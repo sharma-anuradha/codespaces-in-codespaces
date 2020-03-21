@@ -38,27 +38,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Starts environment by invoking the continution activator.
         /// </summary>
+        /// <param name="environmentId">The environment id.</param>
         /// <param name="computeResourceId">Target compute resource id.</param>
         /// <param name="storageResourceId">Target storage resource id.</param>
+        /// <param name="archiveStorageResourceId">Target blob storage resource id.</param>
         /// <param name="environmentVariables">Input environment variables for the compute.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
-        Task<ContinuationResult> StartAsync(
+        Task<ContinuationResult> StartEnvironmentAsync(
+            Guid environmentId,
             Guid computeResourceId,
             Guid storageResourceId,
+            Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
             string reason,
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Starts arhive of storage by invoking the continution activator.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="blobResourceId">Target blob resource id.</param>
+        /// <param name="storageResourceId">Target storage resource id.</param>
+        /// <param name="reason">Trigger for operation.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Resuling continuation result.</returns>
+        Task<ContinuationResult> StartArchiveAsync(
+            Guid environmentId,
+            Guid blobResourceId,
+            Guid storageResourceId,
+            string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Delete resource by invoking the continution activator.
         /// </summary>
+        /// <param name="environmentId">The environment id.</param>
         /// <param name="resourceId">Target resource id.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> DeleteAsync(
+            Guid? environmentId,
             Guid resourceId,
             string reason,
             IDiagnosticsLogger logger);
@@ -66,14 +88,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <summary>
         /// Delete resource by invoking the continution activator.
         /// </summary>
-        /// <param name="resourceId">Target resource id.</param>
         /// <param name="environmentId">The environment id.</param>
+        /// <param name="resourceId">Target resource id.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> SuspendAsync(
-            Guid resourceId,
             Guid environmentId,
+            Guid resourceId,
             string reason,
             IDiagnosticsLogger logger);
 

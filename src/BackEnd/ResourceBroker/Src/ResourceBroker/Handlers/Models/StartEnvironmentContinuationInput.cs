@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {
@@ -14,9 +13,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     public class StartEnvironmentContinuationInput : ContinuationOperationInput
     {
         /// <summary>
+        /// Gets or sets Environment Id.
+        /// </summary>
+        public Guid? EnvironmentId { get; set; }
+
+        /// <summary>
         /// Gets or sets the storage resource id.
         /// </summary>
         public Guid StorageResourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the archive storage resource id.
+        /// </summary>
+        public Guid? ArchiveStorageResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the compute environment variables.

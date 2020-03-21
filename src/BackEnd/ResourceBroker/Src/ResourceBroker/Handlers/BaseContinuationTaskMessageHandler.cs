@@ -9,7 +9,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -74,43 +73,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             return logger.OperationScopeAsync(
                 LogBaseName,
-                (childLogger) => InnerContinue(input, childLogger));
-        }
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddValue("HandlerOperation", Operation)
+                        .FluentAddValue("HandlerType", GetType().Name)
+                        .FluentAddValue("HandlerBasePreContinuationToken", input.ContinuationToken);
 
-        /// <summary>
-        /// Main continuation driver.
-        /// </summary>
-        /// <param name="input">Base target input.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Next contiuation results.</returns>
-        protected async Task<ContinuationResult> InnerContinue(ContinuationInput input, IDiagnosticsLogger logger)
-        {
-            logger.FluentAddValue("HandlerOperation", Operation)
-                .FluentAddValue("HandlerType", GetType().Name)
-                .FluentAddValue("HandlerBasePreContinuationToken", input.ContinuationToken);
+                    // Deals with invalid case
+                    var typedInput = input as TI;
+                    if (typedInput == null)
+                    {
+                        childLogger.FluentAddValue("HandlerInvalidInputType", true);
 
-            // Deals with invalid case
-            var typedInput = input as TI;
-            if (typedInput == null)
-            {
-                logger.FluentAddValue("HandlerInvalidInputType", true);
+                        throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
+                    }
 
-                throw new NotSupportedException($"Provided input type does not match target input type - {typeof(TI)}");
-            }
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, typedInput.ResourceId)
+                        .FluentAddValue("HandlerTriggerSource", typedInput.Reason)
+                        .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
 
-            logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, typedInput.ResourceId)
-                .FluentAddValue("HandlerTriggerSource", typedInput.Reason)
-                .FluentAddValue("HandlerOperationPreContinuationToken", typedInput.OperationInput?.ContinuationToken);
+                    // Core continue
+                    var result = await InnerContinue(typedInput, childLogger);
 
-            // Core continue
-            var result = await InnerContinue(typedInput, logger);
+                    childLogger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
+                        .FluentAddValue("HandlerBasePostStatus", result.Status)
+                        .FluentAddValue("HandlerBasePostErrorReason", result.ErrorReason)
+                        .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
 
-            logger.FluentAddValue("HandlerBasePostContinuationToken", result.NextInput?.ContinuationToken)
-                .FluentAddValue("HandlerBasePostStatus", result.Status)
-                .FluentAddValue("HandlerBasePostErrorReason", result.ErrorReason)
-                .FluentAddValue("HandlerBasePostRetryAfter", result.RetryAfter);
-
-            return result;
+                    return result;
+                });
         }
 
         /// <summary>
@@ -122,24 +113,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected virtual async Task<ContinuationResult> InnerContinue(TI input, IDiagnosticsLogger logger)
         {
             var record = await logger.TrackDurationAsync(
-                "HandlerObtainReference", () => ObtainReferenceAsync(input, logger));
+                "HandlerFetchReference", () => FetchReferenceAsync(input, logger));
 
             // If first time through, queue things up
             if (string.IsNullOrEmpty(input.ContinuationToken))
             {
-                // Short circuit things if thats whats happening
-                if (await ShouldInitiallyHandleContinuationAsync(input, record, logger))
-                {
-                    // Custom logic to terminate things early if we are able to
-                    return await logger.TrackDurationAsync(
-                        "HandlerInitiallyHandleContinuationn", () => InitiallyHandleContinuationAsync(input, record, logger));
-                }
-                else
-                {
-                    // Queue operation to allow the rest of the continuation to occur
-                    return await logger.TrackDurationAsync(
-                        "HandlerInitiallyQueueContinuation", () => InitiallyQueueContinuationAsync(input, record, logger));
-                }
+                // Queue operation to allow the rest of the continuation to occur
+                return await logger.TrackDurationAsync(
+                    "HandlerInitiallyQueueContinuation", () => InitiallyQueueContinuationAsync(input, record, logger));
             }
 
             // If we don't have the operation input build it
@@ -179,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="input">Target input.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Reference objec to the resource.</returns>
-        protected virtual async Task<ResourceRecordRef> ObtainReferenceAsync(TI input, IDiagnosticsLogger logger)
+        protected virtual async Task<ResourceRecordRef> FetchReferenceAsync(TI input, IDiagnosticsLogger logger)
         {
             return await FetchReferenceAsync(input.ResourceId, logger);
         }
@@ -201,37 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 throw new ResourceNotFoundException(resourceId);
             }
 
-            return new ResourceRecordRef(resource, resourceId);
-        }
-
-        /// <summary>
-        /// Signals whether operation should be initially handled or added to queue for
-        /// further processing.
-        /// </summary>
-        /// <param name="input">Target input.</param>
-        /// <param name="record">Referene to target resource.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Whether we are short cirting the operaiton.</returns>
-        protected virtual Task<bool> ShouldInitiallyHandleContinuationAsync(TI input, ResourceRecordRef record, IDiagnosticsLogger logger)
-        {
-            return Task.FromResult(false);
-        }
-
-        /// <summary>
-        /// Handler which runs if we are short circuiting the opertion by not adding to queue.
-        /// </summary>
-        /// <param name="input">Target input.</param>
-        /// <param name="record">Referene to target resource.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Required target input.</returns>
-        protected virtual async Task<ContinuationResult> InitiallyHandleContinuationAsync(TI input, ResourceRecordRef record, IDiagnosticsLogger logger)
-        {
-            var resultStatus = OperationState.Succeeded;
-
-            // Update status straight to target status
-            await UpdateRecordStatusAsync(input, record, resultStatus, "HandleOperation", logger.NewChildLogger());
-
-            return new ContinuationResult { Status = resultStatus };
+            return new ResourceRecordRef(resource);
         }
 
         /// <summary>
@@ -431,7 +382,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 async (IDiagnosticsLogger innerLogger) =>
                 {
                     // Obtain a fresh record.
-                    record.Value = (await FetchReferenceAsync(record.ResourceId, logger)).Value;
+                    record.Value = (await FetchReferenceAsync(Guid.Parse(record.Value.Id), logger)).Value;
 
                     // Mutate record
                     stateChanged = mutateRecordCallback(record.Value);
@@ -495,7 +446,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                     // Starts the delete workflow on the resource
                     var deleteResult = await resourceContinuationOperations.DeleteAsync(
-                        Guid.Parse(record.Value.Id), trigger, logger.NewChildLogger());
+                        null, Guid.Parse(record.Value.Id), trigger, logger.NewChildLogger());
 
                     logger.FluentAddValue("HandlerFailCleanupPostState", deleteResult?.Status)
                         .FluentAddValue("HandlerFailCleanupPostContinuationToken", deleteResult?.NextInput?.ContinuationToken);

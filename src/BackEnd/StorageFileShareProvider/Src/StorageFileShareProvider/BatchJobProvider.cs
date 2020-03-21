@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Batch;
 using Microsoft.Azure.Batch.Common;
@@ -171,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     {
                         var job = await GetOrCreateJob(batchClient, taskInput);
 
-                        var taskId = azureResourceInfo.Name;
+                        var taskId = GetBatchTaskIdFromInput(taskInput, azureResourceInfo);
                         var task = ConstructTask(job.Id, taskId, fileShare, taskInput, logger);
 
                         await job.AddTaskAsync(task);
@@ -190,7 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// Includes retry logic for race conditions of multiple workers attempting to create the same job.
         /// </summary>
         /// <param name="batchClient">Batch client.</param>
-        /// <param name="taskInput">Tarrget task input.</param>
+        /// <param name="taskInput">Target task input.</param>
         /// <returns>CloudJob.</returns>
         protected virtual async Task<CloudJob> GetOrCreateJob(BatchClient batchClient, T taskInput)
         {
@@ -277,6 +278,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <param name="jobSuffix">Target job suffix.</param>
         /// <returns>A job id.</returns>
         protected abstract string GetBatchJobIdFromInput(T taskInput, int jobSuffix);
+
+        /// <summary>
+        /// Construct task id based on avaialble input.
+        /// </summary>
+        /// <param name="taskInput">Target task input.</param>
+        /// <param name="azureResourceInfo">Target azure resource info.</param>
+        /// <returns>Generated task id.</returns>
+        protected virtual string GetBatchTaskIdFromInput(T taskInput, AzureResourceInfo azureResourceInfo)
+        {
+            return azureResourceInfo.Name;
+        }
 
         /// <summary>
         /// Gets an existing job if available from azure batch.

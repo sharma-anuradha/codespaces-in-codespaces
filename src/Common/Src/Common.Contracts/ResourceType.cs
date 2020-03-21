@@ -10,13 +10,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public enum ResourceType
     {
         /// <summary>
-        /// The Cloud Environment back-end compute vm resource type.
+        /// The Environment back-end compute vm resource type.
         /// </summary>
         ComputeVM = 1,
 
         /// <summary>
-        /// The Cloud Environment back-end storage account resource type.
+        /// The Environment hot back-end storage file share resource type.
         /// </summary>
         StorageFileShare = 2,
+
+        /// <summary>
+        /// The Environment cold back-end storage blob resource type.
+        /// </summary>
+        StorageArchive = 3,
     }
 }

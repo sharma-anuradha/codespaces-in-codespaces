@@ -32,8 +32,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly MockBillingEventRepository billingEventRepository;
         public readonly MockClientWorkspaceRepository workspaceRepository;
         public readonly IBillingEventManager billingEventManager;
+        public readonly MockClientAuthRepository authRepository;
+        public readonly IResourceBrokerResourcesExtendedHttpContract resourceBroker;
         public readonly ITokenProvider tokenProvider;
-        public readonly IResourceBrokerResourcesHttpContract resourceBroker;
         public readonly EnvironmentManager environmentManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;

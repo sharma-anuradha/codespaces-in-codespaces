@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -12,6 +13,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
 {
@@ -94,7 +96,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public async Task<int> GetCloudEnvironmentCountAsync(string location, string state, string skuName, IDiagnosticsLogger logger)
+        public async Task<int> GetCloudEnvironmentCountAsync(
+            string location,
+            string state,
+            string skuName,
+            IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
                 @"SELECT VALUE COUNT(1)
@@ -139,6 +145,77 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
             var count = items.FirstOrDefault();
             return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(
+            string idShard,
+            int count,
+            IDiagnosticsLogger logger)
+        {
+            // Look for failed resources, or resources that are stuck in a temporary state for too long.
+            // Special case: For resources that are stuck/failed in the "Starting" state, only consider
+            // the VM resource type. Storage resources should not be considered because they contain user
+            // data that we do not want to clean up until the user has explicitly asked for deletion.
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c
+                FROM c
+                WHERE STARTSWITH(c.id, @idShard)
+                    AND (
+                        c.transitions.archiving.status = @operationStateFailed
+                        OR c.transitions.archiving.status = @operationStateCancelled
+                        OR (
+                            (c.transitions.archiving.status = @operationStateInitialized
+                             OR c.transitions.archiving.status = @operationStateInProgress
+                            ) AND c.transitions.archiving.statusChanged <= @operationFailedTimeLimit
+                        )
+                    )",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = count },
+                    new SqlParameter { Name = "@idShard", Value = idShard },
+                    new SqlParameter { Name = "@operationStateFailed", Value = OperationState.Failed.ToString() },
+                    new SqlParameter { Name = "@operationStateCancelled", Value = OperationState.Cancelled.ToString() },
+                    new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
+                    new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1) },
+                });
+
+            var items = await QueryAsync(
+                (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(
+            string idShard,
+            int count,
+            DateTime cutoffTime,
+            IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c
+                FROM c
+                WHERE STARTSWITH(c.id, @idShard)
+                    AND c.storage != null
+                    AND c.state = @stateShutdown
+                    AND c.lastStateUpdated < @cutoffTime
+                    AND c.transitions.archiving.status = null
+                    AND CONTAINS(c.skuName, @targetSku)",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@count", Value = count },
+                    new SqlParameter { Name = "@idShard", Value = idShard },
+                    new SqlParameter { Name = "@stateShutdown", Value = CloudEnvironmentState.Shutdown.ToString() },
+                    new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
+                    new SqlParameter { Name = "@targetSku", Value = "Linux" },
+                });
+
+            var items = await QueryAsync(
+                (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
         }
     }
 }

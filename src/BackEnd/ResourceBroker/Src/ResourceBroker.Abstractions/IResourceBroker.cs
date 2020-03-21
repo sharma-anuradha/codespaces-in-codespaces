@@ -18,70 +18,123 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstraction
         /// <summary>
         /// Allocate resource set based on input manifest.
         /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
         /// <param name="inputs">Target input manifest.</param>
+        /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>An <see cref="AllocateResult"/> enumerable object.</returns>
         Task<IEnumerable<AllocateResult>> AllocateAsync(
-            IEnumerable<AllocateInput> inputs, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Allocate a compute or storage resource.
         /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
         /// <param name="input">The allocate input object.</param>
+        /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>An <see cref="AllocateResult"/> object.</returns>
-        Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Delete resource set based on input manifest.
-        /// </summary>
-        /// <param name="inputs">The delete input.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the resource was deleted.</returns>
-        Task<bool> DeleteAsync(
-           IEnumerable<DeleteInput> inputs, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Delete a resource.
-        /// </summary>
-        /// <param name="input">The deallocate input.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the resource was deleted.</returns>
-        Task<bool> DeleteAsync(DeleteInput input, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Suspends resource set based on input manifest.
-        /// </summary>
-        /// <param name="input">The suspend input.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the suspend operation was successful.</returns>
-        Task<bool> SuspendAsync(
-            IEnumerable<SuspendInput> input, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Performs cleanup operations to be done before delete on the resource.
-        /// </summary>
-        /// <param name="input">The suspend input.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the suspend operation was successful.</returns>
-        [Obsolete]
-        Task<bool> SuspendAsync(
-            SuspendInput input, IDiagnosticsLogger logger);
+        Task<AllocateResult> AllocateAsync(
+            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Start compute with storage and startup parameters.
         /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="action">The start action.</param>
         /// <param name="input">Input for the environment to be started.</param>
+        /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task.</returns>
-        Task<bool> StartAsync(StartInput input, IDiagnosticsLogger logger);
+        Task<bool> StartAsync(
+            Guid environmentId, StartAction action, IEnumerable<StartInput> input, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Start compute with storage and startup parameters.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="action">The start action.</param>
+        /// <param name="input">Input for the environment to be started.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>A task.</returns>
+        Task<bool> StartAsync(
+            Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Suspends resource set based on input manifest.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="input">The suspend input.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the suspend operation was successful.</returns>
+        Task<bool> SuspendAsync(
+            Guid environmentId, IEnumerable<SuspendInput> input, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Performs cleanup operations to be done before delete on the resource.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="input">The suspend input.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the suspend operation was successful.</returns>
+        Task<bool> SuspendAsync(
+            Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delete resource set based on input manifest.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="inputs">The delete input.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource was deleted.</returns>
+        Task<bool> DeleteAsync(
+           Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delete a resource.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="input">The deallocate input.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource was deleted.</returns>
+        Task<bool> DeleteAsync(
+            Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Status check set based on input manifest.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="input">The suspend input.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the suspend operation was successful.</returns>
+        Task<IEnumerable<StatusResult>> StatusAsync(
+            Guid environmentId, IEnumerable<StatusInput> input, string trigger, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Status check on a resource.
+        /// </summary>
+        /// <param name="environmentId">Environment id associated with the resource.</param>
+        /// <param name="input">The suspend input.</param>
+        /// <param name="trigger">Target trgger.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the suspend operation was successful.</returns>
+        Task<StatusResult> StatusAsync(
+            Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Checks to see if a given resource exists.
         /// </summary>
         /// <param name="id">The target resource id.</param>
+        /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource exists.</returns>
-        Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger);
+        Task<bool> ProcessHeartbeatAsync(
+            Guid id, string trigger, IDiagnosticsLogger logger);
     }
 }

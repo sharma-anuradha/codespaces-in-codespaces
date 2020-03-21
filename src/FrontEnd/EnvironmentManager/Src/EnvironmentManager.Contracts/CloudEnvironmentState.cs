@@ -52,6 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Shutdown,
 
         /// <summary>
+        /// Environment is archived.
+        /// </summary>
+        Archived,
+
+        /// <summary>
         /// Environment is starting.
         /// </summary>
         Starting,

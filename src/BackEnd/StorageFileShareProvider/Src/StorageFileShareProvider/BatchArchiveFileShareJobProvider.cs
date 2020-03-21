@@ -3,11 +3,12 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Batch;
+using Microsoft.Azure.Batch.Common;
 using Microsoft.Azure.Storage.File;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
@@ -43,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <inheritdoc/>
         public Task<BatchTaskInfo> StartArchiveFileShareAsync(
             AzureResourceInfo azureResourceInfo,
+            string srcFileShareUriWithSas,
             string destBlobUriWithSas,
             IDiagnosticsLogger logger)
         {
@@ -51,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var input = new BatchArchiveFileShareJobInput
             {
+                SrcFileShareUriWithSas = srcFileShareUriWithSas,
                 DestBlobUriWithSas = destBlobUriWithSas,
             };
 
@@ -66,7 +69,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             var poolInformation = new PoolInformation { PoolId = StorageProviderSettings.WorkerBatchPoolId, };
             var job = batchClient.JobOperations.CreateJob(jobId, poolInformation);
 
+            var jobPrepareCommandLines = new List<string>();
+
+            // Make sure the target directory exists
+            var localSrc = "/datadrive/archives/";
+            jobPrepareCommandLines.Add($"mkdir -p {localSrc}");
+
+            // Set permissions
+            jobPrepareCommandLines.Add($"chmod 777 {localSrc}");
+
             job.DisplayName = $"Archive{jobId}";
+            job.JobPreparationTask = new JobPreparationTask
+            {
+                CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobPrepareCommandLines)}\"",
+                Constraints = new TaskConstraints
+                {
+                    RetentionTime = TimeSpan.FromDays(1),
+                    MaxWallClockTime = TimeSpan.FromMinutes(10),
+                    MaxTaskRetryCount = 3,
+                },
+                RerunOnComputeNodeRebootAfterSuccess = true,
+                WaitForSuccess = true,
+                UserIdentity = new UserIdentity(new AutoUserSpecification(elevationLevel: ElevationLevel.Admin)),
+            };
 
             return job;
         }
@@ -79,36 +104,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             BatchArchiveFileShareJobInput taskInput,
             IDiagnosticsLogger logger)
         {
-            // The SaS tokens applies to the entire file share where all items are copied to.
-            var destFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
-            {
-                Permissions = SharedAccessFilePermissions.Read,
-                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(4),
-            });
+            var localSrc = "/datadrive/archives/";
+            var localTargetSrc = $"{localSrc}{taskId}_{DateTime.UtcNow.Ticks}";
 
-            var storageType = StorageType.Linux;
+            var taskCopyCommand = new List<string>();
 
-            var mountableFileName = StorageFileShareProviderHelper.GetStorageMountableFileName(storageType);
-            var srcFile = fileShare.GetRootDirectoryReference().GetFileReference(mountableFileName);
-            var srcFileUriWithSas = srcFile.Uri.AbsoluteUri + destFileSas;
-            var taskCopyCommand = $"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{srcFileUriWithSas}' '{taskInput.DestBlobUriWithSas}'";
+            // Clear out any old images just incase something got missed in cleanup
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +30 -delete");
 
-            logger.FluentAddValue($"SourceStorageFilePath-{storageType}", srcFile.Uri.ToString());
+            // Copy target share to local disk
+            taskCopyCommand.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{taskInput.SrcFileShareUriWithSas}' '{localTargetSrc}' --block-size-mb 100");
+
+            // Conduct safty check post copy
+            taskCopyCommand.Add($"e2fsck -fy {localTargetSrc}");
+
+            // Resize the share down
+            taskCopyCommand.Add($"resize2fs -pM {localTargetSrc}");
+
+            // Copy over to blob stroage
+            taskCopyCommand.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{localTargetSrc}' '{taskInput.DestBlobUriWithSas}' --block-size-mb 100");
+
+            // Delete copied file from local disk
+            taskCopyCommand.Add($"rm -f {localTargetSrc}");
 
             // Define the task
-            var taskCommandLine = $"/bin/bash -cxe \"printenv && {taskCopyCommand}\"";
+            var taskCommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", taskCopyCommand)}\"";
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 3, maxWallClockTime: TimeSpan.FromMinutes(30), retentionTime: TimeSpan.FromDays(1)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(30), retentionTime: TimeSpan.FromDays(1)),
+                UserIdentity = new UserIdentity(new AutoUserSpecification(elevationLevel: ElevationLevel.Admin)),
             };
+
             return task;
         }
 
         /// <inheritdoc/>
         protected override string GetBatchJobIdFromInput(BatchArchiveFileShareJobInput taskInput, int jobSuffix)
         {
-            return $"{StorageProviderSettings.WorkerBatchPoolId}_Suspend_{jobSuffix}";
+            return $"{StorageProviderSettings.WorkerBatchPoolId}_archive_{jobSuffix}";
+        }
+
+        /// <inheritdoc/>
+        protected override string GetBatchTaskIdFromInput(BatchArchiveFileShareJobInput taskInput, AzureResourceInfo azureResourceInfo)
+        {
+            // Given that we might rerun the archive job for a given source resource (in the case of a failure),
+            // we need to make sure that the task ids are unique.
+            return base.GetBatchTaskIdFromInput(taskInput, azureResourceInfo) + "_" + DateTime.UtcNow.Ticks;
         }
     }
 }

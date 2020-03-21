@@ -1,4 +1,4 @@
-// <copyright file="StorageFileShareProviderHelperTests.cs" company="Microsoft">
+// <copyright file="BatchPrepareFileShareJobProviderTests.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -25,7 +25,7 @@ using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Test
 {
-    public class StorageFileShareProviderHelperTests
+    public class BatchPrepareFileShareJobProviderTests
     {
         // Azure subscription to be used for tests
         private static readonly string azureSubscriptionId = "86642df6-843e-4610-a956-fdd497102261";
@@ -149,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// </summary>
         [Trait("Category", "IntegrationTest")]
         [Fact]
-        public async Task FileShareProviderHelper_E2EFlow_Completes_Without_Errors()
+        public async Task BatchPrepareFileShareJobProvider_E2EFlow_Completes_Without_Errors()
         {
             var logger = new DefaultLoggerFactory().New();
 
@@ -163,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
             // construct the real StorageFileShareProviderHelper
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(
-                catalogMoq.Object, batchClientFactory, storageProviderSettings);
+                catalogMoq.Object);
 
             IBatchPrepareFileShareJobProvider batchPrepareFileShareJobProvider = new BatchPrepareFileShareJobProvider(
                 providerHelper, catalogMoq.Object, batchClientFactory, storageProviderSettings);

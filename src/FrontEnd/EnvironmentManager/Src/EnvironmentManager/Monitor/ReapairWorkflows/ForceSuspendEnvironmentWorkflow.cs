@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -25,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// <param name="environmentRepository">target repository.</param>
         public ForceSuspendEnvironmentWorkflow(
             IEnvironmentStateManager environmentStateManager,
-            IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
+            IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             ICloudEnvironmentRepository environmentRepository)
         {
             EnvironmentStateManager = environmentStateManager;
@@ -38,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
 
         private IEnvironmentStateManager EnvironmentStateManager { get; }
 
-        private IResourceBrokerResourcesHttpContract ResourceBrokerHttpClient { get; }
+        private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerHttpClient { get; }
 
         private ICloudEnvironmentRepository EnvironmentRepository { get; }
 
@@ -63,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                     // Delete the allocated resources.
                     if (computeIdToken != null)
                     {
-                        await ResourceBrokerHttpClient.DeleteAsync(computeIdToken.Value, childLogger.NewChildLogger());
+                        await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), computeIdToken.Value, childLogger.NewChildLogger());
                     }
                 },
                 swallowException: true);

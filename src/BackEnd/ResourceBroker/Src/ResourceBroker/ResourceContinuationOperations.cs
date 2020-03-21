@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -68,9 +69,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> StartAsync(
+        public async Task<ContinuationResult> StartEnvironmentAsync(
+            Guid environmentId,
             Guid computeResourceId,
             Guid storageResourceId,
+            Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
             string reason,
             IDiagnosticsLogger logger)
@@ -81,8 +84,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var input = new StartEnvironmentContinuationInput()
             {
+                EnvironmentId = environmentId,
                 ResourceId = computeResourceId,
                 StorageResourceId = storageResourceId,
+                ArchiveStorageResourceId = archiveStorageResourceId,
                 EnvironmentVariables = environmentVariables,
                 Reason = reason,
             };
@@ -92,7 +97,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
+        public async Task<ContinuationResult> StartArchiveAsync(
+            Guid environmentId,
+            Guid blobResourceId,
+            Guid fileResourceId,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("BlobResourceId", blobResourceId)
+                .FluentAddBaseValue("StorageResourceId", fileResourceId);
+
+            var loggingProperties = await BuildLoggingProperties(blobResourceId, reason, logger);
+
+            var input = new StartArchiveContinuationInput()
+            {
+                EnvironmentId = environmentId,
+                ResourceId = blobResourceId,
+                FileShareResourceId = fileResourceId,
+                Reason = reason,
+            };
+            var target = StartArchiveContinuationHandler.DefaultQueueTarget;
+
+            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+        }
+
+        /// <inheritdoc/>
         public async Task<ContinuationResult> DeleteAsync(
+            Guid? environmentId,
             Guid resourceId,
             string reason,
             IDiagnosticsLogger logger)
@@ -101,6 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var input = new DeleteResourceContinuationInput()
             {
+                EnvironmentId = environmentId,
                 ResourceId = resourceId,
                 Reason = reason,
             };
@@ -111,8 +143,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public async Task<ContinuationResult> SuspendAsync(
-            Guid resourceId,
             Guid environmentId,
+            Guid resourceId,
             string reason,
             IDiagnosticsLogger logger)
         {
@@ -120,9 +152,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var input = new CleanupResourceContinuationInput()
             {
+                EnvironmentId = environmentId,
                 ResourceId = resourceId,
                 Reason = reason,
-                EnvironmentId = environmentId,
             };
             var target = CleanupResourceContinuationHandler.DefaultQueueTarget;
 
@@ -217,17 +249,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 throw new ResourceNotFoundException(resourceId);
             }
 
+            var resourceDetials = resource.GetDetails();
+
             return new Dictionary<string, string>()
                 {
                     { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
                     { ResourceLoggingPropertyConstants.OperationReason, reason },
                     { ResourceLoggingPropertyConstants.PoolLocation, resource.Location },
-                    { ResourceLoggingPropertyConstants.PoolSkuName, resource.PoolReference.Dimensions.GetValueOrDefault("skuName") },
+                    { ResourceLoggingPropertyConstants.PoolSkuName, resourceDetials.SkuName },
                     { ResourceLoggingPropertyConstants.PoolResourceType, resource.Type.ToString() },
-                    { ResourceLoggingPropertyConstants.PoolDefinition, resource.PoolReference.Code },
-                    { ResourceLoggingPropertyConstants.PoolVersionDefinition, resource.PoolReference.VersionCode },
-                    { ResourceLoggingPropertyConstants.PoolImageFamilyName, resource.PoolReference.Dimensions.GetValueOrDefault("imageFamilyName") },
-                    { ResourceLoggingPropertyConstants.PoolImageName, resource.PoolReference.Dimensions.GetValueOrDefault("imageName") },
+                    { ResourceLoggingPropertyConstants.PoolDefinition, resource.PoolReference?.Code },
+                    { ResourceLoggingPropertyConstants.PoolVersionDefinition, resource.PoolReference?.VersionCode },
+                    { ResourceLoggingPropertyConstants.PoolImageFamilyName, resourceDetials.ImageFamilyName },
+                    { ResourceLoggingPropertyConstants.PoolImageName, resourceDetials.ImageName },
                 };
         }
 

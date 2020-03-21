@@ -11,15 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// <summary>
     /// Watch Orphaned System Environments Task.
     /// </summary>
-    public interface IWatchOrphanedSystemEnvironmentsTask
+    public interface IWatchOrphanedSystemEnvironmentsTask : IBackgroundTask
     {
-        /// <summary>
-        /// Task which ensures that the all environments still have their related
-        /// resources.
-        /// </summary>
-        /// <param name="claimSpan">Target claim span.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Whether the task should run again.</returns>
-        Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger);
     }
 }

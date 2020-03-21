@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -45,5 +46,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         [DataMember(IsRequired = false, EmitDefaultValue = false)]
         public string Message { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the message.
+        /// </summary>
+        [DataMember(IsRequired = false, EmitDefaultValue = false)]
+        public IDictionary<string, string> Data { get; set; }
     }
 }

@@ -3,9 +3,10 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
 {
     /// <summary>
     /// HTTP contract for the resource broker.
@@ -101,10 +102,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <summary>
         /// Get the start compute operation uri.
         /// </summary>
-        /// <param name="computeResourceId">The compute resource id token.</param>
+        /// <param name="environmentId">The environment id token.</param>
+        /// <param name="action">The start action.</param>
         /// <returns>Uri.</returns>
-        public static string GetStartResourceUri(Guid computeResourceId) =>
-            $"{ResourcesRoute}/obsoletestart?id={computeResourceId}";
+        public static string GetStartResourceUri(Guid environmentId, StartRequestAction action) =>
+            $"{ResourcesRoute}/{StartOperation}?environmentId={environmentId}&action={action}";
 
         /// <summary>
         /// Get the suspend uri.
@@ -112,22 +114,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBrok
         /// <param name="environmentId">The environment id token.</param>
         /// <returns>Uri.</returns>
         public static string GetSuspendResourceUri(Guid environmentId) =>
-            $"{ResourcesRoute}/obsoletesuspend?environmentId={environmentId}";
+            $"{ResourcesRoute}/{SuspendOperation}?environmentId={environmentId}";
 
         /// <summary>
         /// Get the deallocate uri.
         /// </summary>
-        /// <param name="resourceId">The resource id token.</param>
+        /// <param name="environmentId">The environment id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetDeleteResourceUri(Guid resourceId) =>
-            $"{ResourcesRoute}/obsoletedelete?id={resourceId}";
+        public static string GetDeleteResourceUri(Guid environmentId) =>
+            $"{ResourcesRoute}?environmentId={environmentId}";
+
+        /// <summary>
+        /// Get the status uri.
+        /// </summary>
+        /// <param name="environmentId">The environment id token.</param>
+        /// <param name="resources">The resource id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetStatusResourceUri(Guid environmentId, IEnumerable<Guid> resources) =>
+            $"{ResourcesRoute}/{StatusOperation}?id={string.Join(",", resources)}&environmentId={environmentId}";
 
         /// <summary>
         /// Get the get resource uri.
         /// </summary>
+        /// <param name="environmentId">The environment id token.</param>
         /// <param name="resourceId">The resource id token.</param>
         /// <returns>Uri.</returns>
-        public static string GetProcessHeartbeatUri(Guid resourceId) =>
-            $"{ResourcesRoute}/obsoleteenvironmentheartbeat?id={resourceId}";
+        public static string GetProcessHeartbeatUri(Guid environmentId, Guid resourceId) =>
+            $"{ResourcesRoute}/{ProcessHeartbeatOperation}?id={resourceId}&environmentId={environmentId}";
     }
 }

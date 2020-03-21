@@ -51,15 +51,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             // Note: fakes will trump mocks.
             if (useFakes)
             {
-                return services.AddSingleton<IResourceBrokerResourcesHttpContract, FakeResourceBrokerClient>(x => new FakeResourceBrokerClient(dockerImageName, publishedCLIPath));
+                return services.AddSingleton<FakeResourceBrokerClient>(x => new FakeResourceBrokerClient(dockerImageName, publishedCLIPath))
+                    .AddSingleton<IResourceBrokerResourcesHttpContract>(x => x.GetRequiredService<FakeResourceBrokerClient>())
+                    .AddSingleton<IResourceBrokerResourcesExtendedHttpContract>(x => x.GetRequiredService<FakeResourceBrokerClient>());
             }
             else if (useMocks)
             {
-                return services.AddSingleton<IResourceBrokerResourcesHttpContract, MockResourceBrokerClient>();
+                return services.AddSingleton<MockResourceBrokerClient>()
+                    .AddSingleton<IResourceBrokerResourcesHttpContract>(x => x.GetRequiredService<MockResourceBrokerClient>())
+                    .AddSingleton<IResourceBrokerResourcesExtendedHttpContract>(x => x.GetRequiredService<MockResourceBrokerClient>());
             }
             else
             {
-                return services.AddSingleton<IResourceBrokerResourcesHttpContract, HttpResourceBrokerClient>();
+                return services.AddSingleton<HttpResourceBrokerClient>()
+                    .AddSingleton<IResourceBrokerResourcesHttpContract>(x => x.GetRequiredService<HttpResourceBrokerClient>())
+                    .AddSingleton<IResourceBrokerResourcesExtendedHttpContract>(x => x.GetRequiredService<HttpResourceBrokerClient>());
             }
         }
 

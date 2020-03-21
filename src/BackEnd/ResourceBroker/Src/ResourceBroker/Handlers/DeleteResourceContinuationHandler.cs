@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
@@ -99,6 +100,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                 };
             }
+            else if (resource.Value.Type == ResourceType.StorageArchive)
+            {
+                var blobStorageDetails = resource.Value.GetStorageDetails();
+
+                operationInput = new FileShareProviderDeleteBlobInput
+                {
+                    AzureResourceInfo = resource.Value.AzureResourceInfo,
+                    BlobName = blobStorageDetails.ArchiveStorageBlobName,
+                    BlobContainerName = blobStorageDetails.ArchiveStorageBlobContainerName,
+                };
+            }
             else
             {
                 throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");
@@ -127,7 +139,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 {
                     result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)input.OperationInput, logger.WithValues(new LogValueSet()));
                 }
-                else if (resource.Value.Type == ResourceType.StorageFileShare)
+                else if (resource.Value.Type == ResourceType.StorageFileShare
+                    || resource.Value.Type == ResourceType.StorageArchive)
                 {
                     result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)input.OperationInput, logger.WithValues(new LogValueSet()));
                 }

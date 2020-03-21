@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         ///  Result of the Assign operation which includes continuationToken which
         ///  can be used to call this method again to continue the next step of operation.
         /// </returns>
-        Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger);
+        Task<FileShareProviderAssignResult> StartAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Suspend a storage resource.

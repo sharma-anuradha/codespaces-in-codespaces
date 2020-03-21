@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Management.Monitor.Fluent.AutoscaleSetting.Definition;
@@ -42,53 +43,82 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
-               "start_environment_handler_process",
-               async (childLogger) =>
-               {
-                   if (!CanProcess(data))
-                   {
-                       throw new InvalidOperationException($"Collected data of type {data?.GetType().Name}, name  {data?.Name} cannot be processed by {nameof(StartEnvironmentResultHandler)}.");
-                   }
+                "start_environment_handler_process",
+                async (childLogger) =>
+                {
+                    if (!CanProcess(data))
+                    {
+                        throw new InvalidOperationException($"Collected data of type {data?.GetType().Name}, name  {data?.Name} cannot be processed by {nameof(StartEnvironmentResultHandler)}.");
+                    }
 
-                   var jobResultData = (JobResult)data;
+                    var jobResultData = (JobResult)data;
+                    var cloudEnvironment = handlerContext.CloudEnvironment;
 
-                   childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResultData))
-                        .FluentAddBaseValue("CloudEnvironmentId", jobResultData.EnvironmentId);
+                    childLogger.FluentAddBaseValue("CloudEnvironmentId", jobResultData.EnvironmentId)
+                        .FluentAddValue("ComputeResourceId", vmResourceId)
+                        .FluentAddValue("CloudEnvironmentFound", cloudEnvironment != null)
+                        .FluentAddValue("JobCollectedData", JsonConvert.SerializeObject(jobResultData))
+                        .FluentAddValue("JobState", jobResultData.JobState);
 
-                   if (jobResultData.JobState != JobState.Succeeded)
-                   {
-                       childLogger.LogError($"Start Environment job failed for virtaul machine : {vmResourceId}");
+                    ValidationUtil.IsRequired(jobResultData.EnvironmentId, nameof(jobResultData.EnvironmentId));
 
-                       // Mark environment provision to failed status
-                       ValidationUtil.IsRequired(jobResultData.EnvironmentId, "Environment Id");
+                    if (cloudEnvironment == null)
+                    {
+                        return handlerContext;
+                    }
 
-                       var cloudEnvironment = handlerContext.CloudEnvironment;
-                       if (cloudEnvironment == default)
-                       {
-                           childLogger.LogInfo($"No environment found for virtual machine id : {vmResourceId} and environment {jobResultData.EnvironmentId}");
-                           return handlerContext;
-                       }
+                    if (jobResultData.JobState == JobState.Succeeded)
+                    {
+                        // Extract mount file share result
+                        var mountFileShareResult = jobResultData.OperationResults.Where(x => x.Name == "MountFileShare").SingleOrDefault();
 
-                       if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
-                       {
-                           cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
-                           var newState = CloudEnvironmentState.Failed;
-                           var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
-                           handlerContext.CloudEnvironmentState = newState;
-                           handlerContext.Reason = errorMessage;
-                           handlerContext.Trigger = CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed;
-                           return handlerContext;
-                       }
-                       else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
-                       {
-                           // Shutdown the environment if the environment has failed to start.
-                           var environmentServiceResult = await environmentManager.ForceSuspendAsync(cloudEnvironment, childLogger);
-                           return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
-                       }
-                   }
+                        logger.FluentAddValue("JobFoundMountFileShareReult", mountFileShareResult != null);
 
-                   return handlerContext;
-               });
+                        // Bail if we didn't find the result
+                        if (mountFileShareResult == null)
+                        {
+                            throw new ArgumentNullException("Expected mount file share result was not found.");
+                        }
+
+                        // Validate that we have needed data
+                        var computeResourceId = mountFileShareResult.Data.GetValueOrDefault("ComputeResourceId");
+                        var storageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageResourceId");
+                        var archiveStorageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageArchiveResourceId");
+
+                        logger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
+                            .FluentAddBaseValue("StorageResourceId", storageResourceId)
+                            .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
+
+                        // Update environment to finalized state
+                        handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
+                            cloudEnvironment,
+                            Guid.Parse(storageResourceId),
+                            string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
+                            childLogger.NewChildLogger());
+                    }
+                    else
+                    {
+                        // Mark environment provision to failed status
+                        if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
+                        {
+                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
+                            var newState = CloudEnvironmentState.Failed;
+                            var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
+                            handlerContext.CloudEnvironmentState = newState;
+                            handlerContext.Reason = errorMessage;
+                            handlerContext.Trigger = CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed;
+                            return handlerContext;
+                        }
+                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
+                        {
+                            // Shutdown the environment if the environment has failed to start.
+                            var environmentServiceResult = await environmentManager.ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+                            return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                        }
+                    }
+
+                    return handlerContext;
+                });
         }
     }
 }

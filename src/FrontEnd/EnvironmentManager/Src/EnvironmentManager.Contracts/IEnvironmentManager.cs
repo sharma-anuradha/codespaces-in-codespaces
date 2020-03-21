@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -98,6 +99,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment service result.</returns>
         Task<CloudEnvironmentServiceResult> ResumeAsync(CloudEnvironment cloudEnvironment, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Completes the start of a shutdown environment.
+        /// </summary>
+        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="storageResourceId">Target new storage that should be swapped in.</param>
+        /// <param name="archiveStorageResourceId">Target archive storage resource id if waking from archive.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironment> ResumeCallbackAsync(CloudEnvironment cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Shuts down an environment.

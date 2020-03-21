@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -17,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     /// <summary>
     /// Fake resource broker client. Provides local docker instead of azure resources.
     /// </summary>
-    public class FakeResourceBrokerClient : IResourceBrokerResourcesHttpContract
+    public class FakeResourceBrokerClient : IResourceBrokerResourcesExtendedHttpContract
     {
         private const string DockerCLI = "docker";
 
@@ -37,78 +38,127 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateRequestBody> allocateRequestsBody, IDiagnosticsLogger logger)
+        public Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
-            await Task.CompletedTask;
+            throw new NotImplementedException();
+        }
 
-            var results = new List<AllocateResponseBody>();
-            foreach (var allocateRequestBody in allocateRequestsBody)
+        /// <inheritdoc/>
+        public Task<AllocateResponseBody> AllocateAsync(Guid environmentId, AllocateRequestBody resource, IDiagnosticsLogger logger)
+        {
+            var result = new AllocateResponseBody
             {
-                var resource = new AllocateResponseBody
-                {
-                    ResourceId = Guid.NewGuid(),
-                    Created = DateTime.UtcNow,
-                    Location = allocateRequestBody.Location,
-                    SkuName = allocateRequestBody.SkuName,
-                };
+                ResourceId = Guid.NewGuid(),
+                Created = DateTime.UtcNow,
+                Location = resource.Location,
+                SkuName = resource.SkuName,
+            };
 
-                if (!resources.TryAdd(resource.ResourceId, resource))
-                {
-                    throw new InvalidOperationException($"Resource already found {resource.ResourceId}");
-                }
+            if (!resources.TryAdd(result.ResourceId, result))
+            {
+                throw new InvalidOperationException($"Resource already found {result.ResourceId}");
+            }
 
-                results.Add(resource);
+            return Task.FromResult(result);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(Guid environmentId, IEnumerable<AllocateRequestBody> resources, IDiagnosticsLogger logger)
+        {
+            var results = new List<AllocateResponseBody>();
+            foreach (var resource in resources)
+            {
+                results.Add(await AllocateAsync(environmentId, resource, logger));
             }
 
             return results;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<bool> StartAsync(Guid environmentId, StartRequestAction action, StartRequestBody resource, IDiagnosticsLogger logger)
         {
-            await Task.CompletedTask;
+            return Task.FromResult(true);
+        }
 
+        /// <inheritdoc/>
+        public Task<bool> StartAsync(Guid environmentId, StartRequestAction action, IEnumerable<StartRequestBody> resources, IDiagnosticsLogger logger)
+        {
+            if (action == StartRequestAction.StartCompute)
+            {
+                var backingResources = resources.Select(x => this.resources.Where(y => y.Key == x.ResourceId).Select(y => (Resource: x, Record: y.Value)).Single());
+                var computeResource = backingResources.Where(x => x.Record.Type == Common.Contracts.ResourceType.ComputeVM).Single();
+                var storageResource = backingResources.Where(x => x.Record.Type == Common.Contracts.ResourceType.StorageFileShare).Single();
+
+                _ = CreateDockerContainerWithCopiedCLI(dockerImageName, publishedCLIPath, computeResource.Resource);
+            }
+
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+        {
             var stopDockerContainerProcess = Process.Start("docker", $"stop {resourceId}");
             stopDockerContainerProcess.WaitForExit();
 
-            return resources.Remove(resourceId, out _);
+            resources.Remove(resourceId, out _);
+
+            return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public async Task<bool> DeleteAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
         {
-            throw new NotSupportedException();
-        }
-
-        /// <inheritdoc/>
-        public Task<bool> ProcessHeartbeatAsync(Guid resourceId, IDiagnosticsLogger logger)
-        {
-            return Task.FromResult(resources.ContainsKey(resourceId));
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> StartAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
-        {
-            await Task.CompletedTask;
-
-            _ = CreateDockerContainerWithCopiedCLI(dockerImageName, publishedCLIPath, startComputeRequestBody, computeResourceId);
+            foreach (var resource in resources)
+            {
+                await DeleteAsync(environmentId, resource, logger);
+            }
 
             return true;
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger)
+        public Task<StatusResponseBody> StatusAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(new StatusResponseBody { ResourceId = resourceId });
         }
 
-        private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, StartResourceRequestBody startComputeRequestBody, Guid computeResourceId)
+        /// <inheritdoc/>
+        public async Task<IEnumerable<StatusResponseBody>> StatusAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
         {
-            var containerName = computeResourceId.ToString();
+            var result = new List<StatusResponseBody>();
+            foreach (var resource in resources)
+            {
+                result.Add(await StatusAsync(environmentId, resource, logger));
+            }
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> ProcessHeartbeatAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(resources.ContainsKey(resourceId));
+        }
+
+        private string CreateDockerContainerWithCopiedCLI(string image, string cliPublishedpath, StartRequestBody computeResource)
+        {
+            var containerName = computeResource.ResourceId.ToString();
             var createCommandLine = new StringBuilder();
             createCommandLine.Append("create ");
-            createCommandLine.Append($"{GetCreateOrRunArguments(image, containerName, startComputeRequestBody)} ");
+            createCommandLine.Append($"{GetCreateOrRunArguments(image, containerName, computeResource)} ");
             var createDockerProcess = Process.Start(DockerCLI, createCommandLine.ToString());
             createDockerProcess.WaitForExit();
             if (createDockerProcess.ExitCode != 0)
@@ -165,10 +215,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             return containerName;
         }
 
-        private string GetCreateOrRunArguments(string image, string containerName, StartResourceRequestBody startComputeRequestBody)
+        private string GetCreateOrRunArguments(string image, string containerName, StartRequestBody computeResource)
         {
             var createCommandLine = new StringBuilder();
-            foreach (var env in startComputeRequestBody.EnvironmentVariables)
+            foreach (var env in computeResource.Variables)
             {
                 if (env.Key == "SESSION_CALLBACK")
                 {

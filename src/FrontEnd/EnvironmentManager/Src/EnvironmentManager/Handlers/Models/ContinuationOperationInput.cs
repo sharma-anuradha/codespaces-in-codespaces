@@ -5,7 +5,7 @@
 using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models
 {
     /// <summary>
     /// Represents the continuation input which has a target input.
@@ -15,12 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <summary>
         /// Gets or sets the reference id.
         /// </summary>
-        public Guid ResourceId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the target input.
-        /// </summary>
-        public ContinuationInput OperationInput { get; set; }
+        public Guid EnvironmentId { get; set; }
 
         /// <summary>
         /// Gets or sets the triggered that caused the operation.

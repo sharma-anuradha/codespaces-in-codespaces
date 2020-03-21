@@ -20,52 +20,69 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="resourceId">The resource id token.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
-        Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger);
+        Task<ResourceBrokerResource> GetAsync(
+            Guid resourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Allocate a set of resources.
         /// </summary>
         /// <param name="environmentId">Environment id associated with the resource.</param>
-        /// <param name="allocateRequestBody">The allocation input properties.</param>
+        /// <param name="resources">The allocation input properties.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The allocation result.</returns>
         Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateRequestBody> allocateRequestBody, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<AllocateRequestBody> resources, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Delete a resource from the resource broker.
         /// </summary>
-        /// <param name="resourceId">The resource id.</param>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="action">The type of start request.</param>
+        /// <param name="resources">The resources.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource has been deleted.</returns>
-        Task<bool> DeleteAsync(Guid resourceId, IDiagnosticsLogger logger);
+        Task<bool> StartAsync(
+            Guid environmentId, StartRequestAction action, IEnumerable<StartRequestBody> resources, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Perform suspend operations on a resource.
         /// </summary>
         /// <param name="environmentId">Environment id associated with the resource.</param>
-        /// <param name="suspendRequestBody">Target resources to suspend.</param>
+        /// <param name="resources">Target resources to suspend.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the resource has been suspended.</returns>
         Task<bool> SuspendAsync(
-            Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Start the compute VM instance with the specified storage.
+        /// Delete a resource from the resource broker.
         /// </summary>
-        /// <param name="computeResourceId">The compute resource id.</param>
-        /// <param name="startComputeRequestBody">The bind input parameters.</param>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="resources">The resource ids.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Task.</returns>
-        Task<bool> StartAsync(Guid computeResourceId, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger);
+        /// <returns>True if the resource has been deleted.</returns>
+        Task<bool> DeleteAsync(
+            Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get the status for a set of resources from the resource broker.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="resources">The resource ids.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the resource has been deleted.</returns>
+        Task<IEnumerable<StatusResponseBody>> StatusAsync(
+            Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Updates resource environment keepalive if exists.
         /// </summary>
-        /// <param name="id">The target resource id.</param>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="resourceId">The target resource id.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Whether the resource has not been deleted
         /// or in the process of being deleted.</returns>
-        Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger);
+        Task<bool> ProcessHeartbeatAsync(
+            Guid environmentId, Guid resourceId, IDiagnosticsLogger logger);
     }
 }

@@ -13,14 +13,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     public class FileShareProviderArchiveInput : ContinuationInput
     {
         /// <summary>
-        /// Gets or sets the azure resource info.
+        /// Gets or sets the source azure resource info.
         /// </summary>
-        public AzureResourceInfo AzureResourceInfo { get; set; }
+        public AzureResourceInfo SrcAzureResourceInfo { get; set; }
 
         /// <summary>
-        /// Gets or sets the type of storage being assigned.
+        /// Gets or sets the file share src url.
         /// </summary>
-        public StorageType StorageType { get; set; }
+        public string SrcFileShareUriWithSas { get; set; }
 
         /// <summary>
         /// Gets or sets the blob dest url.

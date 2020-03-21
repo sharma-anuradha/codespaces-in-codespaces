@@ -27,9 +27,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// </summary>
         public const string DefaultQueueTarget = "HeartbeatMonitor";
 
-        private static readonly List<CloudEnvironmentState> StateToProcess = new List<CloudEnvironmentState> { CloudEnvironmentState.Available, CloudEnvironmentState.Unavailable };
+        private static readonly List<CloudEnvironmentState> StateToProcess =
+            new List<CloudEnvironmentState>
+            {
+                CloudEnvironmentState.Available,
+                CloudEnvironmentState.Unavailable,
+            };
 
-        private static readonly List<CloudEnvironmentState> StateToStopTracking = new List<CloudEnvironmentState> { CloudEnvironmentState.Shutdown, CloudEnvironmentState.Failed, CloudEnvironmentState.Deleted };
+        private static readonly List<CloudEnvironmentState> StateToStopTracking =
+            new List<CloudEnvironmentState>
+            {
+                CloudEnvironmentState.Shutdown,
+                CloudEnvironmentState.Archived,
+                CloudEnvironmentState.Failed,
+                CloudEnvironmentState.Deleted,
+            };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HeartbeatMonitorContinuationHandler"/> class.

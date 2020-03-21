@@ -15,6 +15,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         public const string WatchOrphanedSystemEnvironmentsTask = "watch_orphaned_system_environments_task";
 
         /// <summary>
+        /// Watch Orphaned System Environments Task.
+        /// </summary>
+        public const string WatchSuspendedEnvironmentsToBeArchivedTask = "watch_suspended_environments_to_be_archived_task";
+
+        /// <summary>
+        /// Watch Orphaned System Environments Task.
+        /// </summary>
+        public const string WatchFailedEnvironmentTask = "watch_failed_environment_task";
+
+        /// <summary>
         /// Log Cloud Environments State Task.
         /// </summary>
         public const string LogCloudEnvironmentsStateTask = "log_cloud_environments_state_task";
@@ -23,6 +33,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Log Subscription Statistics Task.
         /// </summary>
         public const string LogSubscriptionStatisticsTask = "log_subscription_statistics_task";
+
+        /// <summary>
+        /// Continuation Task Message Handler Archive.
+        /// </summary>
+        public const string ContinuationTaskMessageHandlerArchive = "continuation_task_message_handler_archive";
 
         /// <summary>
         /// Log Continuation Task Worker Pool Manager name.

@@ -12,6 +12,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
     /// </summary>
     public class CloudEnvironmentResult
     {
+        private string state;
+
         /// <summary>
         /// Gets or sets the environment id.
         /// </summary>
@@ -45,7 +47,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <summary>
         /// Gets or sets the state.
         /// </summary>
-        public string State { get; set; }
+        public string State
+        {
+            get { return state == "Archived" ? "Shutdown" : state; }
+            set { state = value; }
+        }
 
         /// <summary>
         /// Gets or sets the container image.

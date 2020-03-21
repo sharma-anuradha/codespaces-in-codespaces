@@ -155,7 +155,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                                 "OrphanedAzureResourceTask",
                                 childLogger.NewChildLogger());
                         }
-                        else if (resourceType == ResourceType.StorageFileShare)
+                        else if (resourceType == ResourceType.StorageFileShare
+                            || resourceType == ResourceType.StorageArchive)
                         {
                             await ResourceContinuationOperations.DeleteOrphanedStorageAsync(
                                 Guid.Parse(resource.Id),

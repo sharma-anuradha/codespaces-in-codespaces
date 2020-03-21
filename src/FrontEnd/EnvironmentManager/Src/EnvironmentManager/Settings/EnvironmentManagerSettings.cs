@@ -16,10 +16,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
     public class EnvironmentManagerSettings
     {
         /// <summary>
-        /// Gets or sets the Max Environments Per Plan.
+        /// Gets or sets the default Max Environments Per Plan.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public int DefaultMaxEnvironmentsPerPlan { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default envirnment archive cutoff hours.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public double DefaultEnvironmentArchiveCutoffHours { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default envirnment archive batch size.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int DefaultEnvironmentArchiveBatchSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether an envirnment archive enabled state.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool DefaultEnvironmentArchiveEnabled { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the blob container that the Environment Manager
@@ -51,6 +69,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetSubscriptionValueAsync("quota:max-environments-per-plan", subscriptionId, logger, DefaultMaxEnvironmentsPerPlan);
+        }
+
+        /// <summary>
+        /// Gets or sets the Max Environments Per Plan.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<double> EnvironmentArchiveCutoffHours(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<double>("setting:environment-archive-cuttoff-hours", logger, DefaultEnvironmentArchiveCutoffHours);
+        }
+
+        /// <summary>
+        /// Gets or sets the Max Environments Per Plan.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<int> EnvironmentArchiveBatchSize(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<int>("setting:environment-archive-batch-size", logger, DefaultEnvironmentArchiveBatchSize);
+        }
+
+        /// <summary>
+        /// Gets or sets the Max Environments Per Plan.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> EnvironmentArchiveEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<bool>("featureflag:environment-archive-enabled", logger, DefaultEnvironmentArchiveEnabled);
         }
     }
 }

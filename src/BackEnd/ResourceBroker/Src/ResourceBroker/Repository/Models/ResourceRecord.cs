@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -25,6 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public ResourceRecord()
         {
             KeepAlives = new ResourceKeepAliveRecord();
+            Properties = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -216,7 +218,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// Gets or sets the Properties.
         /// </summary>
         [JsonProperty(PropertyName = "properties")]
-        public dynamic Properties { get; set; }
+        public IDictionary<string, string> Properties { get; set; }
+
+        /// <summary>
+        /// Build common stub of new record.
+        /// </summary>
+        /// <param name="id">Target id.</param>
+        /// <param name="time">Target time.</param>
+        /// <param name="type">Target type.</param>
+        /// <param name="locaiton">Targert location.</param>
+        /// <param name="skuName">Target sku.</param>
+        /// <param name="poolReference">Target pool reference.</param>
+        /// <param name="properties">Target properties.</param>
+        /// <returns>Stub resource record.</returns>
+        public static ResourceRecord Build(
+            Guid id,
+            DateTime time,
+            ResourceType type,
+            AzureLocation locaiton,
+            string skuName = null,
+            ResourcePoolDefinitionRecord poolReference = null,
+            IDictionary<string, string> properties = null)
+        {
+            var stub = new ResourceRecord
+                {
+                    Id = id.ToString(),
+                    Type = type,
+                    IsReady = false,
+                    Ready = null,
+                    IsAssigned = false,
+                    Assigned = null,
+                    Created = time,
+                    Location = locaiton.ToString().ToLowerInvariant(),
+                    SkuName = skuName,
+                    PoolReference = poolReference,
+                };
+
+            if (properties != null)
+            {
+                stub.Properties = properties;
+            }
+
+            return stub;
+        }
 
         /// <summary>
         /// Updates the provisioning status.

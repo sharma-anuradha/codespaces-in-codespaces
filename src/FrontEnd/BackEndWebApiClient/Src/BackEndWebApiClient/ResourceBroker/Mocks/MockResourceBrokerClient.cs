@@ -13,34 +13,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     /// <summary>
     /// A mock in-memory resource broker client. No-ops all calls.
     /// </summary>
-    public class MockResourceBrokerClient : IResourceBrokerResourcesHttpContract
+    public class MockResourceBrokerClient : IResourceBrokerResourcesExtendedHttpContract
     {
-        private static readonly Guid MockSubscriptionId = Guid.NewGuid();
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateRequestBody> createResourcesRequestBody, IDiagnosticsLogger logger)
-        {
-            await Task.CompletedTask;
-
-            var now = DateTime.UtcNow;
-            var results = new List<AllocateResponseBody>();
-            foreach (var createResourceRequestBody in createResourcesRequestBody)
-            {
-                var mockInstanceId = Guid.NewGuid();
-                results.Add(new AllocateResponseBody
-                {
-                    ResourceId = mockInstanceId,
-                    Created = DateTime.UtcNow,
-                    Location = createResourceRequestBody.Location,
-                    SkuName = createResourceRequestBody.SkuName,
-                    Type = createResourceRequestBody.Type,
-                });
-            }
-
-            return results;
-        }
-
         /// <inheritdoc/>
         public Task<ResourceBrokerResource> GetAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
@@ -48,25 +22,90 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteAsync(Guid resourceId, IDiagnosticsLogger logger)
+        public Task<AllocateResponseBody> AllocateAsync(Guid environmentId, AllocateRequestBody resource, IDiagnosticsLogger logger)
+        {
+            var result = new AllocateResponseBody
+            {
+                ResourceId = Guid.NewGuid(),
+                Created = DateTime.UtcNow,
+                Location = resource.Location,
+                SkuName = resource.SkuName,
+                Type = resource.Type,
+            };
+
+            return Task.FromResult(result);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(Guid environmentId, IEnumerable<AllocateRequestBody> resources, IDiagnosticsLogger logger)
+        {
+            var results = new List<AllocateResponseBody>();
+            foreach (var resource in resources)
+            {
+                results.Add(await AllocateAsync(environmentId, resource, logger));
+            }
+
+            return results;
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> StartAsync(Guid environmentId, StartRequestAction action, StartRequestBody resource, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> StartAsync(Guid computeResource, StartResourceRequestBody startComputeRequestBody, IDiagnosticsLogger logger)
+        public Task<bool> StartAsync(Guid environmentId, StartRequestAction action, IEnumerable<StartRequestBody> resources, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<SuspendRequestBody> suspendRequestBody, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> DeleteAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(true);
+        }
+
+        /// <inheritdoc/>
+        public Task<StatusResponseBody> StatusAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+        {
+            var result = new StatusResponseBody { ResourceId = resourceId };
+
+            return Task.FromResult(result);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<StatusResponseBody>> StatusAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        {
+            var results = new List<StatusResponseBody>();
+            foreach (var resource in resources)
+            {
+                results.Add(await StatusAsync(environmentId, resource, logger));
+            }
+
+            return results;
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> ProcessHeartbeatAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(true);
         }

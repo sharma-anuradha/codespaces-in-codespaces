@@ -66,14 +66,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
-            IEnumerable<AllocateInput> inputs, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate_set",
                 async (childLogger) =>
                 {
                     var failedInput = default(AllocateInput);
-                    var resourceResults = new List<(AllocateInput Input, ResourceRecord Record, ResourcePool Pool)>();
+                    var resourceResults = new List<(AllocateInput Input, ResourceRecord Record, ResourcePool ResourceSku)>();
 
                     // Work through each input
                     foreach (var input in inputs)
@@ -119,18 +119,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     {
                         var results = new List<AllocateResult>();
 
-                        // Trigger create to replace allocated items and map results
+                        // Map results and trigger create to replace allocated items if needed
                         foreach (var resourceResult in resourceResults)
                         {
-                            var pool = resourceResult.Pool;
+                            var resourceSku = resourceResult.ResourceSku;
                             var record = resourceResult.Record;
 
-                            // Trigger auto pool create to replace assigned item
-                            TaskHelper.RunBackground(
-                                $"{LogBaseName}_run_create",
-                                (taskLogger) => ResourceContinuationOperations.CreateAsync(
-                                    Guid.NewGuid(), pool.Type, pool.Details, "ResourceAssignedReplace", taskLogger),
-                                childLogger);
+                            // Only trigger pool refresh if its a pool resource
+                            if (resourceSku != null)
+                            {
+                                // Trigger auto pool create to replace assigned item
+                                TaskHelper.RunBackground(
+                                    $"{LogBaseName}_run_create",
+                                    (taskLogger) => ResourceContinuationOperations.CreateAsync(
+                                        Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", taskLogger),
+                                    childLogger);
+                            }
 
                             results.Add(Mapper.Map<AllocateResult>(record));
                         }
@@ -166,7 +170,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<AllocateResult> AllocateAsync(AllocateInput input, IDiagnosticsLogger logger)
+        public Task<AllocateResult> AllocateAsync(
+            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate",
@@ -183,27 +188,149 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, assignResult.Resource.Id);
 
-                    // Trigger auto pool create to replace assigned item
-                    TaskHelper.RunBackground(
-                        $"{LogBaseName}_run_create",
-                        (taskLogger) => ResourceContinuationOperations.CreateAsync(
-                            Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
-                        childLogger);
+                    // Only trigger pool refresh if its a pool resource
+                    if (assignResult.ResourceSku != null)
+                    {
+                        // Trigger auto pool create to replace assigned item
+                        TaskHelper.RunBackground(
+                            $"{LogBaseName}_run_create",
+                            (taskLogger) => ResourceContinuationOperations.CreateAsync(
+                                Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
+                            childLogger);
+                    }
 
                     return Mapper.Map<AllocateResult>(assignResult.Resource);
                 });
         }
 
         /// <inheritdoc/>
+        public Task<bool> StartAsync(
+            Guid environmentId, StartAction action, IEnumerable<StartInput> resources, string trigger, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_start",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("StartAction", action.ToString());
+
+                    // Match resources to records
+                    var backingResources = new List<(StartInput Resource, ResourceRecord Record)>();
+                    foreach (var resource in resources)
+                    {
+                        var record = await ResourceRepository.GetAsync(resource.ResourceId.ToString(), logger.NewChildLogger());
+                        backingResources.Add((Resource: resource, Record: record));
+                    }
+
+                    // Switch between different actions
+                    switch (action)
+                    {
+                        case StartAction.StartCompute:
+
+                            if (resources.Count() == 2 || resources.Count() == 3)
+                            {
+                                // Select target resorces
+                                var computeResource = backingResources.Single(x => x.Record.Type == ResourceType.ComputeVM);
+                                var storageResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageFileShare);
+                                var archiveStorageResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.StorageArchive);
+
+                                childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, computeResource.Resource.ResourceId)
+                                    .FluentAddBaseValue("StorageResourceId", storageResource.Resource?.ResourceId)
+                                    .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource.Resource?.ResourceId);
+
+                                // Trigger environment start
+                                await ResourceContinuationOperations.StartEnvironmentAsync(
+                                    environmentId,
+                                    computeResource.Resource.ResourceId,
+                                    storageResource.Resource.ResourceId,
+                                    archiveStorageResource.Resource?.ResourceId,
+                                    computeResource.Resource.Variables,
+                                    trigger,
+                                    childLogger.NewChildLogger());
+                            }
+                            else
+                            {
+                                throw new NotSupportedException($"Start compute action expects 2 resource and {resources.Count()} was supplied.");
+                            }
+
+                            break;
+                        case StartAction.StartArchive:
+                            if (resources.Count() == 2)
+                            {
+                                // Select target resorces
+                                var blobResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageArchive);
+                                var storageResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageFileShare);
+
+                                childLogger.FluentAddBaseValue("StorageResourceId", storageResource.Resource.ResourceId)
+                                    .FluentAddBaseValue("ArchiveStorageResourceId", blobResource.Resource.ResourceId);
+
+                                await ResourceContinuationOperations.StartArchiveAsync(
+                                    environmentId,
+                                    blobResource.Resource.ResourceId,
+                                    storageResource.Resource.ResourceId,
+                                    trigger,
+                                    childLogger.NewChildLogger());
+                            }
+                            else
+                            {
+                                throw new NotSupportedException($"Archive stroage action expects 2 resource and {resources.Count()} was supplied.");
+                            }
+
+                            break;
+                    }
+
+                    return true;
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> StartAsync(
+            Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger)
+        {
+            throw new NotSupportedException("No action type supports the starting of a single resource.");
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(
+            Guid environmentId, IEnumerable<SuspendInput> inputs, string trigger, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_suspend_set",
+                async (childLogger) =>
+                {
+                    var results = await Task.WhenAll(
+                        inputs.Select(input => SuspendAsync(environmentId, input, trigger, childLogger.NewChildLogger())));
+
+                    return results.All(x => x);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SuspendAsync(
+            Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_suspend",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
+
+                    await ResourceContinuationOperations.SuspendAsync(
+                        environmentId, input.ResourceId, trigger, logger);
+
+                    return true;
+                });
+        }
+
+        /// <inheritdoc/>
         public Task<bool> DeleteAsync(
-            IEnumerable<DeleteInput> inputs,
-            IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_delete_set",
                 async (childLogger) =>
                 {
-                    var results = await Task.WhenAll(inputs.Select(input => DeleteAsync(input, childLogger.NewChildLogger())));
+                    var results = await Task.WhenAll(
+                        inputs.Select(input => DeleteAsync(environmentId, input, trigger, childLogger.NewChildLogger())));
 
                     return results.All(x => x);
                 });
@@ -211,8 +338,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<bool> DeleteAsync(
-            DeleteInput input,
-            IDiagnosticsLogger logger)
+            Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_delete",
@@ -221,68 +347,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
 
                     await ResourceContinuationOperations.DeleteAsync(
-                        input.ResourceId, input.Trigger, childLogger.NewChildLogger());
+                        environmentId, input.ResourceId, trigger, childLogger.NewChildLogger());
 
                     return true;
                 });
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(
-            IEnumerable<SuspendInput> inputs,
-            IDiagnosticsLogger logger)
+        public Task<IEnumerable<StatusResult>> StatusAsync(
+            Guid environmentId, IEnumerable<StatusInput> inputs, string trigger, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_suspend_set",
+                $"{LogBaseName}_status_set",
                 async (childLogger) =>
                 {
-                    var results = await Task.WhenAll(inputs.Select(input => SuspendAsync(input, childLogger.NewChildLogger())));
+                    var results = await Task.WhenAll(
+                        inputs.Select(input => StatusAsync(environmentId, input, trigger, childLogger.NewChildLogger())));
 
-                    return results.All(x => x);
+                    return results.AsEnumerable();
                 });
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(
-            SuspendInput input,
-            IDiagnosticsLogger logger)
+        public Task<StatusResult> StatusAsync(
+            Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_suspend",
+                $"{LogBaseName}_status",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
+                    // Get record from db
+                    var record = await ResourceRepository.GetAsync(input.ResourceId.ToString(), logger.NewChildLogger());
+                    var recordDetails = record.GetDetails();
 
-                    await ResourceContinuationOperations.SuspendAsync(input.ResourceId, input.EnvironmentId, input.Trigger, logger);
+                    // Build result
+                    var result = new StatusResult()
+                    {
+                        ResourceId = Guid.Parse(record.Id),
+                        SkuName = recordDetails.SkuName,
+                        Location = recordDetails.Location,
+                        Type = record.Type,
+                        ProvisioningStatus = record.ProvisioningStatus,
+                        ProvisioningStatusChanged = record.ProvisioningStatusChanged,
+                        StartingStatus = record.StartingStatus,
+                        StartingStatusChanged = record.StartingStatusChanged,
+                        DeletingStatus = record.DeletingStatus,
+                        DeletingStatusChanged = record.DeletingStatusChanged,
+                        CleanupStatus = record.CleanupStatus,
+                        CleanupStatusChanged = record.CleanupStatusChanged,
+                    };
 
-                    return true;
+                    return result;
                 });
         }
 
         /// <inheritdoc/>
-        public Task<bool> StartAsync(
-            StartInput input,
-            IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_start",
-                async (childLogger) =>
-                {
-                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ComputeResourceId)
-                        .FluentAddBaseValue("StorageResourceId", input.StorageResourceId);
-
-                    await ResourceContinuationOperations.StartAsync(
-                        input.ComputeResourceId, input.StorageResourceId, input.EnvironmentVariables, input.Trigger, childLogger.NewChildLogger());
-
-                    return true;
-                });
-        }
-
-        /// <inheritdoc/>
-        public Task<bool> ProcessHeartbeatAsync(Guid id, IDiagnosticsLogger logger)
+        public Task<bool> ProcessHeartbeatAsync(Guid id, string trigger, IDiagnosticsLogger logger)
         {
             return logger.RetryOperationScopeAsync(
-                $"{LogBaseName}_exists",
+                $"{LogBaseName}_processheartbeat",
                 async (childLogger) =>
                 {
                     childLogger.FluentAddBaseValue("ResourceId", id);
@@ -318,18 +441,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
                 .FluentAddBaseValue("ResourceType", input.Type.ToString());
 
-            // Map logical sku to resource sku
-            var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
+            // If a blob is being created, we don't need to go to the pool for that
+            if (input.Type == ResourceType.StorageArchive)
+            {
+                // Common properties
+                var id = Guid.NewGuid();
+                var time = DateTime.UtcNow;
+                var type = input.Type;
+                var location = input.Location;
+                var skuName = "ShrunkBlob";
 
-            itemLogger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
+                // Core recrod
+                var resource = ResourceRecord.Build(id, time, type, location, skuName);
+                resource.IsAssigned = true;
+                resource.Assigned = time;
+                resource.IsReady = true;
+                resource.Ready = time;
 
-            // Try and get item from the pool
-            var resource = await ResourcePool.TryGetAsync(
-                        resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
+                // Copy across extended details
+                await MapSourceComputeOS(input, resource);
 
-            itemLogger.FluentAddBaseValue("ResourceResourceAllocateFound", resource != null);
+                // Create the actual record
+                resource = await ResourceRepository.CreateAsync(resource, itemLogger.NewChildLogger());
 
-            return (resource, resourceSku);
+                return (resource, null);
+            }
+            else
+            {
+                // Map logical sku to resource sku
+                var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
+
+                itemLogger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
+
+                // Try and get item from the pool
+                var resource = await ResourcePool.TryGetAsync(
+                    resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
+
+                itemLogger.FluentAddBaseValue("ResourceResourceAllocateFound", resource != null);
+
+                return (resource, resourceSku);
+            }
         }
 
         private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)
@@ -352,6 +503,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             }
 
             return resourceSku.Single();
+        }
+
+        private async Task MapSourceComputeOS(AllocateInput input, ResourceRecord resource)
+        {
+            if (input.Type == ResourceType.StorageArchive || input.Type == ResourceType.StorageFileShare)
+            {
+                // Capture source vm type
+                var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, ResourceType.ComputeVM, input.Location);
+                var targetOS = ((ResourcePoolComputeDetails)resourceSku.Details).OS;
+
+                // Persist target os type
+                var archiveShareResource = resource.GetStorageDetails();
+                archiveShareResource.SourceComputeOS = targetOS;
+            }
         }
     }
 }

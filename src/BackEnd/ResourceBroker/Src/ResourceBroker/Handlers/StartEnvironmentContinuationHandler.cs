@@ -4,8 +4,12 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Blob;
+using Microsoft.Azure.Storage.File;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -13,6 +17,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
@@ -36,15 +41,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service Provider.</param>
+        /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
         public StartEnvironmentContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IStorageFileShareProviderHelper storageFileShareProviderHelper)
             : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
+            StorageFileShareProviderHelper = storageFileShareProviderHelper;
         }
 
         /// <inheritdoc/>
@@ -60,22 +68,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private IStorageProvider StorageProvider { get; }
 
+        private IStorageFileShareProviderHelper StorageFileShareProviderHelper { get; }
+
         /// <inheritdoc/>
         protected override async Task<ContinuationInput> BuildOperationInputAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
             var computeOs = compute.Value.PoolReference.GetComputeOS();
 
-            var storageResult = await AssignStorageAsync(input, input.StorageResourceId, computeOs, logger);
+            // Start storage
+            var storageResult = await StartStorageAsync(input, input.StorageResourceId, computeOs, logger);
             if (storageResult.Status != OperationState.Succeeded)
             {
                 return null;
             }
 
+            // Parse location
             var didParseLocation = Enum.TryParse(compute.Value.Location, true, out AzureLocation azureLocation);
             if (!didParseLocation)
             {
                 throw new NotSupportedException($"Provided location of '{compute.Value.Location}' is not supported.");
             }
+
+            // Archive blob input setup
+            if (input.ArchiveStorageResourceId != null)
+            {
+                await SetupArchiveStorageInfo(input, input.ArchiveStorageResourceId.Value, logger);
+            }
+
+            // Add target stroage id
+            input.EnvironmentVariables.Add("computeResourceId", input.ResourceId.ToString());
+            input.EnvironmentVariables.Add("storageResourceId", input.StorageResourceId.ToString());
 
             return new VirtualMachineProviderStartComputeInput(
                 compute.Value.AzureResourceInfo,
@@ -97,26 +119,75 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)input.OperationInput, logger.WithValues(new LogValueSet()));
         }
 
-        private async Task<FileShareProviderAssignResult> AssignStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, ComputeOS computeOS, IDiagnosticsLogger logger)
+        private async Task<FileShareProviderAssignResult> StartStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, ComputeOS computeOS, IDiagnosticsLogger logger)
         {
             // Fetch storage reference
-            var storage = await FetchReferenceAsync(storageId, logger);
+            var fileReference = await FetchReferenceAsync(storageId, logger);
 
             // Update storage to be inprogress
-            await UpdateRecordStatusAsync(input, storage, OperationState.Initialized, "PreAssignStorage", logger);
+            await UpdateRecordStatusAsync(input, fileReference, OperationState.Initialized, "PreAssignStorage", logger);
 
             // Get file share connection info for target share
+            var storageType = computeOS == ComputeOS.Windows ? StorageType.Windows : StorageType.Linux;
             var fileShareProviderAssignInput = new FileShareProviderAssignInput
             {
-                AzureResourceInfo = storage.Value.AzureResourceInfo,
-                StorageType = computeOS == ComputeOS.Windows ? StorageType.Windows : StorageType.Linux,
+                AzureResourceInfo = fileReference.Value.AzureResourceInfo,
+                StorageType = storageType,
             };
-            var storageResult = await StorageProvider.AssignAsync(fileShareProviderAssignInput, logger);
+            var storageContinuationResult = await StorageProvider.StartAsync(fileShareProviderAssignInput, logger);
 
             // Update storage to be completed
-            await UpdateRecordStatusAsync(input, storage, storageResult.Status, "PostAssignStorage", logger);
+            await UpdateRecordStatusAsync(input, fileReference, storageContinuationResult.Status, "PostAssignStorage", logger);
 
-            return storageResult;
+            // If archive is present, setup file sas token
+            if (input.ArchiveStorageResourceId != null)
+            {
+                // Get storage file share details
+                var storageFile = await StorageFileShareProviderHelper.FetchStorageFileShareSasTokenAsync(
+                    fileReference.Value.AzureResourceInfo,
+                    storageContinuationResult.StorageAccountKey,
+                    storageType,
+                    SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Write,
+                    logger.NewChildLogger());
+
+                input.EnvironmentVariables.Add("storageAccountSasToken", storageFile.Token);
+            }
+
+            return storageContinuationResult;
+        }
+
+        private async Task SetupArchiveStorageInfo(StartEnvironmentContinuationInput input, Guid archiveStorageResourceId, IDiagnosticsLogger logger)
+        {
+            // Fetch blob reference
+            var archiveReference = await FetchReferenceAsync(archiveStorageResourceId, logger);
+            var archiveShareRecordDetails = archiveReference.Value.GetStorageDetails();
+            var archiveAzureInfo = archiveReference.Value.AzureResourceInfo;
+
+            // Execute flow for tarrget Strategy
+            if (archiveShareRecordDetails.ArchiveStorageStrategy == ResourceArchiveStrategy.BlobStorage)
+            {
+                // Get archive blob details
+                var archiveBlob = await StorageFileShareProviderHelper.FetchBlobSasTokenAsync(
+                    archiveAzureInfo,
+                    null,
+                    archiveShareRecordDetails.ArchiveStorageBlobContainerName,
+                    archiveShareRecordDetails.ArchiveStorageBlobName,
+                    SharedAccessBlobPermissions.Read,
+                    logger.NewChildLogger());
+
+                // Setup extra environment vars which describe archive blob
+                input.EnvironmentVariables.Add("storageArchiveResourceId", input.ArchiveStorageResourceId.Value.ToString());
+                input.EnvironmentVariables.Add("storageArchiveStrategy", archiveShareRecordDetails.ArchiveStorageStrategy.ToString());
+                input.EnvironmentVariables.Add("storageArchiveBlobTargetSizeGb", archiveShareRecordDetails.ArchiveStorageSourceSizeInGb.ToString());
+                input.EnvironmentVariables.Add("storageArchiveBlobAccountName", archiveAzureInfo.Name);
+                input.EnvironmentVariables.Add("storageArchiveBlobContainerName", archiveBlob.BlobContainerName);
+                input.EnvironmentVariables.Add("storageArchiveBlobFileName", archiveBlob.BlobName);
+                input.EnvironmentVariables.Add("storageArchiveBlobFileSasToken", archiveBlob.Token);
+            }
+            else
+            {
+                throw new NotSupportedException("Targetted archive strategy is not supported.");
+            }
         }
     }
 }

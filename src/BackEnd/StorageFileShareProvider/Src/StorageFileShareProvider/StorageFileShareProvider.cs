@@ -50,27 +50,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                    "file_share_storage_provider_create_step",
-                    async (childLogger) =>
-                    {
-                        childLogger.FluentAddBaseValue(nameof(input.AzureSubscription), input.AzureSubscription)
-                            .FluentAddBaseValue(nameof(input.AzureLocation), input.AzureLocation)
-                            .FluentAddBaseValue(nameof(input.AzureResourceGroup), input.AzureResourceGroup)
-                            .FluentAddBaseValue(nameof(input.AzureSkuName), input.AzureSkuName);
+                "file_share_storage_provider_create_step",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(nameof(input.AzureSubscription), input.AzureSubscription)
+                        .FluentAddBaseValue(nameof(input.AzureLocation), input.AzureLocation)
+                        .FluentAddBaseValue(nameof(input.AzureResourceGroup), input.AzureResourceGroup)
+                        .FluentAddBaseValue(nameof(input.AzureSkuName), input.AzureSkuName);
 
-                        var r = await CreateInnerAsync(input, childLogger);
-                        childLogger.FluentAddValue(nameof(r.AzureResourceInfo.Name), r.AzureResourceInfo.Name)
-                              .FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
-                              .FluentAddValue(nameof(r.NextInput.ContinuationToken), r.NextInput?.ContinuationToken)
-                              .FluentAddValue(nameof(r.Status), r.Status.ToString());
-                        return r;
-                    },
-                    (ex, childLogger) =>
-                    {
-                        var result = new FileShareProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
-                        return Task.FromResult(result);
-                    },
-                    swallowException: true);
+                    var r = await CreateInnerAsync(input, childLogger);
+                    childLogger.FluentAddValue(nameof(r.AzureResourceInfo.Name), r.AzureResourceInfo.Name)
+                            .FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
+                            .FluentAddValue(nameof(r.NextInput.ContinuationToken), r.NextInput?.ContinuationToken)
+                            .FluentAddValue(nameof(r.Status), r.Status.ToString());
+                    return r;
+                },
+                (ex, childLogger) =>
+                {
+                    var result = new FileShareProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
+                swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -87,7 +87,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 {
                     childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-                    await providerHelper.DeleteStorageAccountAsync(input.AzureResourceInfo, childLogger);
+                    var blobInput = input as FileShareProviderDeleteBlobInput;
+
+                    childLogger.FluentAddValue("DeleteIsBlob", blobInput != null);
+
+                    // When we are targeting a blob, trigger blob delete
+                    if (blobInput != null)
+                    {
+                        await providerHelper.DeleteBlobContainerAsync(
+                            blobInput.AzureResourceInfo,
+                            blobInput.StorageAccountKey,
+                            blobInput.BlobContainerName,
+                            childLogger);
+                    }
+                    else
+                    {
+                        await providerHelper.DeleteStorageAccountAsync(
+                            input.AzureResourceInfo,
+                            childLogger);
+                    }
+
                     var r = new FileShareProviderDeleteResult() { Status = OperationState.Succeeded };
                     childLogger.FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
                           .FluentAddValue(nameof(r.Status), r.Status.ToString());
@@ -102,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         }
 
         /// <inheritdoc/>
-        public Task<FileShareProviderAssignResult> AssignAsync(
+        public Task<FileShareProviderAssignResult> StartAsync(
             FileShareProviderAssignInput input,
             IDiagnosticsLogger logger)
         {
@@ -135,30 +154,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         }
 
         /// <inheritdoc/>
-        public Task<FileShareProviderArchiveResult> ArchiveAsync(FileShareProviderArchiveInput input, IDiagnosticsLogger logger)
+        public Task<FileShareProviderArchiveResult> ArchiveAsync(
+            FileShareProviderArchiveInput input,
+            IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                    "file_share_storage_provider_archive_step",
-                    async (childLogger) =>
-                    {
-                        childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
+                "file_share_storage_provider_archive_step",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(nameof(input.SrcAzureResourceInfo.Name), input.SrcAzureResourceInfo.Name);
 
-                        var result = await ArchiveInnerAsync(input, childLogger);
-                        childLogger.FluentAddValue(nameof(result.AzureResourceInfo.Name), result.AzureResourceInfo.Name)
-                              .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-                              .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
-                              .FluentAddValue(nameof(result.Status), result.Status.ToString());
-                        return result;
-                    },
-                    (ex, childLogger) =>
-                    {
-                        var result = new FileShareProviderArchiveResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
-                        return Task.FromResult(result);
-                    },
-                    swallowException: true);
+                    var result = await ArchiveInnerAsync(input, childLogger);
+                    childLogger.FluentAddValue(nameof(result.AzureResourceInfo.Name), result.AzureResourceInfo.Name)
+                            .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+                            .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
+                            .FluentAddValue(nameof(result.Status), result.Status.ToString());
+                    return result;
+                },
+                (ex, childLogger) =>
+                {
+                    var result = new FileShareProviderArchiveResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    return Task.FromResult(result);
+                },
+                swallowException: true);
         }
 
         /// <summary>
@@ -274,9 +295,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             var continuationToken = input.ContinuationToken;
             if (continuationToken == null)
             {
-                archiveTaskInfo = await batchArchiveFileShareJobProvider.StartArchiveFileShareAsync(input.AzureResourceInfo, input.DestBlobUriWithSas, logger);
+                archiveTaskInfo = await batchArchiveFileShareJobProvider.StartArchiveFileShareAsync(
+                    input.SrcAzureResourceInfo, input.SrcFileShareUriWithSas, input.DestBlobUriWithSas, logger);
                 nextState = FileShareProviderArchiveState.CheckBlob;
-                resultResourceInfo = input.AzureResourceInfo;
+                resultResourceInfo = input.SrcAzureResourceInfo;
             }
             else
             {

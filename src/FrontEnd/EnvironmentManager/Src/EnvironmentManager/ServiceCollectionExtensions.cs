@@ -7,6 +7,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.AzureQueue;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
@@ -76,13 +77,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentStateTransitionMonitorContinuationHandler>(x => x.GetRequiredService<EnvironmentStateTransitionMonitorContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<EnvironmentStateTransitionMonitorContinuationHandler>());
 
+            services.AddSingleton<ArchiveEnvironmentContinuationHandler>();
+            services.AddSingleton<IArchiveEnvironmentContinuationHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
+
             // The environment mangaer
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
+            services.AddSingleton<IEnvironmentContinuationOperations, EnvironmentContinuationOperations>();
 
             if (!disableBackgroundTasks)
             {
                 // Register background tasks
                 services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
+                services.AddSingleton<IWatchFailedEnvironmentTask, WatchFailedEnvironmentTask>();
+                services.AddSingleton<IWatchSuspendedEnvironmentsToBeArchivedTask, WatchSuspendedEnvironmentsToBeArchivedTask>();
                 services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
                 services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
 

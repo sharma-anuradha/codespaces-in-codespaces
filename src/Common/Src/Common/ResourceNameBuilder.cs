@@ -67,7 +67,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)
             {
-                return $"{GetUserName()}{ResourceGroupPostFix}as".Replace("-", string.Empty).ToLowerInvariant();
+                // Need to be careful of account name length
+                var name = GetUserName();
+                if (name.Length > 9)
+                {
+                    name = name.Substring(0, 9);
+                }
+
+                return $"{name}{ResourceGroupPostFix}as".Replace("-", string.Empty).ToLowerInvariant();
             }
 
             return baseName;

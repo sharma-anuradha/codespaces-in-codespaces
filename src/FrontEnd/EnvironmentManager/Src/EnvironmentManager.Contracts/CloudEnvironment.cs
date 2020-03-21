@@ -6,7 +6,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -21,6 +23,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     {
         private string friendlyName;
         private string friendlyNameInLowerCase;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CloudEnvironment"/> class.
+        /// </summary>
+        public CloudEnvironment()
+        {
+            Transitions = new CloudEnvironmentTansitions();
+        }
 
         /// <summary>
         /// Gets or sets the environment type.
@@ -218,5 +228,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "features")]
         public Dictionary<string, string> Features { get; set; }
+
+        /// <summary>
+        /// Gets or sets the transitions.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "transitions")]
+        public CloudEnvironmentTansitions Transitions { get; set; }
+
+        /// <summary>
+        /// Indicates whether the environment is in a shutdown state.
+        /// </summary>
+        /// <returns>Whether it is shutdown.</returns>
+        public bool IsShutdown()
+        {
+            return State == CloudEnvironmentState.Shutdown
+                || State == CloudEnvironmentState.Archived;
+        }
     }
 }

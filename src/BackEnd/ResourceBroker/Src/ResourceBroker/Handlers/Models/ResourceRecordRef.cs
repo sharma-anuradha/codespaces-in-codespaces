@@ -16,30 +16,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Initializes a new instance of the <see cref="ResourceRecordRef"/> class.
         /// </summary>
         /// <param name="value">Target value.</param>
-        /// <param name="resourceId">Target resource id.</param>
-        public ResourceRecordRef(ResourceRecord value, Guid resourceId)
-            : this(resourceId)
+        public ResourceRecordRef(ResourceRecord value)
         {
             Value = value;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ResourceRecordRef"/> class.
-        /// </summary>
-        /// <param name="resourceId">Target resource id.</param>
-        public ResourceRecordRef(Guid resourceId)
-        {
-            ResourceId = resourceId;
         }
 
         /// <summary>
         /// Gets or sets target value.
         /// </summary>
         public ResourceRecord Value { get; set; }
-
-        /// <summary>
-        /// Gets or sets the resource id.
-        /// </summary>
-        public Guid ResourceId { get; set; }
     }
 }

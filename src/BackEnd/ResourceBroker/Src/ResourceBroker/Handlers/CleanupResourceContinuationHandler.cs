@@ -54,13 +54,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IComputeProvider ComputeProvider { get; set; }
 
         /// <inheritdoc/>
-        protected override Task<bool> ShouldInitiallyHandleContinuationAsync(CleanupResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
-        {
-            // If we are dealing with storage, we want to initially handle
-            return Task.FromResult(resource.Value.Type == ResourceType.StorageFileShare);
-        }
-
-        /// <inheritdoc/>
         protected override Task<ContinuationInput> BuildOperationInputAsync(CleanupResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             // Handle compute case only, don't need to do anything with storage here as its already circuited.

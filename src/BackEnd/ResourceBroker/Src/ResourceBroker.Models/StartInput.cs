@@ -13,23 +13,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
     public class StartInput
     {
         /// <summary>
-        /// Gets or sets the compute resource token id.
+        /// Gets or sets the storage resource id token.
         /// </summary>
-        public Guid ComputeResourceId { get; set; }
+        public Guid ResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets the storage resource token id.
+        /// Gets or sets the environment variable dictionary for the environment compute.
         /// </summary>
-        public Guid StorageResourceId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the compute environment variables.
-        /// </summary>
-        public IDictionary<string, string> EnvironmentVariables { get; set; }
-
-        /// <summary>
-        /// Gets or sets the operation trigger.
-        /// </summary>
-        public string Trigger { get; set; }
+        public Dictionary<string, string> Variables { get; set; }
     }
 }

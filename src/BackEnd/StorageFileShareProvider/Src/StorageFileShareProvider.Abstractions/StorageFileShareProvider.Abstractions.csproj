@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Batch" Version="$(AzureBatchPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="$(AzureStoragePackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Storage.File" Version="$(AzureStoragePackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

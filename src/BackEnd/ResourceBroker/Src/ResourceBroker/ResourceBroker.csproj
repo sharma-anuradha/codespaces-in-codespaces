@@ -8,6 +8,7 @@
     <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
@@ -17,6 +18,7 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
+    <ProjectReference Include="..\..\..\ArchiveStorageProvider\Src\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />

@@ -85,5 +85,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Generic message when we don't know the exact reason.
         /// </summary>
         StartEnvironmentGenericError = 14,
+
+        /// <summary>
+        /// Resotring From Archive.
+        /// </summary>
+        ResotringFromArchive = 15,
     }
 }

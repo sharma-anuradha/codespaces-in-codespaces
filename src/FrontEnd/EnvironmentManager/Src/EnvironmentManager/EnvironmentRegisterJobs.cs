@@ -21,6 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Initializes a new instance of the <see cref="EnvironmentRegisterJobs"/> class.
         /// </summary>
         /// <param name="watchOrphanedSystemEnvironmentsTask">Target watch orphaned system environments task.</param>
+        /// <param name="watchFailedEnvironmentTask">Target watch failed environment task.</param>
+        /// <param name="watchSuspendedEnvironmentsToBeArchivedTask">Target watch suspended environments to be archived task.</param>
         /// <param name="logCloudEnvironmentStateTask">Target Log Cloud Environment State task.</param>
         /// <param name="logSubscriptionStatisticsTask">Target Log Subscriptions Statistics task.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
@@ -28,6 +30,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
+            IWatchFailedEnvironmentTask watchFailedEnvironmentTask,
+            IWatchSuspendedEnvironmentsToBeArchivedTask watchSuspendedEnvironmentsToBeArchivedTask,
             ILogCloudEnvironmentStateTask logCloudEnvironmentStateTask,
             ILogSubscriptionStatisticsTask logSubscriptionStatisticsTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
@@ -35,14 +39,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
+            WatchFailedEnvironmentTask = watchFailedEnvironmentTask;
+            WatchSuspendedEnvironmentsToBeArchivedTask = watchSuspendedEnvironmentsToBeArchivedTask;
             LogCloudEnvironmentStateTask = logCloudEnvironmentStateTask;
             LogSubscriptionStatisticsTask = logSubscriptionStatisticsTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
+            Random = new Random();
         }
 
         private IWatchOrphanedSystemEnvironmentsTask WatchOrphanedSystemEnvironmentsTask { get; }
+
+        private IWatchFailedEnvironmentTask WatchFailedEnvironmentTask { get; }
+
+        private IWatchSuspendedEnvironmentsToBeArchivedTask WatchSuspendedEnvironmentsToBeArchivedTask { get; }
 
         private ILogCloudEnvironmentStateTask LogCloudEnvironmentStateTask { get; }
 
@@ -54,8 +65,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private ITaskHelper TaskHelper { get; }
 
+        private Random Random { get; }
+
         /// <inheritdoc/>
-        public Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
+        public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
         {
             // Job: Continuation Task Worker Pool Manager
             TaskHelper.RunBackground(
@@ -75,6 +88,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
+            // Job: Watch Suspended Environments to be Archived
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchSuspendedEnvironmentsToBeArchivedTask}_run",
+                (childLogger) => WatchSuspendedEnvironmentsToBeArchivedTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                TimeSpan.FromMinutes(2));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
+            // Job: Watch Failed Environment
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchFailedEnvironmentTask}_run",
+                (childLogger) => WatchFailedEnvironmentTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                TimeSpan.FromMinutes(2));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
             // Job: Log Cloud Environment State
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask}_run",
@@ -86,8 +120,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{EnvironmentLoggingConstants.LogSubscriptionStatisticsTask}_run",
                 (childLogger) => LogSubscriptionStatisticsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
-
-            return Task.CompletedTask;
         }
     }
 }

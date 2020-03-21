@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
     public class MockStorageProvider : BaseMockResourceProvider, IStorageProvider
     {
         /// <inheritdoc/>
-        public async Task<FileShareProviderAssignResult> AssignAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger)
+        public async Task<FileShareProviderAssignResult> StartAsync(FileShareProviderAssignInput input, IDiagnosticsLogger logger)
         {
             var result = await RunAsync<FileShareProviderAssignInput, FileShareProviderAssignResult>(input, logger);
             if (result.Status == OperationState.Succeeded)

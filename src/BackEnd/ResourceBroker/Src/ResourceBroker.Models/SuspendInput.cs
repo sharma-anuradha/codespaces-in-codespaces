@@ -15,15 +15,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets a value indicating the target Resource Id.
         /// </summary>
         public Guid ResourceId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the operation trigger.
-        /// </summary>
-        public string Trigger { get; set; }
-
-        /// <summary>
-        /// Gets or sets the environment id.
-        /// </summary>
-        public Guid EnvironmentId { get; set; }
     }
 }

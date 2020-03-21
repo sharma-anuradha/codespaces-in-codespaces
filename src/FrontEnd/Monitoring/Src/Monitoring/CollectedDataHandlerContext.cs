@@ -21,9 +21,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
         }
 
         /// <summary>
-        /// Gets the cloud environment object.
+        /// Gets or sets the cloud environment object.
         /// </summary>
-        public CloudEnvironment CloudEnvironment { get; }
+        public CloudEnvironment CloudEnvironment { get; set; }
 
         /// <summary>
         /// Gets or sets the new state of the cloud environment.

@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.M
     public class BatchArchiveFileShareJobInput : BatchTaskInput
     {
         /// <summary>
+        /// Gets or sets the source url.
+        /// </summary>
+        public string SrcFileShareUriWithSas { get; set; }
+
+        /// <summary>
         /// Gets or sets the destination url.
         /// </summary>
         public string DestBlobUriWithSas { get; set; }

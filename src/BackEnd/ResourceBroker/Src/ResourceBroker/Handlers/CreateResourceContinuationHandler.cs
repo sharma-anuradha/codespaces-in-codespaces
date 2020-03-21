@@ -98,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IImageUrlGenerator ImageUrlGenerator { get; }
 
         /// <inheritdoc/>
-        protected override async Task<ResourceRecordRef> ObtainReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
+        protected override async Task<ResourceRecordRef> FetchReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
         {
             // If we have a reference use that
             if (string.IsNullOrEmpty(input.ContinuationToken))
@@ -249,7 +249,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     $"{LogBaseName}_record_update",
                     async (IDiagnosticsLogger innerLogger) =>
                     {
-                        resource.Value = (await ObtainReferenceAsync(input, innerLogger)).Value;
+                        resource.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
 
                         resource.Value.AzureResourceInfo = result.AzureResourceInfo;
 
@@ -265,26 +265,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Common properties
             var id = input.ResourceId;
             var time = DateTime.UtcNow;
-
-            // Core recrod
-            var record = new ResourceRecord
-            {
-                Id = id.ToString(),
-                Type = input.Type,
-                IsReady = false,
-                Ready = null,
-                IsAssigned = false,
-                Assigned = null,
-                Created = time,
-                Location = input.ResourcePoolDetails.Location.ToString().ToLowerInvariant(),
-                SkuName = input.ResourcePoolDetails.SkuName,
-                PoolReference = new ResourcePoolDefinitionRecord
+            var type = input.Type;
+            var location = input.ResourcePoolDetails.Location;
+            var skuName = input.ResourcePoolDetails.SkuName;
+            var poolReference = new ResourcePoolDefinitionRecord
                 {
                     Code = input.ResourcePoolDetails.GetPoolDefinition(),
                     VersionCode = input.ResourcePoolDetails.GetPoolVersionDefinition(),
                     Dimensions = input.ResourcePoolDetails.GetPoolDimensions(),
-                },
-            };
+                };
+
+            // Build core record
+            var record = ResourceRecord.Build(id, time, type, location, skuName, poolReference);
 
             // Update input
             input.ResourceId = id;
@@ -292,7 +284,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Create the actual record
             record = await ResourceRepository.CreateAsync(record, logger);
 
-            return new ResourceRecordRef(record, id);
+            return new ResourceRecordRef(record);
         }
 
         private async Task<IAzureResourceLocation> SelectAzureResourceLocation(

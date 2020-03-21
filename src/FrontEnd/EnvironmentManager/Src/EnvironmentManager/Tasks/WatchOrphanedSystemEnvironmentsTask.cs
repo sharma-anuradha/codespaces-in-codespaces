@@ -20,8 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// </summary>
     public class WatchOrphanedSystemEnvironmentsTask : EnvironmentTaskBase, IWatchOrphanedSystemEnvironmentsTask
     {
-        private const string WatchOrphanedSystemEnvironmentsLeaseContainerName = "watch-orphaned-system-environments-leases";
-
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
         private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
 
@@ -107,7 +105,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                                 {
                                     // Call backend to ensure exists
                                     hasComputeResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
-                                        environment.Compute.ResourceId, childLogger.NewChildLogger());
+                                        Guid.Parse(environment.Id),
+                                        environment.Compute.ResourceId,
+                                        childLogger.NewChildLogger());
 
                                     // Update keep alive details
                                     environment.Compute.KeepAlive.ResourceAlive = DateTime.UtcNow;
@@ -129,7 +129,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                                 try
                                 {
                                     hasStorageResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
-                                        environment.Storage.ResourceId, childLogger.NewChildLogger());
+                                        Guid.Parse(environment.Id),
+                                        environment.Storage.ResourceId,
+                                        childLogger.NewChildLogger());
 
                                     // Update keep alive details
                                     environment.Storage.KeepAlive.ResourceAlive = DateTime.UtcNow;

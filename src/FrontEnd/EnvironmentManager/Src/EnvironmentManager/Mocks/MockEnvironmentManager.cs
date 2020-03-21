@@ -76,6 +76,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
+        public Task<CloudEnvironment> ResumeCallbackAsync(CloudEnvironment cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<CloudEnvironmentServiceResult> SuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
