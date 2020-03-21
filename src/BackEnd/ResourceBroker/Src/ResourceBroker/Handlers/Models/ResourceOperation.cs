@@ -25,11 +25,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         Provisioning,
 
         /// <summary>
-        /// Represents initialization operation.
-        /// </summary>
-        Initializing,
-
-        /// <summary>
         /// Represents cleanup operation.
         /// </summary>
         CleanUp,

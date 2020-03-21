@@ -111,6 +111,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                                 || record.ProvisioningStatus == OperationState.InProgress)
                             && record.ProvisioningStatusChanged <= operationFailedTimeLimit)
                         || (record.ProvisioningStatus == null
+                            && record.Created <= operationFailedTimeLimit)
+                        || (record.ProvisioningStatus == OperationState.Succeeded
+                            && record.IsReady == false
                             && record.Created <= operationFailedTimeLimit))
                     {
                         didFailProvisioning = true;

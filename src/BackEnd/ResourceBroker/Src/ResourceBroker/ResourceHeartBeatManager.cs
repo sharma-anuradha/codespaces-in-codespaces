@@ -72,6 +72,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                   };
 
                   resourceRecord.HeartBeatSummary = heartBeatSummaryRecord;
+
+                  if (!resourceRecord.IsReady)
+                  {
+                      // Storage resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
+                      resourceRecord.IsReady = true;
+                      resourceRecord.Ready = DateTime.UtcNow;
+                  }
+
                   await ResourceRepository.UpdateAsync(resourceRecord, logger.NewChildLogger());
               });
         }

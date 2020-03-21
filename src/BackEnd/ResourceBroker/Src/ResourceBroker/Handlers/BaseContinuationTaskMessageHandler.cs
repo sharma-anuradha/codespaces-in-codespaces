@@ -382,11 +382,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         resource.ProvisioningReason = input.Reason;
                         changed = resource.UpdateProvisioningStatus(state, trigger);
                     }
-                    else if (Operation == ResourceOperation.Initializing)
-                    {
-                        resource.InitializationReason = input.Reason;
-                        changed = resource.UpdateInitializationStatus(state, trigger);
-                    }
                     else if (Operation == ResourceOperation.CleanUp)
                     {
                         resource.CleanupReason = input.Reason;
@@ -482,9 +477,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <returns>Returns the core task.</returns>
         protected async virtual Task FailOperationCleanupAsync(ResourceRecordRef record, string trigger, IDiagnosticsLogger logger)
         {
-            var shouldTriggerDelete =
-                (Operation == ResourceOperation.Provisioning) ||
-                (Operation == ResourceOperation.Initializing) ||
+            var shouldTriggerDelete = Operation == ResourceOperation.Provisioning ||
                 (Operation == ResourceOperation.Starting && record.Value.Type == ResourceType.ComputeVM);
 
             trigger = $"{Operation}_{trigger}";
