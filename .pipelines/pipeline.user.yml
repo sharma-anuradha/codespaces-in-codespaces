@@ -42,5 +42,6 @@ static_analysis_options:
           - 'config-overrides.js'
           - 'webpack.config.worker.js'
           - 'port-forwarding-dev-server.js'
+          - 'jest.setup.js'
           - 'public\amdconfig.js'
           - 'vso-platform-auth\webpack.config.js'
