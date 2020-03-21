@@ -8,7 +8,6 @@ import { store } from './store/store';
 import { sendTelemetry, telemetry } from './utils/telemetry';
 import { trackUnhandled } from './utils/telemetry/unhandledErrors';
 
-import './index.css';
 import { initializeMsal } from './services/msalConfig';
 
 import { getHostingModules } from './getHostingInitModules';
@@ -16,6 +15,10 @@ import { initHostingHtmlTags } from './initHostingHtmlTags';
 
 import { cleanupLegacyMSALCookies } from './utils/cleanupLegacyMSALCookies';
 import { isHostedOnGithub } from './utils/isHostedOnGithub';
+import { isInIframe } from 'vso-client-core';
+import { isInPopupWindow } from './utils/isInPopupWindow';
+
+import './index.css';
 
 async function startApplication() {
     const [ hostingInitModules ] = await Promise.all([
@@ -65,7 +68,7 @@ async function startApplication() {
 
 if (!isHostedOnGithub()) {
     // Don't start application in iframe created by MSAL, but start the MSAL itself.
-    if (window.parent === window) {
+    if (!isInIframe() && !isInPopupWindow()) {
         startApplication();
     } else {
         initializeMsal();
