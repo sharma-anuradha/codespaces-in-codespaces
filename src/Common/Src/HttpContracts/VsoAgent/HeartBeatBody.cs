@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
     public class HeartBeatBody
     {
         /// <summary>
-        /// Gets or sets uTC timestamp of the heartbeat.
+        /// Gets or sets UTC timestamp of the heartbeat.
         /// </summary>
         [JsonProperty("timestamp")]
         public DateTime TimeStamp { get; set; }
@@ -31,6 +31,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common
         /// </summary>
         [JsonProperty("resourceId")]
         public Guid ResourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Environment Id.
+        /// </summary>
+        [JsonProperty("environmentId")]
+        public string EnvironmentId { get; set; }
 
         /// <summary>
         /// Gets or sets a list of data collected and sent by the VSOAgent.

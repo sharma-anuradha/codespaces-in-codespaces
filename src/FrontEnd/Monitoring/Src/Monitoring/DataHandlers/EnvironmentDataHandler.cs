@@ -65,46 +65,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                    childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentData.EnvironmentId);
 
-                   var cloudEnvironment = handlerContext.CloudEnvironment;
-                   ValidateCloudEnvironment(cloudEnvironment, environmentData.EnvironmentId);
+                   var environment = handlerContext.CloudEnvironment;
+                   ValidateEnvironment(environment, environmentData.EnvironmentId);
 
-                   cloudEnvironment.LastUpdatedByHeartBeat = environmentData.Timestamp;
+                   environment.LastUpdatedByHeartBeat = environmentData.Timestamp;
 
                    // This switch gives preference to the existing value instead of the incomming value.
                    // This prevents new values from ovewritting the existing one.
-                   cloudEnvironment.Connection.ConnectionSessionPath = !string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionPath) ? cloudEnvironment.Connection.ConnectionSessionPath : environmentData.SessionPath;
-                   var newState = DetermineNewEnvironmentState(cloudEnvironment, environmentData);
+                   environment.Connection.ConnectionSessionPath = !string.IsNullOrWhiteSpace(environment.Connection.ConnectionSessionPath) ? environment.Connection.ConnectionSessionPath : environmentData.SessionPath;
+                   var newState = DetermineNewEnvironmentState(environment, environmentData);
                    handlerContext.CloudEnvironmentState = newState.state;
                    handlerContext.Reason = newState.reason.ToString();
 
-                   // Shutdown if the environment is idle
-                   if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
+                   if (environment.Type == EnvironmentType.CloudEnvironment)
                    {
-                       var environmentServiceResult = await environmentManager.SuspendAsync(cloudEnvironment, childLogger);
-                       return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
-                   }
-                   else if (newState.state == CloudEnvironmentState.Unavailable)
-                   {
-                       // Check that environment state has transitioned back to avaiable within defined timeout, if not force suspend the environment.
-                       await this.environmentMonitor.MonitorUnavailableStateTransition(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                       // Shutdown if the environment is idle
+                       if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
+                       {
+                           var environmentServiceResult = await environmentManager.SuspendAsync(environment, childLogger);
+                           return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                       }
+                       else if (newState.state == CloudEnvironmentState.Unavailable)
+                       {
+                           // Check that environment state has transitioned back to avaiable within defined timeout, if not force suspend the environment.
+                           await environmentMonitor.MonitorUnavailableStateTransition(environment.Id, environment.Compute.ResourceId, childLogger.NewChildLogger());
+                       }
                    }
 
                    return handlerContext;
                });
         }
 
-        private void ValidateCloudEnvironment(CloudEnvironment cloudEnvironment, string inputEnvironmentId)
+        private void ValidateEnvironment(CloudEnvironment environment, string inputEnvironmentId)
         {
-            ValidationUtil.IsTrue(cloudEnvironment != null, $"No environments found matching the EnvironmentId {inputEnvironmentId} from {nameof(EnvironmentData)}");
-            ValidationUtil.IsTrue(cloudEnvironment.State != CloudEnvironmentState.Deleted, $"Heartbeat received for a deleted environment {inputEnvironmentId}");
+            ValidationUtil.IsTrue(environment != null, $"No environments found matching the EnvironmentId {inputEnvironmentId} from {nameof(EnvironmentData)}");
+            ValidationUtil.IsTrue(environment.State != CloudEnvironmentState.Deleted, $"Heartbeat received for a deleted environment {inputEnvironmentId}");
         }
 
-        private (CloudEnvironmentState state, int? reason) DetermineNewEnvironmentState(CloudEnvironment cloudEnvironment, EnvironmentData environmentData)
+        private (CloudEnvironmentState state, int? reason) DetermineNewEnvironmentState(CloudEnvironment environment, EnvironmentData environmentData)
         {
-            if (IsEnvironmentRunning(environmentData))
+            var environmentIsRunning = environment.Type == EnvironmentType.CloudEnvironment ?
+                IsCloudEnvironmentRunning(environmentData) :
+                IsSelfHostedEnvironmentRunning(environmentData);
+
+            if (environmentIsRunning)
             {
                 // If current state is NOT Available, change status to Available (when Enviroment is fully running).
-                if (cloudEnvironment.State != CloudEnvironmentState.Available)
+                if (environment.State != CloudEnvironmentState.Available)
                 {
                     return (CloudEnvironmentState.Available, null);
                 }
@@ -112,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             else
             {
                 // If current state is Available, change status to Unavailable (when Enviroment is NOT fully running).
-                if (cloudEnvironment.State == CloudEnvironmentState.Available)
+                if (environment.State == CloudEnvironmentState.Available)
                 {
                     return (CloudEnvironmentState.Unavailable, (int)MessageCodes.HeartbeatUnhealthy);
                 }
@@ -121,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             return default;
         }
 
-        private bool IsEnvironmentRunning(EnvironmentData environmentData)
+        private bool IsCloudEnvironmentRunning(EnvironmentData environmentData)
         {
             switch (environmentData.EnvironmentType)
             {
@@ -134,6 +141,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                 default:
                     return default;
             }
+        }
+
+        private bool IsSelfHostedEnvironmentRunning(EnvironmentData environmentData)
+        {
+            var state = environmentData.State;
+            var runningState = VsoEnvironmentState.VslsAgentRunning;
+
+            return state.HasFlag(runningState);
         }
 
         private bool IsContainerBasedEnvironmentRunning(EnvironmentData environmentData)

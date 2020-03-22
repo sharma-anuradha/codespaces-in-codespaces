@@ -14,7 +14,7 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             try
             {
-                ValidateResource(heartBeat.ResourceId);
+                ValidateHeartbeat(heartBeat, logger);
             }
             catch (Exception e)
             {
@@ -86,10 +86,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return UnprocessableEntity();
             }
 
-            // Asynchronously forward the heartbeat to backend service.
-            var backendHeartBeatProcessingTask = BackendHeartBeatClient.UpdateHeartBeatAsync(heartBeat.ResourceId, heartBeat, logger.NewChildLogger());
+            var shouldSendBackendTask = true;
+            if (!string.IsNullOrWhiteSpace(heartBeat.EnvironmentId))
+            {
+                var environment = await environmentManager.GetAsync(heartBeat.EnvironmentId, logger);
+                if (environment.Type != EnvironmentType.StaticEnvironment)
+                {
+                    shouldSendBackendTask = false;
+                }
+            }
 
-            if (heartBeat.CollectedDataList != null && heartBeat.CollectedDataList.Count() > 0)
+            var backendTask = shouldSendBackendTask ?
+                BackendHeartBeatClient.UpdateHeartBeatAsync(heartBeat.ResourceId, heartBeat, logger.NewChildLogger()) :
+                Task.CompletedTask;
+
+            var collectedData = heartBeat?.CollectedDataList?.Where(data => data != null);
+            if (collectedData != null && collectedData.Count() > 0)
             {
                 var processingExceptions = new List<Exception>();
 
@@ -97,17 +109,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                    "process_heartbeat_collected_data",
                    async (childLogger) =>
                    {
-                       CloudEnvironment cloudEnvironment = null;
+                       CloudEnvironment environment = null;
 
-                       var environmentId = heartBeat.CollectedDataList.FirstOrDefault(c => c.EnvironmentId != default)?.EnvironmentId;
+                       var environmentId = collectedData.FirstOrDefault(c => c.EnvironmentId != default)?.EnvironmentId;
                        if (!string.IsNullOrWhiteSpace(environmentId))
                        {
-                           cloudEnvironment = await environmentManager.GetAsync(environmentId, childLogger);
+                           environment = await environmentManager.GetAsync(environmentId, childLogger);
                        }
 
-                       var handlerContext = new CollectedDataHandlerContext(cloudEnvironment);
+                       var handlerContext = new CollectedDataHandlerContext(environment);
 
-                       foreach (var data in heartBeat.CollectedDataList)
+                       foreach (var data in collectedData)
                        {
                            var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
 
@@ -152,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             try
             {
-                await Task.WhenAll(backendHeartBeatProcessingTask);
+                await backendTask;
             }
             catch (HttpResponseStatusException e)
             {
@@ -198,12 +210,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 .LogException("frontend_heartbeat_processing_error", e);
         }
 
-        private void ValidateResource(Guid resourceId)
+        private void ValidateHeartbeat(HeartBeatBody heartbeat, IDiagnosticsLogger logger)
         {
-            ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "Heartbeat VMToken has invalid vmResourceId");
-            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var vmResourceId), $"Heartbeat VMToken has invalid vmResourceId");
-            ValidationUtil.IsTrue(resourceId != default, $"Heartbeat received with empty vmResourceId, from the VM {vmResourceId}");
-            ValidationUtil.IsTrue(vmResourceId == resourceId, $"Heartbeat received with conflicting vmResourceId = {resourceId}, from the VM {vmResourceId}");
+            ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "Heartbeat token has no resourceId");
+            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var tokenResourceId), $"Heartbeat token has invalid resourceId");
+            ValidationUtil.IsTrue(heartbeat.ResourceId != default, $"Heartbeat received with empty resourceId in body, and token resourceId {tokenResourceId}");
+            ValidationUtil.IsTrue(tokenResourceId == heartbeat.ResourceId, $"Heartbeat received with conflicting resourceId in body ({heartbeat.ResourceId}), and in token ({tokenResourceId})");
+            if (!string.IsNullOrWhiteSpace(heartbeat.EnvironmentId))
+            {
+                var collectedDataEnvIds = heartbeat.CollectedDataList.Select(d => d.EnvironmentId).Where(id => id != default);
+                ValidationUtil.IsTrue(collectedDataEnvIds.All(id => id == heartbeat.EnvironmentId), $"Heartbeat received with conflicting environmentId in body and in collected data");
+            }
         }
     }
 }
