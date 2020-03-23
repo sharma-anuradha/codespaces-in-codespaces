@@ -69,6 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                     if (jobResultData.JobState == JobState.Succeeded)
                     {
+                        // BYPASS WHILST POOLS ARE UPDATING
+                        /*
                         // Extract mount file share result
                         var mountFileShareResult = jobResultData.OperationResults.Where(x => x.Name == "MountFileShare").SingleOrDefault();
 
@@ -95,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             Guid.Parse(storageResourceId),
                             string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
                             childLogger.NewChildLogger());
+                        */
                     }
                     else
                     {
