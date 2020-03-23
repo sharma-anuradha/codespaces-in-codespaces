@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             bool autoLogLoopOperation = false,
             Func<Exception, IDiagnosticsLogger, bool> errLoopCallback = default)
         {
-            logger = (logger ?? Logger)
+            logger = (logger ?? Logger.NewChildLogger())
                 .FluentAddBaseValue("TaskWorkerLoopRunId", Guid.NewGuid())
                 .FluentAddBaseValue("TaskLoopRunName", name)
                 .FluentAddBaseValue("TaskRunName", name);
@@ -149,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Func<T, IDiagnosticsLogger, Task<IDisposable>> obtainLease = null,
             int itemDelay = 250)
         {
-            logger = logger ?? Logger;
+            logger = logger ?? Logger.NewChildLogger();
 
             // Log the main task
             return logger.OperationScopeAsync(
@@ -197,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             int concurrentLimit = 3,
             int successDelay = 250)
         {
-            logger = logger ?? Logger;
+            logger = logger ?? Logger.NewChildLogger();
 
             // When debugging, just run one at a time
             concurrentLimit = Math.Max(concurrentLimit, 1);
@@ -227,7 +227,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IDiagnosticsLogger logger = null,
             Action onTimeout = null)
         {
-            logger = Logger ?? logger;
+            logger = logger ?? Logger.NewChildLogger();
 
             // Log the main task
             return await logger.OperationScopeAsync(
@@ -329,7 +329,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             bool autoLogOperation,
             Func<Exception, IDiagnosticsLogger, Task> errCallback)
         {
-            logger = (logger ?? Logger)
+            logger = (logger ?? Logger.NewChildLogger())
                 .FluentAddBaseValue("TaskBackgroundRunId", Guid.NewGuid())
                 .FluentAddBaseValue("TaskBackgroundRunName", name)
                 .FluentAddBaseValue("TaskRunName", name);
