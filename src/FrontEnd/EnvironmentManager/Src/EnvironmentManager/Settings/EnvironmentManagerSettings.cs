@@ -40,6 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public bool DefaultEnvironmentArchiveEnabled { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the envirnment failed worker shoudl be enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool DefaultEnvironmentFailedWorkerEnabled { get; set; }
+
+        /// <summary>
         /// Gets or sets the name of the blob container that the Environment Manager
         /// can use for distributed leases.
         /// </summary>
@@ -105,6 +111,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync<bool>("featureflag:environment-archive-enabled", logger, DefaultEnvironmentArchiveEnabled);
+        }
+
+        /// <summary>
+        /// Gets or sets the Max Environments Per Plan.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> EnvironmentFailedWorkerEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<bool>("featureflag:environment-failed-worker-enabled", logger, DefaultEnvironmentFailedWorkerEnabled);
         }
     }
 }

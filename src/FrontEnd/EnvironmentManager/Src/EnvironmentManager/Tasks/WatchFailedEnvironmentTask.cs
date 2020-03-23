@@ -25,14 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
         private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
-        private static readonly bool IsEnabled = true;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchFailedEnvironmentTask"/> class.
         /// </summary>
         /// <param name="environmentManagerSettings">Target Environment Manager Settings.</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
-        /// <param name="environmentContinuationOperations">Target Resource Broker Http Client.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
@@ -53,16 +51,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            // Hard coded switch to enable and disable archive worker
-            if (!IsEnabled)
-            {
-                return Task.FromResult(!Disposed);
-            }
-
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
                 async (childLogger) =>
                 {
+                    // Bail if disabled
+                    var isEnabled = await EnvironmentManagerSettings.EnvironmentFailedWorkerEnabled(childLogger);
+                    childLogger.FluentAddValue("TaskIsEnabled", isEnabled);
+                    if (!isEnabled)
+                    {
+                        return !Disposed;
+                    }
+
                     // Basic shard by starting resource id character
                     // NOTE: If over time we needed an additional dimention, we could add region
                     //       and do a cross product with it.

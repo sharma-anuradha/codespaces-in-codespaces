@@ -58,16 +58,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 async (childLogger) =>
                 {
                     // Bail if disabled
-                    var isEnabled = await EnvironmentManagerSettings.EnvironmentArchiveEnabled(logger);
+                    var isEnabled = await EnvironmentManagerSettings.EnvironmentArchiveEnabled(childLogger);
+                    childLogger.FluentAddValue("TaskIsEnabled", isEnabled);
                     if (!isEnabled)
                     {
                         return !Disposed;
                     }
 
                     // Settings for query
-                    var cutoffHours = await EnvironmentManagerSettings.EnvironmentArchiveCutoffHours(logger);
+                    var cutoffHours = await EnvironmentManagerSettings.EnvironmentArchiveCutoffHours(childLogger);
                     var cutoffTime = DateTime.UtcNow.AddHours(cutoffHours * -1);
-                    var batchSize = await EnvironmentManagerSettings.EnvironmentArchiveBatchSize(logger);
+                    var batchSize = await EnvironmentManagerSettings.EnvironmentArchiveBatchSize(childLogger);
+
+                    childLogger.FluentAddValue("TaskEnvironmentCutoffHours", cutoffHours)
+                        .FluentAddValue("TaskEnvironmentCutoffTime", cutoffTime)
+                        .FluentAddValue("TaskRequestedItems", batchSize);
 
                     // Basic shard by starting resource id character
                     // NOTE: If over time we needed an additional dimention, we could add region
@@ -90,10 +95,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
         private async Task CoreRunUnitAsync(string idShard, DateTime cutoffTime, int batchSize, IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("TaskRequestedItems", batchSize)
-                .FluentAddBaseValue("TaskEnvironmentIdShard", idShard)
-                .FluentAddBaseValue("TaskEnvironmentCutoffTime", cutoffTime);
-
             // Get environments to be archived
             var records = await CloudEnvironmentRepository.GetEnvironmentsReadyForArchiveAsync(
                 idShard, batchSize, cutoffTime, logger.NewChildLogger());
