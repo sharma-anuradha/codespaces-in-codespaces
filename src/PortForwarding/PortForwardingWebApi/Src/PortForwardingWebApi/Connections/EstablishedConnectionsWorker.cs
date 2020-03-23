@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var client = await QueueClientProvider.GetQueueClientAsync("connections-established", Logger);
+            var client = await QueueClientProvider.GetQueueClientAsync(QueueNames.EstablishedConnections, Logger);
 
             client.RegisterSessionHandler(
                 ProcessSessionMessage,

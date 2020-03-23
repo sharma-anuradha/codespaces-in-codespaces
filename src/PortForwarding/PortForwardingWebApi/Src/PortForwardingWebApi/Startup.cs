@@ -39,6 +39,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
         {
         }
 
+        private PortForwardingHostUtils PortForwardingHostUtils { get; set; } = default!;
+
         /// <summary>
         /// This method gets called by the runtime.
         /// Use this method to add services to the container.
@@ -73,6 +75,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 
             services.AddSingleton<IManagedCache, InMemoryManagedCache>();
             services.AddSingleton<ISystemCatalog, NullSystemCatalog>();
+
+            PortForwardingHostUtils = new PortForwardingHostUtils(portForwardingSettings);
+            services.AddSingleton(PortForwardingHostUtils);
 
             if (IsRunningInAzure() && (
                 portForwardingSettings.UseMockKubernetesMappingClientInDevelopment ||
@@ -134,7 +139,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 
         private bool IsUserRequest(HttpContext context)
         {
-            return context.Request.Headers.ContainsKey("X-VSOnline-Use-Forwarding");
+            var isUserHost = PortForwardingHostUtils.IsPortForwardingHost(context.Request.Host.ToString());
+            var hasUserHeaders = context.Request.Headers.ContainsKey(PortForwardingHeaders.WorkspaceId)
+                && context.Request.Headers.ContainsKey(PortForwardingHeaders.Port);
+
+            return isUserHost || hasUserHeaders;
         }
 
         private void HandleUserRequests(IApplicationBuilder app)
