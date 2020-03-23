@@ -109,22 +109,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var taskCopyCommand = new List<string>();
 
+            // Print out the list of file so far
+            taskCopyCommand.Add("echo ----- DATA DRIVE DETAILS -----");
+            taskCopyCommand.Add($"df -H /datadrive");
+
+            // Print out the list of file so far
+            taskCopyCommand.Add("echo ----- FOUND FILES -----");
+            taskCopyCommand.Add($"ls -la {localSrc}");
+
             // Clear out any old images just incase something got missed in cleanup
+            taskCopyCommand.Add("echo ----- FIND OLD FILES -----");
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +30");
+
+            // Clear out any old images just incase something got missed in cleanup
+            taskCopyCommand.Add("echo ----- DELETE OLD FILES -----");
             taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +30 -delete");
 
             // Copy target share to local disk
+            taskCopyCommand.Add("echo ----- COPY DOWN BLOB -----");
             taskCopyCommand.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{taskInput.SrcFileShareUriWithSas}' '{localTargetSrc}' --block-size-mb 100");
 
             // Conduct safty check post copy
+            taskCopyCommand.Add("echo ----- SAFTY CHECKS -----");
             taskCopyCommand.Add($"e2fsck -fy {localTargetSrc}");
 
             // Resize the share down
+            taskCopyCommand.Add("echo ----- RESIZE -----");
             taskCopyCommand.Add($"resize2fs -pM {localTargetSrc}");
 
             // Copy over to blob stroage
+            taskCopyCommand.Add("echo ----- COPY TO BLOB -----");
             taskCopyCommand.Add($"$AZ_BATCH_NODE_SHARED_DIR/azcopy cp '{localTargetSrc}' '{taskInput.DestBlobUriWithSas}' --block-size-mb 100");
 
             // Delete copied file from local disk
+            taskCopyCommand.Add("echo ----- DELETE USED FILE -----");
             taskCopyCommand.Add($"rm -f {localTargetSrc}");
 
             // Define the task
