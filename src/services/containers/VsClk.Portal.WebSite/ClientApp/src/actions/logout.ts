@@ -13,7 +13,7 @@ const exemptLocalStorageItems = [
     'githubAccessTokenEncrypted',
     'vso-featureset',
 ];
-const alwaysExemptLocalStorageItems = ['vso_machine_id'];
+const alwaysExemptLocalStorageItems = ['vso_machine_id', 'vso.marketing.blog.post.seen'];
 
 // Basic actions dispatched for reducers
 const logoutAction = () => action(logoutActionType);
