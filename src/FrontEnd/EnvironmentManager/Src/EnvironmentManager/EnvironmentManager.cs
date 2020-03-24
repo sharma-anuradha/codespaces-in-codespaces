@@ -687,7 +687,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var computerResource = cloudEnvironment.Compute;
                     var storageResource = cloudEnvironment.Storage;
                     var archiveStorageResource = default(ResourceAllocation);
-                    if (storageResource.Type != ResourceType.StorageFileShare)
+                    if (storageResource.Type == ResourceType.StorageArchive)
                     {
                         archiveStorageResource = storageResource;
                     }
