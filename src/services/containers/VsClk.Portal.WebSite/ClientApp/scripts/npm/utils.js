@@ -13,19 +13,23 @@ const {
     packageJsonPath,
     node_modules,
 } = require('./constants');
+const { ensureDir } = require('../vscode/fileUtils');
 
 const readFile = promisify(fs.readFile);
 const exists = promisify(fs.exists);
 const link = promisify(fs.symlink);
 const rimraf = promisify(rimrafCallback);
 
+/**
+ * @param {string} quality
+ */
 async function getVSCodeCommitFromPackage(quality) {
     try {
         const fileContents = await readFile(packageJsonPath, { encoding: 'utf-8' });
         const packageMetadata = JSON.parse(fileContents);
-        return quality === 'stable'
-            ? packageMetadata.vscodeCommit.stable
-            : packageMetadata.vscodeCommit.insider;
+        return quality === 'insider'
+            ? packageMetadata.vscodeCommit.insider
+            : packageMetadata.vscodeCommit.stable;
     } catch (ex) {
         console.error('Failed to parse package.json');
     }
@@ -33,10 +37,19 @@ async function getVSCodeCommitFromPackage(quality) {
     return null;
 }
 
+/**
+ * @param {string} quality
+ */
 async function downloadVSCodeAssets(quality) {
-    downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase, assetName);
+    await downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase, assetName);
+    await linkBuiltinStaticExtensions(quality);
 }
 
+/**
+ * @param {string} quality
+ * @param {string} vscodeAssetsTargetPathBase
+ * @param {string} assetName
+ */
 async function downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase, assetName) {
     const requiredCommitId = await getVSCodeCommitFromPackage(quality);
     if (!requiredCommitId) {
@@ -44,7 +57,10 @@ async function downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase,
         return;
     }
 
-    const vscodeAssetsTargetPath = path.join(vscodeAssetsTargetPathBase, quality);
+    const vscodeAssetsTargetPath = path.join(
+        vscodeAssetsTargetPathBase,
+        requiredCommitId.substr(0, 7)
+    );
     const currentDownloadedAssetsCommit = await getCurrentAssetsCommit(vscodeAssetsTargetPath);
     if (currentDownloadedAssetsCommit && currentDownloadedAssetsCommit !== requiredCommitId) {
         console.log('Current version of assets does not match required version. Removing');
@@ -58,18 +74,32 @@ async function downloadVSCodeAssetsInternal(quality, vscodeAssetsTargetPathBase,
     }
 
     await downloadVSCode(requiredCommitId, assetName, quality, vscodeAssetsTargetPath);
+
+    return vscodeAssetsTargetPath;
 }
 
-async function linkBuiltinStaticExtensions() {
+/**
+ * @param {string} quality
+ */
+async function linkBuiltinStaticExtensions(quality) {
     /** TEMP: VS Code plans to include the extensions that can run in the browser as part of the web-standalone package.
      *  Until we get that we download the server package just to the extensions.
      */
     const vscodeServerAssetsTargetPath = path.join(vscodeAssetsTargetPathBase, 'server');
-    downloadVSCodeAssetsInternal('stable', vscodeServerAssetsTargetPath, 'server-linux-x64-web');
+    downloadVSCodeAssetsInternal(quality, vscodeServerAssetsTargetPath, 'server-linux-x64-web');
 
-    const builtinExtensionsPath = path.join(vscodeServerAssetsTargetPath, 'stable', 'extensions');
-    const builtinExtensionsTargetPath = path.join(node_modules, 'extensions');
+    const requiredCommitId = await getVSCodeCommitFromPackage(quality);
 
+    const builtinExtensionsPath = path.join(
+        vscodeServerAssetsTargetPath,
+        requiredCommitId,
+        'extensions'
+    );
+
+    const targetExtensionsFolderPath = path.join(node_modules, 'extensions');
+    const builtinExtensionsTargetPath = path.join(targetExtensionsFolderPath, requiredCommitId);
+
+    await ensureDir(targetExtensionsFolderPath);
     const targetExists = await exists(builtinExtensionsTargetPath);
     if (!targetExists) {
         await link(builtinExtensionsPath, builtinExtensionsTargetPath, 'junction');
@@ -79,5 +109,4 @@ async function linkBuiltinStaticExtensions() {
 module.exports = {
     getVSCodeCommitFromPackage,
     downloadVSCodeAssets,
-    linkBuiltinStaticExtensions,
 };

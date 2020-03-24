@@ -18,6 +18,8 @@ import { telemetry, sendTelemetry } from '../../utils/telemetry';
 import * as path from 'path';
 import { trace } from '../../utils/trace';
 import { FolderWorkspaceProvider } from '../../providers/folderWorkspaceProvider';
+import { getVSCodeAssetPath, getVSCodeVersion } from '../../utils/featureSet';
+import { updateFavicon } from '../../utils/updateFavicon';
 
 export interface ServerlessWorkbenchProps {
     folderUri: string;
@@ -31,14 +33,7 @@ export interface ServerlessWorkbenchProps {
 }
 
 const managementFavicon = 'favicon.ico';
-const vscodeFavicon = 'static/web-standalone/favicon.ico';
-function updateFavicon(isMounting: boolean = true) {
-    const link = document.querySelector("link[rel='shortcut icon']");
-    if (link) {
-        const iconPath = isMounting ? vscodeFavicon : managementFavicon;
-        link.setAttribute('href', iconPath);
-    }
-}
+const vscodeFavicon = getVSCodeAssetPath('favicon.ico');
 
 type StaticExtension = { packageJSON: any; extensionLocation: URI };
 function isNotNullStaticExtension(se: StaticExtension | undefined): se is StaticExtension {
@@ -58,15 +53,17 @@ export class ServerlessWorkbench extends Component<
     }
 
     componentDidMount() {
-        updateFavicon(true);
+        updateFavicon(vscodeFavicon);
         this.mountWorkbench();
     }
 
     componentWillUnmount() {
-        updateFavicon(false);
+        updateFavicon(managementFavicon);
     }
 
     private getBuiltinStaticExtensions() {
+        const version = getVSCodeVersion();
+
         // Webpack parses require.context and makes those files available in the bundle. So all the package.json
         // files in the extensions dir will be in the bundle and the .keys() property will be populated at build time
         // to be all the relative paths for the package.json. So, keys will be like './csharp/package.json'
@@ -88,7 +85,7 @@ export class ServerlessWorkbench extends Component<
             return {
                 packageJSON,
                 extensionLocation: vscode.URI.parse(
-                    `https://${window.location.hostname}/static/web-standalone/server/stable/extensions/${packageDirName}/`
+                    `https://${window.location.hostname}/static/web-standalone/server/${version.commit.substr(0, 7)}/extensions/${packageDirName}/`
                 ),
             };
         });

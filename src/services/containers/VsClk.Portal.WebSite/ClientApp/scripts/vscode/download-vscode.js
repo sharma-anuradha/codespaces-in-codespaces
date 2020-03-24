@@ -10,7 +10,6 @@ const tar = require('tar');
 const { ensureDir } = require('./fileUtils');
 const { versionFilename } = require('./get-current-vscode-assets-version');
 
-const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const unlink = promisify(fs.unlink);
 const writeFile = promisify(fs.writeFile);

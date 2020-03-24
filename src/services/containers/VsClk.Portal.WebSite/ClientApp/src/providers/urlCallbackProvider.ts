@@ -1,13 +1,10 @@
 import { URI, IURLCallbackProvider } from 'vscode-web';
+import { Emitter, Event } from 'vscode-jsonrpc';
+import { randomString } from 'vso-client-core';
 
 import { vscode } from '../utils/vscode';
-
-import { Emitter, Event } from 'vscode-jsonrpc';
-
 import { getQueryParams } from '../utils/getQueryParams';
-
-import { randomString } from 'vso-client-core';
-import { getVscodeQuality } from '../utils/configurationUtil';
+import { getVscodeQuality } from '../utils/featureSet';
 
 export const callbackSymbol = Symbol('URICallbackSymbol');
 
@@ -81,7 +78,7 @@ export class UrlCallbackProvider implements IURLCallbackProvider {
     protected generateUrlCallbackParams(authority: string, path: string, query: string) {
         const nonce = randomString();
         this.expectedNonceMap.set(nonce, { authority, path });
-        
+
         const params = new URLSearchParams(query);
         params.append('state', nonce);
 

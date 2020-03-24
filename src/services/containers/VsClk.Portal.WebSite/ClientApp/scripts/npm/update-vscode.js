@@ -6,43 +6,37 @@ const { promisify } = require('util');
 const { getUpdateDetails } = require('../vscode/download-vscode');
 const { getVSCodeCommitFromPackage, downloadVSCodeAssets } = require('./utils');
 
-const { assetName, packageJsonPath } = require('./constants');
+const { assetName, packageJsonPath, amdConfigPath } = require('./constants');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
 async function updateVSCodeAssets() {
-    const currentCommit = await getVSCodeCommitFromPackage();
+    await Promise.all([
+        updateVSCodeAssetsForQuality('insider'),
+        updateVSCodeAssetsForQuality('stable'),
+    ]);
+}
+
+/**
+ * @param {string} quality
+ */
+async function updateVSCodeAssetsForQuality(quality) {
+    const currentCommit = await getVSCodeCommitFromPackage(quality);
 
     if (!currentCommit) {
-        console.log('There in no commit to be updated. Using latest instead');
+        console.log(`There in no commit to be updated for ${quality}. Using latest instead`);
     }
-
     try {
-        const currentCommitStable = currentCommit.stable;
-        let updateDetails = await getUpdateDetails(
-            currentCommitStable || 'latest',
-            assetName,
-            'stable'
-        );
+        let updateDetails = await getUpdateDetails(currentCommit || 'latest', assetName, quality);
 
         if (updateDetails !== null) {
-            console.log(`Updating to stable commit: ${updateDetails.version}`);
-            await setVSCodeCommitInPackageJson(updateDetails.version, 'stable');
+            console.log(`Updating to ${quality} commit: ${updateDetails.version}`);
+
+            await setVSCodeCommitInPackageJson(updateDetails.version, quality);
+            await updateVSCodeCommitInAmdConfig(currentCommit, updateDetails.version);
+
             await downloadVSCodeAssets('stable');
-        }
-
-        const currentCommitInsider = currentCommit.insider;
-        updateDetails = await getUpdateDetails(
-            currentCommitInsider || 'latest',
-            assetName,
-            'insider'
-        );
-
-        if (updateDetails !== null) {
-            console.log(`Updating to insider commit: ${updateDetails.version}`);
-            await setVSCodeCommitInPackageJson(updateDetails.version, 'insider');
-            await downloadVSCodeAssets('insider');
         }
     } catch (err) {
         console.log(err.message);
@@ -51,6 +45,7 @@ async function updateVSCodeAssets() {
 
 /**
  * @param {string} commitId
+ * @param {string} quality
  */
 async function setVSCodeCommitInPackageJson(commitId, quality) {
     try {
@@ -67,6 +62,17 @@ async function setVSCodeCommitInPackageJson(commitId, quality) {
         console.error('Failed to parse package.json');
         throw ex;
     }
+}
+
+/**
+ * @param {string} oldCommitId
+ * @param {string} newCommitId
+ */
+async function updateVSCodeCommitInAmdConfig(oldCommitId, newCommitId) {
+    const fileContents = await readFile(amdConfigPath, { encoding: 'utf-8' });
+    const newContent = fileContents.replace(oldCommitId, newCommitId);
+
+    await writeFile(amdConfigPath, newContent);
 }
 
 updateVSCodeAssets();

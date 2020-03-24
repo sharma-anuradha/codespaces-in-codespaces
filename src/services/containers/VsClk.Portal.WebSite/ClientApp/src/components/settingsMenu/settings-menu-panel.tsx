@@ -22,8 +22,7 @@ import {
     Dropdown,
 } from 'office-ui-fabric-react';
 import { Loader } from '../loader/loader';
-import { getVSCodeVersion } from '../../constants';
-import { getFeatureSet } from '../../utils/featureSet';
+import { getVSCodeVersion } from '../../utils/featureSet';
 
 interface ISettingsMenuProps extends RouteComponentProps {
     selectedPlan: ActivePlanInfo | null;
@@ -40,7 +39,7 @@ interface ISettingsMenuState {
 }
 
 const setTelemetryVSCodeConfig = () => {
-    const vscodeConfig = getVSCodeVersion(getFeatureSet());
+    const vscodeConfig = getVSCodeVersion();
     telemetry.setVscodeConfig(vscodeConfig.commit, vscodeConfig.quality);
 };
 

@@ -10,8 +10,6 @@ import {
 
 import { createTrace } from 'vso-client-core';
 
-import { getVSCodeVersion } from '../../constants';
-
 import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
 
 import { ApplicationState } from '../../reducers/rootReducer';
@@ -44,12 +42,11 @@ import { useActionContext } from '../../actions/middleware/useActionContext';
 import './workbench.css';
 import { CommunicationAdapter } from '../../services/communicationAdapter';
 import { SplashCommunicationProvider } from '../../providers/splashCommunicationProvider';
-import {
-    IWorkbenchSplashScreenProps,
-} from '../../interfaces/IWorkbenchSplashScreenProps';
+import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
+import { getVscodeQuality, getVSCodeVersion } from '../../utils/featureSet';
 
-export interface IWokbenchState {
+export interface IWorkbenchState {
     connectError: string | null;
     connectRequested: boolean;
 }
@@ -77,8 +74,8 @@ export interface WorkbenchProps {
 
 const logger = createTrace('WorkbenchView');
 
-class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
-    constructor(props: WorkbenchProps, state: IWokbenchState) {
+class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
+    constructor(props: WorkbenchProps, state: IWorkbenchState) {
         super(props, state);
         this.state = {
             connectError: null,
@@ -244,8 +241,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
             throw new Error('No access token present.');
         }
 
-        const quality =
-            window.localStorage.getItem('vso-featureset') === 'insider' ? 'insider' : 'stable';
+        const quality = getVscodeQuality();
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(
@@ -341,7 +337,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
 
     private renderWorkbench() {
         const { environmentInfo, SplashScreenComponent } = this.props;
-        
+
         if (!environmentInfo) {
             return <Loader></Loader>;
         }
@@ -376,7 +372,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWokbenchState> {
     }
 
     render() {
-        const content = this.renderWorkbench()
+        const content = this.renderWorkbench();
 
         return <div className='connect-to-environment'>{content}</div>;
     }

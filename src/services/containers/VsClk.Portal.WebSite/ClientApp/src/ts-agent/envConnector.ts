@@ -16,7 +16,7 @@ import { trace } from '../utils/trace';
 import { Signal } from 'vso-client-core';
 import { VSCodeQuality } from '../utils/vscode';
 
-import { DEFAULT_EXTENSIONS, getVSCodeVersion, HOSTED_IN_GITHUB_EXTENSIONS } from '../constants';
+import { DEFAULT_EXTENSIONS, HOSTED_IN_GITHUB_EXTENSIONS } from '../constants';
 import { ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { BrowserSyncService } from './services/browserSyncService';
 import { postServiceWorkerMessage } from '../common/post-message';
@@ -29,6 +29,7 @@ import { wait } from '../dependencies';
 import { sendTelemetry } from '../utils/telemetry';
 import { GitCredentialService } from './services/gitCredentialService';
 import { isHostedOnGithub } from '../utils/isHostedOnGithub';
+import { getVSCodeVersion } from '../utils/featureSet';
 
 export type RemoteVSCodeServerDescription = {
     readonly port: number;
@@ -162,7 +163,12 @@ export class EnvConnector {
         let endPoll = Date.now() + 5 * 60 * 1000; // minutes.
         while (Date.now() < endPoll) {
             try {
-                workspaceClient = await this.connectWorkspaceClient(sessionId, accessToken, liveShareEndpoint, true);
+                workspaceClient = await this.connectWorkspaceClient(
+                    sessionId,
+                    accessToken,
+                    liveShareEndpoint,
+                    true
+                );
                 break;
             } catch {
                 await wait(500);
@@ -221,7 +227,7 @@ export class EnvConnector {
                     },
                 });
             }
-            
+
             const clientAuthCompletion = new PromiseCompletionSource<void>();
             await workspaceClient.authenticate(clientAuthCompletion);
             await Promise.all([clientAuthCompletion.promise, workspaceClient.join()]);
@@ -238,10 +244,7 @@ export class EnvConnector {
                 throw new Error('rpcConnection not set.');
             }
 
-            await this.registerGitCredentialService(
-                workspaceService,
-                rpcConnection,
-            );
+            await this.registerGitCredentialService(workspaceService, rpcConnection);
 
             BrowserSyncService.init(workspaceClient);
 
