@@ -119,6 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 {
                     FriendlyName = name,
                     Location = AzureLocation.WestUs2,
+                    ControlPlaneLocation = AzureLocation.CentralUs,
                     SkuName = "test",
                     PlanId = testPlan.ResourceId,
                     OwnerId = testUserId

@@ -186,6 +186,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public AzureLocation Location { get; set; }
 
         /// <summary>
+        /// Gets or sets the cloud environment Azure location.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "controlPlaneLocation")]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public AzureLocation ControlPlaneLocation { get; set; }
+
+        /// <summary>
         /// Gets or sets the environment storage info.
         /// </summary>
         /// <remarks>

@@ -399,6 +399,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             cloudEnvironment.Location = planDetails.Plan.Location;
+            cloudEnvironment.ControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
 
             var planId = HttpContext.GetPlan();
             var planInfo = VsoPlanInfo.TryParse(planId);

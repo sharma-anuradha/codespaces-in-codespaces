@@ -38,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environment = new CloudEnvironment()
             {
                 Location = AzureLocation.WestUs2,
+                ControlPlaneLocation = AzureLocation.CentralUs,
                 SkuName = sku1.SkuName,
                 Id = Guid.NewGuid().ToString(),
             };
@@ -340,6 +341,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             string name = "env-name",
             string id = "env-id",
             AzureLocation location = AzureLocation.WestUs2,
+            AzureLocation controlPlanLocation = AzureLocation.CentralUs,
             string planId = null,
             string ownerId = "owner-id",
             string skuName = "sku-name",
@@ -351,6 +353,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 Id = id,
                 FriendlyName = name,
                 Location = location,
+                ControlPlaneLocation = controlPlanLocation,
                 SkuName = skuName,
                 PlanId = planId ?? MockPlan().ResourceId,
                 OwnerId = ownerId,

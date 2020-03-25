@@ -22,25 +22,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public int DefaultMaxEnvironmentsPerPlan { get; set; }
 
         /// <summary>
-        /// Gets or sets the default envirnment archive cutoff hours.
+        /// Gets or sets the default environment archive cutoff hours.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public double DefaultEnvironmentArchiveCutoffHours { get; set; }
 
         /// <summary>
-        /// Gets or sets the default envirnment archive batch size.
+        /// Gets or sets the default environment archive batch size.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public int DefaultEnvironmentArchiveBatchSize { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether an envirnment archive enabled state.
+        /// Gets or sets the default environment archive max active count.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int DefaultEnvironmentArchiveMaxActiveCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether an environment archive enabled state.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public bool DefaultEnvironmentArchiveEnabled { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the envirnment failed worker shoudl be enabled.
+        /// Gets or sets a value indicating whether the environment failed worker shoudl be enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public bool DefaultEnvironmentFailedWorkerEnabled { get; set; }
@@ -99,6 +105,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync<int>("setting:environment-archive-batch-size", logger, DefaultEnvironmentArchiveBatchSize);
+        }
+
+        /// <summary>
+        /// Gets or sets the max number of archive jobs allowed.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<int> EnvironmentArchiveMaxActiveCount(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<int>("setting:environment-archive-max-active-count", logger, DefaultEnvironmentArchiveMaxActiveCount);
         }
 
         /// <summary>

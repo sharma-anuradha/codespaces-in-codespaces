@@ -32,16 +32,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="controlPlaneInfo">Target control plane info.</param>
         public WatchSuspendedEnvironmentsToBeArchivedTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IEnvironmentContinuationOperations environmentContinuationOperations,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IControlPlaneInfo controlPlaneInfo)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             EnvironmentContinuationOperations = environmentContinuationOperations;
+            ControlPlaneInfo = controlPlaneInfo;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchSuspendedEnvironmentsToBeArchivedTask)}Lease");
@@ -49,6 +52,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private string LogBaseName => EnvironmentLoggingConstants.WatchSuspendedEnvironmentsToBeArchivedTask;
 
         private IEnvironmentContinuationOperations EnvironmentContinuationOperations { get; }
+
+        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -69,10 +74,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     var cutoffHours = await EnvironmentManagerSettings.EnvironmentArchiveCutoffHours(childLogger);
                     var cutoffTime = DateTime.UtcNow.AddHours(cutoffHours * -1);
                     var batchSize = await EnvironmentManagerSettings.EnvironmentArchiveBatchSize(childLogger);
+                    var maxActiveCount = await EnvironmentManagerSettings.EnvironmentArchiveMaxActiveCount(childLogger);
 
                     childLogger.FluentAddValue("TaskEnvironmentCutoffHours", cutoffHours)
                         .FluentAddValue("TaskEnvironmentCutoffTime", cutoffTime)
-                        .FluentAddValue("TaskRequestedItems", batchSize);
+                        .FluentAddValue("TaskRequestedItems", batchSize)
+                        .FluentAddValue("TaskEnvironmentMaxActiveCount", maxActiveCount);
 
                     // Basic shard by starting resource id character
                     // NOTE: If over time we needed an additional dimention, we could add region
@@ -83,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     await TaskHelper.RunConcurrentEnumerableAsync(
                         $"{LogBaseName}_run_unit_check",
                         idShards,
-                        (idShard, itemLogger) => CoreRunUnitAsync(idShard, cutoffTime, batchSize, itemLogger),
+                        (idShard, itemLogger) => CoreRunUnitAsync(idShard, cutoffTime, batchSize, maxActiveCount, itemLogger),
                         childLogger,
                         (idShard, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{idShard}", claimSpan, itemLogger));
 
@@ -93,18 +100,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 swallowException: true);
         }
 
-        private async Task CoreRunUnitAsync(string idShard, DateTime cutoffTime, int batchSize, IDiagnosticsLogger logger)
+        private async Task CoreRunUnitAsync(string idShard, DateTime cutoffTime, int batchSize, int maxActiveCount, IDiagnosticsLogger logger)
         {
-            // Get environments to be archived
-            var records = await CloudEnvironmentRepository.GetEnvironmentsReadyForArchiveAsync(
-                idShard, batchSize, cutoffTime, logger.NewChildLogger());
+            logger.FluentAddValue("TaskEnvironmentIdShard", idShard);
 
-            logger.FluentAddValue("TaskFoundItems", records.Count());
+            // Pickup current region
+            var controlPlaneRegion = ControlPlaneInfo.Stamp.Location;
 
-            // Run through each found item
-            foreach (var record in records)
+            // Check to see how many jobs are currently running
+            var activeCount = await CloudEnvironmentRepository.GetEnvironmentsArchiveJobActiveCountAsync(
+                controlPlaneRegion, logger.NewChildLogger());
+
+            logger.FluentAddValue("TaskEnvironmentActiveCount", activeCount);
+
+            // Check that we aren't over limit
+            if (activeCount <= maxActiveCount)
             {
-                await CoreRunUnitAsync(record, logger);
+                // Set batchsize for what we need
+                batchSize = Math.Min(batchSize, maxActiveCount - activeCount);
+
+                logger.FluentAddValue("TaskdRequestedItemsAdjuste", batchSize);
+
+                // Get environments to be archived
+                var records = await CloudEnvironmentRepository.GetEnvironmentsReadyForArchiveAsync(
+                    idShard, batchSize, cutoffTime, controlPlaneRegion, logger.NewChildLogger());
+
+                logger.FluentAddValue("TaskFoundItems", records.Count());
+
+                // Run through each found item
+                foreach (var record in records)
+                {
+                    await CoreRunUnitAsync(record, logger);
+                }
             }
         }
 

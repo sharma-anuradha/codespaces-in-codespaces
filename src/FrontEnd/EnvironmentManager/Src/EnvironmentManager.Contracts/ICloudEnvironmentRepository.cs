@@ -4,9 +4,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -52,11 +52,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="idShard">Pool Code.</param>
         /// <param name="count">Limit count.</param>
+        /// <param name="controlPlaneLocation">Target control plane location.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns a list of failed environments.</returns>
         Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(
             string idShard,
             int count,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger);
 
         /// <summary>
@@ -69,12 +71,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="idShard">Pool Code.</param>
         /// <param name="count">Limit count.</param>
         /// <param name="cutoffTime">Target cutoff time.</param>
+        /// <param name="controlPlaneLocation">Target control plane location.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns a list of failed environments.</returns>
         Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(
             string idShard,
             int count,
             DateTime cutoffTime,
+            AzureLocation controlPlaneLocation,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the count of how many archive jobs are currently active.
+        /// </summary>
+        /// <param name="controlPlaneLocation">Target control plane location.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>The number of active jobs.</returns>
+        Task<int> GetEnvironmentsArchiveJobActiveCountAsync(
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger);
     }
 }

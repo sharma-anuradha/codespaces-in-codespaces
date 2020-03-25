@@ -10,9 +10,9 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
@@ -104,8 +104,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         {
             var query = new SqlQuerySpec(
                 @"SELECT VALUE COUNT(1)
-                      FROM c
-                      WHERE c.state = @state
+                FROM c
+                WHERE c.state = @state
                       AND c.location = @location
                       AND c.skuName = @skuName",
                 new SqlParameterCollection
@@ -121,7 +121,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public async Task<int> GetCloudEnvironmentSubscriptionCountAsync(IDiagnosticsLogger logger)
+        public async Task<int> GetCloudEnvironmentSubscriptionCountAsync(
+            IDiagnosticsLogger logger)
         {
             // c.planID is a fully qualified Azure resource path. The values substringed below extract the subscription field. A future suggestion could be to always log the subscriptionID on the Cloud Environment to make it easier to query for this.
             var query = new SqlQuerySpec(
@@ -135,7 +136,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public async Task<int> GetCloudEnvironmentPlanCountAsync(IDiagnosticsLogger logger)
+        public async Task<int> GetCloudEnvironmentPlanCountAsync(
+            IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
               @"SELECT VALUE SUM(1) 
@@ -151,6 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public async Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(
             string idShard,
             int count,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
             // Look for failed resources, or resources that are stuck in a temporary state for too long.
@@ -161,6 +164,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 @"SELECT TOP @count VALUE c
                 FROM c
                 WHERE STARTSWITH(c.id, @idShard)
+                    AND ((IS_DEFINED(c.controlPlaneLocation) = false AND c.location = @controlPlaneLocation)
+                        OR (IS_DEFINED(c.controlPlaneLocation) = true AND c.controlPlaneLocation = @controlPlaneLocation))
                     AND (
                         c.transitions.archiving.status = @operationStateFailed
                         OR c.transitions.archiving.status = @operationStateCancelled
@@ -179,6 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
                     new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
                     new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1) },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync(
@@ -192,6 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             string idShard,
             int count,
             DateTime cutoffTime,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
@@ -202,7 +209,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     AND c.state = @stateShutdown
                     AND c.lastStateUpdated < @cutoffTime
                     AND c.transitions.archiving.status = null
-                    AND CONTAINS(c.skuName, @targetSku)",
+                    AND CONTAINS(c.skuName, @targetSku)
+                    AND ((IS_DEFINED(c.controlPlaneLocation) = false AND c.location = @controlPlaneLocation)
+                        OR (IS_DEFINED(c.controlPlaneLocation) = true AND c.controlPlaneLocation = @controlPlaneLocation))",
                 new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@count", Value = count },
@@ -210,12 +219,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@stateShutdown", Value = CloudEnvironmentState.Shutdown.ToString() },
                     new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
                     new SqlParameter { Name = "@targetSku", Value = "Linux" },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync(
                 (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
 
             return items;
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> GetEnvironmentsArchiveJobActiveCountAsync(
+            AzureLocation controlPlaneLocation,
+            IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE COUNT(1)
+                FROM c
+                WHERE c.transitions.archiving.status = @activeStatus
+                    AND ((IS_DEFINED(c.controlPlaneLocation) = false AND c.location = @controlPlaneLocation)
+                        OR (IS_DEFINED(c.controlPlaneLocation) = true AND c.controlPlaneLocation = @controlPlaneLocation))",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@activeStatus", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
+            var count = items.FirstOrDefault();
+            return count;
         }
     }
 }
