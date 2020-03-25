@@ -75,35 +75,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
                             ActivityLevel++;
                         }
 
-                        // Pull out typed message content
-                        var payload = GetTypedPayload(message);
-
                         childLogger.FluentAddValue("MessageDequeueCount", message.DequeueCount)
                             .FluentAddValue("MessageExpirationTime", message.ExpirationTime)
                             .FluentAddValue("MessageInsertionTime", message.InsertionTime)
-                            .FluentAddValue("MessageNextVisibleTime", message.NextVisibleTime)
-                            .FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
-                            .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
-                            .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
-                            .FluentAddValue("ContinuationPayloadPreRetryAfter", payload.RetryAfter)
-                            .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
-                            .FluentAddValue("ContinuationPayloadCreated", payload.Created)
-                            .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
-                            .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount)
-                            .FluentAddBaseValues(payload.LoggerProperties);
+                            .FluentAddValue("MessageNextVisibleTime", message.NextVisibleTime);
 
-                        // Try and handle message
-                        var resultPayload = await childLogger.TrackDurationAsync(
-                            "WorkerActivator", () => Activator.Continue(payload, childLogger.NewChildLogger()));
-
-                        childLogger.FluentAddValue("ContinuationWasHandled", resultPayload != null);
-
-                        // Deals with error case
-                        if (resultPayload != null)
+                        // Validate that we should process message
+                        if (QueueMessageIsValid(message, childLogger))
                         {
-                            childLogger.FluentAddValue("ContinuationPayloadPostStatus", resultPayload.Status)
-                                .FluentAddValue("ContinuationPayloadPostRetryAfter", resultPayload.RetryAfter)
-                                .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null);
+                            // Pull out typed message content
+                            var payload = GetTypedPayload(message);
+
+                            childLogger.FluentAddBaseValue("ContinuationPayloadTrackingId", payload.TrackingId)
+                                .FluentAddValue("ContinuationPayloadHandleTarget", payload.Target)
+                                .FluentAddValue("ContinuationPayloadIsInitial", !payload.Status.HasValue)
+                                .FluentAddValue("ContinuationPayloadPreRetryAfter", payload.RetryAfter)
+                                .FluentAddValue("ContinuationPayloadPreStatus", payload.Status)
+                                .FluentAddValue("ContinuationPayloadCreated", payload.Created)
+                                .FluentAddValue("ContinuationPayloadCreateOffSet", (DateTime.UtcNow - payload.Created).TotalMilliseconds)
+                                .FluentAddValue("ContinuationPayloadStepCount", payload.StepCount)
+                                .FluentAddBaseValues(payload.LoggerProperties);
+
+                            // Try and handle message
+                            var resultPayload = await childLogger.TrackDurationAsync(
+                                "WorkerActivator", () => Activator.Continue(payload, childLogger.NewChildLogger()));
+
+                            childLogger.FluentAddValue("ContinuationWasHandled", resultPayload != null);
+
+                            // Deals with error case
+                            if (resultPayload != null)
+                            {
+                                childLogger.FluentAddValue("ContinuationPayloadPostStatus", resultPayload.Status)
+                                    .FluentAddValue("ContinuationPayloadPostRetryAfter", resultPayload.RetryAfter)
+                                    .FluentAddValue("ContinuationPayloadIsFinal", resultPayload.Input == null);
+                            }
                         }
 
                         // Delete message when we are done
@@ -143,6 +148,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         {
             return JsonConvert.DeserializeObject<ContinuationQueuePayload>(
                 message.AsString, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
+        }
+
+        private bool QueueMessageIsValid(CloudQueueMessage message, IDiagnosticsLogger logger)
+        {
+            var isValidDequeueCount = message.DequeueCount <= 10;
+
+            logger.FluentAddValue("MessageIsValidDequeueCount", isValidDequeueCount);
+
+            return isValidDequeueCount;
         }
     }
 }
