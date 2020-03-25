@@ -50,7 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 logger,
                 queueClientProvider.Object,
                 mappingClient.Object,
-                hostUtils);
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
 
             Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
         }
@@ -67,7 +68,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 logger,
                 queueClientProvider.Object,
                 mappingClient.Object,
-                hostUtils);
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
 
             Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
         }
@@ -91,13 +93,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 logger,
                 queueClientProvider.Object,
                 mappingClient.Object,
-                hostUtils);
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
 
             var connectionRequest = new ConnectionRequest
             {
                 WorkspaceId = "a68c43fa9e015e45e046c85d502ec5e4b774",
                 Port = 8080,
-                Token = "super_secret_token"
+                Token = "super_secret_token",
+                VSLiveShareApiEndpoint = MockPortForwardingAppSettings.Settings.VSLiveShareApiEndpoint,
             };
             Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
             Assert.Equal(
@@ -128,13 +132,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 logger,
                 queueClientProvider.Object,
                 mappingClient.Object,
-                hostUtils);
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
 
             var connectionRequest = new ConnectionRequest
             {
                 WorkspaceId = "a68c43fa9e015e45e046c85d502ec5e4b774",
                 Port = 8080,
-                Token = "super_secret_token"
+                Token = "super_secret_token",
+                VSLiveShareApiEndpoint = MockPortForwardingAppSettings.Settings.VSLiveShareApiEndpoint,
             };
             Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
             Assert.Equal(
@@ -169,7 +175,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 logger,
                 queueClientProvider.Object,
                 mappingClient.Object,
-                hostUtils);
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
             
             Assert.Equal(StatusCodes.Status504GatewayTimeout, context.Response.StatusCode);
         }

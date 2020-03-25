@@ -26,5 +26,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Model
         /// Gets or sets the list of port forwarding hosts.
         /// </summary>
         public IEnumerable<HostsConfig> HostsConfigs { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the LiveShare API endpoint to be used.
+        /// </summary>
+        public string VSLiveShareApiEndpoint { get; set; } = default!;
     }
 }

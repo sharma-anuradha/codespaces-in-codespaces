@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// Gets or sets Cascade / Access token accepted by LS agent.
         /// </summary>
         public string Token { get; set; }
+
+        /// <summary>
+        /// Gets or sets the LiveShare API endpoint to be used.
+        /// </summary>
+        public string VSLiveShareApiEndpoint { get; set; }
     }
 }

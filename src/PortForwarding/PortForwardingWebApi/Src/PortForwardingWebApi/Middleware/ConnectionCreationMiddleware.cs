@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middleware
 {
@@ -41,14 +42,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
         /// <param name="logger">Target logger.</param>
         /// <param name="queueClientProvider">Queue client provider.</param>
         /// <param name="mappingClient">The mappings client.</param>
-        /// <param name="hostUtils">the host utils.</param>
+        /// <param name="hostUtils">The host utils.</param>
+        /// <param name="appSettings">The service settings.</param>
         /// <returns>Task.</returns>
         public async Task InvokeAsync(
             HttpContext context,
             IDiagnosticsLogger logger,
             IServiceBusQueueClientProvider queueClientProvider,
             IAgentMappingClient mappingClient,
-            PortForwardingHostUtils hostUtils)
+            PortForwardingHostUtils hostUtils,
+            PortForwardingAppSettings appSettings)
         {
             // 1. Extract connection information from the request context.
             var token = string.Empty;
@@ -96,6 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 WorkspaceId = sessionDetails.WorkspaceId,
                 Port = sessionDetails.Port,
                 Token = token,
+                VSLiveShareApiEndpoint = appSettings.VSLiveShareApiEndpoint,
             };
 
             await logger.OperationScopeAsync(
