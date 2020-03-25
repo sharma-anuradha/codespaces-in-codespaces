@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "compile": "webpack",
+    "watch": "webpack -w",
     "postinstall": "yarn compile"
   },
   "devDependencies": {

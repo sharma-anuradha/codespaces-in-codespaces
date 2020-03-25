@@ -20,7 +20,7 @@ self.addEventListener('load', async () => {
         trace.error(e);
 
         try {
-            await postMessageChannel.reportResult('error', e.message);
+            await postMessageChannel.reportResult('error', `Unexpected error: ${e.message}`);
         } catch (err) {
             trace.error(err);
             // no-op

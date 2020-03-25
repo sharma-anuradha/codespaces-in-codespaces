@@ -18,10 +18,11 @@ export class AuthService {
         const { token } = info;
 
         const keys = await createKeys(token);
-        if (!keys) {
+        if (!keys || !keys.length) {
             trace.error(`Cannot create the encryption keys.`);
-            return null;
+            throw new Error('Cannot get the encryption keys, is the Cascade token correct?');
         }
+
         setKeychainKeys(keys);
 
         const key = this.getKeychainPartnerInfoKey(info.environmentId)
