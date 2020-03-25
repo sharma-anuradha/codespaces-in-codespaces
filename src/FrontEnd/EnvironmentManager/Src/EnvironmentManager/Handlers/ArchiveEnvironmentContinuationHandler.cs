@@ -70,6 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("EnvironmentId", operationInput.EnvironmentId)
+                .FluentAddValue("ArchiveSubStatus", operationInput.ArchiveStatus)
+                .FluentAddValue("ArchiveLastStateUpdated", operationInput.LastStateUpdated)
+                .FluentAddValue("ArchiveReason", operationInput.Reason)
+                .FluentAddValue("ArchiveResourceId", operationInput?.ArchiveResource?.ResourceId);
+
             // If the blob is no longer shutdown, then we should fail and cleanup
             if (!IsEnvironmentStateValidForArchive(operationInput, record.Value, logger))
             {
