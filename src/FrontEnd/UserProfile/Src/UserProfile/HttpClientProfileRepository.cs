@@ -2,8 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -38,7 +41,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
                 $"{LogBaseName}_getcurrentuserprofile",
                 async (childLogger) =>
                 {
-                    var response = await HttpClientProvider.HttpClient.GetAsync("profile?scope=programs");
+                    var response = await childLogger.RetryOperationScopeAsync(
+                        $"{LogBaseName}_getcurrentuserprofile_getprofileprograms",
+                        async (retryLogger) =>
+                        {
+                            var operationTimeout = TimeSpan.FromSeconds(5);
+                            var cts = new CancellationTokenSource();
+                            cts.CancelAfter(operationTimeout);
+
+                            return await HttpClientProvider.HttpClient.GetAsync("profile?scope=programs", cts.Token);
+                        });
+
                     logger.AddClientHttpResponseDetails(response);
 
                     if (response.StatusCode == HttpStatusCode.Unauthorized)
