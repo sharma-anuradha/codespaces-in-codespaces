@@ -4,13 +4,14 @@
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
-    "compile": "webpack"
+    "compile": "webpack",
+    "postinstall": "yarn compile"
   },
   "devDependencies": {
-    "ts-loader": "^6.2.1",
+    "ts-loader": "^6.1.0",
     "typescript": "^3.5.3",
     "vso-client-core": "link:../vso-client-core",
-    "webpack": "^4.42.0",
-    "webpack-cli": "^3.3.11"
+    "webpack": "4.28.3",
+    "webpack-cli": "^3.3.8"
   }
 }
