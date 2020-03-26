@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             if (!string.IsNullOrWhiteSpace(heartBeat.EnvironmentId))
             {
                 var environment = await environmentManager.GetAsync(heartBeat.EnvironmentId, logger);
-                if (environment.Type != EnvironmentType.StaticEnvironment)
+                if (environment.Type == EnvironmentType.StaticEnvironment)
                 {
                     shouldSendBackendTask = false;
                 }
