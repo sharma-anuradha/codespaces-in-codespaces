@@ -69,35 +69,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                     if (jobResultData.JobState == JobState.Succeeded)
                     {
-                        // BYPASS WHILST POOLS ARE UPDATING
-                        /*
                         // Extract mount file share result
                         var mountFileShareResult = jobResultData.OperationResults.Where(x => x.Name == "MountFileShare").SingleOrDefault();
 
                         logger.FluentAddValue("JobFoundMountFileShareReult", mountFileShareResult != null);
 
-                        // Bail if we didn't find the result
-                        if (mountFileShareResult == null)
+                        // NOTE: in the future we should switch back to this.
+                        // // Bail if we didn't find the result
+                        // if (mountFileShareResult == null)
+                        // {
+                        //     throw new ArgumentNullException("Expected mount file share result was not found.");
+                        // }
+
+                        // NOTE: this is setup this way till we can switch back to the above
+                        if (mountFileShareResult != null)
                         {
-                            throw new ArgumentNullException("Expected mount file share result was not found.");
+                            // Validate that we have needed data
+                            var computeResourceId = mountFileShareResult.Data.GetValueOrDefault("ComputeResourceId");
+                            var storageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageResourceId");
+                            var archiveStorageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageArchiveResourceId");
+
+                            logger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
+                                .FluentAddBaseValue("StorageResourceId", storageResourceId)
+                                .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
+
+                            // Update environment to finalized state
+                            handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
+                                cloudEnvironment,
+                                Guid.Parse(storageResourceId),
+                                string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
+                                childLogger.NewChildLogger());
                         }
-
-                        // Validate that we have needed data
-                        var computeResourceId = mountFileShareResult.Data.GetValueOrDefault("ComputeResourceId");
-                        var storageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageResourceId");
-                        var archiveStorageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageArchiveResourceId");
-
-                        logger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
-                            .FluentAddBaseValue("StorageResourceId", storageResourceId)
-                            .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
-
-                        // Update environment to finalized state
-                        handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
-                            cloudEnvironment,
-                            Guid.Parse(storageResourceId),
-                            string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
-                            childLogger.NewChildLogger());
-                        */
                     }
                     else
                     {
