@@ -242,7 +242,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var operationResult = (ContinuationResult)null;
             try
             {
-                operationResult = await RunOperationCoreAsync(input, record, logger.NewChildLogger());
+                operationResult = await RunOperationCoreAsync(input, record, logger);
             }
             catch (Exception e)
             {
@@ -313,7 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var stateChanged = await UpdateRecordAsync(
                 input,
                 record,
-                (resource) =>
+                (resource, innerLogger) =>
                 {
                     var changed = false;
 
@@ -371,7 +371,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected async Task<bool> UpdateRecordAsync(
             TI input,
             ResourceRecordRef record,
-            Func<ResourceRecord, bool> mutateRecordCallback,
+            Func<ResourceRecord, IDiagnosticsLogger, bool> mutateRecordCallback,
             IDiagnosticsLogger logger)
         {
             var stateChanged = false;
@@ -379,13 +379,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // retry till we succeed
             await logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_status_update",
-                async (IDiagnosticsLogger innerLogger) =>
+                async (innerLogger) =>
                 {
                     // Obtain a fresh record.
-                    record.Value = (await FetchReferenceAsync(Guid.Parse(record.Value.Id), logger)).Value;
+                    record.Value = (await FetchReferenceAsync(Guid.Parse(record.Value.Id), innerLogger)).Value;
 
                     // Mutate record
-                    stateChanged = mutateRecordCallback(record.Value);
+                    stateChanged = mutateRecordCallback(record.Value, innerLogger);
 
                     // Only need to update things if something has changed
                     if (stateChanged)

@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -84,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Handle compute case only, don't need to do anything with storage here as its already circuited.
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                return await ComputeProvider.ShutdownAsync((VirtualMachineProviderShutdownInput)input.OperationInput, logger.WithValues(new LogValueSet()));
+                return await ComputeProvider.ShutdownAsync((VirtualMachineProviderShutdownInput)input.OperationInput, logger.NewChildLogger());
             }
 
             throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");

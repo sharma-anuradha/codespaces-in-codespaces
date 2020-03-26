@@ -230,11 +230,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Run create operation
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                result = await ComputeProvider.CreateAsync((VirtualMachineProviderCreateInput)input.OperationInput, logger.WithValues(new LogValueSet()));
+                result = await ComputeProvider.CreateAsync((VirtualMachineProviderCreateInput)input.OperationInput, logger.NewChildLogger());
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
             {
-                result = await StorageProvider.CreateAsync((FileShareProviderCreateInput)input.OperationInput, logger.WithValues(new LogValueSet()));
+                result = await StorageProvider.CreateAsync((FileShareProviderCreateInput)input.OperationInput, logger.NewChildLogger());
             }
             else
             {
@@ -253,7 +253,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                         resource.Value.AzureResourceInfo = result.AzureResourceInfo;
 
-                        resource.Value = await ResourceRepository.UpdateAsync(resource.Value, logger.WithValues(new LogValueSet()));
+                        resource.Value = await ResourceRepository.UpdateAsync(resource.Value, innerLogger.NewChildLogger());
                     });
             }
 

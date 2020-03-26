@@ -137,12 +137,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             {
                 if (resource.Value.Type == ResourceType.ComputeVM)
                 {
-                    result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)input.OperationInput, logger.WithValues(new LogValueSet()));
+                    result = await ComputeProvider.DeleteAsync((VirtualMachineProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
                 }
                 else if (resource.Value.Type == ResourceType.StorageFileShare
                     || resource.Value.Type == ResourceType.StorageArchive)
                 {
-                    result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)input.OperationInput, logger.WithValues(new LogValueSet()));
+                    result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
                 }
                 else
                 {

@@ -108,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             await UpdateRecordAsync(
                 input,
                 blobReference,
-                (blobRecord) =>
+                (blobRecord, innerLogger) =>
                 {
                     // Update key Azure resource info
                     blobRecord.AzureResourceInfo = archiveStorageInfo.AzureResourceInfo;
@@ -141,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationCoreAsync(StartArchiveContinuationInput input, ResourceRecordRef blobReference, IDiagnosticsLogger logger)
         {
-            var result = await StorageProvider.ArchiveAsync((FileShareProviderArchiveInput)input.OperationInput, logger.WithValues(new LogValueSet()));
+            var result = await StorageProvider.ArchiveAsync((FileShareProviderArchiveInput)input.OperationInput, logger.NewChildLogger());
 
             // Update the total size of the shunk drive
             if (result.Status == OperationState.Succeeded)
@@ -153,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 var blobContainerName = blobRecordDetails.ArchiveStorageBlobContainerName;
                 var blobName = blobRecordDetails.ArchiveStorageBlobName;
                 var cloudBlobReference = await StorageFileShareProviderHelper.FetchBlobAsync(
-                    blobReference.Value.AzureResourceInfo, null, blobContainerName, blobName, logger);
+                    blobReference.Value.AzureResourceInfo, null, blobContainerName, blobName, logger.NewChildLogger());
                 var blob = cloudBlobReference.Blob;
 
                 // Trigger fetch of attributes so we can geet the length
@@ -170,7 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 await UpdateRecordAsync(
                     input,
                     blobReference,
-                    (blobRecord) =>
+                    (blobRecord, innerLogger) =>
                     {
                         // Save extra blob info to the storage details
                         blobRecordDetails = blobRecord.GetStorageDetails();

@@ -193,7 +193,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             var operationResult = (ContinuationResult)null;
             try
             {
-                operationResult = await RunOperationCoreAsync(input, record, logger.NewChildLogger());
+                operationResult = await RunOperationCoreAsync(input, record, logger);
             }
             catch (Exception e)
             {
@@ -257,10 +257,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             var stateChanged = await UpdateRecordAsync(
                 input,
                 record,
-                (resource) =>
+                (resource, innerLogger) =>
                 {
                     // Get transition
-                    var transition = FetchOperationTransition(input, record, logger);
+                    var transition = FetchOperationTransition(input, record, innerLogger);
 
                     // Update transition
                     transition.Reason = input.Reason;
@@ -294,7 +294,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         protected async Task<bool> UpdateRecordAsync(
             TI input,
             EnvironmentRecordRef record,
-            Func<CloudEnvironment, Task<bool>> mutateRecordCallback,
+            Func<CloudEnvironment, IDiagnosticsLogger, Task<bool>> mutateRecordCallback,
             IDiagnosticsLogger logger)
         {
             var stateChanged = false;
@@ -302,13 +302,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             // retry till we succeed
             await logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_status_update",
-                async (IDiagnosticsLogger innerLogger) =>
+                async (innerLogger) =>
                 {
                     // Obtain a fresh record.
-                    record.Value = (await FetchReferenceAsync(input, logger)).Value;
+                    record.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
 
                     // Mutate record
-                    stateChanged = await mutateRecordCallback(record.Value);
+                    stateChanged = await mutateRecordCallback(record.Value, innerLogger);
 
                     // Only need to update things if something has changed
                     if (stateChanged)

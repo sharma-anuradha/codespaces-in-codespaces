@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 await UpdateRecordAsync(
                     operationInput,
                     record,
-                    (environment) =>
+                    (environment, innerLogger) =>
                     {
                         return Task.FromResult(environment.Transitions.Archiving.ResetStatus(false));
                     },
@@ -271,10 +271,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             var switchedStorage = await UpdateRecordAsync(
                 operationInput,
                 record,
-                async (environment) =>
+                async (environment, innerLogger) =>
                 {
                     // Deal with case where the state has changed between retries
-                    if (!IsEnvironmentStateValidForArchive(operationInput, record.Value, logger))
+                    if (!IsEnvironmentStateValidForArchive(operationInput, record.Value, innerLogger))
                     {
                         return false;
                     }
@@ -290,11 +290,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     };
 
                     // Update state to be archived
-                    await EnvironmentStateManager.SetEnvironmentStateAsync(environment, CloudEnvironmentState.Archived, "ArchiveComplete", null, logger);
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(
+                        environment, CloudEnvironmentState.Archived, "ArchiveComplete", null, innerLogger);
 
                     return true;
                 },
-                logger.NewChildLogger());
+                logger);
 
             // Bail out if we couldn't update
             if (!switchedStorage)
