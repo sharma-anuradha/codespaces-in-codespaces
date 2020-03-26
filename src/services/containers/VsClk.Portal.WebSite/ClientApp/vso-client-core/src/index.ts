@@ -1,5 +1,5 @@
 // auth
-export { postMessageChannel } from './postMessageChannel/postMessageChannel';
+export { PostMessageChannel } from './postMessageChannel/postMessageChannel';
 export { authService } from './auth/authService';
 
 // keychain

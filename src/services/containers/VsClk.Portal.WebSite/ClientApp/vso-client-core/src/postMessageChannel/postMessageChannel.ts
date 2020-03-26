@@ -90,5 +90,3 @@ export class PostMessageChannel {
         signal.complete(data);
     }
 };
-
-export const postMessageChannel = new PostMessageChannel();

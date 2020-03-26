@@ -1,5 +1,5 @@
 
-import { postMessageChannel, authService, createTrace, isInIframe } from 'vso-client-core';
+import { PostMessageChannel, authService, createTrace, isInIframe } from 'vso-client-core';
 
 const trace = createTrace(`vso-platform-auth:auth-page`);
 
@@ -7,6 +7,7 @@ if (!isInIframe()) {
     throw new Error('Not in iframe.');
 }
 
+const postMessageChannel = new PostMessageChannel();
 self.addEventListener('load', async () => {
     try {
         const info = await postMessageChannel.getRepoInfo();
