@@ -1,4 +1,3 @@
-
 import { NewEnvironment } from '../../components/newEnvironment/new-environment';
 import { NewPlan } from '../../components/newPlan/new-plan';
 import { EnvironmentsPanel } from '../../components/environments/environments';
@@ -7,6 +6,7 @@ import { WorkbenchPage } from '../../components/workbenchPage/workbenchPage';
 import { LiveShareWorkbench } from '../../components/liveShareWorkbench/liveShareWorkbench';
 import { GitHubWorkbench } from '../../components/gitHubWorkbench/gitHubWorkbench';
 import { GistWorkbench } from '../../components/gistWorkbench/gistWorkbench';
+import { AzDevWorkbench } from '../../components/azDevWorkbench/azDevWorkbench';
 import { GitHubLogin } from '../../components/gitHubLogin/gitHubLogin';
 import { AzDevLogin } from '../../components/gitHubLogin/azDevLogin';
 import { BlogPost } from '../../BlogPost';
@@ -25,6 +25,7 @@ import {
     liveShareSessionPath,
     githubPath,
     gistPath,
+    azDevPath,
 } from '../../routerPaths';
 
 import { IRoute } from '../../interfaces/IRoute';
@@ -96,6 +97,12 @@ export const routes: IRoute[] = [
         path: gistPath,
         exact: false,
         component: GistWorkbench,
+    },
+    {
+        authenticated: false,
+        path: azDevPath,
+        exact: false,
+        component: AzDevWorkbench,
     },
     {
         authenticated: false,

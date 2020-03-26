@@ -5,6 +5,7 @@ import { createTrace } from 'vso-client-core';
 import { authService } from '../services/authService';
 import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
 import { localStorageKeychain } from 'vso-client-core';
+import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -101,11 +102,21 @@ class GistPadStrategy implements IAuthStrategy {
     }
 }
 
+class AzureDevOpsStrategy implements IAuthStrategy {
+    canHandleService(service: string, account: string): boolean {
+        return service === 'vscode-azdev' && account === 'accesstoken';
+    }
+
+    async getToken(service: string, account: string): Promise<string | null> {
+        return getStoredAzDevToken();
+    }
+}
+
 class GitHubStrategy implements IAuthStrategy {
     canHandleService(service: string, account: string): boolean {
-        return service === 'vso-github' && (
-            account.startsWith('github-token_') ||
-            account.startsWith('cascade-token_')
+        return (
+            service === 'vso-github' &&
+            (account.startsWith('github-token_') || account.startsWith('cascade-token_'))
         );
     }
 
@@ -113,8 +124,8 @@ class GitHubStrategy implements IAuthStrategy {
         if (account.startsWith('github-token_')) {
             return await getStoredGitHubToken();
         }
-        
-        return await localStorageKeychain.get(`vso-${account}`) || null;
+
+        return (await localStorageKeychain.get(`vso-${account}`)) || null;
     }
 }
 
@@ -189,4 +200,5 @@ export const credentialsProvider = new CredentialsProvider([
     new LiveShareWebStrategy(),
     new GistPadStrategy(),
     new GitHubStrategy(),
+    new AzureDevOpsStrategy(),
 ]);

@@ -10,4 +10,5 @@ export const pageNotFoundPath = '/pageNotFound';
 export const liveShareSessionPath = '/liveshare/:id';
 export const githubPath = '/github/:org/:repoId/:commitId?';
 export const gistPath = '/gist/:id';
+export const azDevPath = '/azdev/:org/:project/:repo';
 export const settingsPath = '/settings';
