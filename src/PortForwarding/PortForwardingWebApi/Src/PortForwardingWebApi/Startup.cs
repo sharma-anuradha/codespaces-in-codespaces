@@ -92,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             }
 
             services.AddAgentMappingClient(portForwardingSettings, IsRunningInAzure());
+            services.AddSingleton<IConnectionEstablishedMessageHandler, ConnectionEstablishedMessageHandler>();
 
             services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
 

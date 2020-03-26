@@ -70,19 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 AgentName = AgentName,
                 AgentUid = AgentUid,
             };
+
             var message = new Message(JsonSerializer.SerializeToUtf8Bytes(
-                connectionInfo,
-                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))
-            {
-                SessionId = connectionInfo.GetMessagingSessionId(),
-                Label = MessageLabels.ConnectionEstablishing,
-            };
-
-            await client.SendAsync(message);
-
-            await Task.Delay(TimeSpan.FromSeconds(5));
-
-            message = new Message(JsonSerializer.SerializeToUtf8Bytes(
                 connectionInfo,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }))
             {

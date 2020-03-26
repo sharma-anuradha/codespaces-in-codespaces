@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
@@ -11,7 +10,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections
 {
@@ -20,32 +18,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
     /// </summary>
     public class EstablishedConnectionsWorker : BackgroundService
     {
-        private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
-
         /// <summary>
         /// Initializes a new instance of the <see cref="EstablishedConnectionsWorker"/> class.
         /// </summary>
         /// <param name="queueClientProvider">The service bus queue provider.</param>
+        /// <param name="messageHandler">The message handler.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="agentMappingClient">The agent mapping client.</param>
         public EstablishedConnectionsWorker(
-                IServiceBusQueueClientProvider queueClientProvider,
-                IDiagnosticsLogger logger,
-                IAgentMappingClient agentMappingClient)
+            IServiceBusQueueClientProvider queueClientProvider,
+            IConnectionEstablishedMessageHandler messageHandler,
+            IDiagnosticsLogger logger)
         {
             QueueClientProvider = Requires.NotNull(queueClientProvider, nameof(queueClientProvider));
+            MessageHandler = Requires.NotNull(messageHandler, nameof(messageHandler));
             Logger = Requires.NotNull(logger, nameof(logger));
-            AgentMappingClient = Requires.NotNull(agentMappingClient, nameof(agentMappingClient));
         }
 
         private IServiceBusQueueClientProvider QueueClientProvider { get; }
 
-        private IDiagnosticsLogger Logger { get; }
+        private IConnectionEstablishedMessageHandler MessageHandler { get; }
 
-        private IAgentMappingClient AgentMappingClient { get; }
+        private IDiagnosticsLogger Logger { get; }
 
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -62,24 +55,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
                 })
                 {
                     MaxConcurrentSessions = 1,
-                    AutoComplete = true, // We'll have the relevant information for debugging in logs so we can get rid of the message.
+                    AutoComplete =
+                        true, // We'll have the relevant information for debugging in logs so we can get rid of the message.
                 });
         }
 
-        private Task ProcessSessionMessage(IMessageSession session, Message message, CancellationToken cancellationToken)
+        private Task ProcessSessionMessage(
+            IMessageSession session,
+            Message message,
+            CancellationToken cancellationToken)
         {
-            // We don't care about establishing connections in case of worker.
-            if (message.Label == MessageLabels.ConnectionEstablishing)
-            {
-                return Task.CompletedTask;
-            }
-
             return Logger.OperationScopeAsync(
                 "established_connection_worker_process_connection_established",
                 async (childLogger) =>
                 {
-                    var connection = JsonSerializer.Deserialize<ConnectionDetails>(message.Body, jsonSerializerOptions);
-                    await AgentMappingClient.CreateAgentConnectionMappingAsync(connection, childLogger);
+                    await MessageHandler.ProcessSessionMessageAsync(message, childLogger, cancellationToken);
 
                     await session.CloseAsync();
                 },
