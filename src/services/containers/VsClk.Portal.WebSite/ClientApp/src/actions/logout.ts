@@ -12,6 +12,7 @@ const exemptLocalStorageItems = [
     'azDevAccessTokenEncrypted',
     'githubAccessTokenEncrypted',
     'vso-featureset',
+    'vscode.baseTheme',
 ];
 const alwaysExemptLocalStorageItems = ['vso_machine_id', 'vso.marketing.blog.post.seen'];
 

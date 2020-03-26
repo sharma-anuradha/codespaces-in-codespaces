@@ -66,6 +66,9 @@ export class UserDataProvider implements IFileSystemProvider {
                         '{"workbench.colorTheme": "Github"}'
                     );
                 }
+                localStorage.setItem('vscode.baseTheme', 'vs');
+            } else {
+                localStorage.setItem('vscode.baseTheme', 'vs-dark');
             }
         }
     }
