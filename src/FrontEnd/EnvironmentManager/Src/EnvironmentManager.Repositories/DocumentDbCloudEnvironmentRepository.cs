@@ -164,8 +164,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 @"SELECT TOP @count VALUE c
                 FROM c
                 WHERE STARTSWITH(c.id, @idShard)
-                    AND ((IS_DEFINED(c.controlPlaneLocation) = false AND c.location = @controlPlaneLocation)
-                        OR (IS_DEFINED(c.controlPlaneLocation) = true AND c.controlPlaneLocation = @controlPlaneLocation))
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)
                     AND (
                         c.transitions.archiving.status = @operationStateFailed
                         OR c.transitions.archiving.status = @operationStateCancelled
@@ -210,8 +212,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     AND c.lastStateUpdated < @cutoffTime
                     AND c.transitions.archiving.status = null
                     AND CONTAINS(c.skuName, @targetSku)
-                    AND ((IS_DEFINED(c.controlPlaneLocation) = false AND c.location = @controlPlaneLocation)
-                        OR (IS_DEFINED(c.controlPlaneLocation) = true AND c.controlPlaneLocation = @controlPlaneLocation))",
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
                 new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@count", Value = count },
@@ -237,8 +241,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 @"SELECT VALUE COUNT(1)
                 FROM c
                 WHERE c.transitions.archiving.status = @activeStatus
-                    AND ((IS_DEFINED(c.controlPlaneLocation) = false AND c.location = @controlPlaneLocation)
-                        OR (IS_DEFINED(c.controlPlaneLocation) = true AND c.controlPlaneLocation = @controlPlaneLocation))",
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
                 new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@activeStatus", Value = OperationState.InProgress.ToString() },

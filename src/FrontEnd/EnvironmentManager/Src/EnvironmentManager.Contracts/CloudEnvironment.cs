@@ -6,9 +6,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -21,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public class CloudEnvironment : TaggedEntity
     {
+        private AzureLocation? controlPlaneLocation = null;
         private string friendlyName;
         private string friendlyNameInLowerCase;
 
@@ -190,7 +189,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "controlPlaneLocation")]
         [JsonConverter(typeof(StringEnumConverter))]
-        public AzureLocation ControlPlaneLocation { get; set; }
+        public AzureLocation ControlPlaneLocation
+        {
+            get { return controlPlaneLocation ?? Location; }
+            set { controlPlaneLocation = value; }
+        }
 
         /// <summary>
         /// Gets or sets the environment storage info.
