@@ -4,6 +4,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.Azure.ServiceBus.Core;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -39,6 +40,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
             var connectionString = await controlPlaneAzureResourceAccessor.GetStampServiceBusConnectionStringAsync(logger);
 
             return new SessionClient(connectionString, queueName);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IMessageSender> GetMessageSender(string queueName, IDiagnosticsLogger logger)
+        {
+            var connectionString = await controlPlaneAzureResourceAccessor.GetStampServiceBusConnectionStringAsync(logger);
+
+            return new MessageSender(connectionString, queueName);
         }
     }
 }
