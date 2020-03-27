@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -82,9 +83,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 var azure = await azureClientFactory.GetAzureClientAsync(Guid.Parse(subscriptionId));
                 foreach (var resourceGroup in await azure.ResourceGroups.ListAsync())
                 {
-                    if (resourceGroup.Name.EndsWith("-{ResourceGroupPostFix}"))
+                    if (resourceGroup.Name.EndsWith($"-{ResourceNameBuilder.ResourceGroupPostFix}"))
                     {
-                        var alias = resourceGroup.Name.Replace("-{ResourceGroupPostFix}", string.Empty);
+                        var alias = resourceGroup.Name.Replace($"-{ResourceNameBuilder.ResourceGroupPostFix}", string.Empty);
                         aliasStamps.Add(alias);
 
                         if (!this.BareOutput)
