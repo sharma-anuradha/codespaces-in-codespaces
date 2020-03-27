@@ -92,12 +92,12 @@ async function linkBuiltinStaticExtensions(quality) {
 
     const builtinExtensionsPath = path.join(
         vscodeServerAssetsTargetPath,
-        requiredCommitId,
+        requiredCommitId.substr(0, 7),
         'extensions'
     );
 
     const targetExtensionsFolderPath = path.join(node_modules, 'extensions');
-    const builtinExtensionsTargetPath = path.join(targetExtensionsFolderPath, requiredCommitId);
+    const builtinExtensionsTargetPath = path.join(targetExtensionsFolderPath, requiredCommitId.substr(0, 7));
 
     await ensureDir(targetExtensionsFolderPath);
     const targetExists = await exists(builtinExtensionsTargetPath);
