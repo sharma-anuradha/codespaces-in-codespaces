@@ -29,6 +29,7 @@ import { wait } from '../dependencies';
 import { sendTelemetry } from '../utils/telemetry';
 import { GitCredentialService } from './services/gitCredentialService';
 import { isHostedOnGithub } from '../utils/isHostedOnGithub';
+import { useActionContext } from '../actions/middleware/useActionContext';
 import { getVSCodeVersion } from '../utils/featureSet';
 
 export type RemoteVSCodeServerDescription = {
@@ -74,7 +75,9 @@ export class EnvConnector {
 
     private async startVscodeServer(
         workspaceClient: WorkspaceClient,
-        quality: VSCodeQuality
+        quality: VSCodeQuality,
+        environmentId: string,
+        serviceEndpoint: string,
     ): Promise<number> {
         if (this.vscodeServerPort && !this.vscodeServerPort.isRejected) {
             // This port will remain shared even if we lose connection.
@@ -99,6 +102,8 @@ export class EnvConnector {
                 quality: vscodeConfig.quality,
                 extensions,
                 telemetry: true,
+                environmentId,
+                serviceEndpoint,
             };
 
             trace(`Starting VSCode server: `, options);
@@ -267,9 +272,11 @@ export class EnvConnector {
 
     private async getSharedVscodeServer(
         workspaceClient: WorkspaceClient,
-        quality: VSCodeQuality
+        quality: VSCodeQuality,
+        environmentId: string,
+        serviceEndpoint: string,
     ): Promise<vsls.SharedServer> {
-        const port = await this.startVscodeServer(workspaceClient, quality);
+        const port = await this.startVscodeServer(workspaceClient, quality, environmentId, serviceEndpoint);
         trace(`Started VSCode server started on port [${port}].`);
 
         trace(`Forwarding the VSCode port [${port}].`);
@@ -295,6 +302,12 @@ export class EnvConnector {
             return await this.initializeConnectionSignal.promise;
         }
 
+        const configuration = useActionContext().state.configuration;
+        if (!configuration) {
+            throw new Error('Configuration must be fetched before calling EnvReg service.');
+        }
+        const { environmentRegistrationEndpoint } = configuration;
+
         this.initializeConnectionSignal = new Signal();
 
         try {
@@ -310,7 +323,7 @@ export class EnvConnector {
             const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
                 vsls.StreamManagerService
             );
-            const vscodeServer = await this.getSharedVscodeServer(workspaceClient, quality);
+            const vscodeServer = await this.getSharedVscodeServer(workspaceClient, quality, environmentInfo.id, environmentRegistrationEndpoint);
 
             trace(`Creating the stream.`);
             this.channelOpener = workspaceClient.createServerStream(
