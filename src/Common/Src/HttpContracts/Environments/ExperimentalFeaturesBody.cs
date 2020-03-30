@@ -25,5 +25,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments
         [JsonProperty(Required = Required.Default)]
         [Default(false)]
         public bool NewTerminal { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to queue resource allocation..
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        [Default(false)]
+        public bool QueueResourceAllocation { get; set; }
     }
 }

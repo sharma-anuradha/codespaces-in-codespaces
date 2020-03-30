@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
@@ -47,6 +48,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Reason = reason,
             };
             var target = ArchiveEnvironmentContinuationHandler.DefaultQueueTarget;
+
+            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ContinuationResult> CreateAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(environmentId, reason);
+
+            var input = new CreateEnvironmentContinuationInput()
+            {
+                EnvironmentId = environmentId,
+                LastStateUpdated = lastStateUpdated,
+                CloudEnvironmentOptions = cloudEnvironmentOptions,
+                StartCloudEnvironmentParameters = startCloudEnvironmentParameters,
+                Reason = reason,
+            };
+
+            var target = CreateEnvironmentContinuationHandler.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }

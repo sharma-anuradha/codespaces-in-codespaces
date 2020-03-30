@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets a value indicating whether to use the new terminal output for this environment.
         /// </summary>
         public bool NewTerminal { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to queue the resource allocation.
+        /// </summary>
+        public bool QueueResourceAllocation { get; set; }
     }
 }

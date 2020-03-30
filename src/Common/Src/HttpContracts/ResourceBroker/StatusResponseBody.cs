@@ -37,6 +37,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         public ResourceType Type { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether record is ready.
+        /// </summary>
+        [JsonProperty]
+        public bool IsReady { get; set; }
+
+        /// <summary>
         /// Gets or sets the Provisioning Status.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]

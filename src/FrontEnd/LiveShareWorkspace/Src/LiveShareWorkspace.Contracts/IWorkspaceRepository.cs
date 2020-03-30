@@ -16,9 +16,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// Create a workspace.
         /// </summary>
         /// <param name="workspace">The workspace request.</param>
+        /// <param name="authToken">auth Token.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>A workspace response.</returns>
-        Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, IDiagnosticsLogger logger);
+        Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, string authToken, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Delete a workspace.

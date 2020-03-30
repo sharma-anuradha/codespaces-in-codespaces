@@ -155,5 +155,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Task<CloudEnvironmentAvailableSettingsUpdates> GetAvailableSettingsUpdatesAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Start Compute.
+        /// </summary>
+        /// <param name="cloudEnvironment">cloud environment.</param>
+        /// <param name="computeResourceId">compute resource id.</param>
+        /// <param name="storageResourceId">storage resource id.</param>
+        /// <param name="archiveStorageResourceId">archive storage id.</param>
+        /// <param name="cloudEnvironmentOptions">cloud environment options.</param>
+        /// <param name="startCloudEnvironmentParameters">start environment params.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>resule.</returns>
+        Task<bool> StartComputeAsync(CloudEnvironment cloudEnvironment, Guid computeResourceId, Guid storageResourceId, Guid? archiveStorageResourceId, CloudEnvironmentOptions cloudEnvironmentOptions, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Create workspace.
+        /// </summary>
+        /// <param name="type">Environment type.</param>
+        /// <param name="cloudEnvironmentId">cloud environment id.</param>
+        /// <param name="computeResourceId">compute resource id.</param>
+        /// <param name="connectionServiceUri">live share uri.</param>
+        /// <param name="sessionPath">session path.</param>
+        /// <param name="userAuthToken">user auth token.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<ConnectionInfo> CreateWorkspace(EnvironmentType type, string cloudEnvironmentId, Guid computeResourceId, Uri connectionServiceUri, string sessionPath, string userAuthToken, IDiagnosticsLogger logger);
     }
 }

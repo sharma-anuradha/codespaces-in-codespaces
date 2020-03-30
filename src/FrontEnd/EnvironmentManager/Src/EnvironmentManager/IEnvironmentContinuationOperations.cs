@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -26,6 +27,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Task<ContinuationResult> ArchiveAsync(
             Guid environmentId,
             DateTime lastStateUpdated,
+            string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Resume environment.
+        /// </summary>
+        /// <param name="environmentId">target env id.</param>
+        /// <param name="lastStateUpdated">Target last state updated.</param>
+        /// <param name="cloudEnvironmentOptions">env input.</param>
+        /// <param name="startCloudEnvironmentParameters">env parameters.</param>
+        /// <param name="reason">reason.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<ContinuationResult> CreateAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
             string reason,
             IDiagnosticsLogger logger);
     }

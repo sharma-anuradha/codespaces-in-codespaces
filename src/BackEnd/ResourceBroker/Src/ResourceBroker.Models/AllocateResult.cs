@@ -43,5 +43,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets the time the resource was created.
         /// </summary>
         public DateTime Created { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether record is ready.
+        /// </summary>
+        public bool IsReady { get; set; }
     }
 }

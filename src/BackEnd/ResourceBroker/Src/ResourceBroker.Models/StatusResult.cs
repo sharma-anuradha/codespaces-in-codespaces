@@ -35,6 +35,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         public ResourceType Type { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether record is ready.
+        /// </summary>
+        public bool IsReady { get; set; }
+
+        /// <summary>
         /// Gets or sets the Provisioning Status.
         /// </summary>
         public OperationState? ProvisioningStatus { get; set; }

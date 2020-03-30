@@ -22,6 +22,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Created,
 
         /// <summary>
+        /// Waiting for resource allocation.
+        /// </summary>
+        Queued,
+
+        /// <summary>
         /// Readying the environment.
         /// </summary>
         Provisioning,

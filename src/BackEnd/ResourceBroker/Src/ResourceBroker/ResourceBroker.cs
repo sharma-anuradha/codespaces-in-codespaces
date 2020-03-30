@@ -387,6 +387,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         SkuName = recordDetails.SkuName,
                         Location = recordDetails.Location,
                         Type = record.Type,
+                        IsReady = record.IsReady,
                         ProvisioningStatus = record.ProvisioningStatus,
                         ProvisioningStatusChanged = record.ProvisioningStatusChanged,
                         StartingStatus = record.StartingStatus,

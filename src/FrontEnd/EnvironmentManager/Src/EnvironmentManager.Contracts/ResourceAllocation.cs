@@ -63,5 +63,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             get { return keepAlive ?? (keepAlive = new ResourceAllocationKeepAlive()); }
             set { keepAlive = value; }
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether record is ready.
+        /// </summary>
+        [JsonProperty]
+        public bool IsReady { get; set; }
     }
 }

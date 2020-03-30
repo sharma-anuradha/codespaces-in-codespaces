@@ -244,6 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var tokenProvider = EnvironmentManagerTestsBase.MockTokenProvider();
             var resourceBroker = new MockResourceBrokerClient();
             var environmentMonitor = new MockEnvironmentMonitor();
+            var environmentContinuation = new MockEnvironmentContinuation();
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
 
@@ -255,6 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 billingEventManager,
                 skuCatalog,
                 environmentMonitor,
+                environmentContinuation,
                 environmentSettings,
                 new PlanManagerSettings
                 {

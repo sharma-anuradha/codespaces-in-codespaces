@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         };
 
         /// <inheritdoc/>
-        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, IDiagnosticsLogger logger)
+        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, string authToken, IDiagnosticsLogger logger)
         {
             Requires.NotNull(MockCreate, nameof(MockCreate));
             return Task.FromResult(MockCreate(workspace));

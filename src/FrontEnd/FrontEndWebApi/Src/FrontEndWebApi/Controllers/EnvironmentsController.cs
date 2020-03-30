@@ -446,6 +446,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 cloudEnvironmentOptions.CustomContainers = createEnvironmentInput.ExperimentalFeatures.CustomContainers;
                 cloudEnvironmentOptions.NewTerminal = createEnvironmentInput.ExperimentalFeatures.NewTerminal;
+                cloudEnvironmentOptions.QueueResourceAllocation = createEnvironmentInput.ExperimentalFeatures.QueueResourceAllocation;
             }
 
             // Create the environement
@@ -974,6 +975,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 FrontEndServiceUri = serviceUri,
                 ConnectionServiceUri = new Uri(FrontEndAppSettings.VSLiveShareApiEndpoint, UriKind.Absolute),
                 CallbackUriFormat = callbackUriFormat,
+                UserAuthToken = CurrentUserProvider.GetBearerToken(),
             };
         }
     }

@@ -37,5 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Gets or sets the resource allocation created timestamp.
         /// </summary>
         public DateTime Created { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether record is ready.
+        /// </summary>
+        public bool IsReady { get; set; }
     }
 }

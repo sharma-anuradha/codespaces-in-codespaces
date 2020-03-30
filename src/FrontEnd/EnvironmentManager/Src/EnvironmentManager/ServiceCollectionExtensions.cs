@@ -60,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();
             services.AddSingleton<IContinuationTaskActivator, ContinuationTaskActivator>();
             services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
+
             services.AddSingleton<IEnvironmentMonitor, EnvironmentMonitor>();
 
             // Handlers
@@ -80,6 +81,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ArchiveEnvironmentContinuationHandler>();
             services.AddSingleton<IArchiveEnvironmentContinuationHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
+
+            services.AddSingleton<CreateEnvironmentContinuationHandler>();
+            services.AddSingleton<ICreateEnvironmentContinuationHandler>(x => x.GetRequiredService<CreateEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateEnvironmentContinuationHandler>());
 
             // The environment mangaer
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();

@@ -30,5 +30,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// </summary>
         [Required]
         public AzureLocation Location { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to queue create resource.
+        /// </summary>
+        public bool QueueCreateResource { get; set; }
     }
 }

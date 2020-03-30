@@ -34,6 +34,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
+        public Task<ConnectionInfo> CreateWorkspace(EnvironmentType type, string cloudEnvironmentId, Guid computeIdToken, Uri connectionServiceUri, string sessionPath, string userAuthToken, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<bool> DeleteAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
@@ -77,6 +83,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> ResumeCallbackAsync(CloudEnvironment cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> StartComputeAsync(CloudEnvironment cloudEnvironment, Guid computeResourceId, Guid storageResourceId, Guid? archiveStorageResourceId, CloudEnvironmentOptions cloudEnvironmentOptions, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

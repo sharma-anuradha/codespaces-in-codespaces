@@ -108,6 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.billingEventManager,
                 this.skuCatalog,
                 this.environmentMonitor,
+                new MockEnvironmentContinuation(),
                 environmentSettings,
                 planSettings);
         }

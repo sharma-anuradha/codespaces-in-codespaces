@@ -342,6 +342,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                     SkuName = resourceResult.SkuName,
                     Location = resourceResult.Location,
                     Type = resourceResult.Type,
+                    IsReady = resourceResult.IsReady,
                     ProvisioningStatus = resourceResult.ProvisioningStatus,
                     ProvisioningStatusChanged = resourceResult.ProvisioningStatusChanged,
                     StartingStatus = resourceResult.StartingStatus,

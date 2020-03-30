@@ -18,6 +18,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
     {
         private const string LogBaseName = "httpclientworkspacerepository";
         private const string Path = "workspace";
+        private const string AuthHeaderName = "Authorization";
+        private const string AuthTokenPrefix = "Bearer ";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientWorkspaceRepository"/> class.
@@ -32,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         private IHttpClientProvider HttpClientProvider { get; }
 
         /// <inheritdoc/>
-        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, IDiagnosticsLogger logger)
+        public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, string authToken, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_create",
@@ -40,7 +42,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
                 {
                     var payload = JsonConvert.SerializeObject(workspace);
                     var content = new StringContent(payload, Encoding.UTF8, "application/json");
-                    var response = await HttpClientProvider.HttpClient.PostAsync(Path, content);
+
+                    var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, Path);
+                    httpRequestMessage.Headers.Add("Accept", "application/json");
+                    if (!string.IsNullOrEmpty(authToken))
+                    {
+                        httpRequestMessage.Headers.Add(AuthHeaderName, AuthTokenPrefix + authToken);
+                    }
+
+                    httpRequestMessage.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                    var response = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
                     logger.AddClientHttpResponseDetails(response);
 
                     await response.ThrowIfFailedAsync();
