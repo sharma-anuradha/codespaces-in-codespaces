@@ -63,12 +63,17 @@ export class ServerlessWorkbench extends Component<
 
     private getBuiltinStaticExtensions() {
         const version = getVSCodeVersion();
+        const shortCommitId = version.commit.substr(0, 7);
 
         // Webpack parses require.context and makes those files available in the bundle. So all the package.json
         // files in the extensions dir will be in the bundle and the .keys() property will be populated at build time
         // to be all the relative paths for the package.json. So, keys will be like './csharp/package.json'
-        const context = require.context('extensions', true, /^\.\/[^\/]*\/package.json$/);
-        const keys = context.keys();
+        const context = require.context(
+            'extensions',
+            true,
+            /^\.\/[a-f0-9]{7}\/[^\/]*\/package.json$/
+        );
+        const keys = context.keys().filter((key) => key.startsWith(`./${shortCommitId}`));
 
         const packagesWithMainThatWork = ['vscode.python', 'ms-vscode.references-view'];
 
@@ -85,7 +90,7 @@ export class ServerlessWorkbench extends Component<
             return {
                 packageJSON,
                 extensionLocation: vscode.URI.parse(
-                    `https://${window.location.hostname}/static/web-standalone/server/${version.commit.substr(0, 7)}/extensions/${packageDirName}/`
+                    `https://${window.location.hostname}/static/web-standalone/server/${shortCommitId}/extensions/${packageDirName}/`
                 ),
             };
         });
