@@ -1,4 +1,5 @@
 import { ICommunicationChannel } from '../interfaces/ICommunicationChannel';
+import { TerminalId } from '../constants';
 
 export class SplashCommunicationProvider implements ICommunicationChannel {
     constructor(commandCallback:(message: any) => void) {
@@ -9,8 +10,11 @@ export class SplashCommunicationProvider implements ICommunicationChannel {
         }, false);
     }
     
-    public writeToTerminalOutput(message: string): void {
-        window.postMessage({ message }, window.origin);
+    public writeToTerminalOutput(id: TerminalId, message: string): void {
+        window.postMessage({ terminal: {
+            id,
+            message,
+        }, }, window.origin);
     }
 
     private postStep(step: {}) {

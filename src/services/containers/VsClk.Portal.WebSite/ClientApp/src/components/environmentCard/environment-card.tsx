@@ -205,7 +205,7 @@ const Actions = ({
     const [unsuccessfulUrlDialogHidden, setUnsuccessfulUrlDialogHidden] = useState(true);
     const [shutdownDialogHidden, setShutdownDialogHidden] = useState(true);
     const [changeSettingDialogHidden, setChangeSettingDialogHidden] = useState(true);
-    const [vscodeInstanceName, setVscodeInstanceName] = useState();
+    const [vscodeInstanceName, setVscodeInstanceName] = useState<string>();
 
     return (
         <>
@@ -458,7 +458,7 @@ function ChangeSettingsDialog({
 type UnsuccessfulUrlDialogProps = {
     accept: () => void;
     hidden: boolean;
-    vscodeName: string;
+    vscodeName: string | undefined;
 };
 
 function UnsuccessfulUrlDialog({ accept, hidden, vscodeName }: UnsuccessfulUrlDialogProps) {

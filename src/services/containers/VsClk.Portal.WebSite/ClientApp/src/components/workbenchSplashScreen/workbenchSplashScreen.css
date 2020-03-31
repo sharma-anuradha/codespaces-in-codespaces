@@ -16,6 +16,12 @@
     box-sizing: border-box;
 }
 
+/* Github splash screen body */
+
+.is-github .vsonline-splash-screen-body {
+    background: #FFFFFF;
+}
+
 /* Editor Header */
 .vsonline-splash-screen-titlebar {
     position: relative;
@@ -24,6 +30,11 @@
     right: 0px;
     top: 0px;
     background: #252526;
+}
+
+/* Github Editor Header */
+.is-github .vsonline-splash-screen-titlebar {
+    background: #F3F3F3;
 }
 
 /* Tabs */
@@ -36,13 +47,23 @@
     background: #1E1E1E;
 }
 
+/* Github Tabs */
+.is-github .vsonline-splash-screen-titlebar-tab {
+    background: #FFFFFF;
+}
+
 /* Sidebar */
 .vsonline-splash-screen-tree-pane {
     position: relative;
-    width: 264px;
+    width: 169px;
     bottom: 22px;
     /* Dark / Base / Base 20 */
     background: #252526;
+}
+
+/* Github Sidebar */
+.is-github .vsonline-splash-screen-tree-pane {
+    background: #FAFBFC;
 }
 
 /* Template / Default */
@@ -55,3 +76,7 @@
     background: #333333;
 }
 
+/* Github extensions pane */
+.is-github .vsonline-splash-screen-extensions-pane {
+    background: #24292e;
+}

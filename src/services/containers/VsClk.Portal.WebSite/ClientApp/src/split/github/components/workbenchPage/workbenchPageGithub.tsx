@@ -20,7 +20,6 @@ export const WorkbenchPageGithub = (props: IWorkbenchPageProps) => {
             workbenchFavicon={FAVICON_PATH}
             SplashScreenComponent={WorkbenchSplashScreen}
             PageNotFoundComponent={PageNotFoundGithub}
-            title="Workspace"
             {...props}
         />
     );

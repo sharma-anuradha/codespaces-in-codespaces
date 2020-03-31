@@ -63,7 +63,6 @@ export interface WorkbenchProps {
     params: URLSearchParams;
     correlationId?: string | null;
     isValidEnvironmentFound: boolean;
-    title?: string;
     connectEnvironment: (
         ...params: Parameters<typeof connectEnvironment>
     ) => ReturnType<typeof connectEnvironment>;
@@ -163,7 +162,11 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 this.correlationId || createUniqueId()
             );
             if (environmentInfo.connection) {
-                communicationAdapter.connect(environmentInfo.connection.sessionId);
+                try {   
+                    communicationAdapter.connect(environmentInfo.connection.sessionId);
+                } catch (e) {
+                    logger.info(`Connection failed ${e}`);
+                }
             }
         }
 
@@ -365,7 +368,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     environment={environmentInfo}
                     showPrompt={!this.props.autoStart}
                     connectError={this.state.connectError}
-                    title={this.props.title}
                 />
             );
         }

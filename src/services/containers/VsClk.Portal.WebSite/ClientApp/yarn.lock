@@ -1590,18 +1590,18 @@
     "@types/history" "*"
     "@types/react" "*"
 
-"@types/react@*", "@types/react@16.8.8", "@types/react@^16.9.19":
-  version "16.8.8"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/react/-/react-16.8.8.tgz#4b60a469fd2469f7aa6eaa0f8cfbc51f6d76e662"
-  integrity sha1-S2Ckaf0kafeqbqoPjPvFH2125mI=
+"@types/react@*", "@types/react@16.9.26", "@types/react@^16.9.19":
+  version "16.9.26"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/react/-/react-16.9.26.tgz#1e55803e468f5393413e29033538cc9aaed6cec9"
+  integrity sha1-HlWAPkaPU5NBPikDNTjMmq7Wzsk=
   dependencies:
     "@types/prop-types" "*"
     csstype "^2.2.0"
 
-"@types/react@^16.9.2":
-  version "16.9.19"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/react/-/react-16.9.19.tgz#c842aa83ea490007d29938146ff2e4d9e4360c40"
-  integrity sha1-yEKqg+pJAAfSmTgUb/Lk2eQ2DEA=
+"@types/react@^16.9.26":
+  version "16.9.27"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/@types/react/-/react-16.9.27.tgz#7fc5db99e3ec3f21735b44d3560cff684856814a"
+  integrity sha1-f8XbmePsPyFzW0TTVgz/aEhWgUo=
   dependencies:
     "@types/prop-types" "*"
     csstype "^2.2.0"
@@ -1820,10 +1820,10 @@
     diffie-hellman "^5.0.3"
     vscode-jsonrpc "^4.0.0"
 
-"@vs/vso-splash-screen@^1.0.1785":
-  version "1.0.1785"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.1785.tgz#7b19d1795b0e0138890c04707470f6d492cb1aee"
-  integrity sha1-exnReVsOATiJDARwdHD21JLLGu4=
+"@vs/vso-splash-screen@^1.0.1894":
+  version "1.0.1894"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.1894.tgz#477252439b8c4dd43e153aaded05711d35428f03"
+  integrity sha1-R3JSQ5uMTdQ+FTqt7QVxHTVCjwM=
   dependencies:
     "@types/classnames" "^2.2.9"
     "@types/react" "^16.9.19"

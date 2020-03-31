@@ -7,6 +7,8 @@ import { VSOSplashScreen, IConnectionAdapter } from '@vs/vso-splash-screen'
 import { stateToDisplayName } from '../../utils/environmentUtils';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import './workbenchSplashScreen.css';
+import classnames from 'classnames';
+import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
 
 interface IRenderSplashScreenProps {
     message: string;
@@ -52,9 +54,10 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
 
 export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (props: IWorkbenchSplashScreenProps) => {
     const connection = React.useMemo(() => { return new CommunicationProvider() }, []);
-    const { showPrompt, environment, connectError, onRetry, onConnect, title } = props;
+    const { showPrompt, environment, connectError, onRetry, onConnect } = props;
     const { friendlyName } = environment;
-
+    const isOnGithub = isHostedOnGithub();
+    const mainClass = classnames('vsonline-splash-screen-main', {'is-github': isOnGithub});
     if (connectError !== null) {
         return (
             <RenderSplashScreen message={`Connecting to environment ${friendlyName} failed. ${connectError}`}>
@@ -72,7 +75,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
             );
         } else {
             return (
-                    <div className="vsonline-splash-screen-main">
+                    <div className={mainClass}>
                         <div className="vsonline-splash-screen-extensions-pane"></div>
                         <div className='vsonline-splash-screen-tree-pane'></div>
                         <div className="vsonline-splash-screen-editor">
@@ -80,7 +83,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
                                 <div className='vsonline-splash-screen-titlebar-tab'></div>
                             </div>
                             <div className="vsonline-splash-screen-body">
-                                <VSOSplashScreen connection={connection} title={title}></VSOSplashScreen>
+                                <VSOSplashScreen connection={connection} github={isOnGithub}></VSOSplashScreen>
                             </div>
                         </div>
                     </div>

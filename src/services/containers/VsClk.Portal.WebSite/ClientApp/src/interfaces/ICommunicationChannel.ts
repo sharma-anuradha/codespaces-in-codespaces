@@ -1,4 +1,6 @@
+import { TerminalId } from '../constants';
+
 export interface ICommunicationChannel {
-    writeToTerminalOutput(message: string): void;
+    writeToTerminalOutput(id: TerminalId, message: string): void;
     updateStep(step: {}): void;
 }

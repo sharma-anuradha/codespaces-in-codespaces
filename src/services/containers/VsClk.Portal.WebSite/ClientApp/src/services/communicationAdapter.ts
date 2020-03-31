@@ -6,6 +6,7 @@ import { WorkspaceClient } from '../ts-agent/workspaceClient';
 import { openSshChannel } from '../ts-agent/openSshChannel';
 import { SplashCommunicationProvider } from '../providers/splashCommunicationProvider';
 import { useActionContext } from '../actions/middleware/useActionContext';
+import { TerminalId } from '../constants';
 
 export class CommunicationAdapter {
     private envConnector: EnvConnector;
@@ -78,7 +79,7 @@ export class CommunicationAdapter {
                 channel.onDataReceived((data: any) => {
                     let strData = this.utf8Decoder.decode(data);
                     const processedData = this.processData(strData);
-                    this.communicationProvider.writeToTerminalOutput(processedData);
+                    this.communicationProvider.writeToTerminalOutput(TerminalId.VMTerminal, processedData);
 
                 });
                 channel.onClosed(() => {
