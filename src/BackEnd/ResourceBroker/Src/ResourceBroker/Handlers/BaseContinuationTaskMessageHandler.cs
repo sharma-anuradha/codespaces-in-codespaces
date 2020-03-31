@@ -318,7 +318,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     var changed = false;
 
                     // Determine what needs to be updated
-                    if (Operation == ResourceOperation.Starting)
+                    if (Operation == ResourceOperation.StartEnvironment
+                        || Operation == ResourceOperation.StartArchiving)
                     {
                         resource.StartingReason = input.Reason;
                         changed = resource.UpdateStartingStatus(state, trigger);
@@ -429,7 +430,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected async virtual Task FailOperationCleanupAsync(ResourceRecordRef record, string trigger, IDiagnosticsLogger logger)
         {
             var shouldTriggerDelete = Operation == ResourceOperation.Provisioning ||
-                (Operation == ResourceOperation.Starting && record.Value.Type == ResourceType.ComputeVM);
+                (Operation == ResourceOperation.StartEnvironment && record.Value.Type == ResourceType.ComputeVM);
 
             trigger = $"{Operation}_{trigger}";
 

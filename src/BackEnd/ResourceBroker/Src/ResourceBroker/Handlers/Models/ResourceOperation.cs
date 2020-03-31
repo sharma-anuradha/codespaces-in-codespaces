@@ -15,9 +15,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         Deleting,
 
         /// <summary>
-        /// Represents starting operation.
+        /// Represents start environment operation.
         /// </summary>
-        Starting,
+        StartEnvironment,
 
         /// <summary>
         /// Represents provisioning operation.
@@ -28,5 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Represents cleanup operation.
         /// </summary>
         CleanUp,
+
+        /// <summary>
+        /// Represents start archiving operation.
+        /// </summary>
+        StartArchiving,
     }
 }

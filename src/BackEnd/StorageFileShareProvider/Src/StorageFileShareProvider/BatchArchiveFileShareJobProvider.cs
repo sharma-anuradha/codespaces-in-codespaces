@@ -119,11 +119,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             // Clear out any old images just incase something got missed in cleanup
             taskCopyCommand.Add("echo ----- FIND OLD FILES -----");
-            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +30");
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +60");
 
             // Clear out any old images just incase something got missed in cleanup
             taskCopyCommand.Add("echo ----- DELETE OLD FILES -----");
-            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +30 -delete");
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +60 -delete");
 
             // Copy target share to local disk
             taskCopyCommand.Add("echo ----- COPY DOWN BLOB -----");
@@ -150,7 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(30), retentionTime: TimeSpan.FromDays(1)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromHours(1), retentionTime: TimeSpan.FromDays(1)),
                 UserIdentity = new UserIdentity(new AutoUserSpecification(elevationLevel: ElevationLevel.Admin)),
             };
 

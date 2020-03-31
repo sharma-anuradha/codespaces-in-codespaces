@@ -78,8 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
                     childLogger.FluentAddValue("TaskEnvironmentCutoffHours", cutoffHours)
                         .FluentAddValue("TaskEnvironmentCutoffTime", cutoffTime)
-                        .FluentAddValue("TaskRequestedItems", batchSize)
-                        .FluentAddValue("TaskEnvironmentMaxActiveCount", maxActiveCount);
+                        .FluentAddValue("TaskEnvironmentMaxActiveCount", maxActiveCount)
+                        .FluentAddValue("TaskRequestedItems", batchSize);
 
                     // Basic shard by starting resource id character
                     // NOTE: If over time we needed an additional dimention, we could add region
@@ -144,7 +144,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     // TODO: Need to add filtering so that we only target speicfic subscriptions
                     //       to start, plus add feature flag, etc
                     // App config on and off, then system config from database
-                    childLogger.FluentAddBaseValue("EnvironmentId", environment.Id);
+                    childLogger.FluentAddBaseValue("EnvironmentId", environment.Id)
+                        .FluentAddBaseValue("ArchiveAttemptCount", environment.Transitions.Archiving.AttemptCount);
 
                     // Trigger the environment archive continuation task.
                     await EnvironmentContinuationOperations.ArchiveAsync(

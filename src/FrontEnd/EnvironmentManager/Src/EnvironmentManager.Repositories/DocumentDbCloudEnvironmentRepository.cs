@@ -185,7 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@operationStateCancelled", Value = OperationState.Cancelled.ToString() },
                     new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
                     new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
-                    new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1) },
+                    new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1.25) },
                     new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                 });
 
@@ -210,7 +210,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     AND c.storage != null
                     AND c.state = @stateShutdown
                     AND c.lastStateUpdated < @cutoffTime
-                    AND c.transitions.archiving.status = null
+                    AND (
+                        IS_DEFINED(c.transitions) = false
+                        OR (c.transitions.archiving.status = null
+                            AND c.transitions.archiving.attemptCount <= @attemptCountLimit))
                     AND CONTAINS(c.skuName, @targetSku)
                     AND (((
                         IS_DEFINED(c.controlPlaneLocation) = false
@@ -224,6 +227,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
                     new SqlParameter { Name = "@targetSku", Value = "Linux" },
                     new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@attemptCountLimit", Value = 5 },
                 });
 
             var items = await QueryAsync(

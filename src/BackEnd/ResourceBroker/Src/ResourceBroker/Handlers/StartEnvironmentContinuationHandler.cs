@@ -56,13 +56,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <inheritdoc/>
-        protected override string LogBaseName => ResourceLoggingConstants.ContinuationTaskMessageHandlerStart;
+        protected override string LogBaseName => ResourceLoggingConstants.ContinuationTaskMessageHandlerStartEnvironment;
 
         /// <inheritdoc/>
         protected override string DefaultTarget => DefaultQueueTarget;
 
         /// <inheritdoc/>
-        protected override ResourceOperation Operation => ResourceOperation.Starting;
+        protected override ResourceOperation Operation => ResourceOperation.StartEnvironment;
 
         private IComputeProvider ComputeProvider { get; }
 

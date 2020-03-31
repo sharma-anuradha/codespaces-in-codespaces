@@ -98,6 +98,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     AttemptCount = 0;
                 }
+                else
+                {
+                    AttemptCount++;
+                }
 
                 return true;
             }

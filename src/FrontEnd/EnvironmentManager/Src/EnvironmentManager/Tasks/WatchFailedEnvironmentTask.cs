@@ -113,8 +113,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 $"{LogBaseName}_run_fail_cleanup",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddBaseValue("TaskFailedItemRunId", Guid.NewGuid())
-                        .AddEnvironmentId(record.Id);
+                    childLogger.AddEnvironmentId(record.Id)
+                        .FluentAddBaseValue("TaskFailedItemRunId", Guid.NewGuid())
+                        .FluentAddBaseValue("ArchiveAttemptCount", record.Transitions.Archiving.AttemptCount);
 
                     // Record the reason why this one is being deleted
                     var didFailStatus = false;
@@ -156,7 +157,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                                 record = await CloudEnvironmentRepository.GetAsync(record.Id, innerLogger.NewChildLogger());
 
                                 // Update core properties
-                                record.Transitions.Archiving.AttemptCount++;
                                 record.Transitions.Archiving.ResetStatus(false);
 
                                 // Do the actual update
