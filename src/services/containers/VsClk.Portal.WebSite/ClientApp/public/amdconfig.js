@@ -2,7 +2,7 @@ const vsoFeatureSet = window.localStorage.getItem('vso-featureset') || 'stable';
 const vscodeQuality = vsoFeatureSet === 'insider' ? 'insider' : 'stable';
 
 const commits = {
-    insider: 'd7d1147d6b764a48b789000c03088ee9afabcd8a',
+    insider: '20b88fa0694cae8e46ffd305a1450ba58ae6065b',
     stable: '0ba0ca52957102ca3527cf479571617f0de6ed50',
 };
 
