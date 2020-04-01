@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 
@@ -15,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
     /// <summary>
     /// Message pump which gates messages to/from the underlying queue.
     /// </summary>
-    public class ContinuationTaskMessagePump : IContinuationTaskMessagePump
+    public class ContinuationTaskMessagePump : IContinuationTaskMessagePump, ICrossRegionContinuationTaskMessagePump
     {
         private const string LogBaseName = "continuation_task_message_pump";
         private static TimeSpan defaultTimeout = TimeSpan.FromMinutes(2.5);
@@ -25,18 +26,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// </summary>
         /// <param name="continuationTaskWorkerPoolManager">Targer pool manager.</param>
         /// <param name="continuationJobQueueRepository">Underlying resourcec job queue repository.</param>
+        /// <param name="crossRegionContinuationJobQueueRepository">Underlying resourcec job queue repository for cross region communication.</param>
         public ContinuationTaskMessagePump(
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
-            IContinuationJobQueueRepository continuationJobQueueRepository)
+            IContinuationJobQueueRepository continuationJobQueueRepository,
+            ICrossRegionContinuationJobQueueRepository crossRegionContinuationJobQueueRepository)
         {
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             ContinuationJobQueueRepository = continuationJobQueueRepository;
+            CrossRegionContinuationJobQueueRepository = crossRegionContinuationJobQueueRepository;
             MessageCache = new ConcurrentQueue<CloudQueueMessage>();
         }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
         private IContinuationJobQueueRepository ContinuationJobQueueRepository { get; }
+
+        private ICrossRegionContinuationJobQueueRepository CrossRegionContinuationJobQueueRepository { get; }
 
         private ConcurrentQueue<CloudQueueMessage> MessageCache { get; }
 
@@ -128,6 +134,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         public async Task PushMessageAsync(ContinuationQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             await ContinuationJobQueueRepository.AddAsync(payload.ToJson(), initialVisibilityDelay, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task PushMessageToControlPlaneRegionAsync(ContinuationQueuePayload payload, AzureLocation controlPlaneRegion, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        {
+            await CrossRegionContinuationJobQueueRepository.AddAsync(payload.ToJson(), controlPlaneRegion, initialVisibilityDelay, logger);
         }
 
         /// <inheritdoc/>

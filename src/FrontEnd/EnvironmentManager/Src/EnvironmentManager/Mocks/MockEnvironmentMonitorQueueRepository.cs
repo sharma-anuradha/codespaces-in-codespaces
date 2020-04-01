@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
@@ -15,10 +16,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <summary>
     /// Mock repository for environment monitor.
     /// </summary>
-    internal class MockEnvironmentMonitorQueueRepository : IContinuationJobQueueRepository
+    internal class MockEnvironmentMonitorQueueRepository : IContinuationJobQueueRepository, ICrossRegionContinuationJobQueueRepository
     {
         /// <inheritdoc/>
         public Task AddAsync(string content, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task AddAsync(string content, AzureLocation controlPlaneRegion, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

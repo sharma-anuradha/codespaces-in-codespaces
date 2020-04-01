@@ -5,15 +5,16 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.AzureQueue;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common.Repositories.AzureQueue;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -49,8 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             else
             {
                 services.AddVsoDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
-                services.AddSingleton<IContinuationJobQueueRepository, StorageEnvironmentJobQueueRepository>();
+                services.AddSingleton<IContinuationJobQueueRepository, FrontendJobQueueRepository>();
+                services.AddSingleton<ICrossRegionContinuationJobQueueRepository, CrossRegionFrontendJobQueueRepository>();
                 services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
+                services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
             }
 
             services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();
@@ -63,6 +66,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
 
             services.AddSingleton<IEnvironmentMonitor, EnvironmentMonitor>();
+
+            // Continuation - Cross region.
+            services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
+            services.AddSingleton<ICrossRegionContinuationTaskMessagePump>(x => (ContinuationTaskMessagePump)x.GetRequiredService<IContinuationTaskMessagePump>());
+            services.AddSingleton<ICrossRegionContinuationTaskActivator>(x => (ContinuationTaskActivator)x.GetRequiredService<IContinuationTaskActivator>());
 
             // Handlers
             services.AddSingleton<ILatestHeartbeatMonitor, LatestHeartbeatMonitor>();

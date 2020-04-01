@@ -38,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// Operation is not created yet.
         /// </summary>
         Initialized = 6,
+
+        /// <summary>
+        /// Operation is triggered in fire and forget style.
+        /// </summary>
+        Triggered = 7,
     }
 }

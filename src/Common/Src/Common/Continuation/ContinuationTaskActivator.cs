@@ -5,8 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 {
@@ -14,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
     /// Continuation Activator which works with the supplied message and the
     /// available handlers to trigger the targetted handler.
     /// </summary>
-    public class ContinuationTaskActivator : IContinuationTaskActivator
+    public class ContinuationTaskActivator : IContinuationTaskActivator, ICrossRegionContinuationTaskActivator
     {
         private const string LogBaseName = "continuation_task_activator";
 
@@ -24,20 +26,87 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// <param name="handlers">Registered handlers in the system.</param>
         /// <param name="messagePump">Message pump that can be used to put next
         /// messages onto the queue.</param>
+        /// <param name="crossRegionMessagePump">Message pump that can be used to put next
+        /// messages onto the queue for another control plane region.</param>
+        /// <param name="controlPlaneInfo">Control plane info.</param>
+        /// <param name="currentLocationProvider">Current location provider.</param>
         public ContinuationTaskActivator(
             IEnumerable<IContinuationTaskMessageHandler> handlers,
-            IContinuationTaskMessagePump messagePump)
+            IContinuationTaskMessagePump messagePump,
+            ICrossRegionContinuationTaskMessagePump crossRegionMessagePump,
+            IControlPlaneInfo controlPlaneInfo,
+            ICurrentLocationProvider currentLocationProvider)
         {
             Handlers = handlers;
             MessagePump = messagePump;
+            CrossRegionMessagePump = crossRegionMessagePump;
+            ControlPlaneInfo = controlPlaneInfo;
+            CurrentLocationProvider = currentLocationProvider;
         }
 
         private IEnumerable<IContinuationTaskMessageHandler> Handlers { get; }
 
         private IContinuationTaskMessagePump MessagePump { get; }
 
+        private ICrossRegionContinuationTaskMessagePump CrossRegionMessagePump { get; }
+
+        private IControlPlaneInfo ControlPlaneInfo { get; }
+
+        private ICurrentLocationProvider CurrentLocationProvider { get; }
+
         /// <inheritdoc/>
-        public Task<ContinuationResult> Execute(string name, ContinuationInput input, IDiagnosticsLogger logger, Guid? trackingId = null, IDictionary<string, string> loggerProperties = null)
+        public Task<ContinuationResult> Execute(
+            string name,
+            ContinuationInput input,
+            IDiagnosticsLogger logger,
+            Guid? trackingId = null,
+            IDictionary<string, string> loggerProperties = null)
+        {
+            var payload = ConstructPayload(name, input, logger, ref trackingId, loggerProperties);
+
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                async (childLogger) => (await InnerContinue(payload, childLogger)).Result);
+        }
+
+        /// <inheritdoc/>
+        public Task<ContinuationResult> ExecuteForDataPlane(
+            string name,
+            AzureLocation dataPlaneRegion,
+            ContinuationInput input,
+            IDiagnosticsLogger logger,
+            Guid? systemId = null,
+            IDictionary<string, string> loggerProperties = null)
+        {
+            var controlPlaneRegion = ControlPlaneInfo.GetOwningControlPlaneStamp(dataPlaneRegion).Location;
+            if (CurrentLocationProvider.CurrentLocation == controlPlaneRegion)
+            {
+                return Execute(name, input, logger, systemId, loggerProperties);
+            }
+
+            var payload = ConstructPayload(name, input, logger, ref systemId, loggerProperties);
+
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                async (childLogger) =>
+                {
+                    await CrossRegionMessagePump.PushMessageToControlPlaneRegionAsync(payload, controlPlaneRegion, TimeSpan.Zero, logger.WithValues(new LogValueSet()));
+                    return new ContinuationResult
+                    {
+                        Status = OperationState.Triggered,
+                    };
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<ContinuationQueuePayload> Continue(ContinuationQueuePayload payload, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                LogBaseName,
+                async (childLogger) => (await InnerContinue(payload, childLogger)).ResultPayload);
+        }
+
+        private static ContinuationQueuePayload ConstructPayload(string name, ContinuationInput input, IDiagnosticsLogger logger, ref Guid? trackingId, IDictionary<string, string> loggerProperties)
         {
             var trackingInstanceId = Guid.NewGuid();
             trackingId = trackingId ?? trackingInstanceId;
@@ -54,18 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
             };
 
             logger.FluentAddBaseValues(payload.LoggerProperties);
-
-            return logger.OperationScopeAsync(
-                LogBaseName,
-                async (childLogger) => (await InnerContinue(payload, childLogger)).Result);
-        }
-
-        /// <inheritdoc/>
-        public Task<ContinuationQueuePayload> Continue(ContinuationQueuePayload payload, IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                LogBaseName,
-                async (childLogger) => (await InnerContinue(payload, childLogger)).ResultPayload);
+            return payload;
         }
 
         private async Task<(ContinuationQueuePayload ResultPayload, ContinuationResult Result)> InnerContinue(ContinuationQueuePayload payload, IDiagnosticsLogger logger)
