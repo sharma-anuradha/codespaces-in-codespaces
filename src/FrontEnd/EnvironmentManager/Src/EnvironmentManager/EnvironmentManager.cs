@@ -960,7 +960,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_force_suspend",
                 async (childLogger) =>
                 {
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
+                    // Deal with getting the state to the correct place
+                    var shutdownState = CloudEnvironmentState.Shutdown;
+                    if (cloudEnvironment?.Storage?.Type == ResourceType.StorageArchive)
+                    {
+                        shutdownState = CloudEnvironmentState.Archived;
+                    }
+
+                    // Set the state of the environement
+                    await SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
 
                     var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                     cloudEnvironment.Compute = null;
