@@ -49,3 +49,26 @@ port-forwarding-web-api:
         - '*.app.westus2.online.visualstudio.com'
         - '*.app.southeastasia.online.visualstudio.com'
         secretName: ssl-cert
+
+# Config for tokens
+tokens-web-api:
+  config:
+    aspNetEnv: Production
+    overrideAppSettingsJson: false
+  ingress:
+    hosts:
+      - sts.online.visualstudio.com
+      - sts.core.vsengsaas.visualstudio.com
+      - sts-eastus.online.visualstudio.com
+      - sts-westeurope.online.visualstudio.com
+      - sts-westus2.online.visualstudio.com
+      - sts-southeastasia.online.visualstudio.com
+    tls:
+      - hosts:
+        - sts.online.visualstudio.com
+        - sts.core.vsengsaas.visualstudio.com
+        - sts-eastus.online.visualstudio.com
+        - sts-westeurope.online.visualstudio.com
+        - sts-westus2.online.visualstudio.com
+        - sts-southeastasia.online.visualstudio.com
+        secretName: ssl-cert

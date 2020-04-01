@@ -4,7 +4,7 @@
   <PropertyGroup>
     <UseStyleCop>true</UseStyleCop>
     <UseCodeAnalysis>true</UseCodeAnalysis>
-    <RootName>Microsoft.VsSaaS.Services.CloudEnvironments</RootName>
+    <RootName Condition="'$(RootName)'==''">Microsoft.VsSaaS.Services.CloudEnvironments</RootName>
   </PropertyGroup>
 
   <Import Project="$(ThisFileDirectory)../Directory.Build.props" />

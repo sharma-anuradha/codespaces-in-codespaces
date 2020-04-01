@@ -4,6 +4,7 @@
     <BuildFrontendBackend Condition="'$(BuildFrontendBackend)' == ''">true</BuildFrontendBackend>
     <BuildPortForwarding Condition="'$(BuildPortForwarding)' == ''">true</BuildPortForwarding>
     <BuildPortal Condition="'$(BuildPortal)' == ''">true</BuildPortal>
+    <BuildTokenService Condition="'$(BuildTokenService)' == ''">true</BuildTokenService>
     <BuildOtherServices Condition="'$(BuildOtherServices)' == ''">true</BuildOtherServices>
   </PropertyGroup>
 
@@ -14,6 +15,7 @@
     <ProjectReference Include="FrontEnd/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
     <ProjectReference Include="Portal/dirs.proj" Condition="'$(BuildPortal)' == 'true'" />
     <ProjectReference Include="PortForwarding/dirs.proj" Condition="'$(BuildPortForwarding)' == 'true'" />
+    <ProjectReference Include="Tokens/dirs.proj" Condition="'$(BuildTokenService)' == 'true'" />
     <ProjectReference Include="services/dirs.proj" Condition="'$(BuildOtherServices)' == 'true' AND '$(NOSERVICES)' == ''" />
   </ItemGroup>
 

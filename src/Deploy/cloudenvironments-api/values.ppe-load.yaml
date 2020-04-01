@@ -45,3 +45,25 @@ port-forwarding-web-api:
         - '*.app.westeurope-ppe-load-online.core.vsengsaas.visualstudio.com'
         - '*.app.westus2-ppe-load-online.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
+
+# Config for tokens
+tokens-web-api:
+  config:
+    aspNetEnv: Staging
+    overrideAppSettingsJson: appsettings.ppe-load.json
+  ingress:
+    hosts:
+      - ppe-load-sts.core.vsengsaas.visualstudio.com
+      - eastus-ppe-load-sts.core.vsengsaas.visualstudio.com
+      - southeastasia-ppe-load-sts.core.vsengsaas.visualstudio.com
+      - westeurope-ppe-load-sts.core.vsengsaas.visualstudio.com
+      - westus2-ppe-load-sts.core.vsengsaas.visualstudio.com
+    tls:
+      - hosts:
+        - ppe-load-sts.core.vsengsaas.visualstudio.com
+        - eastus-ppe-load-sts.core.vsengsaas.visualstudio.com
+        - southeastasia-ppe-load-sts.core.vsengsaas.visualstudio.com
+        - westeurope-ppe-load-sts.core.vsengsaas.visualstudio.com
+        - westus2-ppe-load-sts.core.vsengsaas.visualstudio.com
+        secretName: ssl-cert
+

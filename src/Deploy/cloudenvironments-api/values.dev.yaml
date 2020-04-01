@@ -37,3 +37,20 @@ port-forwarding-web-api:
         - '*.app.ci-online.dev.core.vsengsaas.visualstudio.com'
         - '*.app.westus2-ci-online.dev.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
+
+# Config for tokens
+tokens-web-api:
+  config:
+    aspNetEnv: Development
+    overrideAppSettingsJson: false
+  ingress:
+    hosts:
+      - sts.dev.core.vsengsaas.visualstudio.com
+      - ci-sts.dev.core.vsengsaas.visualstudio.com
+      - westus2-ci-sts.dev.core.vsengsaas.visualstudio.com
+    tls:
+      - hosts:
+        - sts.dev.core.vsengsaas.visualstudio.com
+        - ci-sts.dev.core.vsengsaas.visualstudio.com
+        - westus2-ci-sts.dev.core.vsengsaas.visualstudio.com
+        secretName: ssl-cert

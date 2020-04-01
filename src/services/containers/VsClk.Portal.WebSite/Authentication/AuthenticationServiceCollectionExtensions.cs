@@ -151,14 +151,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                         keyVaultReader,
                         ClientKeyvaultReader.GetAppKeyVaultName(),
                         appSettings.VsSaaSCertificateSecretName,
-                        logger)
-                    {
-                        ConvertPrivateCertificatesToPublic = true
-                    };
-
+                        logger);
                     certCache.StartPeriodicRefresh(TimeSpan.FromDays(1));
 
-                    cascadeJwtReader.AddIssuer(appSettings.VsSaaSTokenIssuer, certCache);
+                    cascadeJwtReader.AddIssuer(appSettings.VsSaaSTokenIssuer, certCache.ConvertToPublic());
                     cascadeJwtReader.AddAudience(appSettings.VsSaaSTokenIssuer); // Same as issuer
 
                     return certCache;

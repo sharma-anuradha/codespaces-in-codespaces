@@ -1,0 +1,83 @@
+{{- $fullName := include "tokens-web-api.fullname" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tokens-web-api.fullname" . }}
+  labels:
+{{ include "tokens-web-api.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.minReplicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "tokens-web-api.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  minReadySeconds: {{ .Values.pods.minReadySeconds }}
+  progressDeadlineSeconds: {{ .Values.pods.progressDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "tokens-web-api.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- if .Values.image.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.image.imagePullSecret }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.repositoryName not specified" .Values.image.repositoryName }}:{{ required "Value image.tag not specified" .Values.image.tag }}'
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.containerPort }}
+              protocol: TCP
+          env:
+          {{- range .Values.appSettings }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fullName }}-settings
+                  key: {{ . }}
+          {{- end }}
+          {{- if .Values.pods.livenessProbePath }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.pods.livenessProbePath }}
+              port: http
+            {{- if .Values.pods.livenessProbeDelaySeconds }}
+            initialDelaySeconds: {{ .Values.pods.livenessProbeDelaySeconds }}
+            {{- end }}
+            {{- if .Values.pods.livenessProbeTimeoutSeconds }}
+            timeoutSeconds: {{ .Values.pods.livenessProbeTimeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.pods.readinessProbePath }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.pods.readinessProbePath }}
+              port: http
+            {{- if .Values.pods.readinessProbeDelaySeconds }}
+            initialDelaySeconds: {{ .Values.pods.readinessProbeDelaySeconds }}
+            {{- end }}
+            {{- if .Values.pods.readinessProbeTimeoutSeconds }}
+            timeoutSeconds: {{ .Values.pods.readinessProbeTimeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

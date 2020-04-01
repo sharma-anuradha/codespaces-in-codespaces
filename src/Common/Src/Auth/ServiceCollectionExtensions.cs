@@ -111,11 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
             else
             {
                 var certCacheFactory = serviceProvider.GetRequiredService<IJwtCertificateCredentialsKeyVaultCacheFactory>();
-
                 var audienceCache = certCacheFactory.New(tokenSettings.AudienceCertificateName, keyVaultName: tokenSettings.KeyVaultName);
-                audienceCache.ConvertPrivateCertificatesToPublic = true;
-
-                writer.AddAudience(tokenSettings.Audience, audienceCache);
+                writer.AddAudience(tokenSettings.Audience, audienceCache.ConvertToPublic());
                 return audienceCache;
             }
         }
@@ -123,12 +120,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
         private static IAsyncWarmup AddIssuerToReader(IJwtReader reader, TokenSettings tokenSettings, IServiceProvider serviceProvider)
         {
             var certCacheFactory = serviceProvider.GetRequiredService<IJwtCertificateCredentialsKeyVaultCacheFactory>();
-
             var issuerCache = certCacheFactory.New(tokenSettings.IssuerCertificateName);
-            issuerCache.ConvertPrivateCertificatesToPublic = true;
-
-            reader.AddIssuer(tokenSettings.Issuer, issuerCache);
-
+            reader.AddIssuer(tokenSettings.Issuer, issuerCache.ConvertToPublic());
             return issuerCache;
         }
 

@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Xunit.Extensions.AssemblyFixture" Version="2.2.0" />
+    <PackageReference Include="Xunit.Extensibility.Core" Version="2.4.1" />
+    <PackageReference Include="Xunit.Extensibility.Execution" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\TokenService\TokenService.csproj" />
+    <ProjectReference Include="..\..\Src\TokenService.Client\TokenService.Client.csproj" />
+    <ProjectReference Include="..\..\Src\TokenService.Contracts\TokenService.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="TestAudience.pfx" />
+    <EmbeddedResource Include="TestIssuer.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

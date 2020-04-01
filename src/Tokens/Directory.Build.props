@@ -1,0 +1,17 @@
+<Project>
+
+  <!-- Overrides and switches for vsclk.build.props -->
+  <PropertyGroup>
+    <RootName>Microsoft.VsSaaS.Services</RootName>
+  </PropertyGroup>
+
+  <Import Project="$(ThisFileDirectory)../Directory.Build.props" />
+
+  <!-- Product Properties -->
+  <PropertyGroup>
+    <Product>Microsoft Visual Studio SaaS</Product>
+    <Tags>Microsoft;vssaas</Tags>
+    <Title>VS SaaS</Title>
+  </PropertyGroup>
+
+</Project>

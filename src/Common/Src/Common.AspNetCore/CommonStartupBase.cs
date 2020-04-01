@@ -149,8 +149,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public void ConfigureCommonServices(IServiceCollection services, out LoggingBaseValues loggingBaseValues)
         {
             var appSecrets = Configuration.GetSection(AppSecretsSectionName).Get<CommonAppSecretsProvider>();
-
-            services.TryAddSingleton<ISecretProvider>(appSecrets);
+            if (appSecrets != null)
+            {
+                // Some integration tests can run without any secrets.
+                services.TryAddSingleton<ISecretProvider>(appSecrets);
+            }
 
             services.AddApplicationServicePrincipal(AppSettings.ApplicationServicePrincipal);
 

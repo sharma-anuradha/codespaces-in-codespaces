@@ -1,9 +1,17 @@
 {
-  "tool": "Credential Scanner",
-  "suppressions": [
-    {
-      "file": ".pipelines\\replaceNugetConfig.ps1",
-      "_justification": "The '*' pat not a real secret; it is used only for testing the script."
-    }
-  ]
+    "tool": "Credential Scanner",
+    "suppressions": [
+        {
+            "file": ".pipelines\\replaceNugetConfig.ps1",
+            "_justification": "The '*' pat not a real secret; it is used only for testing the script."
+        },
+        {      
+            "hash": "AM4duappmxoFXTYRynOH35HpY6o1AI++nGmiv2BQNfw=",
+            "_justification": "Private cert TestIssuer.pfx is used only for unit testing."
+        },
+        {
+            "hash": "CodafYDRcQ0n0QMFF+Qpj9oIYWuu8t/dEQiFy/ClpC0=",
+            "_justification": "Private cert TestAudience.pfx is used only for unit testing."
+        }
+    ]
 }

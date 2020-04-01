@@ -22,6 +22,9 @@
     <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="$(MSBuildThisFileDirectory)\..\Tokens\Src\TokenService\Charts\**" LinkBase="$(ChartName)\charts" >
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

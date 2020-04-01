@@ -336,7 +336,7 @@ appsettings.secrets.json
 appsettings.test.json
 
 # Helm Chart secrets
-app.secrets.yaml
+templates/app.secrets.yaml
 
 
 .DS_Store

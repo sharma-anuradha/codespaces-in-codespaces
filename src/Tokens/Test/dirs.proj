@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="TokenService.Test\TokenService.Test.csproj" />
+  </ItemGroup>
+
+</Project>
