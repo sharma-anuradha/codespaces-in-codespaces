@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <returns>returns task.</returns>
         Task MonitorHeartbeatAsync(
                 string environmentId,
-                Guid computeId,
+                Guid? computeId,
                 IDiagnosticsLogger logger);
 
         /// <summary>

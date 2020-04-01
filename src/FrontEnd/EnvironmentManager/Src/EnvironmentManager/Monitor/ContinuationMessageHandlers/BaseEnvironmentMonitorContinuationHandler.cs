@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -175,11 +176,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             // Add environment details to telemetry.
             logger.AddCloudEnvironment(environment);
 
-            // Check Compute Id matches with message
-            if (environment.Compute?.ResourceId != null && environment.Compute.ResourceId != typedInput.ComputeResourceId)
+            // We don't need to do the resource check if we're a static environment.
+            if (environment.Type != EnvironmentType.StaticEnvironment)
             {
-                // return result with null next input
-                return CreateFinalResult(OperationState.Cancelled, "EnvironmentResourceChanged");
+                // Check Compute Id matches with message
+                if (environment.Compute?.ResourceId != null && environment.Compute.ResourceId != typedInput.ComputeResourceId)
+                {
+                    // return result with null next input
+                    return CreateFinalResult(OperationState.Cancelled, "EnvironmentResourceChanged");
+                }
             }
 
             // Core continue

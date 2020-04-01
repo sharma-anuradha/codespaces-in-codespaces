@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
     public class MockEnvironmentMonitor : IEnvironmentMonitor
     {
         /// <inheritdoc/>
-        public Task MonitorHeartbeatAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        public Task MonitorHeartbeatAsync(string environmentId, Guid? computeId, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

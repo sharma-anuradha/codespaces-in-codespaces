@@ -10,6 +10,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
     public enum EnvironmentRepairActions
     {
         /// <summary>
+        /// Mark an environment as Unavailable.
+        /// </summary>
+        Unavailable = 2,
+
+        /// <summary>
         /// Suspend Environment.
         /// </summary>
         ForceSuspend = 1,

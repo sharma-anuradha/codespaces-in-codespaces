@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -80,11 +81,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 if (environment.State == CloudEnvironmentState.Starting || environment.State == CloudEnvironmentState.Unavailable)
                 {
-                    // Timeout Kick off force shutdown to repair environment.
-                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
+                    if (environment.Type != EnvironmentType.StaticEnvironment)
+                    {
+                        // Timeout Kick off force shutdown to repair environment.
+                        await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
+                    }
                 }
 
-                // compute has healthy heartbeat, return next input
+                // compute does not have a healthy heartbeat, return next input
                 return CreateFinalResult(OperationState.Failed, "TimeoutInStateTransition");
             }
 

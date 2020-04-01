@@ -120,6 +120,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         }
 
         /// <summary>
+        /// Gets a value intdicating if static environment monitoring is enabled.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> StaticEnvironmentMonitoringEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-static-environment-monitoring", logger, false);
+        }
+
+        /// <summary>
         /// Gets or sets the Max Environments Per Plan.
         /// </summary>
         /// <param name="logger">Target logger.</param>

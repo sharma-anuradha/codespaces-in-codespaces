@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
@@ -89,36 +90,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         protected override async Task<ContinuationResult> RunOperationCoreAsync(HeartbeatMonitorInput input, CloudEnvironment environment, IDiagnosticsLogger logger)
         {
             // Check the Environment state is valid.
-            if (StateToStopTracking.Contains(environment.State) || environment.Compute?.ResourceId == null)
+            if (StateToStopTracking.Contains(environment.State) || (environment.Compute?.ResourceId == null && environment.Type != EnvironmentType.StaticEnvironment))
             {
                 // return result with null next input
                 return CreateFinalResult(OperationState.Cancelled, "StopHeartbeatMonitoringState");
             }
 
-            // Check environment state
-            if (StateToProcess.Contains(environment.State))
+            bool hasHeartbeatTimeExpired = LatestHeartbeatMonitor.LastHeartbeatReceived != null
+                                && LatestHeartbeatMonitor.LastHeartbeatReceived > environment.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
+                                && environment.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes);
+            var environmentMonitor = ServiceProvider.GetService<IEnvironmentMonitor>();
+            logger.FluentAddBaseValue(nameof(environment.LastUpdatedByHeartBeat), environment.LastUpdatedByHeartBeat);
+
+            if (environment.Type != EnvironmentType.StaticEnvironment)
             {
-                // Check heartbeat timeout
-                if (LatestHeartbeatMonitor.LastHeartbeatReceived != null
-                    && LatestHeartbeatMonitor.LastHeartbeatReceived > environment.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
-                    && environment.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes))
+                if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
                 {
-                    logger.FluentAddBaseValue(nameof(environment.LastUpdatedByHeartBeat), environment.LastUpdatedByHeartBeat);
-
-                    // Compute is not healthy, kick off force shutdown
                     await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
-
-                    // return null next input
                     return CreateFinalResult(OperationState.Failed, "NoHeartbeat");
                 }
             }
-
-            // Start new continuation, as compute is healthy or State is transitioning.
-            // Fetch instance
-            var environmentMonitor = ServiceProvider.GetService<IEnvironmentMonitor>();
+            else
+            {
+                if (environment.State == CloudEnvironmentState.Available && hasHeartbeatTimeExpired)
+                {
+                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.Unavailable].ExecuteAsync(environment, logger.NewChildLogger());
+                    await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
+                    return CreateFinalResult(OperationState.Failed, "NoHeartbeatMarkingUnavailable");
+                }
+                else if (environment.State == CloudEnvironmentState.Unavailable && hasHeartbeatTimeExpired)
+                {
+                    await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
+                    return CreateFinalResult(OperationState.Failed, "NoHeartbeatForUnavailableEnvironment");
+                }
+            }
 
             // Starts the delete workflow on the resource
-            await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute.ResourceId, logger.NewChildLogger());
+            await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
 
             // compute has healthy heartbeat, return next input
             return CreateFinalResult(OperationState.Succeeded, "HealthyHeartbeat");

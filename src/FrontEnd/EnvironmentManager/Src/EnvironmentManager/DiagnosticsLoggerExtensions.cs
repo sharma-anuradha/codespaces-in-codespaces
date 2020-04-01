@@ -16,7 +16,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     public static class DiagnosticsLoggerExtensions
     {
         private const string LogValueCloudEnvironmentId = "CloudEnvironmentId";
-        private const string LogValueOwnerId = "OwnerId";
         private const string LogValueSessionId = "SessionId";
         private const string LogValueComputeResourceId = "ComputeResourceId";
         private const string LogValueStorageResourceId = "StorageResourceId";
@@ -43,7 +42,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 logger
                     .AddEnvironmentId(cloudEnvironment.Id)
-                    .AddOwnerId(cloudEnvironment.OwnerId)
                     .AddCloudEnvironmentType(cloudEnvironment.Type)
                     .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
                     .AddComputeResourceId(cloudEnvironment.Compute?.ResourceId)
@@ -66,15 +64,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddEnvironmentId(this IDiagnosticsLogger logger, string environmentId)
             => logger.FluentAddBaseValue(LogValueCloudEnvironmentId, environmentId);
-
-        /// <summary>
-        /// Add the environment owner id to the logger.
-        /// </summary>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <param name="ownerId">The environment owner id.</param>
-        /// <returns>The <paramref name="logger"/>.</returns>
-        public static IDiagnosticsLogger AddOwnerId(this IDiagnosticsLogger logger, string ownerId)
-            => logger.FluentAddBaseValue(LogValueOwnerId, ownerId);
 
         /// <summary>
         /// Add the environment connection session id to the logger.

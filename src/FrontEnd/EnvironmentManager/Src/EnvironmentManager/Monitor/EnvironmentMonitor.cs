@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private EnvironmentMonitorSettings EnvironmentMonitorSettings { get; }
 
         /// <inheritdoc/>
-        public async Task MonitorHeartbeatAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        public async Task MonitorHeartbeatAsync(string environmentId, Guid? computeId, IDiagnosticsLogger logger)
         {
             // Check for flighting switch
             if (!await EnvironmentMonitorSettings.EnableHeartbeatMonitoring(logger.NewChildLogger()))
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var input = new HeartbeatMonitorInput()
             {
                 EnvironmentId = environmentId,
-                ComputeResourceId = computeId,
+                ComputeResourceId = computeId ?? default(Guid),
                 ContinuationToken = string.Empty,
             };
 

@@ -400,6 +400,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         result.CloudEnvironment = cloudEnvironment;
                         result.HttpStatusCode = StatusCodes.Status200OK;
 
+                        try
+                        {
+                            var staticEnvironmentMonitoringEnabled = await EnvironmentManagerSettings.StaticEnvironmentMonitoringEnabled(childLogger);
+                            if (staticEnvironmentMonitoringEnabled)
+                            {
+                                await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, default(Guid), logger.NewChildLogger());
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            childLogger.LogException($"{LogBaseName}_create_monitor_error", ex);
+                            result.MessageCode = MessageCodes.UnableToAllocateResources;
+                            result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
+                            return result;
+                        }
+
                         return result;
                     }
 
