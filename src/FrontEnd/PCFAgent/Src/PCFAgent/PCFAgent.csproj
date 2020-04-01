@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
   </ItemGroup>
 
 </Project>

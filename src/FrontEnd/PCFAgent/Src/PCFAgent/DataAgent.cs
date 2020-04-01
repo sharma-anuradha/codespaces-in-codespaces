@@ -26,6 +26,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
     public class DataAgent : IPrivacyDataAgent
     {
         private const string ExportFileName = "ProductAndServiceUsage_VisualStudioOnline.json";
+        private const int MaximumLeaseExtensions = 4;
+        private readonly TimeSpan? commandLeaseDuration = TimeSpan.FromMinutes(15);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DataAgent"/> class.
@@ -130,17 +132,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
         private async Task PerformDeleteAsync(IPrivacyCommand command, IDiagnosticsLogger logger)
         {
-            var affectedRowCount = 0;
-            var userIdSets = await GetUserIdSetsAsync(command, logger.NewChildLogger());
-            foreach (var userIdSet in userIdSets)
+            await logger.OperationScopeAsync("pcf_perform_delete", async (childLogger) =>
             {
-                affectedRowCount += await Retry.DoAsync(async attempt =>
-                {
-                    return await PrivacyDataManager.PerformDeleteAsync(userIdSet, logger);
-                });
-            }
+                var userIdSets = await GetUserIdSetsAsync(command, logger.NewChildLogger());
+                var affectedRowCount = command.GetAffectedRowCount();
+                var attemptNumber = command.GetAttemptNumber();
+                CommandStatus commandStatus;
 
-            await command.CheckpointAsync(CommandStatus.Complete, affectedRowCount);
+                var environments = await PrivacyDataManager.GetUserEnvironments(userIdSets, logger);
+                if (environments.Any())
+                {
+                    if (attemptNumber >= MaximumLeaseExtensions)
+                    {
+                        // If the deletion did not succeed after MaximumLeaseExtensions attempts, mark the command as failed.
+                        // This will cause the PCF to retry the operaion with a fresh command.
+                        commandStatus = CommandStatus.Failed;
+                    }
+                    else
+                    {
+                        commandStatus = CommandStatus.Pending;
+
+                        // For the first execution, trigger the environment deletes.
+                        if (attemptNumber == 0)
+                        {
+                            affectedRowCount += await PrivacyDataManager.DeleteEnvironmentsAsync(environments, logger);
+                        }
+                    }
+                }
+                else
+                {
+                    affectedRowCount += await PrivacyDataManager.DeleteUserIdentityMapAsync(userIdSets, logger);
+                    commandStatus = CommandStatus.Complete;
+                }
+
+                command.MarkNewAttemptWithAffectedRowCount(affectedRowCount);
+                await command.CheckpointAsync(
+                    commandStatus: commandStatus,
+                    affectedRowCount: affectedRowCount,
+                    leaseExtension: commandStatus == CommandStatus.Pending ? commandLeaseDuration : null);
+
+                childLogger.FluentAddBaseValue("PcfAffectedEntitiesCount", affectedRowCount)
+                                    .AddAttempt(attemptNumber);
+            });
         }
 
         private async Task<IEnumerable<UserIdSet>> GetUserIdSetsAsync(IPrivacyCommand command, IDiagnosticsLogger logger)

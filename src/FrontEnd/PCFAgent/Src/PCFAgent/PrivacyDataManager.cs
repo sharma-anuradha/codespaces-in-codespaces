@@ -2,10 +2,13 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
@@ -24,37 +27,83 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// </summary>
         /// <param name="environmentManager">Environment manager.</param>
         /// <param name="identityMapRepository">The identity map repository.</param>
-        public PrivacyDataManager(IEnvironmentManager environmentManager, IIdentityMapRepository identityMapRepository)
+        /// <param name="crossRegionActivator">Cross-region continuatinuation task activator.</param>
+        public PrivacyDataManager(
+            IEnvironmentManager environmentManager,
+            IIdentityMapRepository identityMapRepository,
+            ICrossRegionContinuationTaskActivator crossRegionActivator)
         {
             EnvironmentManager = environmentManager;
             IdentityMapRepository = identityMapRepository;
+            CrossRegionActivator = crossRegionActivator;
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
 
         private IIdentityMapRepository IdentityMapRepository { get; }
 
+        private ICrossRegionContinuationTaskActivator CrossRegionActivator { get; }
+
         /// <inheritdoc/>
-        public async Task<int> PerformDeleteAsync(UserIdSet userIdSet, IDiagnosticsLogger logger)
+        public async Task<int> DeleteEnvironmentsAsync(IEnumerable<CloudEnvironment> environments, IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync("pcf_delete_environments", async (childLogger) =>
+            {
+                var affectedEntitiesCount = 0;
+                foreach (var environment in environments)
+                {
+                    var continuationInput = new EnvironmentDeletionContinuationInput { EnvironmentId = environment.Id };
+                    await CrossRegionActivator.ExecuteForDataPlane(EnvironmentDeletionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger.NewChildLogger());
+                    affectedEntitiesCount++;
+                }
+
+                childLogger.AddBaseValue("PcfAffectedEntitiesCount", affectedEntitiesCount.ToString());
+                return affectedEntitiesCount;
+            });
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> DeleteUserIdentityMapAsync(IEnumerable<UserIdSet> userIdSets, IDiagnosticsLogger logger)
         {
             var affectedEntitiesCount = 0;
-            await logger.OperationScopeAsync("pcf_perform_delete", async (childLogger) =>
+
+            await logger.OperationScopeAsync("pcf_delete_identitymap", async (childLogger) =>
+            {
+                foreach (var userIdSet in userIdSets)
+                {
+                    await Retry.DoAsync(async attempt =>
+                    {
+                        var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
+                        if (map != null)
+                        {
+                            affectedEntitiesCount += await DeleteUserIdentityMap(map, childLogger);
+                        }
+
+                        childLogger.AddBaseValue("PcfAffectedEntitiesCount", affectedEntitiesCount.ToString());
+                    });
+                }
+            });
+
+            return affectedEntitiesCount;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetUserEnvironments(IEnumerable<UserIdSet> userIdSets, IDiagnosticsLogger logger)
+        {
+            var allEnvironments = new List<CloudEnvironment>();
+            foreach (var userIdSet in userIdSets)
             {
                 var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
-                userIdSet = new UserIdSet(
+                var updatedUserIdSet = new UserIdSet(
                     map?.CanonicalUserId ?? userIdSet.CanonicalUserId,
                     map?.ProfileId ?? userIdSet.ProfileId,
                     map?.ProfileProviderId ?? userIdSet.ProfileProviderId);
 
-                affectedEntitiesCount += await DeleteUserEnvironments(userIdSet, childLogger);
-                if (map != null)
-                {
-                    affectedEntitiesCount += await DeleteUserIdentityMap(map, childLogger);
-                }
+                var environments = await EnvironmentManager.ListAsync(logger: logger.NewChildLogger(), userIdSet: updatedUserIdSet);
+                allEnvironments.AddRange(environments);
+            }
 
-                childLogger.AddBaseValue("PcfAffectedEntitiesCount", affectedEntitiesCount.ToString());
-            });
-            return affectedEntitiesCount;
+            return allEnvironments;
         }
 
         /// <inheritdoc/>
@@ -83,19 +132,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         private JToken CreateExport(object data)
         {
             return JToken.FromObject(data, new JsonSerializer { ContractResolver = new PcfExportContractResolver() });
-        }
-
-        private async Task<int> DeleteUserEnvironments(UserIdSet userIdSet, IDiagnosticsLogger logger)
-        {
-            var environments = await EnvironmentManager.ListAsync(logger: logger.NewChildLogger(), userIdSet: userIdSet);
-            var recordsDeleted = 0;
-            foreach (var environment in environments)
-            {
-                await EnvironmentManager.DeleteAsync(environment, logger);
-                recordsDeleted++;
-            }
-
-            return recordsDeleted;
         }
 
         private async Task<int> DeleteUserIdentityMap(IIdentityMapEntity map, IDiagnosticsLogger logger)
