@@ -10,6 +10,7 @@ appSettings:
 
 pods:
   minReplicaCount: 3
+  agentMinReplicaCount: 1
   maxReplicaCount: 10
   minReadySeconds: 1
   progressDeadlineSeconds: 300
@@ -26,6 +27,8 @@ image:
   repositoryUrl:
   repositoryName: port-forwarding-web-api
   tag:
+  agentRepositoryName: port-forwarding-agent
+  agentTag: latest
   imagePullSecret:
 
 serviceAccount:
@@ -38,6 +41,9 @@ serviceAccount:
 role:
   create: true
   name: port-forwarding-agent-mapping-manager
+
+portForwardingAgent:
+  enabled: false
 
 service:
   type: ClusterIP

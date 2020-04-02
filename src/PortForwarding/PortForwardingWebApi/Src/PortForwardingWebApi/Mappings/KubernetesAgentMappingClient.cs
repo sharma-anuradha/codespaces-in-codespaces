@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         private readonly Dictionary<string, string> nginxIngressAnnotations = new Dictionary<string, string>
         {
             ["kubernetes.io/ingress.class"] = "nginx",
-            ["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1",
+            ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
         };
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                                     new Extensionsv1beta1HTTPIngressPath
                                     {
                                         Backend = new Extensionsv1beta1IngressBackend(mapping.GetKubernetesServiceName(), MappingServicePort),
-                                        Path = "/(.*)",
+                                        Path = "/",
                                     },
                                 },
                                 },

@@ -71,3 +71,29 @@ Create the name of the rolebinding to use
     {{ default "default" .Values.role.name }}
 {{- end -}}
 {{- end -}}
+
+{{- define "port-forwarding-agent.fullname" -}}
+{{- if contains "port-forwarding-agent" .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name "port-forwarding-agent" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "port-forwarding-agent.name" -}}
+{{- default "port-forwarding-agent" .Values.agentNameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "port-forwarding-agent.chart" -}}
+{{- printf "%s-%s" "port-forwarding-agent" .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "port-forwarding-agent.labels" -}}
+app.kubernetes.io/name: {{ include "port-forwarding-agent.name" . }}
+helm.sh/chart: {{ include "port-forwarding-agent.chart" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
