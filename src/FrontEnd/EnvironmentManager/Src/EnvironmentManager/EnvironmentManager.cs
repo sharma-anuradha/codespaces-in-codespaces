@@ -716,14 +716,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Setup variables for easier use
                     var computerResource = cloudEnvironment.Compute;
                     var storageResource = cloudEnvironment.Storage;
-                    var archiveStorageResource = default(ResourceAllocation);
-                    if (storageResource.Type == ResourceType.StorageArchive)
-                    {
-                        archiveStorageResource = storageResource;
-                    }
+                    var archiveStorageResource = storageResource.Type == ResourceType.StorageArchive
+                        ? storageResource : null;
+                    var isArchivedEnvironment = archiveStorageResource != null;
+
+                    logger.FluentAddBaseValue("CloudEnvironmentIsArchived", isArchivedEnvironment);
 
                     // At this point, if archive record is going to be switched in it will have been
-                    var startingStateReson = archiveStorageResource != null ? MessageCodes.ResotringFromArchive.ToString() : null;
+                    var startingStateReson = isArchivedEnvironment ? MessageCodes.ResotringFromArchive.ToString() : null;
                     await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, startingStateReson, childLogger.NewChildLogger());
 
                     // Persist updates madee to date
@@ -734,6 +734,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         storageResource = await AllocateStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
                     }
+
+                    logger.FluentAddBaseValue("StorageResourceId", storageResource?.ResourceId)
+                        .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource?.ResourceId);
 
                     // Kick off start-compute before returning.
                     await StartComputeAsync(
