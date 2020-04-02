@@ -70,24 +70,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                     if (jobResultData.JobState == JobState.Succeeded)
                     {
                         // Extract mount file share result
-                        var mountFileShareResult = jobResultData.OperationResults.Where(x => x.Name == "MountFileShare").SingleOrDefault();
+                        var payloadStageResult = jobResultData.OperationResults.Where(x => x.Name == "PayloadStage").SingleOrDefault();
 
-                        logger.FluentAddValue("JobFoundMountFileShareReult", mountFileShareResult != null);
+                        logger.FluentAddValue("JobFoundMountFileShareReult", payloadStageResult != null);
 
-                        // NOTE: in the future we should switch back to this.
-                        // // Bail if we didn't find the result
-                        // if (mountFileShareResult == null)
-                        // {
-                        //     throw new ArgumentNullException("Expected mount file share result was not found.");
-                        // }
+                        // Bail if we didn't find the result
+                        if (payloadStageResult == null)
+                        {
+                            throw new ArgumentNullException("Expected mount file share result was not found.");
+                        }
 
                         // NOTE: this is setup this way till we can switch back to the above
-                        if (mountFileShareResult != null)
+                        if (payloadStageResult != null)
                         {
                             // Validate that we have needed data
-                            var computeResourceId = mountFileShareResult.Data.GetValueOrDefault("ComputeResourceId");
-                            var storageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageResourceId");
-                            var archiveStorageResourceId = mountFileShareResult.Data.GetValueOrDefault("StorageArchiveResourceId");
+                            var computeResourceId = payloadStageResult.Data.GetValueOrDefault("ComputeResourceId");
+                            var storageResourceId = payloadStageResult.Data.GetValueOrDefault("StorageResourceId");
+                            var archiveStorageResourceId = payloadStageResult.Data.GetValueOrDefault("StorageArchiveResourceId");
 
                             logger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
                                 .FluentAddBaseValue("StorageResourceId", storageResourceId)
