@@ -80,3 +80,13 @@
 .is-github .vsonline-splash-screen-extensions-pane {
     background: #24292e;
 }
+
+/* Github main text color */
+.is-github .text-color {
+    color: #616161;
+}
+
+/* Main text color */
+.text-color {
+    color: #B4B4B4;
+}
