@@ -42,6 +42,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         }
 
         /// <summary>
+        /// Adds the <see cref="IAzureClientFactory"/>.
+        /// </summary>
+        /// <param name="services">The service collecdtion.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddAzureClientFactory(this IServiceCollection services)
+        {
+            services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the <see cref="IControlPlaneAzureClientFactory"/>.
+        /// </summary>
+        /// <param name="services">The service collecdtion.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddControlPlaneAzureClientFactory(this IServiceCollection services)
+        {
+            services.AddSingleton<IControlPlaneAzureClientFactory, ControlPlaneAzureClientFactory>();
+            return services;
+        }
+
+        /// <summary>
         /// Adds the <see cref="ICurrentLocationProvider"/>.
         /// </summary>
         /// <param name="services">The service collecdtion.</param>

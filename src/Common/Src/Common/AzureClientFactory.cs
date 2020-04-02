@@ -10,28 +10,27 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// Build Azure Client.
     /// </summary>
-    public class AzureClientFactory : IAzureClientFactory
+    public class AzureClientFactory : AzureClientFactoryBase, IAzureClientFactory
     {
-        private readonly ISystemCatalog systemCatalog;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureClientFactory"/> class.
         /// </summary>
-        /// <param name="systemCatalog">provides service principle name.</param>
-        public AzureClientFactory(ISystemCatalog systemCatalog)
+        /// <param name="subscriptionCatalog">The azure subscription catalog..</param>
+        public AzureClientFactory(
+            IAzureSubscriptionCatalog subscriptionCatalog)
         {
-            this.systemCatalog = systemCatalog;
+            SubscriptionCatalog = Requires.NotNull(subscriptionCatalog, nameof(subscriptionCatalog));
         }
+
+        private IAzureSubscriptionCatalog SubscriptionCatalog { get; }
 
         /// <inheritdoc/>
         public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId)
@@ -39,17 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var azureSub = systemCatalog
-                    .AzureSubscriptionCatalog
-                    .AzureSubscriptionsIncludingInfrastructure()
-                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
-
-                var sp = azureSub.ServicePrincipal;
-                var azureAppId = sp.ClientId;
-                var azureAppKey = await sp.GetClientSecretAsync();
-                var azureTenant = sp.TenantId;
-
-                return await GetAzureClientAsync(azureSubscriptionId, azureAppId, azureAppKey, azureTenant);
+                var sp = GetServicePrincipalForSubscription(subscriptionId);
+                return await GetAzureClientAsync(subscriptionId, sp);
             }
             catch (InvalidOperationException ex)
             {
@@ -78,10 +68,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var restClient = await CreateRestClientAsync(azureSubscriptionId);
-                var azureClient = new ComputeManagementClient(restClient)
-                { SubscriptionId = azureSubscriptionId };
-                return azureClient;
+                var sp = GetServicePrincipalForSubscription(subscriptionId);
+                return await GetComputeManagementClient(subscriptionId, sp);
             }
             catch (InvalidOperationException ex)
             {
@@ -95,10 +83,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var restClient = await CreateRestClientAsync(azureSubscriptionId);
-                var azureClient = new NetworkManagementClient(restClient)
-                { SubscriptionId = azureSubscriptionId };
-                return azureClient;
+                var sp = GetServicePrincipalForSubscription(subscriptionId);
+                return await GetNetworkManagementClient(subscriptionId, sp);
             }
             catch (InvalidOperationException ex)
             {
@@ -112,10 +98,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var azureSubscriptionId = subscriptionId.ToString();
             try
             {
-                var restClient = await CreateRestClientAsync(azureSubscriptionId);
-                var azureClient = new ResourceManagementClient(restClient)
-                { SubscriptionId = azureSubscriptionId };
-                return azureClient;
+                var sp = GetServicePrincipalForSubscription(subscriptionId);
+                return await GetResourceManagementClient(subscriptionId, sp);
             }
             catch (InvalidOperationException ex)
             {
@@ -123,31 +107,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
         }
 
-        private async Task<RestClient> CreateRestClientAsync(string azureSubscriptionId)
+        private IServicePrincipal GetServicePrincipalForSubscription(Guid azureSubscriptionId)
         {
-            var azureSub = systemCatalog
-                    .AzureSubscriptionCatalog
+            var subscriptionId = azureSubscriptionId.ToString();
+            var azureSub = this.SubscriptionCatalog
                     .AzureSubscriptionsIncludingInfrastructure()
-                    .Single(sub => sub.SubscriptionId == azureSubscriptionId && sub.Enabled);
-
-            var sp = azureSub.ServicePrincipal;
-            var azureAppId = sp.ClientId;
-            var azureAppKey = await sp.GetClientSecretAsync();
-            var azureTenant = sp.TenantId;
-            var creds = new AzureCredentialsFactory()
-                .FromServicePrincipal(
-                    azureAppId,
-                    azureAppKey,
-                    azureTenant,
-                    AzureEnvironment.AzureGlobalCloud);
-
-            var restClient = RestClient.Configure()
-                .WithEnvironment(creds.Environment)
-                .WithCredentials(creds)
-                .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
-                .Build();
-
-            return restClient;
+                    .Single(sub => sub.SubscriptionId == subscriptionId && sub.Enabled);
+            return azureSub.ServicePrincipal;
         }
     }
 }

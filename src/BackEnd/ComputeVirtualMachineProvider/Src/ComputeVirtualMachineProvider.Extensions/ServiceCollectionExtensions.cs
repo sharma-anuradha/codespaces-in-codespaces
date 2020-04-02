@@ -4,7 +4,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -38,18 +38,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             services.AddSingleton<IComputeProvider, VirtualMachineProvider>();
             services.AddSingleton<IDeploymentManager, LinuxVirtualMachineManager>();
             services.AddSingleton<IDeploymentManager, WindowsVirtualMachineManager>();
-
-            // External Service
-            if (mocksSettings?.UseMocksForExternalDependencies == true)
-            {
-                // TODO: this needs to be updated
-                var clientFactoryMock = new AzureClientFactoryMock("{what_should_this_be}");
-                services.AddSingleton<IAzureClientFactory>(clientFactoryMock);
-            }
-            else
-            {
-                services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
-            }
 
             return services;
         }

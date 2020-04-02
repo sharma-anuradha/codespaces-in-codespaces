@@ -34,21 +34,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// Initializes a new instance of the <see cref="BatchJobProvider{T}"/> class.
         /// </summary>
         /// <param name="storageFileShareProviderHelper">Target Storage File Share Provider Helper.</param>
-        /// <param name="systemCatalog">System catalog.</param>
         /// <param name="batchClientFactory">Batch client factory.</param>
+        /// <param name="azureClientFactory">Azure client factory.</param>
         /// <param name="storageProviderSettings">The storage provider settings.</param>
         public BatchJobProvider(
             IStorageFileShareProviderHelper storageFileShareProviderHelper,
-            ISystemCatalog systemCatalog,
             IBatchClientFactory batchClientFactory,
+            IAzureClientFactory azureClientFactory,
             StorageProviderSettings storageProviderSettings)
         {
-            Requires.NotNull(systemCatalog, nameof(systemCatalog));
-
             StorageFileShareProviderHelper = Requires.NotNull(storageFileShareProviderHelper, nameof(storageFileShareProviderHelper));
             BatchClientFactory = Requires.NotNull(batchClientFactory, nameof(batchClientFactory));
+            AzureClientFactory = Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
             StorageProviderSettings = Requires.NotNull(storageProviderSettings, nameof(storageProviderSettings));
-            AzureClientFactory = new AzureClientFactory(systemCatalog);
         }
 
         /// <summary>

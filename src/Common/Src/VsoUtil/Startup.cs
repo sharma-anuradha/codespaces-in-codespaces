@@ -91,7 +91,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 CosmosDbResourcePoolStateSnapshotRepository.ConfigureOptions);
 
             services.AddSingleton<IServiceBusQueueClientProvider, ServiceBusQueueClientProvider>();
-            services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
 
             services.AddSingleton<IHealthProvider, NullHealthProvider>();
             services.AddSingleton<IDiagnosticsLoggerFactory, NullDiagnosticsLoggerFactory>();

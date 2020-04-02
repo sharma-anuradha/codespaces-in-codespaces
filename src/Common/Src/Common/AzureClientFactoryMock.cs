@@ -9,19 +9,27 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
+    /// <summary>
+    /// A mock <see cref="IAzureClientFactory"/>.
+    /// </summary>
     public class AzureClientFactoryMock : IAzureClientFactory
     {
         private readonly string authFile;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AzureClientFactoryMock"/> class.
+        /// </summary>
+        /// <param name="authFile">The auth file.</param>
         public AzureClientFactoryMock(string authFile)
         {
             this.authFile = authFile;
         }
 
+        /// <inheritdoc/>
         public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId)
         {
             var credentials = SdkContext.AzureCredentialsFactory
@@ -30,11 +38,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return await Task.FromResult(Microsoft.Azure.Management.Fluent.Azure.Authenticate(credentials).WithSubscription(subscriptionId.ToString()));
         }
 
+        /// <inheritdoc/>
         public async Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
         {
             return await GetAzureClientAsync(Guid.Parse(subscriptionId));
         }
 
+        /// <inheritdoc/>
         public async Task<IComputeManagementClient> GetComputeManagementClient(Guid subscriptionId)
         {
             var credentials = SdkContext.AzureCredentialsFactory

@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 
@@ -26,6 +27,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public AzureLocation Location { get; }
         public string AuthFilePath { get; }
         public ISystemCatalog SystemCatalog { get; }
+        public IServicePrincipal ServicePrincipal { get; }
+        public IAzureClientFactory AzureClientFactory { get; }
         public IAzure Azure { get; }
         public IControlPlaneAzureResourceAccessor ResourceAccessor { get; }
 
@@ -35,9 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             SubscriptionId = Guid.Parse(azureSubscriptionId);
             Location = azureLocation;
             ResourceGroupName = GetResourceGroupName();
-            var servicePrincipal = GetServicePrincipal();
-            SystemCatalog = GetMockSystemCatalog(servicePrincipal).Object;
-            Azure = GetAzureClient(SystemCatalog).Result;
+            ServicePrincipal = GetServicePrincipal();
+            SystemCatalog = GetMockSystemCatalog(ServicePrincipal).Object;
+            AzureClientFactory = new AzureClientFactory(SystemCatalog.AzureSubscriptionCatalog);
+            Azure = AzureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId)).Result;
             ResourceAccessor = GetMockControlPlaneAzureResourceAccessor(Azure).Object;
         }
 
@@ -109,14 +113,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                     return (sa.Name, saKey.Value);
                 });
             return resourceAccessor;
-        }
-
-        private static async Task<IAzure> GetAzureClient(ISystemCatalog catalog)
-        {
-            // Get azure client
-            var azureClientFactory = new AzureClientFactory(catalog);
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
-            return azure;
         }
 
         public async Task<string> GetSrcBlobUrlAsync(string vsoBlobName)

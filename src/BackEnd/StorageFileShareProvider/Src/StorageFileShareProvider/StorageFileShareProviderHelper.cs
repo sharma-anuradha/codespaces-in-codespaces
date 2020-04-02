@@ -39,18 +39,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         private static readonly string StorageAccountNamePrefix = "vsoce";
         private static readonly string StorageLinuxMountableFilename = "dockerlib";
         private static readonly string StorageWindowsMountableFilename = "windowsdisk.vhdx";
-        private readonly ISystemCatalog systemCatalog;
         private readonly IAzureClientFactory azureClientFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageFileShareProviderHelper"/> class.
         /// </summary>
-        /// <param name="systemCatalog">System catalog.</param>
+        /// <param name="azureClientFactory">The azure client factory.</param>
         public StorageFileShareProviderHelper(
-            ISystemCatalog systemCatalog)
+            IAzureClientFactory azureClientFactory)
         {
-            this.systemCatalog = Requires.NotNull(systemCatalog, nameof(systemCatalog));
-            azureClientFactory = new AzureClientFactory(this.systemCatalog);
+            this.azureClientFactory = Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
         }
 
         /// <inheritdoc/>

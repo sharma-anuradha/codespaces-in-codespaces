@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contrac
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
@@ -44,7 +45,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
         /// </summary>
         /// <param name="capacityManager">The capacity manager.</param>
         /// <param name="controlPlaneInfo">The control plane info.</param>
-        /// <param name="systemCatalog">The system catalog.</param>
+        /// <param name="azureSubscriptionCatalog">The azure subscription catalog.</param>
+        /// <param name="azureClientFactory">The azure client factory.</param>
         /// <param name="metricsProvider">The azure metrics provider.</param>
         /// <param name="resourceNameBuilder">Resource naming for DEV stamps.</param>
         /// <param name="personalStampSettings">DEV stamp settings.</param>
@@ -53,7 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
         public ArchiveStorageProvider(
             ICapacityManager capacityManager,
             IControlPlaneInfo controlPlaneInfo,
-            ISystemCatalog systemCatalog,
+            IAzureSubscriptionCatalog azureSubscriptionCatalog,
+            IAzureClientFactory azureClientFactory,
             IMetricsProvider metricsProvider,
             IResourceNameBuilder resourceNameBuilder,
             DeveloperPersonalStampSettings personalStampSettings,
@@ -62,7 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
         {
             Requires.NotNull(capacityManager, nameof(capacityManager));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
-            Requires.NotNull(systemCatalog, nameof(systemCatalog));
+            Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
+            Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
             Requires.NotNull(metricsProvider, nameof(metricsProvider));
             Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
             Requires.NotNull(personalStampSettings, nameof(personalStampSettings));
@@ -70,8 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
             Requires.NotNull(defaultLogValues, nameof(defaultLogValues));
 
             ControlPlaneInfo = controlPlaneInfo;
-            AzureSubscriptionCatalog = systemCatalog.AzureSubscriptionCatalog;
-            AzureClientFactory = new AzureClientFactory(systemCatalog);
+            AzureSubscriptionCatalog = azureSubscriptionCatalog;
+            AzureClientFactory = azureClientFactory;
             MetricsProvider = metricsProvider;
             ResourceNameBuilder = resourceNameBuilder;
             IsDeveloperStamp = personalStampSettings.DeveloperStamp;
@@ -87,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
 
         private IInMemoryManagedCache InMemoryManagedCache { get; }
 
-        private AzureClientFactory AzureClientFactory { get; }
+        private IAzureClientFactory AzureClientFactory { get; }
 
         private IMetricsProvider MetricsProvider { get; }
 

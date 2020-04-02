@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.Batch.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Storage.File" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="$(AzureStoragePackageVersion)" />
     <PackageReference Include="Microsoft.Azure.ServiceBus" Version="$(AzureServiceBusPackageVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.0" />

@@ -9,6 +9,7 @@ using Microsoft.Azure.Batch;
 using Microsoft.Azure.Batch.Common;
 using Microsoft.Azure.Storage.File;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
@@ -26,15 +27,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// Initializes a new instance of the <see cref="BatchArchiveFileShareJobProvider"/> class.
         /// </summary>
         /// <param name="storageFileShareProviderHelper">Storage file share provider helper.</param>
-        /// <param name="systemCatalog">System catalog.</param>
         /// <param name="batchClientFactory">Batch client factory.</param>
+        /// <param name="azureClientFactory">The azure client factory.</param>
         /// <param name="storageProviderSettings">The storage provider settings.</param>
         public BatchArchiveFileShareJobProvider(
             IStorageFileShareProviderHelper storageFileShareProviderHelper,
-            ISystemCatalog systemCatalog,
             IBatchClientFactory batchClientFactory,
+            IAzureClientFactory azureClientFactory,
             StorageProviderSettings storageProviderSettings)
-            : base(storageFileShareProviderHelper, systemCatalog, batchClientFactory, storageProviderSettings)
+            : base(storageFileShareProviderHelper, batchClientFactory, azureClientFactory, storageProviderSettings)
         {
         }
 

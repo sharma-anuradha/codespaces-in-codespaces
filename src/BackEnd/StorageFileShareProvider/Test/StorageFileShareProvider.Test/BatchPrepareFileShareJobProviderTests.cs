@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -114,10 +115,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return resourceAccessor;
         }
 
-        private static async Task<IAzure> GetAzureClient(ISystemCatalog catalog)
+        private static async Task<IAzure> GetAzureClient(IAzureClientFactory azureClientFactory)
         {
-            // Get azure client
-            var azureClientFactory = new AzureClientFactory(catalog);
             var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
             return azure;
         }
@@ -156,17 +155,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var resourceGroupName = GetResourceGroupName();
             var servicePrincipal = GetServicePrincipal();
             var catalogMoq = GetMockSystemCatalog(servicePrincipal);
-            var azure = await GetAzureClient(catalogMoq.Object);
+            var azureClientFactory = new AzureClientFactory(catalogMoq.Object.AzureSubscriptionCatalog);
+            var azure = await GetAzureClient(azureClientFactory);
             var storageProviderSettings = new StorageProviderSettings() { WorkerBatchPoolId = batchPoolId };
             var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(azure);
             var batchClientFactory = new BatchClientFactory(resourceAccessorMoq.Object);
 
             // construct the real StorageFileShareProviderHelper
             IStorageFileShareProviderHelper providerHelper = new StorageFileShareProviderHelper(
-                catalogMoq.Object);
+                azureClientFactory);
 
             IBatchPrepareFileShareJobProvider batchPrepareFileShareJobProvider = new BatchPrepareFileShareJobProvider(
-                providerHelper, catalogMoq.Object, batchClientFactory, storageProviderSettings);
+                providerHelper, batchClientFactory, azureClientFactory, storageProviderSettings);
 
             // Create storage accounts
             var storageAccounts = await Task.WhenAll(

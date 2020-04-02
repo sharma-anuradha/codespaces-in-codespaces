@@ -64,9 +64,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IContinuationTaskActivator, ContinuationTaskActivator>();
             services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
 
-            // Azure
-            services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
-
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
             services.AddSingleton<IAsyncBackgroundWarmup>(x => x.GetRequiredService<ResourceRegisterJobs>());

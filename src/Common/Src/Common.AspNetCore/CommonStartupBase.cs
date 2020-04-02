@@ -161,6 +161,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             services.AddControlPlaneAzureResourceAccessor();
 
+            // Note: there is a AzureClientFactoryMock that is no longer configured.
+            // It would be added back here if we decide to get mocks working again.
+            services.AddAzureClientFactory();
+            services.AddControlPlaneAzureClientFactory();
+
             services.AddCurrentLocationProvider(CurrentAzureLocation);
 
             services.AddSystemCatalog(

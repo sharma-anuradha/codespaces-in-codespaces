@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         [Fact]
         public async Task LinuxCompute_Create_Start_Delete_Ok()
         {
-            var clientFactory = new AzureClientFactory(testContext.SystemCatalog);
+            var clientFactory = new AzureClientFactory(testContext.SystemCatalog.AzureSubscriptionCatalog);
             var azureDeploymentManager = new LinuxVirtualMachineManager(
                 clientFactory,
                testContext.ResourceAccessor);
@@ -83,7 +83,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 input = input.BuildNextInput(createResult.NextInput.ContinuationToken);
                 statusCheckResult = await computeProvider.CreateAsync(input, logger);
                 Assert.NotNull(statusCheckResult);
-                Assert.True(statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded));
+                Assert.True(
+                    statusCheckResult.Status.Equals(OperationState.InProgress) || statusCheckResult.Status.Equals(OperationState.Succeeded),
+                    $"Unexpected status: {statusCheckResult.Status} : {statusCheckResult.ErrorReason}");
                 if (statusCheckResult.Status.Equals(OperationState.InProgress))
                 {
                     var statusCheckdeploymentStatusToken = statusCheckResult.NextInput.ContinuationToken.ToNextStageInput();
