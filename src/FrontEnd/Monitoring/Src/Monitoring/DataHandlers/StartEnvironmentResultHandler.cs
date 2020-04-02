@@ -69,20 +69,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                     if (jobResultData.JobState == JobState.Succeeded)
                     {
-                        // Extract mount file share result
-                        var payloadStageResult = jobResultData.OperationResults.Where(x => x.Name == "PayloadStage").SingleOrDefault();
-
-                        logger.FluentAddValue("JobFoundMountFileShareReult", payloadStageResult != null);
-
-                        // Bail if we didn't find the result
-                        if (payloadStageResult == null)
+                        // Only call resume callback when we are calling back from a resume
+                        if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                         {
-                            throw new ArgumentNullException("Expected mount file share result was not found.");
-                        }
+                            // Extract mount file share result
+                            var payloadStageResult = jobResultData.OperationResults.Where(x => x.Name == "PayloadStage").SingleOrDefault();
 
-                        // NOTE: this is setup this way till we can switch back to the above
-                        if (payloadStageResult != null)
-                        {
+                            logger.FluentAddValue("JobFoundMountFileShareReult", payloadStageResult != null);
+
+                            // Bail if we didn't find the result
+                            if (payloadStageResult == null)
+                            {
+                                throw new ArgumentNullException("Expected mount file share result was not found.");
+                            }
+
                             // Validate that we have needed data
                             var computeResourceId = payloadStageResult.Data.GetValueOrDefault("ComputeResourceId");
                             var storageResourceId = payloadStageResult.Data.GetValueOrDefault("StorageResourceId");
