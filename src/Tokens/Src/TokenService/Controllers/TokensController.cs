@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         private readonly IJwtReader jwtReader;
         private readonly IAuthenticationSchemeProvider authSchemeProvider;
         private readonly TokenServiceAppSettings settings;
-        private readonly TokenIssuerSettings exchangeIssuer;
+        private readonly TokenIssuerSettings? exchangeIssuer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TokensController"/> class.
@@ -66,9 +66,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 authSchemeProvider, nameof(authSchemeProvider));
             this.settings = Requires.NotNull(settings, nameof(settings));
 
-            var exchangeIssuerKey = Requires.NotNull(
-                settings.ExchangeSettings?.Issuer, "exchangeSettings.issuer");
-            this.exchangeIssuer = this.settings.IssuerSettings[exchangeIssuerKey!];
+            if (!string.IsNullOrEmpty(settings.ExchangeSettings?.Issuer))
+            {
+                this.settings.IssuerSettings?.TryGetValue(
+                    settings.ExchangeSettings.Issuer, out this.exchangeIssuer);
+            }
         }
 
         /// <summary>
@@ -243,6 +245,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             [FromBody]ExchangeParameters? parameters,
             [FromServices]IDiagnosticsLogger logger)
         {
+            if (this.exchangeIssuer == null || string.IsNullOrEmpty(this.exchangeIssuer.IssuerUri))
+            {
+                return Problem("Missing exchange issuer configuration.");
+            }
+
             var claims = HttpContext.GetTokenClaims();
 
             if (!string.IsNullOrEmpty(parameters?.Token))
@@ -289,13 +296,13 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 logger.AddValue("audience", parameters?.Audience);
                 logger.LogError("token_exchange_invalid_audience");
                 return Problem("Invalid audience: " + parameters?.Audience ??
-                        this.settings.ExchangeSettings.ValidAudiences?.FirstOrDefault() ??
+                        this.settings.ExchangeSettings?.ValidAudiences?.FirstOrDefault() ??
                         string.Empty);
             }
 
             payload.AddClaim(new Claim(JwtRegisteredClaimNames.Aud, audience));
 
-            var defaultLifetime = this.settings.ExchangeSettings.Lifetime ??
+            var defaultLifetime = this.settings.ExchangeSettings?.Lifetime ??
                 this.exchangeIssuer.MaxLifetime;
             var lifetime = parameters?.Lifetime != null &&
                 (defaultLifetime == null || parameters.Lifetime < defaultLifetime) ?
@@ -355,11 +362,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
 
         private TokenIssuerSettings? ValidateIssueIssuer(string? issuer)
         {
-            var issuerSettings = this.settings.IssuerSettings;
-            if (issuerSettings == null)
-            {
-                return null;
-            }
+            var issuerSettings = this.settings.IssuerSettings ??
+                throw new InvalidOperationException("Missing issuer settings.");
 
             var clientSettings = HttpContext.GetClientSettings();
             var validIssuers = clientSettings?.ValidIssuers ?? Enumerable.Empty<string>();
@@ -385,11 +389,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 return true;
             }
 
-            var audienceSettings = this.settings.AudienceSettings;
-            if (audienceSettings == null)
-            {
-                return false;
-            }
+            var audienceSettings = this.settings.AudienceSettings ??
+                throw new InvalidOperationException("Missing audience settings.");
 
             var clientSettings = HttpContext.GetClientSettings();
             foreach (var audienceKey in clientSettings?.ValidAudiences ??
@@ -412,12 +413,17 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
 
         private string? ValidateExchangeAudience(string? audience)
         {
-            TokenAudienceSettings audienceSettings;
+            var exchangeSettings = this.settings.ExchangeSettings ??
+                throw new InvalidOperationException("Missing exchange settings.");
+            var audienceSettings = this.settings.AudienceSettings ??
+                throw new InvalidOperationException("Missing audience settings.");
+
+            TokenAudienceSettings validAudience;
             if (!string.IsNullOrEmpty(audience))
             {
                 // The caller specified an audience.
                 string audienceKey;
-                (audienceKey, audienceSettings) = this.settings.AudienceSettings.SingleOrDefault(
+                (audienceKey, validAudience) = audienceSettings.SingleOrDefault(
                     (a) => EqualsIgnoringTrailingSlash(a.Value.AudienceUri, audience));
                 if (audienceKey == null)
                 {
@@ -425,7 +431,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                     return null;
                 }
 
-                if (this.settings.ExchangeSettings.ValidAudiences?.Contains(audienceKey) != true)
+                if (exchangeSettings.ValidAudiences?.Contains(audienceKey) != true)
                 {
                     // The audience is known but is not allowed for exchanging.
                     return null;
@@ -434,16 +440,16 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             else
             {
                 // No audience was specified. Use the default audience for exchanging.
-                var audienceKey = this.settings.ExchangeSettings.ValidAudiences?.FirstOrDefault();
+                var audienceKey = exchangeSettings.ValidAudiences?.FirstOrDefault();
                 if (audienceKey == null ||
-                    !this.settings.AudienceSettings.TryGetValue(audienceKey, out audienceSettings!))
+                    !audienceSettings.TryGetValue(audienceKey, out validAudience!))
                 {
                     // An unknown audience is configured as the default exchange audience.
                     return null;
                 }
             }
 
-            return audienceSettings.AudienceUri;
+            return validAudience.AudienceUri;
         }
 
         private IActionResult? CopyAadIdentityClaims(

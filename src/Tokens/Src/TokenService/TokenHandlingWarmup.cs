@@ -57,7 +57,8 @@ namespace Microsoft.VsSaaS.Services.TokenService
             this.warmups = new List<IAsyncWarmup>();
 
             // Configure issuers from settings.
-            foreach (var issuerSettings in tokenServiceSettings.IssuerSettings)
+            foreach (var issuerSettings in tokenServiceSettings?.IssuerSettings
+                ?? Enumerable.Empty<KeyValuePair<string, TokenIssuerSettings>>())
             {
                 var signingCredentials = new JwtCertificateCredentialsKeyVaultCache(
                     keyVaultReader,
@@ -76,10 +77,16 @@ namespace Microsoft.VsSaaS.Services.TokenService
                         issuerSettings.Value.IssuerUri,
                         signingCredentials);
                 }
+
+                logger.AddValue("Issuer", issuerSettings.Value.IssuerUri);
+                logger.AddValue("VaultName", vaultName);
+                logger.AddValue("CertificateName", issuerSettings.Value.SigningCertificateName);
+                logger.LogInfo("token_service_issuer_config");
             }
 
             // Configure audiences from settings.
-            foreach (var audienceSettings in tokenServiceSettings.AudienceSettings)
+            foreach (var audienceSettings in tokenServiceSettings?.AudienceSettings
+                ?? Enumerable.Empty<KeyValuePair<string, TokenAudienceSettings>>())
             {
                 var encryptingCertificateName = audienceSettings.Value.EncryptingCertificateName;
                 if (string.IsNullOrEmpty(encryptingCertificateName))
@@ -90,6 +97,9 @@ namespace Microsoft.VsSaaS.Services.TokenService
                     {
                         tokenReader.AddAudience(audienceSettings.Value.AudienceUri);
                     }
+
+                    logger.AddValue("VaultName", vaultName);
+                    logger.AddValue("CertificateName", encryptingCertificateName);
                 }
                 else
                 {
@@ -112,6 +122,9 @@ namespace Microsoft.VsSaaS.Services.TokenService
                             encryptingCredentials!);
                     }
                 }
+
+                logger.AddValue("Audience", audienceSettings.Value.AudienceUri);
+                logger.LogInfo("token_service_audience_config");
             }
         }
 
