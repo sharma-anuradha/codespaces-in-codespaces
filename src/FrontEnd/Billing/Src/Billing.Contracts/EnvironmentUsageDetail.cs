@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         // be relevant to understanding the bill, such as the env size.
 
         /// <summary>
-        /// State of the environment at the end of the period.
+        /// Gets or sets state of the environment at the end of the period.
         /// </summary>
         /// <seealso cref="EnvironmentStates" />
         /// <remarks>
@@ -34,16 +34,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public string EndState { get; set; }
 
         /// <summary>
-        /// Usage billed to the environment for the billing period for one or more
+        /// Gets or sets usage billed to the environment for the billing period for one or more
         /// billing meters, in each meter's units.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "usage")]
         public IDictionary<string, double> Usage { get; set; }
 
         /// <summary>
-        /// The Cloud Environments (VSLS) profile ID of the user of the environment.
+        /// Gets or sets the Cloud Environments (VSLS) profile ID of the user of the environment.
         /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "userId")]
+        [JsonProperty(Required = Required.Default, PropertyName = "userId")]
         public string UserId { get; set; }
 
         /// <summary>

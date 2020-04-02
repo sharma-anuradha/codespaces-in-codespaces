@@ -179,7 +179,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             var totalBillable = 0.0d;
             var environmentUsageDetails = new Dictionary<string, EnvironmentUsageDetail>();
-            var userUsageDetails = new Dictionary<string, UserUsageDetail>();
             var meterId = GetMeterIdByAzureLocation(plan.Location);
 
             // Get events per environment
@@ -274,11 +273,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // Sku is currently not exposed in the billing report and only used in this method for tracking the previous end state
                         // so even if there are multiple Sku changes within this window we only need to remember the final state.
                         Sku = currState.Sku,
-                        UserId = environmentDetails.UserId,
                     };
 
                     environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
-                    userUsageDetails = AggregateUserUsageDetails(userUsageDetails, billableUnits, environmentDetails.UserId, meterId);
                     totalBillable += billableUnits;
                 }
 
@@ -291,7 +288,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 PeriodStart = lastSummary.PeriodEnd,
                 PeriodEnd = billSummaryEndTime,
-                UsageDetail = new UsageDetail { Environments = environmentUsageDetails, Users = userUsageDetails, },
+                UsageDetail = new UsageDetail { Environments = environmentUsageDetails, },
                 SubscriptionState = string.Empty,
                 Plan = string.Empty,
                 SubmissionState = BillingSubmissionState.None,
@@ -352,7 +349,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     UsageDetail = new UsageDetail
                     {
                         Environments = new Dictionary<string, EnvironmentUsageDetail>(),
-                        Users = new Dictionary<string, UserUsageDetail>(),
                     },
                     SubscriptionState = string.Empty,
                     Plan = string.Empty,
@@ -433,7 +429,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Sku is currently not exposed in the billing report and only used in this method for tracking the previous end state
                     // so even if there are multiple Sku changes within this window we only need to remember the final state.
                     Sku = environment.Value.Sku,
-                    UserId = environment.Value.UserId,
                 };
 
                 // Update Environment list, SkuPlan billable units, and User billable units
@@ -451,8 +446,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     currentSummary.Usage.Add(meterId, billableUnits);
                 }
-
-                currentSummary.UsageDetail.Users = AggregateUserUsageDetails(currentSummary.UsageDetail.Users, billableUnits, environment.Value.UserId, meterId);
             }
 
             return currentSummary;
@@ -809,37 +802,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
 
             return (nextSlice, nextState);
-        }
-
-        /// <summary>
-        /// Helper method to update or add a userId and billing unit to the current UserUsageDetails dictionary.
-        /// The dictionary is a property of the BillingSummary<see cref="BillingSummary"/>.
-        /// </summary>
-        /// <param name="currentlist">A container for aggregating times for a particular user.</param>
-        /// <param name="billable">the amount of billable time.</param>
-        /// <param name="userId">the userID.</param>
-        /// <param name="meterId">the meter being billed.</param>
-        /// <returns>A dictionary of usage details.</returns>
-        private Dictionary<string, UserUsageDetail> AggregateUserUsageDetails(
-            IDictionary<string, UserUsageDetail> currentlist,
-            double billable,
-            string userId,
-            string meterId)
-        {
-            if (currentlist.TryGetValue(userId, out var userUsageDetail))
-            {
-                userUsageDetail.Usage.TryGetValue(meterId, out var oldValue);
-                userUsageDetail.Usage[meterId] = billable + oldValue;
-            }
-            else
-            {
-                currentlist.Add(userId, new UserUsageDetail
-                {
-                    Usage = new UsageDictionary { { meterId, billable } },
-                });
-            }
-
-            return currentlist as Dictionary<string, UserUsageDetail>;
         }
 
         /// <summary>

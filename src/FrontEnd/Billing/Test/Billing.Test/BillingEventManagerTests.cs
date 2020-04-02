@@ -177,7 +177,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         Name = "one",
                         EndState = "Running",
                         Usage = new UsageDictionary { [meter] = 1.1 },
-                        UserId = testEnvironment.UserId,
                         Sku = testEnvironment.Sku
                     },
                     ["2"] = new EnvironmentUsageDetail
@@ -185,15 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         Name = "two",
                         EndState = "Suspended",
                         Usage = new UsageDictionary { [meter] = 2.2 },
-                        UserId = testEnvironment.UserId,
                         Sku = testEnvironment.Sku
-                    },
-                },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    ["test"] = new UserUsageDetail
-                    {
-                        Usage = new UsageDictionary { [meter] = 3.3 },
                     },
                 },
             };
@@ -249,8 +240,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Assert.NotNull(usageDetail2);
             Assert.NotNull(usageDetail2.Environments);
             Assert.Equal(usageDetail.Environments.Count, usageDetail2.Environments.Count);
-            Assert.NotNull(usageDetail2.Users);
-            Assert.Equal(usageDetail.Users.Count, usageDetail2.Users.Count);
         }
 
         [Fact]
@@ -341,7 +330,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                     Name = testEnvironment.Name,
                                     Usage = new UsageDictionary(),
                                     EndState = "two",
-                                    UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
                                 },
                                 [testEnvironment2.Id] = new EnvironmentUsageDetail
@@ -349,16 +337,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                     Name = testEnvironment2.Name,
                                     Usage = new UsageDictionary(),
                                     EndState = "three",
-                                    UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
                                 },
-                            },
-                            Users = new Dictionary<string, UserUsageDetail>
-                            {
-                                [testEnvironment.UserId] = new UserUsageDetail
-                                {
-                                    Usage = new UsageDictionary(),
-                                }
                             },
                         },
                         SubmissionState = BillingSubmissionState.None,
@@ -384,7 +364,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                     Name = testEnvironment.Name,
                                     Usage = new UsageDictionary(),
                                     EndState = "two",
-                                    UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
                                 },
                                 [testEnvironment2.Id] = new EnvironmentUsageDetail
@@ -392,17 +371,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                     Name = testEnvironment2.Name,
                                     Usage = new UsageDictionary(),
                                     EndState = "three",
-                                    UserId = testEnvironment.UserId,
                                     Sku = testEnvironment.Sku
                                 },
-                            },
-                            Users = new Dictionary<string, UserUsageDetail>
-                            {
-                                [testEnvironment.UserId] = new UserUsageDetail
-                                {
-                                    Usage = new UsageDictionary(),
-                                }
-                            },
+                            }
                         },
                         SubmissionState = BillingSubmissionState.None,
                     },

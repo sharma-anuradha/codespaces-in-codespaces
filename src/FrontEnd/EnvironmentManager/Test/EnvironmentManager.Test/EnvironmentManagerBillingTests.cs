@@ -16,7 +16,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             Assert.Equal(testPlan, billingEvent.Plan);
             Assert.Equal(environment.Id, billingEvent.Environment?.Id);
             Assert.Equal(environment.FriendlyName, billingEvent.Environment?.Name);
-            Assert.Equal(testUserId, billingEvent.Environment?.UserId);
             Assert.Equal(environment.SkuName, billingEvent.Environment?.Sku?.Name);
             Assert.Equal(BillingEventTypes.EnvironmentStateChange, billingEvent.Type);
             var change = billingEvent.Args as BillingStateChange;

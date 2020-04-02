@@ -67,7 +67,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 Id = cloudEnvironment.Id,
                 Name = cloudEnvironment.FriendlyName,
-                UserId = cloudEnvironment.OwnerId,
                 Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
             };
 

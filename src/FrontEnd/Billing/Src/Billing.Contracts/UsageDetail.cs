@@ -7,18 +7,21 @@ using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Usage detail.
+    /// </summary>
     public class UsageDetail
     {
         /// <summary>
-        /// Mapping from environment IDs to environment usage details.
+        /// Gets or sets mapping from environment IDs to environment usage details.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "environments")]
         public IDictionary<string, EnvironmentUsageDetail> Environments { get; set; }
 
         /// <summary>
-        /// Mapping from user IDs to user usage details.
+        /// Gets or sets mapping from user IDs to user usage details.
         /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "users")]
+        [JsonProperty(Required = Required.Default, PropertyName = "users")]
         public IDictionary<string, UserUsageDetail> Users { get; set; }
     }
 }

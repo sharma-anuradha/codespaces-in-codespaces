@@ -256,7 +256,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         {
                             EndState = "Available",
                             Sku = new Sku { Name = standardLinuxSkuName },
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
@@ -264,20 +263,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, 0 },
-                            },
-
-                        }
-                    }
-                }
 
             },
             PeriodEnd = TestTimeNow.Subtract(TimeSpan.FromHours(6)),
@@ -301,7 +286,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         {
                             EndState = "Available",
                             Sku = new Sku { Name = standardLinuxSkuName },
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
@@ -309,21 +293,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, 0 },
-                            },
-
-                        }
-                    }
-                }
-
             },
             PeriodEnd = TestTimeNow.Subtract(TimeSpan.FromHours(11)),
 
@@ -346,7 +315,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         {
                             EndState = "Available",
                             Sku = new Sku { Name = standardLinuxSkuName },
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
@@ -359,7 +327,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         {
                             EndState = "Shutdown",
                             Sku = new Sku { Name = standardLinuxSkuName },
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
@@ -372,7 +339,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         {
                             EndState = "Deleted",
                             Sku = new Sku { Name = standardLinuxSkuName },
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
@@ -380,21 +346,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     }
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, 0 },
-                            },
-
-                        }
-                    }
-                }
-
             }
         };
         public static readonly BillingSummary BillingSummaryOutput = new BillingSummary
@@ -413,7 +364,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 {WestUs2MeterId, BillableUnits },
@@ -421,21 +371,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                {WestUs2MeterId, BillableUnits },
-                            },
-
-                        }
-                    }
-                }
-
             }
         };
         public static readonly BillingSummary BillingSummaryMultiOutput = new BillingSummary
@@ -456,7 +391,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 {WestUs2MeterId, BillableUnits },
@@ -468,7 +402,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
-                            UserId = testEnvironment2.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 {WestUs2MeterId, BillableUnits },
@@ -476,21 +409,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, BillableUnitsMultiEnvironments },
-                            },
-
-                        }
-                    },
-                }
-
             }
         };
         public static readonly BillingSummary BillingSummaryWithShutdownOutput = new BillingSummary
@@ -509,7 +427,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 {WestUs2MeterId, BillableUnitsWithShutdown },
@@ -517,21 +434,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                {WestUs2MeterId, BillableUnitsWithShutdown },
-                            },
-
-                        }
-                    }
-                }
-
             }
         };
         public static readonly BillingSummary BillingSummaryWithSkuChangeOutput = new BillingSummary
@@ -550,7 +452,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Deleted",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, BillableUnitsWithSkuChange },
@@ -558,21 +459,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, BillableUnitsWithSkuChange },
-                            },
-
-                        }
-                    }
-                }
-
             }
         };
         public static readonly BillingSummary BillingSummaryOutputNoCurrentEvents = new BillingSummary
@@ -593,7 +479,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Available",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, BillableUnits },
@@ -605,7 +490,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Shutdown",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, BillableUnitForShutdownEnvironment },
@@ -613,21 +497,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, BIllableUnitsNoNewEvents },
-                            },
-
-                        }
-                    }
-                }
-
             }
         };
 
@@ -761,11 +630,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Environment usage details 
             Assert.Equal(expectedEnvironmentUsageDetail.Usage.First().Value, actualEnvironmentUsageDetail.Usage.First().Value, 2);
             Assert.Equal(expectedEnvironmentUsageDetail.EndState, actualEnvironmentUsageDetail.EndState);
-            Assert.Equal(expectedEnvironmentUsageDetail.UserId, actualEnvironmentUsageDetail.UserId);
-
-            // UserId list match
-            Assert.NotNull(expectedSummary.UsageDetail.Users);
-            Assert.Equal(expectedSummary.UsageDetail.Users.Count, actualSummary.UsageDetail.Users.Count);
         }
 
 
@@ -1080,7 +944,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 {
                                     EndState = "Available",
                                     Sku = new Sku { Name = standardLinuxSkuName },
-                                    UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
                                         { WestUs2MeterId, 0 },
@@ -1093,7 +956,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 {
                                     EndState = "Shutdown",
                                     Sku = new Sku { Name = standardLinuxSkuName },
-                                    UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
                                         { WestUs2MeterId, 0 },
@@ -1106,7 +968,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 {
                                     EndState = "Deleted",
                                     Sku = new Sku { Name = standardLinuxSkuName },
-                                    UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
                                         { WestUs2MeterId, 0 },
@@ -1114,21 +975,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 }
                             }
                         },
-                        Users = new Dictionary<string, UserUsageDetail>
-                        {
-                            {
-                                testEnvironment.UserId,
-                                new UserUsageDetail
-                                {
-                                    Usage = new Dictionary<string, double>
-                                    {
-                                        { WestUs2MeterId, 0 },
-                                    },
-
-                                }
-                            }
-                        }
-
                     }
                 },
                 // Last billing summary was written 3 hrs ago but should be irrelevant
@@ -1153,7 +999,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Available",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, billableActiveHours },
@@ -1165,7 +1010,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         new EnvironmentUsageDetail
                         {
                             EndState = "Shutdown",
-                            UserId = testEnvironment.UserId,
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, billableShutdownHours },
@@ -1173,21 +1017,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                         }
                     },
                 },
-                    Users = new Dictionary<string, UserUsageDetail>
-                {
-                    {
-                        testEnvironment.UserId,
-                        new UserUsageDetail
-                        {
-                            Usage = new Dictionary<string, double>
-                            {
-                                { WestUs2MeterId, billableActiveHours + billableShutdownHours },
-                            },
-
-                        }
-                    }
-                }
-
                 }
             };
             var shardUsageTimes = new Dictionary<string, double>();
@@ -1204,10 +1033,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             // MeterId match
             Assert.Equal(expectedSummary.Usage.First().Key, actualSummary.Usage.First().Key);
-
-            // UserId list match
-            Assert.NotNull(expectedSummary.UsageDetail.Users);
-            Assert.Equal(expectedSummary.UsageDetail.Users.Count, actualSummary.UsageDetail.Users.Count);
 
             var actualUsageDetail = actualSummary.UsageDetail;
             var expectedUsageDetail = expectedSummary.UsageDetail;
@@ -1231,11 +1056,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // EndState should match because no new events are present
             Assert.Equal(expectedAvailableEnvironmentUsageDetail.EndState, actualAvailableEnvironmentUsageDetail.EndState);
             Assert.Equal(expectedShutdownEnvironment2UsageDetail.EndState, actualShutdownEnvironmentUsageDetail.EndState);
-
-            // UserID should match
-            Assert.Equal(expectedAvailableEnvironmentUsageDetail.UserId, actualAvailableEnvironmentUsageDetail.UserId);
-            Assert.Equal(expectedShutdownEnvironment2UsageDetail.UserId, actualShutdownEnvironmentUsageDetail.UserId);
-
         }
 
         [Fact]
@@ -1256,9 +1076,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 }
             };
             IEnumerable<VsoPlan> plans = new List<VsoPlan>() { plan };
-            
-            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() ;
-            IEnumerable<BillingEvent> oldEvents = new List<BillingEvent>() ;
+
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>();
+            IEnumerable<BillingEvent> oldEvents = new List<BillingEvent>();
 
             Mock<IControlPlaneInfo> controlPlane = new Mock<IControlPlaneInfo>();
             IEnumerable<AzureLocation> locations = new List<AzureLocation>() { AzureLocation.WestUs2 };
@@ -1347,7 +1167,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 {
                                     EndState = "Available",
                                     Sku = new Sku { Name = standardLinuxSkuName },
-                                    UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
                                         { WestUs2MeterId, 0 },
@@ -1450,7 +1269,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                 {
                                     EndState = "Available",
                                     Sku = new Sku { Name = standardLinuxSkuName },
-                                    UserId = testEnvironment.UserId,
                                     Usage = new Dictionary<string, double>
                                     {
                                         { WestUs2MeterId, 0 },

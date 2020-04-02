@@ -45,28 +45,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment",
-            UserId = Guid.NewGuid().ToString(),
             Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
         public static readonly EnvironmentBillingInfo testEnvironmentWithPremiumSku = new EnvironmentBillingInfo
         {
             Id = testEnvironment.Id,
             Name = testEnvironment.Name,
-            UserId = testEnvironment.UserId,
             Sku = new Sku { Name = premiumLinuxSkuName, Tier = "test" },
         };
         public static readonly EnvironmentBillingInfo testEnvironment2 = new EnvironmentBillingInfo
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment2",
-            UserId = testEnvironment.UserId,
             Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
         public static readonly EnvironmentBillingInfo testEnvironment3 = new EnvironmentBillingInfo
         {
             Id = Guid.NewGuid().ToString(),
             Name = "testEnvironment3",
-            UserId = testEnvironment.UserId,
             Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
         public readonly IBillingEventRepository repository;
