@@ -69,8 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Continuation - Cross region.
             services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
-            services.AddSingleton<ICrossRegionContinuationTaskMessagePump>(x => (ContinuationTaskMessagePump)x.GetRequiredService<IContinuationTaskMessagePump>());
-            services.AddSingleton<ICrossRegionContinuationTaskActivator>(x => (ContinuationTaskActivator)x.GetRequiredService<IContinuationTaskActivator>());
+            services.AddSingleton<ICrossRegionContinuationTaskMessagePump, CrossRegionContinuationTaskMessagePump>();
+            services.AddSingleton<ICrossRegionContinuationTaskActivator, CrossRegionContinuationTaskActivator>();
 
             // Handlers
             services.AddSingleton<ILatestHeartbeatMonitor, LatestHeartbeatMonitor>();

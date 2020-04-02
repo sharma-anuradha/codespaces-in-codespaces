@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
     /// <summary>
     /// Message pump which gates messages to/from the underlying queue.
     /// </summary>
-    public interface ICrossRegionContinuationTaskMessagePump : IDisposable
+    public interface ICrossRegionContinuationTaskMessagePump
     {
         /// <summary>
         /// Pushes message onto queue.
