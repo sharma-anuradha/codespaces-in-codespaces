@@ -7,6 +7,24 @@ using System;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
 {
     /// <summary>
+    /// Pcf Endpoints.
+    /// </summary>
+    public enum PcfEndpoint
+    {
+        /// <summary>
+        /// Pcf PPE.
+        /// To be used with VSO Dev.
+        /// </summary>
+        Ppe = 0,
+
+        /// <summary>
+        /// Pcf Production.
+        /// To be used with VSO PPE and Production.
+        /// </summary>
+        Prod = 1,
+    }
+
+    /// <summary>
     /// PrivacyCommandFeed Settings.
     /// </summary>
     public class PrivacyCommandFeedSettings
@@ -20,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// Gets or sets PCF Agent id.
         /// </summary>
         public Guid PcfAgentId { get; set; }
+
+        /// <summary>
+        /// Gets or sets Pcf endpoint.
+        /// </summary>
+        public PcfEndpoint PcfEndpoint { get; set; }
     }
 }

@@ -52,8 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
                 var affectedEntitiesCount = 0;
                 foreach (var environment in environments)
                 {
-                    var continuationInput = new EnvironmentDeletionContinuationInput { EnvironmentId = environment.Id };
-                    await CrossRegionActivator.ExecuteForDataPlane(EnvironmentDeletionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger.NewChildLogger());
+                    await QueueEnvironmentForDeletion(environment, logger.NewChildLogger());
                     affectedEntitiesCount++;
                 }
 
@@ -138,6 +137,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         {
             var isDeleted = await IdentityMapRepository.DeleteAsync(map.Id, logger);
             return isDeleted ? 1 : 0;
+        }
+
+        private async Task QueueEnvironmentForDeletion(CloudEnvironment environment, IDiagnosticsLogger logger)
+        {
+            await logger.OperationScopeAsync("pcf_queue_environment_for_deletion", async (childLogger) =>
+            {
+                childLogger.AddCloudEnvironment(environment);
+                var continuationInput = new EnvironmentDeletionContinuationInput { EnvironmentId = environment.Id };
+                await CrossRegionActivator.ExecuteForDataPlane(EnvironmentDeletionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
+            });
         }
     }
 }

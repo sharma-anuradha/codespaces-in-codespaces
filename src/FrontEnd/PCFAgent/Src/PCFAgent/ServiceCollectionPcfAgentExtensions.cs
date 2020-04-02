@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.PrivacyServices.CommandFeed.Client;
 using Microsoft.VsSaaS.Common;
@@ -20,10 +19,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         /// Service collection extension to enable privacy command feed processing.
         /// </summary>
         /// <param name="services">Service collection.</param>
-        /// <param name="pcfAgentId">PCF Agent Id.</param>
+        /// <param name="pcfSettings">The Privacy Command Feed Settings.</param>
         /// <param name="useMocksForLocalDevelopment">Use mocks for developemnt.</param>
         /// <returns>Updated service collection.</returns>
-        public static IServiceCollection AddPcfAgent(this IServiceCollection services, Guid pcfAgentId, bool useMocksForLocalDevelopment)
+        public static IServiceCollection AddPcfAgent(this IServiceCollection services, PrivacyCommandFeedSettings pcfSettings, bool useMocksForLocalDevelopment)
         {
             services.AddHostedService<PcfAgentWorker>();
             services.AddSingleton<IPrivacyDataManager, PrivacyDataManager>();
@@ -40,16 +39,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                 services.AddSingleton<ICommandFeedClient, CommandFeedClient>(serviceProvider =>
                 {
                     var servicePrincipal = serviceProvider.GetRequiredService<IServicePrincipal>();
-
                     return new CommandFeedClient(
-                        agentId: pcfAgentId,
+                        agentId: pcfSettings.PcfAgentId,
                         aadClientId: servicePrincipal.ClientId,
                         aadClientSecret: servicePrincipal.GetClientSecretAsync().Result,
-                        logger: serviceProvider.GetService<CommandFeedLogger>());
+                        logger: serviceProvider.GetService<CommandFeedLogger>(),
+                        endpointConfiguration: GetEndpointConfiguration(pcfSettings));
                 });
             }
 
             return services;
+        }
+
+        private static CommandFeedEndpointConfiguration GetEndpointConfiguration(PrivacyCommandFeedSettings pcfSettings)
+        {
+            switch (pcfSettings.PcfEndpoint)
+            {
+                case PcfEndpoint.Ppe:
+                    return CommandFeedEndpointConfiguration.Preproduction;
+                case PcfEndpoint.Prod:
+                    return CommandFeedEndpointConfiguration.Production;
+                default:
+                    return null;
+            }
         }
     }
 }

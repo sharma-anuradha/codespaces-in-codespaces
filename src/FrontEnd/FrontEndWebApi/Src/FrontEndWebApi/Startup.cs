@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 // Add PCF Agent.
                 if (frontEndAppSettings.PrivacyCommandFeedSettings?.IsPcfEnabled == true)
                 {
-                    services.AddPcfAgent(frontEndAppSettings.PrivacyCommandFeedSettings.PcfAgentId, frontEndAppSettings.UseMocksForLocalDevelopment);
+                    services.AddPcfAgent(frontEndAppSettings.PrivacyCommandFeedSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
                 }
             }
 
