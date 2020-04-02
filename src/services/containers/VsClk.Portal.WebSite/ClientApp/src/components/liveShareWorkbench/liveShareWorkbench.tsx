@@ -11,6 +11,7 @@ import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench'
 import { defaultConfig } from '../../services/configurationService';
 
 import { getShortEnvironmentName } from '../../utils/getShortEnvironmentName';
+import { telemetry } from '../../utils/telemetry';
 
 export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareWebExtensionEndpoint: string;
@@ -21,9 +22,9 @@ export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: strin
 const liveShareEnvParam = (env: string, currentSearch: string): string | null => {
     const currentEnv = getShortEnvironmentName(env);
 
-    const isDEV = (currentEnv === 'dev');
-    const isDEVStg = (currentEnv === 'dev-stg');
-    const isPPE = (currentEnv === 'ppe');
+    const isDEV = currentEnv === 'dev';
+    const isDEVStg = currentEnv === 'dev-stg';
+    const isPPE = currentEnv === 'ppe';
     if (!isDEV && !isDEVStg && !isPPE) {
         return null;
     }
@@ -35,9 +36,7 @@ const liveShareEnvParam = (env: string, currentSearch: string): string | null =>
         return setParam;
     }
 
-    return (currentEnv === 'dev-stg')
-        ? 'dev'
-        : currentEnv;
+    return currentEnv === 'dev-stg' ? 'dev' : currentEnv;
 };
 
 class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShareWorkbenchProps> {
@@ -56,7 +55,7 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
         }
 
         return params;
-    }
+    };
 
     constructor(props: LiveShareWorkbenchProps) {
         super(props);
@@ -74,9 +73,7 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
             ]);
 
             const link: IApplicationLink = {
-                uri: vscode.URI.parse(
-                    `vsls:?${params}`
-                ),
+                uri: vscode.URI.parse(`vsls:?${params}`),
                 label: 'Open in Desktop',
             };
 
@@ -100,7 +97,7 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
 
         const { sessionId } = this.props;
         const params = this.getSessionLinkParamsWithEnvironment([
-            ['sessionId',  this.props.sessionId],
+            ['sessionId', this.props.sessionId],
         ]);
 
         // This is the folder URI format recognized by the LiveShare file system provider.
@@ -113,6 +110,10 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
                 id: '_liveshareweb.gotoSessionPage',
                 handler: () =>
                     (window.location.href = `https://prod.liveshare.vsengsaas.visualstudio.com/join?${this.props.sessionId}`),
+            },
+            {
+                id: '_liveshareweb.getMachineId',
+                handler: () => telemetry.getContext().browserId,
             },
         ];
 
