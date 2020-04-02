@@ -23,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
             services.AddSingleton<IDataHandler, StartEnvironmentResultHandler>();
             services.AddSingleton<IDataHandler, ShutdownJobHandler>();
             services.AddSingleton<IDataHandler, EnvironmentSessionDataHandler>();
+            services.AddSingleton<IDataHandler, GitChangesDataHandler>();
             /* Add additional handlers here as needed */
 
             return services;

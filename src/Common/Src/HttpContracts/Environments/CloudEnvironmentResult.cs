@@ -117,5 +117,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the features.
         /// </summary>
         public Dictionary<string, string> Features { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the environment has unpushed git changes.
+        /// </summary>
+        public bool HasUnpushedGitChanges { get; set; }
     }
 }

@@ -37,6 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
                 {
                     return collectedData.ToObject<EnvironmentSessionData>();
                 }
+                else if (name.Equals(nameof(GitChangesData), StringComparison.OrdinalIgnoreCase))
+                {
+                    return collectedData.ToObject<GitChangesData>();
+                }
                 else
                 {
                     return null;

@@ -227,6 +227,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public DateTime LastUsed { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the environment has unpushed git changes.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "hasUnpushedGitChanges")]
+        public bool? HasUnpushedGitChanges { get; set; }
+
+        /// <summary>
         /// Gets or sets the auto shutdown time the user specified.
         /// </summary>
         [GDPR(Action = GDPRAction.Export)]
