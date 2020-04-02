@@ -64,8 +64,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    ValidateCloudEnvironment(cloudEnvironment, gitChangesData.EnvironmentId);
 
                    cloudEnvironment.LastUpdatedByHeartBeat = gitChangesData.Timestamp;
-                   latestHeartbeatMonitor.UpdateHeartbeat(gitChangesData.Timestamp);
-
                    cloudEnvironment.HasUnpushedGitChanges = gitChangesData.HasChanges;
 
                    return Task.FromResult(handlerContext);

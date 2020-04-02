@@ -229,7 +229,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets a value indicating whether the environment has unpushed git changes.
         /// </summary>
-        [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "hasUnpushedGitChanges")]
         public bool? HasUnpushedGitChanges { get; set; }
 
