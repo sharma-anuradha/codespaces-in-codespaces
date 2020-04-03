@@ -23,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             try
             {
                 return Parser.Default.ParseArguments<
+                    ShowDbAccountInfoCommand,
                     CreatePortForwardingConnection,
                     PortForwardingConnectionEstablished,
                     ShowSkusCommand,
@@ -38,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     CleanDevStamp,
                     ListDevStamps>(args)
                     .MapResult(
+                        (ShowDbAccountInfoCommand command) => command.Execute(Console.Out, Console.Error),
                         (CreatePortForwardingConnection command) => command.Execute(Console.Out, Console.Error),
                         (PortForwardingConnectionEstablished command) => command.Execute(Console.Out, Console.Error),
                         (ShowSkusCommand command) => command.Execute(Console.Out, Console.Error),
