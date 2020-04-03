@@ -186,24 +186,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var controlPlaneInfo = LoadControlPlaneInfo("ppe-rel", null, AzureLocation.WestUs2);
 
-            void eastUsStamp(IControlPlaneStampInfo s)
-            {
-                Assert.Equal(AzureLocation.EastUs, s.Location);
-                Assert.Equal("eastus-ppe-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
-                Assert.Equal("vsclk-online-ppe-rel-use", s.StampResourceGroupName);
-                Assert.Equal("vsclk-online-ppe-rel-use-db", s.StampCosmosDbAccountName);
-                Assert.Equal("vsclk-online-ppe-rel-use-service-bus", s.StampServiceBusNamespaceName);
-                Assert.Equal("vsclkonlinepperelusesa", s.StampStorageAccountName);
-                Assert.Collection(s.DataPlaneLocations,
-                    l => Assert.Equal(AzureLocation.EastUs, l));
-                Assert.Equal("vsopperelusecquse", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
-                Assert.Equal("vsopperelusevmuse", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
-                Assert.Equal("vsopperelusesiuse", s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
-                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
-                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
-                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
-            }
-
             void westUs2Stamp(IControlPlaneStampInfo s)
             {
                 Assert.Equal(AzureLocation.WestUs2, s.Location);
@@ -222,24 +204,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
                 Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.EastUs));
-            }
-
-            void westEuropeStamp(IControlPlaneStampInfo s)
-            {
-                Assert.Equal(AzureLocation.WestEurope, s.Location);
-                Assert.Equal("westeurope-ppe-rel-online.core.vsengsaas.visualstudio.com", s.DnsHostName);
-                Assert.Equal("vsclk-online-ppe-rel-euw", s.StampResourceGroupName);
-                Assert.Equal("vsclk-online-ppe-rel-euw-db", s.StampCosmosDbAccountName);
-                Assert.Equal("vsclk-online-ppe-rel-euw-service-bus", s.StampServiceBusNamespaceName);
-                Assert.Equal("vsclkonlineppereleuwsa", s.StampStorageAccountName);
-                Assert.Collection(s.DataPlaneLocations,
-                    l => Assert.Equal(AzureLocation.WestEurope, l));
-                Assert.Equal("vsoppereleuwcqeuw", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestEurope));
-                Assert.Equal("vsoppereleuwvmeuw", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestEurope));
-                Assert.Equal("vsoppereleuwsieuw", s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestEurope));
-                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs));
-                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs));
-                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs));
             }
 
             void southEastAsiaStamp(IControlPlaneStampInfo s)
@@ -263,9 +227,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             }
 
             Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()),
-                eastUsStamp,
                 southEastAsiaStamp,
-                westEuropeStamp,
                 westUs2Stamp);
             Assert.Equal("online-ppe.core.vsengsaas.visualstudio.com", controlPlaneInfo.DnsHostName);
             Assert.Equal("vsclk-online-ppe", controlPlaneInfo.EnvironmentResourceGroupName);

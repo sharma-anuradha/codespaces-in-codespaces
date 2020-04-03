@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 async (childLogger) =>
                 {
                     var queueClients = new Dictionary<AzureLocation, CloudQueue>();
-                    foreach (var controlPlaneStampInfo in controlPlaneInfo.AllStamps.Values.Distinct())
+                    foreach (var controlPlaneStampInfo in controlPlaneInfo.AllStamps.Values)
                     {
                         var controlPlaneRegion = controlPlaneInfo.Stamp.Location;
                         var queueClient = await clientProvider.GetQueueAsync(QueueId, controlPlaneRegion);

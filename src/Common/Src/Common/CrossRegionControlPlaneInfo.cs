@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var currentControlPlaneInfo = new Dictionary<AzureLocation, IControlPlaneInfo>();
             var accessors = new Dictionary<AzureLocation, IControlPlaneAzureResourceAccessor>();
 
-            foreach (var stamp in controlPlaneInfo.AllStamps.Values.Distinct())
+            foreach (var stamp in controlPlaneInfo.AllStamps.Values)
             {
                 var localCurrentLocationProvider = stamp.Location == currentLocationProvider.CurrentLocation ?
                     currentLocationProvider : new CurrentLocationProvider(stamp.Location);
