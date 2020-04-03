@@ -40,20 +40,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var currentControlPlaneInfo = new Dictionary<AzureLocation, IControlPlaneInfo>();
             var accessors = new Dictionary<AzureLocation, IControlPlaneAzureResourceAccessor>();
 
-            foreach (var stamp in controlPlaneInfo.AllStamps.Values)
+            foreach (var controlPlaneRegion in controlPlaneInfo.AllStamps.Keys)
             {
-                var localCurrentLocationProvider = stamp.Location == currentLocationProvider.CurrentLocation ?
-                    currentLocationProvider : new CurrentLocationProvider(stamp.Location);
+                var localCurrentLocationProvider = controlPlaneRegion == currentLocationProvider.CurrentLocation ?
+                    currentLocationProvider : new CurrentLocationProvider(controlPlaneRegion);
 
-                var localControlPlaneInfo = stamp.Location == currentLocationProvider.CurrentLocation ?
+                var localControlPlaneInfo = controlPlaneRegion == currentLocationProvider.CurrentLocation ?
                     controlPlaneInfo : new ControlPlaneInfo(options, localCurrentLocationProvider, resourceNameBuilder);
 
-                var localAccessor = stamp.Location == currentLocationProvider.CurrentLocation ?
+                var localAccessor = controlPlaneRegion == currentLocationProvider.CurrentLocation ?
                     controlPlaneAzureResourceAccessor : new ControlPlaneAzureResourceAccessor(localControlPlaneInfo, servicePrincipal, httpClient, cache);
 
-                currentLocations.Add(stamp.Location, localCurrentLocationProvider);
-                currentControlPlaneInfo.Add(stamp.Location, localControlPlaneInfo);
-                accessors.Add(stamp.Location, localAccessor);
+                currentLocations.Add(controlPlaneRegion, localCurrentLocationProvider);
+                currentControlPlaneInfo.Add(controlPlaneRegion, localControlPlaneInfo);
+                accessors.Add(controlPlaneRegion, localAccessor);
             }
 
             AllLocationProviders = new ReadOnlyDictionary<AzureLocation, ICurrentLocationProvider>(currentLocations);
