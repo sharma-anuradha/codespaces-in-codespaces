@@ -16,10 +16,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public class EnvironmentStateManager : IEnvironmentStateManager
     {
+        private const string LogBaseName = "environment_state_manager";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentStateManager"/> class.
         /// </summary>
         /// <param name="billingEventManager">target billing manager.</param>
+        /// <param name="cloudEnvironmentRepository">target cloud environment repository.</param>
         public EnvironmentStateManager(IBillingEventManager billingEventManager)
         {
             this.BillingEventManager = billingEventManager;
@@ -28,68 +31,73 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IBillingEventManager BillingEventManager { get; }
 
         /// <inheritdoc/>
-        public async Task SetEnvironmentStateAsync(
+        public Task SetEnvironmentStateAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentState state,
             string trigger,
             string reason,
             IDiagnosticsLogger logger)
         {
-            var oldState = cloudEnvironment.State;
-            var oldStateUpdated = cloudEnvironment.LastStateUpdated;
-
-            logger.FluentAddBaseValue("OldState", oldState)
-                .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
-
-            VsoPlanInfo plan;
-            if (cloudEnvironment.PlanId == default)
-            {
-                // Use a temporary plan if the environment doesn't have one.
-                // TODO: Remove this; make the plan required after clients are updated to supply it.
-                plan = new VsoPlanInfo
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_set",
+                async (childLogger) =>
                 {
-                    Subscription = Guid.Empty.ToString(),
-                    ResourceGroup = "none",
-                    Name = "none",
-                };
-            }
-            else
-            {
-                Requires.Argument(
-                    VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan),
-                    nameof(cloudEnvironment.PlanId),
-                    "Invalid plan ID");
+                    var oldState = cloudEnvironment.State;
+                    var oldStateUpdated = cloudEnvironment.LastStateUpdated;
 
-                plan.Location = cloudEnvironment.Location;
-            }
+                    logger.FluentAddBaseValue("OldState", oldState)
+                        .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
 
-            var environment = new EnvironmentBillingInfo
-            {
-                Id = cloudEnvironment.Id,
-                Name = cloudEnvironment.FriendlyName,
-                Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
-            };
+                    VsoPlanInfo plan;
+                    if (cloudEnvironment.PlanId == default)
+                    {
+                        // Use a temporary plan if the environment doesn't have one.
+                        // TODO: Remove this; make the plan required after clients are updated to supply it.
+                        plan = new VsoPlanInfo
+                        {
+                            Subscription = Guid.Empty.ToString(),
+                            ResourceGroup = "none",
+                            Name = "none",
+                        };
+                    }
+                    else
+                    {
+                        Requires.Argument(
+                            VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan),
+                            nameof(cloudEnvironment.PlanId),
+                            "Invalid plan ID");
 
-            var stateChange = new BillingStateChange
-            {
-                OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
-                NewValue = state.ToString(),
-            };
+                        plan.Location = cloudEnvironment.Location;
+                    }
 
-            await BillingEventManager.CreateEventAsync(
-                plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
+                    var environment = new EnvironmentBillingInfo
+                    {
+                        Id = cloudEnvironment.Id,
+                        Name = cloudEnvironment.FriendlyName,
+                        Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
+                    };
 
-            cloudEnvironment.State = state;
-            cloudEnvironment.LastStateUpdateTrigger = trigger;
-            cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
+                    var stateChange = new BillingStateChange
+                    {
+                        OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
+                        NewValue = state.ToString(),
+                    };
 
-            if (reason != null)
-            {
-                cloudEnvironment.LastStateUpdateReason = reason;
-            }
+                    await BillingEventManager.CreateEventAsync(
+                        plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
-            logger.AddCloudEnvironment(cloudEnvironment)
-                 .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
+                    cloudEnvironment.State = state;
+                    cloudEnvironment.LastStateUpdateTrigger = trigger;
+                    cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
+
+                    if (reason != null)
+                    {
+                        cloudEnvironment.LastStateUpdateReason = reason;
+                    }
+
+                    logger.AddCloudEnvironment(cloudEnvironment)
+                         .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
+                });
         }
     }
 }

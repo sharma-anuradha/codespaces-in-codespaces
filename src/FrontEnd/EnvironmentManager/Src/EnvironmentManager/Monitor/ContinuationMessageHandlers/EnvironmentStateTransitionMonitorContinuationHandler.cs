@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager

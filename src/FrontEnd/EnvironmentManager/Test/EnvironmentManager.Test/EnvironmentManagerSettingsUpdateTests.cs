@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
@@ -58,13 +59,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var targetSku = MockSku(skuName: "TargetSku");
             var activeSku = MockSku(skuName: "ActiveSku", skuTransitions: new[] { targetSku.SkuName });
-            
+
             var skuCatalog = MockSkuCatalog(targetSku, activeSku);
 
             var environmentRepository = new MockCloudEnvironmentRepository();
-            
+
             var environment = MockEnvironment(
-                skuName: activeSku.SkuName, 
+                skuName: activeSku.SkuName,
                 state: CloudEnvironmentState.Shutdown,
                 autoShutdownDelayMinutes: 0);
 
@@ -223,7 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var defaultCount = 20;
             var defaultAutoShutdownOptions = new[] { 0, 5, 30, 120 };
             var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = defaultCount };
-            var environmentSettings = new EnvironmentManagerSettings() 
+            var environmentSettings = new EnvironmentManagerSettings()
             {
                 DefaultMaxEnvironmentsPerPlan = defaultCount,
             };
@@ -245,6 +246,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceBroker = new MockResourceBrokerClient();
             var environmentMonitor = new MockEnvironmentMonitor();
             var environmentContinuation = new MockEnvironmentContinuation();
+            var environmentStateManager = new EnvironmentStateManager(billingEventManager);
+            var environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(environmentStateManager, resourceBroker, environmentRepository) };
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
 
@@ -261,7 +264,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 new PlanManagerSettings
                 {
                     DefaultAutoSuspendDelayMinutesOptions = autoShutdownDelayOptions ?? defaultAutoShutdownOptions,
-                });
+                },
+                environmentStateManager,
+                environmentRepairWorkflows);
         }
 
         private static ICloudEnvironmentSku MockSku(
@@ -335,7 +340,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         private static IControlPlaneStampInfo MockControlPlaneStampInfo()
-        {            
+        {
             return new Mock<IControlPlaneStampInfo>().Object;
         }
 

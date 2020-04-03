@@ -6,17 +6,18 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows
 {
     /// <summary>
     /// Force suspend environment.
     /// </summary>
     public class ForceSuspendEnvironmentWorkflow : IForceSuspendEnvironmentWorkflow
     {
-        private const string LogBaseName = "suspend_environment_workflow";
+        private const string LogBaseName = "force_suspend_environment_repair";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ForceSuspendEnvironmentWorkflow"/> class.
@@ -50,21 +51,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
             Requires.NotNull(logger, nameof(logger));
 
             await logger.OperationScopeAsync(
-                $"{LogBaseName}_force_suspend",
+                $"{LogBaseName}_execute",
                 async (childLogger) =>
                 {
-                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.EnvironmentMonitor, "EnvironmentRepair", logger.NewChildLogger());
+                    // Deal with getting the state to the correct place
+                    var shutdownState = CloudEnvironmentState.Shutdown;
+                    if (cloudEnvironment?.Storage?.Type == ResourceType.StorageArchive)
+                    {
+                        shutdownState = CloudEnvironmentState.Archived;
+                    }
+
+                    // Set the state of the environement
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
 
                     var computeIdToken = cloudEnvironment.Compute?.ResourceId;
                     cloudEnvironment.Compute = null;
 
                     // Update the database state.
-                    await EnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    cloudEnvironment = await EnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
                     // Delete the allocated resources.
                     if (computeIdToken != null)
                     {
-                        await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), computeIdToken.Value, childLogger.NewChildLogger());
+                        await ResourceBrokerHttpClient.DeleteAsync(
+                            Guid.Parse(cloudEnvironment.Id),
+                            computeIdToken.Value,
+                            childLogger.NewChildLogger());
                     }
                 },
                 swallowException: true);

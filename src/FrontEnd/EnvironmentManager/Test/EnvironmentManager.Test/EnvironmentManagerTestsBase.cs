@@ -1,27 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
-using Moq;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.VsSaaS.Tokens;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using System.Collections.Generic;
+using Microsoft.VsSaaS.Tokens;
+using Moq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
@@ -39,6 +40,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
+        private readonly EnvironmentStateManager environmentStateManager;
+        private readonly List<IEnvironmentRepairWorkflow> environmentRepairWorkflows;
         public readonly IEnvironmentMonitor environmentMonitor;
         public const string testUserId = "test-user";
         public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
@@ -99,6 +102,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var skuCatalogMock = new Mock<ISkuCatalog>(MockBehavior.Strict);
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
             this.skuCatalog = skuCatalogMock.Object;
+            this.environmentStateManager = new EnvironmentStateManager(billingEventManager);
+            this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository) };
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
@@ -110,7 +115,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentMonitor,
                 new MockEnvironmentContinuation(),
                 environmentSettings,
-                planSettings);
+                planSettings,
+                this.environmentStateManager,
+                this.environmentRepairWorkflows);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")

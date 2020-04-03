@@ -5,9 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor.RepairWorkflows
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows
 {
     /// <summary>
     /// An interface to support componsition for the InactiveEnvironmentWorkflow.

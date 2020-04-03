@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
@@ -44,6 +45,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentMonitor">The environment monitor.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
         /// <param name="planManagerSettings">The plan manager settings.</param>
+        /// <param name="environmentStateManager">The environment state manager.</param>
+        /// <param name="environmentRepairWorkflows">The environment repair workflows.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
@@ -54,18 +57,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentMonitor environmentMonitor,
             IEnvironmentContinuationOperations environmentContinuation,
             EnvironmentManagerSettings environmentManagerSettings,
-            PlanManagerSettings planManagerSettings)
+            PlanManagerSettings planManagerSettings,
+            IEnvironmentStateManager environmentStateManager,
+            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
             BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
-            SkuCatalog = skuCatalog;
-            EnvironmentMonitor = environmentMonitor;
+            SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
+            EnvironmentMonitor = Requires.NotNull(environmentMonitor, nameof(environmentMonitor));
+            EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             EnvironmentContinuation = Requires.NotNull(environmentContinuation, nameof(environmentContinuation));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
             PlanManagerSettings = Requires.NotNull(planManagerSettings, nameof(PlanManagerSettings));
+            EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -82,11 +89,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IEnvironmentMonitor EnvironmentMonitor { get; }
 
+        private IEnvironmentStateManager EnvironmentStateManager { get; }
+
         private IEnvironmentContinuationOperations EnvironmentContinuation { get; }
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         private PlanManagerSettings PlanManagerSettings { get; }
+
+        private Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -165,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Update the new state before returning.
                     if (originalState != newState)
                     {
-                        await SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.GetEnvironment, null, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.GetEnvironment, null, childLogger.NewChildLogger());
 
                         cloudEnvironment.Updated = DateTime.UtcNow;
 
@@ -266,7 +277,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     cloudEnvironment.Updated = DateTime.UtcNow;
                     if (newState != default && newState != cloudEnvironment.State)
                     {
-                        await SetEnvironmentStateAsync(cloudEnvironment, newState, trigger, reason, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, newState, trigger, reason, childLogger.NewChildLogger());
                     }
 
                     return await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -293,7 +304,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
 
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, CloudEnvironmentStateUpdateTriggers.EnvironmentCallback, string.Empty, childLogger.NewChildLogger());
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Available, CloudEnvironmentStateUpdateTriggers.EnvironmentCallback, string.Empty, childLogger.NewChildLogger());
 
                     cloudEnvironment.Updated = DateTime.UtcNow;
 
@@ -393,8 +404,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
 
                         // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
-                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
-                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
 
                         cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
@@ -489,7 +500,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Create the cloud environment record in the provisioning state -- before starting.
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                     // Highly unlikely, but still...
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
 
                     // Persist core cloud environment record
                     cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -535,7 +546,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_delete",
                 async (childLogger) =>
                 {
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, childLogger.NewChildLogger());
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, childLogger.NewChildLogger());
 
                     if (cloudEnvironment.Type == EnvironmentType.CloudEnvironment)
                     {
@@ -724,7 +735,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // At this point, if archive record is going to be switched in it will have been
                     var startingStateReson = isArchivedEnvironment ? MessageCodes.ResotringFromArchive.ToString() : null;
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, startingStateReson, childLogger.NewChildLogger());
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, startingStateReson, childLogger.NewChildLogger());
 
                     // Persist updates madee to date
                     await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -899,7 +910,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
                     else
                     {
-                        await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, childLogger.NewChildLogger());
 
                         // Update the database state.
                         cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -964,30 +975,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_force_suspend",
                 async (childLogger) =>
                 {
-                    // Deal with getting the state to the correct place
-                    var shutdownState = CloudEnvironmentState.Shutdown;
-                    if (cloudEnvironment?.Storage?.Type == ResourceType.StorageArchive)
-                    {
-                        shutdownState = CloudEnvironmentState.Archived;
-                    }
-
-                    // Set the state of the environement
-                    await SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
-
-                    var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                    cloudEnvironment.Compute = null;
-
-                    // Update the database state.
-                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
-
-                    // Delete the allocated resources.
-                    if (computeIdToken != null)
-                    {
-                        await ResourceBrokerClient.DeleteAsync(
-                            Guid.Parse(cloudEnvironment.Id),
-                            computeIdToken.Value,
-                            childLogger.NewChildLogger());
-                    }
+                    await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(cloudEnvironment, childLogger);
 
                     return new CloudEnvironmentServiceResult
                     {
@@ -1062,7 +1050,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     cloudEnvironment.Updated = DateTime.UtcNow;
 
-                    await SetEnvironmentStateAsync(
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(
                         cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, childLogger.NewChildLogger());
 
                     cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -1238,7 +1226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Create the cloud environment record in the provisioning state -- before starting.
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                     // Highly unlikely, but still...
-                    await SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Queued, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Queued, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
 
                     // Persist core cloud environment record
                     cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -1259,70 +1247,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     return default(CloudEnvironmentServiceResult);
                 });
-        }
-
-        private async Task SetEnvironmentStateAsync(
-            CloudEnvironment cloudEnvironment,
-            CloudEnvironmentState state,
-            string trigger,
-            string reason,
-            IDiagnosticsLogger logger)
-        {
-            var oldState = cloudEnvironment.State;
-            var oldStateUpdated = cloudEnvironment.LastStateUpdated;
-
-            logger.FluentAddBaseValue("OldState", oldState)
-                .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
-
-            VsoPlanInfo plan;
-            if (cloudEnvironment.PlanId == default)
-            {
-                // Use a temporary plan if the environment doesn't have one.
-                // TODO: Remove this; make the plan required after clients are updated to supply it.
-                plan = new VsoPlanInfo
-                {
-                    Subscription = Guid.Empty.ToString(),
-                    ResourceGroup = "none",
-                    Name = "none",
-                };
-            }
-            else
-            {
-                Requires.Argument(
-                    VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan),
-                    nameof(cloudEnvironment.PlanId),
-                    "Invalid plan ID");
-
-                plan.Location = cloudEnvironment.Location;
-            }
-
-            var environment = new EnvironmentBillingInfo
-            {
-                Id = cloudEnvironment.Id,
-                Name = cloudEnvironment.FriendlyName,
-                Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
-            };
-
-            var stateChange = new BillingStateChange
-            {
-                OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
-                NewValue = state.ToString(),
-            };
-
-            await BillingEventManager.CreateEventAsync(
-                plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
-
-            cloudEnvironment.State = state;
-            cloudEnvironment.LastStateUpdateTrigger = trigger;
-            cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
-
-            if (reason != null)
-            {
-                cloudEnvironment.LastStateUpdateReason = reason;
-            }
-
-            logger.AddCloudEnvironment(cloudEnvironment)
-                 .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
         }
 
         private Task<ResourceAllocation> AllocateComputeAsync(

@@ -5,7 +5,7 @@
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows
 {
     /// <summary>
     /// Represents Workflows for Environment Repair.

@@ -4,10 +4,9 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor.RepairWorkflows
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows
 {
     /// <summary>
     /// Used to mark an environment as inactive.
