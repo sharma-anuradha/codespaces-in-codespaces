@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             // with no plan info.
             actionResult = await skuUtils.IsVisible(sku, null, userProvider.GetProfile());
-            Assert.True(actionResult);
+            Assert.False(actionResult);
 
             // with no user profile info. its always true for any non-windows skus as of now.
             actionResult = await skuUtils.IsVisible(sku, planInfo, null);
