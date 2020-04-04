@@ -55,6 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
             var isEnabled = false;
             var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            Logger.FluentAddValue("IsPcfAgentEnabled", isEnabled)
+                        .LogInfo(GetType().FormatLogMessage("pcf_status_check"));
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -83,6 +85,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                     }
 
                     isEnabled = enabledInSystemConfig;
+
+                    Logger.FluentAddValue("IsPcfAgentEnabled", isEnabled)
+                        .LogInfo(GetType().FormatLogMessage("pcf_status_check"));
                 }
 
                 // Check the system config record every minute, to determine whether the PCF processing needs to be disabled.
