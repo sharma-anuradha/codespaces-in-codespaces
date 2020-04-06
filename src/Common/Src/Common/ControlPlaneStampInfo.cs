@@ -90,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             { AzureLocation.SouthEastAsia, "asse" },
             { AzureLocation.WestEurope, "euw" },
             { AzureLocation.WestUs2, "usw2" },
+            { AzureLocation.EastUs2Euap, "usec" },
         };
 
         private IControlPlaneInfo ControlPlaneInfo { get; }

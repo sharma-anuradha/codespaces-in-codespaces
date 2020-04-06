@@ -26,6 +26,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             { "ppe-rel", null },
             { "ppe-rel", "ppe-load" },
             { "prod-rel", null },
+            { "prod-rel", "prod-can" },
+            { "prod-can", null },
         };
 
         [Theory]
@@ -136,7 +138,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         [MemberData(nameof(EnvironmentNames))]
         public void AppSettings_ControlPlaneInfo(string environmentName, string overrideName)
         {
-            var controlPlaneInfo = LoadControlPlaneInfo(environmentName, overrideName);
+            var location = environmentName == "prod-can" ? AzureLocation.EastUs2Euap : AzureLocation.WestUs2;
+            var controlPlaneInfo = LoadControlPlaneInfo(environmentName, overrideName, location);
             Assert.NotNull(controlPlaneInfo);
             var stamp = controlPlaneInfo.Stamp;
             Assert.NotNull(stamp);
@@ -338,6 +341,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             Assert.Collection(controlPlaneInfo.Stamp.DataPlaneLocations,
                 l => Assert.Equal(AzureLocation.WestUs2, l));
             westUs2Stamp(controlPlaneInfo.Stamp);
+            Assert.False(controlPlaneInfo.TryGetSubscriptionId(out var _));
+        }
+
+        [Fact]
+        public void AppSettings_ControlPlaneInfo_Production_Canary()
+        {
+            var controlPlaneInfo = LoadControlPlaneInfo("prod-can", null, AzureLocation.EastUs2Euap);
+
+            void eastUs2EuapStamp(IControlPlaneStampInfo s)
+            {
+                Assert.Equal(AzureLocation.EastUs2Euap, s.Location);
+                Assert.Equal("eastus2euap.online.visualstudio.com", s.DnsHostName);
+                Assert.Equal("vsclk-online-prod-can-usec", s.StampResourceGroupName);
+                Assert.Equal("vsclk-online-prod-can-usec-db", s.StampCosmosDbAccountName);
+                Assert.Equal("vsclk-online-prod-can-usec-service-bus", s.StampServiceBusNamespaceName);
+                Assert.Equal("vsclkonlineprodcanusecsa", s.StampStorageAccountName);
+                Assert.Collection(s.DataPlaneLocations,
+                    l => Assert.Equal(AzureLocation.EastUs2Euap, l));
+                Assert.Equal("vsoprodcanuseccqusec", s.GetStampStorageAccountNameForComputeQueues(AzureLocation.EastUs2Euap));
+                Assert.Equal("vsoprodcanusecvmusec", s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.EastUs2Euap));
+                Assert.Equal("vsoprodcanusecsiusec", s.GetStampStorageAccountNameForStorageImages(AzureLocation.EastUs2Euap));
+                Assert.Equal("vsoprodcanusecbausec", s.GetStampBatchAccountName(AzureLocation.EastUs2Euap));
+                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeQueues(AzureLocation.WestUs2));
+                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForComputeVmAgentImages(AzureLocation.WestUs2));
+                Assert.Throws<NotSupportedException>(() => s.GetStampStorageAccountNameForStorageImages(AzureLocation.WestUs2));
+                Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.WestUs2));
+            }
+
+            Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()), eastUs2EuapStamp);
+
+            Assert.Equal("canary.online.visualstudio.com", controlPlaneInfo.DnsHostName);
+            Assert.Equal("vsclk-online-prod", controlPlaneInfo.EnvironmentResourceGroupName);
+            Assert.Equal("vsclk-online-prod-kv", controlPlaneInfo.EnvironmentKeyVaultName);
+            Assert.Equal("vsclk-online-prod-can", controlPlaneInfo.InstanceResourceGroupName);
+            Assert.Equal("vsclk-online-prod-can-db", controlPlaneInfo.InstanceCosmosDbAccountName);
+            Assert.Collection(controlPlaneInfo.Stamp.DataPlaneLocations,
+                l => Assert.Equal(AzureLocation.EastUs2Euap, l));
+            eastUs2EuapStamp(controlPlaneInfo.Stamp);
             Assert.False(controlPlaneInfo.TryGetSubscriptionId(out var _));
         }
 

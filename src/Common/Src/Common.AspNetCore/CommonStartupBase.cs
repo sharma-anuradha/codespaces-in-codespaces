@@ -63,11 +63,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 .SetBasePath(hostingEnvironment.ContentRootPath)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.json"), optional: false, reloadOnChange: true)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.secrets.json"), optional: true)
-                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true)
-                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.{infix}.json"), optional: false);
+                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true);
+
+            var hasOverrideFile = TryGetOverrideAppSettingsJsonFile(out var overrideAppSettingsJsonFile);
+
+            // Skipping environment appsettings file if override file is 'prod-can', so Stamps do not get merged
+            if (!(hasOverrideFile && overrideAppSettingsJsonFile == "appsettings.prod-can.json"))
+            {
+                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.{infix}.json"), optional: false);
+            }
 
             // Get the optional override appsettings file.
-            if (TryGetOverrideAppSettingsJsonFile(out var overrideAppSettingsJsonFile))
+            if (hasOverrideFile)
             {
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{overrideAppSettingsJsonFile}"), optional: false);
             }

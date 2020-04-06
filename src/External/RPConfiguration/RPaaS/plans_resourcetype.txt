@@ -58,9 +58,26 @@
               "ResourcePostAction"
             ]
         }]
+},
+{
+"apiVersions": [ "2019-07-01-privatepreview"],
+"locations": ["East US 2 EUAP"],
+"timeout": "PT2M",
+"extensions": [{
+            "endpointUri": "https://canary.online.visualstudio.com/api/v1/",
+            "extensionCategories": [
+              "ResourceCreationValidate",
+              "ResourceCreationBegin",
+              "ResourceCreationCompleted",
+              "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction"
+            ]
+        }]
 }], 
 "swaggerSpecifications": [
-{ "apiVersions": [ "2019-07-01-preview","2019-07-01-alpha","2019-07-01-beta" ], 
+{ "apiVersions": [ "2019-07-01-preview","2019-07-01-alpha","2019-07-01-beta","2019-07-01-privatepreview" ], 
 "swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/" 
 }] 
 }, 

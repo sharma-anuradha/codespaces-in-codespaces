@@ -1,0 +1,54 @@
+﻿# Common override values for charts deployed to vsclk-online-dev-ci
+
+image:
+  repositoryUrl: vsclkonlineprod.azurecr.io
+
+ingress:
+  hosts:
+    - canary.online.visualstudio.com
+  tls:
+    - hosts:
+        - canary.online.visualstudio.com
+      secretName: ssl-cert
+
+pfingress:
+  hosts:
+    - "*.app.canary.online.visualstudio.com"
+    - "*.apps.workspaces.githubusercontent.com"
+  tls:
+    - hosts:
+        - "*.app.canary.online.visualstudio.com"
+      secretName: ssl-cert
+    - hosts:
+        - "*.apps.workspaces.githubusercontent.com"
+      secretName: ssl-cert-github-pf
+
+authentication:
+  audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
+
+config:
+  aspNetEnv: Production
+  authRedirectUrl: https://canary.online.visualstudio.com
+  keyVaultName: vsclk-online-prod-kv
+  clusterDefaultHost: canary.online.visualstudio.com
+  portalEndpoint: https://canary.online.visualstudio.com
+  environmentRegistrationEndpoint: https://canary.online.visualstudio.com/api/v1/environments
+  apiEndpoint: https://canary.online.visualstudio.com/api/v1
+  liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
+  liveShareWebExtensionEndpoint: https://vslsprod.blob.core.windows.net/webextension
+  githubClientId: 15a84bcaef36dd681c52
+  githubNativeClientId: Iv1.ad5f73e593b03f40
+  azDevClientId: 282DE6CF-8729-4112-A472-CFB80960C5CD
+  vsSaaSTokenIssuer: https://insiders.liveshare.vsengsaas.visualstudio.com/
+  vsSaaSCertificateSecretName: vsls-prod-auth-cert-primary
+
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
+  # vsclk-core-ppe
+  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
+  # vsclk-core-prod
+  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  keyVaultName-dev: vsclk-online-dev-kv
+  keyVaultName-ppe: vsclk-online-ppe-kv
+  keyVaultName-prod: vsclk-online-prod-kv
