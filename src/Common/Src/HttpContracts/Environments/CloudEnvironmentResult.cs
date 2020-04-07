@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
 {
@@ -121,6 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// <summary>
         /// Gets or sets a value indicating whether the environment has unpushed git changes.
         /// </summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         public bool HasUnpushedGitChanges { get; set; }
     }
 }
