@@ -6,15 +6,17 @@
     </environment>
 </head>
 <body>
-    <div class="vsonline-titlebar part">
-        <div class="vsonline-titlebar__caption" aria-label="Visual Studio logo">
-            <div class="vsonline-titlebar__logo"></div>
-            <div class="vsonline-titlebar__separator"></div>
-            <div class="vsonline-titlebar__caption-text">
-                Visual Studio Online
+    @if (!string.Equals(ViewData["RenderBranding"], "GitHub")) {
+        <div class="vsonline-titlebar part">
+            <div class="vsonline-titlebar__caption" aria-label="Visual Studio logo">
+                <div class="vsonline-titlebar__logo"></div>
+                <div class="vsonline-titlebar__separator"></div>
+                <div class="vsonline-titlebar__caption-text">
+                    Visual Studio Online
+                </div>
             </div>
         </div>
-    </div>
+    }
     <div>
         @RenderBody()
     </div>

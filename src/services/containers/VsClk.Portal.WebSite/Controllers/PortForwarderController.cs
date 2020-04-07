@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -46,6 +47,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return string.Empty;
         }
 
+        [BrandedView]
         public async Task<IActionResult> Index(string path, [FromServices] IDiagnosticsLogger logger)
         {
             var cascadeToken = string.Empty;
@@ -65,7 +67,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 {
                     return ExceptionView(PortForwardingFailure.NotAuthenticated);
                 }
-                
+
                 var portString = portStringValues.SingleOrDefault();
                 if (string.IsNullOrWhiteSpace(portString))
                 {
@@ -207,7 +209,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                 return PhysicalFile(assetPhysicalPath, mediaType);
             }
-            
+
             var asset = Path.Combine(Directory.GetCurrentDirectory(),
                 "ClientApp", "build", path);
 
