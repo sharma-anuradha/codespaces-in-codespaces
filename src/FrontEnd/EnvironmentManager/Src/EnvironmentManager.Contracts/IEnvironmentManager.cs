@@ -181,5 +181,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">logger.</param>
         /// <returns>result.</returns>
         Task<ConnectionInfo> CreateWorkspace(EnvironmentType type, string cloudEnvironmentId, Guid computeResourceId, Uri connectionServiceUri, string sessionPath, string userAuthToken, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Allocate resources.
+        /// </summary>
+        /// <param name="cloudEnvironment">cloud environment.</param>
+        /// <param name="queueResourceCreation">queueResourceCreation.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(CloudEnvironment cloudEnvironment, bool queueResourceCreation, IDiagnosticsLogger logger);
     }
 }

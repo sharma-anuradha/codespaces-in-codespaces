@@ -28,6 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
+        public Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(CloudEnvironment cloudEnvironment, bool queueResourceCreation, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<CloudEnvironmentServiceResult> CreateAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, StartCloudEnvironmentParameters startCloudEnvironmentParameters, VsoPlanInfo plan, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();

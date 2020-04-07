@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
@@ -37,9 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
-        /// <param name="authRepository">The Live Share authentication repository.</param>
         /// <param name="tokenProvider">Provider capable of issuing access tokens.</param>
-        /// <param name="billingEventManager">The billing event manager.</param>
         /// <param name="skuCatalog">The SKU catalog.</param>
         /// <param name="environmentContinuation">The environment continuation.</param>
         /// <param name="environmentMonitor">The environment monitor.</param>
@@ -52,7 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IWorkspaceRepository workspaceRepository,
             ITokenProvider tokenProvider,
-            IBillingEventManager billingEventManager,
             ISkuCatalog skuCatalog,
             IEnvironmentMonitor environmentMonitor,
             IEnvironmentContinuationOperations environmentContinuation,
@@ -65,7 +61,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
-            BillingEventManager = Requires.NotNull(billingEventManager, nameof(billingEventManager));
             SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
             EnvironmentMonitor = Requires.NotNull(environmentMonitor, nameof(environmentMonitor));
             EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
@@ -82,8 +77,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ITokenProvider TokenProvider { get; }
 
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
-
-        private IBillingEventManager BillingEventManager { get; }
 
         private ISkuCatalog SkuCatalog { get; }
 
@@ -439,7 +432,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Allocate Storage and Compute
                     try
                     {
-                        var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, false, childLogger.NewChildLogger());
                         cloudEnvironment.Storage = allocationResult.Storage;
                         cloudEnvironment.Compute = allocationResult.Compute;
                     }
@@ -1202,6 +1195,64 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  logger.NewChildLogger());
         }
 
+        /// <inheritdoc/>
+        public async Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(
+           CloudEnvironment cloudEnvironment,
+           bool queueResourceCreation,
+           IDiagnosticsLogger logger)
+        {
+            var computeRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.ComputeVM,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+                QueueCreateResource = queueResourceCreation,
+            };
+
+            var storageRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.StorageFileShare,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+                QueueCreateResource = queueResourceCreation,
+            };
+
+            var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
+
+            var resultResponse = await ResourceBrokerClient.AllocateAsync(
+                Guid.Parse(cloudEnvironment.Id),
+                inputRequest,
+                logger.NewChildLogger());
+
+            var computeResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.ComputeVM);
+            var storageResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
+            if (computeResponse != null && storageResponse != null)
+            {
+                var computeResult = new ResourceAllocation
+                {
+                    ResourceId = computeResponse.ResourceId,
+                    SkuName = computeResponse.SkuName,
+                    Location = computeResponse.Location,
+                    Created = computeResponse.Created,
+                    Type = ResourceType.ComputeVM,
+                    IsReady = computeResponse.IsReady,
+                };
+                var stroageResult = new ResourceAllocation
+                {
+                    ResourceId = storageResponse.ResourceId,
+                    SkuName = storageResponse.SkuName,
+                    Location = storageResponse.Location,
+                    Created = storageResponse.Created,
+                    Type = ResourceType.StorageFileShare,
+                    IsReady = storageResponse.IsReady,
+                };
+
+                return (computeResult, stroageResult);
+            }
+
+            throw new InvalidOperationException("Allocate result for Compute and Storage was invalid.");
+        }
+
         private Task<CloudEnvironmentServiceResult> QueueCreateAsync(
            CloudEnvironment cloudEnvironment,
            CloudEnvironmentOptions cloudEnvironmentOptions,
@@ -1214,11 +1265,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    var result = new CloudEnvironmentServiceResult()
-                    {
-                        MessageCode = MessageCodes.Unknown,
-                        HttpStatusCode = StatusCodes.Status409Conflict,
-                    };
 
                     // Initialize connection, if it is null, client will fail to get environment list.
                     cloudEnvironment.Connection = new ConnectionInfo();
@@ -1233,8 +1279,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     await EnvironmentContinuation.CreateAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.LastStateUpdated, cloudEnvironmentOptions, startCloudEnvironmentParameters, "createnewenvironment", logger.NewChildLogger());
 
-                    result.CloudEnvironment = cloudEnvironment;
-                    result.HttpStatusCode = StatusCodes.Status200OK;
+                    var result = new CloudEnvironmentServiceResult()
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
 
                     return result;
                 },
@@ -1292,58 +1341,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Created = resultResponse.Created,
                 Type = resourceType,
             };
-        }
-
-        private async Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(
-            CloudEnvironment cloudEnvironment,
-            IDiagnosticsLogger logger)
-        {
-            var computeRequest = new AllocateRequestBody
-            {
-                Type = ResourceType.ComputeVM,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-            };
-
-            var storageRequest = new AllocateRequestBody
-            {
-                Type = ResourceType.StorageFileShare,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-            };
-
-            var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
-
-            var resultResponse = await ResourceBrokerClient.AllocateAsync(
-                Guid.Parse(cloudEnvironment.Id),
-                inputRequest,
-                logger.NewChildLogger());
-
-            var computeResponse = resultResponse.Where(x => x.Type == ResourceType.ComputeVM).FirstOrDefault();
-            var storageResponse = resultResponse.Where(x => x.Type == ResourceType.StorageFileShare).FirstOrDefault();
-            if (computeResponse != null && storageResponse != null)
-            {
-                var computeResult = new ResourceAllocation
-                {
-                    ResourceId = computeResponse.ResourceId,
-                    SkuName = computeResponse.SkuName,
-                    Location = computeResponse.Location,
-                    Created = computeResponse.Created,
-                    Type = ResourceType.ComputeVM,
-                };
-                var stroageResult = new ResourceAllocation
-                {
-                    ResourceId = storageResponse.ResourceId,
-                    SkuName = storageResponse.SkuName,
-                    Location = storageResponse.Location,
-                    Created = storageResponse.Created,
-                    Type = ResourceType.StorageFileShare,
-                };
-
-                return (computeResult, stroageResult);
-            }
-
-            throw new InvalidOperationException("Allocate result for Compute and Storage was invalid.");
         }
     }
 }

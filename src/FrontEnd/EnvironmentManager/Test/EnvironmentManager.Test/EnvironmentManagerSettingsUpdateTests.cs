@@ -256,7 +256,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceBroker,
                 workspaceRepository,
                 tokenProvider,
-                billingEventManager,
                 skuCatalog,
                 environmentMonitor,
                 environmentContinuation,

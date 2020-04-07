@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
@@ -77,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 case CreateEnvironmentContinuationInputState.AllocateResource:
                     // Trigger compute allocate by calling allocate endpoint
-                    return await RunAllocateComputeAsync(operationInput, record, logger);
+                    return await RunAllocateResourceAsync(operationInput, record, logger);
                 case CreateEnvironmentContinuationInputState.CheckResourceState:
                     // Trigger check resource state
                     return await RunCheckResourceProvisioningAsync(operationInput, record, logger);
@@ -88,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Check by calling start check endpoint
                     return await RunCheckStartComputeAsync(operationInput, record, logger);
                 case CreateEnvironmentContinuationInputState.StartHeartbeatMonitoring:
+                    // Start environment monitoring.
                     return await RunStartEnvironmentMonitoring(record, logger);
                 default:
                     return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidEnvironmentCreateState" };
@@ -115,7 +118,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
           string trigger,
           IDiagnosticsLogger logger)
         {
-            await FailEnvironmentAsync(record.Value, logger);
+            var didUpdate = await UpdateRecordAsync(
+                    operationInput,
+                    record,
+                    async (environment, innerLogger) =>
+                    {
+                        // Update state to be failed
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(
+                            environment,
+                            CloudEnvironmentState.Failed,
+                            nameof(FailOperationCleanupCoreAsync),
+                            string.Empty,
+                            innerLogger);
+                        return true;
+                    },
+                    logger);
+
+            if (!didUpdate)
+            {
+                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
+            }
+
+            var resourceList = new List<Guid>();
+
+            // Delete the allocated resources.
+            if (record.Value.Compute != null)
+            {
+                resourceList.Add(record.Value.Compute.ResourceId);
+            }
+
+            if (record.Value.Storage != null)
+            {
+                resourceList.Add(record.Value.Storage.ResourceId);
+            }
+
+            if (resourceList.Count != 0)
+            {
+                await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(record.Value.Id), resourceList, logger.NewChildLogger());
+            }
+
             return await base.FailOperationCleanupCoreAsync(operationInput, record, trigger, logger);
         }
 
@@ -135,54 +176,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 || resourceState == OperationState.Failed;
         }
 
-        private async Task<ContinuationResult> RunStartEnvironmentMonitoring(
-            EnvironmentRecordRef record,
-            IDiagnosticsLogger logger)
-        {
-            var cloudEnvironment = record.Value;
-            var environmentMonitor = ServiceProvider.GetService<IEnvironmentMonitor>();
-
-            // Start Environment Monitoring
-            await environmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
-            return new ContinuationResult { Status = OperationState.Succeeded };
-        }
-
-        private async Task<ContinuationResult> RunAllocateComputeAsync(
+        private async Task<ContinuationResult> RunAllocateResourceAsync(
              CreateEnvironmentContinuationInput operationInput,
              EnvironmentRecordRef record,
              IDiagnosticsLogger logger)
         {
-            var cloudEnvironment = record.Value;
+            var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
 
-            var computeResult = cloudEnvironment.Compute;
-            if (computeResult == null)
+            // TODO:: Move allocate to a separate class.
+            var allocationResult = await environmentManager.AllocateComputeAndStorageAsync(record.Value, true, logger.NewChildLogger());
+            var computeResult = allocationResult.Compute;
+            var storageResult = allocationResult.Storage;
+
+            // Setup result
+            operationInput.ComputeResource = computeResult;
+            operationInput.StorageResource = storageResult;
+            operationInput.CurrentState = CreateEnvironmentContinuationInputState.CheckResourceState;
+
+            LogResource(operationInput, logger);
+
+            return new ContinuationResult
             {
-                computeResult = await AllocateResourceAsync(operationInput, cloudEnvironment, ResourceType.ComputeVM, logger);
-            }
-
-            var storageResult = cloudEnvironment.Storage;
-            if (storageResult == null)
-            {
-                storageResult = await AllocateResourceAsync(operationInput, cloudEnvironment, ResourceType.StorageFileShare, logger);
-            }
-
-            if (computeResult != null && storageResult != null)
-            {
-                // Setup result
-                operationInput.ComputeResource = computeResult;
-                operationInput.StorageResource = storageResult;
-                operationInput.CurrentState = CreateEnvironmentContinuationInputState.CheckResourceState;
-
-                LogResource(operationInput, logger);
-
-                return new ContinuationResult
-                {
-                    NextInput = operationInput,
-                    Status = OperationState.InProgress,
-                };
-            }
-
-            return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidResourceAllocate" };
+                NextInput = operationInput,
+                Status = OperationState.InProgress,
+            };
         }
 
         private async Task<ContinuationResult> RunCheckResourceProvisioningAsync(
@@ -190,11 +207,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
-            var cloudEnvironment = record.Value;
-
-            var computeStatus = await ResourceBrokerHttpClient.StatusAsync(operationInput.EnvironmentId, operationInput.ComputeResource.ResourceId, logger.NewChildLogger());
-            var storageStatus = await ResourceBrokerHttpClient.StatusAsync(operationInput.EnvironmentId, operationInput.StorageResource.ResourceId, logger.NewChildLogger());
-
+            var statusResponse = await ResourceBrokerHttpClient.StatusAsync(operationInput.EnvironmentId, new List<Guid>() { operationInput.ComputeResource.ResourceId, operationInput.StorageResource.ResourceId }, logger.NewChildLogger());
+            var computeStatus = statusResponse.Single(x => x.Type == ResourceType.ComputeVM);
+            var storageStatus = statusResponse.Single(x => x.Type == ResourceType.StorageFileShare);
             operationInput.ComputeResource.IsReady = computeStatus.IsReady;
             operationInput.StorageResource.IsReady = storageStatus.IsReady;
 
@@ -202,10 +217,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (computeStatus.IsReady && storageStatus.IsReady)
             {
-                cloudEnvironment.Compute = operationInput.ComputeResource;
-                cloudEnvironment.Storage = operationInput.StorageResource;
-                await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger.NewChildLogger());
+                var didUpdate = await UpdateRecordAsync(
+                    operationInput,
+                    record,
+                    (environment, innerLogger) =>
+                    {
+                        // Update state to be failed
+                        record.Value.Compute = operationInput.ComputeResource;
+                        record.Value.Storage = operationInput.StorageResource;
+                        return Task.FromResult(true);
+                    },
+                    logger);
+
+                if (!didUpdate)
+                {
+                    return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
+                }
+
                 operationInput.CurrentState = CreateEnvironmentContinuationInputState.StartCompute;
+                return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
             }
             else if (CheckForFailedState(storageStatus.ProvisioningStatus))
             {
@@ -216,7 +246,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidComputeResourceState" };
             }
 
-            return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
+            return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, RetryAfter = TimeSpan.FromSeconds(10) };
         }
 
         private async Task<ContinuationResult> RunStartComputeAsync(
@@ -224,36 +254,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         EnvironmentRecordRef record,
         IDiagnosticsLogger logger)
         {
-            var cloudEnvironment = record.Value;
             var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
 
             // Create the Live Share workspace
-            cloudEnvironment.Connection = await environmentManager.CreateWorkspace(
+            var connection = await environmentManager.CreateWorkspace(
                 EnvironmentType.CloudEnvironment,
-                cloudEnvironment.Id,
-                cloudEnvironment.Compute.ResourceId,
+                record.Value.Id,
+                record.Value.Compute.ResourceId,
                 operationInput.StartCloudEnvironmentParameters.ConnectionServiceUri,
-                cloudEnvironment.Connection?.ConnectionSessionPath,
+                record.Value.Connection?.ConnectionSessionPath,
                 operationInput.StartCloudEnvironmentParameters.UserAuthToken,
                 logger.NewChildLogger());
 
-            if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
+            if (string.IsNullOrWhiteSpace(connection.ConnectionSessionId))
             {
                 logger.LogErrorWithDetail($"{LogBaseName}_resume_workspace_error", "Could not create the cloud environment workspace session.");
 
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidCreateWorkspace" };
             }
 
-            await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, logger.NewChildLogger());
+            var didUpdate = await UpdateRecordAsync(
+                    operationInput,
+                    record,
+                    async (environment, innerLogger) =>
+                    {
+                        // assign connection
+                        environment.Connection = connection;
 
-            // Persist core cloud environment record
-            cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger.NewChildLogger());
+                        // Update state to be failed
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(
+                            environment,
+                            CloudEnvironmentState.Provisioning,
+                            CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
+                            string.Empty,
+                            logger.NewChildLogger());
+                        return true;
+                    },
+                    logger);
+
+            if (!didUpdate)
+            {
+                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
+            }
 
             // Kick off start-compute before returning.
             var isSuccess = await environmentManager.StartComputeAsync(
-                 cloudEnvironment,
-                 cloudEnvironment.Compute.ResourceId,
-                 cloudEnvironment.Storage.ResourceId,
+                 record.Value,
+                 record.Value.Compute.ResourceId,
+                 record.Value.Storage.ResourceId,
                  null,
                  operationInput.CloudEnvironmentOptions,
                  operationInput.StartCloudEnvironmentParameters,
@@ -266,7 +314,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     NextInput = operationInput,
                     Status = OperationState.InProgress,
-                    RetryAfter = TimeSpan.FromSeconds(10),
+                    RetryAfter = TimeSpan.FromSeconds(1),
                 };
             }
 
@@ -278,7 +326,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
-            var computeStatus = await ResourceBrokerHttpClient.StatusAsync(operationInput.EnvironmentId, operationInput.ComputeResource.ResourceId, logger.NewChildLogger());
+            var computeStatus = await ResourceBrokerHttpClient.StatusAsync(
+                operationInput.EnvironmentId,
+                operationInput.ComputeResource.ResourceId,
+                logger.NewChildLogger());
+            logger.AddBaseValue("ComputeStartingStatus", computeStatus.StartingStatus.ToString());
+
             if (computeStatus.StartingStatus == OperationState.Succeeded)
             {
                 operationInput.CurrentState = CreateEnvironmentContinuationInputState.StartHeartbeatMonitoring;
@@ -287,63 +340,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (computeStatus.StartingStatus == OperationState.InProgress)
             {
-                return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
+                return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, RetryAfter = TimeSpan.FromSeconds(1) };
             }
 
-            await FailEnvironmentAsync(record.Value, logger.NewChildLogger());
-            return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidStartState" };
+            return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidStartComputeState" };
         }
 
-        private async Task<ResourceAllocation> AllocateResourceAsync(
-            CreateEnvironmentContinuationInput operationInput,
-            CloudEnvironment cloudEnvironment,
-            ResourceType resourceType,
+        private async Task<ContinuationResult> RunStartEnvironmentMonitoring(
+            EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
-            // Setup request object
-            var allocateRequest = new AllocateRequestBody
-            {
-                Type = resourceType,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-                QueueCreateResource = true,
-            };
+            var cloudEnvironment = record.Value;
+            var environmentMonitor = ServiceProvider.GetService<IEnvironmentMonitor>();
 
-            // Make request to allocate compute
-            var allocateResponse = await ResourceBrokerHttpClient.AllocateAsync(
-                operationInput.EnvironmentId, allocateRequest, logger.NewChildLogger());
-            if (allocateResponse != null)
-            {
-                // Map across details
-                return new ResourceAllocation
-                {
-                    ResourceId = allocateResponse.ResourceId,
-                    SkuName = allocateResponse.SkuName,
-                    Location = allocateResponse.Location,
-                    Created = allocateResponse.Created,
-                    Type = allocateResponse.Type,
-                    IsReady = allocateResponse.IsReady,
-                };
-            }
+            // Start Environment Monitoring
+            await environmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
 
-            return null;
-        }
-
-        private async Task FailEnvironmentAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
-        {
-            await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Failed, nameof(RunCheckResourceProvisioningAsync), "FailedToAllocateResource", logger.NewChildLogger());
-            await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, logger.NewChildLogger());
-
-            // Delete the allocated resources.
-            if (cloudEnvironment.Compute != null)
-            {
-                await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
-            }
-
-            if (cloudEnvironment.Storage != null)
-            {
-                await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.Storage.ResourceId, logger.NewChildLogger());
-            }
+            return new ContinuationResult { Status = OperationState.Succeeded };
         }
     }
 }

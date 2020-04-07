@@ -110,7 +110,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.resourceBroker,
                 this.workspaceRepository,
                 this.tokenProvider,
-                this.billingEventManager,
                 this.skuCatalog,
                 this.environmentMonitor,
                 new MockEnvironmentContinuation(),
