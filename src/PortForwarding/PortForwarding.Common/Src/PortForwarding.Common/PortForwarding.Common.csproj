@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+		<IsPackable>true</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Http" Version="$(AspNetCoreDllVersions)" />
+		<PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\Connections.Contracts\Src\Connections.Contracts\Connections.Contracts.csproj" />
+	</ItemGroup>
+
+</Project>

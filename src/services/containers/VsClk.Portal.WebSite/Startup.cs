@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -7,14 +8,18 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -30,15 +35,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         private IWebHostEnvironment HostEnvironment { get; }
 
-        public AppSettings AppSettings { get; set; }
+        private AppSettings AppSettings { get; set; }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
+
+        private PortForwardingHostUtils PortForwardingHostUtils { get; set; }
+
+        private PortForwardingRoutingHelper PortForwardingRoutingHelper { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public virtual void ConfigureServices(IServiceCollection services)
         {
-            IDiagnosticsLogger Logger = new JsonStdoutLogger(new LogValueSet());
-            services.AddSingleton<IDiagnosticsLogger>(Logger);
+            IDiagnosticsLogger logger = new JsonStdoutLogger(new LogValueSet());
+            services.AddSingleton<IDiagnosticsLogger>(logger);
 
             services.AddDistributedMemoryCache();
 
@@ -50,13 +59,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 options.Providers.Add<GzipCompressionProvider>();
             });
             services.AddControllersWithViews().AddControllersAsServices();
-            services.AddRazorPages();
-
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "ClientApp/build";
-            });
 
             // Configuration
             var appSettingsConfiguration = Configuration.GetSection("AppSettings");
@@ -65,22 +67,31 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
 
+            // In production, the React files will be served from this directory
+            // In tests, the assets are not built, but the static index.html will do just fine.
+            var spaRootPath = AppSettings.IsTest ? "ClientApp/public" : "ClientApp/build";
+            services.AddSpaStaticFiles(configuration => { configuration.RootPath = spaRootPath; });
+
+            PortForwardingHostUtils = new PortForwardingHostUtils(appSettings.PortForwardingHostsConfigs);
+            services.AddSingleton(PortForwardingHostUtils);
+            PortForwardingRoutingHelper = new PortForwardingRoutingHelper(PortForwardingHostUtils);
+
             if (string.IsNullOrEmpty(AppSettings.AesKey)
-                 || string.IsNullOrEmpty(AppSettings.AesIV)
-                 || string.IsNullOrEmpty(AppSettings.Domain))
+                || string.IsNullOrEmpty(AppSettings.AesIV)
+                || string.IsNullOrEmpty(AppSettings.Domain))
             {
                 throw new Exception("AesKey, AesIV or Domain keys are not found in the app settings.");
             }
 
             // Basic VS SaaS Hosting: health provider, in memory caching, logging, hosting environment, http context accessor, and key vault reader
             services.AddVsSaaSHosting(
-                this.HostEnvironment, 
+                HostEnvironment,
                 new LoggingBaseValues
                 {
                     ServiceName = "vso_portal",
                     CommitId = null,
                 },
-                configureSecretReaderOptions: (options) => 
+                configureSecretReaderOptions: (options) =>
                 {
                     options.ServicePrincipalClientId = appSettings.KeyVaultReaderServicePrincipalClientId;
                     options.GetServicePrincipalClientSecretAsyncCallback = () => Task.FromResult(appSettings.KeyVaultReaderServicePrincipalClientSecret);
@@ -96,13 +107,36 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
-            services.AddSingleton<IControllerProvider, ControllerProvider>();
-
             services.AddSingleton<AsyncWarmupHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (HostEnvironment.IsDevelopment() || AppSettings.IsLocal)
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            if (AppSettings.IsLocal)
+            {
+                // Enable PII data in logs for Local
+                IdentityModelEventSource.ShowPII = true;
+            }
+
+            app.MapWhen(Not(IsPortForwardingRequest), ConfigurePortal);
+            app.MapWhen(IsPortForwardingRequest, ConfigurePortForwarding);
+
+            ClientKeyvaultReader.GetKeyvaultKeys().Wait();
+            app.ApplicationServices.GetRequiredService<AsyncWarmupHelper>().RunAsync().Wait();
+        }
+
+        private bool IsPortForwardingRequest(HttpContext context)
+        {
+            return PortForwardingRoutingHelper.IsPortForwardingRequest(context);
+        }
+
+        private void ConfigurePortal(IApplicationBuilder app)
         {
             app.UseResponseCompression();
 
@@ -119,24 +153,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 });
             }
 
-            if (AppSettings.IsLocal)
-            {
-                // Enable PII data in logs for Local
-                IdentityModelEventSource.ShowPII = true;
-            }
-
-            if (env.IsDevelopment() || AppSettings.IsLocal)
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
+            if (!HostEnvironment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
-            // app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSession();
 
@@ -144,7 +167,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             {
                 OnPrepareResponse = (ctx) =>
                 {
-                    // TODO: Remove later.
                     ctx.Context.Response.Headers.Add("Service-Worker-Allowed", "/");
                 }
             });
@@ -153,25 +175,39 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             {
                 if (!context.Request.Path.StartsWithSegments("/static", StringComparison.OrdinalIgnoreCase))
                 {
-                    context.Response.GetTypedHeaders().CacheControl = 
+                    context.Response.GetTypedHeaders().CacheControl =
                         new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
                         {
                             Public = true,
                             MaxAge = CacheControl_MaxAgeValue
                         };
                 }
+
                 await next();
             });
 
             // VS SaaS Middleware: ApplicationServicesProvider, logging factory, x-content-type-options header, unhandled exception reporter, request ids, diagnostics, authentication
-            app.UseVsSaaS(env.IsDevelopment(), useAuthentication: true);
-                
+            app.UseVsSaaS(HostEnvironment.IsDevelopment(), useAuthentication: true);
+
+            app.Use(async (context, next) =>
+            {
+                var logger = context.GetLogger();
+                var endpoint = context.GetEndpoint();
+
+                logger.AddBaseValue("routing_context", "Portal");
+                logger.AddBaseValue("endpoint", endpoint?.DisplayName);
+
+                await next();
+            });
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.UseEndpoints(routes =>
             {
-                routes.MapControllerRoute("default", "{controller}/{action=Index}/{id?}");
+                routes.MapControllers();
             });
+
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
@@ -182,10 +218,56 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                     spa.UseProxyToSpaDevelopmentServer("http://localhost:3030");
                 }
             });
+        }
 
-            ClientKeyvaultReader.GetKeyvaultKeys().Wait();
+        private void ConfigurePortForwarding(IApplicationBuilder app)
+        {
+            if (!AppSettings.IsTest && !AppSettings.IsLocal)
+            {
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(
+                        Path.Combine(HostEnvironment.ContentRootPath, "ClientApp", "build"))
+                });
+            }
 
-            app.ApplicationServices.GetRequiredService<AsyncWarmupHelper>().RunAsync().Wait();
+            if (AppSettings.IsTest || AppSettings.IsLocal)
+            {
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(
+                        Path.Combine(HostEnvironment.ContentRootPath, "ClientApp", "public"))
+                });
+            }
+
+            app.UseRouting();
+
+            // VS SaaS Middleware: ApplicationServicesProvider, logging factory, x-content-type-options header, unhandled exception reporter, request ids, diagnostics, authentication
+            app.UseVsSaaS(HostEnvironment.IsDevelopment(), useAuthentication: false);
+
+            app.Use(async (context, next) =>
+            {
+                var logger = context.GetLogger();
+                var endpoint = context.GetEndpoint();
+
+                logger.AddBaseValue("routing_context", "PortForwarding");
+                logger.AddBaseValue("endpoint", endpoint?.DisplayName);
+
+                await next();
+            });
+
+            app.UseEndpoints(routes =>
+            {
+                routes.MapFallbackToController(
+                    pattern: "{*path}",
+                    action: nameof(PortForwarderController.Index),
+                    controller: "PortForwarder");
+            });
+        }
+
+        private Func<HttpContext, bool> Not(Func<HttpContext, bool> predicate)
+        {
+            return (arg) => !predicate(arg);
         }
     }
 }

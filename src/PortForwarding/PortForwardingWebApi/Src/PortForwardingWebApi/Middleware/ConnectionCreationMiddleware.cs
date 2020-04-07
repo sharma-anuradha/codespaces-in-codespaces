@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
@@ -57,34 +58,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             var token = string.Empty;
             if (context.Request.Headers.TryGetValue(PortForwardingHeaders.Token, out var tokenValues))
             {
-                token = tokenValues.FirstOrDefault();
+                token = tokenValues.SingleOrDefault();
             }
 
             if (string.IsNullOrEmpty(token))
             {
+                logger.LogInfo("connection_creation_middleware_missing_token");
+
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.CompleteAsync();
 
                 return;
             }
 
-            (string WorkspaceId, int Port) sessionDetails = default;
-
-            if (context.Request.Headers.TryGetValue(PortForwardingHeaders.WorkspaceId, out var workspaceIdValues) &&
-                context.Request.Headers.TryGetValue(PortForwardingHeaders.Port, out var portStringValues) &&
-                !hostUtils.TryGetPortForwardingSessionDetails(
-                    workspaceIdValues.FirstOrDefault(),
-                    portStringValues.FirstOrDefault(),
-                    out sessionDetails))
+            if (!hostUtils.TryGetPortForwardingSessionDetails(context.Request, out var sessionDetails))
             {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await context.Response.CompleteAsync();
+                logger.LogInfo("connection_creation_middleware_missing_or_invalid_session_details");
 
-                return;
-            }
-
-            if (sessionDetails == default && !hostUtils.TryGetPortForwardingSessionDetails(context.Request.Host.ToString(), out sessionDetails))
-            {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await context.Response.CompleteAsync();
 
@@ -124,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             {
                 await mappingClient.WaitForServiceAvailableAsync(connectionInfo.GetKubernetesServiceName(), logger);
             }
-            catch (TaskCanceledException)
+            catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
             {
                 context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
                 context.Response.Headers.Add("X-Powered-By", "Visual Studio Online");

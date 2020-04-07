@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="PortalWebsite\Test\PortalWebsite.Test\PortalWebsite.Test.csproj" />
   </ItemGroup>
 
 </Project>

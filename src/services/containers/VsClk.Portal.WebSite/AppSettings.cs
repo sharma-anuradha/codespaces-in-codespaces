@@ -1,5 +1,5 @@
-using System;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -7,6 +7,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
     {
         // General configuration
         public bool IsLocal { get; set; }
+        public bool IsTest { get; set; }
 
         // Key Vault configuration
         public string KeyVaultName { get; set; }
@@ -25,7 +26,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string GitHubNativeAppClientId { get; set; }
 
         public string GitHubNativeAppClientSecret { get; set; }
-        
+
         // AzureDevOps application configuration
         public string AzDevAppClientId { get; set; }
 
@@ -35,17 +36,21 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         public string LiveShareWebExtensionEndpoint { get; set; }
 
-        public string PortalEndpoint { get; set; } 
-        
+        public string PortalEndpoint { get; set; }
+
         public string EnvironmentRegistrationEndpoint { get; set; }
         public string ApiEndpoint { get; set; }
         public string Domain { get; set; }
         public string AesKey { get; set; }
+
         public string AesIV { get; set; }
+
         // The app service principal that has access to reading the app key vault
         public string KeyVaultReaderServicePrincipalClientId { get; set; }
         public string KeyVaultReaderServicePrincipalClientSecret { get; set; }
         public string VsSaaSTokenIssuer { get; set; }
         public string VsSaaSCertificateSecretName { get; set; }
+
+        public IEnumerable<HostsConfig> PortForwardingHostsConfigs { get; set; }
     }
 }

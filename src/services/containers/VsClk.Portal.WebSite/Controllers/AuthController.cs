@@ -103,7 +103,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             SetCascadeCookie(cascadeToken);
-            return Ok(200);
+            return Ok();
         }
 
         [HttpPost("~/logout-port-forwarder")]

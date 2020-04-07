@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
 {
     /// <summary>
     /// Constants for port forwarding header names.
@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
         /// Gets header name for port.
         /// </summary>
         public static string Token { get => "X-VSOnline-Forwarding-Token"; }
+
+        /// <summary>
+        /// Gets header name for original url header.
+        /// </summary>
+        public static string OriginalUrl { get => "X-Original-URL"; }
     }
 }

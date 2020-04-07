@@ -29,6 +29,14 @@ spec:
         ports:
         - containerPort: {{ .Values.service.internalPort }}
         env:
+        {{- range $index, $hosts := .Values.portForwardingHosts }}
+        {{- range $hostIndex, $host := $hosts.hosts }}
+        - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__Hosts__{{ $hostIndex }}
+          value: {{ $host | quote }}
+        {{- end }}
+        - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__CertificateSecretName
+          value: {{ $hosts.certificateSecretName | quote }}
+        {{- end }}
         {{- range .Values.appSettings }}
         - name: {{ . }}
           valueFrom:

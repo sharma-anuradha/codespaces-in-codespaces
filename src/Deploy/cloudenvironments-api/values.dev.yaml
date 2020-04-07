@@ -2,7 +2,9 @@
 frontend-web-api:
   config:
     aspNetEnv: Development
-    overrideAppSettingsJson: false
+    overrideAppSettingsJson: false  
+  portForwardingAgent:
+    enabled: true
   ingress:
     hosts:
       - online.dev.core.vsengsaas.visualstudio.com

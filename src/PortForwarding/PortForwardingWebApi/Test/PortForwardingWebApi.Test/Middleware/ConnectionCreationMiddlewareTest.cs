@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middleware;
 using Moq;
@@ -33,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         {
             IDiagnosticsLoggerFactory loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
-            hostUtils = new PortForwardingHostUtils(MockPortForwardingAppSettings.Settings);
+            hostUtils = new PortForwardingHostUtils(MockPortForwardingAppSettings.Settings.HostsConfigs);
 
             middleware = new ConnectionCreationMiddleware(context => Task.CompletedTask);
         }

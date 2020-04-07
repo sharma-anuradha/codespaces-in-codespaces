@@ -14,12 +14,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public static DateTime KeychainHashExpiration2 { get; set; }
 
         private static TaskCompletionSource<bool> KeychainKeysInitalizedSignal = new TaskCompletionSource<bool>(false);
-        private static Task<bool> KeychainKeysInitalized = KeychainKeysInitalizedSignal.Task;
 
         public static void ResolveKeychainSettingsSignal()
         {
-            KeychainKeysInitalizedSignal
-                .SetResult(true);
+            if (!KeychainKeysInitalizedSignal.Task.IsCompleted)
+            {
+                KeychainKeysInitalizedSignal
+                    .SetResult(true);    
+            }
         }
 
         public static async Task WaitOnKeychainSettingsAsync(int delayMs = 10000)

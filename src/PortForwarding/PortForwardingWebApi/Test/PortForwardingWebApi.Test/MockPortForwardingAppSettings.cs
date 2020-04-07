@@ -1,3 +1,4 @@
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test

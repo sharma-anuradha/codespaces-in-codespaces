@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models
 {
     /// <summary>
     /// List of hosts with associated ssl certificate secret name.
@@ -14,11 +14,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Model
         /// <summary>
         /// Gets or sets ssl certificate secret name.
         /// </summary>
-        public string CertificateSecretName { get; set; } = default!;
+        public string CertificateSecretName { get; set; }
 
         /// <summary>
         /// Gets or sets the list of port forwarding hosts.
         /// </summary>
-        public IEnumerable<string> Hosts { get; set; } = default!;
+        public IEnumerable<string> Hosts { get; set; }
     }
 }

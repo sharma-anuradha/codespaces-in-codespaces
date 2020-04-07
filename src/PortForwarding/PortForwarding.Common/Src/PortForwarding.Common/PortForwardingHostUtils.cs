@@ -2,12 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
 {
     /// <summary>
     /// Utils for parsing and validating port forwarding hosts.
@@ -17,11 +19,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <summary>
         /// Initializes a new instance of the <see cref="PortForwardingHostUtils"/> class.
         /// </summary>
-        /// <param name="appSettings">The service settings.</param>
-        public PortForwardingHostUtils(PortForwardingAppSettings appSettings)
+        /// <param name="hostsConfigs">The port forwarding hosts.</param>
+        public PortForwardingHostUtils(IEnumerable<HostsConfig> hostsConfigs)
         {
             var routingHostPartRegex = "(?<workspaceId>[0-9A-Fa-f]{36})-(?<port>\\d{2,5})";
-            HostRegexes = appSettings.HostsConfigs.SelectMany(
+            HostRegexes = hostsConfigs.SelectMany(
                 hostConf => hostConf.Hosts.Select(host => string.Format(host, routingHostPartRegex)));
         }
 
@@ -87,6 +89,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
 
             sessionDetails = (workspaceIdString, port);
             return true;
+        }
+
+        /// <summary>
+        /// Parses the host and extracts workspace id and port from it.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        /// <param name="sessionDetails">The output session details.</param>
+        /// <returns>True if workspace and port are valid.</returns>
+        public bool TryGetPortForwardingSessionDetails(
+            HttpRequest request,
+            out (string WorkspaceId, int Port) sessionDetails)
+        {
+            sessionDetails = default;
+
+            // 1. Headers - when set they need to be valid.
+            if (request.Headers.TryGetValue(PortForwardingHeaders.WorkspaceId, out var workspaceIdValues) &&
+                request.Headers.TryGetValue(PortForwardingHeaders.Port, out var portStringValues) &&
+                !TryGetPortForwardingSessionDetails(
+                    workspaceIdValues.SingleOrDefault(),
+                    portStringValues.SingleOrDefault(),
+                    out sessionDetails))
+            {
+                return false;
+            }
+
+            // 2. Host - in case there were no headers set to overrule it.
+            if (sessionDetails == default &&
+                TryGetPortForwardingSessionDetails(request.Host.ToString(), out sessionDetails))
+            {
+                return true;
+            }
+
+            if (sessionDetails != default)
+            {
+                return true;
+            }
+
+            // 3. X-Original-Url - cases where nginx is proxying the request (e.g. /auth).
+            return request.Headers.TryGetValue(PortForwardingHeaders.OriginalUrl, out var originalUrlValues) &&
+                   Uri.TryCreate(originalUrlValues.SingleOrDefault(), UriKind.Absolute, out var originalUrl) &&
+                   TryGetPortForwardingSessionDetails(originalUrl.Host, out sessionDetails);
         }
     }
 }

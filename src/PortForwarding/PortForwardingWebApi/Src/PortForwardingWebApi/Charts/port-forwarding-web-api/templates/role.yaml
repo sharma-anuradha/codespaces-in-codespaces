@@ -14,9 +14,11 @@ rules:
   - apiGroups:
         - ""
     resources:
-        - "list"
         - "services"
     verbs:
+        - "list"
+        - "watch"
+        - "get"
         - "create"
   - apiGroups:
         - "extensions"

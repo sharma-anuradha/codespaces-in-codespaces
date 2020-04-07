@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
-    <ProjectReference Include="PortForwardingWebApi\dirs.proj" />
     <ProjectReference Include="Connections.Contracts\dirs.proj" />
+    <ProjectReference Include="PortForwardingWebApi\dirs.proj" />
+    <ProjectReference Include="PortForwarding.Common\dirs.proj" />
   </ItemGroup>
 
 </Project>

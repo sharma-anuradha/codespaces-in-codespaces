@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\services\containers\VsClk.Portal.WebSite\VsClk.Portal.WebSite.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WebApplicationFactoryContentRootAttribute Include="VsClk.Portal.WebSite" AssemblyName="Microsoft.VsCloudKernel.Services.VsClk.Portal.WebSite" ContentRootPath="..\VsClk.Portal.WebSite" ContentRootTest="appsettings.json" Priority="-2" />
+  </ItemGroup>
+
+</Project>

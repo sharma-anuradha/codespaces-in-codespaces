@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models
 {

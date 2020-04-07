@@ -30,8 +30,29 @@ ingress:
 pfingress:
   enabled: true
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /portforward?path=$1
-  path: /(.*)
+    # Auth applies to both Portal and PFS as nginx config for the same host gets merged    
+    nginx.ingress.kubernetes.io/auth-url: "http://portal-vsclk-portal-website.default.svc.cluster.local/auth"
+    nginx.ingress.kubernetes.io/auth-cache-key: $remote_addr$http_x_vsonline_authentication$cookie_vso_pf
+    nginx.ingress.kubernetes.io/auth-cache-duration: 200 1m
+    nginx.ingress.kubernetes.io/auth-response-headers: X-VSOnline-Forwarding-Token,X-VSOnline-Forwarding-Port,X-VSOnline-Forwarding-WorkspaceId
+    # Server configurations from canary ingresses don't have effect, the annotations need to be applied to non-canary ingress rules.    
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_intercept_errors on;
+      error_page 302 = @handle_error;
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location @handle_error {
+        if ($upstream_http_location ~* "^https?:\/\/(?<pf_session>[0-9a-f]{36}-\d{2,5})\.(?<subdomain>[^\/]+)(?<path>\/.*)$") {
+          proxy_pass 'http://$pf_session.$subdomain';
+        }
+      }
+      location /authenticate-port-forwarder {
+        proxy_pass_request_body on;
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /logout-port-forwarder {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+  path: /
 
 appSettings:
   - ASPNETCORE_ENVIRONMENT

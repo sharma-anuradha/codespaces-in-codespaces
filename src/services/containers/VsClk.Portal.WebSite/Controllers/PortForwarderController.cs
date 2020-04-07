@@ -4,31 +4,33 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.ControllerAccess;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
     public class PortForwarderController : Controller
     {
         private static AppSettings AppSettings { get; set; }
-
-        private readonly IControllerProvider controllerProvider;
+        private PortForwardingHostUtils HostUtils { get; }
+        private IHostEnvironment HostEnvironment { get; }
 
         public PortForwarderController(
             AppSettings appSettings,
-            IControllerProvider controllerProvider)
+            PortForwardingHostUtils hostUtils,
+            IHostEnvironment hostEnvironment)
         {
             AppSettings = appSettings;
-            this.controllerProvider = controllerProvider;
+            HostUtils = hostUtils;
+            HostEnvironment = hostEnvironment;
         }
 
         private string GetTokenClaim(string claimName, JwtSecurityToken token)
@@ -44,64 +46,51 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return string.Empty;
         }
 
-        [HttpGet("~/portforward")]
-        public async Task<IActionResult> Index(
-            [FromQuery] string path,
-            [FromServices] IDiagnosticsLogger logger
-        )
+        public async Task<IActionResult> Index(string path, [FromServices] IDiagnosticsLogger logger)
         {
-            if (path == "error")
+            var cascadeToken = string.Empty;
+            var sessionId = string.Empty;
+            if (Request.Headers.TryGetValue(PortForwardingHeaders.Token, out var tokenValues) &&
+                Request.Headers.TryGetValue(PortForwardingHeaders.WorkspaceId, out var connectionIdValues) &&
+                Request.Headers.TryGetValue(PortForwardingHeaders.Port, out var portStringValues))
             {
-                return ExceptionView();
+                cascadeToken = tokenValues.SingleOrDefault();
+                if (string.IsNullOrWhiteSpace(cascadeToken))
+                {
+                    return ExceptionView(PortForwardingFailure.NotAuthenticated);
+                }
+
+                sessionId = connectionIdValues.SingleOrDefault();
+                if (string.IsNullOrWhiteSpace(sessionId))
+                {
+                    return ExceptionView(PortForwardingFailure.NotAuthenticated);
+                }
+                
+                var portString = portStringValues.SingleOrDefault();
+                if (string.IsNullOrWhiteSpace(portString))
+                {
+                    return ExceptionView(PortForwardingFailure.NotAuthenticated);
+                }
             }
 
-            // Since all paths in the forwarded domain are redirected to this controller, the request for the service 
-            // worker will be as well. In that case, serve up the actual service worker.
-            if (path == "service-worker.js")
+            switch (path)
             {
-                return await FetchStaticAsset("service-worker.js", "application/javascript");
-            }
-            if (path == "service-worker.js.map")
-            {
-                return await FetchStaticAsset("service-worker.js.map", "application/octet-stream");
-            }
-            if (path == "favicon.ico")
-            {
-                return await FetchStaticAsset("favicon.ico", "image/x-icon");
-            }
-            if (path == "site.css")
-            {
-                return await FetchStaticAsset("site.css", "text/css");
-            }
-            if (path == "spinner-dark.svg")
-            {
-                return await FetchStaticAsset("spinner-dark.svg", "image/svg+xml");
-            }
-            if (path == "ms-logo.svg")
-            {
-                return await FetchStaticAsset("ms-logo.svg", "image/svg+xml");
-            }
-
-            var (cascadeToken, error) = GetAuthToken(logger);
-            if (cascadeToken == default)
-            {
-                return ExceptionView(error);
-            }
-
-            string sessionId;
-            try
-            {
-                (sessionId, _) = GetPortForwardingSessionDetails(logger);
-            }
-            catch (InvalidOperationException)
-            {
-                return BadRequest();
-            }
-
-            var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, logger);
-            if (!isUserAllowedToAccessEnvironment)
-            {
-                return ExceptionView(PortForwardingFailure.NotAuthorized);
+                case "error":
+                    return ExceptionView();
+                // Since all paths in the forwarded domain are redirected to this controller, the request for the service 
+                // worker will be as well. In that case, serve up the actual service worker.
+                case "service-worker.js":
+                    return await FetchStaticAsset("service-worker.js", "application/javascript");
+                case "service-worker.js.map":
+                    return await FetchStaticAsset("service-worker.js.map", "application/octet-stream");
+                case "favicon.ico":
+                    return await FetchStaticAsset("favicon.ico", "image/x-icon");
+                case "site.css":
+                    return await FetchStaticAsset("site.css", "text/css");
+                case "spinner-dark.svg":
+                    return await FetchStaticAsset("spinner-dark.svg", "image/svg+xml");
+                case "ms-logo.svg":
+                    return await FetchStaticAsset("ms-logo.svg", "image/svg+xml");
             }
 
             var cookiePayload = new LiveShareConnectionDetails
@@ -124,9 +113,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             string sessionId;
+            int port;
             try
             {
-                (sessionId, _) = GetPortForwardingSessionDetails(logger);
+                (sessionId, port) = GetPortForwardingSessionDetails(logger);
             }
             catch (InvalidOperationException)
             {
@@ -139,38 +129,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return ExceptionView(PortForwardingFailure.NotAuthorized);
             }
 
-            Response.Headers.Add("X-VSOnline-Forwarding-Token", cascadeToken);
+            Response.Headers.Add(PortForwardingHeaders.Token, cascadeToken);
+            Response.Headers.Add(PortForwardingHeaders.WorkspaceId, sessionId);
+            Response.Headers.Add(PortForwardingHeaders.Port, port.ToString());
+
             return Ok();
-        }
-
-        [HttpPost("~/portforward")]
-        [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> PostAsync(
-            [FromQuery] string path
-        )
-        {
-            // Add this header in case there is any confusion about which service the reponse is coming from
-            Response.Headers.Add("X-Powered-By", "Visual Studio Online Portal");
-
-            if (path == "authenticate-port-forwarder")
-            {
-                this.Request.Form.TryGetValue("token", out var tokenValues);
-                this.Request.Form.TryGetValue("cascadeToken", out var cascadeTokenValues);
-
-                var token = tokenValues.SingleOrDefault();
-                var cascadeToken = cascadeTokenValues.SingleOrDefault();
-
-                var authController = controllerProvider.Create<AuthController>(this.ControllerContext);
-                return await authController.AuthenticatePortForwarderAsync(token, cascadeToken);
-            }
-            if (path == "logout-port-forwarder")
-            {
-                var authController = controllerProvider.Create<AuthController>(this.ControllerContext);
-                return authController.LogoutPortForwarder();
-            }
-
-            // This most likely should have gone to the service worker instead
-            return BadRequest();
         }
 
         private ActionResult ExceptionView(PortForwardingFailure failureReason = PortForwardingFailure.Unknown)
@@ -193,7 +156,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     var pathAndQuery = path.Split("?");
                     if (pathAndQuery.Length == 1)
                     {
-                        redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host, pathAndQuery[0]));
+                        redirectUriQuery.Set("redirectUrl",
+                            UriHelper.BuildAbsolute(Request.Scheme, Request.Host, pathAndQuery[0]));
                     }
                     else if (pathAndQuery.Length == 2)
                     {
@@ -211,13 +175,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             redirectUriBuilder.Path = "/login";
             redirectUriBuilder.Query = redirectUriQuery.ToString();
 
-            var details = new PortForwardingErrorDetails()
+            var details = new PortForwardingErrorDetails
             {
                 FailureReason = failureReason,
                 RedirectUrl = redirectUriBuilder.Uri.ToString()
             };
 
-            Response.StatusCode = StatusCodes.Status401Unauthorized;
+            Response.StatusCode = failureReason == PortForwardingFailure.Unknown
+                ? StatusCodes.Status400BadRequest
+                : StatusCodes.Status401Unauthorized;
             return View("exception", details);
         }
 
@@ -227,14 +193,23 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             // The portal runs on https://localhost:443 only right now, because of authentication.
             if (AppSettings.IsLocal)
             {
-                HttpClient client = new HttpClient();
+                var client = new HttpClient();
                 var stream = await client.GetStreamAsync($"https://localhost:443/{path}");
 
                 return File(stream, mediaType);
             }
 
+            // The static files in test are limited to the ones that don't need to be built.
+            if (AppSettings.IsTest)
+            {
+                var assetPhysicalPath = Path.Combine(HostEnvironment.ContentRootPath,
+                    "ClientApp", "public", path);
+
+                return PhysicalFile(assetPhysicalPath, mediaType);
+            }
+            
             var asset = Path.Combine(Directory.GetCurrentDirectory(),
-                            "ClientApp", "build", path);
+                "ClientApp", "build", path);
 
             return PhysicalFile(asset, mediaType);
         }
@@ -273,42 +248,29 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         private (string SessionId, int Port) GetPortForwardingSessionDetails(IDiagnosticsLogger logger)
         {
-            string workspaceId;
-            string portString;
-            if (!Request.Headers.TryGetValue("X-VSOnline-Forwarding-WorkspaceId", out var workspaceIdValues) ||
-                !Request.Headers.TryGetValue("X-VSOnline-Forwarding-Port", out var portStringValues))
+            if (!HostUtils.TryGetPortForwardingSessionDetails(Request, out var sessionDetails))
             {
-                logger.AddValue("session_details_source", "host");
-
-                var hostString = Request.Host.ToString();
-
-                var match = Regex.Match(hostString, "(?<workspaceId>[0-9A-Fa-f]{36})-(?<port>\\d{2,5})");
-                workspaceId = match.Groups["workspaceId"].Value;
-                portString = match.Groups["port"].Value;
-            }
-            else
-            {
-                logger.AddValue("session_details_source", "headers");
-
-                workspaceId = workspaceIdValues.FirstOrDefault();
-                portString = portStringValues.FirstOrDefault();
-            }
-
-            if (!Regex.IsMatch(workspaceId, "^[0-9A-Fa-f]{36}$") || !int.TryParse(portString, out int port))
-            {
+                logger.AddValue(
+                    "session_details_source",
+                    Request.Headers.ContainsKey(PortForwardingHeaders.WorkspaceId) &&
+                    Request.Headers.ContainsKey(PortForwardingHeaders.Port)
+                        ? "headers"
+                        : "host"
+                );
                 logger.LogInfo("portforwarding_get_session_details_failed");
+
                 throw new InvalidOperationException("Cannot extract workspace id and port from current request.");
             }
 
-            logger.AddValue("workspace_id", workspaceId);
-            logger.AddValue("port", port.ToString());
+            logger.AddValue("workspace_id", sessionDetails.WorkspaceId);
+            logger.AddValue("port", sessionDetails.Port.ToString());
             logger.LogInfo("portforwarding_get_session_details");
-            return (workspaceId, port);
+            return sessionDetails;
         }
 
         private async Task<bool> CheckUserAccessAsync(string cascadeToken, string sessionId, IDiagnosticsLogger logger)
         {
-            var userId = string.Empty;
+            string userId;
             try
             {
                 var handler = new JwtSecurityTokenHandler();

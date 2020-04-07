@@ -18,6 +18,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middleware;
@@ -40,6 +42,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
         }
 
         private PortForwardingHostUtils PortForwardingHostUtils { get; set; } = default!;
+
+        private PortForwardingRoutingHelper PortForwardingRoutingHelper { get; set; } = default!;
 
         /// <summary>
         /// This method gets called by the runtime.
@@ -76,8 +80,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             services.AddSingleton<IManagedCache, InMemoryManagedCache>();
             services.AddSingleton<ISystemCatalog, NullSystemCatalog>();
 
-            PortForwardingHostUtils = new PortForwardingHostUtils(portForwardingSettings);
+            PortForwardingHostUtils = new PortForwardingHostUtils(portForwardingSettings.HostsConfigs);
             services.AddSingleton(PortForwardingHostUtils);
+            PortForwardingRoutingHelper = new PortForwardingRoutingHelper(PortForwardingHostUtils);
 
             if (IsRunningInAzure() && (
                 portForwardingSettings.UseMockKubernetesMappingClientInDevelopment ||
@@ -127,8 +132,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
 
-            app.MapWhen(Not<HttpContext>(IsUserRequest), HandleInternalRequests);
-            app.MapWhen(IsUserRequest, HandleUserRequests);
+            app.MapWhen(Not<HttpContext>(PortForwardingRoutingHelper.IsPortForwardingRequest), HandleInternalRequests);
+            app.MapWhen(PortForwardingRoutingHelper.IsPortForwardingRequest, HandleUserRequests);
 
             Warmup(app);
         }
@@ -136,15 +141,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
         private Func<T, bool> Not<T>(Func<T, bool> predicate)
         {
             return (arg) => !predicate(arg);
-        }
-
-        private bool IsUserRequest(HttpContext context)
-        {
-            var isUserHost = PortForwardingHostUtils.IsPortForwardingHost(context.Request.Host.ToString());
-            var hasUserHeaders = context.Request.Headers.ContainsKey(PortForwardingHeaders.WorkspaceId)
-                && context.Request.Headers.ContainsKey(PortForwardingHeaders.Port);
-
-            return isUserHost || hasUserHeaders;
         }
 
         private void HandleUserRequests(IApplicationBuilder app)
