@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         /// <inheritdoc />
         public async Task ProcessAccountClosedAsync(IAccountCloseCommand command)
         {
-            var logger = GetNewLogger();
+            var logger = GetNewLogger(command);
             logger.LogInfo(GetType().FormatLogMessage(nameof(ProcessAccountClosedAsync)));
             await PerformDeleteAsync(command, logger);
         }
@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         /// <inheritdoc/>
         public async Task ProcessAgeOutAsync(IAgeOutCommand command)
         {
-            var logger = GetNewLogger();
+            var logger = GetNewLogger(command);
             logger.LogInfo(GetType().FormatLogMessage(nameof(ProcessAgeOutAsync)));
             await PerformDeleteAsync(command, logger);
         }
@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         /// <inheritdoc/>
         public async Task ProcessDeleteAsync(IDeleteCommand command)
         {
-            var logger = GetNewLogger();
+            var logger = GetNewLogger(command);
             logger.LogInfo(GetType().FormatLogMessage(nameof(ProcessDeleteAsync)));
 
             // Only AgeOuts and AccountCloseOuts results in deletion. Manual delete commands are not supported.
@@ -81,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
         /// <inheritdoc/>
         public async Task ProcessExportAsync(IExportCommand command)
         {
-            var logger = GetNewLogger();
+            var logger = GetNewLogger(command);
             logger.LogInfo(GetType().FormatLogMessage(nameof(ProcessExportAsync)));
 
             await logger.OperationScopeAsync("pcf_perform_export", async (childLogger) =>
@@ -232,10 +232,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
             return guid.ToString("D");
         }
 
-        private IDiagnosticsLogger GetNewLogger()
+        private IDiagnosticsLogger GetNewLogger(IPrivacyCommand command = null)
         {
             var logger = LoggerFactory.New(DefaultLogValues);
             logger.AddBaseValue(LoggingConstants.CorrelationId, Guid.NewGuid().ToString("D"));
+            if (command != null)
+            {
+                logger.AddBaseValue("PcfCommandId", command.CommandId);
+            }
+
             return logger;
         }
     }
