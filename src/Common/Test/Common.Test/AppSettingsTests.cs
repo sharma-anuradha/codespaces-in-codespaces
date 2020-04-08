@@ -86,8 +86,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                         Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
                     }
-                    Assert.True(sku.StoragePoolLevel > 0);
-                    Assert.True(sku.ComputePoolLevel > 0);
+
+                    // for prod-can appsettings all sku pool and storage
+                    // is defaulted to 0 except Standdard Linux and Windows
+                    if (environmentName == "prod-can")
+                    {
+                        if (sku.SkuName.Equals("premiumLinux") ||
+                            sku.SkuName.Equals("basicLinux") ||
+                            sku.SkuName.Equals("internal64Server") ||
+                            sku.SkuName.Equals("internal32Server"))
+                        {
+                            Assert.True(sku.StoragePoolLevel == 0);
+                            Assert.True(sku.ComputePoolLevel == 0);
+                        }
+                        else
+                        {
+                            Assert.True(sku.StoragePoolLevel > 0);
+                            Assert.True(sku.ComputePoolLevel > 0);
+                        }
+                    }
                 }
             }
         }

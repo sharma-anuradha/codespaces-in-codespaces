@@ -1,5 +1,10 @@
 {
-  "providerAuthorizations": [],
+  "providerAuthorizations": [
+        {
+            "applicationId": "9bd5ab7f-4031-4045-ace9-6bebbad202f6",
+            "roleDefinitionId": "b879ac78-f1e6-448d-ab4c-5908cd5967c1"
+        }
+  ],
   "namespace": "Microsoft.VSOnline",
   "providerVersion": "2.0",
   "providerType": "Internal",
@@ -281,6 +286,16 @@
           "endpointUri": "https://southeastasia.metarp.azure.com",
           "locations": [
             "Southeast Asia"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+              "2019-07-01-privatepreview"
+          ],
+          "endpointUri": "https://eastus2euap.metarp.azure.com",
+          "locations": [
+              "East US 2 EUAP"
           ],
           "timeout": "PT2M"
         }

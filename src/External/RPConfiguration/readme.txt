@@ -20,9 +20,10 @@ RPaaS	- Contains configuration files used to register our Resource provider and 
 			sample_payload.txt 			- Defines a sample json payload for creating a plan resource type.
 
 API Versions
-2019-07-01-preview 		- Points to Production resource provider.
-2019-07-01-beta    		- Points to PPE resource provider.
-2019-07-01-alpha   		- Points to DEV resource provider.
+2019-07-01-preview 		  - Points to Production resource provider.
+2019-07-01-beta    		  - Points to PPE resource provider.
+2019-07-01-alpha   		  - Points to DEV resource provider.
+2019-07-01-privatepreview - Points to Canary resource provider
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 HOW TO UPDATE RPAAS CONFIGURATION
