@@ -38,14 +38,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// </summary>
         /// <param name="command">IPrivacyCommand object.</param>
         /// <returns>Attempt number.</returns>
-        public static int GetAttemptNumber(this IPrivacyCommand command) => GetValueFromStateDictionary<int>(command, AttemptNumberKey);
+        public static int GetAttemptNumber(this IPrivacyCommand command) => (int)GetValueFromStateDictionary<long>(command, AttemptNumberKey);
 
         /// <summary>
         /// AffectedRowCount for this command.
         /// </summary>
         /// <param name="command">IPrivacyCommand object.</param>
         /// <returns>AffectedRowCount.</returns>
-        public static int GetAffectedRowCount(this IPrivacyCommand command) => GetValueFromStateDictionary<int>(command, AffectedRowCountKey);
+        public static int GetAffectedRowCount(this IPrivacyCommand command) => (int)GetValueFromStateDictionary<long>(command, AffectedRowCountKey);
 
         private static T GetValueFromStateDictionary<T>(IPrivacyCommand command, string key)
         {

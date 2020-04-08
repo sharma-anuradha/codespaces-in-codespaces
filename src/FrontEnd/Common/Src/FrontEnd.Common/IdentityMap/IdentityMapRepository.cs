@@ -144,9 +144,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         {
             var query = new SqlQuerySpec(
                    @"SELECT * FROM c WHERE
-                        c.profileProviderId = @profileProviderId or
-                        c.canonicalUserId = @canonicalUserId or
-                        c.profileId = @profileId",
+                        (IS_NULL(c.profileProviderId) = false and c.profileProviderId = @profileProviderId) or
+                        (IS_NULL(c.canonicalUserId) = false and c.canonicalUserId = @canonicalUserId) or
+                        (IS_NULL(c.profileId) = false and c.profileId = @profileId)",
                    new SqlParameterCollection
                    {
                         new SqlParameter { Name = "@profileProviderId", Value = userIdSet.ProfileProviderId },

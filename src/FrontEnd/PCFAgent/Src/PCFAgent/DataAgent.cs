@@ -171,7 +171,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                     affectedRowCount: affectedRowCount,
                     leaseExtension: commandStatus == CommandStatus.Pending ? commandLeaseDuration : null);
 
-                childLogger.FluentAddBaseValue("PcfAffectedEntitiesCount", affectedRowCount)
+                childLogger.FluentAddValue("PcfCommandStatus", commandStatus)
+                    .FluentAddValue("PcfAffectedEntitiesCount", affectedRowCount)
                                     .AddAttempt(attemptNumber);
             });
         }
@@ -233,7 +234,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
         private IDiagnosticsLogger GetNewLogger()
         {
-            return LoggerFactory.New(DefaultLogValues);
+            var logger = LoggerFactory.New(DefaultLogValues);
+            logger.AddBaseValue(LoggingConstants.CorrelationId, Guid.NewGuid().ToString("D"));
+            return logger;
         }
     }
 }
