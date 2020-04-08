@@ -32,6 +32,11 @@ apt-get install -fy
 rm $docker_debfile
 docker --version
 
+echo "Install docker-compose"
+curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
 # Block Azure Instance Metadata Service IP on host (OUTPUT) and also in containers (DOCKER-USER)
 # This needs to happen after the docker install for DOCKER-USER to exist in iptables.
 
