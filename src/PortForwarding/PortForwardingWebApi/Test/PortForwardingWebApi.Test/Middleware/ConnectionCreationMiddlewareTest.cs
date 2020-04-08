@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             };
             Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
             Assert.Equal(
-                "https://a68c43fa9e015e45e046c85d502ec5e4b774-8080.svc.cluster.local/test/path",
+                "https://pf-a68c43fa9e015e45e046c85d502ec5e4b774-8080.svc.cluster.local/test/path",
                 context.Response.Headers.GetValueOrDefault("Location"));
             
             queueClient.Verify(c => c.SendAsync(It.Is<Message>(msg =>
@@ -145,7 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             };
             Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
             Assert.Equal(
-                "https://a68c43fa9e015e45e046c85d502ec5e4b774-8080.svc.cluster.local/test/path",
+                "https://pf-a68c43fa9e015e45e046c85d502ec5e4b774-8080.svc.cluster.local/test/path",
                 context.Response.Headers.GetValueOrDefault("Location"));
             
             queueClient.Verify(c => c.SendAsync(It.Is<Message>(msg =>

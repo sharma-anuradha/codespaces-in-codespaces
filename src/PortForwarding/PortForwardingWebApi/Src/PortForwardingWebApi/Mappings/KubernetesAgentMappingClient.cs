@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 .FluentAddBaseValue("source_port", mapping.SourcePort)
                 .FluentAddBaseValue("pod_name", mapping.AgentName)
                 .FluentAddBaseValue("pod_uid", mapping.AgentUid)
-                .FluentAddBaseValue("target_port", mapping.WorkspaceId);
+                .FluentAddBaseValue("destination_port", mapping.DestinationPort);
 
             await logger.OperationScopeAsync(
                 "kubernetes_create_agent_service",
@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                         {
                             return hostConf.Hosts.Select(host => new Extensionsv1beta1IngressRule
                             {
-                                Host = string.Format(host, mapping.GetKubernetesServiceName()),
+                                Host = string.Format(host, mapping.GetPortForwardingSessionSubdomain()),
                                 Http = new Extensionsv1beta1HTTPIngressRuleValue
                                 {
                                     Paths = new List<Extensionsv1beta1HTTPIngressPath>

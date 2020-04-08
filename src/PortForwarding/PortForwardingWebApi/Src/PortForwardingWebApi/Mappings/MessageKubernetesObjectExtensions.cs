@@ -13,7 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
     public static class MessageKubernetesObjectExtensions
     {
         /// <summary>
-        /// Converts the <see cref="ConnectionEstablishing"/> agent to the Kubernetes <see cref="V1OwnerReference"/>.
+        /// Converts the <see cref="ConnectionDetails"/> agent to the Kubernetes <see cref="V1OwnerReference"/>.
         /// </summary>
         /// <param name="connection">The connection reference for agent we'll be setting as the owner of service and ingress rule.</param>
         /// <returns>The owner object.</returns>
@@ -35,17 +35,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <returns>Kubernetes service name.</returns>
         public static string GetKubernetesServiceName(this ConnectionDetails connection)
         {
+            return $"pf-{connection.WorkspaceId.ToLower()}-{connection.SourcePort}";
+        }
+
+        /// <summary>
+        /// Returns PF subdomain for use in host configuration name based on connection mapping.
+        /// </summary>
+        /// <param name="connection">Connection mapping.</param>
+        /// <returns>PF subdomain.</returns>
+        public static string GetPortForwardingSessionSubdomain(this ConnectionDetails connection)
+        {
             return $"{connection.WorkspaceId.ToLower()}-{connection.SourcePort}";
         }
 
         /// <summary>
-        /// Returns Kubernetes service name based on connection mapping.
+        /// Returns Kubernetes service name based on connection request.
         /// </summary>
         /// <param name="connection">Connection mapping.</param>
         /// <returns>Kubernetes service name.</returns>
         public static string GetKubernetesServiceName(this ConnectionRequest connection)
         {
-            return $"{connection.WorkspaceId.ToLower()}-{connection.Port}";
+            return $"pf-{connection.WorkspaceId.ToLower()}-{connection.Port}";
         }
     }
 }
