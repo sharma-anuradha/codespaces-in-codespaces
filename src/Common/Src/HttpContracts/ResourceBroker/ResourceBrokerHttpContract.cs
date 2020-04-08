@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker
@@ -131,7 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="resources">The resource id token.</param>
         /// <returns>Uri.</returns>
         public static string GetStatusResourceUri(Guid environmentId, IEnumerable<Guid> resources) =>
-            $"{ResourcesRoute}/{StatusOperation}?id={string.Join(",", resources)}&environmentId={environmentId}";
+            $"{ResourcesRoute}/{StatusOperation}?{string.Join("&", resources.Select(x => $"id={x}"))}&environmentId={environmentId}";
 
         /// <summary>
         /// Get the get resource uri.

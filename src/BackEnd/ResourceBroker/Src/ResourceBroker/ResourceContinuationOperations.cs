@@ -62,10 +62,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 ResourcePoolDetails = details,
                 ResourceId = resourceId,
                 Reason = reason,
+                IsAssigned = false,
             };
             var target = CreateResourceContinuationHandler.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ResourceRecord> QueueCreateAsync(
+            Guid resourceId,
+            ResourceType type,
+            ResourcePoolResourceDetails details,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
+
+            var input = new CreateResourceContinuationInput()
+            {
+                Type = type,
+                ResourcePoolDetails = details,
+                ResourceId = resourceId,
+                Reason = reason,
+                IsAssigned = true,
+            };
+            var target = CreateResourceContinuationHandler.DefaultQueueTarget;
+
+            await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
+
+            return resource;
         }
 
         /// <inheritdoc/>

@@ -78,13 +78,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     // Work through each input
                     foreach (var input in inputs)
                     {
+                        (AllocateInput Input, ResourceRecord Resource, ResourcePool ResourceSku) resourceResult = default;
+
+                        // Setting up logger
+                        logger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
+                            .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
+                            .FluentAddBaseValue("ResourceType", input.Type.ToString())
+                            .FluentAddBaseValue("ResourceQueueAllocation", input.QueueCreateResource);
+
                         // Try and get item from the pool
-                        var resourceResult = await childLogger.OperationScopeAsync(
+                        resourceResult = await childLogger.OperationScopeAsync(
                             $"{LogBaseName}_allocate",
                             async (itemLogger) =>
                             {
-                                // Try and get item from the pool
-                                var assignResult = await TryGetAsync(input, itemLogger);
+                                (ResourceRecord Resource, ResourcePool ResourceSku) assignResult = default;
+
+                                if (input.QueueCreateResource)
+                                {
+                                    // Try to create resource for request.
+                                    assignResult = await TryQueueAsync(input, itemLogger);
+                                }
+                                else
+                                {
+                                    // Try and get item from the pool
+                                    assignResult = await TryGetAsync(input, itemLogger);
+                                }
 
                                 // Deal with case that it didn't exist
                                 if (assignResult.Resource == null)
@@ -113,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     var isValid = resourceResults.Count == inputs.Count() && failedInput == null;
 
                     childLogger.FluentAddValue("AllocationIsValid", isValid)
-                        .FluentAddValue("AllocationAllocationCount", resourceResults.Count);
+                               .FluentAddValue("AllocationAllocationCount", resourceResults.Count);
 
                     if (isValid)
                     {
@@ -126,7 +144,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             var record = resourceResult.Record;
 
                             // Only trigger pool refresh if its a pool resource
-                            if (resourceSku != null)
+                            if (resourceSku != null && !resourceResult.Input.QueueCreateResource)
                             {
                                 // Trigger auto pool create to replace assigned item
                                 TaskHelper.RunBackground(
@@ -150,18 +168,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                         // Try and get item from the pool
                         await childLogger.OperationScopeAsync(
-                            $"{LogBaseName}_release",
-                            async (itemLogger) =>
-                            {
-                                itemLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, record.Id)
-                                    .FluentAddBaseValue("ResourceLocation", record.Location)
-                                    .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
-                                    .FluentAddBaseValue("ResourceType", record.Type);
+                                $"{LogBaseName}_release",
+                                async (itemLogger) =>
+                                {
+                                    itemLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, record.Id)
+                                        .FluentAddBaseValue("ResourceLocation", record.Location)
+                                        .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
+                                        .FluentAddBaseValue("ResourceType", record.Type);
 
-                                await ResourcePool.ReleaseGetAsync(
-                                    record.Id, itemLogger.NewChildLogger());
-                            },
-                            swallowException: true);
+                                    await ResourcePool.ReleaseGetAsync(
+                                        record.Id,
+                                        itemLogger.NewChildLogger());
+                                },
+                                swallowException: true);
                     }
 
                     // Throw exception since we failed to allocate
@@ -177,8 +196,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_allocate",
                 async (childLogger) =>
                 {
-                    // Try and get item from the pool
-                    var assignResult = await TryGetAsync(input, childLogger);
+                    (ResourceRecord Resource, ResourcePool ResourceSku) assignResult = default;
+
+                    if (input.QueueCreateResource)
+                    {
+                        // Try to create resource for request.
+                        assignResult = await TryQueueAsync(input, childLogger);
+                    }
+                    else
+                    {
+                        // Try and get item from the pool
+                        assignResult = await TryGetAsync(input, childLogger);
+                    }
 
                     // Deal with case that it didn't exist
                     if (assignResult.Resource == null)
@@ -437,11 +466,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryGetAsync(AllocateInput input, IDiagnosticsLogger itemLogger)
         {
-            // Setting up logger
-            itemLogger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
-                .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
-                .FluentAddBaseValue("ResourceType", input.Type.ToString());
-
             // If a blob is being created, we don't need to go to the pool for that
             if (input.Type == ResourceType.StorageArchive)
             {
@@ -478,10 +502,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 var resource = await ResourcePool.TryGetAsync(
                     resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
 
-                itemLogger.FluentAddBaseValue("ResourceResourceAllocateFound", resource != null);
+                itemLogger.FluentAddBaseValue("ResourceAllocateFound", resource != null);
 
                 return (resource, resourceSku);
             }
+        }
+
+        private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryQueueAsync(
+            AllocateInput input,
+            IDiagnosticsLogger logger)
+        {
+            // Map logical sku to resource sku
+            var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
+
+            var resourceId = Guid.NewGuid();
+            var resource = await ResourceContinuationOperations.QueueCreateAsync(
+            resourceId, input.Type, resourceSku.Details, "ResourceQueueAllocate", logger.NewChildLogger());
+
+            return (Resource: resource, ResourceSku: resourceSku);
         }
 
         private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)

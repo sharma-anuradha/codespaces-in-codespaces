@@ -176,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         }
 
         /// <summary>
-        /// Cleans a resource in the resource broker.
+        /// Gets status of resource in the resource broker.
         /// <para>
         /// GET api/v1/resourcebroker/resources/status?id={resourceId}&environmentId={environmentId}.
         /// </para>
@@ -243,6 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                     Location = resourceRequest.Location,
                     SkuName = resourceRequest.SkuName,
                     Type = resourceRequest.Type,
+                    QueueCreateResource = resourceRequest.QueueCreateResource,
                 });
             }
 

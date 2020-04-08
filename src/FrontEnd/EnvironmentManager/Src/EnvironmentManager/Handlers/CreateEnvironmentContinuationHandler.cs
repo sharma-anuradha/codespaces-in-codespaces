@@ -113,10 +113,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> FailOperationCleanupCoreAsync(
-          CreateEnvironmentContinuationInput operationInput,
-          EnvironmentRecordRef record,
-          string trigger,
-          IDiagnosticsLogger logger)
+            CreateEnvironmentContinuationInput operationInput,
+            EnvironmentRecordRef record,
+            string trigger,
+            IDiagnosticsLogger logger)
         {
             var didUpdate = await UpdateRecordAsync(
                     operationInput,
@@ -160,7 +160,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return await base.FailOperationCleanupCoreAsync(operationInput, record, trigger, logger);
         }
 
-        private static void LogResource(CreateEnvironmentContinuationInput operationInput, IDiagnosticsLogger logger)
+        private static void LogResource(
+            CreateEnvironmentContinuationInput operationInput,
+            IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("ComputeResourceId", operationInput.ComputeResource?.ResourceId)
                 .FluentAddBaseValue("ComputeResourceReady", operationInput.ComputeResource?.IsReady)
@@ -176,6 +178,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 || resourceState == OperationState.Failed;
         }
 
+        private static EnvironmentContinuationInputResource BuildQueueInputResource(ResourceAllocation resource)
+        {
+            return new EnvironmentContinuationInputResource()
+            {
+                Location = resource.Location,
+                SkuName = resource.SkuName,
+                Created = resource.Created,
+                Type = resource.Type.Value,
+                ResourceId = resource.ResourceId,
+                IsReady = resource.IsReady,
+            };
+        }
+
+        private static ResourceAllocation BuildResourceRecord(EnvironmentContinuationInputResource resource)
+        {
+            return new ResourceAllocation()
+            {
+                Location = resource.Location,
+                SkuName = resource.SkuName,
+                Created = resource.Created,
+                Type = resource.Type,
+                ResourceId = resource.ResourceId,
+                IsReady = resource.IsReady,
+            };
+        }
+
         private async Task<ContinuationResult> RunAllocateResourceAsync(
              CreateEnvironmentContinuationInput operationInput,
              EnvironmentRecordRef record,
@@ -185,12 +213,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // TODO:: Move allocate to a separate class.
             var allocationResult = await environmentManager.AllocateComputeAndStorageAsync(record.Value, true, logger.NewChildLogger());
-            var computeResult = allocationResult.Compute;
-            var storageResult = allocationResult.Storage;
 
             // Setup result
-            operationInput.ComputeResource = computeResult;
-            operationInput.StorageResource = storageResult;
+            operationInput.ComputeResource = BuildQueueInputResource(allocationResult.Compute);
+            operationInput.StorageResource = BuildQueueInputResource(allocationResult.Storage);
             operationInput.CurrentState = CreateEnvironmentContinuationInputState.CheckResourceState;
 
             LogResource(operationInput, logger);
@@ -217,14 +243,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (computeStatus.IsReady && storageStatus.IsReady)
             {
+                var computeResource = BuildResourceRecord(operationInput.ComputeResource);
+                var storageResource = BuildResourceRecord(operationInput.StorageResource);
+
                 var didUpdate = await UpdateRecordAsync(
                     operationInput,
                     record,
                     (environment, innerLogger) =>
                     {
                         // Update state to be failed
-                        record.Value.Compute = operationInput.ComputeResource;
-                        record.Value.Storage = operationInput.StorageResource;
+                        record.Value.Compute = computeResource;
+                        record.Value.Storage = storageResource;
                         return Task.FromResult(true);
                     },
                     logger);
@@ -250,9 +279,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         private async Task<ContinuationResult> RunStartComputeAsync(
-        CreateEnvironmentContinuationInput operationInput,
-        EnvironmentRecordRef record,
-        IDiagnosticsLogger logger)
+            CreateEnvironmentContinuationInput operationInput,
+            EnvironmentRecordRef record,
+            IDiagnosticsLogger logger)
         {
             var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
 
@@ -338,7 +367,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return new ContinuationResult { Status = OperationState.InProgress, NextInput = operationInput, };
             }
 
-            if (computeStatus.StartingStatus == OperationState.InProgress)
+            if (computeStatus.StartingStatus == OperationState.InProgress || computeStatus.StartingStatus == OperationState.Initialized)
             {
                 return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, RetryAfter = TimeSpan.FromSeconds(1) };
             }

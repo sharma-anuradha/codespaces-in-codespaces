@@ -109,8 +109,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                    var shutdownOperationResult = await deploymentManager.ShutdownComputeAsync(input, retryAttemptCount, logger);
                    var result = new VirtualMachineProviderShutdownResult
                    {
-                       Status = shutdownOperationResult.Item1,
-                       NextInput = (shutdownOperationResult.Item1 == OperationState.Succeeded) ? default : input.BuildNextInput(shutdownOperationResult.Item2.ToString()),
+                       Status = shutdownOperationResult.OperationState,
+                       NextInput = (shutdownOperationResult.OperationState == OperationState.Succeeded) ? default : input.BuildNextInput(shutdownOperationResult.RetryAttempt.ToString()),
                    };
                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
                         .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
@@ -198,8 +198,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     var startComputeResult = await deploymentManager.StartComputeAsync(input, retryAttemptCount, childLogger.NewChildLogger());
                     var result = new VirtualMachineProviderStartComputeResult()
                     {
-                        Status = startComputeResult.Item1,
-                        NextInput = (startComputeResult.Item1 == OperationState.Succeeded) ? default : input.BuildNextInput(startComputeResult.Item2.ToString()),
+                        Status = startComputeResult.OperationState,
+                        NextInput = (startComputeResult.OperationState == OperationState.Succeeded) ? default : input.BuildNextInput(startComputeResult.RetryAttempt.ToString()),
                     };
 
                     // TODO:: Add correlation id

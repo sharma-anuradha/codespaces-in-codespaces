@@ -26,5 +26,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets the target Location.
         /// </summary>
         public AzureLocation Location { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to create resource on the fly.
+        /// </summary>
+        public bool QueueCreateResource { get; set; }
     }
 }

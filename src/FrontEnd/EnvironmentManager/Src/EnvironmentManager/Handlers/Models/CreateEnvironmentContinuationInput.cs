@@ -35,11 +35,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Gets or sets the compute resource for environment.
         /// </summary>
-        public ResourceAllocation ComputeResource { get; set; }
+        public EnvironmentContinuationInputResource ComputeResource { get; set; }
 
         /// <summary>
         /// Gets or sets the storage resource for environment.
         /// </summary>
-        public ResourceAllocation StorageResource { get; set; }
+        public EnvironmentContinuationInputResource StorageResource { get; set; }
     }
 }

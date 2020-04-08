@@ -269,14 +269,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var location = input.ResourcePoolDetails.Location;
             var skuName = input.ResourcePoolDetails.SkuName;
             var poolReference = new ResourcePoolDefinitionRecord
-                {
-                    Code = input.ResourcePoolDetails.GetPoolDefinition(),
-                    VersionCode = input.ResourcePoolDetails.GetPoolVersionDefinition(),
-                    Dimensions = input.ResourcePoolDetails.GetPoolDimensions(),
-                };
+            {
+                Code = input.ResourcePoolDetails.GetPoolDefinition(),
+                VersionCode = input.ResourcePoolDetails.GetPoolVersionDefinition(),
+                Dimensions = input.ResourcePoolDetails.GetPoolDimensions(),
+            };
 
             // Build core record
             var record = ResourceRecord.Build(id, time, type, location, skuName, poolReference);
+            if (input.IsAssigned)
+            {
+                record.IsAssigned = true;
+                record.Assigned = DateTime.UtcNow;
+            }
 
             // Update input
             input.ResourceId = id;

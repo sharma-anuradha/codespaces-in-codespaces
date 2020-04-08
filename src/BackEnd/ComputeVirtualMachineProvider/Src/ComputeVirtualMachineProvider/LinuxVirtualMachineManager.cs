@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input.AzureResourceGroup, nameof(input.AzureResourceGroup));
             Requires.NotNull(input.AzureSkuName, nameof(input.AzureSkuName));
@@ -141,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> CheckCreateComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> CheckCreateComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
         {
             try
             {
@@ -175,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, int)> StartComputeAsync(VirtualMachineProviderStartComputeInput input, int retryAttempt, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, int RetryAttempt)> StartComputeAsync(VirtualMachineProviderStartComputeInput input, int retryAttempt, IDiagnosticsLogger logger)
         {
             try
             {
@@ -222,7 +222,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, int)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, int RetryAttempt)> ShutdownComputeAsync(VirtualMachineProviderShutdownInput input, int retryAttempt, IDiagnosticsLogger logger)
         {
             try
             {
@@ -254,7 +254,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             try
             {
@@ -296,7 +296,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> CheckDeleteComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> CheckDeleteComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
         {
             try
             {

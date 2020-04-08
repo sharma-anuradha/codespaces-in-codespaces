@@ -1,4 +1,4 @@
-﻿// <copyright file="ArchiveEnvironmentContinuationInputResource.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentContinuationInputResource.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
     /// See backend resource broker AllocateResult.
     /// </remarks>
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class ArchiveEnvironmentContinuationInputResource
+    public class EnvironmentContinuationInputResource
     {
         /// <summary>
         /// Gets or sets the resource id token.
@@ -50,5 +50,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// </summary>
         [JsonProperty]
         public ResourceType Type { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether resource is ready.
+        /// </summary>
+        [JsonProperty]
+        public bool IsReady { get; set; }
     }
 }

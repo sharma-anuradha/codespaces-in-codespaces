@@ -84,9 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Job: Watch Orphaned Azure Resources
             TaskHelper.RunBackgroundLoop(
-                $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
-                (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
-                TimeSpan.FromMinutes(10));
+            $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
+            (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+            TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));

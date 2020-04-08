@@ -103,18 +103,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
             services.AddSingleton<IEnvironmentContinuationOperations, EnvironmentContinuationOperations>();
 
-            if (!disableBackgroundTasks)
-            {
-                // Register background tasks
-                services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
-                services.AddSingleton<IWatchFailedEnvironmentTask, WatchFailedEnvironmentTask>();
-                services.AddSingleton<IWatchSuspendedEnvironmentsToBeArchivedTask, WatchSuspendedEnvironmentsToBeArchivedTask>();
-                services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
-                services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
+            // Register background tasks
+            services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
+            services.AddSingleton<IWatchFailedEnvironmentTask, WatchFailedEnvironmentTask>();
+            services.AddSingleton<IWatchSuspendedEnvironmentsToBeArchivedTask, WatchSuspendedEnvironmentsToBeArchivedTask>();
+            services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
+            services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
 
-                // Job warmup
-                services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();
-            }
+            // Job warmup
+            services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();
 
             return services;
         }

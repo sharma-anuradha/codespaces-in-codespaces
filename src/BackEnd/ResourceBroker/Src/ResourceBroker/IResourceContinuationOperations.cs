@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -142,6 +143,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string name,
             AzureLocation location,
             IDictionary<string, string> resourceTags,
+            string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Create custom resources.
+        /// </summary>
+        /// <param name="resourceId">resource id.</param>
+        /// <param name="type">resource type.</param>
+        /// <param name="details">pool details.</param>
+        /// <param name="reason">reason.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<ResourceRecord> QueueCreateAsync(
+            Guid resourceId,
+            ResourceType type,
+            ResourcePoolResourceDetails details,
             string reason,
             IDiagnosticsLogger logger);
     }

@@ -81,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> BeginCreateComputeAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input.AzureResourceGroup, nameof(input.AzureResourceGroup));
             Requires.NotNull(input.AzureSkuName, nameof(input.AzureSkuName));
@@ -185,7 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> CheckCreateComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> CheckCreateComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
         {
             try
             {
@@ -226,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> BeginDeleteComputeAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             try
             {
@@ -265,7 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState, NextStageInput)> CheckDeleteComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> CheckDeleteComputeStatusAsync(NextStageInput input, IDiagnosticsLogger logger)
         {
             try
             {
@@ -351,32 +351,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 if (input.RetryAttempt < 5)
                 {
                     return (OperationState.InProgress, nextStageInput);
-                }
-
-                throw;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(AzureLocation location, string virtualMachineName, int retryAttemptCount, IDiagnosticsLogger logger)
-        {
-            try
-            {
-                var queueClient = await GetQueueClientAsync(location, GetQueueName(virtualMachineName), logger);
-                var sas = queueClient.GetSharedAccessSignature(new SharedAccessQueuePolicy()
-                {
-                    Permissions = SharedAccessQueuePermissions.ProcessMessages,
-                    SharedAccessExpiryTime = DateTime.UtcNow.AddDays(365),
-                });
-
-                return (OperationState.Succeeded, new QueueConnectionInfo(queueClient.Name, queueClient.ServiceClient.BaseUri.ToString(), sas), 0);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException("windows_virtual_machine_manager_get_input_queue_url_error", ex);
-                if (retryAttemptCount < 5)
-                {
-                    return (OperationState.InProgress, default, retryAttemptCount + 1);
                 }
 
                 throw;
@@ -546,6 +520,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private static string GetOsDiskName(string vmName)
         {
             return $"{vmName}-disk";
+        }
+
+        private async Task<(OperationState, QueueConnectionInfo, int)> GetVirtualMachineInputQueueConnectionInfoAsync(AzureLocation location, string virtualMachineName, int retryAttemptCount, IDiagnosticsLogger logger)
+        {
+            try
+            {
+                var queueClient = await GetQueueClientAsync(location, GetQueueName(virtualMachineName), logger);
+                var sas = queueClient.GetSharedAccessSignature(new SharedAccessQueuePolicy()
+                {
+                    Permissions = SharedAccessQueuePermissions.ProcessMessages,
+                    SharedAccessExpiryTime = DateTime.UtcNow.AddDays(365),
+                });
+
+                return (OperationState.Succeeded, new QueueConnectionInfo(queueClient.Name, queueClient.ServiceClient.BaseUri.ToString(), sas), 0);
+            }
+            catch (Exception ex)
+            {
+                logger.LogException("windows_virtual_machine_manager_get_input_queue_url_error", ex);
+                if (retryAttemptCount < 5)
+                {
+                    return (OperationState.InProgress, default, retryAttemptCount + 1);
+                }
+
+                throw;
+            }
         }
 
         private async Task<CloudQueue> GetQueueClientAsync(AzureLocation location, string queueName, IDiagnosticsLogger logger)

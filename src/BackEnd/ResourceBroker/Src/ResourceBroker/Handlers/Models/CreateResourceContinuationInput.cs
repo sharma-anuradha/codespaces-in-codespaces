@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public ResourceType Type { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether resource is assigned.
+        /// </summary>
+        public bool IsAssigned { get; set; }
     }
 }

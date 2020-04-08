@@ -1214,7 +1214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Type = ResourceType.StorageFileShare,
                 SkuName = cloudEnvironment.SkuName,
                 Location = cloudEnvironment.Location,
-                QueueCreateResource = queueResourceCreation,
+                QueueCreateResource = false,
             };
 
             var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };

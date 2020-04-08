@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             if (allocateResponse != null)
             {
                 // Map across details
-                var blobResult = new ArchiveEnvironmentContinuationInputResource
+                var blobResult = new EnvironmentContinuationInputResource
                 {
                     ResourceId = allocateResponse.ResourceId,
                     SkuName = allocateResponse.SkuName,

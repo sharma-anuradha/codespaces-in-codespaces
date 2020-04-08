@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Gets or sets the Archiuve Resource that exists in the continuation.
         /// </summary>
-        public ArchiveEnvironmentContinuationInputResource ArchiveResource { get; set; }
+        public EnvironmentContinuationInputResource ArchiveResource { get; set; }
 
         /// <summary>
         /// Gets or sets the last state updated time.
