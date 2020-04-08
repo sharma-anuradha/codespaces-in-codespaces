@@ -31,3 +31,16 @@ port-forwarding-web-api:
       - hosts:
         - '*.app.canary.online.visualstudio.com'
         secretName: ssl-cert
+
+# Config for tokens
+tokens-web-api:
+  config:
+    aspNetEnv: Production
+    overrideAppSettingsJson: appsettings.prod-can.json
+  ingress:
+    hosts:
+      - sts.canary.online.visualstudio.com
+    tls:
+      - hosts:
+        - sts.canary.online.visualstudio.com
+        secretName: ssl-cert
