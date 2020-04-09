@@ -21,6 +21,11 @@ import { FolderWorkspaceProvider } from '../../providers/folderWorkspaceProvider
 import { getVSCodeAssetPath, getVSCodeVersion } from '../../utils/featureSet';
 import { updateFavicon } from '../../utils/updateFavicon';
 
+export enum RepoType_QueryParam {
+    GitHub = 'GitHub',
+    AzureDevOps = 'AzureDevOps',
+}
+
 export interface ServerlessWorkbenchProps {
     folderUri: string;
     staticExtensions?: { packageJSON: any; extensionLocation: string }[];

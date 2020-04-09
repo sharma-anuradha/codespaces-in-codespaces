@@ -99,7 +99,7 @@ export const routes: IRoute[] = [
         component: GistWorkbench,
     },
     {
-        authenticated: false,
+        authenticated: true,
         path: azDevPath,
         exact: false,
         component: AzDevWorkbench,

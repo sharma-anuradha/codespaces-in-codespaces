@@ -3,16 +3,17 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
+import { ServerlessWorkbench, RepoType_QueryParam } from '../serverlessWorkbench/serverlessWorkbench';
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 import { Loader } from '../loader/loader';
 import { getAzDevCredentials } from '../../actions/getAzDevCredentials';
 
 export interface AzDevWorkbenchProps extends RouteComponentProps<{ id: string }> {
     org: string;
-    project: string;
-    repo: string;
+    projectName: string;
+    repoName: string;
     filePath: string;
+    commitId: string;
 }
 
 export interface AzDevWorkbenchState {
@@ -50,11 +51,12 @@ class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchSt
 
         // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
         const uriQueryObj = {
-            repoType: 'AzureDevOps',
+            repoType: RepoType_QueryParam.AzureDevOps,
             org: this.props.org,
-            project: this.props.project,
-            repo: this.props.repo,
+            projectName: this.props.projectName,
+            repoName: this.props.repoName,
             filePath: this.props.filePath,
+            commitId: this.props.commitId,
         };
         const uriQueryString = JSON.stringify(uriQueryObj);
         const folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
@@ -65,20 +67,27 @@ class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchSt
 
 const getProps = (
     state: ApplicationState,
-    props: RouteComponentProps<{ org: string; project: string; repo: string }>
+    props: RouteComponentProps<{
+        org: string;
+        projectName: string;
+        repoName: string;
+        commitId: string;
+    }>
 ) => {
     const org = props.match.params.org;
-    const project = props.match.params.project;
-    const repo = props.match.params.repo;
+    const projectName = props.match.params.projectName;
+    const repoName = props.match.params.repoName;
+    const commitId = props.match.params.commitId;
 
     const fileParam = new URLSearchParams(props.location.search).get('filePath');
     const filePath = fileParam ? fileParam : '';
 
     return {
         org,
-        project,
-        repo,
+        projectName,
+        repoName,
         filePath,
+        commitId,
     };
 };
 

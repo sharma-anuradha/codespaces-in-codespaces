@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
+import { ServerlessWorkbench, RepoType_QueryParam } from '../serverlessWorkbench/serverlessWorkbench';
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 
 export interface GitHubWorkbenchProps extends RouteComponentProps<{ id: string }> {
@@ -26,6 +26,7 @@ class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenc
 
          // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
          const uriQueryObj = {
+            repoType: RepoType_QueryParam.GitHub,
             org: this.props.org,
             repoId: this.props.repoId,
             commitId: this.props.commitId,
