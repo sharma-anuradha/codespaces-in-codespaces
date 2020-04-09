@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
@@ -98,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
             services.AddSingleton<IWatchOrphanedVmAgentImagesTask, WatchOrphanedVmAgentImagesTask>();
             services.AddSingleton<IWatchOrphanedStorageImagesTask, WatchOrphanedStorageImagesTask>();
+            services.AddSingleton<IWatchOrphanedComputeImagesTask, WatchOrphanedComputeImagesTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

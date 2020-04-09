@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     // Assert the vm image and storage image
                     Assert.Equal("test-compute-image-family-linux", sku.ComputeImage.ImageFamilyName);
                     Assert.Equal("test-vm-agent-image-family-linux", sku.VmAgentImage.ImageFamilyName);
-                    Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
+                    Assert.Equal(ImageKind.Custom, sku.ComputeImage.ImageKind);
                     Assert.Equal("test-storage-image-family-linux", sku.StorageImage.ImageFamilyName);
                     Assert.Equal("test-storage-image-url-linux", await sku.StorageImage.GetCurrentImageNameAsync(logger: null));
                     // Assert the default pool level
@@ -146,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     // Assert the vm image and storage image
                     Assert.Equal("test-compute-image-family-windows", sku.ComputeImage.ImageFamilyName);
                     Assert.Equal("test-vm-agent-image-family-windows", sku.VmAgentImage.ImageFamilyName);
-                    Assert.Equal(VmImageKind.Custom, sku.ComputeImage.ImageKind);
+                    Assert.Equal(ImageKind.Custom, sku.ComputeImage.ImageKind);
                     Assert.Equal("test-storage-image-family-windows", sku.StorageImage.ImageFamilyName);
                     Assert.Equal("test-storage-image-url-windows", await sku.StorageImage.GetCurrentImageNameAsync(logger: null));
                     // Assert the override pool level
@@ -333,7 +333,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         "test-compute-image-family-linux",
                         new VmImageFamilySettings
                         {
-                            ImageKind = VmImageKind.Custom,
+                            ImageKind = ImageKind.Custom,
                             ImageName = "test-compute-image-url-linux",
                             ImageVersion = "1.0.1",
                         }
@@ -342,7 +342,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         "test-compute-image-family-windows",
                         new VmImageFamilySettings
                         {
-                            ImageKind = VmImageKind.Custom,
+                            ImageKind = ImageKind.Custom,
                             ImageName = "test-compute-image-url-windows",
                             ImageVersion = "1.0.1",
                         }

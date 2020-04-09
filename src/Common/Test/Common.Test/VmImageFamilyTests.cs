@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 var imageFamily = new VmImageFamily(
                     stampInfo.Object,
                     "nexusWindowsImage",
-                    VmImageKind.Custom,
+                    ImageKind.Custom,
                     "NexusWindowsImage",
                     "2019.1111.001",
                     subscriptionId,

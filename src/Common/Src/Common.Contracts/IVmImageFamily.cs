@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets the image OS.
         /// </summary>
-        VmImageKind ImageKind { get; }
+        ImageKind ImageKind { get; }
 
         /// <summary>
         /// Gets the default image name for this family.

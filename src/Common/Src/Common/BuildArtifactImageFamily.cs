@@ -18,11 +18,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="imageFamilyType">The type of image family that is being referenced.</param>
         /// <param name="imageFamilyName">The image family name.</param>
         /// <param name="defaultImageName">The default full image url.</param>
+        /// <param name="defaultImageVersion">The default full image version.</param>
         /// <param name="currentImageInfoProvider">The current image info provider.</param>
         public BuildArtifactImageFamily(
             ImageFamilyType imageFamilyType,
             string imageFamilyName,
             string defaultImageName,
+            string defaultImageVersion,
             ICurrentImageInfoProvider currentImageInfoProvider)
         {
             Requires.NotNullOrEmpty(imageFamilyName, nameof(imageFamilyName));
@@ -32,6 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ImageFamilyType = imageFamilyType;
             ImageFamilyName = imageFamilyName;
             DefaultImageName = defaultImageName;
+            DefaultImageVersion = defaultImageVersion;
             CurrentImageInfoProvider = currentImageInfoProvider;
         }
 
@@ -41,6 +44,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public string ImageFamilyName { get; }
 
+        /// <summary>
+        /// Gets the image version.
+        /// </summary>
+        public string DefaultImageVersion { get; }
+
         private string DefaultImageName { get; }
 
         private ICurrentImageInfoProvider CurrentImageInfoProvider { get; }
@@ -49,6 +57,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public Task<string> GetCurrentImageNameAsync(IDiagnosticsLogger logger)
         {
             return CurrentImageInfoProvider.GetImageNameAsync(ImageFamilyType, ImageFamilyName, DefaultImageName, logger);
+        }
+
+        /// <inheritdoc/>
+        public string GetDefaultImageVersion()
+        {
+            return DefaultImageVersion;
         }
     }
 }

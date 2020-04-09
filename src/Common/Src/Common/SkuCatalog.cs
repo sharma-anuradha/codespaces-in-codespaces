@@ -65,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         ImageFamilyType.VmAgent,
                         e.Key,
                         e.Value.ImageName,
+                        e.Value.ImageVersion,
                         currentImageInfoProvider) as IBuildArtifactImageFamily));
 
             // Get the mapping from storage family.
@@ -75,6 +76,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                         ImageFamilyType.Storage,
                         e.Key,
                         e.Value.ImageName,
+                        null,
+                        currentImageInfoProvider) as IBuildArtifactImageFamily));
+
+            // Get the mapping from Compute family.
+            BuildArtifactComputeImageFamilies = new ReadOnlyDictionary<string, IBuildArtifactImageFamily>(
+                skuCatalogSettings.ComputeImageFamilies.ToDictionary(
+                    e => e.Key,
+                    e => new BuildArtifactImageFamily(
+                        ImageFamilyType.Compute,
+                        e.Key,
+                        e.Value.ImageName,
+                        e.Value.ImageVersion,
                         currentImageInfoProvider) as IBuildArtifactImageFamily));
 
             // Get the supported azure locations
@@ -162,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 var priority = cloudEnvironmentSettings.Priority;
 
                 // Get the VM and storage image familes.
-                var computeImageFamily = NewVmImageFamily(
+                var computeImageFamily = NewComputeImageFamily(
                     controlPlaneInfo.Stamp,
                     skuConfiguration.ComputeImageFamily,
                     skuCatalogSettings.ComputeImageFamilies,
@@ -229,9 +242,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         public IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactStorageImageFamilies { get; }
 
+        /// <summary>
+        ///  Gets compute image family info.
+        /// </summary>
+        public IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactComputeImageFamilies { get; }
+
         private Dictionary<string, ICloudEnvironmentSku> Skus { get; } = new Dictionary<string, ICloudEnvironmentSku>();
 
-        private static IVmImageFamily NewVmImageFamily(
+        private static IVmImageFamily NewComputeImageFamily(
             IControlPlaneStampInfo stampInfo,
             string imageFamilyName,
             IDictionary<string, VmImageFamilySettings> imageFamilies,
@@ -270,6 +288,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 imageFamilyType,
                 imageFamilyName,
                 imageFamilySettings.ImageName,
+                imageFamilySettings.ImageVersion,
                 currentImageInfoProvider);
 
             return imageFamily;

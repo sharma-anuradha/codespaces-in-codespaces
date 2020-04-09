@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the storage Image Families.
         /// </summary>
         IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactStorageImageFamilies { get; }
+
+        /// <summary>
+        /// Gets the Compute Image Families.
+        /// </summary>
+        IReadOnlyDictionary<string, IBuildArtifactImageFamily> BuildArtifactComputeImageFamilies { get; }
     }
 }

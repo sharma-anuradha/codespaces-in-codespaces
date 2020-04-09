@@ -18,6 +18,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Gets or sets a value that indicates how <see cref="ImageFamilySettings.ImageName"/> is to be interpreted.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public VmImageKind ImageKind { get; set; }
+        public ImageKind ImageKind { get; set; }
     }
 }

@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public VmImageFamily(
             IControlPlaneStampInfo stampInfo,
             string imageFamilyName,
-            VmImageKind imageKind,
+            ImageKind imageKind,
             string defaultImageName,
             string defaultImageVersion,
             string vmImageSubscriptionId,
@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Requires.NotNullOrEmpty(defaultImageName, nameof(defaultImageName));
             Requires.NotNullOrEmpty(defaultImageVersion, nameof(defaultImageVersion));
 
-            if (imageKind == VmImageKind.Custom)
+            if (imageKind == ImageKind.Custom)
             {
                 Requires.NotNullOrEmpty(vmImageSubscriptionId, nameof(vmImageSubscriptionId));
             }
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public ImageFamilyType ImageFamilyType { get; } = ImageFamilyType.Compute;
 
         /// <inheritdoc/>
-        public VmImageKind ImageKind { get; }
+        public ImageKind ImageKind { get; }
 
         /// <inheritdoc/>
         public string DefaultImageName { get; }
@@ -83,10 +83,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             switch (ImageKind)
             {
-                case VmImageKind.Canonical:
+                case ImageKind.Canonical:
                     return $"{imageName}:{imageVersion}";
 
-                case VmImageKind.Custom:
+                case ImageKind.Custom:
                     return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{StampInfo.GetResourceGroupNameForWindowsImages(location)}/providers/Microsoft.Compute/galleries/{StampInfo.GetImageGalleryNameForWindowsImages(location)}/images/windows/versions/{imageVersion}";
 
                 default:

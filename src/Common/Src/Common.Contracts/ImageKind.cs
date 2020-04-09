@@ -1,4 +1,4 @@
-﻿// <copyright file="VmImageKind.cs" company="Microsoft">
+﻿// <copyright file="ImageKind.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     /// Indicates the kind of vm image name.
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum VmImageKind
+    public enum ImageKind
     {
         /// <summary>
         /// The image name spcifies a conanical VM image name.

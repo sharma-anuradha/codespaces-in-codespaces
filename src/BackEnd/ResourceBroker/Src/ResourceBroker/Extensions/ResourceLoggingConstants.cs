@@ -75,6 +75,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchOrphanedStorageImagesTask = "watch_orphaned_storage_image_task";
 
         /// <summary>
+        /// Watch Orphaned Build Artifact Compute Image Task.
+        /// </summary>
+        public const string WatchOrphanedComputeImagesTask = "watch_orphaned_compute_image_task";
+
+        /// <summary>
         /// Watch Orphaned System Resource Task.
         /// </summary>
         public const string WatchOrphanedSystemResourceTask = "watch_orphaned_system_resource_task";

@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 azureSubscriptionName,
                 servicePrincipal,
                 true,
-                new[] {azureLocation},
+                new[] { azureLocation },
                 null,
                 null,
                 null);
@@ -107,7 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             var resourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
             resourceAccessor.Setup(x => x.GetStampBatchAccountAsync(It.IsAny<AzureLocation>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(async () => {
+                .Returns(async () =>
+                {
                     var batch = await azure.BatchAccounts.GetByResourceGroupAsync(batchAccountResourceGroup, batchAccountName);
                     var batchKey = batch.GetKeys().Primary;
                     return (batch.Name, batchKey, $"https://{batch.AccountEndpoint}");
@@ -134,10 +135,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .CreateCloudBlobClient()
                 .GetContainerReference(fileShareTemplateContainerName)
                 .GetBlobReference(srcBlobName);
-            var blobSas = blobRef.GetSharedAccessSignature(new SharedAccessBlobPolicy {
-                    Permissions = SharedAccessBlobPermissions.Read,
-                    SharedAccessExpiryTime = DateTime.UtcNow.AddHours(12) // Allow time for blob copy and debugging, etc.
-                });
+            var blobSas = blobRef.GetSharedAccessSignature(new SharedAccessBlobPolicy
+            {
+                Permissions = SharedAccessBlobPermissions.Read,
+                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(12) // Allow time for blob copy and debugging, etc.
+            });
             return blobRef.Uri + blobSas;
         }
 
@@ -176,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                         azureLocationStr,
                         resourceGroupName,
                         azureSkuName,
-                        new Dictionary<string, string> { {"ResourceTag", "GeneratedFromTest"}, },
+                        new Dictionary<string, string> { { "ResourceTag", "GeneratedFromTest" }, },
                         logger))
             );
 
@@ -199,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                 var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => batchPrepareFileShareJobProvider.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, STORAGE_SIZE_IN_GB, logger)));
 
-                var fileShareStatus  = new BatchTaskStatus[NUM_STORAGE_TO_CREATE];
+                var fileShareStatus = new BatchTaskStatus[NUM_STORAGE_TO_CREATE];
 
                 var stopWatch = new Stopwatch();
                 stopWatch.Start();

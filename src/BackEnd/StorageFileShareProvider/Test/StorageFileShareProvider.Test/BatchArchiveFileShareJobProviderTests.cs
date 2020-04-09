@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly int PREPARE_TIMEOUT_MINS = 60;
         private static readonly int STORAGE_SIZE_IN_GB = 64;
         private static readonly int NUM_STORAGE_TO_CREATE = 1;
-        
+
         /// <summary>
         /// Run all the operations exposed by the provider helper.
         /// These tests aren't mocked and so run against real Azure.
@@ -221,7 +221,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             var resourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
             resourceAccessor.Setup(x => x.GetStampBatchAccountAsync(It.IsAny<AzureLocation>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(async () => {
+                .Returns(async () =>
+                {
                     var batch = await azure.BatchAccounts.GetByResourceGroupAsync(batchAccountResourceGroup, batchAccountName);
                     var batchKey = batch.GetKeys().Primary;
                     return (batch.Name, batchKey, $"https://{batch.AccountEndpoint}");

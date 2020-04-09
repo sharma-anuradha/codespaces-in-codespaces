@@ -18,5 +18,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="logger">The logger to use for this operation.</param>
         /// <returns>The name of the image to use.</returns>
         Task<string> GetCurrentImageNameAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets the image version.
+        /// </summary>
+        /// <returns>The version of the image to use.</returns>
+        string GetDefaultImageVersion();
     }
 }

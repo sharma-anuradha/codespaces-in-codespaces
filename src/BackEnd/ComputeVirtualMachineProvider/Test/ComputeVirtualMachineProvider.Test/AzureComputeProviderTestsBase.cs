@@ -135,7 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             });
             return blobRef.Uri + blobSas;
         }
-       
+
         public void Dispose()
         {
             Azure.ResourceGroups.BeginDeleteByNameAsync(ResourceGroupName);
