@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -95,7 +96,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockProvider.Setup(x => x.JwtWriter).Returns(mockWriter.Object);
             mockProvider.Setup(x => x.Settings).Returns(TestAuthSettings);
 
-            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(TestPlan, null, TestScopes, identity, null, null, TestLogger);
+            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(
+                TestPlan, null, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -125,7 +127,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockProvider.Setup(x => x.JwtWriter).Returns(mockWriter.Object);
             mockProvider.Setup(x => x.Settings).Returns(TestAuthSettings);
 
-            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(TestPlan, null, TestScopes, identity, null, null, TestLogger);
+            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(
+                TestPlan, null, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -155,7 +158,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockProvider.Setup(x => x.JwtWriter).Returns(mockWriter.Object);
             mockProvider.Setup(x => x.Settings).Returns(TestAuthSettings);
 
-            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(TestPlan, Partner.GitHub, TestScopes, identity, null, null, TestLogger);
+            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(
+                TestPlan, Partner.GitHub, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -185,7 +189,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mockProvider.Setup(x => x.JwtWriter).Returns(mockWriter.Object);
             mockProvider.Setup(x => x.Settings).Returns(TestAuthSettings);
 
-            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(TestPlan, Partner.GitHub, TestScopes, identity, null, null, TestLogger);
+            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(
+                TestPlan, Partner.GitHub, TestScopes, identity, null, null, null, TestLogger);
+
+            Assert.Equal(TestTokenValue, token);
+        }
+
+        [Fact]
+        public void GenerateDelegatedToken_WithEnvironmentIds()
+        {
+            var environmentIds = new[]
+            {
+                Guid.Empty.ToString(),
+                Guid.Empty.ToString().Replace('0', '1'),
+            };
+
+            var identity = TestIdentityWithEmail;
+
+            var mockWriter = new Mock<IJwtWriter>();
+            mockWriter
+                .Setup(x => x.WriteToken(It.IsAny<JwtPayload>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(TestTokenValue)
+                .Callback((JwtPayload payload, IDiagnosticsLogger logger) =>
+                {
+                    AssertHasClaimWithValue(payload, CustomClaims.Provider, "github");
+                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestPlan.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.OId, identity.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.PlanResourceId, TestPlan.Plan.ResourceId);
+                    AssertHasClaimWithValue(payload, CustomClaims.Scope, string.Join(" ", TestScopes));
+                    AssertHasClaimWithValue(payload, CustomClaims.Environments, environmentIds);
+                });
+
+            var mockProvider = new Mock<ITokenProvider>();
+            mockProvider.Setup(x => x.JwtWriter).Returns(mockWriter.Object);
+            mockProvider.Setup(x => x.Settings).Returns(TestAuthSettings);
+
+            var token = mockProvider.Object.GenerateDelegatedVsSaaSToken(
+                TestPlan, Partner.GitHub, TestScopes, identity, null, null, environmentIds, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -194,6 +234,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             Assert.True(payload.TryGetValue(claimName, out var actualValue));
             Assert.Equal(expectedValue, actualValue);
+        }
+
+        private static void AssertHasClaimWithValue(JwtPayload payload, string claimName, string[] expectedValue)
+        {
+            Assert.True(payload.TryGetValue(CustomClaims.Environments, out var actualValue));
+            Assert.Equal(expectedValue, actualValue as IEnumerable<object>);
         }
     }
 }

@@ -89,6 +89,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// <param name="identity">The identity of the user the token is granted to.</param>
         /// <param name="armTokenExpiration">The expiration of the source ARM token.</param>
         /// <param name="requestedExpiration">The expiration of the token.</param>
+        /// <param name="environmentIds">Optional list of environment IDs that the token should be
+        /// scoped to.</param>
         /// <param name="logger">logger.</param>
         /// <returns>security token.</returns>
         public static string GenerateDelegatedVsSaaSToken(
@@ -99,31 +101,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
             DelegateIdentity identity,
             DateTime? armTokenExpiration,
             DateTime? requestedExpiration,
+            string[] environmentIds,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(identity, nameof(identity));
 
             string providerId;
-            IEnumerable<Claim> extraClaims;
+            IEnumerable<Claim> extraClaims = Enumerable.Empty<Claim>();
 
             if (partner == Partner.GitHub)
             {
                 providerId = "github";
 
-                if (IsEmail(identity.Username))
-                {
-                    extraClaims = null;
-                }
-                else
+                if (!IsEmail(identity.Username))
                 {
                     var githubUserEmail = $"{identity.Username}@users.noreply.github.com";
-                    extraClaims = new[] { new Claim(CustomClaims.Email, githubUserEmail), };
+                    extraClaims = extraClaims.Concat(
+                        new[] { new Claim(CustomClaims.Email, githubUserEmail), });
                 }
             }
             else
             {
                 providerId = "vso";
-                extraClaims = null;
+            }
+
+            if (environmentIds != null)
+            {
+                extraClaims = extraClaims.Concat(
+                    environmentIds.Select((e) => new Claim(CustomClaims.Environments, e)));
             }
 
             return GenerateVsSaaSToken(

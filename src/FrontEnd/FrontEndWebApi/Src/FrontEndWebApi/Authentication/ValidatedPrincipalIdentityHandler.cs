@@ -106,11 +106,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     scopes = null;
                 }
 
+                var environments = identity.Claims
+                    .Where((c) => c.Type == CustomClaims.Environments)
+                    .Select((c) => c.Value)
+                    .ToArray();
+                if (environments.Length == 0)
+                {
+                    environments = null;
+                }
+
                 httpContext.SetScopes(scopes);
+                httpContext.SetEnvironments(environments);
             }
             else
             {
                 httpContext.SetScopes(null);
+                httpContext.SetEnvironments(null);
             }
 
             // Handle the Live Share profile. We always do this for now.

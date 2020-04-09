@@ -1,10 +1,13 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Xunit;
 using Scopes = Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts.PlanAccessTokenScopes;
@@ -22,6 +25,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             this.loggerFactory = new DefaultLoggerFactory();
             this.logger = loggerFactory.New();
+        }
+
+        public static TheoryData<AccessTest> ListData = new TheoryData<AccessTest>
+        {
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { Guid.Empty.ToString(), MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: true, isOwner: false),
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { Guid.Empty.ToString() }),
+            AccessTest.Forbid(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: false),
+        };
+
+        [Theory]
+        [MemberData(nameof(ListData))]
+        public async Task ListEnvironments(AccessTest test)
+        {
+            string userId = "test-user";
+            string planId = "test-plan";
+
+            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
+            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
+
+            var mockHttpContext = new DefaultHttpContext();
+            mockHttpContext.SetScopes(test.Scopes);
+            mockHttpContext.SetEnvironments(test.Environments);
+            if (test.IsMatchingPlan == true)
+            {
+                mockHttpContext.SetPlan(planId);
+            }
+            else if (test.IsMatchingPlan == false)
+            {
+                mockHttpContext.SetPlan("not-" + planId);
+            }
+
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider();
+            if (test.IsOwner)
+            {
+                mockEnv.OwnerId = mockCurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+            }
+
+            var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
+                environmentManager: mockEnvManager,
+                currentUserProvider: mockCurrentUserProvider,
+                httpContext: mockHttpContext);
+
+            var result = await environmentController.ListAsync(name: null, planId, logger);
+            Assert.IsType(test.ExpectedResultType, result);
+
+            if (test.ExpectedResultType == typeof(OkObjectResult))
+            {
+                var resultsArray = (CloudEnvironmentResult[])((OkObjectResult)result).Value;
+                if (test.IsMatchingPlan != false &&
+                    (test.Environments == null || test.Environments.Contains(MockUtil.MockEnvironmentId)))
+                {
+                    Assert.Single(resultsArray, (e) => e.Id == MockUtil.MockEnvironmentId);
+                }
+                else
+                {
+                    Assert.Empty(resultsArray);
+                }
+            }
         }
 
         public static TheoryData<AccessTest> GetData = new TheoryData<AccessTest>
@@ -53,6 +117,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 scopes: new[] { Scopes.ReadEnvironments, Scopes.DeleteEnvironments },
                 isMatchingPlan: true,
                 isOwner: false),
+
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { Guid.Empty.ToString(), MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: true, isOwner: false),
+            AccessTest.Forbid(scope: Scopes.ReadEnvironments, new[] { Guid.Empty.ToString() }),
+            AccessTest.Forbid(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: false),
         };
 
         [Theory]
@@ -67,6 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockHttpContext = new DefaultHttpContext();
             mockHttpContext.SetScopes(test.Scopes);
+            mockHttpContext.SetEnvironments(test.Environments);
             if (test.IsMatchingPlan == true)
             {
                 mockHttpContext.SetPlan(planId);
@@ -127,6 +199,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 scopes: new[] { Scopes.ReadEnvironments, Scopes.WriteEnvironments, Scopes.DeleteEnvironments },
                 isMatchingPlan: true,
                 isOwner: true),
+
+            AccessTest.Forbid(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: true, isOwner: true),
         };
 
         public static TheoryData<AccessTest> CreateInSharedPlanData = new TheoryData<AccessTest>
@@ -149,6 +223,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             AccessTest.Created(
                 scopes: new[] { Scopes.ReadEnvironments, Scopes.WriteEnvironments, Scopes.DeleteEnvironments },
                 isMatchingPlan: true),
+
+            AccessTest.Forbid(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: true, isOwner: false),
         };
 
         [Theory]
@@ -188,6 +264,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan));
 
             mockHttpContext.SetScopes(test.Scopes);
+            mockHttpContext.SetEnvironments(test.Environments);
             if (test.IsMatchingPlan == true)
             {
                 mockHttpContext.SetPlan(plan.Plan.ResourceId);
@@ -206,6 +283,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.IsType(test.ExpectedResultType, result);
         }
 
+        public static TheoryData<AccessTest> UpdateSettingsData = new TheoryData<AccessTest>
+        {
+            AccessTest.Ok(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }),
+            AccessTest.Ok(scope: Scopes.WriteEnvironments, new[] { Guid.Empty.ToString(), MockUtil.MockEnvironmentId }),
+            AccessTest.Forbid(scope: Scopes.WriteEnvironments, new[] { Guid.Empty.ToString() }),
+            AccessTest.Forbid(scope: Scopes.ReadEnvironments, new[] { MockUtil.MockEnvironmentId }),
+            AccessTest.Forbid(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: false),
+            AccessTest.Forbid(scope: Scopes.WriteEnvironments, new[] { MockUtil.MockEnvironmentId }, isMatchingPlan: true, isOwner: false),
+        };
+
+        [Theory]
+        [MemberData(nameof(UpdateSettingsData))]
+        public async Task UpdateEnvironmentSettings(AccessTest test)
+        {
+            string userId = "test-user";
+            string planId = "test-plan";
+
+            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
+            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
+
+            var mockHttpContext = new DefaultHttpContext();
+            mockHttpContext.SetScopes(test.Scopes);
+            mockHttpContext.SetEnvironments(test.Environments);
+            if (test.IsMatchingPlan == true)
+            {
+                mockHttpContext.SetPlan(planId);
+            }
+            else if (test.IsMatchingPlan == false)
+            {
+                mockHttpContext.SetPlan("not-" + planId);
+            }
+
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider();
+            if (test.IsOwner)
+            {
+                mockEnv.OwnerId = mockCurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+            }
+
+            var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
+                environmentManager: mockEnvManager,
+                currentUserProvider: mockCurrentUserProvider,
+                httpContext: mockHttpContext);
+
+            var updateInput = new UpdateCloudEnvironmentBody();
+            var result = await environmentController.UpdateSettingsAsync(
+                mockEnv.Id, updateInput, logger);
+            Assert.IsType(test.ExpectedResultType, result);
+        }
+
         public class AccessTest
         {
             public static AccessTest Ok(string scope, bool? isMatchingPlan, bool isOwner = false)
@@ -214,6 +340,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 => new AccessTest
                 {
                     Scopes = scopes,
+                    IsMatchingPlan = isMatchingPlan,
+                    IsOwner = isOwner,
+                    ExpectedResultType = typeof(OkObjectResult),
+                };
+            public static AccessTest Ok(
+                string scope, string[] environments, bool? isMatchingPlan = true, bool isOwner = true)
+                => new AccessTest
+                {
+                    Scopes = new[] { scope },
+                    Environments = environments,
                     IsMatchingPlan = isMatchingPlan,
                     IsOwner = isOwner,
                     ExpectedResultType = typeof(OkObjectResult),
@@ -229,7 +365,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     IsOwner = isOwner,
                     ExpectedResultType = typeof(CreatedResult),
                 };
-
+            public static AccessTest Created(
+                string scope, string[] environments, bool? isMatchingPlan = true, bool isOwner = true)
+                => new AccessTest
+                {
+                    Scopes = new[] { scope },
+                    Environments = environments,
+                    IsMatchingPlan = isMatchingPlan,
+                    IsOwner = isOwner,
+                    ExpectedResultType = typeof(CreatedResult),
+                };
 
             public static AccessTest Forbid(string scope, bool? isMatchingPlan, bool isOwner = false)
                 => Forbid(scope == null ? null : new[] { scope }, isMatchingPlan, isOwner);
@@ -241,8 +386,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     IsOwner = isOwner,
                     ExpectedResultType = typeof(ForbidResult),
                 };
+            public static AccessTest Forbid(
+                string scope, string[] environments, bool? isMatchingPlan = true, bool isOwner = true)
+                => new AccessTest
+                {
+                    Scopes = new[] { scope },
+                    Environments = environments,
+                    IsMatchingPlan = isMatchingPlan,
+                    IsOwner = isOwner,
+                    ExpectedResultType = typeof(ForbidResult),
+                };
 
             public string[] Scopes { get; private set; }
+            public string[] Environments { get; private set; }
             public bool? IsMatchingPlan { get; private set; }
             public bool IsOwner { get; private set; }
             public Type ExpectedResultType { get; private set; }

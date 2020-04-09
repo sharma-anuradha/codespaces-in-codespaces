@@ -844,6 +844,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         requestBody.Identity,
                         sourceArmTokenExpiration,
                         requestBody.Expiration,
+                        requestBody.EnvironmentIds,
                         logger);
 
                     var response = new PlanAccessToken

@@ -26,8 +26,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// null if the current context is not restricted to any plan.</returns>
         public static bool? IsPlanAuthorized(this HttpContext context, string plan)
         {
-            string authorizedPlan = context.Items[HttpContextKeys.Plan] as string;
+            string authorizedPlan = context.GetPlan();
             return authorizedPlan == null ? (bool?)null : authorizedPlan == plan;
+        }
+
+        /// <summary>
+        /// Checks if an environment is specifically authorized for the current HTTP context.
+        /// </summary>
+        /// <param name="context">HTTP context.</param>
+        /// <param name="environmentId">ID of the environment the user is attempting to access,
+        /// or null if the user is attempting a non-environment-scoped action.</param>
+        /// <returns>
+        /// True if the environment is explicitly authorized,
+        /// false if the current context is restricted to different environment(s), or
+        /// null if the current context is not restricted to any environment(s).</returns>
+        public static bool? IsEnvironmentAuthorized(this HttpContext context, string environmentId)
+        {
+            string[] authorizedEnvs = context.GetEnvironments();
+            return authorizedEnvs == null ? (bool?)null :
+                environmentId != null && authorizedEnvs.Contains(environmentId);
         }
 
         /// <summary>
@@ -41,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// null if the current context is not restricted to a scope.</returns>
         public static bool? IsScopeAuthorized(this HttpContext context, string scope)
         {
-            var authorizedScopes = context.Items[HttpContextKeys.Scopes] as IEnumerable<string>;
+            var authorizedScopes = context.GetScopes();
             return authorizedScopes == null ? (bool?)null :
                 authorizedScopes.Contains(scope, StringComparer.OrdinalIgnoreCase);
         }
@@ -81,6 +98,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             => context.Items[HttpContextKeys.Scopes] = scopes;
 
         /// <summary>
+        /// Gets the current authorized environments.
+        /// </summary>
+        /// <param name="context">HTTP context.</param>
+        /// <returns>Array of authorized environment IDs, or null if the current user does not have
+        /// any specified environments.</returns>
+        public static string[] GetEnvironments(this HttpContext context)
+            => context.Items[HttpContextKeys.Environments] as string[];
+
+        /// <summary>
+        /// Sets the current authorized environments.
+        /// </summary>
+        /// <param name="context">HTTP context.</param>
+        /// <param name="environments">Array of authorized environment IDs, or null.</param>
+        public static void SetEnvironments(this HttpContext context, string[] environments)
+            => context.Items[HttpContextKeys.Environments] = environments;
+
+        /// <summary>
         /// Keys for items stored in <see cref="HttpContext.Items" />.
         /// </summary>
         private static class HttpContextKeys
@@ -90,6 +124,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             /// <summary>Scopes claim (string[]?).</summary>
             public const string Scopes = "VSO-Scopes";
+
+            /// <summary>Environments claim (string[]?).</summary>
+            public const string Environments = "VSO-Environments";
         }
     }
 }

@@ -27,6 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public static class MockUtil
     {
+        public static readonly string MockEnvironmentId = Guid.Empty.ToString().Replace('0', '1');
         public const string MockServiceUri = "https://testhost/test-service-uri/";
         private const string MockCallbackUriFormat = "https://testhost/test-callback-uri/";
         private const string MockUserProviderId = "mock-provider-id";
@@ -37,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             return new CloudEnvironment
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = MockEnvironmentId,
                 Location = AzureLocation.WestUs2,
                 OwnerId = ownerId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
                 PlanId = planId,
@@ -297,6 +298,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var moq = new Mock<IEnvironmentManager>();
 
             moq
+                .Setup(obj => obj.ListAsync(
+                    It.IsAny<IDiagnosticsLogger>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdSet>()))
+                .ReturnsAsync((
+                    IDiagnosticsLogger logger,
+                    string planId,
+                    string name,
+                    UserIdSet userIdSet) =>
+                {
+                    var mockEnv = MockCloudEnvironment();
+                    return new[] { mockEnv };
+                });
+
+            moq
                 .Setup(obj => obj.CreateAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentOptions>(),
@@ -346,6 +363,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         HttpStatusCode = StatusCodes.Status200OK,
                     };
                 });
+
+            moq
+                .Setup(obj => obj.UpdateSettingsAsync(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync((
+                    CloudEnvironment env,
+                    CloudEnvironmentUpdate updateParams,
+                    IDiagnosticsLogger logger) =>
+                {
+                    Assert.NotNull(updateParams);
+
+                    return CloudEnvironmentSettingsUpdateResult.Success(env);
+                });
+
 
             if (environment != null)
             {

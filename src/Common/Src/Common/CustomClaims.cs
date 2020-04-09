@@ -63,5 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Live share session ID.
         /// </summary>
         public const string Session = "session";
+
+        /// <summary>
+        /// Array of VSO environment IDs.
+        /// </summary>
+        public const string Environments = "environments";
     }
 }

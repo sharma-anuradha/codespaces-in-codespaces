@@ -47,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private const string LoggingBaseName = "environments_controller";
         private const string UnauthorizedPlanId = "unauthorized_plan_id";
+        private const string UnauthorizedEnvironmentId = "unauthorized_environment_id";
         private const string UnauthorizedPlanScope = "unauthorized_plan_scope";
         private const string UnauthorizedPlanUser = "unauthorized_plan_user";
         private const string UnauthorizedEnvironmentUser = "unauthorized_environment_user";
@@ -193,12 +194,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return new ForbidResult();
             }
 
-            var modelsRaw = await EnvironmentManager.ListAsync(
+            var environments = await EnvironmentManager.ListAsync(
                 logger.NewChildLogger(), planId, name, userIdSet);
 
-            logger.FluentAddValue("Count", modelsRaw.Count().ToString());
+            var environmentIds = HttpContext.GetEnvironments();
+            if (environmentIds != null)
+            {
+                // The user has a token that limits access to specific environment(s).
+                environments = environments.Where((e) => environmentIds.Contains(e.Id));
+            }
 
-            return Ok(Mapper.Map<CloudEnvironmentResult[]>(modelsRaw));
+            var environmentsList = environments.ToList();
+            logger.FluentAddValue("Count", environmentsList.Count.ToString());
+
+            return Ok(Mapper.Map<CloudEnvironmentResult[]>(environmentsList));
         }
 
         /// <summary>
@@ -870,6 +879,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return false;
             }
 
+            if (HttpContext.IsEnvironmentAuthorized(environment.Id) == false)
+            {
+                // Users with explicit access to different env(s) do not have access to this one.
+                logger.LogWarning(UnauthorizedEnvironmentId);
+                return false;
+            }
+
             var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
             if (currentUserIdSet.EqualsAny(environment.OwnerId) &&
                 HttpContext.IsScopeAuthorized(PlanAccessTokenScopes.WriteEnvironments) != false)
@@ -916,6 +932,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             {
                 // Users with explicit access to a different plan do not have access to this plan.
                 logger.LogWarning(UnauthorizedPlanId);
+                return false;
+            }
+
+            if (HttpContext.IsEnvironmentAuthorized(null) == false)
+            {
+                // Users with explicit access to env(s) do not have access to the whole plan.
+                logger.LogWarning(UnauthorizedEnvironmentId);
                 return false;
             }
 

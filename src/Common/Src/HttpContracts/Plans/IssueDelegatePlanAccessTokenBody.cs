@@ -28,5 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans
         /// </summary>
         [JsonConverter(typeof(UnixDateTimeConverter))]
         public DateTime? Expiration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of environment IDs that the delegate token will be scoped to,
+        /// or null if the token is plan-scoped and not environment-scoped.
+        /// </summary>
+        public string[] EnvironmentIds { get; set; }
     }
 }
