@@ -16,8 +16,9 @@ import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
 import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
-import './login.css';
 import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
+
+import './login.css';
 
 const trace = createTrace('Login');
 
