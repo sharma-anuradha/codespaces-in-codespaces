@@ -127,6 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("get")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> GetAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
@@ -160,6 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpOperationalScope("list")]
+        [Audit(AuditEventCategory.ResourceManagement, "planId", "Plan")]
         public async Task<IActionResult> ListAsync(
             [FromQuery]string name,
             [FromQuery]string planId,
@@ -222,6 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("shutdown")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> SuspendAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
@@ -256,23 +259,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             logger.AddCloudEnvironment(result.CloudEnvironment);
 
-            try
-            {
-                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
-                var targetResource = new TargetResource("environment", result.CloudEnvironment.Id);
-                logger.Audit(
-                    AuditScope.Application,
-                    "EnvironmentShutdown",
-                    AuditEventCategory.ObjectManagement,
-                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
-                    targetResource,
-                    OperationResult.Success);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LoggingBaseName}_audit_error", ex);
-            }
-
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
         }
 
@@ -288,6 +274,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("start")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> ResumeAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
@@ -324,23 +311,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             logger.AddCloudEnvironment(result.CloudEnvironment);
 
-            try
-            {
-                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
-                var targetResource = new TargetResource("environment", result.CloudEnvironment.Id);
-                logger.Audit(
-                    AuditScope.Application,
-                    "EnvironmentStart",
-                    AuditEventCategory.ObjectManagement,
-                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
-                    targetResource,
-                    OperationResult.Success);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LoggingBaseName}_audit_error", ex);
-            }
-
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
         }
 
@@ -357,6 +327,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         [HttpOperationalScope("create")]
+        [Audit(AuditEventCategory.ResourceManagement)]
         public async Task<IActionResult> CreateAsync(
             [FromBody]CreateCloudEnvironmentBody createEnvironmentInput,
             [FromServices]IDiagnosticsLogger logger)
@@ -500,23 +471,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             location.Path = $"{location.Path}/{createCloudEnvironmentResult.CloudEnvironment.Id}";
 
             logger.AddCloudEnvironment(createCloudEnvironmentResult.CloudEnvironment);
-
-            try
-            {
-                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
-                var targetResource = new TargetResource("environment", createCloudEnvironmentResult.CloudEnvironment.Id);
-                logger.Audit(
-                    AuditScope.Application,
-                    "EnvironmentCreate",
-                    AuditEventCategory.ObjectManagement,
-                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
-                    targetResource,
-                    OperationResult.Success);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LoggingBaseName}_audit_error", ex);
-            }
+            AuditAttribute.SetTargetResourceId(HttpContext, createCloudEnvironmentResult.CloudEnvironment.Id);
 
             return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(createCloudEnvironmentResult.CloudEnvironment));
         }
@@ -534,6 +489,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("delete")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> DeleteAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
@@ -565,23 +521,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            try
-            {
-                var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
-                var targetResource = new TargetResource("environment", environment.Id);
-                logger.Audit(
-                    AuditScope.Application,
-                    "EnvironmentDelete",
-                    AuditEventCategory.ObjectManagement,
-                    new CallerIdentity(CallerIdentityType.ObjectID, userId),
-                    targetResource,
-                    OperationResult.Success);
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LoggingBaseName}_audit_error", ex);
-            }
-
             return NoContent();
         }
 
@@ -599,6 +538,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("update")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> UpdateAsync(
             [FromRoute]string environmentId,
             [FromBody]EnvironmentRegistrationCallbackBody callbackBody,
@@ -661,6 +601,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("update_settings")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> UpdateSettingsAsync(
             [FromRoute]string environmentId,
             [FromBody]UpdateCloudEnvironmentBody updateEnvironmentInput,
@@ -693,23 +634,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             if (result.IsSuccess)
             {
-                try
-                {
-                    var userId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
-                    var targetResource = new TargetResource("environment", environment.Id);
-                    logger.Audit(
-                        AuditScope.Application,
-                        "EnvironmentUpdate",
-                        AuditEventCategory.ObjectManagement,
-                        new CallerIdentity(CallerIdentityType.ObjectID, userId),
-                        targetResource,
-                        OperationResult.Success);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogException($"{LoggingBaseName}_audit_error", ex);
-                }
-
                 return Ok(Mapper.Map<CloudEnvironmentResult>(result.CloudEnvironment));
             }
             else
@@ -730,6 +654,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("available_updates")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> GetAvailableSettingsUpdatesAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)
@@ -809,6 +734,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("heartbeat_tokens")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> GenerateHeartBeatTokenAsync(
             [FromRoute]string environmentId,
             [FromServices]IDiagnosticsLogger logger)

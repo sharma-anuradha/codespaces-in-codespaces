@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics.Audit;
 
 /// <summary>
 /// Construct consistent logging messages.
@@ -23,6 +24,39 @@ namespace Microsoft.VsSaaS.Diagnostics.Extensions
     /// </summary>
     public static class LoggingExtensions
     {
+        private const string UnknownString = "unknown";
+
+        /// <summary>
+        /// Default audit implementation.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="operationName">Target operation name.</param>
+        /// <param name="auditEventCategory">Target audit event category.</param>
+        /// <param name="userId">Target user id.</param>
+        /// <param name="resource">Target resource.</param>
+        /// <param name="resourceId">Target resource id.</param>
+        /// <param name="operationResult">Target operation result.</param>
+        /// <returns>Logger to be used next.</returns>
+        public static IDiagnosticsLogger Audit(
+            this IDiagnosticsLogger logger,
+            string operationName,
+            AuditEventCategory auditEventCategory,
+            string userId,
+            string resource,
+            string resourceId,
+            OperationResult operationResult)
+        {
+            logger.Audit(
+                    AuditScope.Application,
+                    operationName,
+                    auditEventCategory,
+                    new CallerIdentity(CallerIdentityType.ObjectID, userId ?? UnknownString),
+                    new TargetResource(resource, resourceId ?? UnknownString),
+                    operationResult);
+
+            return logger;
+        }
+
         /// <summary>
         /// Generates a new child logger based off the parent.
         /// </summary>
