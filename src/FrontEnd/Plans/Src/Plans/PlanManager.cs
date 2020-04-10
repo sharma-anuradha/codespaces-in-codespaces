@@ -11,7 +11,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -212,29 +211,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteAsync(VsoPlanInfo plan, IDiagnosticsLogger logger)
+        public async Task<VsoPlan> DeleteAsync(VsoPlan plan, IDiagnosticsLogger logger)
         {
-            // Find model in DB
-            // Location is not provided on a DELETE operation from RPSaaS,
-            // thus we can only compare Name, Subscription, and ResourceGroup which should be sufficient
-            var savedModel = (await planRepository.GetWhereAsync(
-                (model) => model.Plan.Name == plan.Name &&
-                           model.Plan.Subscription == plan.Subscription &&
-                           model.Plan.ResourceGroup == plan.ResourceGroup,
-                logger,
-                null)).Where(x => x.IsDeleted != true);
-            var modelList = savedModel.ToList().SingleOrDefault();
-
-            if (modelList == null)
-            {
-                // Nothing to delete, Plan does not exist
-                return false;
-            }
-
-            modelList.IsDeleted = true;
-
-            var updatedModel = await planRepository.UpdateAsync(modelList, logger);
-            return updatedModel.IsDeleted;
+            plan.IsDeleted = true;
+            return await planRepository.UpdateAsync(plan, logger);
         }
 
         /// <inheritdoc/>

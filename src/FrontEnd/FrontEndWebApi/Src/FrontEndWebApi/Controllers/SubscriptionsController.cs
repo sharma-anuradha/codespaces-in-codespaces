@@ -282,22 +282,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
-                    var plan = new VsoPlanInfo
+                    var planInfo = new VsoPlanInfo
                     {
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
                     };
 
+                    var plan = await planManager.GetAsync(planInfo, logger, includeDeleted: true);
+
+                    if (plan == null)
+                    {
+                        return CreateErrorResponse("ResourceDeleteFailed", "Plan not found");
+                    }
+
                     var environments = await environmentManager.ListAsync(
-                        logger, planId: plan.ResourceId);
+                        logger, planId: planInfo.ResourceId);
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
                     {
                         foreach (var environment in nonDeletedEnvironments)
                         {
                             var childLogger = logger.NewChildLogger()
-                                .AddVsoPlan(plan);
+                                .AddVsoPlan(planInfo);
 
                             _ = Task.Run(async () =>
                                 {
@@ -317,19 +324,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                 });
                         }
 
-                        logger.AddVsoPlan(plan)
+                        logger.AddVsoPlan(planInfo)
                             .FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
                             .LogInfo("plan_delete_environment_delete_success");
                     }
 
-                    var response = await planManager.DeleteAsync(plan, logger);
-                    if (!response)
+                    if (!plan.IsDeleted)
                     {
-                        logger.AddVsoPlan(plan).LogError("plan_delete_doesnotexist_error");
-                        return Ok();
+                        plan = await planManager.DeleteAsync(plan, logger);
+                        logger.AddVsoPlan(planInfo).LogInfo($"plan_delete_success");
                     }
-
-                    logger.LogInfo($"plan_delete_success");
+                    else
+                    {
+                        logger.AddVsoPlan(planInfo).LogWarning("plan_delete_alreadydeleted");
+                    }
 
                     // Required response format in case validation pass with empty body.
                     return Ok();

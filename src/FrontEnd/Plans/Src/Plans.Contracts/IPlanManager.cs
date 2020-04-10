@@ -61,12 +61,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         Task<VsoPlan> GetAsync(VsoPlanInfo plan, IDiagnosticsLogger logger, bool includeDeleted = false);
 
         /// <summary>
-        /// Deletes the plan from the database.
+        /// Performs a soft delete of the plan in the database.
         /// </summary>
-        /// <param name="plan">The plan identity.</param>
+        /// <remarks>
+        /// This only performs a soft delete by setting <see cref="VsoPlan.IsDeleted"/> to true.  It does not remove the record from the database.
+        /// </remarks>
+        /// <param name="plan">The plan.</param>
         /// <param name="logger">The IDiagnosticsLogger.</param>
-        /// <returns>A boolean value indicating if the plan was deleted.</returns>
-        Task<bool> DeleteAsync(VsoPlanInfo plan, IDiagnosticsLogger logger);
+        /// <returns>The updated plan record with <see cref="VsoPlan.IsDeleted"/> set to true.</returns>
+        Task<VsoPlan> DeleteAsync(VsoPlan plan, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Lists the available plans for the specified parameters.

@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Equal(plan.Plan.Name, savedModel.Plan.Name);
 
             // Delete the old plan
-            await planManager.DeleteAsync(plan.Plan, logger);
+            await planManager.DeleteAsync(plan, logger);
 
             plan = GeneratePlan("CreatePlanTest");
             plan.SkuPlan.Name = "NewSku";
@@ -122,13 +122,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task CreateAccountChecksPerSubscriptionQuota()
         {
+            VsoPlan toDelete = null;
+            PlanManagerServiceResult result;
             for (var i = 1; i <= 20; i++)
             {
-                await planManager.CreateAsync(GeneratePlan($"CreatePlanTest-{i}"), logger);
+                result = await planManager.CreateAsync(GeneratePlan($"CreatePlanTest-{i}"), logger);
+                if (i == 1)
+                {
+                    toDelete = result.VsoPlan;
+                }
             }
 
             // 21st SkuPlan should fail.
-            var result = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), logger);
+            result = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), logger);
             Assert.Null(result.VsoPlan);
             Assert.Equal(ErrorCodes.ExceededQuota, result.ErrorCode);
 
@@ -137,7 +143,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Equal(20, listAccounts.Count());
 
             // Delete 1 SkuPlan.
-            await planManager.DeleteAsync(GeneratePlan("CreatePlanTest-1").Plan, logger);
+            await planManager.DeleteAsync(toDelete, logger);
 
             // User should be able to create a new SkuPlan.
             var successResult = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), logger);
@@ -193,8 +199,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         public async Task DeletePlan()
         {
             var savedModel = (await planManager.CreateAsync(GeneratePlan("DeletePlanTest"), logger)).VsoPlan;
-            var result = await planManager.DeleteAsync(savedModel.Plan, logger);
-            Assert.True(result);
+            var result = await planManager.DeleteAsync(savedModel, logger);
+            Assert.True(result.IsDeleted);
 
             var deleted = await planManager.GetAsync(savedModel.Plan, logger);
             Assert.Null(deleted);
@@ -204,8 +210,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         public async Task DeletePlan_ButStillFindIt()
         {
             var savedModel = (await planManager.CreateAsync(GeneratePlan("DeletePlanTest"), logger)).VsoPlan;
-            var result = await planManager.DeleteAsync(savedModel.Plan, logger);
-            Assert.True(result);
+            var result = await planManager.DeleteAsync(savedModel, logger);
+            Assert.True(result.IsDeleted);
 
             // If we consider deleted plans, we can still find them.
             var deleted = await planManager.GetAsync(savedModel.Plan, logger, includeDeleted: true);
@@ -368,7 +374,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Equal(planProperties, updateResult.VsoPlan.Properties);
 
             // Updating a deleted plan fails.
-            Assert.True(await planManager.DeleteAsync(vsoPlan.Plan, logger));
+            vsoPlan = await planManager.DeleteAsync(vsoPlan, logger);
+            Assert.True(vsoPlan.IsDeleted);
             var deletedUpdateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
             Assert.Null(deletedUpdateResult.VsoPlan);
             Assert.Equal(ErrorCodes.PlanDoesNotExist, deletedUpdateResult.ErrorCode);
