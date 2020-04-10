@@ -55,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             { CloudEnvironmentState.Deleted, "deleted" },
             { CloudEnvironmentState.Failed, "failed" },
             { CloudEnvironmentState.None, "none" },
+            { CloudEnvironmentState.Queued, "queued" },
             { CloudEnvironmentState.Provisioning, "provisioining" },
             { CloudEnvironmentState.Shutdown, "shutdown" },
             { CloudEnvironmentState.ShuttingDown, "shuttingDown" },
@@ -68,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             { CloudEnvironmentState.Available, "availableStateEnded" },
             { CloudEnvironmentState.Shutdown, "shutdownStateEnded" },
             { CloudEnvironmentState.Archived, "archivedStateEnded" },
+            { CloudEnvironmentState.Queued, "queuedStateEnded" },
         };
 
         /// <summary>
