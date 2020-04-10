@@ -148,9 +148,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageContinuationResult.StorageAccountKey,
                     storageType,
                     SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Write,
+                    "temp",
                     logger.NewChildLogger());
 
                 input.EnvironmentVariables.Add("storageAccountSasToken", storageFile.Token);
+                input.EnvironmentVariables.Add("storageFileNameTemp", storageFile.FileName);
             }
 
             return storageContinuationResult;

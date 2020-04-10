@@ -94,7 +94,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 null,
                 blobSourceComputeOS.Value == ComputeOS.Windows ? StorageType.Windows : StorageType.Linux,
                 SharedAccessFilePermissions.Read,
-                logger.NewChildLogger());
+                filePrefix: null,
+                logger: logger.NewChildLogger());
 
             // Fetch blob storage details
             var archiveBlob = await StorageFileShareProviderHelper.FetchArchiveBlobSasTokenAsync(

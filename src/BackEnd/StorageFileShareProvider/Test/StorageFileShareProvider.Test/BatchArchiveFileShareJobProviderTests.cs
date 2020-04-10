@@ -273,7 +273,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             AzureResourceInfo info, IStorageFileShareProviderHelper storageFileShareProviderHelper, IDiagnosticsLogger logger)
         {
             return storageFileShareProviderHelper.FetchStorageFileShareSasTokenAsync(
-                info, null, StorageType.Linux, SharedAccessFilePermissions.Read, logger);
+                info, null, StorageType.Linux, SharedAccessFilePermissions.Read, null, logger);
         }
     }
 }

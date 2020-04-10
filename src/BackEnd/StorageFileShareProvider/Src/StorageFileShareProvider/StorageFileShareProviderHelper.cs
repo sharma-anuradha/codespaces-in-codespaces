@@ -347,6 +347,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             string storageAccountKey,
             StorageType storageType,
             SharedAccessFilePermissions filePermissions,
+            string filePrefix,
             IDiagnosticsLogger logger)
         {
             // Get file client for storage account
@@ -357,7 +358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             // Get file reference
             var fileShareName = GetStorageMountableShareName();
             var fileShare = fileClient.GetShareReference(fileShareName);
-            var fileName = GetStorageMountableFileName(storageType);
+            var fileName = $"{filePrefix}{GetStorageMountableFileName(storageType)}";
             var fileReference = fileShare.GetRootDirectoryReference().GetFileReference(fileName);
 
             // Get file sas token

@@ -180,6 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
         /// <param name="storageAccountKey">Target storage account key if known.</param>
         /// <param name="storageType">Target storage type.</param>
         /// <param name="filePermissions">Target blob permissions.</param>
+        /// <param name="filePrefix">Target file prefix.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         Task<(string Token, string FileShareName, string FileName)> FetchStorageFileShareSasTokenAsync(
@@ -187,6 +188,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.A
             string storageAccountKey,
             StorageType storageType,
             SharedAccessFilePermissions filePermissions,
+            string filePrefix,
             IDiagnosticsLogger logger);
     }
 }
