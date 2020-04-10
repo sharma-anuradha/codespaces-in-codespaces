@@ -33,5 +33,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
         /// The metrics namespace property name.
         /// </summary>
         public static readonly string Namespace = "MetricsNamespace";
+
+        /// <summary>
+        /// The metrics average property name.
+        /// </summary>
+        public static readonly string AggregateAverage = "MetricsAverage";
+
+        /// <summary>
+        /// The metrics count property name.
+        /// </summary>
+        public static readonly string AggregateCount = "MetricsCount";
+
+        /// <summary>
+        /// The metrics sum property name.
+        /// </summary>
+        public static readonly string AggregateSum = "MetricsSum";
+
+        /// <summary>
+        /// The metrics property name for an unknown aggregate type.
+        /// </summary>
+        public static readonly string AggregateOther = "MetricsValue";
     }
 }

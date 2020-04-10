@@ -99,8 +99,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
             }
 
             // Add the aggregate value
-            var aggregateKey = $"metrics{aggregateType}";
-            metricsLogger.AddValue(aggregateKey, aggregateValue.ToString());
+            switch (aggregateType)
+            {
+                case AggregateType.Average:
+                    metricsLogger.FluentAddValue(MetricsConstants.AggregateAverage, aggregateValue);
+                    break;
+
+                case AggregateType.Count:
+                    metricsLogger.FluentAddValue(MetricsConstants.AggregateCount, aggregateValue);
+                    break;
+
+                case AggregateType.Sum:
+                    metricsLogger.FluentAddValue(MetricsConstants.AggregateSum, aggregateValue);
+                    break;
+
+                default:
+                    metricsLogger.FluentAddValue(MetricsConstants.AggregateOther, aggregateValue);
+                    break;
+            }
 
             // Emit to the logger.
             metricsLogger.LogInfo(MetricsConstants.AggregateMessage);

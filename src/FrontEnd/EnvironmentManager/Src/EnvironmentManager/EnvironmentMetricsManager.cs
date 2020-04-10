@@ -18,6 +18,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public class EnvironmentMetricsManager : IEnvironmentMetricsManager
     {
+        private const string LoggingMessageName = "environment_metrics_manager";
+
         private const string EnvironmentMetricsNamespace = "Microsoft.VSOnline/Environments";
         private const string EnvironmentAgeInDaysProperty = "EnvironmentAgeInDays";
         private const string EnvironmentAgeInHoursProperty = "EnvironmentAgeInHours";
@@ -105,6 +107,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Get the environment SKU. Skip logging if sku is unknown.
             if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(environment.SkuName, out var sku))
             {
+                logger
+                    .FluentAddValue(SkuNameProperty, environment.SkuName)
+                    .LogError($"{LoggingMessageName}_unknown_sku");
                 return;
             }
 
@@ -150,20 +155,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 { ClientVsoClientTypeProperty, vsoClientType.ToString() },
             };
 
-            // Post the state-change event.
-            if (!StateEventNames.TryGetValue(newState, out var stateEventName))
+            // Post the state-change event, if it is mapped
+            if (StateEventNames.TryGetValue(newState, out var stateEventName))
             {
                 MetricsLogger.PostEvent(EnvironmentMetricsNamespace, stateEventName, properties, logger);
             }
-            else
-            {
-                logger
-                    .FluentAddValue("state", newState.ToString())
-                    .LogWarning("environment_metrics_logger_unknown_state_warning");
-                return;
-            }
 
-            // Post the state-ended event.
+            // Post the state-ended event, if it is mapped.
             if (StateEndedEventNames.TryGetValue(lastState, out var stateEndedEventName))
             {
                 MetricsLogger.PostEvent(EnvironmentMetricsNamespace, stateEndedEventName, properties, logger);
@@ -177,7 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 { SkuNameProperty, cloudEnvironmentDimensions.SkuName },
                 { EnvironmentLocationProperty, cloudEnvironmentDimensions.Location.ToString() },
-                { EnvironmentLastStateProperty, cloudEnvironmentDimensions.State.ToString() },
+                { EnvironmentStateProperty, cloudEnvironmentDimensions.State.ToString() },
                 { EnvironmentPartnerProperty, cloudEnvironmentDimensions.Partner.ToString() },
                 { ClientCountryCodeProperty, cloudEnvironmentDimensions.IsoCountryCode },
                 { ClientAzureGeographyProperty, cloudEnvironmentDimensions.AzureGeography.ToString() },

@@ -2,11 +2,15 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
 {
     /// <summary>
     /// Indicates a public Azure Geography.
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum VsoClientType
     {
         /// <summary>
