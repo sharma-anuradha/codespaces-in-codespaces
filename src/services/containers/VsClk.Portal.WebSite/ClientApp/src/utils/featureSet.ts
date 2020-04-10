@@ -3,8 +3,8 @@ import { FeatureSet, getFeatureSet } from 'vso-client-core';
 export const customContainers = 'customContainers';
 export const azureDevOpsOAuth = 'azureDevOpsOAuth';
 
-const stableFeatures: string[] = [customContainers];
-const insiderFeatures: string[] = [azureDevOpsOAuth];
+const stableFeatures: string[] = [customContainers, azureDevOpsOAuth];
+const insiderFeatures: string[] = [];
 
 export function evaluateFeatureFlag(flag: string): boolean {
     let featureSet = getFeatureSet();
