@@ -41,6 +41,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
         private readonly List<IEnvironmentRepairWorkflow> environmentRepairWorkflows;
+        private readonly IResourceAllocationManager resourceAllocationManager;
+        private readonly IWorkspaceManager workspaceManager;
         public readonly IEnvironmentMonitor environmentMonitor;
         public readonly IEnvironmentStateManager environmentStateManager;
         public const string testUserId = "test-user";
@@ -105,11 +107,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.skuCatalog = skuCatalogMock.Object;
             this.environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
             this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository) };
+            this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
+            this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
-                this.workspaceRepository,
                 this.tokenProvider,
                 this.skuCatalog,
                 this.environmentMonitor,
@@ -117,7 +120,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentSettings,
                 planSettings,
                 this.environmentStateManager,
-                this.environmentRepairWorkflows);
+                this.environmentRepairWorkflows,
+                this.resourceAllocationManager,
+                this.workspaceManager);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")
@@ -205,7 +210,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             string id = "mock-id",
             Dictionary<string, object> programs = null,
             string email = default)
-        {            
+        {
             return new Profile
             {
                 Provider = provider,

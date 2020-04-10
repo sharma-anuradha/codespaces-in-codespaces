@@ -30,16 +30,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRepository">target env repo.</param>
         /// <param name="resourceBrokerHttpClient">Target Resource Broker Http Client.</param>
         /// <param name="environmentStateManager">target environment state manager.</param>
+        /// <param name="resourceAllocationManager">target resource allocation manager.</param>
+        /// <param name="workspaceManager">target workspace manager.</param>
         /// <param name="serviceProvider">target serviceProvider.</param>
         public CreateEnvironmentContinuationHandler(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IEnvironmentStateManager environmentStateManager,
+            IResourceAllocationManager resourceAllocationManager,
+            IWorkspaceManager workspaceManager,
             IServiceProvider serviceProvider)
             : base(cloudEnvironmentRepository)
         {
             ResourceBrokerHttpClient = resourceBrokerHttpClient;
             EnvironmentStateManager = environmentStateManager;
+            ResourceAllocationManager = resourceAllocationManager;
+            WorkspaceManager = workspaceManager;
             ServiceProvider = serviceProvider;
         }
 
@@ -60,6 +66,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerHttpClient { get; }
 
         private IEnvironmentStateManager EnvironmentStateManager { get; }
+
+        private IResourceAllocationManager ResourceAllocationManager { get; }
+
+        private IWorkspaceManager WorkspaceManager { get; }
 
         private IServiceProvider ServiceProvider { get; }
 
@@ -209,14 +219,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
              EnvironmentRecordRef record,
              IDiagnosticsLogger logger)
         {
-            var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
+            var computeRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.ComputeVM,
+                SkuName = record.Value.SkuName,
+                Location = record.Value.Location,
+                QueueCreateResource = operationInput.CloudEnvironmentOptions.QueueResourceAllocation,
+            };
 
-            // TODO:: Move allocate to a separate class.
-            var allocationResult = await environmentManager.AllocateComputeAndStorageAsync(record.Value, true, logger.NewChildLogger());
+            var storageRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.StorageFileShare,
+                SkuName = record.Value.SkuName,
+                Location = record.Value.Location,
+                QueueCreateResource = false,
+            };
+
+            var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
+
+            var resultResponse = await ResourceAllocationManager.AllocateResourcesAsync(
+                Guid.Parse(record.Value.Id),
+                inputRequest,
+                logger.NewChildLogger());
+
+            var computeResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.ComputeVM);
+            var storageResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
 
             // Setup result
-            operationInput.ComputeResource = BuildQueueInputResource(allocationResult.Compute);
-            operationInput.StorageResource = BuildQueueInputResource(allocationResult.Storage);
+            operationInput.ComputeResource = BuildQueueInputResource(computeResponse);
+            operationInput.StorageResource = BuildQueueInputResource(storageResponse);
             operationInput.CurrentState = CreateEnvironmentContinuationInputState.CheckResourceState;
 
             LogResource(operationInput, logger);
@@ -283,10 +314,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
-            var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
-
             // Create the Live Share workspace
-            var connection = await environmentManager.CreateWorkspace(
+            var connection = await WorkspaceManager.CreateWorkspaceAsync(
                 EnvironmentType.CloudEnvironment,
                 record.Value.Id,
                 record.Value.Compute.ResourceId,
@@ -327,6 +356,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             // Kick off start-compute before returning.
+            var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
             var isSuccess = await environmentManager.StartComputeAsync(
                  record.Value,
                  record.Value.Compute.ResourceId,

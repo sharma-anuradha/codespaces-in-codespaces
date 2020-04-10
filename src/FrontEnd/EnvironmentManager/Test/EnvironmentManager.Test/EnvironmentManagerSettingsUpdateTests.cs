@@ -250,13 +250,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentContinuation = new MockEnvironmentContinuation();
             var environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
             var environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(environmentStateManager, resourceBroker, environmentRepository) };
+            var resourceAllocationManager = new ResourceAllocationManager(resourceBroker);
+            var workspaceManager = new WorkspaceManager(workspaceRepository);
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
 
             return new EnvironmentManager(
                 environmentRepository,
                 resourceBroker,
-                workspaceRepository,
                 tokenProvider,
                 skuCatalog,
                 environmentMonitor,
@@ -267,7 +268,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     DefaultAutoSuspendDelayMinutesOptions = autoShutdownDelayOptions ?? defaultAutoShutdownOptions,
                 },
                 environmentStateManager,
-                environmentRepairWorkflows);
+                environmentRepairWorkflows,
+                resourceAllocationManager,
+                workspaceManager);
         }
 
         private static ICloudEnvironmentSku MockSku(

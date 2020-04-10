@@ -76,6 +76,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Handlers
             services.AddSingleton<ILatestHeartbeatMonitor, LatestHeartbeatMonitor>();
+            services.AddSingleton<IResourceAllocationManager, ResourceAllocationManager>();
+            services.AddSingleton<IWorkspaceManager, WorkspaceManager>();
 
             services.AddSingleton<ForceSuspendEnvironmentWorkflow>();
             services.AddSingleton<IForceSuspendEnvironmentWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());

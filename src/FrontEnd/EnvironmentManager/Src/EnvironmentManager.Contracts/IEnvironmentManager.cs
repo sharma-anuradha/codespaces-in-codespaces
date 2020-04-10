@@ -168,27 +168,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">logger.</param>
         /// <returns>resule.</returns>
         Task<bool> StartComputeAsync(CloudEnvironment cloudEnvironment, Guid computeResourceId, Guid storageResourceId, Guid? archiveStorageResourceId, CloudEnvironmentOptions cloudEnvironmentOptions, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Create workspace.
-        /// </summary>
-        /// <param name="type">Environment type.</param>
-        /// <param name="cloudEnvironmentId">cloud environment id.</param>
-        /// <param name="computeResourceId">compute resource id.</param>
-        /// <param name="connectionServiceUri">live share uri.</param>
-        /// <param name="sessionPath">session path.</param>
-        /// <param name="userAuthToken">user auth token.</param>
-        /// <param name="logger">logger.</param>
-        /// <returns>result.</returns>
-        Task<ConnectionInfo> CreateWorkspace(EnvironmentType type, string cloudEnvironmentId, Guid computeResourceId, Uri connectionServiceUri, string sessionPath, string userAuthToken, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Allocate resources.
-        /// </summary>
-        /// <param name="cloudEnvironment">cloud environment.</param>
-        /// <param name="queueResourceCreation">queueResourceCreation.</param>
-        /// <param name="logger">logger.</param>
-        /// <returns>result.</returns>
-        Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(CloudEnvironment cloudEnvironment, bool queueResourceCreation, IDiagnosticsLogger logger);
     }
 }

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Management.Sql.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -28,14 +29,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     public class EnvironmentManager : IEnvironmentManager
     {
         private const string LogBaseName = "environment_manager";
-        private const int PersistentSessionExpiresInDays = 30;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentManager"/> class.
         /// </summary>
         /// <param name="cloudEnvironmentRepository">The cloud environment repository.</param>
         /// <param name="resourceBrokerHttpClient">The resource broker client.</param>
-        /// <param name="workspaceRepository">The Live Share workspace repository.</param>
         /// <param name="tokenProvider">Provider capable of issuing access tokens.</param>
         /// <param name="skuCatalog">The SKU catalog.</param>
         /// <param name="environmentMonitor">The environment monitor.</param>
@@ -44,10 +43,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="planManagerSettings">The plan manager settings.</param>
         /// <param name="environmentStateManager">The environment state manager.</param>
         /// <param name="environmentRepairWorkflows">The environment repair workflows.</param>
+        /// <param name="resourceAllocationManager">The environment resource allocation manager.</param>
+        /// <param name="workspaceManager">The workspace manager.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            IWorkspaceRepository workspaceRepository,
             ITokenProvider tokenProvider,
             ISkuCatalog skuCatalog,
             IEnvironmentMonitor environmentMonitor,
@@ -55,10 +55,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentManagerSettings environmentManagerSettings,
             PlanManagerSettings planManagerSettings,
             IEnvironmentStateManager environmentStateManager,
-            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows)
+            IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
+            IResourceAllocationManager resourceAllocationManager,
+            IWorkspaceManager workspaceManager)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
-            WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
             SkuCatalog = skuCatalog;
@@ -68,11 +69,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
             PlanManagerSettings = Requires.NotNull(planManagerSettings, nameof(PlanManagerSettings));
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
+            ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
+            WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
-
-        private IWorkspaceRepository WorkspaceRepository { get; }
 
         private ITokenProvider TokenProvider { get; }
 
@@ -91,6 +92,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private PlanManagerSettings PlanManagerSettings { get; }
 
         private Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
+
+        private IResourceAllocationManager ResourceAllocationManager { get; }
+
+        private IWorkspaceManager WorkspaceManager { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -152,7 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         case CloudEnvironmentState.Available:
                         case CloudEnvironmentState.Awaiting:
                             var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                            var workspace = await WorkspaceRepository.GetStatusAsync(sessionId, childLogger.NewChildLogger());
+                            var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
                             if (workspace == null)
                             {
                                 // In this case the workspace is deleted. There is no way of getting to an environment without it.
@@ -259,7 +264,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironment> UpdateAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
+        public Task<CloudEnvironment> UpdateAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentState newState,
+            string trigger,
+            string reason,
+            IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_update",
@@ -379,7 +389,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                         if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
                         {
-                            cloudEnvironment.Connection = await CreateWorkspace(
+                            cloudEnvironment.Connection = await WorkspaceManager.CreateWorkspaceAsync(
                                 EnvironmentType.StaticEnvironment,
                                 cloudEnvironment.Id,
                                 Guid.Empty,
@@ -432,7 +442,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Allocate Storage and Compute
                     try
                     {
-                        var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, false, childLogger.NewChildLogger());
+                        var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
                         cloudEnvironment.Storage = allocationResult.Storage;
                         cloudEnvironment.Compute = allocationResult.Compute;
                     }
@@ -472,7 +482,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Create the Live Share workspace
-                    cloudEnvironment.Connection = await CreateWorkspace(
+                    cloudEnvironment.Connection = await WorkspaceManager.CreateWorkspaceAsync(
                         EnvironmentType.CloudEnvironment,
                         cloudEnvironment.Id,
                         cloudEnvironment.Compute.ResourceId,
@@ -480,15 +490,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Connection?.ConnectionSessionPath,
                         null,
                         childLogger.NewChildLogger());
-                    if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
-                    {
-                        childLogger.LogErrorWithDetail($"{LogBaseName}_create_workspace_error", "Could not create the cloud environment workspace session.");
-
-                        result.MessageCode = MessageCodes.UnableToAllocateResources;
-                        result.HttpStatusCode = StatusCodes.Status503ServiceUnavailable;
-
-                        return result;
-                    }
 
                     // Create the cloud environment record in created state and transition immediately to the provisioning state -- before starting.
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
@@ -590,7 +591,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                 innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
                                     .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.ConnectionSessionId);
 
-                                await WorkspaceRepository.DeleteAsync(cloudEnvironment.Connection.ConnectionSessionId, innerLogger.NewChildLogger());
+                                await WorkspaceManager.DeleteWorkspaceAsync(cloudEnvironment.Connection.ConnectionSessionId, innerLogger.NewChildLogger());
                             },
                             swallowException: true);
                     }
@@ -653,7 +654,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         // Delete the previous liveshare session from database.
                         // Do not block start process on delete of old workspace from liveshare db.
-                        _ = Task.Run(() => WorkspaceRepository.DeleteAsync(connectionSessionId, childLogger.NewChildLogger()));
+                        _ = Task.Run(() => WorkspaceManager.DeleteWorkspaceAsync(connectionSessionId, childLogger.NewChildLogger()));
                         cloudEnvironment.Connection.ConnectionComputeId = null;
                         cloudEnvironment.Connection.ConnectionComputeTargetId = null;
                         cloudEnvironment.Connection.ConnectionServiceUri = null;
@@ -699,7 +700,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Create the Live Share workspace
-                    cloudEnvironment.Connection = await CreateWorkspace(
+                    cloudEnvironment.Connection = await WorkspaceManager.CreateWorkspaceAsync(
                         EnvironmentType.CloudEnvironment,
                         cloudEnvironment.Id,
                         cloudEnvironment.Compute.ResourceId,
@@ -707,16 +708,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Connection?.ConnectionSessionPath,
                         null,
                         childLogger.NewChildLogger());
-                    if (string.IsNullOrWhiteSpace(cloudEnvironment.Connection.ConnectionSessionId))
-                    {
-                        childLogger.LogErrorWithDetail($"{LogBaseName}_resume_workspace_error", "Could not create the cloud environment workspace session.");
-
-                        return new CloudEnvironmentServiceResult
-                        {
-                            MessageCode = MessageCodes.UnableToAllocateResourcesWhileStarting,
-                            HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
-                        };
-                    }
 
                     // Setup variables for easier use
                     var computerResource = cloudEnvironment.Compute;
@@ -960,7 +951,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironmentServiceResult> ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironmentServiceResult> ForceSuspendAsync(
+            CloudEnvironment cloudEnvironment,
+            IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
             Requires.NotNull(logger, nameof(logger));
@@ -1095,48 +1088,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public async Task<ConnectionInfo> CreateWorkspace(
-            EnvironmentType type,
-            string cloudEnvironmentId,
-            Guid computeIdToken,
-            Uri connectionServiceUri,
-            string sessionPath,
-            string userAuthToken,
-            IDiagnosticsLogger logger)
-        {
-            var duration = logger.StartDuration();
-
-            Requires.NotNullOrEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
-            Requires.NotNull(connectionServiceUri, nameof(connectionServiceUri));
-
-            var workspaceRequest = new WorkspaceRequest()
-            {
-                Name = cloudEnvironmentId.ToString(),
-                ConnectionMode = ConnectionMode.Auto,
-                AreAnonymousGuestsAllowed = false,
-                ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
-            };
-
-            var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest, userAuthToken, logger);
-            if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
-            {
-                logger
-                    .AddEnvironmentId(cloudEnvironmentId)
-                    .LogError(GetType().FormatLogErrorMessage(nameof(CreateWorkspace)));
-                return null;
-            }
-
-            return new ConnectionInfo
-            {
-                ConnectionServiceUri = connectionServiceUri.AbsoluteUri,
-                ConnectionComputeId = computeIdToken.ToString(),
-                ConnectionComputeTargetId = type.ToString(),
-                ConnectionSessionId = workspaceResponse.Id,
-                ConnectionSessionPath = sessionPath,
-            };
-        }
-
-        /// <inheritdoc/>
         public async Task<bool> StartComputeAsync(
             CloudEnvironment cloudEnvironment,
             Guid computeResourceId,
@@ -1194,64 +1145,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  StartRequestAction.StartCompute,
                  resources,
                  logger.NewChildLogger());
-        }
-
-        /// <inheritdoc/>
-        public async Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(
-           CloudEnvironment cloudEnvironment,
-           bool queueResourceCreation,
-           IDiagnosticsLogger logger)
-        {
-            var computeRequest = new AllocateRequestBody
-            {
-                Type = ResourceType.ComputeVM,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-                QueueCreateResource = queueResourceCreation,
-            };
-
-            var storageRequest = new AllocateRequestBody
-            {
-                Type = ResourceType.StorageFileShare,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-                QueueCreateResource = false,
-            };
-
-            var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
-
-            var resultResponse = await ResourceBrokerClient.AllocateAsync(
-                Guid.Parse(cloudEnvironment.Id),
-                inputRequest,
-                logger.NewChildLogger());
-
-            var computeResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.ComputeVM);
-            var storageResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
-            if (computeResponse != null && storageResponse != null)
-            {
-                var computeResult = new ResourceAllocation
-                {
-                    ResourceId = computeResponse.ResourceId,
-                    SkuName = computeResponse.SkuName,
-                    Location = computeResponse.Location,
-                    Created = computeResponse.Created,
-                    Type = ResourceType.ComputeVM,
-                    IsReady = computeResponse.IsReady,
-                };
-                var stroageResult = new ResourceAllocation
-                {
-                    ResourceId = storageResponse.ResourceId,
-                    SkuName = storageResponse.SkuName,
-                    Location = storageResponse.Location,
-                    Created = storageResponse.Created,
-                    Type = ResourceType.StorageFileShare,
-                    IsReady = storageResponse.IsReady,
-                };
-
-                return (computeResult, stroageResult);
-            }
-
-            throw new InvalidOperationException("Allocate result for Compute and Storage was invalid.");
         }
 
         private Task<CloudEnvironmentServiceResult> QueueCreateAsync(
@@ -1325,23 +1218,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 Location = cloudEnvironment.Location,
             };
 
-            var resultResponse = await ResourceBrokerClient.AllocateAsync(
+            var resultResponse = await ResourceAllocationManager.AllocateResourcesAsync(
+                Guid.Parse(cloudEnvironment.Id),
+                new List<AllocateRequestBody>() { inputRequest },
+                logger.NewChildLogger());
+
+            return resultResponse.Single();
+        }
+
+        private async Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(
+           CloudEnvironment cloudEnvironment,
+           IDiagnosticsLogger logger)
+        {
+            var computeRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.ComputeVM,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+                QueueCreateResource = false,
+            };
+
+            var storageRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.StorageFileShare,
+                SkuName = cloudEnvironment.SkuName,
+                Location = cloudEnvironment.Location,
+                QueueCreateResource = false,
+            };
+
+            var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
+
+            var resultResponse = await ResourceAllocationManager.AllocateResourcesAsync(
                 Guid.Parse(cloudEnvironment.Id),
                 inputRequest,
                 logger.NewChildLogger());
-            if (resultResponse == null)
-            {
-                throw new InvalidOperationException("Allocate result for Compute and Storage was invalid.");
-            }
 
-            return new ResourceAllocation
-            {
-                ResourceId = resultResponse.ResourceId,
-                SkuName = resultResponse.SkuName,
-                Location = resultResponse.Location,
-                Created = resultResponse.Created,
-                Type = resourceType,
-            };
+            var computeResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.ComputeVM);
+            var storageResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
+
+            return (computeResponse, storageResponse);
         }
     }
 }
