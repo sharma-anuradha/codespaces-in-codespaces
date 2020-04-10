@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
@@ -245,8 +246,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var tokenProvider = EnvironmentManagerTestsBase.MockTokenProvider();
             var resourceBroker = new MockResourceBrokerClient();
             var environmentMonitor = new MockEnvironmentMonitor();
+            var metricsLogger = new MockEnvironmentMetricsLogger();
             var environmentContinuation = new MockEnvironmentContinuation();
-            var environmentStateManager = new EnvironmentStateManager(billingEventManager);
+            var environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
             var environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(environmentStateManager, resourceBroker, environmentRepository) };
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();

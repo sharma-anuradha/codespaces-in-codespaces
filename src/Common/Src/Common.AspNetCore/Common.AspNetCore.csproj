@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="..\Common.Metrics\Common.Metrics.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 

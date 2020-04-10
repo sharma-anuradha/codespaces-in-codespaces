@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Http" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Maps" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Extensions" Version="$(VsSaaSPackageVersion)" />
+  </ItemGroup>
+
+</Project>

@@ -33,6 +33,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string InstanceCosmosDbAccountName { get; }
 
         /// <summary>
+        /// Gets the control-plane instance maps account name, e.g., vsclk-online-prod-rel-maps.
+        /// </summary>
+        string InstanceMapsAccountName { get; }
+
+        /// <summary>
         /// Gets the control-plane DNS host name.
         /// </summary>
         string DnsHostName { get; }

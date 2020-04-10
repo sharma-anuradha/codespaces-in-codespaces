@@ -490,6 +490,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mapper = MockUtil.MockMapper();
             serviceUriBuilder ??= MockUtil.MockServiceUriBuilder();
             skuUtils ??= MockUtil.MockSkuUtils(true);
+            var metrics = MockUtil.MockMetricsManager();
 
             var settings = new FrontEndAppSettings
             {
@@ -508,7 +509,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 serviceUriBuilder,
                 settings,
                 skuUtils,
-                tokenProvider.Object);
+                tokenProvider.Object,
+                metrics);
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();

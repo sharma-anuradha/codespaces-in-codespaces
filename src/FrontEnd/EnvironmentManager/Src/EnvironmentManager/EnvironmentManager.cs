@@ -38,8 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="workspaceRepository">The Live Share workspace repository.</param>
         /// <param name="tokenProvider">Provider capable of issuing access tokens.</param>
         /// <param name="skuCatalog">The SKU catalog.</param>
-        /// <param name="environmentContinuation">The environment continuation.</param>
         /// <param name="environmentMonitor">The environment monitor.</param>
+        /// <param name="environmentContinuation">The environment continuation.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
         /// <param name="planManagerSettings">The plan manager settings.</param>
         /// <param name="environmentStateManager">The environment state manager.</param>
@@ -61,8 +61,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             WorkspaceRepository = Requires.NotNull(workspaceRepository, nameof(workspaceRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
-            SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
-            EnvironmentMonitor = Requires.NotNull(environmentMonitor, nameof(environmentMonitor));
+            SkuCatalog = skuCatalog;
+            EnvironmentMonitor = environmentMonitor;
             EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             EnvironmentContinuation = Requires.NotNull(environmentContinuation, nameof(environmentContinuation));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
@@ -490,9 +490,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
-                    // Create the cloud environment record in the provisioning state -- before starting.
+                    // Create the cloud environment record in created state and transition immediately to the provisioning state -- before starting.
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                     // Highly unlikely, but still...
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
                     await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
 
                     // Persist core cloud environment record

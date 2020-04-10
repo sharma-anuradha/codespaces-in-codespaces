@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
@@ -83,6 +84,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public static IDiagnosticsLogger MockLogger()
         {
             var moq = new Mock<IDiagnosticsLogger>();
+            return moq.Object;
+        }
+
+        public static IMetricsManager MockMetricsManager()
+        {
+            var moq = new Mock<IMetricsManager>();
             return moq.Object;
         }
 

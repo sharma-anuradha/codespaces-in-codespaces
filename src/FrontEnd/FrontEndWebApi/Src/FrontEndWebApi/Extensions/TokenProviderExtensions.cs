@@ -10,9 +10,9 @@ using System.Security.Claims;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Partners;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions

@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
@@ -60,5 +61,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "properties")]
         public VsoPlanProperties Properties { get; set; }
+
+        /// <summary>
+        /// Gets or sets the external partner.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "partner")]
+        public Partner? Partner { get; set; }
     }
 }

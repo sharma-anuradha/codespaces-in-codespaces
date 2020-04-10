@@ -40,9 +40,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
-        private readonly EnvironmentStateManager environmentStateManager;
         private readonly List<IEnvironmentRepairWorkflow> environmentRepairWorkflows;
         public readonly IEnvironmentMonitor environmentMonitor;
+        public readonly IEnvironmentStateManager environmentStateManager;
         public const string testUserId = "test-user";
         public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
         public const string testAccessToken = "test-token";
@@ -92,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             tokenProvider = MockTokenProvider();
             resourceBroker = new MockResourceBrokerClient();
             this.environmentMonitor = new MockEnvironmentMonitor();
+            var metricsLogger = new MockEnvironmentMetricsLogger();
 
             var skuMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
             skuMock.Setup((s) => s.ComputeOS).Returns(ComputeOS.Linux);
@@ -102,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var skuCatalogMock = new Mock<ISkuCatalog>(MockBehavior.Strict);
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
             this.skuCatalog = skuCatalogMock.Object;
-            this.environmentStateManager = new EnvironmentStateManager(billingEventManager);
+            this.environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
             this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository) };
 
             this.environmentManager = new EnvironmentManager(

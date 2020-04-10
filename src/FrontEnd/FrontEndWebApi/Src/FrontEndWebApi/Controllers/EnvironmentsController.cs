@@ -22,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -66,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="frontEndAppSettings">Front-end app settings.</param>
         /// <param name="skuUtils">skuUtils to find sku's eligiblity.</param>
         /// <param name="tokenProvider">Token Provider.</param>
+        /// <param name="metricsManager">The metrics manager.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -77,7 +79,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IServiceUriBuilder serviceUriBuilder,
             FrontEndAppSettings frontEndAppSettings,
             ISkuUtils skuUtils,
-            ITokenProvider tokenProvider)
+            ITokenProvider tokenProvider,
+            IMetricsManager metricsManager)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -90,6 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));
             SkuUtils = Requires.NotNull(skuUtils, nameof(skuUtils));
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
+            MetricsManager = Requires.NotNull(metricsManager, nameof(metricsManager));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -113,6 +117,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private ISkuUtils SkuUtils { get; }
 
         private ITokenProvider TokenProvider { get; }
+
+        private IMetricsManager MetricsManager { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -378,7 +384,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return BadRequest(message);
             }
 
+            // Inherit the location and partner from the VSO plan.
             cloudEnvironment.Location = planDetails.Plan.Location;
+            cloudEnvironment.Partner = planDetails.Partner;
             cloudEnvironment.ControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
 
             var planId = HttpContext.GetPlan();
@@ -421,12 +429,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return BadRequest(message);
             }
 
+            // Determine the cloud environment options
             var cloudEnvironmentOptions = new CloudEnvironmentOptions();
             if (createEnvironmentInput.ExperimentalFeatures != null)
             {
                 cloudEnvironmentOptions.CustomContainers = createEnvironmentInput.ExperimentalFeatures.CustomContainers;
                 cloudEnvironmentOptions.NewTerminal = createEnvironmentInput.ExperimentalFeatures.NewTerminal;
                 cloudEnvironmentOptions.QueueResourceAllocation = createEnvironmentInput.ExperimentalFeatures.QueueResourceAllocation;
+            }
+
+            // Try to get the client's geo location and client user agent type for metrics and logging.
+            try
+            {
+                var metricsClientInfo = await MetricsManager.GetMetricsInfoForRequestAsync(Request.Headers, logger.NewChildLogger());
+                cloudEnvironment.CreationMetrics = new MetricsInfo
+                {
+                    IsoCountryCode = metricsClientInfo.IsoCountryCode,
+                    AzureGeography = metricsClientInfo.AzureGeography,
+                    VsoClientType = metricsClientInfo.VsoClientType,
+                };
+            }
+            catch
+            {
+                // Ignore metrics exceptions here. Do not fail to create an environment due to missing metrics info.
             }
 
             // Create the environement

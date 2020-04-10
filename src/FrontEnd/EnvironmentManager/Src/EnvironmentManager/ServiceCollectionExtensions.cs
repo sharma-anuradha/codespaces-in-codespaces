@@ -45,11 +45,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<ICloudEnvironmentRepository, MockCloudEnvironmentRepository>();
+                services.AddSingleton<ICloudEnvironmentCosmosContainer, MockCloudEnvironmentCosmosContainer>();
                 services.AddSingleton<IContinuationJobQueueRepository, MockEnvironmentMonitorQueueRepository>();
             }
             else
             {
                 services.AddVsoDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
+                services.AddVsoCosmosContainer<CloudEnvironment, ICloudEnvironmentCosmosContainer, CloudEnvironmentCosmosContainer>(CloudEnvironmentCosmosContainer.ConfigureOptions);
                 services.AddSingleton<IContinuationJobQueueRepository, FrontendJobQueueRepository>();
                 services.AddSingleton<ICrossRegionContinuationJobQueueRepository, CrossRegionFrontendJobQueueRepository>();
                 services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
@@ -102,6 +104,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // The environment mangaer
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
             services.AddSingleton<IEnvironmentContinuationOperations, EnvironmentContinuationOperations>();
+
+            // The environment metrics
+            services.AddSingleton<IEnvironmentMetricsManager, EnvironmentMetricsManager>();
 
             // Register background tasks
             services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
+using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
@@ -254,15 +255,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             services.AddServiceUriBuilder(frontEndAppSettings.ForwardingHostForLocalDevelopment);
 
-            services.AddDocumentDbClientProvider(options =>
-            {
-                var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetInstanceCosmosDbAccountAsync().Result;
-                options.HostUrl = hostUrl;
-                options.AuthKey = authKey;
-                options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
-                options.UseMultipleWriteLocations = true;
-                options.PreferredLocation = CurrentAzureLocation.ToString();
-            });
+            // Both DocumentDB and Cosmos DB client providers point to the same instance database.
+            services
+                .AddDocumentDbClientProvider(options =>
+                {
+                    var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetInstanceCosmosDbAccountAsync().Result;
+                    options.HostUrl = hostUrl;
+                    options.AuthKey = authKey;
+                    options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
+                    options.UseMultipleWriteLocations = true;
+                    options.PreferredLocation = CurrentAzureLocation.ToString();
+                })
+                .AddCosmosClientProvider(options =>
+                {
+                    var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetInstanceCosmosDbAccountAsync().Result;
+                    options.HostUrl = hostUrl;
+                    options.AuthKey = authKey;
+                    options.DatabaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
+                    options.ApplicationLocation = CurrentAzureLocation;
+                });
 
             // Add HeartBeat data handlers
             services.AddHeartBeatDataHandlers();

@@ -10,9 +10,10 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 {
@@ -28,23 +29,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// </summary>
         /// <param name="environmentManagerSettings">Environment settings used to generate the lease name.</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
+        /// <param name="cloudEnvironmentCosmosContainer">Target Cloud Environment Cosmos DB container.</param>
         /// <param name="skuCatalog">The sku catalog (used to find which SKUs to query over.</param>
         /// <param name="controlPlane">The control plan info. Used to know which AzureLocations to query over.</param>
         /// <param name="taskHelper">The Task helper.</param>
         /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
+        /// <param name="environmentMetricsLogger">The metrics logger.</param>
         public LogCloudEnvironmentStateTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
+            ICloudEnvironmentCosmosContainer cloudEnvironmentCosmosContainer,
             ISkuCatalog skuCatalog,
             IControlPlaneInfo controlPlane,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IEnvironmentMetricsManager environmentMetricsLogger)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
-            ControlPlane = controlPlane;
-            skuDictionary = skuCatalog.CloudEnvironmentSkus;
+            ControlPlane = Requires.NotNull(controlPlane, nameof(controlPlane));
+            skuDictionary = Requires.NotNull(skuCatalog, nameof(skuCatalog)).CloudEnvironmentSkus;
+            EnvironmentMetricsLogger = Requires.NotNull(environmentMetricsLogger, nameof(environmentMetricsLogger));
+            CloudEnvironmentCosmosContainer = Requires.NotNull(cloudEnvironmentCosmosContainer, nameof(cloudEnvironmentCosmosContainer));
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogCloudEnvironmentStateTask)}Lease");
@@ -52,6 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private string LogBaseName => EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask;
 
         private IControlPlaneInfo ControlPlane { get; }
+
+        private IEnvironmentMetricsManager EnvironmentMetricsLogger { get; }
+
+        private ICloudEnvironmentCosmosContainer CloudEnvironmentCosmosContainer { get; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -78,6 +89,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                swallowException: true);
         }
 
+        private static string PartnerString(Partner? partner) => partner.ToString() ?? "vso";
+
         private async Task RunLogTaskAsync(IDiagnosticsLogger childLogger)
         {
             // A batch ID incase we want to join or look at individual values
@@ -85,79 +98,112 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             childLogger.AddBaseValue("BatchId", batchID.ToString());
 
             var total = 0;
-            var allStates = await GetStates(childLogger);
+            var countByDimensionsList = await GetCountByDimensionsForDataPlaneLocationsAsync(childLogger);
 
             // Send individual values
-            foreach (var record in allStates)
+            foreach (var countByDimensions in countByDimensionsList)
             {
-                total += record.Count;
-                childLogger.FluentAddValue($"EnvironmentState", record.State)
-                           .FluentAddValue($"EnvironmentSku", record.SkuName)
-                           .FluentAddValue($"EnvironmentRegion", record.Location)
-                           .FluentAddValue($"EnvironmentCount", record.Count.ToString())
+                var count = countByDimensions.Count;
+                total += count;
+                childLogger.FluentAddValue("EnvironmentState", countByDimensions.State)
+                           .FluentAddValue("EnvironmentSku", countByDimensions.SkuName)
+                           .FluentAddValue("EnvironmentRegion", countByDimensions.Location)
+                           .FluentAddValue("EnvironmentPartner", PartnerString(countByDimensions.Partner))
+                           .FluentAddValue("EnvironmentCountryCode", countByDimensions.IsoCountryCode)
+                           .FluentAddValue("EnvironmentAzureGeography", countByDimensions.AzureGeography)
+                           .FluentAddValue("EnvironmentCount", count)
                            .LogInfo("cloud_environment_individual_measure");
+
+                EnvironmentMetricsLogger.PostEnvironmentCount(countByDimensions, count, childLogger);
             }
 
-            // Aggregate by state.
-            var byState = allStates.GroupBy(x => x.State);
+            // Aggregate by State
+            var byState = countByDimensionsList.GroupBy(x => x.State);
             foreach (var state in byState)
             {
                 childLogger.FluentAddValue("EnvironmentState", state.Key)
-                           .FluentAddValue($"EnvironmentCount", state.Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentCount", state.Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentTotalCount", total)
                            .LogInfo("cloud_environment_state_measure");
             }
 
             // Aggregate by Sku
-            var bySku = allStates.GroupBy(x => x.SkuName);
+            var bySku = countByDimensionsList.GroupBy(x => x.SkuName);
             foreach (var sku in bySku)
             {
                 childLogger.FluentAddValue("EnvironmentSku", sku.Key)
-                           .FluentAddValue($"EnvironmentCount", sku.Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentActiveCount", sku.Where(x => x.State.Equals(CloudEnvironmentState.Available.ToString())).Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentShutdownCount", sku.Where(x => x.State.Equals(CloudEnvironmentState.Shutdown.ToString())).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentCount", sku.Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentTotalCount", total)
+                           .FluentAddValue("EnvironmentActiveCount", sku.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentShutdownCount", sku.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentArchivedCount", sku.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
                            .LogInfo("cloud_environment_sku_measure");
             }
 
             // Aggregate by Location
-            var byLocation = allStates.GroupBy(x => x.Location);
+            var byLocation = countByDimensionsList.GroupBy(x => x.Location);
             foreach (var location in byLocation)
             {
                 childLogger.FluentAddValue("EnvironmentLocation", location.Key)
-                           .FluentAddValue($"EnvironmentCount", location.Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentActiveCount", location.Where(x => x.State.Equals(CloudEnvironmentState.Available.ToString())).Sum(x => x.Count))
-                           .FluentAddValue($"EnvironmentShutdownCount", location.Where(x => x.State.Equals(CloudEnvironmentState.Shutdown.ToString())).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentCount", location.Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentTotalCount", total)
+                           .FluentAddValue("EnvironmentActiveCount", location.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentShutdownCount", location.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentArchivedCount", location.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
                            .LogInfo("cloud_environment_location_measure");
+            }
+
+            // Aggregate by Partner
+            var byPartner = countByDimensionsList.GroupBy(x => x.Partner);
+            foreach (var partner in byPartner)
+            {
+                childLogger.FluentAddValue("EnvironmentPartner", PartnerString(partner.Key))
+                           .FluentAddValue("EnvironmentCount", partner.Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentTotalCount", total)
+                           .FluentAddValue("EnvironmentActiveCount", partner.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentShutdownCount", partner.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentArchivedCount", partner.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
+                           .LogInfo("cloud_environment_partner_measure");
+            }
+
+            // Aggregate by Country
+            var byCountry = countByDimensionsList.GroupBy(x => x.IsoCountryCode);
+            foreach (var country in byCountry)
+            {
+                childLogger.FluentAddValue("EnvironmentCountryCode", country.Key)
+                           .FluentAddValue("EnvironmentCount", country.Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentTotalCount", total)
+                           .FluentAddValue("EnvironmentActiveCount", country.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentShutdownCount", country.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
+                           .FluentAddValue("EnvironmentArchivedCount", country.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
+                           .LogInfo("cloud_environment_country_measure");
+            }
+
+            // Aggregate by Geo
+            var byGeo = countByDimensionsList.GroupBy(x => x.AzureGeography);
+            foreach (var geo in byGeo)
+            {
+                childLogger.FluentAddValue("EnvironmentAzureGeography", geo.Key)
+                           .FluentAddValue($"EnvironmentCount", geo.Sum(x => x.Count))
+                           .FluentAddValue($"EnvironmentTotalCount", total)
+                           .FluentAddValue($"EnvironmentActiveCount", geo.Where(x => x.State == CloudEnvironmentState.Available).Sum(x => x.Count))
+                           .FluentAddValue($"EnvironmentShutdownCount", geo.Where(x => x.State == CloudEnvironmentState.Shutdown).Sum(x => x.Count))
+                           .FluentAddValue($"EnvironmentArchivedCount", geo.Where(x => x.State == CloudEnvironmentState.Archived).Sum(x => x.Count))
+                           .LogInfo("cloud_environment_geo_measure");
             }
         }
 
-        private async Task<IEnumerable<CloudEnvironmentLogRecord>> GetStates(IDiagnosticsLogger childLogger)
+        private async Task<IEnumerable<CloudEnvironmentCountByDimensions>> GetCountByDimensionsForDataPlaneLocationsAsync(IDiagnosticsLogger logger)
         {
-            // TODO: If we update our SDK to 3.3 or higher, we could likely use a condensed query that'll group by all these fields.
-            // This may or may not be more expensive than scalar queries though.
-            // Example: SELECT c.state, c.location, c.skuName, VALUE COUNT(1) as Total FROM c GROUP BY c.state, c.location, c.skuName
-            var records = new List<CloudEnvironmentLogRecord>();
-            foreach (CloudEnvironmentState state in Enum.GetValues(typeof(CloudEnvironmentState)))
+            var results = new List<CloudEnvironmentCountByDimensions>();
+
+            foreach (var location in ControlPlane.GetAllDataPlaneLocations())
             {
-                foreach (var location in ControlPlane.GetAllDataPlaneLocations())
-                {
-                    foreach (var sku in skuDictionary.Keys)
-                    {
-                        var count = await CloudEnvironmentRepository.GetCloudEnvironmentCountAsync(location.ToString(), state.ToString(), sku.ToString(), childLogger);
-                        if (count > 0)
-                        {
-                            records.Add(new CloudEnvironmentLogRecord()
-                            {
-                                Count = count,
-                                Location = location.ToString(),
-                                SkuName = sku.ToString(),
-                                State = state.ToString(),
-                            });
-                        }
-                    }
-                }
+                var countByDimensionsForLocation = await CloudEnvironmentCosmosContainer.GetCountByDimensionsAsync(location, logger);
+                results.AddRange(countByDimensionsForLocation);
             }
 
-            return records;
+            return results.ToArray();
         }
     }
 }

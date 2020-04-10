@@ -68,6 +68,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             $"{InstanceResourceGroupName}-db";
 
         /// <inheritdoc/>
+        public string InstanceMapsAccountName =>
+            $"{InstanceResourceGroupName}-maps";
+
+        /// <inheritdoc/>
         public string DnsHostName => NotNullOrWhiteSpace(ControlPlaneSettings.DnsHostName, nameof(ControlPlaneSettings.DnsHostName));
 
         /// <inheritdoc/>

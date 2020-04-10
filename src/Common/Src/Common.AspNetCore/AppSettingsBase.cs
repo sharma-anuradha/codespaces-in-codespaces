@@ -67,5 +67,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public string DeveloperAlias { get; set; }
+
+        /// <summary>
+        /// Gets or sets the MDSD event source for the metrics logger.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string MetricsLoggerMdsdEventSource { get; set; }
     }
 }

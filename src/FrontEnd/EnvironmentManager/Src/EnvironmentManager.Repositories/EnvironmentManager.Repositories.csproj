@@ -6,7 +6,9 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Cosmos" Version="$(VsSaaSPackageVersion)" />    
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />    
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.6.0" />
   </ItemGroup>
 
   <ItemGroup>

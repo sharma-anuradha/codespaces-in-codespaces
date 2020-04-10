@@ -2,10 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Partners
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
 {
     /// <summary>
     /// Set of known external partners which have some custom integrations.

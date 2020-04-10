@@ -6,7 +6,9 @@ using System;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -27,6 +29,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueLastStateUpdateTrigger = "LastStateUpdateTrigger";
         private const string LogValueTargetSkuName = "TargetSkuName";
         private const string LogValueTargetAutoShutdownDelay = "TargetAutoShutdownDelay";
+        private const string LogValuePartner = "Partner";
+        private const string LogValueCountryCode = "CountryCode";
+        private const string LogValueAzureGeoraphy = "AzureGeogrpahy";
+        private const string LogValueVsoClientType = "VsoClientType";
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironment"/> instance.
@@ -50,7 +56,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddSkuName(cloudEnvironment.SkuName)
                     .AddCloudEnvironmentState(cloudEnvironment.State)
                     .AddLastStateUpdateReason(cloudEnvironment.LastStateUpdateReason)
-                    .AddLastStateUpdateTrigger(cloudEnvironment.LastStateUpdateTrigger);
+                    .AddLastStateUpdateTrigger(cloudEnvironment.LastStateUpdateTrigger)
+                    .AddPartner(cloudEnvironment.Partner)
+                    .AddCountryCode(cloudEnvironment.CreationMetrics?.IsoCountryCode)
+                    .AddAzureGeography(cloudEnvironment.CreationMetrics?.AzureGeography)
+                    .AddVsoClientType(cloudEnvironment.CreationMetrics?.VsoClientType);
             }
 
             return logger;
@@ -145,6 +155,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddLastStateUpdateTrigger(this IDiagnosticsLogger logger, string trigger)
             => logger.FluentAddValue(LogValueLastStateUpdateTrigger, trigger);
+
+        /// <summary>
+        /// Add the environment partner to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="value">The partner value.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddPartner(this IDiagnosticsLogger logger, Partner? value)
+            => logger.FluentAddValue(LogValuePartner, value);
+
+        /// <summary>
+        /// Add the environment country code to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="value">The country code value.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddCountryCode(this IDiagnosticsLogger logger, string value)
+            => logger.FluentAddValue(LogValueCountryCode, value);
+
+        /// <summary>
+        /// Add the environment azure geo to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="value">The azure geo value.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddAzureGeography(this IDiagnosticsLogger logger, AzureGeography? value)
+            => logger.FluentAddValue(LogValueAzureGeoraphy, value);
+
+        /// <summary>
+        /// Add the environment vso client type to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="value">The azure geo value.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddVsoClientType(this IDiagnosticsLogger logger, VsoClientType? value)
+            => logger.FluentAddValue(LogValueVsoClientType, value);
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironmentUpdate"/> instance.

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test;
 using Xunit;
@@ -32,7 +33,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
             var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
 
             Assert.Collection(
-                billingEventRepository.Values,
+                billingEventRepository.Values.OrderBy(item => item.Time),
+                (billingEvent) => VerifyEnvironmentStateChange(
+                        testEnvironment, billingEvent, CloudEnvironmentState.Created, CloudEnvironmentState.Created),
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Created, CloudEnvironmentState.Provisioning));
         }

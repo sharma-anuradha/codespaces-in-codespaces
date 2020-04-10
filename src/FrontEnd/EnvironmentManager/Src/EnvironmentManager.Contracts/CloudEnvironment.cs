@@ -8,6 +8,8 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -250,6 +252,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "transitions")]
         public CloudEnvironmentTansitions Transitions { get; set; }
+
+        /// <summary>
+        /// Gets or sets the partner. See <see cref="VsoPlan.Partner"/>.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "partner")]
+        public Partner? Partner { get; set; }
+
+        /// <summary>
+        /// Gets or sets the environment metrics values at creation time.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "creationMetrics")]
+        public MetricsInfo CreationMetrics { get; set; }
 
         /// <summary>
         /// Indicates whether the environment is in a shutdown state.

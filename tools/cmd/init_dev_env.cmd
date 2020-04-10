@@ -33,12 +33,17 @@ REM call :which_tool "msbuild        "
 
 :: Macros
 doskey /macrofile="%~dp0aliases.macros"
-echo.
-echo %ENVIRONMENT_NAME% macros:
-for /f "delims== tokens=1,2" %%i in ('doskey /macros') do call :echo_key_value %%i %%j
+REM echo.
+REM echo %ENVIRONMENT_NAME% macros:
+REM for /f "delims== tokens=1,2" %%i in ('doskey /macros') do call :echo_key_value %%i %%j
 
 :: Local Tools
 set "PATH=%PATH%;%~dp0"
+
+:: Git Branch
+echo | set /p "dummyName=Git branch: "
+set "dummyName="
+call git rev-parse --abbrev-ref HEAD
 
 :: Done
 exit /b 0

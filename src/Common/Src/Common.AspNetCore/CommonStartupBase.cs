@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsSaaS.Azure.Maps;
+using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -20,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repositor
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Newtonsoft.Json;
 
@@ -204,6 +207,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             // Use TryAddSingleton to allow callers to override this implementation by calling AddSingleton before calling this method
             services.TryAddSingleton<ICurrentImageInfoProvider, CurrentImageInfoProvider>();
+
+            // Metrics Logger
+            services.TryAddSingleton<IManagedCache, InMemoryManagedCache>();
+            services.AddAzureMaps(options =>
+            {
+                var controlPlaneInfo = ApplicationServicesProvider.GetRequiredService<IControlPlaneInfo>();
+                var controlPlaneResourceAccessor = ApplicationServicesProvider.GetRequiredService<IControlPlaneAzureResourceAccessor>();
+                options.AccountName = controlPlaneInfo.InstanceMapsAccountName;
+                options.ResourceGroupName = controlPlaneInfo.InstanceResourceGroupName;
+                options.SubscriptionId = controlPlaneResourceAccessor.GetCurrentSubscriptionIdAsync().Result;
+            });
+            services.AddMetrics(options =>
+            {
+                options.MdsdEventSource = AppSettings.MetricsLoggerMdsdEventSource;
+            });
         }
 
         /// <summary>

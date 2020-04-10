@@ -174,6 +174,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ? resource.Properties.UserId
                         : HttpContext.User.GetUserIdFromClaims();
 
+                    var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
+
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
                     ValidationUtil.IsRequired(providerNamespace);
@@ -198,6 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                             Subscription = subscriptionId,
                         },
                         UserId = userId,
+                        Partner = partner,
                     };
                     var result = await planManager.CreateAsync(plan, logger);
 

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -22,13 +23,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Initializes a new instance of the <see cref="EnvironmentStateManager"/> class.
         /// </summary>
         /// <param name="billingEventManager">target billing manager.</param>
-        /// <param name="cloudEnvironmentRepository">target cloud environment repository.</param>
-        public EnvironmentStateManager(IBillingEventManager billingEventManager)
+        /// <param name="environmentMetricsLogger">The metrics logger.</param>
+        public EnvironmentStateManager(
+            IBillingEventManager billingEventManager,
+            IEnvironmentMetricsManager environmentMetricsLogger)
         {
-            this.BillingEventManager = billingEventManager;
+            BillingEventManager = billingEventManager;
+            EnvironmentMetricsLogger = environmentMetricsLogger;
         }
 
         private IBillingEventManager BillingEventManager { get; }
+
+        private IEnvironmentMetricsManager EnvironmentMetricsLogger { get; }
 
         /// <inheritdoc/>
         public Task SetEnvironmentStateAsync(
@@ -86,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     await BillingEventManager.CreateEventAsync(
                         plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
+                    var stateSnapshot = new CloudEnvironmentStateSnapshot(cloudEnvironment);
                     cloudEnvironment.State = state;
                     cloudEnvironment.LastStateUpdateTrigger = trigger;
                     cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
@@ -95,8 +102,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.LastStateUpdateReason = reason;
                     }
 
+                    // Log to business metrics, post both current state and prior state.
+                    EnvironmentMetricsLogger.PostEnvironmentEvent(cloudEnvironment, stateSnapshot, logger.NewChildLogger());
+
+                    // Log to operational telemetry
                     logger.AddCloudEnvironment(cloudEnvironment)
-                         .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
+                        .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
                 });
         }
     }
