@@ -1,4 +1,9 @@
-import { ILocalCloudEnvironment, StateInfo, EnvironmentType } from '../interfaces/cloudenvironment';
+import {
+    ILocalEnvironment,
+    EnvironmentStateInfo,
+    EnvironmentType
+} from 'vso-client-core';
+
 import { replaceAtIndex } from './reducerUtils';
 
 import {
@@ -43,8 +48,8 @@ import {
 } from '../actions/environmentChanged';
 
 export type EnvironmentsState = {
-    environments: ILocalCloudEnvironment[];
-    deletedEnvironments: ILocalCloudEnvironment[];
+    environments: ILocalEnvironment[];
+    deletedEnvironments: ILocalEnvironment[];
     activatingEnvironments: string[];
     selectedPlanId: string | null;
     isLoading: boolean;
@@ -69,8 +74,8 @@ type AcceptedActions =
     | UpdateEnvironmentSettingsSuccessAction;
 
 const defaultState: EnvironmentsState = {
-    environments: [] as ILocalCloudEnvironment[],
-    deletedEnvironments: [] as ILocalCloudEnvironment[],
+    environments: [] as ILocalEnvironment[],
+    deletedEnvironments: [] as ILocalEnvironment[],
     activatingEnvironments: [] as string[],
     selectedPlanId: null,
     isLoading: true,
@@ -142,7 +147,7 @@ export function environments(
                 skuName,
             } = action.payload.environment;
 
-            const envLie: ILocalCloudEnvironment = {
+            const envLie: ILocalEnvironment = {
                 type,
                 friendlyName,
                 created: new Date(),
@@ -156,7 +161,7 @@ export function environments(
                     dotfilesTargetPath,
                     dotfilesRepository,
                 },
-                state: StateInfo.Provisioning,
+                state: EnvironmentStateInfo.Provisioning,
                 lieId: action.payload.lieId,
                 autoShutdownDelayMinutes,
                 skuName,
@@ -186,7 +191,7 @@ export function environments(
                     ...state,
                     environments: replaceAtIndex(state.environments, failedIndex, {
                         ...failedCreation,
-                        state: StateInfo.Failed,
+                        state: EnvironmentStateInfo.Failed,
                     }),
                 };
             })();

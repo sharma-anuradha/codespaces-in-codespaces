@@ -1,5 +1,7 @@
-import { isHostedOnGithub } from './isHostedOnGithub';
-import { CrossDomainPFAuthenticator } from './CrossDomainPFAuthenticator';
+import { isHostedOnGithub } from 'vso-client-core';
+
+import { CrossDomainPFAuthenticator } from 'vso-workbench';
+
 import { getCurrentEnvironment, getPFDomain } from './getPortForwardingDomain';
 
 export async function setAuthCookie(accessToken: string, endpoint: string) {

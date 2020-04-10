@@ -1,5 +1,6 @@
+import { EnvironmentStateInfo } from 'vso-client-core';
+
 import { action } from './middleware/useActionCreator';
-import { StateInfo } from '../interfaces/cloudenvironment';
 import { useActionContext } from './middleware/useActionContext';
 
 export const stateChangeEnvironmentActionType = 'async.environments.stateChange';
@@ -7,8 +8,8 @@ export const stateChangeEnvironmentActionType = 'async.environments.stateChange'
 // Basic actions dispatched for reducers
 export const stateChangeEnvironmentAction = (
     id: string,
-    environmentState: StateInfo,
-    oldState?: StateInfo,
+    environmentState: EnvironmentStateInfo,
+    oldState?: EnvironmentStateInfo,
     context = useActionContext()
 ) => {
     context.setContextTelemetryProperty('environmentid', id);

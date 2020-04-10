@@ -1,15 +1,14 @@
 import React, { FC, Fragment } from 'react';
+import { ILocalEnvironment } from 'vso-client-core';
 
 import { NoEnvironments } from './no-environments';
 import { EnvironmentCard } from '../environmentCard/environment-card';
-
-import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 
 interface IProps {
-    environments: ILocalCloudEnvironment[];
+    environments: ILocalEnvironment[];
     openCreateEnvironmentForm: () => void;
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...name: Parameters<typeof shutdownEnvironment>) => void;

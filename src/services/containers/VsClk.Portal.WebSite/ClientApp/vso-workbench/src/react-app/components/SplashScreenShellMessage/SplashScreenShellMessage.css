@@ -1,0 +1,19 @@
+.vso-splash-screen__block {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.4rem;
+    text-align: center;
+    margin-top: -5rem;
+    animation: vso-fadein .75s;
+}
+
+.vso-splash-screen__message {
+    margin-bottom: 2rem;
+}
+
+@keyframes vso-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

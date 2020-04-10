@@ -1,0 +1,104 @@
+import { URI, IURLCallbackProvider } from 'vscode-web';
+import { Emitter, Event } from 'vscode-jsonrpc';
+import { randomString, getVSCodeScheme } from 'vso-client-core';
+
+import { vscode } from '../../vscodeAssets/vscode';
+import { getQueryParams } from '../../../utils/getQueryParams';
+
+export const callbackSymbol = Symbol('URICallbackSymbol');
+
+const LOCAL_STORAGE_KEY = 'vsonline.redirect.url';
+
+interface IExpectedNonceRecord {
+    authority: string;
+    path: string;
+}
+
+export class UrlCallbackProvider implements IURLCallbackProvider {
+    protected callbackSymbol: typeof callbackSymbol = callbackSymbol;
+    protected [callbackSymbol] = new Emitter<URI>();
+    protected extensionCallbackPath = '/extension-auth-callback';
+
+    constructor() {
+        // listen for changes to localStorage
+        if (window.addEventListener) {
+            window.addEventListener('storage', this.onStorage, false);
+        } else {
+            (window as any).attachEvent('onstorage', this.onStorage);
+        }
+    }
+
+    private expectedNonceMap = new Map<string, IExpectedNonceRecord>();
+
+    protected onStorage = (e: StorageEvent) => {
+        const { key, newValue } = e;
+
+        if (!key || !newValue) {
+            return;
+        }
+
+        const [nonce, keyName] = key.split('::');
+
+        if (!nonce || keyName !== LOCAL_STORAGE_KEY) {
+            return;
+        }
+
+        const expectedRedirectRecord = this.expectedNonceMap.get(nonce);
+
+        if (!expectedRedirectRecord) {
+            return;
+        }
+
+        localStorage.removeItem(key);
+        this.expectedNonceMap.delete(nonce);
+
+        const url = newValue;
+        const queryParams = getQueryParams(url);
+
+        // please use the https://github.com/microsoft/vscode/blob/2320972f5f1206d6e9a047e3850b4d0bee4d2e87/src/vs/base/common/uri.ts#L99
+        // for the Uri format refrence
+        const protocolHandlerUri = vscode.URI.from({
+            authority: expectedRedirectRecord.authority,
+            query: queryParams.toString(),
+            scheme: getVSCodeScheme(),
+            path: expectedRedirectRecord.path,
+            fragment: '',
+        });
+
+        this[callbackSymbol].fire(protocolHandlerUri);
+    };
+
+    public onCallback: Event<URI> = this[callbackSymbol].event;
+
+    protected generateUrlCallbackParams(authority: string, path: string, query: string) {
+        const nonce = randomString();
+        this.expectedNonceMap.set(nonce, { authority, path });
+
+        const params = new URLSearchParams(query);
+        params.append('state', nonce);
+
+        return params.toString();
+    }
+
+    public create(options: Partial<URI>) {
+        if (!options) {
+            throw new Error('No "options" set.');
+        }
+
+        const { authority, path = '/', query = '' } = options;
+
+        if (!authority) {
+            throw new Error('No "authority" set.');
+        }
+
+        const uri = vscode.URI.from({
+            scheme: location.protocol.replace(/\:/g, ''),
+            path: this.extensionCallbackPath,
+            authority: location.host,
+            query: this.generateUrlCallbackParams(authority!, path, query),
+            fragment: options.fragment || '',
+        });
+
+        return uri;
+    }
+}

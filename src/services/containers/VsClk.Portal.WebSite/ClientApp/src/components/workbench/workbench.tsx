@@ -1,16 +1,41 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
+
 import {
     IWorkbenchConstructionOptions,
     IWebSocketFactory,
     URI,
-    IApplicationLink,
 } from 'vscode-web';
 
-import { createTrace } from 'vso-client-core';
+import {
+    createTrace,
+    ILocalEnvironment,
+    IEnvironment,
+    isHostedOnGithub,
+    vsls
+} from 'vso-client-core';
 
-import { VSLSWebSocket, envConnector } from '../../resolvers/vslsResolver';
+import {
+    disconnectCloudEnv,
+    postServiceWorkerMessage,
+    EnvConnector,
+    VSLSWebSocket,
+} from 'vso-ts-agent';
+
+import {
+    UserDataProvider,
+    UrlCallbackProvider,
+    WorkspaceProvider,
+    resourceUriProviderFactory,
+    applicationLinksProviderFactory,
+    vscode,
+    getVSCodeVersion,
+    getExtensions,
+} from 'vso-workbench';
+
+import { BrowserSyncService } from '../../rpcServices/BrowserSyncService';
+import { GitCredentialService } from '../../rpcServices/GitCredentialService';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import {
@@ -20,18 +45,25 @@ import {
     isNotAvailable,
 } from '../../utils/environmentUtils';
 
-import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
 import { credentialsProvider } from '../../providers/credentialsProvider';
-import { WorkspaceProvider } from '../../providers/workspaceProvider';
 import { EnvironmentsExternalUriProvider } from '../../providers/externalUriProvider';
-import { resourceUriProviderFactory } from '../../providers/resourceUriProviderFactory';
-import { postServiceWorkerMessage } from '../../common/post-message';
-import { disconnectCloudEnv } from '../../common/service-worker-messages';
-import { UserDataProvider } from '../../utils/userDataProvider';
 
-import { vscode } from '../../utils/vscode';
+const getWorkspaceUrl = (defaultUrl: URL) => {
+    if (!isHostedOnGithub()) {
+        return defaultUrl;
+    }
 
-import { ILocalCloudEnvironment, ICloudEnvironment } from '../../interfaces/cloudenvironment';
+    const result = PostMessageRepoInfoRetriever.getStoredInfo();
+    if (!result) {
+        throw new Error('No environmentId info found.'); 
+    }
+
+    const url = new URL(`https://github.com/workspaces/${result.ownerUsername}/${result.workspaceId}`);
+
+    return url;
+}
+
+
 import { telemetry } from '../../utils/telemetry';
 import { updateFavicon } from '../../utils/updateFavicon';
 import { defaultConfig } from '../../services/configurationService';
@@ -39,12 +71,13 @@ import { createUniqueId } from '../../dependencies';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
-import './workbench.css';
 import { CommunicationAdapter } from '../../services/communicationAdapter';
 import { SplashCommunicationProvider } from '../../providers/splashCommunicationProvider';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
-import { getVscodeQuality, getVSCodeVersion } from '../../utils/featureSet';
+
+import './workbench.css';
+import { PostMessageRepoInfoRetriever } from '../../split/github/postMessageRepoInfoRetriever';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -58,8 +91,9 @@ export interface WorkbenchProps {
     SplashScreenComponent: React.JSXElementConstructor<IWorkbenchSplashScreenProps>;
     PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
+    apiEndpoint: string;
     token: string | undefined;
-    environmentInfo: ILocalCloudEnvironment | undefined;
+    environmentInfo: ILocalEnvironment | undefined;
     params: URLSearchParams;
     correlationId?: string | null;
     isValidEnvironmentFound: boolean;
@@ -76,6 +110,7 @@ const logger = createTrace('WorkbenchView');
 class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     constructor(props: WorkbenchProps, state: IWorkbenchState) {
         super(props, state);
+        
         this.state = {
             connectError: null,
             connectRequested: false,
@@ -134,21 +169,22 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     };
 
     // tslint:disable-next-line: max-func-body-length
-    checkForEnvironmentStatus(environmentInfo: ILocalCloudEnvironment | undefined) {
+    checkForEnvironmentStatus(environmentInfo: ILocalEnvironment | undefined) {
         if (!environmentInfo) {
             return;
         }
 
         if (isEnvironmentAvailable(environmentInfo)) {
-            if (this.communicationProvider) {
+            if (this.communicationProvider && environmentInfo.id) {
                 this.communicationProvider.postEnvironmentId(environmentInfo.id);
             }
 
             this.cancelPolling();
-            this.mountWorkbench(environmentInfo);
+            this.mountWorkbench(environmentInfo as IEnvironment);
 
             return;
         }
+
 
         if (this.state && this.state.connectError) {
             return;
@@ -161,6 +197,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 this.props.liveShareEndpoint,
                 this.correlationId || createUniqueId()
             );
+
             if (environmentInfo.connection) {
                 try {   
                     communicationAdapter.connect(environmentInfo.connection.sessionId);
@@ -174,10 +211,10 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             return;
         }
 
-        if (!this.isConnecting && isSuspended(environmentInfo)) {
+        if (!this.isConnecting && isSuspended(environmentInfo) && environmentInfo.id) {
             this.isConnecting = true;
             this.props
-                .connectEnvironment(environmentInfo.id!, environmentInfo.state)
+                .connectEnvironment(environmentInfo.id, environmentInfo.state)
                 .catch((error) => {
                     this.setState({ connectError: error });
                 })
@@ -191,7 +228,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
     }
 
-    pollForActivatingEnvironment(environmentInfo: ILocalCloudEnvironment) {
+    pollForActivatingEnvironment(environmentInfo: ILocalEnvironment) {
         if (isActivating(environmentInfo)) {
             if (this.interval) {
                 return;
@@ -227,7 +264,13 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     };
 
     // tslint:disable-next-line: max-func-body-length
-    async mountWorkbench(environmentInfo: ICloudEnvironment) {
+    async mountWorkbench(environmentInfo: IEnvironment) {
+        const {
+            token,
+            liveShareEndpoint,
+            apiEndpoint
+        } = this.props;
+
         if (this.workbenchMounted) {
             return;
         } else {
@@ -240,18 +283,38 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             return;
         }
 
-        if (!this.props.token) {
+        if (!token) {
             throw new Error('No access token present.');
         }
 
-        const quality = getVscodeQuality();
+        const envConnector = new EnvConnector(async (e) => {
+            const {
+                workspaceClient,
+                workspaceService,
+                rpcConnection
+            } = e;
+
+            // Expose credential service
+            const gitCredentialService = new GitCredentialService(workspaceService, rpcConnection);
+            await gitCredentialService.shareService();
+
+            // Expose browser sync service
+            const sourceEventService = workspaceClient.getServiceProxy<vsls.SourceEventService>(
+                vsls.SourceEventService
+            );
+            
+            new BrowserSyncService(sourceEventService);
+        });
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(
             environmentInfo,
-            this.props.token,
-            this.props.liveShareEndpoint,
-            quality
+            token,
+            liveShareEndpoint,
+            getVSCodeVersion(),
+            getExtensions(),
+            environmentInfo.id,
+            apiEndpoint,
         );
 
         const listener = () => {
@@ -266,15 +329,16 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         };
         window.addEventListener('beforeunload', listener);
 
-        const vscodeVersion = getVSCodeVersion(quality);
-
+        const vscodeVersion = getVSCodeVersion();
         const resourceUriProvider = resourceUriProviderFactory(
             vscodeVersion.commit,
             environmentInfo.connection.sessionId,
             envConnector
         );
 
-        const userDataProvider = new UserDataProvider();
+        const defaultSettings = isHostedOnGithub() ? '{"workbench.colorTheme": "Github"}' : '';
+        
+        const userDataProvider = new UserDataProvider(defaultSettings);
         await userDataProvider.initializeDBProvider();
 
         const correlationId = this.correlationId;
@@ -282,7 +346,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             throw new Error('correlationId must be set at this point');
         }
 
-        const { liveShareEndpoint, token } = this.props;
         const VSLSWebSocketFactory: IWebSocketFactory = {
             create(url: string) {
                 return new VSLSWebSocket(
@@ -291,14 +354,24 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     environmentInfo,
                     liveShareEndpoint,
                     correlationId,
-                    quality
+                    getVSCodeVersion(),
+                    envConnector,
+                    logger.verbose,
+                    async () => { return environmentInfo; },
+                    getExtensions(),
+                    environmentInfo.id,
+                    apiEndpoint,
                 );
             },
         };
 
         const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(telemetry);
 
-        const workspaceProvider = new WorkspaceProvider(this.props.params, environmentInfo);
+        const workspaceProvider = new WorkspaceProvider(
+            this.props.params,
+            environmentInfo,
+            getWorkspaceUrl
+        );
 
         const externalUriProvider = new EnvironmentsExternalUriProvider(
             environmentInfo,
@@ -311,22 +384,17 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             return externalUriProvider.resolveExternalUri(uri);
         };
 
-        const link: IApplicationLink = {
-            uri: workspaceProvider.getApplicationUri(quality),
-            label: 'Open in Desktop',
-        };
-
-        const applicationLinks = [link];
+        const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
 
         const config: IWorkbenchConstructionOptions = {
-            workspaceProvider,
             remoteAuthority: `vsonline+${environmentInfo.id}`,
             webSocketFactory: VSLSWebSocketFactory,
-            urlCallbackProvider: new UrlCallbackProvider(),
             connectionToken: vscodeVersion.commit,
+            workspaceProvider,
             credentialsProvider,
-            resourceUriProvider,
             userDataProvider,
+            urlCallbackProvider: new UrlCallbackProvider(),
+            resourceUriProvider,
             resolveExternalUri,
             resolveCommonTelemetryProperties,
             applicationLinks,
@@ -340,10 +408,10 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
     private renderWorkbench() {
         const { environmentInfo, SplashScreenComponent } = this.props;
-
         if (!environmentInfo) {
             return <Loader></Loader>;
         }
+
         if (!isNotAvailable(environmentInfo!)) {
             return (
                 <div className='vsonline-workbench'>
@@ -385,7 +453,10 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         return e.id === props.match.params.id;
     });
 
-    const { liveShareEndpoint } = state.configuration || defaultConfig;
+    const {
+        liveShareEndpoint,
+        apiEndpoint
+    } = state.configuration || defaultConfig;
 
     const params = new URLSearchParams(props.location.search);
 
@@ -398,6 +469,7 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         environmentInfo,
         params,
         liveShareEndpoint,
+        apiEndpoint,
         correlationId: params.get('correlationId'),
         autoStart: params.get('autoStart') !== 'false',
         isValidEnvironmentFound,

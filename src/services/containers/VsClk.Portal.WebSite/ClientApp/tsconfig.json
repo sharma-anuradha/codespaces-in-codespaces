@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2017",
+    "outDir": "./build",
     "lib": [
       "dom",
       "dom.iterable",
@@ -28,7 +29,13 @@
   ],
   "references": [
     {
-        "path": "./vso-client-core"
+      "path": "./vso-client-core",
+    },
+    {
+      "path": "./vso-ts-agent",
+    },
+    {
+      "path": "./vso-workbench",
     }
   ]
 }

@@ -1,6 +1,7 @@
+import { EnvironmentStateInfo, IEnvironment } from 'vso-client-core';
+
 import * as envRegService from '../services/envRegService';
 import { useDispatch } from './middleware/useDispatch';
-import { StateInfo, ICloudEnvironment } from '../interfaces/cloudenvironment';
 import { stateChangeEnvironmentAction } from './environmentStateChange';
 import { ServiceResponseError } from './middleware/useWebClient';
 import { environmentErrorCodeToString } from '../utils/environmentUtils';
@@ -21,17 +22,17 @@ export const connectEnvironmentFailureAction = (environmentId: string, error: Er
 // Exposed - callable actions that have side-effects
 export async function connectEnvironment(
     id: string,
-    environmentState: StateInfo
-): Promise<ICloudEnvironment | undefined> {
+    environmentState: EnvironmentStateInfo
+): Promise<IEnvironment | undefined> {
     // 1. Try to connect environment
     const dispatch = useDispatch();
 
     dispatch(connectEnvironmentAction(id));
-    let isSuspended = environmentState === StateInfo.Shutdown;
+    let isSuspended = environmentState === EnvironmentStateInfo.Shutdown;
 
     try {
         if (isSuspended) {
-            dispatch(stateChangeEnvironmentAction(id, StateInfo.Starting, StateInfo.Shutdown));
+            dispatch(stateChangeEnvironmentAction(id, EnvironmentStateInfo.Starting, EnvironmentStateInfo.Shutdown));
         }
 
         const environment = await envRegService.connectEnvironment(id, environmentState);
@@ -70,7 +71,7 @@ export async function connectEnvironment(
             // If starting environment failed, put it to right state.
             let e = await envRegService.getEnvironment(id);
             if (e) {
-                dispatch(stateChangeEnvironmentAction(id, e.state, StateInfo.Shutdown));
+                dispatch(stateChangeEnvironmentAction(id, e.state, EnvironmentStateInfo.Shutdown));
             }
         }
 

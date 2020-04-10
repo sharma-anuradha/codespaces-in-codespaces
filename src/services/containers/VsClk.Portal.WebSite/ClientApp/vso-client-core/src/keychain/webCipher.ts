@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 import { ICipher } from '../interfaces/ICipher';
 import { createTrace } from '../utils/createTrace';
 

@@ -121,7 +121,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 authProperties);
         }
 
-        [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.CookeAuthenticationSchemes)]
         [HttpGet("~/keychain-keys")]
         public async Task<IActionResult> GetKeysAsync()
         {

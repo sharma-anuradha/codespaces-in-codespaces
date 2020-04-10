@@ -1,70 +1,71 @@
-import { isDefined } from './isDefined';
 import {
-    ILocalCloudEnvironment,
-    ICloudEnvironment,
-    StateInfo,
+    IEnvironment,
+    EnvironmentStateInfo,
+    isDefined,
+    ILocalEnvironment,
     EnvironmentType,
-    EnvironmentErrorCodes,
-} from '../interfaces/cloudenvironment';
+    EnvironmentErrorCodes
+} from 'vso-client-core';
+
 import { ISku } from '../interfaces/ISku';
 
 export function isEnvironmentAvailable(
-    local: ILocalCloudEnvironment | undefined
-): local is ICloudEnvironment {
+    local: ILocalEnvironment | undefined
+): local is IEnvironment {
     return (
         isDefined(local) &&
         isDefined(local.id) &&
         isDefined(local.connection) &&
         isDefined(local.connection.sessionPath) &&
-        local.state === StateInfo.Available
+        local.state === EnvironmentStateInfo.Available
     );
 }
 
-export function isSelfHostedEnvironment({ type }: ILocalCloudEnvironment) {
+export function isSelfHostedEnvironment({ type }: ILocalEnvironment) {
     return (
         isDefined(type) && type.toLowerCase() === EnvironmentType.StaticEnvironment.toLowerCase()
     );
 }
 
-export function environmentIsALie({ lieId }: ILocalCloudEnvironment) {
+export function environmentIsALie({ lieId }: ILocalEnvironment) {
     return lieId != null;
 }
 
-export function isNotAvailable({ state }: ILocalCloudEnvironment): boolean {
-    return state !== StateInfo.Available;
+export function isNotAvailable({ state }: ILocalEnvironment): boolean {
+    return state !== EnvironmentStateInfo.Available;
 }
 
-export function isNotSuspendable(environment: ILocalCloudEnvironment): boolean {
+export function isNotSuspendable(environment: ILocalEnvironment): boolean {
     const { state } = environment;
     return (
-        state === StateInfo.Provisioning ||
-        state === StateInfo.Failed ||
-        state === StateInfo.Shutdown ||
-        state === StateInfo.Deleted ||
+        state === EnvironmentStateInfo.Provisioning ||
+        state === EnvironmentStateInfo.Failed ||
+        state === EnvironmentStateInfo.Shutdown ||
+        state === EnvironmentStateInfo.Deleted ||
         isSelfHostedEnvironment(environment)
     );
 }
 
-export function isNotConnectable({ state }: ILocalCloudEnvironment): boolean {
-    return state !== StateInfo.Available &&
-        state !== StateInfo.Shutdown &&
-        state !== StateInfo.Provisioning &&
-        state !== StateInfo.Starting;
+export function isNotConnectable({ state }: ILocalEnvironment): boolean {
+    return state !== EnvironmentStateInfo.Available &&
+        state !== EnvironmentStateInfo.Shutdown &&
+        state !== EnvironmentStateInfo.Provisioning &&
+        state !== EnvironmentStateInfo.Starting;
 }
 
-export function isSuspended(cloudenvironment: ILocalCloudEnvironment): boolean {
-    return cloudenvironment.state === StateInfo.Shutdown;
+export function isSuspended(cloudenvironment: ILocalEnvironment): boolean {
+    return cloudenvironment.state === EnvironmentStateInfo.Shutdown;
 }
 
-export function isCreating(cloudenvironment: ILocalCloudEnvironment): boolean {
-    return cloudenvironment.state === StateInfo.Provisioning;
+export function isCreating(cloudenvironment: ILocalEnvironment): boolean {
+    return cloudenvironment.state === EnvironmentStateInfo.Provisioning;
 }
 
-export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvironment, 'state'>) {
+export function isActivating({ state }: Pick<ILocalEnvironment | IEnvironment, 'state'>) {
     switch (state) {
-        case StateInfo.ShuttingDown:
-        case StateInfo.Starting:
-        case StateInfo.Provisioning:
+        case EnvironmentStateInfo.ShuttingDown:
+        case EnvironmentStateInfo.Starting:
+        case EnvironmentStateInfo.Provisioning:
             return true;
 
         default:
@@ -72,20 +73,20 @@ export function isActivating({ state }: Pick<ILocalCloudEnvironment | ICloudEnvi
     }
 }
 
-export function isInStableState({ state }: ILocalCloudEnvironment): boolean {
-    return state === StateInfo.Available ||
-        state === StateInfo.Shutdown;
+export function isInStableState({ state }: ILocalEnvironment): boolean {
+    return state === EnvironmentStateInfo.Available ||
+        state === EnvironmentStateInfo.Shutdown;
 }
 
-export function stateToDisplayName(state: StateInfo) {
+export function stateToDisplayName(state: EnvironmentStateInfo) {
     switch (state) {
-        case StateInfo.Provisioning:
+        case EnvironmentStateInfo.Provisioning:
             return 'Creating';
-        case StateInfo.Failed:
+        case EnvironmentStateInfo.Failed:
             return 'Failed to Create';
-        case StateInfo.Shutdown:
+        case EnvironmentStateInfo.Shutdown:
             return 'Suspended';
-        case StateInfo.ShuttingDown:
+        case EnvironmentStateInfo.ShuttingDown:
             return 'Suspending';
         default:
             return state;

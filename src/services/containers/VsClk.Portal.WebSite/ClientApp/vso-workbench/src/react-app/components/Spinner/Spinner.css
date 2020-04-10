@@ -1,0 +1,55 @@
+.vso-ms-spinner {
+  margin: 1rem auto;
+  width: 2rem;
+  height: 2rem;
+  position: relative;
+}
+  
+.vso-ms-spinner__rect {
+  width: 50%;
+  height: 50%;
+  position: absolute;
+  animation: 6s vso-ms-spinner-animation infinite;
+}
+
+.vso-ms-spinner--stopped .vso-ms-spinner__rect {
+  animation: none;
+}
+
+.vso-ms-spinner__rect--1 {
+  background-color: #F25022;
+  top: -1px;
+  left: -1px;
+  animation-delay: 1s;
+}
+
+.vso-ms-spinner__rect--2 {
+  background-color: #7FBA02;
+  top: -1px;
+  right: 0;
+  animation-delay: 1.25s;
+}
+
+.vso-ms-spinner__rect--3 {
+  background-color: #00A4EF;
+  bottom: 0;
+  left: -1px;
+  animation-delay: 1.5s; 
+}
+
+.vso-ms-spinner__rect--4 {
+  background-color: #FFB902;
+  bottom: 0;
+  right: 0;
+  animation-delay: 1.75s;
+}
+
+@keyframes vso-ms-spinner-animation {
+  0%, 1% {
+      transform: perspective(120px) rotateX(180deg);
+  } 7%, 50% {
+      transform: perspective(120px) rotateX(0deg);
+  } 57%, 100% {
+    transform: perspective(120px)  rotateX(0deg) rotateY(180deg);
+  }
+}

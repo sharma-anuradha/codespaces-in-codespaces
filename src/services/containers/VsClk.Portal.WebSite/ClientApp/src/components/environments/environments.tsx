@@ -6,8 +6,13 @@ import { Spinner } from 'office-ui-fabric-react/lib/Spinner';
 import { PrimaryButton, IButton } from 'office-ui-fabric-react/lib/Button';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 
+import {
+    isHostedOnGithub,
+    isDefined,
+    ILocalEnvironment
+} from 'vso-client-core';
+
 import { PortalLayout } from '../portalLayout/portalLayout';
-import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
@@ -17,19 +22,17 @@ import { newPlanPath, newEnvironmentPath } from '../../routerPaths';
 import { EnvironmentList } from './get-environment-cards-for-plan';
 
 import './environments.css';
-import { isDefined } from '../../utils/isDefined';
 import { fetchEnvironments } from '../../actions/fetchEnvironments';
 import { pollActivatingEnvironments } from '../../actions/pollEnvironment';
 import { environmentIsALie } from '../../utils/environmentUtils';
 import { blurCreateEnvironmentButton } from '../../actions/createEnvironment';
-import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
 
 interface EnvironmentsPanelProps extends RouteComponentProps {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...name: Parameters<typeof shutdownEnvironment>) => void;
     pollActivatingEnvironments(): void;
     pollEnvironmentsForState(): void;
-    environments: ILocalCloudEnvironment[];
+    environments: ILocalEnvironment[];
     isLoading: boolean;
     shouldCreateEnvironmentReceiveFocus: boolean;
     shouldOpenPlanCreation: boolean;
@@ -139,8 +142,8 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
 
 export function getPlanEnvironments(
     plan: ActivePlanInfo | null,
-    environments: ILocalCloudEnvironment[]
-): ILocalCloudEnvironment[] {
+    environments: ILocalEnvironment[]
+): ILocalEnvironment[] {
     if (!plan) {
         return [];
     }

@@ -1,12 +1,15 @@
+import React from 'react';
+
 import { Image, Stack, StackItem } from 'office-ui-fabric-react';
 import { Text } from 'office-ui-fabric-react/lib/Text';
-import React from 'react';
+import { isHostedOnGithub } from 'vso-client-core';
+
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 import '../portalLayout/portalLayout.css';
 import errorUfo from './error-ufo-404.svg';
 import './pageNotFound.css';
-import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
+
 
 export function PageNotFound() {
     return (

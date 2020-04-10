@@ -15,7 +15,7 @@ module.exports = (app) => {
 
     // VSCode source maps
     app.use((req, res, next) => {
-        const workbenchBaseUrl = '/static/web-standalone/out/vs/workbench/';
+        const workbenchBaseUrl = '/workbench-page/static/web-standalone/out/vs/workbench/';
         const sourcemapsHost = 'https://ticino.blob.core.windows.net/sourcemaps';
 
         if (req.originalUrl.startsWith(`${workbenchBaseUrl}${sourcemapsHost}`)) {

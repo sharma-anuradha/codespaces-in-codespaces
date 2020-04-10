@@ -1,6 +1,10 @@
-    import { createUniqueId } from '../dependencies';
-import { Signal, createTrace, localStorageKeychain } from 'vso-client-core';
-import { isHostedOnGithub } from '../utils/isHostedOnGithub';
+import { createUniqueId } from '../dependencies';
+import {
+    Signal,
+    createTrace,
+    localStorageKeychain,
+    isHostedOnGithub
+} from 'vso-client-core';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { SupportedGitService } from '../utils/gitUrlNormalization';
 import { IRepoInfo, PostMessageRepoInfoRetriever } from '../split/github/postMessageRepoInfoRetriever';
@@ -160,6 +164,8 @@ export class GithubAuthenticationAttempt implements IAuthenticationAttempt {
         if (isHostedOnGithub() && !this.repoInfo) {
             const postMessageRepoInfoRetriever = new PostMessageRepoInfoRetriever();
             this.repoInfo = await postMessageRepoInfoRetriever.getRepoInfo();
+
+            postMessageRepoInfoRetriever.dispose();
 
             if (!this.repoInfo) {
                 throw new Error('Cannot get repo info');

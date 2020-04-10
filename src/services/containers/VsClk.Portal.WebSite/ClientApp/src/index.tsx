@@ -14,8 +14,7 @@ import { getHostingModules } from './getHostingInitModules';
 import { initHostingHtmlTags } from './initHostingHtmlTags';
 
 import { cleanupLegacyMSALCookies } from './utils/cleanupLegacyMSALCookies';
-import { isHostedOnGithub } from './utils/isHostedOnGithub';
-import { isInIframe } from 'vso-client-core';
+import { isInIframe, isHostedOnGithub } from 'vso-client-core';
 import { isInPopupWindow } from './utils/isInPopupWindow';
 
 import './index.css';

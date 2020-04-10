@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.AspNetCore.Authentication;
@@ -27,9 +30,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
     public static class AuthenticationServiceCollectionExtensions
     {
         public const string VsoAuthenticationScheme = "vso";
+        public const string VsoBodyAuthenticationScheme = "vso-body";
+        public const string CookieNoSameSiteScheme = "cookies-no-same-site-scheme";
 
         public const string JwtBearerAuthenticationSchemes =
             JwtBearerDefaults.AuthenticationScheme + "," + VsoAuthenticationScheme;
+
+        public const string CookeAuthenticationSchemes =
+            CookieAuthenticationDefaults.AuthenticationScheme + "," + CookieNoSameSiteScheme;
 
         public static IServiceCollection AddPortalWebSiteAuthentication(
             this IServiceCollection services,
@@ -56,22 +64,25 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                     options.DefaultAuthenticateScheme = JwtBearerAuthenticationSchemes;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookieAuthentication()
+                .AddCookieAuthentication(CookieAuthenticationDefaults.AuthenticationScheme, true)
+                .AddCookieAuthentication(CookieNoSameSiteScheme, false)
                 .AddAadAuthentication()
-                .AddVsoAuthentication(appSettings);
+                .AddVsoAuthentication(appSettings, VsoAuthenticationScheme, false)
+                .AddVsoAuthentication(appSettings, VsoBodyAuthenticationScheme, true);
 
             return services;
         }
 
         private static AuthenticationBuilder AddCookieAuthentication(
-            this AuthenticationBuilder builder)
+            this AuthenticationBuilder builder, string scheme, bool isSameSite)
         {
-            return builder.AddCookie(options =>
+            return builder.AddCookie(scheme, options =>
             {
                 options.LoginPath = "/login";
                 options.LogoutPath = "/signout";
                 options.AccessDeniedPath = "/accessdenied";
                 options.Cookie.Name = "vssaas.session";
+                options.Cookie.SameSite = (isSameSite) ? SameSiteMode.Lax : SameSiteMode.None;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
                 options.Events.OnRedirectToLogin = ctx =>
@@ -124,12 +135,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 
         private static AuthenticationBuilder AddVsoAuthentication(
             this AuthenticationBuilder builder,
-            AppSettings appSettings)
+            AppSettings appSettings, string scheme, bool isBody)
         {
             var cascadeJwtReader = new JwtReader();
 
             builder.AddJwtBearer(
-                VsoAuthenticationScheme,
+                scheme,
                 options =>
                 {
                     var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
@@ -140,6 +151,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                     {
                         OnTokenValidated = JwtTokenValidatedAsync,
                     };
+
+                    if (isBody) {
+                        options.Events.OnMessageReceived = OnVSOBodyAuthenticationMessage;
+                    }
                 })
                 .Services
                 .AddSingleton<IAsyncWarmup>((serviceProvider) =>
@@ -161,6 +176,36 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 });
 
             return builder;
+        }
+
+        private static async Task OnVSOBodyAuthenticationMessage(MessageReceivedContext context)
+        {
+
+            string authorization = context.Request.Headers["Authorization"];
+
+            // If no authorization header found, nothing to process further
+            if (!string.IsNullOrEmpty(authorization))
+            {
+                context.NoResult();
+                return;
+            }
+
+            var reader = new StreamReader(context.Request.Body);
+            var rawMessage = await reader.ReadToEndAsync();
+
+            try {
+                var bodyParams = HttpUtility.ParseQueryString(rawMessage);
+                var cascadeToken = bodyParams.Get("cascadeToken");
+
+                if (string.IsNullOrWhiteSpace(cascadeToken)) {
+                    context.NoResult();
+                    return;
+                }
+
+                context.Token = cascadeToken;
+            } catch (Exception) {
+                context.NoResult();
+            }
         }
 
         private static async Task JwtTokenValidatedAsync(TokenValidatedContext context)

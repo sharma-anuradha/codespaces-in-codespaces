@@ -23,16 +23,20 @@ export class AuthServiceGithub {
          */
         addDefaultGithubKey();  
 
-        const postMessageInfoRetriever = new PostMessageRepoInfoRetriever();
+        this.repoInfo = PostMessageRepoInfoRetriever.getStoredInfo();
 
-        this.repoInfo = postMessageInfoRetriever.getStoredRepoInfo();
         if (this.repoInfo) {
             this.initializeSignal.complete(undefined);
             return;
         }
 
         window.onload = async () => {
+            const postMessageInfoRetriever = new PostMessageRepoInfoRetriever();
+
             this.repoInfo = await postMessageInfoRetriever.getRepoInfo();
+
+            postMessageInfoRetriever.dispose();
+            
             this.initializeSignal.complete(undefined);
         };
 

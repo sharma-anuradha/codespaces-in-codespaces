@@ -10,6 +10,8 @@ import { ComboBox, IComboBoxOption, IComboBoxProps } from 'office-ui-fabric-reac
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { KeyCodes } from '@uifabric/utilities';
 
+import { isDefined } from 'vso-client-core';
+
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
 
 import { Loader } from '../loader/loader';
@@ -24,7 +26,6 @@ import { getLocations } from '../../actions/locations-actions';
 import { IAzureSubscription } from '../../interfaces/IAzureSubscription';
 import { Collapsible } from '../collapsible/collapsible';
 import { createUniqueId } from '../../dependencies';
-import { isDefined } from '../../utils/isDefined';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 import { PlanCreationError, PlanCreationFailureReason } from './PlanCreationError';
 import { createPlan } from '../../actions/createPlan';

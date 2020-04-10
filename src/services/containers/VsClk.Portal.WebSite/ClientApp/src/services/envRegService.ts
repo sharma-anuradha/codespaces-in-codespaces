@@ -1,9 +1,8 @@
 import {
-    ICloudEnvironment,
     CreateEnvironmentParameters as CreateEnvironmentParametersBase,
-    StateInfo,
     EnvPersonalization,
 } from '../interfaces/cloudenvironment';
+import { IEnvironment, EnvironmentStateInfo } from 'vso-client-core';
 
 import { useWebClient } from '../actions/middleware/useWebClient';
 import { useActionContext } from '../actions/middleware/useActionContext';
@@ -16,13 +15,13 @@ import { evaluateFeatureFlag, customContainers } from '../utils/featureSet';
 // and prevents direct re-exporting of types.
 export type CreateEnvironmentParameters = CreateEnvironmentParametersBase;
 
-export async function fetchEnvironments(): Promise<ICloudEnvironment[]> {
+export async function fetchEnvironments(): Promise<IEnvironment[]> {
     const { configuration } = useActionContext().state;
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
     }
 
-    const emptyEnvironmentList: ICloudEnvironment[] = [];
+    const emptyEnvironmentList: IEnvironment[] = [];
 
     const { environmentRegistrationEndpoint } = configuration;
     const webClient = useWebClient();
@@ -38,14 +37,14 @@ export async function fetchEnvironments(): Promise<ICloudEnvironment[]> {
         environment.updated = new Date(environment.updated);
     });
 
-    return fetchedEnvironments.sort((a: ICloudEnvironment, b: ICloudEnvironment) => {
+    return fetchedEnvironments.sort((a: IEnvironment, b: IEnvironment) => {
         return b.updated.getTime() - a.updated.getTime();
     });
 }
 
 export async function createEnvironment(
     environment: CreateEnvironmentParameters
-): Promise<ICloudEnvironment> {
+): Promise<IEnvironment> {
     const configuration = useActionContext().state.configuration;
     const containers = evaluateFeatureFlag(customContainers);
 
@@ -90,7 +89,7 @@ export async function createEnvironment(
             gitConfig: { userName, userEmail },
         },
         personalization,
-        state: StateInfo.Provisioning,
+        state: EnvironmentStateInfo.Provisioning,
         connection: {
             sessionId: '',
             sessionPath: '',
@@ -104,7 +103,7 @@ export async function createEnvironment(
     return await webClient.post(environmentRegistrationEndpoint, body);
 }
 
-export async function getEnvironment(id: string): Promise<ICloudEnvironment | undefined> {
+export async function getEnvironment(id: string): Promise<IEnvironment | undefined> {
     const configuration = useActionContext().state.configuration;
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
@@ -163,15 +162,15 @@ export async function shutdownEnvironment(id: string): Promise<void> {
 
 export async function connectEnvironment(
     id: string,
-    state: StateInfo
-): Promise<ICloudEnvironment | undefined> {
+    state: EnvironmentStateInfo
+): Promise<IEnvironment | undefined> {
     const actionContext = useActionContext();
     const configuration = actionContext.state.configuration;
     if (!configuration) {
         throw new Error('Configuration must be fetched before calling EnvReg service.');
     }
 
-    if (state === StateInfo.Shutdown) {
+    if (state === EnvironmentStateInfo.Shutdown) {
         const { environmentRegistrationEndpoint } = configuration;
         const webClient = useWebClient();
         await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null, {

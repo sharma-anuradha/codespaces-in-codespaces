@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-
 import { ICipherPayload } from '../interfaces/ICipherPayload';
 import { IKeychainKey } from '../interfaces/IKeychainKey';
 import { randomBytes } from '../utils/randomBytes';

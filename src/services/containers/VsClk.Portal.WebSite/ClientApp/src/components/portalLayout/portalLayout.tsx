@@ -1,10 +1,11 @@
 import React from 'react';
 
+import { isHostedOnGithub } from 'vso-client-core';
+
 import { TitleBar } from '../titlebar/titlebar';
 import { Navigation } from '../navigation/navigation';
 
 import './portalLayout.css';
-import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
 
 const MaybeNavigation = (props: { hideNavigation?: boolean; }) => {
     if (props.hideNavigation) {

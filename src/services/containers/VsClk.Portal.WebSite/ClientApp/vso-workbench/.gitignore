@@ -1,0 +1,7 @@
+dist
+public/dist
+public/web-standalone
+
+node_modules
+/build
+/*.log

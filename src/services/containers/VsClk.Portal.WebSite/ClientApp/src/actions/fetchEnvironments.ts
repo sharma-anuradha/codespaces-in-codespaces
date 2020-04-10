@@ -1,4 +1,5 @@
-import { ICloudEnvironment } from '../interfaces/cloudenvironment';
+import { IEnvironment } from 'vso-client-core';
+
 import * as envRegService from '../services/envRegService';
 
 import { action } from './middleware/useActionCreator';
@@ -12,7 +13,7 @@ export const fetchEnvironmentsFailureActionType = 'async.environments.fetch.fail
 
 // Basic actions dispatched for reducers
 const fetchEnvironmentsAction = () => action(fetchEnvironmentsActionType);
-const fetchEnvironmentsSuccessAction = (environments: ICloudEnvironment[]) =>
+const fetchEnvironmentsSuccessAction = (environments: IEnvironment[]) =>
     action(fetchEnvironmentsSuccessActionType, { environments });
 const fetchEnvironmentsFailureAction = (error: Error) =>
     action(fetchEnvironmentsFailureActionType, error);

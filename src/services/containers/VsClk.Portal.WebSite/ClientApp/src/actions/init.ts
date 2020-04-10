@@ -8,7 +8,8 @@ import { telemetry } from '../utils/telemetry';
 import { tryGetGitHubCredentialsLocal } from './getGitHubCredentials';
 import { tryGetAzDevCredentialsLocal } from './getAzDevCredentials';
 
-import { register as registerServiceWorker } from '../serviceWorker';
+import { registerServiceWorker } from 'vso-ts-agent';
+
 import { getPlans } from './plans-actions';
 import { useActionContext } from './middleware/useActionContext';
 import { setCommonAuthTokenAction } from './getAuthTokenActionCommon';

@@ -2,7 +2,6 @@ import { ITokenWithMsalAccount } from '../typings/ITokenWithMsalAccount';
 import { inLocalStorageJWTTokenCacheFactory } from '../cache/localstorageJWTCache';
 import { getTokenExpiration } from '../utils/getTokenExpiration';
 import { expirationTimeBackgroundTokenRefreshThreshold } from '../constants';
-import { debounceInterval } from '../utils/debounce-interval';
 
 import {
     logout as logoutFromArmAuthService,
@@ -24,6 +23,7 @@ import {
     localStorageKeychain,
     setKeychainKeys,
     addRandomKey,
+    debounceInterval,
 } from 'vso-client-core';
 import { getUserFromMsalToken } from '../utils/getUserFromMsalToken';
 

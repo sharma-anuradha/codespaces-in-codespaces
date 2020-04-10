@@ -1,0 +1,58 @@
+/* Main Pane */
+.vsonline-splash-screen-main {
+    display: flex;
+}
+
+/* Editor side of the splash screen */
+.vsonline-splash-screen-editor {
+    flex: 1;
+}
+
+/* Splash screen body */
+
+.vsonline-splash-screen-body {
+    position: relative;
+    background: #1E1E1E;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Editor Header */
+.vsonline-splash-screen-titlebar {
+    position: relative;
+    height: 35px;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    background: #252526;
+}
+
+/* Tabs */
+.vsonline-splash-screen-titlebar-tab {
+    position: relative;
+    width: 122px;
+    height: 35px;
+    left: 0px;
+    top: 0px;
+    background: #1E1E1E;
+}
+
+/* Sidebar */
+.vsonline-splash-screen-tree-pane {
+    position: relative;
+    width: 264px;
+    bottom: 22px;
+    /* Dark / Base / Base 20 */
+    background: #252526;
+}
+
+/* Template / Default */
+.vsonline-splash-screen-extensions-pane {
+    position: relative;
+    width: 48px;
+    left: 0px;
+    bottom: 1px;
+    /* Dark / Base / Base 17 */
+    background: #333333;
+}
+

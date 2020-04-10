@@ -1,13 +1,14 @@
+import { ILocalEnvironment } from 'vso-client-core';
+
 import {
     buildEnvironmentSettingsUpdateRequest,
     getDropdownOptionForSettingsUpdates,
 } from '../environment-card';
-import { ILocalCloudEnvironment } from '../../../interfaces/cloudenvironment';
 import { ActivePlanInfo } from '../../../reducers/plans-reducer';
 
 describe('environment-card', () => {
     describe('buildEnvironmentSettingsUpdateRequest', () => {
-        const environment = <ILocalCloudEnvironment>{
+        const environment = <ILocalEnvironment>{
             skuName: 'skuName',
             autoShutdownDelayMinutes: 0,
         };
@@ -64,7 +65,7 @@ describe('environment-card', () => {
             availableSkus: [sku1, sku2],
         };
 
-        const environment = <ILocalCloudEnvironment>{
+        const environment = <ILocalEnvironment>{
             skuName: sku1.name,
             autoShutdownDelayMinutes: 0,
         };

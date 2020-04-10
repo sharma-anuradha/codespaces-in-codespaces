@@ -1,28 +1,18 @@
-import { ICredentialsProvider } from 'vscode-web';
+import {
+    CredentialsProvider,
+    IAuthStrategy,
+    MsalAuthStrategy as MsalAuthStrategyWorkbench,
+    AADv2BrowserSyncStrategy as AADv2BrowserSyncStrategyWorkbench,
+    LiveShareWebStrategy as LiveShareWebStrategyWorkbench,
+} from 'vso-workbench';
 
-import { createTrace } from 'vso-client-core';
+import { localStorageKeychain } from 'vso-client-core';
 
 import { authService } from '../services/authService';
 import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
-import { localStorageKeychain } from 'vso-client-core';
 import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
 
-const trace = createTrace('credentials-provider:info');
-
-interface IAuthStrategy {
-    canHandleService(service: string, account: string): boolean;
-
-    getToken(service: string, account: string): Promise<string | null>;
-}
-
-class MsalAuthStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
-        const isVSCodeAccount = service === 'VS Code Account';
-        const isAADv2AccessToken = account === 'AADv2.accessToken';
-
-        return isVSCodeAccount && isAADv2AccessToken;
-    }
-
+class MsalAuthStrategy extends MsalAuthStrategyWorkbench {
     async getToken(service: string, account: string): Promise<string | null> {
         const token = await authService.getCachedToken();
 
@@ -34,11 +24,7 @@ class MsalAuthStrategy implements IAuthStrategy {
     }
 }
 
-class AADv2BrowserSyncStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
-        return service === 'aadv2browsersync_vscode-account' || account === 'AADv2BrowserSync';
-    }
-
+class AADv2BrowserSyncStrategy extends AADv2BrowserSyncStrategyWorkbench {
     async getToken(service: string, account: string): Promise<string | null> {
         // TODO: write one that relies on store
         const token = await authService.getCachedToken();
@@ -56,7 +42,7 @@ class AADv2BrowserSyncStrategy implements IAuthStrategy {
  * We should move to `refreshToken`-based solution in the nearest future.
  */
 class AzureAccountStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
+    async canHandleService(service: string, account: string) {
         return service === 'VS Code Azure' && account === 'Azure';
     }
 
@@ -76,11 +62,7 @@ class AzureAccountStrategy implements IAuthStrategy {
     }
 }
 
-class LiveShareWebStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
-        return service === 'liveshare-web' && account === 'accesstoken';
-    }
-
+class LiveShareWebStrategy extends LiveShareWebStrategyWorkbench {
     async getToken(service: string, account: string): Promise<string | null> {
         const token = await authService.getCachedToken();
 
@@ -93,7 +75,7 @@ class LiveShareWebStrategy implements IAuthStrategy {
 }
 
 class GistPadStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
+    async canHandleService(service: string, account: string) {
         return service === 'vscode-gistpad' && account === 'gist-token';
     }
 
@@ -103,7 +85,7 @@ class GistPadStrategy implements IAuthStrategy {
 }
 
 class AzureDevOpsStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
+    async canHandleService(service: string, account: string) {
         return service === 'vscode-azdev' && account === 'accesstoken';
     }
 
@@ -113,7 +95,7 @@ class AzureDevOpsStrategy implements IAuthStrategy {
 }
 
 class GitHubStrategy implements IAuthStrategy {
-    canHandleService(service: string, account: string): boolean {
+    async canHandleService(service: string, account: string) {
         return (
             service === 'vso-github' &&
             (account.startsWith('github-token_') || account.startsWith('cascade-token_'))
@@ -126,70 +108,6 @@ class GitHubStrategy implements IAuthStrategy {
         }
 
         return (await localStorageKeychain.get(`vso-${account}`)) || null;
-    }
-}
-
-const GENERIC_PREFIX = 'vsonline.keytar';
-
-export class CredentialsProvider implements ICredentialsProvider {
-    constructor(private strategies: IAuthStrategy[]) {}
-
-    private generateGenericLocalStorageKey(service: string, account: string) {
-        return `${GENERIC_PREFIX}.${service}.${account}`;
-    }
-
-    async getPassword(service: string, account: string): Promise<string | null> {
-        trace.verbose('Responding to VSCode keytar-shim request.', { service, account });
-
-        const strategy = this.strategies.find((strategy) =>
-            strategy.canHandleService(service, account)
-        );
-
-        if (!strategy) {
-            trace.verbose('Cannot respond to VSCode keytar-shim request.', { service, account });
-
-            // generic keytar request
-            const genericKey = this.generateGenericLocalStorageKey(service, account);
-            const password = await localStorageKeychain.get(genericKey);
-
-            if (password) {
-                return password;
-            }
-
-            return null;
-        }
-
-        const token = await strategy.getToken(service, account);
-
-        if (token) {
-            return token;
-        }
-
-        trace.warn('No token available.');
-
-        return null;
-    }
-
-    async setPassword(service: string, account: string, password: string): Promise<void> {
-        const key = this.generateGenericLocalStorageKey(service, account);
-        await localStorageKeychain.set(key, password);
-    }
-
-    async deletePassword(service: string, account: string): Promise<boolean> {
-        const key = this.generateGenericLocalStorageKey(service, account);
-        const isPresent = localStorageKeychain.has(key);
-
-        await localStorageKeychain.delete(key);
-
-        return isPresent;
-    }
-
-    findPassword(service: string): Promise<string | null> {
-        return Promise.resolve(null);
-    }
-
-    findCredentials(service: string): Promise<{ account: string; password: string }[]> {
-        return Promise.resolve([]);
     }
 }
 

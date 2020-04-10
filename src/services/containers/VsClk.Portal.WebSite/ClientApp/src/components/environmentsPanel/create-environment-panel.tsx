@@ -8,6 +8,8 @@ import { TextField, ITextFieldProps } from 'office-ui-fabric-react/lib/TextField
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { KeyCodes, IRenderFunction } from '@uifabric/utilities';
 
+import { isDefined } from 'vso-client-core';
+
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
 import {
     Dropdown,
@@ -40,7 +42,6 @@ import {
 } from '../../utils/gitUrlNormalization';
 
 import './create-environment-panel.css';
-import { isDefined } from '../../utils/isDefined';
 import { Loader } from '../loader/loader';
 import { Signal } from 'vso-client-core';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';

@@ -1,9 +1,7 @@
-import { Buffer } from 'buffer';
-
-export const randomBytes = (length: number): Buffer => {
-    if (!window.crypto) {
+export const randomBytes = (length: number) => {
+    if (!self.crypto) {
         throw new Error('No crypto API available.');
     }
 
-    return window.crypto.getRandomValues(new Buffer(length));
+    return self.crypto.getRandomValues(new Buffer(length));
 };

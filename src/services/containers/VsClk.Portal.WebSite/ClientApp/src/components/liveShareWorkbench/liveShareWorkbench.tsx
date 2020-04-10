@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
-import { vscode } from '../../utils/vscode';
 import { URI, IApplicationLink } from 'vscode-web';
 import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
 
@@ -12,6 +11,7 @@ import { defaultConfig } from '../../services/configurationService';
 
 import { getShortEnvironmentName } from '../../utils/getShortEnvironmentName';
 import { telemetry } from '../../utils/telemetry';
+import { vscode } from 'vso-workbench';
 
 export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareWebExtensionEndpoint: string;

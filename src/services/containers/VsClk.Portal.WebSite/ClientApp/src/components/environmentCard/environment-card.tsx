@@ -11,11 +11,6 @@ import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { ProgressIndicator } from 'office-ui-fabric-react/lib/ProgressIndicator';
 import { SharedColors, NeutralColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 
-import {
-    ILocalCloudEnvironment,
-    StateInfo,
-    EnvironmentErrorCodes,
-} from '../../interfaces/cloudenvironment';
 import { deleteEnvironment } from '../../actions/deleteEnvironment';
 import { shutdownEnvironment } from '../../actions/shutdownEnvironment';
 import {
@@ -46,13 +41,12 @@ import {
 } from '../../actions/environmentSettingsChanges';
 import { Loader } from '../loader/loader';
 import { ServiceResponseError } from '../../actions/middleware/useWebClient';
-import { Signal } from 'vso-client-core';
-import { isDefined } from '../../utils/isDefined';
+import { Signal, ILocalEnvironment, EnvironmentStateInfo, isDefined, EnvironmentErrorCodes } from 'vso-client-core';
 
 const friendlyNameDisplayLength = 20;
 export interface EnvironmentCardProps {
     className?: string;
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
 }
@@ -154,16 +148,16 @@ function DetailValueOrEdit({
     }
 }
 
-function Status({ environment }: { environment: ILocalCloudEnvironment }) {
+function Status({ environment }: { environment: ILocalEnvironment }) {
     let backgroundColor;
     let color;
     switch (environment.state) {
-        case StateInfo.Available:
+        case EnvironmentStateInfo.Available:
             backgroundColor = '#6BB700';
             color = NeutralColors.gray160;
             break;
-        case StateInfo.Deleted:
-        case StateInfo.Failed:
+        case EnvironmentStateInfo.Deleted:
+        case EnvironmentStateInfo.Failed:
             backgroundColor = SharedColors.red20;
             color = NeutralColors.gray10;
             break;
@@ -188,7 +182,7 @@ function Status({ environment }: { environment: ILocalCloudEnvironment }) {
 }
 
 type ActionProps = {
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
     enableEditing: () => void;
@@ -265,7 +259,7 @@ const Actions = ({
                                     return;
                                 }
 
-                                if (environment.state === StateInfo.Available) {
+                                if (environment.state === EnvironmentStateInfo.Available) {
                                     setChangeSettingDialogHidden(false);
                                 } else {
                                     enableEditing();
@@ -339,7 +333,7 @@ const Actions = ({
 type DeleteDialogProps = {
     deleteEnvironment: (...params: Parameters<typeof deleteEnvironment>) => void;
     cancel: () => void;
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     hidden: boolean;
 };
 
@@ -374,7 +368,7 @@ function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: Delete
 type ShutdownDialogProps = {
     shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
     close: () => void;
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     hidden: boolean;
 };
 
@@ -413,7 +407,7 @@ type ChangeSettingsDialogProps = {
     shutdownEnvironment: (...params: Parameters<typeof shutdownEnvironment>) => void;
     enableEditing: () => void;
     close: () => void;
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     hidden: boolean;
 };
 
@@ -549,7 +543,7 @@ const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
 };
 
 type EnvironmentNameProps = {
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
 };
 function EnvironmentName({ environment }: Readonly<EnvironmentNameProps>) {
     const shortFriendlyName = getShortFriendlyName(environment.friendlyName);
@@ -588,7 +582,7 @@ function EnvironmentName({ environment }: Readonly<EnvironmentNameProps>) {
 }
 
 type ApplyEnvironmentSettingsChangeButtonProps = {
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     disabled: boolean;
     settingsChangeState: EnvironmentSettingsChangeState;
     submitSettingsUpdate: () => void;
@@ -607,7 +601,7 @@ function ApplyEnvironmentSettingsChangeButton({
     let text: string;
     let isLoading: boolean;
 
-    if (environment.state !== StateInfo.Shutdown) {
+    if (environment.state !== EnvironmentStateInfo.Shutdown) {
         text = 'Suspending...';
         isLoading = true;
     } else if (settingsChangeState === EnvironmentSettingsChangeState.Submitting) {
@@ -622,7 +616,7 @@ function ApplyEnvironmentSettingsChangeButton({
         <PrimaryButton
             onClick={submitSettingsUpdate}
             className={'environment-card__change-settings-button'}
-            disabled={disabled || environment.state !== StateInfo.Shutdown}
+            disabled={disabled || environment.state !== EnvironmentStateInfo.Shutdown}
         >
             {isLoading ? loader : null}
             {text}
@@ -639,11 +633,11 @@ function getShortFriendlyName(friendlyName: string): string {
 }
 
 type FooterProps = {
-    environment: ILocalCloudEnvironment;
+    environment: ILocalEnvironment;
     settingsChangeState: EnvironmentSettingsChangeState;
 
     deleteEnvironment: (id: string) => void;
-    shutdownEnvironment: (id: string, state: StateInfo) => void;
+    shutdownEnvironment: (id: string, state: EnvironmentStateInfo) => void;
     submitSettingsUpdate: () => void;
 
     startEditing: () => void;
@@ -898,7 +892,7 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
 
 export function getDropdownOptionForSettingsUpdates(
     availableSettings: EnvironmentSettingsAllowedUpdates | undefined,
-    environment: ILocalCloudEnvironment,
+    environment: ILocalEnvironment,
     selectedPlan: ActivePlanInfo
 ): {
     skuEditOptions?: IDropdownOption[];
@@ -954,7 +948,7 @@ function addCurrentSettingValueOptionIfNotExists(
 }
 
 export function buildEnvironmentSettingsUpdateRequest(
-    environment: ILocalCloudEnvironment,
+    environment: ILocalEnvironment,
     skuName: string | undefined,
     autoShutdownDelayMinutes: number | undefined
 ): EnvironmentSettingsUpdate | null {

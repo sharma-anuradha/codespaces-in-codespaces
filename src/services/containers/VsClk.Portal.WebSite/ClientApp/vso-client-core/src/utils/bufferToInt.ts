@@ -1,4 +1,3 @@
-
 export const bufferToInt = (buffer: Buffer) => {
     let result = 0;
     const start = buffer.length - 1;

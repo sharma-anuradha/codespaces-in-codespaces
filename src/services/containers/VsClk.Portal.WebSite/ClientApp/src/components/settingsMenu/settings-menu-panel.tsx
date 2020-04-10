@@ -5,14 +5,6 @@ import { Panel } from 'office-ui-fabric-react/lib/Panel';
 import { Toggle } from 'office-ui-fabric-react/lib/Toggle';
 import { DefaultButton, PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
-import { telemetry } from '../../utils/telemetry';
-import { ActivePlanInfo } from '../../reducers/plans-reducer';
-import { getPlans, selectPlan } from '../../actions/plans-actions';
-import { deletePlan } from '../../actions/createPlan';
-import { ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
-
-import './settings-menu-panel.css';
-import { PlanSelector } from '../planSelector/plan-selector';
 import {
     Dialog,
     DialogFooter,
@@ -21,12 +13,23 @@ import {
     MessageBarType,
     Dropdown,
 } from 'office-ui-fabric-react';
+
+import { ILocalEnvironment } from 'vso-client-core';
+import { getVSCodeVersion } from 'vso-workbench';
+
+import { telemetry } from '../../utils/telemetry';
+import { ActivePlanInfo } from '../../reducers/plans-reducer';
+import { getPlans, selectPlan } from '../../actions/plans-actions';
+import { deletePlan } from '../../actions/createPlan';
+
+import { PlanSelector } from '../planSelector/plan-selector';
 import { Loader } from '../loader/loader';
-import { getVSCodeVersion } from '../../utils/featureSet';
+
+import './settings-menu-panel.css';
 
 interface ISettingsMenuProps extends RouteComponentProps {
     selectedPlan: ActivePlanInfo | null;
-    environmentsInPlan: ILocalCloudEnvironment[];
+    environmentsInPlan: ILocalEnvironment[];
     hidePanel: () => void;
 }
 

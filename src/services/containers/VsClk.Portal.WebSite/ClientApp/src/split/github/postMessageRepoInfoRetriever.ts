@@ -1,5 +1,6 @@
 import { isGithubTLD } from 'vso-client-core';
 import { createUniqueId } from '../../dependencies';
+import { getCurrentEnvironmentId } from 'vso-workbench/src/utils/getCurrentEnvironmentId';
 
 export interface IRepoInfo {
     ownerUsername: string;
@@ -8,47 +9,43 @@ export interface IRepoInfo {
     environmentId: string;
 }
 
+const getLocalstorageKey = () => {
+    const envId = getCurrentEnvironmentId();
+
+    return `vso-github-repo-info-${envId}`;
+}
+
+const isValidInfo = (info: IRepoInfo) => {
+    return info.ownerUsername && info.workspaceId && info.repositoryId;
+};
+
 export class PostMessageRepoInfoRetriever {
     private awaitResponsePromises: Map<string, [Function, Function]> = new Map();
 
-    private localStorageKey: string;
-
     constructor() {
         const envId = location.pathname.split('/')[2];
-
         if (!envId) {
             throw new Error('No environmentId found.'); 
         }
 
-        this.localStorageKey = `vso-github-repo-info-${envId}`;
-
         window.addEventListener('message', this.receiveMessage, false);
     }
 
-    private isValidInfo = (info: IRepoInfo) => {
-        return info.ownerUsername && info.workspaceId && info.repositoryId;
-    };
-
-    private getStoredInfo() {
-        const storedInfoString = localStorage.getItem(this.localStorageKey);
+    public static getStoredInfo() {
+        const storedInfoString = localStorage.getItem(getLocalstorageKey());
         if (storedInfoString) {
             try {
                 const storedInfo = JSON.parse(storedInfoString) as IRepoInfo;
 
-                if (this.isValidInfo(storedInfo)) {
+                if (isValidInfo(storedInfo)) {
                     return storedInfo;
                 }
             } catch {}
         }
     }
 
-    public getStoredRepoInfo = (id = createUniqueId()): IRepoInfo | undefined => {
-        const storedInfo = this.getStoredInfo();
-        return storedInfo;
-    };
-
     public getRepoInfo = async (id = createUniqueId()): Promise<IRepoInfo> => {
-        const storedInfo = this.getStoredInfo();
+        const storedInfo = PostMessageRepoInfoRetriever.getStoredInfo();
         if (storedInfo) {
             return storedInfo;
         }
@@ -67,13 +64,13 @@ export class PostMessageRepoInfoRetriever {
         if (data === null) {
             throw new Error(`Parent didn\'t respond on postMessage request in ${timeout}ms.`);
         }
-        if (!this.isValidInfo(data)) {
+        if (!isValidInfo(data)) {
             throw new Error(
                 'No "repoName" or "repoOwnerUsername" is not set on the message from parent.'
             );
         }
 
-        localStorage.setItem(this.localStorageKey, JSON.stringify(data, null, 2));
+        localStorage.setItem(getLocalstorageKey(), JSON.stringify(data, null, 2));
 
         return data;
     };
@@ -104,7 +101,6 @@ export class PostMessageRepoInfoRetriever {
         }
 
         const promiseFunctions = this.awaitResponsePromises.get(responseId);
-
         if (!promiseFunctions) {
             return;
         }
@@ -112,4 +108,9 @@ export class PostMessageRepoInfoRetriever {
         const [resolve] = promiseFunctions;
         resolve(e.data);
     };
+
+    public dispose() {
+        window.removeEventListener('message', this.receiveMessage, false);
+        this.awaitResponsePromises = new Map();
+    }
 }

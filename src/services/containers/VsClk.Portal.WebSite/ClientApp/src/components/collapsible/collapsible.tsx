@@ -1,3 +1,5 @@
+import { isDefined } from 'vso-client-core';
+
 import React, { useState, useCallback, MouseEventHandler, FC } from 'react';
 import classnames from 'classnames';
 
@@ -5,7 +7,6 @@ import { Stack, IStackProps, StackItem } from 'office-ui-fabric-react/lib/Stack'
 import { DefaultButton, BaseButton, Button } from 'office-ui-fabric-react/lib/Button';
 
 import './collapsible.css';
-import { isDefined } from '../../utils/isDefined';
 
 type Props = {
     title: string;

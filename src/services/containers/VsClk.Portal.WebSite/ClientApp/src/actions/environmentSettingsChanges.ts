@@ -1,3 +1,5 @@
+import { IEnvironment } from 'vso-client-core';
+
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
 import { useActionContext } from './middleware/useActionContext';
@@ -5,7 +7,6 @@ import { useWebClient } from './middleware/useWebClient';
 import {
     EnvironmentSettingsAllowedUpdates,
     EnvironmentSettingsUpdate,
-    ICloudEnvironment,
 } from '../interfaces/cloudenvironment';
 
 export const getAllowedEnvironmentSettingsChangesActionType =
@@ -45,7 +46,7 @@ const updateEnvironmentSettingsAction = (envId: string, update: EnvironmentSetti
 const updateEnvironmentSettingsSuccessAction = (
     envId: string,
     update: EnvironmentSettingsUpdate,
-    env: ICloudEnvironment
+    env: IEnvironment
 ) => action(updateEnvironmentSettingsSuccessActionType, { envId, update, env });
 const updateEnvironmentSettingsFailureAction = (
     envId: string,
@@ -95,7 +96,7 @@ export async function getAllowedEnvironmentSettingsChanges(
 export async function updateEnvironmentSettings(
     environmentId: string,
     update: EnvironmentSettingsUpdate
-): Promise<ICloudEnvironment> {
+): Promise<IEnvironment> {
     const dispatch = useDispatch();
 
     try {
@@ -113,7 +114,7 @@ export async function updateEnvironmentSettings(
 
         const webClient = useWebClient();
         const url = new URL(`${apiEndpoint}/environments/${environmentId}`);
-        const response = await webClient.patch<ICloudEnvironment>(url.toString(), update, {
+        const response = await webClient.patch<IEnvironment>(url.toString(), update, {
             retryCount: 2,
         });
 

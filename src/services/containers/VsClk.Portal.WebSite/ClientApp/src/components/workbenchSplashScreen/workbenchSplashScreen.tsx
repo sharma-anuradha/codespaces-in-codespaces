@@ -1,13 +1,14 @@
 import * as React from 'react';
-
 import { PrimaryButton, Stack, Text } from 'office-ui-fabric-react';
-import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 import { VSOSplashScreen, IConnectionAdapter } from '@vs/vso-splash-screen'
+
+import { isHostedOnGithub } from 'vso-client-core';
+
+import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 import { stateToDisplayName } from '../../utils/environmentUtils';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import './workbenchSplashScreen.css';
 import classnames from 'classnames';
-import { isHostedOnGithub } from '../../utils/isHostedOnGithub';
 
 interface IRenderSplashScreenProps {
     isOnGithub: boolean;

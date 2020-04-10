@@ -1,3 +1,5 @@
+import { EnvironmentStateInfo, ILocalEnvironment } from 'vso-client-core';
+
 import {
     createMockStore,
     MockStore,
@@ -9,7 +11,6 @@ import {
 } from '../../utils/testUtils';
 
 import { defaultConfig } from '../../services/configurationService';
-import { StateInfo, ILocalCloudEnvironment } from '../../interfaces/cloudenvironment';
 import { stateChangeEnvironmentActionType } from '../environmentStateChange';
 import {
     pollActivatingEnvironment,
@@ -32,12 +33,12 @@ describe('pollEnvironment', () => {
     let store: MockStore;
     const environmentInState = {
         id: 'env-id',
-        state: StateInfo.Available,
+        state: EnvironmentStateInfo.Available,
     };
 
     const environmentFromService = {
         id: environmentInState.id,
-        state: StateInfo.ShuttingDown,
+        state: EnvironmentStateInfo.ShuttingDown,
     };
 
     beforeEach(() => {
@@ -45,7 +46,7 @@ describe('pollEnvironment', () => {
             authentication: authenticated,
             configuration: defaultConfig,
             environments: {
-                environments: [environmentInState] as ILocalCloudEnvironment[],
+                environments: [environmentInState] as ILocalEnvironment[],
                 activatingEnvironments: [] as string[],
             } as EnvironmentsState,
         });

@@ -3,6 +3,7 @@ import {
     ITelemetryEvent,
     TelemetryPropertyValue
 } from 'vso-client-core';
+
 import { useActionContext } from '../../actions/middleware/useActionContext';
 
 import { exceptionEventName } from './TelemetryEventNames';

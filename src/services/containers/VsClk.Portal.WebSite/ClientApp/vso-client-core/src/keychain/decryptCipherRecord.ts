@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-
 import { WebCipher } from './webCipher';
 import { createTrace } from '../utils/createTrace';
 import { ICipherPayload } from '../interfaces/ICipherPayload';

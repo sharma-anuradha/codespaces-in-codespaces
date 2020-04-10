@@ -1,11 +1,12 @@
+import { ILocalEnvironment, EnvironmentStateInfo } from 'vso-client-core';
+
 import protocolCheck from 'custom-protocol-check';
-import { StateInfo, ILocalCloudEnvironment } from '../interfaces/cloudenvironment';
 import { connectEnvironment } from '../services/envRegService';
 import { createUniqueId } from '../dependencies';
 
 //tslint:disable-next-line: export-name
-export async function tryOpeningUrl(environment: ILocalCloudEnvironment, protocol: 'vscode' | 'vscode-insiders') {
-	if (environment.state === StateInfo.Shutdown) {
+export async function tryOpeningUrl(environment: ILocalEnvironment, protocol: 'vscode' | 'vscode-insiders') {
+	if (environment.state === EnvironmentStateInfo.Shutdown) {
 		await connectEnvironment(environment.id!, environment.state);
 	}
 

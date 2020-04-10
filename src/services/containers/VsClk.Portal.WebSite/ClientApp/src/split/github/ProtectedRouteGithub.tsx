@@ -2,11 +2,14 @@ import React from 'react';
 import { Route, RouteComponentProps, RouteProps } from 'react-router-dom';
 import { connect } from 'react-redux';
 
+import { createTrace } from 'vso-client-core';
+
 import { telemetry } from '../../utils/telemetry';
 import { authService } from './authServiceGithub';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../../components/loader/loader';
-import { trace } from '../../ts-agent/services/gitCredentialService';
+
+const trace = createTrace('protected-route');
 
 type Props = {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;

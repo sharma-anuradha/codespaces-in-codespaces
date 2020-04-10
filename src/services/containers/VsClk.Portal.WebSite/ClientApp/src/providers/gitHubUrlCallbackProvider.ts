@@ -1,7 +1,12 @@
-import { vscode } from '../utils/vscode';
+import {
+    vscode,
+    UrlCallbackProvider
+} from 'vso-workbench';
+
+import { getVSCodeScheme } from 'vso-client-core';
+
 import { getStoredGitHubToken, isGitHubTokenUpdate } from '../services/gitHubAuthenticationService';
 import { createUniqueId } from '../dependencies';
-import { UrlCallbackProvider, callbackSymbol } from './urlCallbackProvider';
 
 export class GitHubUrlCallbackProvider extends UrlCallbackProvider {
     authority: string | undefined;
@@ -25,11 +30,11 @@ export class GitHubUrlCallbackProvider extends UrlCallbackProvider {
         if (getStoredGitHubToken(this.scope)) {
             const protocolHandlerUri = vscode.URI.from({
                 authority: this.authority,
-                scheme: this.getVSCodeScheme(),
+                scheme: getVSCodeScheme(),
                 path: this.path,
             });
 
-            this[callbackSymbol].fire(protocolHandlerUri);
+            this[this.callbackSymbol].fire(protocolHandlerUri);
         }
     };
 

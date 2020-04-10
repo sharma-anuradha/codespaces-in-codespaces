@@ -1,9 +1,10 @@
+import { IEnvironment, EnvironmentErrorCodes } from 'vso-client-core';
+
 import {
     createEnvironment as createCloudEnvironment,
     CreateEnvironmentParameters,
 } from '../services/envRegService';
 import { createUniqueId } from '../dependencies';
-import { ICloudEnvironment, EnvironmentErrorCodes } from '../interfaces/cloudenvironment';
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
 import { getUserInfo } from './getUserInfo';
@@ -26,7 +27,7 @@ const createEnvironmentAction = (lieId: string, environment: PartialEnvironmentI
 
 const createEnvironmentSuccessAction = (
     lieId: string,
-    environment: ICloudEnvironment,
+    environment: IEnvironment,
     context = useActionContext()
 ) => {
     context.setContextTelemetryProperty('environmentid', environment.id);

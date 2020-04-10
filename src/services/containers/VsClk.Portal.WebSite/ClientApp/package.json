@@ -15,8 +15,6 @@
     "@vs/vso-splash-screen": "^1.0.1894",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",
-    "babel-loader": "8.0.5",
-    "babel-plugin-named-asset-import": "^0.3.1",
     "babel-preset-react-app": "^7.0.2",
     "bfj": "6.1.1",
     "buffer": "^5.4.3",
@@ -42,7 +40,6 @@
     "html-webpack-plugin": "4.0.0-alpha.2",
     "http-message-parser": "^0.0.34",
     "identity-obj-proxy": "3.0.0",
-    "jest": "^24.9.0",
     "jest-pnp-resolver": "1.0.2",
     "jest-resolve": "23.6.0",
     "jest-watch-typeahead": "^0.2.1",
@@ -104,27 +101,34 @@
     "fork-ts-checker-webpack-plugin": "^1.5.0",
     "fs-extra": "7.0.1",
     "http-proxy-middleware": "^0.19.1",
+    "jest": "^25.3.0",
+    "jest-config": "^25.3.0",
     "jest-junit": "^8.0.0",
     "madge": "^3.4.4",
     "nodemon": "^1.19.3",
     "npm-run-all": "^4.1.5",
     "tar": "^4.4.10",
-    "ts-jest": "^24.1.0",
+    "ts-jest": "^25.2.1",
     "ts-loader": "^6.1.0",
     "tslint": "5.14.0",
     "tslint-microsoft-contrib": "6.1.0",
     "uuid": "^3.3.2",
     "vso-client-core": "link:./vso-client-core",
+    "vso-ts-agent": "link:./vso-ts-agent",
+    "vso-workbench": "link:./vso-workbench",
     "webpack": "4.28.3",
     "webpack-cli": "^3.3.8"
   },
   "scripts": {
-    "preinstall": "node scripts/npm/preinstall.js",
-    "postinstall": "node scripts/npm/postinstall.js && yarn compile-client-core",
-    "compile-client-core": "cd ./vso-client-core && yarn",
+    "preinstall": "node scripts/npm/preinstall.js && yarn compile-client-core && yarn compile-ts-agent && yarn precompile-workbench-page && yarn compile-service-worker",
+    "postinstall": "yarn compile-workbench-page",
+    "compile-client-core": "cd ./vso-client-core && yarn && cd ../",
+    "compile-ts-agent": "cd ./vso-ts-agent && yarn && cd ../",
     "compile-platform-auth": "cd ./vso-platform-auth && yarn && cd ../",
+    "precompile-workbench-page": "cd ./vso-workbench && yarn compile-tsc && cd ../",
+    "compile-workbench-page": "cd ./vso-workbench && yarn setup && cd ../",
+    "compile-service-worker": "cd ./vso-ts-agent && yarn && yarn compile-service-worker-prod && cd ../",
     "clean": "run-p clean:vscode clean:build",
-    "clean:vscode": "rimraf public/static/web-standalone",
     "clean:build": "rimraf build",
     "prestart": "yarn get-service-principal",
     "start": "run-p watch:portal watch:client",
@@ -133,18 +137,17 @@
     "start:pf-proxy": "node port-forwarding-dev-server.js",
     "prewatch:client": "cross-env NODE_ENV=development node scripts/npm/generate-version-file.js",
     "watch:portal": "dotnet watch --project ../VsClk.Portal.WebSite.csproj run --launch-profile Local",
-    "watch:client": "node scripts/start",
+    "watch:client": "yarn compile-service-worker && node scripts/start",
     "watch:pf-proxy": "nodemon --watch ./port-forwarding-dev-server.js port-forwarding-dev-server.js",
     "build": "run-s build:client",
     "prebuild:client": "cross-env NODE_ENV=production node scripts/npm/generate-version-file.js",
-    "build:client": "yarn compile-platform-auth && node scripts/build",
+    "build:client": "yarn compile-platform-auth && yarn compile-workbench-page && yarn compile-service-worker && node scripts/build",
     "test:ui": "node test/uitest/uitest.js",
     "test:ui-prep-json": "node test/uitest/prepTestJson.js",
     "pretest": "cross-env NODE_ENV=test node scripts/npm/generate-version-file.js",
     "test": "node scripts/test",
     "pretest:ci": "cross-env NODE_ENV=test node scripts/npm/generate-version-file.js",
     "test:ci": "cross-env NODE_ENV=test jest --reporters=\"default\" --reporters=\"jest-junit\"",
-    "update-vscode": "node scripts/npm/update-vscode.js",
     "update-github-secret": "node scripts/npm/update-github-secret.js",
     "get-service-principal": "node scripts/npm/get-service-principal.js",
     "get-dev-cert": "node scripts/npm/get-dev-ssl-cert.js",
@@ -152,7 +155,7 @@
     "lint-only": "tslint -c tslint.json src/**/*.{ts,tsx} --project tsconfig.json",
     "circular-dependencies": "node ./scripts/circular-dependencies.js",
     "dep-graph:main": "npx madge --layout dot --warning --image main-graph.svg src/index.tsx",
-    "dep-graph:service-worker": "npx madge --layout dot --warning --image service-worker-graph.svg src/service-worker/service-worker.ts"
+    "dep-graph:service-worker": "npx madge --layout dot --warning --image service-worker-graph.svg vso-ts-agent/src/service-worker/service-worker.ts"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -165,10 +168,6 @@
     "not ie < 11",
     "not op_mini all"
   ],
-  "vscodeCommit": {
-    "stable": "0ba0ca52957102ca3527cf479571617f0de6ed50",
-    "insider": "2aae1f26c72891c399f860409176fe435a154b13"
-  },
   "jest": {
     "setupFilesAfterEnv": [
       "./jest.setup.js"
@@ -202,8 +201,10 @@
       "^.+\\.module\\.(css|sass|scss)$"
     ],
     "modulePathIgnorePatterns": [
-      "[/\\\\]build[/\\\\]",
-      "[/\\\\]public[/\\\\]"
+      "<rootDir>/dist/",
+      "<rootDir>/public/",
+      "<rootDir>/vso-workbench/dist",
+      "<rootDir>/vso-workbench/public"
     ],
     "moduleNameMapper": {
       "^react-native$": "react-native-web",

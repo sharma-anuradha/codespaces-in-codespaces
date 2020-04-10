@@ -1,4 +1,4 @@
-import { evaluateFeatureFlag, azureDevOpsOAuth } from "./featureSet";
+import { evaluateFeatureFlag, azureDevOpsOAuth } from './featureSet';
 
 export enum SupportedGitService {
     Unknown,

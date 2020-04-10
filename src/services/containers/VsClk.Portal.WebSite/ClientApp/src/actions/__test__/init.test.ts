@@ -19,7 +19,7 @@ jest.mock('../getUserInfo', () => {
     };
 });
 
-jest.mock('../../serviceWorker', () => {
+jest.mock('../../../vso-ts-agent/src/service-worker/serviceWorker', () => {
     return {
         register: jest.fn(),
         onMessage: jest.fn(),

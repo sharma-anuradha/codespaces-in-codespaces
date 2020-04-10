@@ -1,0 +1,36 @@
+{
+    "compilerOptions": {
+      "composite": true,
+      "target": "es2017",
+      "baseUrl": ".",
+      "lib": [
+        "dom",
+        "dom.iterable",
+        "esnext",
+        "webworker"
+      ],
+      "allowJs": false,
+      "sourceMap": true,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "strict": true,
+      "strictBindCallApply": true,
+      "forceConsistentCasingInFileNames": true,
+      "module": "esnext",
+      "moduleResolution": "node",
+      "resolveJsonModule": true,
+      "isolatedModules": false,
+      "experimentalDecorators": true,
+      "downlevelIteration": true,
+      "outDir": "dist",
+    },
+    "include": [
+      "src/**/*", "version.json"
+    ],
+    "references": [
+      {
+        "path": "../vso-client-core"
+      }
+    ]
+  }

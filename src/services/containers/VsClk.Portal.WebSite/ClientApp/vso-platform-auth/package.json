@@ -2,10 +2,11 @@
   "name": "vso-platform-auth",
   "version": "0.1.0",
   "main": "dist/index.js",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.txt",
   "scripts": {
     "compile": "webpack",
     "watch": "webpack -w",
+    "preinstall": "cd ../vso-client-core && yarn",
     "postinstall": "yarn compile"
   },
   "devDependencies": {

@@ -1,10 +1,11 @@
+import { isDefined } from 'vso-client-core';
+
 import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
 import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
 import { wait } from '../../dependencies';
 import { sendTelemetry } from '../../utils/telemetry';
-import { isDefined } from '../../utils/isDefined';
 
 const trace = baseTrace.extend('useWebClient:trace');
 // tslint:disable-next-line: no-console

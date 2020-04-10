@@ -1,5 +1,3 @@
-import { match } from 'react-router-dom';
-
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { detect } from 'detect-browser';
 
@@ -16,7 +14,7 @@ import { ICustomTelemetryContextProperties } from '../interfaces/ICustomTelemetr
 
 let sequenceNumber = 0;
 
-type MatchFunction = (pathname: string) => match<{}> | null;
+type MatchFunction = (pathname: string) => { path: string; } | null;
 
 export class TelemetryService {
     private appInsights: ApplicationInsights;

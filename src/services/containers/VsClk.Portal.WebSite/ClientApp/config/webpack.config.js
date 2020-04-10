@@ -1,5 +1,6 @@
 //@ts-check
 
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 const resolve = require('resolve');
@@ -21,6 +22,7 @@ const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
 const ForkTsCheckerNotifierWebpackPlugin = require('fork-ts-checker-notifier-webpack-plugin');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
+
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
@@ -221,7 +223,7 @@ module.exports = function(webpackEnv) {
                 '!**/src/setupProxy.*',
                 '!**/src/setupTests.*',
             ],
-            watch: paths.appSrc,
+            watch: paths.appPath,
             silent: true,
             // The formatter is invoked directly in WebpackDevServerUtils during development
             formatter: isEnvProduction ? typescriptFormatter : undefined,
@@ -253,42 +255,13 @@ module.exports = function(webpackEnv) {
                             name: 'static/media/[name].[hash:8].[ext]',
                         },
                     },
-                    isEnvDevelopment && {
+                    {
                         test: /\.(js|mjs|jsx|ts|tsx)$/,
-                        include: paths.appSrc,
+                        include: paths.appPath,
                         loader: require.resolve('ts-loader'),
                         options: {
                             configFile: paths.appTsConfig,
                             transpileOnly: true,
-                        },
-                    },
-                    // Process application JS with Babel.
-                    // The preset includes JSX, Flow, TypeScript, and some ESnext features.
-                    isEnvProduction && {
-                        test: /\.(js|mjs|jsx|ts|tsx)$/,
-                        include: paths.appSrc,
-                        loader: require.resolve('babel-loader'),
-                        options: {
-                            customize: require.resolve('babel-preset-react-app/webpack-overrides'),
-
-                            plugins: [
-                                [
-                                    require.resolve('babel-plugin-named-asset-import'),
-                                    {
-                                        loaderMap: {
-                                            svg: {
-                                                ReactComponent: '@svgr/webpack?-svgo,+ref![path]',
-                                            },
-                                        },
-                                    },
-                                ],
-                            ],
-                            // This is a feature of `babel-loader` for webpack (not Babel itself).
-                            // It enables caching results in ./node_modules/.cache/babel-loader/
-                            // directory for faster rebuilds.
-                            cacheDirectory: true,
-                            cacheCompression: isEnvProduction,
-                            compact: isEnvProduction,
                         },
                     },
                     // Process any JS outside of the app with Babel.
@@ -431,7 +404,7 @@ module.exports = function(webpackEnv) {
                 // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
                 // please link the files into your node_modules/ and let module-resolution kick in.
                 // Make sure your source files are compiled, as they will not be processed in any way.
-                new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
+                new ModuleScopePlugin(paths.appBuild, [paths.appPackageJson]),
             ],
         },
 
@@ -536,22 +509,6 @@ module.exports = function(webpackEnv) {
                     : isEnvDevelopment &&
                       ((info) => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
             },
-        },
-        {
-            ...defaults,
-            entry: paths.serviceWorkerJs,
-            plugins: [...commonPlugins].filter(Boolean),
-            output: {
-                path: isEnvProduction ? paths.appBuild : undefined,
-                pathinfo: isEnvDevelopment,
-                filename: 'service-worker.js',
-                publicPath,
-                devtoolModuleFilenameTemplate: isEnvProduction
-                    ? (info) =>
-                          path.relative(paths.appSrc, info.absoluteResourcePath).replace(/\\/g, '/')
-                    : isEnvDevelopment &&
-                      ((info) => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
-            },
-        },
+        }
     ];
 };

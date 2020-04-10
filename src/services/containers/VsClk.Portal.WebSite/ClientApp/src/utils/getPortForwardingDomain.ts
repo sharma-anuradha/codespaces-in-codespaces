@@ -1,5 +1,6 @@
+import { isHostedOnGithub } from 'vso-client-core';
+
 import { useActionContext } from '../actions/middleware/useActionContext';
-import { isHostedOnGithub } from './isHostedOnGithub';
 import { TEnvironment } from '../services/configurationService';
 
 const getGithubPFDomain = (subdomain: '' | 'dev.' | 'ppe.' = '') => {

@@ -60,6 +60,10 @@ export class PostMessageChannel {
     };
 
     private receiveMessage = (e: MessageEvent) => {
+        if (!e.data) {
+            return;
+        }
+
         // ignore messages from unknown partners
         if (!isKnownPartnerTLD(e.origin)) {
             this.reportResult('error', `Unknown embedder domain ${e.origin}.`);

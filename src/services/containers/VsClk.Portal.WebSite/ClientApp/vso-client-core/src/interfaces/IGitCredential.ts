@@ -1,7 +1,8 @@
+type TCredentialHost = 'github.com' | 'azure.com';
+
 export interface IGitCredential {
-    readonly provider: string;
-    readonly url: string;
-    readonly username: string;
-    readonly email: string;
+    readonly expiration?: number;
+    readonly path?: string;
+    readonly host: TCredentialHost;
     readonly token: string;
 }

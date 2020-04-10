@@ -1,5 +1,6 @@
+import { EnvironmentType } from 'vso-client-core';
+
 import { PropertiesTelemetryEvent, ExceptionTelemetryEvent } from './TelemetryEvents';
-import { EnvironmentType } from '../../interfaces/cloudenvironment';
 import { telemetry } from '.';
 
 type SendTelemetryProps =

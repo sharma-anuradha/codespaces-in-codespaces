@@ -1,13 +1,15 @@
+import { TelemetryService } from 'vso-client-core';
+import { getVSCodeVersion } from 'vso-workbench';
+
+import versionFile from '../../version.json';
+
 export interface IActionTelemetryProperties {
     action: string;
     correlationId: string;
     isInternal: boolean;
 }
-import { TelemetryService } from 'vso-client-core';
 
 export { sendTelemetry } from './sendTelemetry';
-import { getVSCodeVersion } from '../featureSet';
-import versionFile from '../../version.json';
 
 const vscodeConfig = getVSCodeVersion();
 

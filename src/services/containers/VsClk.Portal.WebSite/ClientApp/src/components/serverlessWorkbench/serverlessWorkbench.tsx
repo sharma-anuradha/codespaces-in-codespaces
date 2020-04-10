@@ -1,7 +1,15 @@
-import React, { Component } from 'react';
-import './serverlessWorkbench.css';
+import * as path from 'path';
 
-import { vscode } from '../../utils/vscode';
+import React, { Component } from 'react';
+
+import {
+    UserDataProvider,
+    vscode,
+    getVSCodeVersion,
+    getVSCodeAssetPath,
+    UrlCallbackProvider
+} from 'vso-workbench';
+
 import {
     IWorkbenchConstructionOptions,
     URI,
@@ -11,15 +19,13 @@ import {
 } from 'vscode-web';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
-import { UrlCallbackProvider } from '../../providers/urlCallbackProvider';
-import { UserDataProvider } from '../../utils/userDataProvider';
 
 import { telemetry, sendTelemetry } from '../../utils/telemetry';
-import * as path from 'path';
 import { trace } from '../../utils/trace';
 import { FolderWorkspaceProvider } from '../../providers/folderWorkspaceProvider';
-import { getVSCodeAssetPath, getVSCodeVersion } from '../../utils/featureSet';
 import { updateFavicon } from '../../utils/updateFavicon';
+
+import './serverlessWorkbench.css';
 
 export enum RepoType_QueryParam {
     GitHub = 'GitHub',
@@ -38,7 +44,7 @@ export interface ServerlessWorkbenchProps {
 }
 
 const managementFavicon = 'favicon.ico';
-const vscodeFavicon = getVSCodeAssetPath('favicon.ico');
+const vscodeFavicon = getVSCodeAssetPath(managementFavicon);
 
 type StaticExtension = { packageJSON: any; extensionLocation: URI };
 function isNotNullStaticExtension(se: StaticExtension | undefined): se is StaticExtension {
@@ -95,7 +101,7 @@ export class ServerlessWorkbench extends Component<
             return {
                 packageJSON,
                 extensionLocation: vscode.URI.parse(
-                    `https://${window.location.hostname}/static/web-standalone/server/${shortCommitId}/extensions/${packageDirName}/`
+                    `https://${window.location.hostname}/workbench-page/static/web-standalone/server/${shortCommitId}/extensions/${packageDirName}/`
                 ),
             };
         });
@@ -113,6 +119,7 @@ export class ServerlessWorkbench extends Component<
             }
 
             const packageJSON = await response.json();
+
             return {
                 packageJSON,
                 extensionLocation: vscode.URI.parse(extensionLocation),
@@ -135,7 +142,7 @@ export class ServerlessWorkbench extends Component<
 
         this.workbenchMounted = true;
 
-        const userDataProvider = new UserDataProvider();
+        const userDataProvider = new UserDataProvider('');
         await userDataProvider.initializeDBProvider();
 
         const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(telemetry);

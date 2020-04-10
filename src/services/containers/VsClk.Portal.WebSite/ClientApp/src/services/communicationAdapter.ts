@@ -1,12 +1,18 @@
-import { createTrace } from 'vso-client-core';
+import {
+    createTrace,
+    vsls
+} from 'vso-client-core';
+import {
+    EnvConnector,
+    WorkspaceClient,
+    openSshChannel
+} from 'vso-ts-agent';
 
-import * as vsls from '../ts-agent/contracts/VSLS';
-import { EnvConnector } from '../ts-agent/envConnector';
-import { WorkspaceClient } from '../ts-agent/workspaceClient';
-import { openSshChannel } from '../ts-agent/openSshChannel';
 import { SplashCommunicationProvider } from '../providers/splashCommunicationProvider';
 import { useActionContext } from '../actions/middleware/useActionContext';
 import { TerminalId } from '../constants';
+import { BrowserSyncService } from '../rpcServices/BrowserSyncService';
+import { GitCredentialService } from '../rpcServices/GitCredentialService';
 
 export class CommunicationAdapter {
     private envConnector: EnvConnector;
@@ -23,7 +29,24 @@ export class CommunicationAdapter {
     };
 
     constructor(communication: SplashCommunicationProvider, liveShareEndpoint: string, correlationId: string) {
-        this.envConnector = new EnvConnector();
+        this.envConnector = new EnvConnector(async (e) => {
+            const {
+                workspaceClient,
+                workspaceService,
+                rpcConnection
+            } = e;
+
+            // Expose credential service
+            const gitCredentialService = new GitCredentialService(workspaceService, rpcConnection);
+            await gitCredentialService.shareService();
+
+            // Expose browser sync service
+            const sourceEventService = workspaceClient.getServiceProxy<vsls.SourceEventService>(
+                vsls.SourceEventService
+            );
+            
+            new BrowserSyncService(sourceEventService);
+        });
         this.communicationProvider = communication;
         this.utf8Decoder = new TextDecoder('utf-8');
         this.correlationId = correlationId;

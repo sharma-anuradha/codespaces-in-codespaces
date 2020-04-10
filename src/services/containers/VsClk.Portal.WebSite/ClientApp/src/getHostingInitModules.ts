@@ -1,5 +1,6 @@
-import { isHostedOnGithub } from './utils/isHostedOnGithub';
 import { init } from './actions/init';
+
+import { isHostedOnGithub } from 'vso-client-core';
 
 import { getHostingInitModules as getGithubModules } from './split/github/getHostingInitModulesGithub';
 import { getHostingInitModules as getVSOModules } from './split/vso/getHostingInitModules';

@@ -1,17 +1,17 @@
-import { getPFDomain, getCurrentEnvironment } from './../utils/getPortForwardingDomain';
-import { isHostedOnGithub } from './../utils/isHostedOnGithub';
+import { isHostedOnGithub, IEnvironment } from 'vso-client-core';
+
+import { EnvConnector } from 'vso-ts-agent';
+
+import { BaseExternalUriProvider as WorkbenchBaseExternalUriProvider } from 'vso-workbench';
+
+import { getPFDomain, getCurrentEnvironment } from '../utils/getPortForwardingDomain';
+
 import { URI } from 'vscode-web';
-import { ICloudEnvironment } from '../interfaces/cloudenvironment';
-import { EnvConnector } from '../ts-agent/envConnector';
 import { sendTelemetry } from '../utils/telemetry';
 import { setAuthCookie } from '../utils/setAuthCookie';
 import { getAuthTokenAction } from '../actions/getAuthTokenActionCommon';
 
-abstract class BaseExternalUriProvider {
-    protected abstract ensurePortIsForwarded(port: number): Promise<void>;
-
-    constructor(private readonly sessionId: string) {}
-
+abstract class BaseExternalUriProvider extends WorkbenchBaseExternalUriProvider {
     public async resolveExternalUri(uri: URI): Promise<URI> {
         const port = this.getLocalHostPortToForward(uri);
         if (port === undefined) {
@@ -42,24 +42,6 @@ abstract class BaseExternalUriProvider {
 
         return uri;
     }
-
-    private getLocalHostPortToForward(uri: URI): number | undefined {
-        const defaultHttpPort = 80;
-        const defaultHttpsPort = 443;
-        if (uri.scheme !== 'http' && uri.scheme !== 'https') {
-            return undefined;
-        }
-        const localhostMatch = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/.exec(uri.authority);
-        if (!localhostMatch) {
-            return undefined;
-        }
-
-        if (localhostMatch == undefined) {
-            return uri.scheme == 'http' ? defaultHttpPort : defaultHttpsPort;
-        } else {
-            return +localhostMatch[2].substr(1, localhostMatch[2].length);
-        }
-    }
 }
 
 export class EnvironmentsExternalUriProvider extends BaseExternalUriProvider {
@@ -73,7 +55,7 @@ export class EnvironmentsExternalUriProvider extends BaseExternalUriProvider {
     }
 
     constructor(
-        private readonly environmentInfo: ICloudEnvironment,
+        private readonly environmentInfo: IEnvironment,
         private readonly accessToken: string,
         private readonly connector: EnvConnector,
         private readonly liveShareEndpoint: string

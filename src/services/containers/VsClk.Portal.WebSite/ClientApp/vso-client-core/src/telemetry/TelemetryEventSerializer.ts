@@ -1,7 +1,7 @@
 import moment from 'moment';
-import { isNumber } from 'util';
 import { prefixPropertyNames } from './prefixPropertyNames';
 import { ITelemetryEvent, TelemetryPropertyValue } from '../interfaces/ITelemetryEvent';
+import { isNumber } from '../utils/isNumber';
 
 export class TelemetryEventSerializer {
     serialize(

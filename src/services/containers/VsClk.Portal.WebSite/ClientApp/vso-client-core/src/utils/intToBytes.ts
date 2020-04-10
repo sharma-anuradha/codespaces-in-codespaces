@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-
 export const intToBytes = (num: number, bufferLength = 4): Buffer => {
     const buff = new Buffer(bufferLength);
     const start = (bufferLength - 1);

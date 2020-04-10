@@ -1,14 +1,15 @@
-﻿import * as envRegService from '../services/envRegService';
+﻿import { EnvironmentStateInfo } from 'vso-client-core';
+
+import * as envRegService from '../services/envRegService';
 import { useDispatch } from './middleware/useDispatch';
-import { StateInfo } from '../interfaces/cloudenvironment';
 import { stateChangeEnvironmentAction } from './environmentStateChange';
 
 // Exposed - callable actions that have side-effects
-export async function shutdownEnvironment(id: string, oldState: StateInfo) {
+export async function shutdownEnvironment(id: string, oldState: EnvironmentStateInfo) {
     const dispatch = useDispatch();
     // 1. Try to shutdown environment
     try {
-        dispatch(stateChangeEnvironmentAction(id, StateInfo.ShuttingDown, oldState));
+        dispatch(stateChangeEnvironmentAction(id, EnvironmentStateInfo.ShuttingDown, oldState));
         await envRegService.shutdownEnvironment(id);
     } catch (err) {
         let e = await envRegService.getEnvironment(id);

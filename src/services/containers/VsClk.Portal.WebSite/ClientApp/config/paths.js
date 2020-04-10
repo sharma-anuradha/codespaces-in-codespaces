@@ -57,7 +57,7 @@ module.exports = {
     appPublic: resolveApp('public'),
     appHtml: resolveApp('public/index.html'),
     appIndexJs: resolveModule(resolveApp, 'src/index'),
-    serviceWorkerJs: resolveModule(resolveApp, 'src/service-worker/service-worker'),
+    serviceWorkerJs: resolveModule(resolveApp, 'vso-ts-agent/src/service-worker/service-worker'),
     appPackageJson: resolveApp('package.json'),
     appSrc: resolveApp('src'),
     appTsConfig: resolveApp('tsconfig.json'),
@@ -67,8 +67,8 @@ module.exports = {
     publicUrl: getPublicUrl(resolveApp('package.json')),
     servedPath: getServedPath(resolveApp('package.json')),
     mocks: {
-        net: resolveApp('src/ts-agent/mocks/net'),
-        nodeRsa: resolveApp('src/ts-agent/mocks/net'),
+        net: resolveApp('vso-ts-agent/mocks/net'),
+        nodeRsa: resolveApp('vso-ts-agent/mocks/net'),
     },
 };
 
