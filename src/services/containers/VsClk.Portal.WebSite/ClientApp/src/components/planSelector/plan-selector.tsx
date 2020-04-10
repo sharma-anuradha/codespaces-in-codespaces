@@ -99,7 +99,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
             planOptions.push(dividerDropdownOption);
         }
 
-        if (!this.props.hasNoCreate){
+        if (!this.props.hasNoCreate) {
             planOptions.push(createNewPlanDropdownOption);
         }
 

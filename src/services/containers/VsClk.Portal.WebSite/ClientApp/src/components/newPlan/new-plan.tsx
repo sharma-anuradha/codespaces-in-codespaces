@@ -8,17 +8,19 @@ import { focusPlanSelectorDropdown } from '../../actions/plans-actions';
 
 export function NewPlan(props: RouteComponentProps) {
     const hidePanel = useCallback(
-        (canContinueToEnvironment = false) => {
+        (canContinue = false) => {
             const query = new URLSearchParams(props.location.search);
-
-            const isWizard = query.get('type') === 'wizard';
-
-            const newPath =
-                isWizard && canContinueToEnvironment ? newEnvironmentPath : environmentsPath;
+            const redirectUrl = query.get('redirectUrl');
+            const showCreateEnvironmentPanel = query.get('showCreateEnvironmentPanel') === 'true';
+            const nextPath =
+                showCreateEnvironmentPanel && canContinue ? newEnvironmentPath : environmentsPath;
 
             focusPlanSelectorDropdown();
 
-            props.history.replace(newPath);
+            props.history.push({
+                pathname: nextPath,
+                search: redirectUrl ? redirectUrl.toString() : '',
+            });
         },
         [props.history, props.location]
     );

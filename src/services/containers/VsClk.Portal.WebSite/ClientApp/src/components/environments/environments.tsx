@@ -111,7 +111,9 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
         if (this.props.shouldOpenPlanCreation) {
             this.props.history.push({
                 pathname: newPlanPath,
-                search: 'type=wizard',
+                search: new URLSearchParams({
+                    showCreateEnvironmentPanel: 'true',
+                }).toString(),
             });
         } else {
             this.props.history.push(newEnvironmentPath);

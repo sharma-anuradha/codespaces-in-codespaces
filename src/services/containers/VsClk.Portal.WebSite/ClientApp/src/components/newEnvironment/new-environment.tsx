@@ -10,7 +10,6 @@ import {
 } from '../environmentsPanel/create-environment-panel';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
-import { Redirect } from 'react-router';
 import { newPlanPath } from '../../routerPaths';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
@@ -25,9 +24,11 @@ export function NewEnvironment(props: RouteComponentProps) {
     );
 
     const query = new URLSearchParams(props.location.search);
-    const name = query.get('name');
-    const repo = query.get('repo');
-    const skuName = query.get('instanceType');
+    const redirectUrl = query && query.get('redirectUrl');
+    const urlParams = redirectUrl ? new URLSearchParams(redirectUrl) : query;
+    const name = urlParams.get('name');
+    const repo = urlParams.get('repo');
+    const skuName = urlParams.get('instanceType');
 
     const hidePanel = useCallback(
         (environmentId?: string) => {
@@ -68,7 +69,18 @@ export function NewEnvironment(props: RouteComponentProps) {
     }
 
     if (!selectedPlan) {
-        return <Redirect to={newPlanPath} />;
+        let search = new URLSearchParams({
+            showCreateEnvironmentPanel: 'true',
+        });
+
+        if (location.search) {
+            search.append('redirectUrl', location.search);
+        }
+
+        props.history.push({
+            pathname: newPlanPath,
+            search: search.toString(),
+        });
     }
 
     return (
