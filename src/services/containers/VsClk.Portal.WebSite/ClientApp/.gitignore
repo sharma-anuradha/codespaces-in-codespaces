@@ -47,3 +47,6 @@ junit.xml
 service-worker-graph.svg
 main-graph.svg
 
+# TS inline output
+*.js
+*.map
