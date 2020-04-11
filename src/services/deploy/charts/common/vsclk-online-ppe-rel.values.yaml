@@ -6,11 +6,15 @@ image:
 ingress:
   hosts:
     - online-ppe.core.vsengsaas.visualstudio.com
+    - "*.workspaces-ppe.github.com"
     - vsclk-online-ppe-rel-tm.trafficmanager.net
   tls:
     - hosts:
         - online-ppe.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
+    - hosts:
+        - "*.workspaces-ppe.github.com"
+      secretName: ssl-cert-github-ws
 
 pfingress:
   hosts:

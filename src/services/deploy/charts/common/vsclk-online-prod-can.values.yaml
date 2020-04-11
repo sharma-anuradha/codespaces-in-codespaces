@@ -6,10 +6,14 @@ image:
 ingress:
   hosts:
     - canary.online.visualstudio.com
+    - "*.workspaces.github.com"
   tls:
     - hosts:
         - canary.online.visualstudio.com
       secretName: ssl-cert
+    - hosts:
+        - "*.workspaces.github.com"
+      secretName: ssl-cert-github-ws
 
 pfingress:
   hosts:

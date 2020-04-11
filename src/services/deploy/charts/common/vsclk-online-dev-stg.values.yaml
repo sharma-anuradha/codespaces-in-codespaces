@@ -6,11 +6,15 @@ image:
 ingress:
   hosts:
     - online-stg.dev.core.vsengsaas.visualstudio.com
+    - "*.workspaces-dev.github.com"
     - vsclk-online-dev-stg-tm.trafficmanager.net
   tls:
     - hosts:
         - online-stg.dev.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
+    - hosts:
+        - "*.workspaces-dev.github.com"
+      secretName: ssl-cert-github-ws
 
 pfingress:
   hosts:

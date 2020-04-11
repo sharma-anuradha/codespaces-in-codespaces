@@ -113,10 +113,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
                     // GitHub endpoints that should have access to all VSO service instances (including prod)
                     currentOrigins.Add("https://github.com");
-                    currentOrigins.Add("https://githubworkspaces.com");
                     currentOrigins.Add("https://github.localhost");
                     currentOrigins.Add("http://github.localhost");
                     currentOrigins.Add("https://*.review-lab.github.com");
+                    currentOrigins.Add("https://*.workspaces.github.com");
+                    currentOrigins.Add("https://*.workspaces-ppe.github.com");
+                    currentOrigins.Add("https://*.workspaces-dev.github.com");
 
                     options.AddPolicy(
                         "ProdCORSPolicy",

@@ -7,11 +7,15 @@ ingress:
   hosts:
     - online.visualstudio.com
     - online.core.vsengsaas.visualstudio.com
+    - "*.workspaces.github.com"
     - vsclk-online-prod-rel-tm.trafficmanager.net
   tls:
     - hosts:
         - online.visualstudio.com
       secretName: ssl-cert
+    - hosts:
+        - "*.workspaces.github.com"
+      secretName: ssl-cert-github-ws
 
 pfingress:
   hosts:
