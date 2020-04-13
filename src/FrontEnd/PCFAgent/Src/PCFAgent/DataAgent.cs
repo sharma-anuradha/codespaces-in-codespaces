@@ -173,7 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
                 childLogger.FluentAddValue("PcfCommandStatus", commandStatus)
                     .FluentAddValue("PcfAffectedEntitiesCount", affectedRowCount)
-                                    .AddAttempt(attemptNumber);
+                    .FluentAddValue("AttemptNumber", attemptNumber);
             });
         }
 
@@ -234,14 +234,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
 
         private IDiagnosticsLogger GetNewLogger(IPrivacyCommand command = null)
         {
-            var logger = LoggerFactory.New(DefaultLogValues);
-            logger.AddBaseValue(LoggingConstants.CorrelationId, Guid.NewGuid().ToString("D"));
-            if (command != null)
+            var pcfLogValues = new LogValueSet
             {
-                logger.AddBaseValue("PcfCommandId", command.CommandId);
+                { LoggingConstants.CorrelationId, Guid.NewGuid().ToString("D") },
+            };
+
+            if (command != null && Guid.TryParse(command.CommandId, out Guid commandIdGuid))
+            {
+                pcfLogValues.Add("PcfCommandId", commandIdGuid.ToString("D"));
             }
 
-            return logger;
+            pcfLogValues = DefaultLogValues?.Concat(pcfLogValues) ?? pcfLogValues;
+            return LoggerFactory.New(pcfLogValues);
         }
     }
 }
