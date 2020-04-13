@@ -26,25 +26,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
                 IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Monitor environment heartbeat by invoking the continution activator.
+        /// Monitor the unavailable state transition by invoking the continution activator.
         /// </summary>
         /// <param name="environmentId">Target environment id.</param>
         /// <param name="computeId">Target compute id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>returns task.</returns>
-        Task MonitorUnavailableStateTransition(
+        Task MonitorUnavailableStateTransitionAsync(
             string environmentId,
             Guid computeId,
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Monitor environment heartbeat by invoking the continution activator.
+        /// Monitor the resume state transition by invoking the continution activator.
         /// </summary>
         /// <param name="environmentId">Target environment id.</param>
         /// <param name="computeId">Target compute id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>returns task.</returns>
         Task MonitorResumeStateTransitionAsync(
+            string environmentId,
+            Guid computeId,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Monitor the shutdown state transition by invoking the continution activator.
+        /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
+        /// <param name="computeId">Target compute id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>returns task.</returns>
+        Task MonitorShutdownStateTransitionAsync(
             string environmentId,
             Guid computeId,
             IDiagnosticsLogger logger);

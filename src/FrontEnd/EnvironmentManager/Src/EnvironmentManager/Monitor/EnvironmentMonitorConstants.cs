@@ -30,6 +30,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
         public const int ResumeEnvironmentTimeoutInSeconds = 600;
 
         /// <summary>
+        /// Gets Shutdown Environment Timeout In Seconds.
+        /// </summary>
+        public const int ShutdownEnvironmentTimeoutInSeconds = 120;
+
+        /// <summary>
+        /// Gets Docker Rebuild Timeout In Seconds.
+        /// </summary>
+        public const int RebuildEnvironmentTimeoutInSeconds = 600;
+
+        /// <summary>
+        /// Gets Provision Environment Timeout In Seconds.
+        /// </summary>
+        public const int ProvisionEnvironmentTimeoutInSeconds = 3600;
+
+        /// <summary>
         /// Gets Unavailable Environment Timeout In Seconds.
         /// </summary>
         public const int UnavailableEnvironmentTimeoutInSeconds = 60;

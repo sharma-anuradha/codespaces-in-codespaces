@@ -71,6 +71,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationCoreAsync(EnvironmentStateTransitionInput input, CloudEnvironment environment, IDiagnosticsLogger logger)
         {
+            logger.FluentAddValue("EnvironmentTransitioningState", input.TargetState);
+            logger.FluentAddValue("EnvironmentActualState", environment.State);
+            logger.FluentAddValue("EnvironmentTransitionTimeout", input.TransitionTimeout);
+
             if (environment.State == input.TargetState)
             {
                 // compute has healthy heartbeat, return next input
@@ -80,7 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Check environment state
             if (environment.State == input.CurrentState)
             {
-                if (environment.State == CloudEnvironmentState.Starting || environment.State == CloudEnvironmentState.Unavailable)
+                if (environment.State == CloudEnvironmentState.Starting ||
+                    environment.State == CloudEnvironmentState.ShuttingDown ||
+                    environment.State == CloudEnvironmentState.Unavailable)
                 {
                     if (environment.Type != EnvironmentType.StaticEnvironment)
                     {
@@ -89,11 +95,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
                 }
 
-                // compute does not have a healthy heartbeat, return next input
+                // state transition has timed out, return next input
                 return CreateFinalResult(OperationState.Failed, "TimeoutInStateTransition");
             }
 
-            // compute has healthy heartbeat, return next input
+            // unknown state transition, return next input
             return CreateFinalResult(OperationState.Cancelled, "UnknownStateTransition");
         }
     }

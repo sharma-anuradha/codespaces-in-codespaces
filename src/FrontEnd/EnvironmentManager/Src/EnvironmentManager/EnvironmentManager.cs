@@ -904,6 +904,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                         // Start the cleanup operation to shutdown environment.
                         await ResourceBrokerClient.SuspendAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+
+                        // Kick off state transition monitoring.
+                        await EnvironmentMonitor.MonitorShutdownStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                     }
 
                     return new CloudEnvironmentServiceResult

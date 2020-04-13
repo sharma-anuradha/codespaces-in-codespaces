@@ -22,6 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public class EnvironmentMonitor : IEnvironmentMonitor
     {
+        private const string LogBaseName = "environment_monitor";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentMonitor"/> class.
         /// </summary>
@@ -84,7 +86,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public async Task MonitorUnavailableStateTransition(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        public async Task MonitorShutdownStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
+                ContinuationToken = string.Empty,
+                CurrentState = CloudEnvironmentState.ShuttingDown,
+                TargetState = CloudEnvironmentState.Shutdown,
+                TransitionTimeout = TimeSpan.FromSeconds(EnvironmentMonitorConstants.ShutdownEnvironmentTimeoutInSeconds),
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task MonitorUnavailableStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
         {
             var input = new EnvironmentStateTransitionInput()
             {
@@ -99,24 +117,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             await MonitorStateTransitionAsync(input, logger);
         }
 
-        private async Task MonitorStateTransitionAsync(EnvironmentStateTransitionInput input, IDiagnosticsLogger logger)
+        private Task MonitorStateTransitionAsync(EnvironmentStateTransitionInput input, IDiagnosticsLogger logger)
         {
-            // Check for flighting switch
-            if (!await EnvironmentMonitorSettings.EnableStateTransitionMonitoring(logger.NewChildLogger()))
-            {
-                // Stop environment monitoring
-                return;
-            }
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_monitor_state_transition",
+                async (childLogger) =>
+                {
+                    // Check for flighting switch
+                    if (!await EnvironmentMonitorSettings.EnableStateTransitionMonitoring(childLogger.NewChildLogger()))
+                    {
+                        // Stop environment monitoring
+                        return;
+                    }
 
-            var loggingProperties = new Dictionary<string, string>();
+                    var loggingProperties = new Dictionary<string, string>();
 
-            var target = EnvironmentStateTransitionMonitorContinuationHandler.DefaultQueueTarget;
+                    var target = EnvironmentStateTransitionMonitorContinuationHandler.DefaultQueueTarget;
 
-            var result = await Activator.Execute(target, input, logger, null, loggingProperties);
-            if (result.Status != OperationState.InProgress)
-            {
-                throw new EnvironmentMonitorInitializationException(input.EnvironmentId);
-            }
+                    var result = await Activator.Execute(target, input, childLogger, null, loggingProperties);
+                    if (result.Status != OperationState.InProgress)
+                    {
+                        throw new EnvironmentMonitorInitializationException(input.EnvironmentId);
+                    }
+                });
         }
     }
 }

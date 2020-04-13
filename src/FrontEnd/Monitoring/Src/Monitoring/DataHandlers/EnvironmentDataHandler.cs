@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        else if (newState.state == CloudEnvironmentState.Unavailable)
                        {
                            // Check that environment state has transitioned back to avaiable within defined timeout, if not force suspend the environment.
-                           await environmentMonitor.MonitorUnavailableStateTransition(environment.Id, environment.Compute.ResourceId, childLogger.NewChildLogger());
+                           await environmentMonitor.MonitorUnavailableStateTransitionAsync(environment.Id, environment.Compute.ResourceId, childLogger.NewChildLogger());
                        }
                    }
 
