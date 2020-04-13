@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
@@ -113,7 +114,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironmentSettingsUpdateResult> UpdateSettingsAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentUpdate update, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentUpdate update, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironmentUpdateResult> UpdateFoldersListAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentFolderBody update, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

@@ -70,6 +70,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         public ConnectionInfoBody Connection { get; set; }
 
         /// <summary>
+        /// Gets or sets session paths for folders opened in an environment.
+        /// </summary>
+        public List<string> RecentFolders { get; set; }
+
+        /// <summary>
         /// Gets or sets the last active date.
         /// </summary>
         public DateTime Active { get; set; }

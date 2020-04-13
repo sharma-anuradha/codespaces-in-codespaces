@@ -748,6 +748,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
+        /// Puts list of recent folders into environment record.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="folderPathInput">The new environment settings.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
+        [HttpPatch("{environmentId}/folder")]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(GetAvailableSettingsUpdatesAsync))]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("update_MRU_folders")]
+        public async Task<IActionResult> UpdateRecentFoldersListAsync(
+            [FromRoute]string environmentId,
+            [FromBody]CloudEnvironmentFolderBody folderPathInput,
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            ValidationUtil.IsRequired(folderPathInput, nameof(folderPathInput));
+            ValidationUtil.IsRequired(logger, nameof(logger));
+
+            var environment = await GetEnvironmentAsync(environmentId, logger);
+            if (environment is null)
+            {
+                return NotFound();
+            }
+
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger))
+            {
+                return new ForbidResult();
+            }
+
+            // Reroute to correct location if needed
+            var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
+            if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
+            {
+                return RedirectToLocation(owningStamp);
+            }
+
+            var result = await EnvironmentManager.UpdateFoldersListAsync(environment, folderPathInput, logger);
+            if (result.IsSuccess)
+            {
+                return Ok(Mapper.Map<CloudEnvironmentResult>(result.CloudEnvironment));
+            }
+            else
+            {
+                return BadRequest(result.ValidationErrors);
+            }
+        }
+
+        /// <summary>
         /// Generates a heartbeat token for the specified environment.
         /// </summary>
         /// <param name="environmentId">The environment id.</param>

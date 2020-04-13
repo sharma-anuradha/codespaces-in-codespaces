@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\BackEnd\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />

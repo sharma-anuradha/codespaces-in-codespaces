@@ -387,7 +387,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 {
                     Assert.NotNull(updateParams);
 
-                    return CloudEnvironmentSettingsUpdateResult.Success(env);
+                    return CloudEnvironmentUpdateResult.Success(env);
                 });
 
 

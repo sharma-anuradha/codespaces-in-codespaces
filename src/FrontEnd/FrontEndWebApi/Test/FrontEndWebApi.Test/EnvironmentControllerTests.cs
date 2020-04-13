@@ -370,7 +370,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 AutoShutdownDelayMinutes = 123,
             };
 
-            var updateSettingsReponse = CloudEnvironmentSettingsUpdateResult.Success(mockEnvironment);
+            var updateSettingsReponse = CloudEnvironmentUpdateResult.Success(mockEnvironment);
 
             var mockEnvironmentManager = new Mock<IEnvironmentManager>();
 
@@ -417,7 +417,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
 
             var errorCodes = new List<MessageCodes> { MessageCodes.EnvironmentNotShutdown, MessageCodes.RequestedSkuIsInvalid, };
-            var updateSettingsReponse = CloudEnvironmentSettingsUpdateResult.Error(errorCodes);
+            var updateSettingsReponse = CloudEnvironmentUpdateResult.Error(errorCodes);
 
             var mockEnvironmentManager = new Mock<IEnvironmentManager>();
 
@@ -444,6 +444,104 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var environmentController = CreateTestEnvironmentsController(environmentManager: mockEnvironmentManager.Object);
 
             var actionResult = await environmentController.UpdateSettingsAsync(mockEnvironment.Id, updateRequest, logger);
+            Assert.IsType<BadRequestObjectResult>(actionResult);
+
+            var result = (actionResult as BadRequestObjectResult).Value as List<MessageCodes>;
+
+            Assert.NotNull(result);
+            Assert.Equal(errorCodes.Count, result.Count);
+
+            for (var i = 0; i < errorCodes.Count; ++i)
+            {
+                var expectedCode = errorCodes[i];
+                var actualCode = result[i];
+
+                Assert.Equal(expectedCode, actualCode);
+            }
+        }
+
+        [Fact]
+        public async Task EnvironmentController_UpdateRecentFoldersListAsync()
+        {
+            var mockEnvironment = MockUtil.MockCloudEnvironment();
+
+            var updateRequest = new CloudEnvironmentFolderBody
+            {
+                RecentFolderPaths = new List<string> { "/home/vsonline/otherWorkspaceHi" }
+            };
+
+            var updateSettingsReponse = CloudEnvironmentUpdateResult.Success(mockEnvironment);
+
+            var mockEnvironmentManager = new Mock<IEnvironmentManager>();
+
+            mockEnvironmentManager
+                .Setup(x => x.GetAndStateRefreshAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment))
+                .Callback((string id, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.UpdateFoldersListAsync(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<CloudEnvironmentFolderBody>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(updateSettingsReponse))
+                .Callback((CloudEnvironment env, CloudEnvironmentFolderBody update, IDiagnosticsLogger log) =>
+                {
+                    Assert.Equal(updateRequest.RecentFolderPaths, update.RecentFolderPaths);
+                });
+
+            var environmentController = CreateTestEnvironmentsController(environmentManager: mockEnvironmentManager.Object);
+
+            var actionResult = await environmentController.UpdateRecentFoldersListAsync(mockEnvironment.Id, updateRequest, logger);
+            Assert.IsType<OkObjectResult>(actionResult);
+
+            var result = (actionResult as OkObjectResult).Value as CloudEnvironmentResult;
+
+            Assert.NotNull(result);
+            Assert.Equal(mockEnvironment.Id, result.Id);
+        }
+
+        [Fact]
+        public async Task EnvironmentController_UpdateRecentFoldersAsync_BadRequest()
+        {
+            var mockEnvironment = MockUtil.MockCloudEnvironment();
+
+            var updateRequest = new CloudEnvironmentFolderBody
+            {
+                RecentFolderPaths = new List<string> { "/home/vsonline/otherWorkspaceHi" }
+            };
+
+            var errorCodes = new List<MessageCodes> { MessageCodes.TooManyRecentFolders, MessageCodes.FilePathIsInvalid, };
+            var updateSettingsReponse = CloudEnvironmentUpdateResult.Error(errorCodes);
+
+            var mockEnvironmentManager = new Mock<IEnvironmentManager>();
+
+            mockEnvironmentManager
+                .Setup(x => x.GetAndStateRefreshAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment))
+                .Callback((string id, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.UpdateFoldersListAsync(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<CloudEnvironmentFolderBody>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(updateSettingsReponse))
+                .Callback((CloudEnvironment env, CloudEnvironmentFolderBody update, IDiagnosticsLogger log) =>
+                {
+                    Assert.Equal(updateRequest.RecentFolderPaths, update.RecentFolderPaths);
+                });
+
+            var environmentController = CreateTestEnvironmentsController(environmentManager: mockEnvironmentManager.Object);
+
+            var actionResult = await environmentController.UpdateRecentFoldersListAsync(mockEnvironment.Id, updateRequest, logger);
+
             Assert.IsType<BadRequestObjectResult>(actionResult);
 
             var result = (actionResult as BadRequestObjectResult).Value as List<MessageCodes>;

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -141,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="update">The update request.</param>
         /// <param name="logger">The logger.</param>
         /// <returns>A <see cref="CloudEnvironmentAvailableSettingsUpdates"/> providing the allowed settings updates.</returns>
-        Task<CloudEnvironmentSettingsUpdateResult> UpdateSettingsAsync(
+        Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
             IDiagnosticsLogger logger);
@@ -154,6 +155,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>A <see cref="CloudEnvironmentAvailableSettingsUpdates"/> providing the allowed settings updates.</returns>
         Task<CloudEnvironmentAvailableSettingsUpdates> GetAvailableSettingsUpdatesAsync(
             CloudEnvironment cloudEnvironment,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Replaces the given environment's recent folders list with the given updated list.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        /// <param name="update">The updated list.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>A <see cref="CloudEnvironmentUpdateResult"/> the result of updating the environment. </returns>
+        Task<CloudEnvironmentUpdateResult> UpdateFoldersListAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentFolderBody update,
             IDiagnosticsLogger logger);
 
         /// <summary>

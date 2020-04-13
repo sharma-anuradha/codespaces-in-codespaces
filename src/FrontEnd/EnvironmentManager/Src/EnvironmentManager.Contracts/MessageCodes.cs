@@ -87,8 +87,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         StartEnvironmentGenericError = 14,
 
         /// <summary>
-        /// Resotring From Archive.
+        /// Restoring From Archive.
         /// </summary>
-        ResotringFromArchive = 15,
+        RestoringFromArchive = 15,
+
+        /// <summary>
+        /// File path is too long.
+        /// </summary>
+        FilePathIsInvalid = 16,
+
+        /// <summary>
+        /// The list of file paths exceeds the maximum allowed number of elements
+        /// </summary>
+        TooManyRecentFolders = 17,
     }
 }

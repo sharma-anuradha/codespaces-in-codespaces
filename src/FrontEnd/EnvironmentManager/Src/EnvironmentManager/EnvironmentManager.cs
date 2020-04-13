@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -719,7 +721,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     logger.FluentAddBaseValue("CloudEnvironmentIsArchived", isArchivedEnvironment);
 
                     // At this point, if archive record is going to be switched in it will have been
-                    var startingStateReson = isArchivedEnvironment ? MessageCodes.ResotringFromArchive.ToString() : null;
+                    var startingStateReson = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
                     await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, startingStateReson, childLogger.NewChildLogger());
 
                     // Persist updates madee to date
@@ -974,7 +976,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironmentSettingsUpdateResult> UpdateSettingsAsync(
+        public async Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
             IDiagnosticsLogger logger)
@@ -1032,7 +1034,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         childLogger.AddErrorDetail($"Error MessageCodes: [ {string.Join(", ", validationErrors)} ]");
 
-                        return CloudEnvironmentSettingsUpdateResult.Error(validationErrors);
+                        return CloudEnvironmentUpdateResult.Error(validationErrors);
                     }
 
                     cloudEnvironment.Updated = DateTime.UtcNow;
@@ -1042,7 +1044,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
-                    return CloudEnvironmentSettingsUpdateResult.Success(cloudEnvironment);
+                    return CloudEnvironmentUpdateResult.Success(cloudEnvironment);
+                },
+                swallowException: false);
+        }
+
+        /// <inheritdoc/>
+        public async Task<CloudEnvironmentUpdateResult> UpdateFoldersListAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentFolderBody update,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotNull(update, nameof(update));
+            Requires.NotNull(logger, nameof(logger));
+
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_update_recent_folders",
+                async (childLogger) =>
+                {
+                    var validationErrors = new List<MessageCodes>();
+
+                    var validationDetails = new List<string>();
+
+                    if (!(update.RecentFolderPaths is null))
+                    {
+                        if (update.RecentFolderPaths.Count > 20)
+                        {
+                            validationErrors.Add(MessageCodes.TooManyRecentFolders);
+                        }
+                        else
+                        {
+                            update.RecentFolderPaths.ForEach(path =>
+                            {
+                                if (path.Length > 1000)
+                                {
+                                    validationErrors.Add(MessageCodes.FilePathIsInvalid);
+                                    validationDetails.Add(string.Join("-", MessageCodes.FilePathIsInvalid, string.Join("...", path.Substring(0, 30), path.Substring(path.Length - 30))));
+                                }
+                            });
+                        }
+                    }
+
+                    if (validationErrors.Any())
+                    {
+                        childLogger.AddErrorDetail($"Error MessageCodes: [ {string.Join(", ", validationDetails)} ]");
+
+                        return CloudEnvironmentUpdateResult.Error(validationErrors, string.Join(", ", validationDetails));
+                    }
+
+                    cloudEnvironment.RecentFolders = update.RecentFolderPaths;
+
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                    return CloudEnvironmentUpdateResult.Success(cloudEnvironment);
                 },
                 swallowException: false);
         }

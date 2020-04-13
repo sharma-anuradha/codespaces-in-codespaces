@@ -158,6 +158,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public ConnectionInfo Connection { get; set; }
 
         /// <summary>
+        /// Gets or sets session paths for folders opened in an environment.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "recentFolders")]
+        public List<string> RecentFolders { get; set; }
+
+        /// <summary>
         /// Gets or sets the last active date and time.
         /// </summary>
         [GDPR(Action = GDPRAction.Export)]

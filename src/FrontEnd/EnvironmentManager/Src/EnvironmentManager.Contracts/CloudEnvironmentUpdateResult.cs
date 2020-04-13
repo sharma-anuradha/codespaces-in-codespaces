@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentSettingsUpdateResult.cs" company="Microsoft">
+﻿// <copyright file="CloudEnvironmentUpdateResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,9 +7,9 @@ using System.Collections.Generic;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
-    /// Class which encapsulates the results of cloud environment settings update request.
+    /// Class which encapsulates the results of cloud environment update request.
     /// </summary>
-    public class CloudEnvironmentSettingsUpdateResult
+    public class CloudEnvironmentUpdateResult
     {
         /// <summary>
         /// Gets the updated environment settings after processing the update request or null if the request was invalid.
@@ -22,35 +22,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         public IEnumerable<MessageCodes> ValidationErrors { get; private set; }
 
         /// <summary>
+        /// Gets additional error details relating to the validation errors or null if no details were provided.
+        /// </summary>
+        public string ErrorDetails { get; private set; }
+
+        /// <summary>
         /// Gets a value indicating whether or not the result is a successful result.
         /// </summary>
         public bool IsSuccess => ValidationErrors == null;
 
         /// <summary>
-        /// Constructs a CloudEnvironmentSettingsUpdateResult for a successul settings update.
+        /// Constructs a CloudEnvironmentUpdateResult for a successul settings update.
         /// </summary>
         /// <param name="updatedEnvironment">The updated environment settings.</param>
-        /// <returns>The successful <see cref="CloudEnvironmentSettingsUpdateResult"/>.</returns>
-        public static CloudEnvironmentSettingsUpdateResult Success(CloudEnvironment updatedEnvironment)
+        /// <returns>The successful <see cref="CloudEnvironmentUpdateResult"/>.</returns>
+        public static CloudEnvironmentUpdateResult Success(CloudEnvironment updatedEnvironment)
         {
-            return new CloudEnvironmentSettingsUpdateResult
+            return new CloudEnvironmentUpdateResult
             {
                 CloudEnvironment = updatedEnvironment,
                 ValidationErrors = null,
+                ErrorDetails = null,
             };
         }
 
         /// <summary>
-        /// Constructs a CloudEnvironmentSettingsUpdateResult for a failed settings update.
+        /// Constructs a CloudEnvironmentUpdateResult for a failed settings update.
         /// </summary>
         /// <param name="validationErrors">The reason(s) the request failed.</param>
-        /// <returns>The failed <see cref="CloudEnvironmentSettingsUpdateResult"/>.</returns>
-        public static CloudEnvironmentSettingsUpdateResult Error(List<MessageCodes> validationErrors)
+        /// <param name="details">optional parameter: Additional details for message codes.</param>
+        /// <returns>The failed <see cref="CloudEnvironmentUpdateResult"/>.</returns>
+        public static CloudEnvironmentUpdateResult Error(List<MessageCodes> validationErrors, string details = null)
         {
-            return new CloudEnvironmentSettingsUpdateResult
+            return new CloudEnvironmentUpdateResult
             {
                 CloudEnvironment = null,
                 ValidationErrors = validationErrors,
+                ErrorDetails = details,
             };
         }
     }
