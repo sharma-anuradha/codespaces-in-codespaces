@@ -85,11 +85,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Load the local file if not running in azure.
             if (!IsRunningInAzure() && hostingEnvironment.IsDevelopment())
             {
+                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: true);
+
                 // Loading from user profile so that it will even work with git clean or a new repo.
                 var userAppSettings = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "CEDev", "appsettings.json");
                 builder.AddJsonFile(AddAppSettingsJsonFile(userAppSettings), optional: true);
-
-                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: true);
             }
 
             builder.AddEnvironmentVariables();
