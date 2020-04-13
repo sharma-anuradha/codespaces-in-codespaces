@@ -41,8 +41,8 @@ pfingress:
       error_page 302 = @handle_error;
     nginx.ingress.kubernetes.io/server-snippet: |
       location @handle_error {
-        if ($upstream_http_location ~* "^https?:\/\/(?<pf_session>[0-9a-f]{36}-\d{2,5})\.(?<subdomain>[^\/]+)(?<path>\/.*)$") {
-          proxy_pass 'http://$pf_session.$subdomain';
+        if ($upstream_http_location ~* "^https?:\/\/pf-(?<pf_session>[0-9a-f]{36}-\d{2,5})\.(?<subdomain>[^\/]+)(?<path>\/.*)$") {
+          proxy_pass 'http://pf-$pf_session.$subdomain';
         }
       }
       location /authenticate-port-forwarder {

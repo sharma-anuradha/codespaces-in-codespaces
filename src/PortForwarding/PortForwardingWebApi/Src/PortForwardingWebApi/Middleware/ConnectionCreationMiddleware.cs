@@ -125,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
 
             var uriBuilder = new UriBuilder(
                 context.Request.Scheme,
-                $"{connectionInfo.GetKubernetesServiceName()}.svc.cluster.local")
+                $"{connectionInfo.GetKubernetesServiceName()}.default.svc.cluster.local")
             {
                 Path = context.Request.Path,
                 Query = context.Request.QueryString.ToString(),
