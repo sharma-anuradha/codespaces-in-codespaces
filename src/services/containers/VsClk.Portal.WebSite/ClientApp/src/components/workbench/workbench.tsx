@@ -34,6 +34,8 @@ import {
     getExtensions,
 } from 'vso-workbench';
 
+import * as envRegService from '../../services/envRegService';
+
 import { BrowserSyncService } from '../../rpcServices/BrowserSyncService';
 import { GitCredentialService } from '../../rpcServices/GitCredentialService';
 
@@ -94,6 +96,7 @@ export interface WorkbenchProps {
     apiEndpoint: string;
     token: string | undefined;
     environmentInfo: ILocalEnvironment | undefined;
+    getEnvironment: typeof envRegService.getEnvironment
     params: URLSearchParams;
     correlationId?: string | null;
     isValidEnvironmentFound: boolean;
@@ -268,7 +271,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         const {
             token,
             liveShareEndpoint,
-            apiEndpoint
+            apiEndpoint,
+            getEnvironment,
         } = this.props;
 
         if (this.workbenchMounted) {
@@ -336,7 +340,13 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             envConnector
         );
 
-        const defaultSettings = isHostedOnGithub() ? '{"workbench.colorTheme": "Github"}' : '';
+        const defaultSettings = isHostedOnGithub()
+            ? '{"workbench.colorTheme": "Github"}'
+            : '';
+
+        if (!isHostedOnGithub()) {
+            localStorage.setItem('vscode.baseTheme', 'vs-dark');
+        }
         
         const userDataProvider = new UserDataProvider(defaultSettings);
         await userDataProvider.initializeDBProvider();
@@ -357,7 +367,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     getVSCodeVersion(),
                     envConnector,
                     logger.verbose,
-                    async () => { return environmentInfo; },
+                    getEnvironment,
                     getExtensions(),
                     environmentInfo.id,
                     apiEndpoint,
@@ -469,6 +479,7 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         environmentInfo,
         params,
         liveShareEndpoint,
+        getEnvironment: envRegService.getEnvironment,
         apiEndpoint,
         correlationId: params.get('correlationId'),
         autoStart: params.get('autoStart') !== 'false',

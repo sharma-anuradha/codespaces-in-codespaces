@@ -65,7 +65,7 @@ export class UserDataProvider implements IFileSystemProvider {
             }
         }
     }
-
+    
     watch(resource: URI, opts: IWatchOptions): Disposable {
         return {
             dispose() {},
