@@ -49,6 +49,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         private const int VirtualNetworksDefaultLimit = 1000;
         private const string StorageAccountsQuota = AzureResourceQuotaNames.StorageAccounts;
         private const int StorageAccountsDefaultLimit = 250;
+        private const int ArtificialKeyVaultLimit = 100; // Key vaults have no limit, but we'll return something reasonable for the caller to consider.
+
+        // Random number generator used for randomizing subscription allocation for resources that
+        // has no azure quota limits, such as KeyVaults.
+        private static readonly Random Random = new Random();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureSubscriptionCapacityProvider"/> class.
@@ -109,6 +114,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
                 case ServiceType.Network:
                     return await LoadAzureResourceUsageAsync(subscription, location, ServiceType.Network, subscription.NetworkQuotas, logger);
+
+                case ServiceType.KeyVault:
+                    /*
+                    // Theoretically there are no limits to the number of KeyVaults you can have in a subscription.
+                    // This code constructs an artificial resource usage object for keyVaults, which can still
+                    // preserve the randomness of how the subscription is choosen.
+                    */
+
+                    int artificialKeyVaultCurrentUsage = Random.Next(ArtificialKeyVaultLimit); // Returning random usage implies there will always be room for one more.
+
+                    var resourceUsage = new AzureResourceUsage(
+                        subscription.SubscriptionId,
+                        ServiceType.KeyVault,
+                        location,
+                        ServiceType.KeyVault.ToString(),
+                        ArtificialKeyVaultLimit,
+                        artificialKeyVaultCurrentUsage);
+
+                    return Enumerable.Repeat(resourceUsage, 1);
 
                 default:
                     throw new NotSupportedException();
@@ -382,7 +406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             }
         }
 
-        #if false // unused, but might want this to count the number of resource groups, or resources per group
+#if false // unused, but might want this to count the number of resource groups, or resources per group
         private async Task<ResourceManagementClient> CreateResourceManagementClientAsync(IAzureSubscription azureSubscription)
         {
             var restClient = await CreateRestClientAsync();
@@ -392,7 +416,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             };
             return resourceManagementClient;
         }
-        #endif
+#endif
 
         private async Task<ComputeManagementClient> CreateComputeManagementAsync(IAzureSubscription azureSubscription)
         {

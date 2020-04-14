@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         /// Azure Storage
         /// </summary>
         Storage = 2,
+
+        /// <summary>
+        /// Azure KeyVault.
+        /// </summary>
+        KeyVault = 3,
     }
 }
