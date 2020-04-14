@@ -1,3 +1,4 @@
+
 export { vscode } from './vscode/vscodeAssets/vscode';
 
 export { UserDataProvider } from './vscode/providers/userDataProvider/userDataProvider';
@@ -8,7 +9,7 @@ export { applicationLinksProviderFactory } from './vscode/providers/applicationL
 export { CredentialsProvider } from './vscode/providers/credentialsProvider/credentialsProvider';
 export { BaseExternalUriProvider } from './vscode/providers/externalUriProvider/externalUriProvider';
 
-export { getVSCodeVersion } from './utils/getVSCodeVersion';
+export { getVSCodeVersion, getVSCodeVersionString } from './utils/getVSCodeVersion';
 export { getVSCodeAssetPath } from './utils/getVSCodeAssetPath';
 
 export { IAuthStrategy } from './interfaces/IAuthStrategy';

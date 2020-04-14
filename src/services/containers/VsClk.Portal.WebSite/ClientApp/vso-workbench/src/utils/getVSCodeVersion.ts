@@ -21,3 +21,9 @@ export const getVSCodeVersion = (): IVSCodeConfig => {
 
     return { quality, commit };
 };
+
+export const getVSCodeVersionString = (): string => {
+    const version = getVSCodeVersion();
+
+    return `${version.quality}-${version.commit.substr(0, 7)}`;
+};
