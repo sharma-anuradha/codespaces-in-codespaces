@@ -25,7 +25,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
     public class Startup
     {
-        private static readonly TimeSpan CacheControl_MaxAgeValue = TimeSpan.FromHours(2);
         private static readonly TimeSpan CacheControl_YearValue = TimeSpan.FromDays(365);
 
         public Startup(IConfiguration configuration, IWebHostEnvironment hostEnvironment)
@@ -125,6 +124,34 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 IdentityModelEventSource.ShowPII = true;
             }
 
+            app.Use(async (context, next) =>
+            {
+                // Locally the webpack dev server serves assets under constant names and /static/js|css|.../* paths. We don't want the cashing locally.
+                if (AppSettings.IsLocal ||
+                    !context.Request.Path.StartsWithSegments("/static", StringComparison.OrdinalIgnoreCase) ||
+                    !context.Request.Path.StartsWithSegments("/workbench-page", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.GetTypedHeaders().CacheControl =
+                        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                        {
+                            Public = true,
+                            NoCache = true,
+                            NoStore = true,
+                        };
+                }
+                else
+                {
+                    context.Response.GetTypedHeaders().CacheControl =
+                        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                        {
+                            Public = true,
+                            MaxAge = CacheControl_YearValue
+                        };
+                }
+
+                await next();
+            });
+
             app.MapWhen(Not(IsPortForwardingRequest), ConfigurePortal);
             app.MapWhen(IsPortForwardingRequest, ConfigurePortForwarding);
 
@@ -172,33 +199,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 }
             });
             app.UseRouting();
-            app.Use(async (context, next) =>
-            {
-                // Locally the webpack dev server serves assets under constant names and /static/js|css|.../* paths. We don't want the cashing locally.
-                if (AppSettings.IsLocal ||
-                    !context.Request.Path.StartsWithSegments("/static", StringComparison.OrdinalIgnoreCase) ||
-                    !context.Request.Path.StartsWithSegments("/workbench-page", StringComparison.OrdinalIgnoreCase))
-                {
-                    context.Response.GetTypedHeaders().CacheControl =
-                        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
-                        {
-                            Public = true,
-                            NoCache = true,
-                            NoStore = true,
-                        };
-                }
-                else
-                {
-                    context.Response.GetTypedHeaders().CacheControl =
-                        new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
-                        {
-                            Public = true,
-                            MaxAge = CacheControl_YearValue
-                        };
-                }
-
-                await next();
-            });
 
             // VS SaaS Middleware: ApplicationServicesProvider, logging factory, x-content-type-options header, unhandled exception reporter, request ids, diagnostics, authentication
             app.UseVsSaaS(HostEnvironment.IsDevelopment(), useAuthentication: true);
