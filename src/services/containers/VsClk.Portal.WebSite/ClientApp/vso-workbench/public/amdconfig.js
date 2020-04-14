@@ -1,8 +1,22 @@
-const vsoFeatureSet = window.localStorage.getItem('vso-featureset') || 'stable';
-const vscodeQuality = vsoFeatureSet === 'insider' ? 'insider' : 'stable';
+const stableFlag = 'stable';
+const insiderFlag = 'insider';
+
+const params = new URLSearchParams(location.search);
+const paramsFeatureSet = params.get('dogfoodChannel');
+
+const vsoFeatureSet = window.localStorage.getItem('vso-featureset');
+
+let vscodeQuality = stableFlag;
+if (paramsFeatureSet === insiderFlag) {
+    vscodeQuality = insiderFlag;
+}
+
+if (vsoFeatureSet === insiderFlag) {
+    vscodeQuality = insiderFlag;
+}
 
 const commits = {
-    insider: '2225d77536d12fea2eda04930f431a5eb0930bba',
+    insider: '4f05de82a75569601bc2dc894023383b4ce1c2c0',
     stable: '2aae1f26c72891c399f860409176fe435a154b13',
 };
 

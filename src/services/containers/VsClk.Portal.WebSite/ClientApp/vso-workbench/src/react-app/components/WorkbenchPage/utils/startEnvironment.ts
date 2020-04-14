@@ -1,8 +1,7 @@
-import { EnvironmentStateInfo } from 'vso-client-core';
+import { EnvironmentStateInfo, getCurrentEnvironmentId } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../../interfaces/EnvironmentWorkspaceState';
 import { authService } from '../../../../auth/authService';
-import { getCurrentEnvironmentId } from '../../../../utils/getCurrentEnvironmentId';
 import { vsoAPI } from '../../../../api/vsoAPI';
 
 export const startEnvironment = async (

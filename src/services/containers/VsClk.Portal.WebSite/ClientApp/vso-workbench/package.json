@@ -8,8 +8,7 @@
     "compile": "webpack",
     "compile-prod": "webpack --config ./webpack.prod.config.js",
     "setup": "yarn && yarn compile-tsc && yarn update-vscode && yarn compile-prod && yarn copy-build-files",
-    "update-vscode": "yarn clean:vscode && node scripts/npm/update-vscode.js",
-    "clean:vscode": "rimraf public/web-standalone",
+    "update-vscode": "rimraf node_modules/extension && node scripts/npm/update-vscode.js",
     "copy-build-files": "node scripts/npm/copy-build-files.js",
     "compile-client-core": "cd ../vso-client-core && yarn && cd ../",
     "compile-platform-auth": "cd ../vso-platform-auth && yarn && cd ../",
@@ -29,7 +28,7 @@
     }
   },
   "vscodeCommit": {
-    "insider": "2225d77536d12fea2eda04930f431a5eb0930bba",
+    "insider": "4f05de82a75569601bc2dc894023383b4ce1c2c0",
     "stable": "2aae1f26c72891c399f860409176fe435a154b13"
   },
   "devDependencies": {

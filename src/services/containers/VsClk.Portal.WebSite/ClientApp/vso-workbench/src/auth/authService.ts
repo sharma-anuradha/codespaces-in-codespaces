@@ -6,9 +6,9 @@ import {
     createTrace,
     debounceInterval,
     timeConstants,
+    getCurrentEnvironmentId,
 } from 'vso-client-core';
 
-import { getCurrentEnvironmentId } from '../utils/getCurrentEnvironmentId';
 import { FatalPlatformRedirectionError } from '../errors/FatalPlatformRedirectionError';
 import { getPartnerLoginRedirectionURL } from '../utils/getPartnerLoginRedirectionURL';
 import { isValidCascadeToken } from '../utils/isValidCascadeToken';

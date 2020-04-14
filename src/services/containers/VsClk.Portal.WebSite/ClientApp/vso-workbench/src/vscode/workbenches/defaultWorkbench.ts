@@ -1,10 +1,9 @@
-import { isHostedOnGithub } from 'vso-client-core';
+import { isHostedOnGithub, getCurrentEnvironmentId } from 'vso-client-core';
 import { DEFAULT_EXTENSIONS, HOSTED_IN_GITHUB_EXTENSIONS } from '../../constants';
 import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 import { getVSCodeVersion } from '../../utils/getVSCodeVersion';
 import { AuthenticationError } from '../../errors/AuthenticationError';
 import { vsoAPI } from '../../api/vsoAPI';
-import { getCurrentEnvironmentId } from '../../utils/getCurrentEnvironmentId';
 import { VSCodeWorkbench } from './vscodeWorkbench';
 import { EnvConnector, registerServiceWorker } from 'vso-ts-agent';
 import { WorkspaceProvider } from '../providers/workspaceProvider/workspaceProvider';

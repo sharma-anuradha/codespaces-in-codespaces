@@ -2,10 +2,10 @@ import {
     authService as vsoPartnerInfoService,
     timeConstants,
     IGitCredential,
+    getCurrentEnvironmentId,
 } from 'vso-client-core';
 
 import { IAuthStrategy } from '../../../../interfaces/IAuthStrategy';
-import { getCurrentEnvironmentId } from '../../../../utils/getCurrentEnvironmentId';
 
 const isExpiredCredential = (credential: IGitCredential) => {
     const { expiration } = credential;

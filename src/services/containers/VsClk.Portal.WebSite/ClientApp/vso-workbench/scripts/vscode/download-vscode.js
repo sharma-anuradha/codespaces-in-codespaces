@@ -34,9 +34,12 @@ async function downloadVSCode(
         console.log(`Target folder path: ${targetFolderPath}`);
         
         const targetExist = await exists(targetFolderPath);
-        if (!targetExist) {
-            await ensureDir(targetFolderPath);
+        if (targetExist) {
+            console.log(`Target folder path exists, nothing to do. ${targetFolderPath}`);
+            return;
         }
+        
+        await ensureDir(targetFolderPath);
 
         const archivePath = path.join(targetFolderPath, `${assetName}.tar.gz`);
 

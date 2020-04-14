@@ -1,6 +1,6 @@
 import * as debug from 'debug';
 
-import { IVSCodeConfig, IEnvironment, randomString } from 'vso-client-core';
+import { IVSCodeConfig, IEnvironment, randomString, getCurrentEnvironmentId } from 'vso-client-core';
 import { IWebSocketFactory, IWorkbenchConstructionOptions } from 'vscode-web';
 
 import {
@@ -15,7 +15,6 @@ import { vsoAPI } from '../../api/vsoAPI';
 
 import { authService } from '../../auth/authService';
 import { vscode } from '../vscodeAssets/vscode';
-import { getCurrentEnvironmentId } from '../../utils/getCurrentEnvironmentId';
 import { config } from '../../config/config';
 
 interface IWorkbenchOptions {

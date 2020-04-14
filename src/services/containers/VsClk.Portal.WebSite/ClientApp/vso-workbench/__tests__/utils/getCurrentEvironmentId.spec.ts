@@ -1,5 +1,4 @@
-import { KNOWN_VSO_HOSTNAMES } from 'vso-client-core';
-import { getCurrentEnvironmentId } from '../../src/utils/getCurrentEnvironmentId';
+import { KNOWN_VSO_HOSTNAMES, getCurrentEnvironmentId } from 'vso-client-core';
 
 describe('getCurrentEnvironmentId', () => {
     const { location } = window;

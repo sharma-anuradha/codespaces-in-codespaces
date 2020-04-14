@@ -1,7 +1,19 @@
 import { FeatureSet } from '../interfaces/FeatureSet';
 
 export const getFeatureSet = (): FeatureSet => {
-    const vsoFeatureSet = window.localStorage.getItem('vso-featureset') || FeatureSet.Stable;
+    const params = new URLSearchParams(location.search);
+    const paramsFeatureSet = params.get('dogfoodChannel');
 
-    return vsoFeatureSet === FeatureSet.Insider ? FeatureSet.Insider : FeatureSet.Stable;
+    const vsoFeatureSet = window.localStorage.getItem('vso-featureset');
+
+    let vscodeQuality = FeatureSet.Stable;
+    if (paramsFeatureSet === FeatureSet.Insider) {
+        vscodeQuality = FeatureSet.Insider;
+    }
+
+    if (vsoFeatureSet === FeatureSet.Insider) {
+        vscodeQuality = FeatureSet.Insider;
+    }
+
+    return vscodeQuality;
 };

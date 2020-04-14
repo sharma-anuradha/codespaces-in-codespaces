@@ -1,9 +1,8 @@
-import { IEnvironment, createTrace } from 'vso-client-core';
+import { IEnvironment, createTrace, getCurrentEnvironmentId } from 'vso-client-core';
 
 import { authService } from '../../../../auth/authService';
 import { vsoAPI } from '../../../../api/vsoAPI';
 import { EnvironmentWorkspaceState } from '../../../../interfaces/EnvironmentWorkspaceState';
-import { getCurrentEnvironmentId } from '../../../../utils/getCurrentEnvironmentId';
 import { AuthenticationError } from '../../../../errors/AuthenticationError';
 
 const trace = createTrace('vso-getEnvironmentInfo');

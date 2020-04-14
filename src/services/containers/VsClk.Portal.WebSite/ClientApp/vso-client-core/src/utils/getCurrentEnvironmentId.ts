@@ -1,21 +1,22 @@
-import { KNOWN_VSO_HOSTNAMES } from 'vso-client-core';
+import { KNOWN_VSO_HOSTNAMES } from '../constants';
 
 /**
  * https://online.dev.core.vsengsaas.visualstudio.com/workspace/{id}
  * https://online.dev.core.vsengsaas.visualstudio.com/environment/{id}
+ * https://online.dev.core.vsengsaas.visualstudio.com/environments/{id}
  */
 export const getCurrentEnvironmentId = () => {
     const { pathname, hostname } = location;
 
     if (!KNOWN_VSO_HOSTNAMES.includes(hostname)) {
-        throw new Error('Unknown origin.');
+        throw new Error(`Unknown origin "${hostname}".`);
     }
 
     const split = pathname.split('/').slice(1);
     const [workspacePath, id] = split;
 
-    if (!['workspace',  'environment'].includes(workspacePath)) {
-        throw new Error('Unexpected path.');
+    if (!['workspace', 'environment', 'environments'].includes(workspacePath)) {
+        throw new Error(`Unexpected path "${workspacePath}".`);
     }
 
     if (typeof id !== 'string') {

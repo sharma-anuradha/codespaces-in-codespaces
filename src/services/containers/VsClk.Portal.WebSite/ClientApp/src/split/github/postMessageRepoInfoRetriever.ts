@@ -1,6 +1,5 @@
-import { isGithubTLD } from 'vso-client-core';
+import { isGithubTLD, getCurrentEnvironmentId } from 'vso-client-core';
 import { createUniqueId } from '../../dependencies';
-import { getCurrentEnvironmentId } from 'vso-workbench/src/utils/getCurrentEnvironmentId';
 
 export interface IRepoInfo {
     ownerUsername: string;

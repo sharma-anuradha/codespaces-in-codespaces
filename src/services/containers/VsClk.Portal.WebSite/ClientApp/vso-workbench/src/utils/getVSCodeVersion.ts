@@ -3,7 +3,7 @@ import { getFeatureSet, IPackageJson, IVSCodeConfig } from 'vso-client-core';
 export const packageJSON: IPackageJson = require('../../package.json');
 
 if (!packageJSON) {
-    throw new Error('No package.json found');
+    throw new Error('No package.json found.');
 }
 
 export const getVSCodeVersion = (): IVSCodeConfig => {
