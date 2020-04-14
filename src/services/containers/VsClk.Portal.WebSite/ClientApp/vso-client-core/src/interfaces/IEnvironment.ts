@@ -116,4 +116,11 @@ export enum EnvironmentErrorCodes {
     customContainersCLICopyFailed = 1157,
     customContainersDependenciesFailed = 1158,
     customContainersCLIStartFailed = 1158,
+    customContainersIncorrectUserID = 1159,
+
+    customContainersComposeGeneralError = 1200,
+    customContainersComposeValidationError = 1201,
+    customContainersComposeConfigError = 1202,
+    customContainersWrongServiceError = 1203,
+    customContainersComposeUpError = 1204,
 }

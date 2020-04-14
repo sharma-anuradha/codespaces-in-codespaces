@@ -159,6 +159,19 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
             return 'The VSOnline Agent dependencies failed to install in the custom container.';
         case  EnvironmentErrorCodes.customContainersCLIStartFailed : 
             return 'The VSOnline Agent failed to start in the custom container.';
+        case  EnvironmentErrorCodes.customContainersIncorrectUserID :
+            return 'The dockerfile or image references a user id instead of a username, please configure the remoteUser or containerUser property in devcontainer.json';
+
+        case  EnvironmentErrorCodes.customContainersComposeGeneralError :
+            return 'Unknown error running docker compose.';
+        case  EnvironmentErrorCodes.customContainersComposeValidationError :
+            return 'Required properties not present. Service is required.';
+        case  EnvironmentErrorCodes.customContainersComposeConfigError :
+            return 'Error inspecting docker-compose file for services.';
+        case  EnvironmentErrorCodes.customContainersWrongServiceError :
+            return 'The specified service was not found in the docker-compose file.';
+        case  EnvironmentErrorCodes.customContainersComposeUpError :
+            return 'Running docker-compose up failed, please inspect the logs.';
 
         case EnvironmentErrorCodes.shutdownStaticEnvironment:
         case EnvironmentErrorCodes.startStaticEnvironment:
