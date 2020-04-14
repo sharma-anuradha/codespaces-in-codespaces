@@ -1,22 +1,24 @@
+import { isGitHubHostname } from './isGitHubHostname';
 import { KNOWN_VSO_HOSTNAMES } from '../constants';
 
 /**
  * https://online.dev.core.vsengsaas.visualstudio.com/workspace/{id}
  * https://online.dev.core.vsengsaas.visualstudio.com/environment/{id}
- * https://online.dev.core.vsengsaas.visualstudio.com/environments/{id}
+ * https://{:id}.workspaces-dev.github.com/environment/{:id}
  */
 export const getCurrentEnvironmentId = () => {
-    const { pathname, hostname } = location;
+    const { pathname, hostname, href } = location;
 
-    if (!KNOWN_VSO_HOSTNAMES.includes(hostname)) {
-        throw new Error(`Unknown origin "${hostname}".`);
+    const isKnownExactOrigin = KNOWN_VSO_HOSTNAMES.includes(hostname);
+    if (!isKnownExactOrigin && !isGitHubHostname(href)) {
+        throw new Error('Unknown origin.');
     }
 
     const split = pathname.split('/').slice(1);
     const [workspacePath, id] = split;
 
-    if (!['workspace', 'environment', 'environments'].includes(workspacePath)) {
-        throw new Error(`Unexpected path "${workspacePath}".`);
+    if (!['workspace', 'environment'].includes(workspacePath)) {
+        throw new Error('Unexpected path.');
     }
 
     if (typeof id !== 'string') {

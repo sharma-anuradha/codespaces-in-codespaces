@@ -8,21 +8,23 @@
           "commandName": "Project",
           "environmentVariables": {
               "ASPNETCORE_ENVIRONMENT": "Local",
-              "PORTAL_AppSettings__IsLocal": "true"
+              "PORTAL_AppSettings__IsLocal": "true",
+              "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-cert.pfx"
           },
           "launchBrowser": true,
           "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
           "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
       },
-      "GitHubLocal": {
+      "LocalGitHub": {
         "commandName": "Project",
         "environmentVariables": {
-            "ASPNETCORE_ENVIRONMENT": "GitHubLocal",
-            "PORTAL_AppSettings__IsLocal": "true"
+            "ASPNETCORE_ENVIRONMENT": "Local",
+            "PORTAL_AppSettings__IsLocal": "true",
+            "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-github-cert.pfx"
         },
-        "launchBrowser": true,
-        "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
-        "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
+        "launchBrowser": false,
+        "applicationUrl": "https://*.workspaces-dev.github.com",
+        "launchUrl": "https://*.workspaces-dev.github.com/environment/*"
     }
   }
 }

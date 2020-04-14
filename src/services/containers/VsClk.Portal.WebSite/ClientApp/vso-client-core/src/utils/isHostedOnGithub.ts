@@ -1,7 +1,10 @@
 import { isGithubTLD } from './isGithubTLD';
 
-
 export const isHostedOnGithub = () => {
+    if (isGithubTLD(location.href)) {
+        return true;
+    }
+
     const { ancestorOrigins } = window.document.location;
 
     if (!ancestorOrigins || !ancestorOrigins[0]) {

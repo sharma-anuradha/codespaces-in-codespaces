@@ -24,4 +24,4 @@ const getCert = async (certName, certOutputPath) => {
 }
 
 getCert('dev-core-vsengsaas-visualstudio-com-ssl', '../../../dev-cert.pfx');
-getCert('local-code-github-com-ssl', '../../../local.code.github.pfx');
+getCert('workspaces-dev-github-com-ssl', '../../../dev-github-cert.pfx');
