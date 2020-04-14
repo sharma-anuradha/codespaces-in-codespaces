@@ -19,6 +19,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     {
         private readonly TraceSource traceSource;
         private CancellationTokenSource stopCts;
+        private CancellationTokenSource connectWaitingCts;
 
         public HubClient(string url, TraceSource trace)
             : this(HubConnectionHelpers.FromUrl(url).Build(), trace)
@@ -67,7 +68,49 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public Task DisposeAsync()
         {
+            Connection.Closed -= OnClosedAsync;
             return StopAsync(CancellationToken.None);
+        }
+
+        /// <inheritdoc/>
+        public async Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            if (IsConnected)
+            {
+                return;
+            }
+
+            var tcs = new TaskCompletionSource<bool>();
+            AsyncEventHandler<AttemptConnectionEventArgs> eventHandler = null;
+            eventHandler = (s, e) =>
+            {
+                AttemptConnection -= eventHandler;
+                if (e.Error != null)
+                {
+                    tcs.SetException(e.Error);
+                }
+                else
+                {
+                    tcs.SetResult(true);
+                }
+
+                return Task.CompletedTask;
+            };
+
+            AttemptConnection += eventHandler;
+            if (this.IsRunning)
+            {
+                this.connectWaitingCts?.Cancel();
+            }
+            else
+            {
+                StartAsync(cancellationToken).Forget();
+            }
+
+            using (cancellationToken.Register(() => tcs.TrySetCanceled()))
+            {
+                await tcs.Task;
+            }
         }
 
         /// <inheritdoc/>
@@ -79,6 +122,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 IsRunning = true;
                 this.stopCts?.Dispose();
                 this.stopCts = new CancellationTokenSource();
+                this.connectWaitingCts?.Dispose();
+                this.connectWaitingCts = new CancellationTokenSource();
                 if (State != HubConnectionState.Connected)
                 {
                     var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, StopToken);
@@ -142,6 +187,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 5000,
                 60000,
                 this.traceSource,
+                this.connectWaitingCts.Token,
                 cancellationToken);
             await FireConnectionStateChangedAsync();
         }

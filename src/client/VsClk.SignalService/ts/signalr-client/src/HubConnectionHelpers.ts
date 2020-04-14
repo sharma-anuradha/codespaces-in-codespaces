@@ -1,5 +1,7 @@
 import * as signalR from '@microsoft/signalr';
+import { IDisposable } from '@vs/vso-signalr-client-proxy';
 import { ExponentialBackoff } from './ExponentialBackoff';
+import { CancellationToken } from './CancellationToken';
 
 export async function connect(
     hubConnection: signalR.HubConnection,
@@ -7,7 +9,8 @@ export async function connect(
     maxRetries: number,
     delayMilliseconds: number,
     maxDelayMilliseconds: number,
-    logger: signalR.ILogger) {
+    logger: signalR.ILogger,
+    cancellationToken: CancellationToken) {
     const exponentialBackoff = new ExponentialBackoff(maxRetries, delayMilliseconds, maxDelayMilliseconds);
     while (true) {
         try {
@@ -24,12 +27,28 @@ export async function connect(
                 break;
             }
             
-            await sleep(delay);
+            await sleep(delay, cancellationToken);
         }
     }
 }
 
-function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(() => resolve(), ms));
+function sleep(ms: number, cancellationToken: CancellationToken): Promise<void> {
+    return new Promise(resolve => {
+        let disposable: IDisposable;
+
+        const resolveCallback = () => {
+            if (disposable) {
+                disposable.dispose();
+            }
+            resolve();
+        };
+        const timeoutId = setTimeout(() => {
+            resolveCallback();
+        }, ms);
+        disposable = cancellationToken.onCancellationRequest(() => {
+            clearTimeout(timeoutId);
+            resolveCallback();
+        });
+    });
 }
   

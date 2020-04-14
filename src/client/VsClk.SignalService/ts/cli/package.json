@@ -5,14 +5,14 @@
     "main": "out/app.js",
     "description": "CLI test sample for the signalR client package",
     "scripts": {
-        "compile": "tsc -b ./",
-        "watch": "tsc -watch -b ./"
+        "compile": "../node_modules/.bin/tsc -b ./",
+        "watch": "../node_modules/.bin/tsc -watch -b ./"
     },
     "dependencies": {
         "@microsoft/signalr-protocol-msgpack": "^3.1.2",
         "@types/yargs": "^13.0.0",
         "@vs/vso-signalr-client": "link:../signalr-client",
-        "@vs/vso-signalr-client-jsonrpc": "link:../jsonrpc",
+        "@vs/vso-signalr-ssh": "link:../ssh",
         "yargs": "^13.2.4"
     },
     "devDependencies": {}

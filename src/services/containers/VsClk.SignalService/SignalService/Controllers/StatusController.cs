@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
     /// <summary>
-    /// A controller to return overall status of the app
+    /// A controller to return overall status of the app.
     /// </summary>
     public class StatusController : ControllerBase
     {
@@ -41,7 +41,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             this.serviceEndpoints = serviceEndpoints;
         }
 
-        private IConfigurationRoot Configuration => this.startup.Configuration;
+        private IConfiguration Configuration => this.startup.Configuration;
 
         private ApplicationServicePrincipal ApplicationServicePrincipal => Configuration.GetSection(nameof(ApplicationServicePrincipal)).Get<ApplicationServicePrincipal>();
 
@@ -73,6 +73,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                     this.appSettings.ResourceGroupName,
                     this.appSettings.ResourceGroupInstanceName,
                     this.appSettings.CorsOrigin,
+                    this.appSettings.IsJsonRpcMessagePackEnabled,
                 },
                 this.startup.EnableAuthentication,
                 this.startup.UseAzureSignalR,

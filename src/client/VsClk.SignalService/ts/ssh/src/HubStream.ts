@@ -5,6 +5,7 @@ import { IRelayHubProxy, SendOption, ParticipantChangeType, SequenceRelayDataHub
 export class HubStream extends BaseStream {
     private nextSequence = 0;
     private disposables: IDisposable[] = [];
+
     constructor(
         private readonly relayHubProxy: IRelayHubProxy,
         private readonly streamId: string,
@@ -39,6 +40,9 @@ export class HubStream extends BaseStream {
     }
 
     public async write(data: Buffer, cancellation?: CancellationToken): Promise<void> {
+        if (!data) throw new TypeError('Data is required.');
+		if (this.disposed) throw new Error('HubStream diposed');
+
         await this.relayHubProxy.sendData(
             SendOption.ExcludeSelf,
             [ this.targetParticipant ],

@@ -4,8 +4,9 @@
 
 using System;
 using System.Buffers;
+using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using MessagePack;
 using StreamJsonRpc;
 using StreamJsonRpc.Protocol;
@@ -30,28 +31,36 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public JsonRpcMessage Deserialize(ReadOnlySequence<byte> contentBuffer)
         {
-            var stream = new MemoryStream(contentBuffer.ToArray());
-            var binaryReader = new BinaryReader(stream);
-            stream.Position = 0;
-            JsonRpcType rpcType = (JsonRpcType)binaryReader.ReadByte();
+            var sequenceReader = new SequenceReader<byte>(contentBuffer);
+
+            byte b;
+            sequenceReader.TryRead(out b);
+            JsonRpcType rpcType = (JsonRpcType)b;
 
             switch (rpcType)
             {
                 case JsonRpcType.Request:
-                    var id = binaryReader.ReadInt64();
-                    var method = binaryReader.ReadString();
-                    var argumentCount = binaryReader.ReadInt32();
+                    long id;
+                    Assumes.True(sequenceReader.TryReadBigEndian(out id), "requestId");
+                    int argumentCount;
+                    Assumes.True(sequenceReader.TryReadBigEndian(out argumentCount), "argumentCount");
+
+                    var method = Encoding.UTF8.GetString(ReadBuffer(ref sequenceReader));
                     var argumentBuffers = new List<byte[]>();
                     for (int index = 0; index < argumentCount; ++index)
                     {
-                        argumentBuffers.Add(ReadBuffer(binaryReader));
+                        var argumentBuffer = ReadBuffer(ref sequenceReader);
+                        argumentBuffers.Add(argumentBuffer);
                     }
 
                     return new JsonRpcRequestMessagePack(id, method, argumentBuffers.ToArray());
                 case JsonRpcType.Result:
-                    return new JsonRpcResultMessagePack(binaryReader.ReadInt64(), ReadBuffer(binaryReader));
+                    long resultId;
+                    Assumes.True(sequenceReader.TryReadBigEndian(out resultId), "resultId");
+
+                    return new JsonRpcResultMessagePack(resultId, ReadBuffer(ref sequenceReader));
                 case JsonRpcType.Error:
-                    return MessagePackSerializer.Deserialize<JsonRpcError>(ReadBuffer(binaryReader), resolver);
+                    return MessagePackSerializer.Deserialize<JsonRpcError>(ReadBuffer(ref sequenceReader), resolver);
                 default:
                     throw new NotSupportedException();
             }
@@ -66,54 +75,63 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public void Serialize(IBufferWriter<byte> bufferWriter, JsonRpcMessage message)
         {
-            var stream = new MemoryStream();
-            var binaryWriter = new BinaryWriter(stream);
-
             if (message is JsonRpcRequest jsonRpcRequest)
             {
-                binaryWriter.Write((byte)JsonRpcType.Request);
-                binaryWriter.Write(jsonRpcRequest.Id != null ? Convert.ToInt64(jsonRpcRequest.Id) : 0);
-                binaryWriter.Write(jsonRpcRequest.Method);
-                binaryWriter.Write(jsonRpcRequest.ArgumentCount);
+                Span<byte> stackSpan = stackalloc byte[1 + sizeof(long) + sizeof(int)];
+                stackSpan[0] = (byte)JsonRpcType.Request;
+                BinaryPrimitives.WriteInt64BigEndian(stackSpan.Slice(1, sizeof(long)), jsonRpcRequest.Id != null ? Convert.ToInt64(jsonRpcRequest.Id) : 0);
+                BinaryPrimitives.WriteInt32BigEndian(stackSpan.Slice(1 + sizeof(long), sizeof(int)), jsonRpcRequest.ArgumentCount);
+                bufferWriter.Write(stackSpan);
+
+                byte[] methodBytes = Encoding.UTF8.GetBytes(jsonRpcRequest.Method);
+                WriteBuffer(bufferWriter, methodBytes);
 
                 foreach (var argument in jsonRpcRequest.ArgumentsList)
                 {
                     var buffer = MessagePackSerializer.Serialize(argument, resolver);
-                    WriteBuffer(binaryWriter, buffer);
+                    WriteBuffer(bufferWriter, buffer);
                 }
             }
             else if (message is JsonRpcResult jsonRpcResult)
             {
-                binaryWriter.Write((byte)JsonRpcType.Result);
-                binaryWriter.Write(Convert.ToInt64(jsonRpcResult.Id));
+                Span<byte> stackSpan = stackalloc byte[sizeof(long) + 1];
+                stackSpan[0] = (byte)JsonRpcType.Result;
+                BinaryPrimitives.WriteInt64BigEndian(stackSpan.Slice(1, sizeof(long)), Convert.ToInt64(jsonRpcResult.Id));
+                bufferWriter.Write(stackSpan);
                 var buffer = MessagePackSerializer.Serialize(jsonRpcResult.Result, resolver);
-                WriteBuffer(binaryWriter, buffer);
+                WriteBuffer(bufferWriter, buffer);
             }
             else if (message is JsonRpcError jsonRpcError)
             {
-                binaryWriter.Write((byte)JsonRpcType.Error);
+                Span<byte> stackSpan = stackalloc byte[1];
+                stackSpan[0] = (byte)JsonRpcType.Error;
+                bufferWriter.Write(stackSpan);
                 var buffer = MessagePackSerializer.Serialize(jsonRpcError, resolver);
-                WriteBuffer(binaryWriter, buffer);
+                WriteBuffer(bufferWriter, buffer);
             }
             else
             {
                 throw new NotSupportedException();
             }
-
-            var bytes = stream.ToArray();
-            bufferWriter.Write(new ReadOnlySpan<byte>(bytes));
         }
 
-        private static void WriteBuffer(BinaryWriter binaryWriter, byte[] buffer)
+        private static byte[] ReadBuffer(ref SequenceReader<byte> sequenceReader)
         {
-            binaryWriter.Write((short)buffer.Length);
-            binaryWriter.Write(buffer);
+            int length;
+            Assumes.True(sequenceReader.TryReadBigEndian(out length));
+
+            Span<byte> spanBuffer = stackalloc byte[length];
+            Assumes.True(sequenceReader.TryCopyTo(spanBuffer), $"Read buffer length:{length}");
+            sequenceReader.Advance(length);
+            return spanBuffer.ToArray();
         }
 
-        private static byte[] ReadBuffer(BinaryReader binaryReader)
+        private static void WriteBuffer(IBufferWriter<byte> bufferWriter, byte[] buffer)
         {
-            short size = binaryReader.ReadInt16();
-            return binaryReader.ReadBytes(size);
+            Span<byte> spanLength = stackalloc byte[sizeof(int)];
+            BinaryPrimitives.WriteInt32BigEndian(spanLength, buffer.Length);
+            bufferWriter.Write(spanLength);
+            bufferWriter.Write(new ReadOnlySpan<byte>(buffer));
         }
 
         /// <summary>

@@ -48,7 +48,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <inheritdoc/>
         public async Task DisposeAsync()
         {
-            await CompleteActionBlock(this.sendDataHubActionBlock, nameof(this.sendDataHubActionBlock));
+            await CompleteActionBlockAsync(this.sendDataHubActionBlock, nameof(this.sendDataHubActionBlock));
         }
 
         public async Task<Dictionary<string, Dictionary<string, object>>> GetRelayInfoAsync(string hubId, CancellationToken cancellationToken)

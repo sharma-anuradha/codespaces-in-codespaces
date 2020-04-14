@@ -16,6 +16,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    StartupUtils.ConfigureAppConfiguration(context, config, args);
+                })
                 .UseStartup<Startup>();
     }
 }

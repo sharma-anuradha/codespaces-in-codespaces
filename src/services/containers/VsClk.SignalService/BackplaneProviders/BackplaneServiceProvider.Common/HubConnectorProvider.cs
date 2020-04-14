@@ -76,6 +76,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                2000,
                10000,
                Trace,
+               default,
                cancellationToken);
             this.creatingFlag = false;
         }

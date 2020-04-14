@@ -37,6 +37,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         public string AzureCacheRedisName { get; set; }
 
         public string AzureCosmosDbName { get; set; }
+
+        public bool IsJsonRpcMessagePackEnabled { get; set; }
     }
 
     public class ApplicationServicePrincipal

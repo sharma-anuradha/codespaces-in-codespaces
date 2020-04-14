@@ -106,14 +106,15 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             var uniqueId = messageUniqueId.HasValue ? messageUniqueId.Value : relayHubType.NextUniquId();
 
-            Func<IEnumerable<IClientProxy>, Task> sendTaskCallback = (clients) => Task.WhenAll(clients.Select(proxy => proxy.SendAsync(
+            // callback to be invoked on each target client
+            Func<IEnumerable<IClientProxy>, byte[], Dictionary<string, object>, Task> sendTaskCallback = (clients, clientData, clientMessageProperties) => Task.WhenAll(clients.Select(proxy => proxy.SendAsync(
                    RelayHubMethods.MethodReceiveData,
                    Id,
                    fromParticipantId,
                    uniqueId,
                    type,
-                   data,
-                   messageProperties,
+                   clientData,
+                   clientMessageProperties,
                    cancellationToken)));
 
             try
@@ -123,13 +124,45 @@ namespace Microsoft.VsCloudKernel.SignalService
                     await relayHubType.WaitAsync(cancellationToken);
                 }
 
-                if (targetParticipantIds == null)
+                if (targetParticipantIds == null || targetParticipantIds.Length == 0)
                 {
-                    await sendTaskCallback(sendOption.HasFlag(SendOption.ExcludeSelf) ? AllExcept(fromParticipantId) : All());
+                    await sendTaskCallback(sendOption.HasFlag(SendOption.ExcludeSelf) ? AllExcept(fromParticipantId) : All(), data, messageProperties);
                 }
                 else
                 {
-                    await sendTaskCallback(All(targetParticipantIds));
+                    if (sendOption.HasFlag(SendOption.Batch))
+                    {
+                        // Note: the payload will contain data for each target on the message properties.
+                        await Task.WhenAll(targetParticipantIds.Select(participantId =>
+                        {
+                            var targetPrefixProperty = $"{RelayHubMessageProperties.PropertyTargetPrefixId}{participantId}-";
+                            byte[] clientData = null;
+                            var clientMessageProperties = messageProperties.Where(kvp =>
+                            {
+                                if (kvp.Key.StartsWith(targetPrefixProperty))
+                                {
+                                    var property = kvp.Key.Substring(targetPrefixProperty.Length);
+                                    if (property == RelayHubMessageProperties.PropertyDataId)
+                                    {
+                                        clientData = (byte[])kvp.Value;
+                                        return false;
+                                    }
+
+                                    return true;
+                                }
+                                else
+                                {
+                                    return !kvp.Key.StartsWith(RelayHubMessageProperties.PropertyTargetPrefixId);
+                                }
+                            }).ToDictionary(kvp => kvp.Key.StartsWith(targetPrefixProperty) ? kvp.Key.Substring(targetPrefixProperty.Length) : kvp.Key, kvp => kvp.Value);
+
+                            return sendTaskCallback(All(new string[] { participantId }), clientData, clientMessageProperties);
+                        }));
+                    }
+                    else
+                    {
+                        await sendTaskCallback(All(targetParticipantIds), data, messageProperties);
+                    }
                 }
 
                 return uniqueId;

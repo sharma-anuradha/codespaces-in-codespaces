@@ -17,7 +17,7 @@
       "path": "../signalr-client"
     },
     {
-      "path": "../jsonrpc"
+      "path": "../ssh"
     }
   ]
 }

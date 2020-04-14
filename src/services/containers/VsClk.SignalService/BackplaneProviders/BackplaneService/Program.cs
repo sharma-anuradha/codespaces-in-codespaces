@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.VsCloudKernel.SignalService;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
@@ -16,6 +17,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    StartupUtils.ConfigureAppConfiguration(context, config, args);
+                })
                 .UseStartup<Startup>();
     }
 }

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService.Client
@@ -14,6 +15,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
     public class SequenceRelayDataHubProxy : RelayDataHubProxy
     {
         private readonly SortedList<int, ReceiveDataEventArgs> receivedDataBuffer = new SortedList<int, ReceiveDataEventArgs>();
+        private readonly object receiveDataLock = new object();
 
         public SequenceRelayDataHubProxy(
             IRelayDataHubProxy relayDataHubProxy,
@@ -28,42 +30,52 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         }
 
         /// <summary>
-        /// Gets or sets the current sequence being tracked.
+        /// Gets the current sequence being tracked.
         /// </summary>
-        public int CurrentSequence { get; set; }
+        public int CurrentSequence { get; private set; }
 
         /// <summary>
         /// Gets the total events tracked so far.
         /// </summary>
         public int TotalEvents { get; private set; }
 
+        /// <inheritdoc/>
         protected override void ProcessReceiveData(ReceiveDataEventArgs e)
         {
-            int sequence;
-            if (e.MessageProperties == null || (sequence = e.MessageProperties.TryGetProperty(RelayHubMessageProperties.PropertySequenceId, -1)) == -1)
+            lock (this.receiveDataLock)
             {
-                // no message property found
-                FireReceiveData(e);
-                return;
-            }
-
-            if (CurrentSequence == -1 || (CurrentSequence + 1) == sequence)
-            {
-                // no need to buffer
-                CurrentSequence = sequence;
-                FireReceiveData(e);
-                while (TryRemoveValue(CurrentSequence + 1, out e))
+                int sequence;
+                if (e.MessageProperties == null || (sequence = e.MessageProperties.TryGetProperty(RelayHubMessageProperties.PropertySequenceId, -1)) == -1)
                 {
+                    // no message property found
                     FireReceiveData(e);
-                    ++CurrentSequence;
+                    return;
                 }
-            }
-            else
-            {
-                ++TotalEvents;
 
-                // out of order sequence
-                this.receivedDataBuffer.Add(sequence, e);
+                if (CurrentSequence == -1 || (CurrentSequence + 1) == sequence)
+                {
+                    // no need to buffer
+                    CurrentSequence = sequence;
+                    FireReceiveData(e);
+                    while (TryRemoveValue(CurrentSequence + 1, out e))
+                    {
+                        FireReceiveData(e);
+                        ++CurrentSequence;
+                    }
+                }
+                else
+                {
+#if DEBUG
+                    if (sequence > CurrentSequence && (sequence - CurrentSequence) > 15)
+                    {
+                        Debug.WriteLine($"###-----> sequence/current:{sequence}/{CurrentSequence}");
+                    }
+#endif
+                    ++TotalEvents;
+
+                    // out of order sequence
+                    this.receivedDataBuffer.Add(sequence, e);
+                }
             }
         }
 

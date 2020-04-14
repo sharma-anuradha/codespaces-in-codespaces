@@ -32,13 +32,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <inheritdoc/>
         Task IContactBackplaneServiceNotification.FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken)
         {
-            return InvokeAll(nameof(IContactBackplaneServiceNotification.FireOnUpdateContactAsync), contactDataChanged, affectedProperties);
+            return InvokeAllAsync(nameof(IContactBackplaneServiceNotification.FireOnUpdateContactAsync), contactDataChanged, affectedProperties);
         }
 
         /// <inheritdoc/>
         Task IContactBackplaneServiceNotification.FireOnSendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
-            return InvokeAll(nameof(IContactBackplaneServiceNotification.FireOnSendMessageAsync), messageData);
+            return InvokeAllAsync(nameof(IContactBackplaneServiceNotification.FireOnSendMessageAsync), messageData);
         }
 
         public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>

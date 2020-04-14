@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -94,7 +95,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            this.logger.LogDebug($"OnDisconnectedAsync connectionId:{Context.ConnectionId}");
+            this.logger.LogMethodScope(LogLevel.Debug, exception, $"connectionId:{Context.ConnectionId}", nameof(OnDisconnectedAsync));
             await this.relayService.DisconnectAsync(Context.ConnectionId, default);
             await base.OnDisconnectedAsync(exception);
         }

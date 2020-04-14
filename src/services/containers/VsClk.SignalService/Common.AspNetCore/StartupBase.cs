@@ -28,28 +28,18 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private Func<Type, ILogger> loggerFactory;
 
-        public StartupBase(ILoggerFactory loggerFactory, IWebHostEnvironment env)
+        public StartupBase(
+            IConfiguration configuration,
+            IWebHostEnvironment hostEnvironment,
+            ILoggerFactory loggerFactory)
         {
             this.loggerFactory = (t) => loggerFactory.CreateLogger(t.FullName);
 
-            this.hostEnvironment = env;
-
-            // Build configuration
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-#if DEBUG
-                .AddJsonFile("appsettings.Development.json", optional: true)
-                .AddJsonFile("appsettings.Debug.json", optional: true)
-#else
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-#endif
-                .AddEnvironmentVariables();
-
-            Configuration = builder.Build();
+            this.hostEnvironment = hostEnvironment;
+            Configuration = configuration;
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
 
         public string Environment => this.hostEnvironment.EnvironmentName;
 
@@ -68,6 +58,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected IConfigurationSection AppSettingsConfiguration { get; private set; }
 
         protected ApplicationServicePrincipal ServicePrincipal { get; private set; }
+
+        protected bool GetBoolConfiguration(string optionName)
+        {
+            return Configuration.GetValue<bool>(optionName);
+        }
 
         protected ILogger CreateLoggerInstance(Type type)
         {

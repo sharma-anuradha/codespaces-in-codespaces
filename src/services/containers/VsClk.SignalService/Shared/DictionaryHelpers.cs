@@ -70,6 +70,11 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
 
         private static string FormatValue(IDataFormatProvider provider, string propertyName, object value)
         {
+            if (value is byte[] buffer)
+            {
+                return $"data-length:{buffer.Length}";
+            }
+
             var format = provider?.GetPropertyFormat(propertyName);
             return string.Format(provider, string.IsNullOrEmpty(format) ? "{0}" : $"{{0:{format}}}", value);
         }

@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.VsCloudKernel.SignalService;
 using StreamJsonRpc;
 
@@ -26,14 +27,19 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private const string RegisterServiceMethod = "RegisterService";
 
         private readonly IEnumerable<IJsonRpcSessionFactory> jsonRpcSessionFactories;
+        private readonly IOptions<AppSettingsBase> appSettingsProvider;
 
         public JsonRpcServerService(
             IEnumerable<IJsonRpcSessionFactory> jsonRpcSessionFactories,
+            IOptions<AppSettingsBase> appSettingsProvider,
             ILogger<JsonRpcServerService> logger)
         {
             this.jsonRpcSessionFactories = Requires.NotNull(jsonRpcSessionFactories, nameof(jsonRpcSessionFactories));
+            this.appSettingsProvider = Requires.NotNull(appSettingsProvider, nameof(appSettingsProvider));
             Logger = Requires.NotNull(logger, nameof(logger));
         }
+
+        private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
 
         private ILogger Logger { get; }
 
@@ -60,7 +66,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 var tcpStream = client.GetStream();
                 Logger.LogInformation(
                     $"Accepted incoming connection from {((IPEndPoint)client.Client.RemoteEndPoint).Address}");
-                var jsonRpc = CreateJsonRpcWithMessagePack(tcpStream);
+                var jsonRpc = AppSettings.IsJsonRpcMessagePackEnabled ? CreateJsonRpcWithMessagePack(tcpStream) : new JsonRpc(tcpStream);
 
                 Action<string, string> registerCallback = (serviceType, serviceId) =>
                 {

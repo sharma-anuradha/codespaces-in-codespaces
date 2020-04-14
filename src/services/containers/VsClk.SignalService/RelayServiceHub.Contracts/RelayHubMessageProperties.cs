@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.VsCloudKernel.SignalService.Client
+namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
     /// Factory relay hub message properties.
@@ -15,6 +15,21 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// The message property unique id.
         /// </summary>
         public const string PropertySequenceId = "sequenceId";
+
+        /// <summary>
+        /// The audit property prefix id.
+        /// </summary>
+        public const string PropertyAuditPrefixId = "audit-";
+
+        /// <summary>
+        /// The target property  prefix id.
+        /// </summary>
+        public const string PropertyTargetPrefixId = "target-";
+
+        /// <summary>
+        /// Indicate the special 'data' property.
+        /// </summary>
+        public const string PropertyDataId = "data";
 
         /// <summary>
         /// Create message properties based on a sequence id.

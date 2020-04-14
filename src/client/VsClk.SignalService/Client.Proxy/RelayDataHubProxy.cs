@@ -32,11 +32,19 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             this.relayDataHubProxy.ReceiveData -= OnReceiveData;
         }
 
+        /// <summary>
+        /// process received data.
+        /// </summary>
+        /// <param name="e">The data received event.</param>
         protected virtual void ProcessReceiveData(ReceiveDataEventArgs e)
         {
             FireReceiveData(e);
         }
 
+        /// <summary>
+        /// Fire a received data on our event sink.
+        /// </summary>
+        /// <param name="e">The data received event.</param>
         protected void FireReceiveData(ReceiveDataEventArgs e)
         {
             ReceiveData?.Invoke(this, e);

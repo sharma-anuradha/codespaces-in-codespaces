@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Base class for all our hub services
+    /// Base class for all our hub services.
     /// </summary>
     public class HubService<THub, TOptions>
         where TOptions : HubServiceOptions
@@ -49,10 +49,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Return all client proxies from a connection id
+        /// Return all client proxies from a connection id.
         /// </summary>
-        /// <param name="connectionId"></param>
-        /// <returns></returns>
+        /// <param name="connectionId">The signalR connection id.</param>
+        /// <returns>List of client proxies.</returns>
         public IEnumerable<IClientProxy> Clients(string connectionId)
         {
             return HubClients(hubClients => hubClients.Client(connectionId));

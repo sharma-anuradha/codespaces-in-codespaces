@@ -2,12 +2,14 @@ import * as signalR from '@microsoft/signalr';
 import { connect } from './HubConnectionHelpers';
 import { IHubProxy, IHubProxyConnection, CallbackContainer, IDisposable } from '@vs/vso-signalr-client-proxy';
 import { HubProxy } from './HubProxy';
+import { CancellationToken } from './CancellationToken';
 
 export class HubClient implements IHubProxyConnection {
     private isRunningFlag = false;
     private attemptConnectionCallbacks = new CallbackContainer<(retries: number, backoffTime?: number, error?: Error) => Promise<void>>();
     private connectionStateCallbacks = new CallbackContainer<() => Promise<void>>();
     private hubProxyInstance: IHubProxy;
+    private readonly connectSleepCancellation = new CancellationToken();
 
     constructor(
         public readonly hubConnection: signalR.HubConnection,
@@ -54,6 +56,33 @@ export class HubClient implements IHubProxyConnection {
         }        
     }
 
+    public connect(): Promise<void> {
+        if (this.state === signalR.HubConnectionState.Connected) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve, reject) => {            
+            const disposable = this.onAttemptConnection((retries, backoffTime, error) => {
+                this.log(signalR.LogLevel.Debug, `connect err:${error}`);         
+
+                disposable.dispose();
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+
+                return Promise.resolve();
+            });
+            
+            if (this.isRunning) {
+                this.connectSleepCancellation.cancel();
+            } else {
+                this.start();
+            }
+        });
+    }
+
     public get state(): signalR.HubConnectionState {
         return this.hubConnection.state;
     }
@@ -89,7 +118,8 @@ export class HubClient implements IHubProxyConnection {
             -1,
             5000,
             60000,
-            this.logger ? this.logger : signalR.NullLogger.instance);
+            this.logger ? this.logger : signalR.NullLogger.instance,
+            this.connectSleepCancellation);
         
         if (this.isConnected) {
             await this.fireConnectionStateChanged();

@@ -3,9 +3,10 @@
 // </copyright>
 
 using System;
-using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using StreamJsonRpc;
@@ -65,9 +66,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <param name="targetName">The remote target name to invoke.</param>
         /// <param name="arguments">Arguments expected on the remote rpc host side.</param>
         /// <returns>Task completion.</returns>
-        protected async Task InvokeAll(string targetName, params object[] arguments)
+        protected async Task InvokeAllAsync(string targetName, params object[] arguments)
         {
-            foreach (var jsonRpc in this.rpcSessions.Values)
+            foreach (var jsonRpc in this.rpcSessions.Values.ToArray())
             {
                 try
                 {

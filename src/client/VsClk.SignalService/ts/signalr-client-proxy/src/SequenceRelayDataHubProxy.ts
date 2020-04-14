@@ -24,7 +24,7 @@ export class SequenceRelayDataHubProxy extends RelayDataHubProxy {
 
     protected async processReceivedData(receivedData: IReceivedData): Promise<void> {
         const sequence = RelayHubMessageProperties.getMessageSequence(receivedData.properties);
-        if (!sequence) {
+        if (!sequence || sequence === -1) {
             await this.fireReceivedData(receivedData);
             return;
         }
@@ -42,6 +42,10 @@ export class SequenceRelayDataHubProxy extends RelayDataHubProxy {
                 }
             }
         } else {
+            if (sequence > this.currentSequence && (sequence - this.currentSequence) > 10) {
+                console.debug(`###-----> sequence/current:${sequence}/${this.currentSequence}`);
+            }
+
             this.receiveDataBuffer.set(sequence, receivedData);
             ++this.totalEvents;
         }

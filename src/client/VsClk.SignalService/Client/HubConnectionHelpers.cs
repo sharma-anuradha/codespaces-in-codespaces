@@ -49,29 +49,43 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             int delayMilliseconds,
             int maxDelayMilliseconds,
             TraceSource traceSource,
+            CancellationToken connectWaitingToken,
             CancellationToken cancellationToken)
         {
             Requires.NotNull(hubConnection, nameof(hubConnection));
             Requires.NotNull(traceSource, nameof(traceSource));
 
-            var exponentialBackoff = new ExponentialBackoff(maxRetries, delayMilliseconds, maxDelayMilliseconds);
-            while (true)
+            using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(connectWaitingToken, cancellationToken))
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                try
+                var exponentialBackoff = new ExponentialBackoff(maxRetries, delayMilliseconds, maxDelayMilliseconds);
+                while (true)
                 {
-                    traceSource.Verbose($"hubConnection.StartAsync -> retries:{exponentialBackoff.Retries}");
-                    await hubConnection.StartAsync(cancellationToken);
-                    await onConnectCallback(exponentialBackoff.Retries, 0, null);
-                    traceSource.Verbose($"Succesfully connected...");
-                    break;
-                }
-                catch (Exception err)
-                {
-                    int delay = exponentialBackoff.NextDelayMilliseconds();
-                    traceSource.Error($"Failed to connect-> delay:{delay} name:{err.GetType().Name} err:{err.Message}");
-                    delay = await onConnectCallback(exponentialBackoff.Retries, delay, err);
-                    await Task.Delay(delay, cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        traceSource.Verbose($"hubConnection.StartAsync -> retries:{exponentialBackoff.Retries}");
+                        await hubConnection.StartAsync(cancellationToken);
+                        await onConnectCallback(exponentialBackoff.Retries, 0, null);
+                        traceSource.Verbose($"Succesfully connected...");
+                        break;
+                    }
+                    catch (Exception err)
+                    {
+                        int delay = exponentialBackoff.NextDelayMilliseconds();
+                        traceSource.Error($"Failed to connect-> delay:{delay} name:{err.GetType().Name} err:{err.Message}");
+                        delay = await onConnectCallback(exponentialBackoff.Retries, delay, err);
+                        try
+                        {
+                            await Task.Delay(delay, linkedCts.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                throw;
+                            }
+                        }
+                    }
                 }
             }
         }

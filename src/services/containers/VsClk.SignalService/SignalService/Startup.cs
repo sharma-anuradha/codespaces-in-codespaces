@@ -51,8 +51,21 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// </summary>
         private const string VsoCorsPolicy = "vsoCORSPolicy";
 
-        public Startup(ILoggerFactory loggerFactory, IWebHostEnvironment env)
-            : base(loggerFactory, env)
+        /// <summary>
+        /// Option to disable the auth.
+        /// </summary>
+        private const string NoAuthenticationOption = "noAuth";
+
+        /// <summary>
+        /// Option to disable backplane support.
+        /// </summary>
+        private const string NoBackplaneOption = "noBackplane";
+
+        public Startup(
+            IConfiguration configuration,
+            IWebHostEnvironment hostEnvironment,
+            ILoggerFactory loggerFactory)
+            : base(configuration, hostEnvironment, loggerFactory)
         {
         }
 
@@ -97,7 +110,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // Next block will enable authentication based on a Profile service Uri
             var authenticateProfileServiceUri = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.AuthenticateProfileServiceUri));
-            if (!string.IsNullOrEmpty(authenticateProfileServiceUri))
+            if (!GetBoolConfiguration(NoAuthenticationOption) && !string.IsNullOrEmpty(authenticateProfileServiceUri))
             {
                 Logger.LogInformation("Authentication enabled...");
 
@@ -108,23 +121,26 @@ namespace Microsoft.VsCloudKernel.SignalService
                     $"signlr-{ServiceId}-{Stamp}");
             }
 
-            var backplaneHostName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneHostName));
-            if (!string.IsNullOrEmpty(backplaneHostName))
+            if (!GetBoolConfiguration(NoBackplaneOption))
             {
-                // add json Rpc backplane support
-                services.AddHostedService<JsonRpcBackplaneServiceProviderService<IContactBackplaneManager, ContactBackplaneServiceProvider>>();
-                services.AddHostedService<JsonRpcBackplaneServiceProviderService<IRelayBackplaneManager, RelayBackplaneServiceProvider>>();
-            }
-            else
-            {
-                // Create the Azure Cosmos backplane provider service
-                services.AddSingleton<IAzureDocumentsProviderServiceFactory, AzureDocumentsProviderFactory>();
-                services.AddHostedService<AzureDocumentsProviderService>();
+                var backplaneHostName = AppSettingsConfiguration.GetValue<string>(nameof(AppSettings.BackplaneHostName));
+                if (!string.IsNullOrEmpty(backplaneHostName))
+                {
+                    // add json Rpc backplane support
+                    services.AddHostedService<JsonRpcBackplaneServiceProviderService<IContactBackplaneManager, ContactBackplaneServiceProvider>>();
+                    services.AddHostedService<JsonRpcBackplaneServiceProviderService<IRelayBackplaneManager, RelayBackplaneServiceProvider>>();
+                }
+                else
+                {
+                    // Create the Azure Cosmos backplane provider service
+                    services.AddSingleton<IAzureDocumentsProviderServiceFactory, AzureDocumentsProviderFactory>();
+                    services.AddHostedService<AzureDocumentsProviderService>();
 
-                // Create the Azure Redis backplane provider service
-                services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisContactsProviderFactory>();
-                services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisRelayProviderFactory>();
-                services.AddHostedService<AzureRedisProviderService>();
+                    // Create the Azure Redis backplane provider service
+                    services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisContactsProviderFactory>();
+                    services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisRelayProviderFactory>();
+                    services.AddHostedService<AzureRedisProviderService>();
+                }
             }
 
             // Service options
@@ -278,7 +294,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     routes.MapHub<HealthServiceHub>(HealthHubMap);
                 }
 
-                routes.MapControllerRoute("default", "{controller=Status}/{action=Get}");
+                routes.MapControllerRoute("default", "{controller=Default}/{action=Get}");
             });
         }
     }

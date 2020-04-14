@@ -5,7 +5,7 @@
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Hub Methods defined by relay hub service
+    /// Hub Methods defined by relay hub service.
     /// </summary>
     public static class RelayHubMethods
     {

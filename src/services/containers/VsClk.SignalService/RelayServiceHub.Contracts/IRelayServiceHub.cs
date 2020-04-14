@@ -28,6 +28,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Indicate to send serialized data
         /// </summary>
         Serialize = 2,
+
+        /// <summary>
+        /// Indicate multiple payload.
+        /// </summary>
+        Batch = 4,
     }
 
     /// <summary>

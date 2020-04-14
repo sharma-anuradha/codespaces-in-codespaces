@@ -5,6 +5,7 @@
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,8 +16,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 {
     public class Startup : SignalService.StartupBase<AppSettings>
     {
-        public Startup(ILoggerFactory loggerFactory, IWebHostEnvironment env)
-            : base(loggerFactory, env)
+        public Startup(
+            IConfiguration configuration,
+            IWebHostEnvironment hostEnvironment,
+            ILoggerFactory loggerFactory)
+            : base(configuration, hostEnvironment, loggerFactory)
         {
         }
 

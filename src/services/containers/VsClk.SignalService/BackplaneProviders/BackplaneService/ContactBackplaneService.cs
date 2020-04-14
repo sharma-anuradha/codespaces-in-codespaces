@@ -106,8 +106,8 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public async Task DisposeAsync()
         {
-            await CompleteActionBlock(this.updateContactActionBlock, nameof(this.updateContactActionBlock));
-            await CompleteActionBlock(this.sendMessageActionBlock, nameof(this.sendMessageActionBlock));
+            await CompleteActionBlockAsync(this.updateContactActionBlock, nameof(this.updateContactActionBlock));
+            await CompleteActionBlockAsync(this.sendMessageActionBlock, nameof(this.sendMessageActionBlock));
         }
 
         public Task UpdateMetricsAsync(

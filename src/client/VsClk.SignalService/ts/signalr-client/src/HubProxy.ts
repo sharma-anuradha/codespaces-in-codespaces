@@ -14,6 +14,9 @@ export class HubProxy implements IHubProxy {
     public get isConnected(): boolean {
         return this.hubClient.isConnected;
     }
+    public connect(): Promise<void> {
+        return this.hubClient.connect();
+    }
 
     public onConnectionStateChanged(callback: () => Promise<void>): IDisposable {
         return this.hubClient.onConnectionStateChanged(callback);

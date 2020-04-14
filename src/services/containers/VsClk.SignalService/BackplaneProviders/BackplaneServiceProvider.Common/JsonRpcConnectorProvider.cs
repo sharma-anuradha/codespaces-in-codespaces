@@ -22,14 +22,16 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private readonly string host;
         private readonly int port;
+        private readonly bool useMessagePack;
         private readonly Dictionary<string, Delegate> targetHandlers = new Dictionary<string, Delegate>();
         private JsonRpc jsonRpc;
 
-        public JsonRpcConnectorProvider(string host, int port, ILogger logger)
+        public JsonRpcConnectorProvider(string host, int port, bool useMessagePack, ILogger logger)
         {
             Requires.NotNullOrEmpty(host, nameof(host));
             this.host = host;
             this.port = port;
+            this.useMessagePack = useMessagePack;
             Logger = logger;
         }
 
@@ -154,7 +156,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private void Attach(Stream tcpStream)
         {
-            this.jsonRpc = CreateJsonRpcWithMessagePack(tcpStream);
+            this.jsonRpc = this.useMessagePack ? CreateJsonRpcWithMessagePack(tcpStream) : new JsonRpc(tcpStream);
             foreach (var kvp in this.targetHandlers)
             {
                 this.jsonRpc.AddLocalRpcMethod(kvp.Key, kvp.Value);

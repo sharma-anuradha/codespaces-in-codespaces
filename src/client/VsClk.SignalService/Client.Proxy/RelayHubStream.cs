@@ -51,6 +51,16 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         }
 
         /// <summary>
+        /// Event fired when the stream is closed.
+        /// </summary>
+        public event EventHandler<EventArgs> Closed;
+
+        /// <summary>
+        /// Gets a value indicating whether the hub stream is closed.
+        /// </summary>
+        public bool IsClosed => this.isClosed;
+
+        /// <summary>
         /// Gets the IRelayHubProxy underlying proxy.
         /// </summary>
         public IRelayHubProxy RelayHubProxy { get; }
@@ -96,6 +106,20 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private CancellationToken CloseToken => this.closeCts.Token;
 
+        /// <summary>
+        /// Gets the pending flushed data.
+        /// </summary>
+        /// <param name="nextMessageSequence">The next message id.</param>
+        /// <returns>Buffer data.</returns>
+        public byte[] GetFlushedData(out int nextMessageSequence)
+        {
+            var flushedData = Combine(this.writeQueue.ToArray());
+            this.writeQueue.Clear();
+            nextMessageSequence = Interlocked.Increment(ref this.nextMessageId);
+
+            return flushedData;
+        }
+
         /// <inheritdoc/>
         public override void Flush()
         {
@@ -104,15 +128,15 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         /// <inheritdoc/>
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
-            var flushedData = Combine(this.writeQueue.ToArray());
-            this.writeQueue.Clear();
+            int nextSequenceId;
+            var flushedData = GetFlushedData(out nextSequenceId);
 
             return RelayHubProxy.SendDataAsync(
                 SendOption.None,
                 new string[] { TargetParticipantId },
                 StreamId,
                 flushedData,
-                RelayHubMessageProperties.CreateMessageSequence(Interlocked.Increment(ref this.nextMessageId)),
+                RelayHubMessageProperties.CreateMessageSequence(nextSequenceId),
                 HubMethodOption.Send,
                 cancellationToken);
         }
@@ -306,6 +330,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private void CloseInternal()
         {
+            Closed?.Invoke(this, EventArgs.Empty);
             if (RelayHubProxy != null)
             {
                 Detach();

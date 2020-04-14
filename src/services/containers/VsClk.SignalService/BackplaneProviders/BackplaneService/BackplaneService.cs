@@ -93,7 +93,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return actionBlock;
         }
 
-        protected Task CompleteActionBlock<T>(ActionBlock<T> actionBlock, string name)
+        protected Task CompleteActionBlockAsync<T>(ActionBlock<T> actionBlock, string name)
         {
             Logger.LogDebug($"CompleteActionBlock for:{name} input count:{actionBlock.InputCount}");
             actionBlock.Complete();

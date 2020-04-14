@@ -1,9 +1,23 @@
 
 import { IRelayHubProxy, SendOption, ParticipantChangeType, SequenceRelayDataHubProxy, RelayHubMessageProperties, IDisposable } from '@vs/vso-signalr-client-proxy';
-import { IDataChannel, ChannelClosedEventArgs } from './IDataChannel';
 import { Event, Emitter, CancellationToken } from 'vscode-jsonrpc';
+import { SshChannel, SshRpcMessageStream }  from '@vs/vs-ssh';
 
-export class RelayDataChannel implements IDataChannel, IDisposable {
+export function createSshRpcMessageStream(
+    relayHubProxy: IRelayHubProxy,
+    streamId: string,
+    targetParticipant: string): SshRpcMessageStream  {
+
+    const sshChannel = <SshChannel>(<any>new SshRelayChannel(relayHubProxy,streamId,targetParticipant));
+    return new SshRpcMessageStream(sshChannel);
+}
+
+class ChannelClosedEventArgs {
+    public readonly errorMessage?: string;
+    public readonly error?: Error;
+}
+
+class SshRelayChannel implements IDisposable {
     private readonly dataReceivedEmitter = new Emitter<Buffer>();
     private nextSequence = 0;
     private disposables: IDisposable[] = [];

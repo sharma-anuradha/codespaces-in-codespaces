@@ -158,11 +158,27 @@ namespace Microsoft.VsCloudKernel.SignalService
             Requires.NotNullOrEmpty(type, nameof(type));
 
             var relayHub = await GetOrCreateRelayHubAsync(hubId, cancellationToken);
+
+            // extract audit properties
+            Dictionary<string, object> auditProperties = null;
+            if (messageProperties != null)
+            {
+                auditProperties = messageProperties
+                    .Where(kvp => kvp.Key.StartsWith(RelayHubMessageProperties.PropertyAuditPrefixId))
+                    .ToDictionary(kvp => kvp.Key.Substring(RelayHubMessageProperties.PropertyAuditPrefixId.Length), kvp => kvp.Value);
+                if (auditProperties.Count > 0)
+                {
+                    messageProperties = messageProperties
+                        .Where(kvp => !kvp.Key.StartsWith(RelayHubMessageProperties.PropertyAuditPrefixId))
+                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                }
+            }
+
             var uniqueId = await relayHub.SendDataAsync(connectionId, null, sendOption, targetParticipantIds, type, data, messageProperties, cancellationToken);
             using (BeginHubScope(RelayServiceScopes.MethodSendDataHub, hubId, connectionId))
             {
                 var targetParticipantIdsStr = targetParticipantIds != null ? string.Join(",", targetParticipantIds) : "*";
-                Logger.LogDebug($"uniqueId:{uniqueId} sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data?.Length} messageProperties:{messageProperties?.ConvertToString(FormatProvider)}");
+                Logger.LogDebug($"uniqueId:{uniqueId} sendOption:{sendOption} targetParticipantIds:{targetParticipantIdsStr} type:{type} data-length:{data?.Length} messageProperties:{messageProperties?.ConvertToString(FormatProvider)} auditProperties:{auditProperties.ConvertToString(FormatProvider)}");
             }
 
             if (BackplaneManager != null)

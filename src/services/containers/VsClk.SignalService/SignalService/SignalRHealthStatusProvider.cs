@@ -76,7 +76,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     if (!string.IsNullOrEmpty(appSettings.BaseUri))
                     {
-                        var result = await EchoHealthHub(cancellationToken);
+                        var result = await EchoHealthHubAsync(cancellationToken);
                         if (State == false)
                         {
                             using (logger.BeginMethodScope(MethodEchoHealthHubReconnectScope))
@@ -126,7 +126,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private async Task<EchoResult> EchoHealthHub(CancellationToken cancellationToken)
+        private async Task<EchoResult> EchoHealthHubAsync(CancellationToken cancellationToken)
         {
             var hubConnection = new HubConnectionBuilder().WithUrl(HealthHubUrl).Build();
             await hubConnection.StartAsync(cancellationToken);

@@ -105,6 +105,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
         }
 
         /// <inheritdoc/>
+        public Task ConnectAsync(CancellationToken cancellationToken) => Client.ConnectAsync(cancellationToken);
+
+        /// <inheritdoc/>
         public IDisposable On(string methodName, Type[] parameterTypes, Func<object[], Task> handler)
         {
             return Connection.On(ToHubMethodName(methodName), parameterTypes, handler);

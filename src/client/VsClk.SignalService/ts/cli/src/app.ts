@@ -9,7 +9,7 @@ import {
     SendOption
 } from '@vs/vso-signalr-client-proxy';
 
-import { RpcMessageStream, RelayDataChannel } from '@vs/vso-signalr-client-jsonrpc';
+import { createSshRpcMessageStream } from '@vs/vso-signalr-ssh';
 
 import * as signalR from '@microsoft/signalr';
 import * as signalProtocolR from '@microsoft/signalr-protocol-msgpack';
@@ -189,8 +189,7 @@ function main_relay(hubClient: HubClient, hubId: string, logger: signalR.ILogger
             } else {
                 const participants = relayHubProxy.participants.filter(p => p.id !== relayHubProxy.selfParticipant.id);
                 if (participants.length > 0) {
-                    const relayDataChannel = new RelayDataChannel(relayHubProxy, 'jsonRpc', participants[0].id);
-                    const rpcMessageStream = new RpcMessageStream(relayDataChannel);
+                    const rpcMessageStream = createSshRpcMessageStream(relayHubProxy, 'jsonRpc', participants[0].id);
 
                     rpcConnection = rpc.createMessageConnection(
                         rpcMessageStream.reader,

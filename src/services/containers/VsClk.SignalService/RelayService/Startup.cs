@@ -22,22 +22,12 @@ namespace Microsoft.VsCloudKernel.RelayService
         /// </summary>
         private const string RelayHubMap = "/relayhub";
 
-        public Startup(IWebHostEnvironment env)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-#if DEBUG
-                .AddJsonFile("appsettings.Debug.json", optional: true)
-#else
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-#endif
-                .AddEnvironmentVariables();
-
-            Configuration = builder.Build();
+            Configuration = configuration;
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)

@@ -26,10 +26,19 @@
     "@microsoft/signalr" ">=3.1.2"
     msgpack5 "^4.0.2"
 
-"@microsoft/signalr@>=3.1.2", "@microsoft/signalr@^3.1.0":
+"@microsoft/signalr@>=3.1.2":
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/@microsoft/signalr/-/signalr-3.1.2.tgz#74561aea8a7e1fb8a6f5d428149a2b81cafe188a"
   integrity sha512-NeOJQUvkONpbGdkm/q+riYRomInY3Jm8U1hfCWxwdGn3hoS4m54jyb2ix5V0lgOWBHwpTdgW9i3YI7TFf8AdhA==
+  dependencies:
+    eventsource "^1.0.7"
+    request "^2.88.0"
+    ws "^6.0.0"
+
+"@microsoft/signalr@^3.1.2":
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/@microsoft/signalr/-/signalr-3.1.3.tgz#250df3fcabe9e637a61e696edcd97f93a96bbcd3"
+  integrity sha512-jcjzvPDP3VbtmUoTDwgKEjaQ1m4FgSiS00zvybcF8UweAkdWUAYsaMXTISEk7E5nD0jrxyMMdSuPGgw9AcG46w==
   dependencies:
     eventsource "^1.0.7"
     request "^2.88.0"
@@ -52,19 +61,15 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vs/vs-ssh@^2.0.10":
-  version "2.0.10"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-2.0.10.tgz#6d6873b9917d388849739ab42b0affd2e5380759"
-  integrity sha1-bWhzuZF9OIhJc5q0Kwr/0uU4B1k=
+"@vs/vs-ssh@^2.2.1":
+  version "2.2.1"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-2.2.1.tgz#6879851d9dc1f55ac2644ab592de0414a9f29644"
+  integrity sha1-aHmFHZ3B9VrCZEq1kt4EFKnylkQ=
   dependencies:
     buffer "^5.2.1"
     debug "^4.1.1"
     diffie-hellman "^5.0.3"
     vscode-jsonrpc "^4.0.0"
-
-"@vs/vso-signalr-client-jsonrpc@link:jsonrpc":
-  version "0.0.0"
-  uid ""
 
 "@vs/vso-signalr-client-proxy@link:signalr-client-proxy":
   version "0.0.0-placeholder"
@@ -72,7 +77,13 @@
 "@vs/vso-signalr-client@link:signalr-client":
   version "0.0.0-placeholder"
   dependencies:
-    "@microsoft/signalr" "^3.1.0"
+    "@microsoft/signalr" "^3.1.2"
+    "@vs/vso-signalr-client-proxy" "link:signalr-client-proxy"
+
+"@vs/vso-signalr-ssh@link:ssh":
+  version "0.0.0-placeholder"
+  dependencies:
+    "@vs/vs-ssh" "^2.2.1"
     "@vs/vso-signalr-client-proxy" "link:signalr-client-proxy"
 
 ajv@^6.5.5:

@@ -49,6 +49,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var backplaneConnectorProvider = new JsonRpcConnectorProvider(
                 AppSettings.BackplaneHostName,
                 Port,
+                AppSettings.IsJsonRpcMessagePackEnabled,
                 this.logger);
             var backplaneProviderService = Activator.CreateInstance(
                 typeof(TBackplaneServiceProviderType),

@@ -54,9 +54,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                         trace.Verbose($"OnHubDisconnected-> hubId:{relayHubProxy.Id}");
                         relayHubProxy.OnHubDisconnected();
                     }
-                }
 
-                this.relayHubs.Clear();
+                    // clear all our realy hubs
+                    this.relayHubs.Clear();
+                }
 
                 return Task.CompletedTask;
             };
@@ -234,25 +235,40 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
                 CancellationToken cancellationToken)
             {
                 CheckState();
-                if (this.relayServiceProxy.TraceHubData)
-                {
-                    Trace.Verbose($"SendData-> hubId:{Id} type:{type} data-length:{data?.Length} properties:{messageProperties.ConvertToString(this.relayServiceProxy.FormatProvider)}");
-                }
 
-                if (methodOption == HubMethodOption.Send)
+                Func<string, string> sendTraceText = (prefix) =>
                 {
-                    await HubProxy.SendAsync(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data, messageProperties }, cancellationToken).ConfigureAwait(false);
-                    return 0;
-                }
-                else
+                    Func<string> targetIdsFunc = () => targetParticipantIds != null ? string.Join(",", targetParticipantIds) : "(null)";
+                    return $"{prefix}-> hubId:{Id} ids:{targetIdsFunc()} type:{type} data-length:{data?.Length} properties:{messageProperties.ConvertToString(this.relayServiceProxy.FormatProvider)}";
+                };
+
+                try
                 {
-                    var uniqueId = await HubProxy.InvokeAsync<int>(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data, messageProperties }, cancellationToken);
                     if (this.relayServiceProxy.TraceHubData)
                     {
-                        Trace.Verbose($"SendData <- result:{uniqueId}");
+                        Trace.Verbose(sendTraceText("SendData"));
                     }
 
-                    return uniqueId;
+                    if (methodOption == HubMethodOption.Send)
+                    {
+                        await HubProxy.SendAsync(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data, messageProperties }, cancellationToken).ConfigureAwait(false);
+                        return 0;
+                    }
+                    else
+                    {
+                        var uniqueId = await HubProxy.InvokeAsync<int>(nameof(IRelayServiceHub.SendDataHubAsync), new object[] { Id, sendOption, targetParticipantIds, type, data, messageProperties }, cancellationToken);
+                        if (this.relayServiceProxy.TraceHubData)
+                        {
+                            Trace.Verbose($"SendData <- result:{uniqueId}");
+                        }
+
+                        return uniqueId;
+                    }
+                }
+                catch (Exception error)
+                {
+                    Trace.Error(sendTraceText($"Failed to SendData err:{error.Message}"));
+                    throw;
                 }
             }
 
