@@ -75,12 +75,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// <param name="subscriptionId">Target subscription id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public Task<int> MaxEnvironmentsPerPlanAsync(string subscriptionId, IDiagnosticsLogger logger)
+        public async Task<int> MaxEnvironmentsPerPlanAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
             Requires.NotNull(subscriptionId, nameof(subscriptionId));
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetSubscriptionValueAsync("quota:max-environments-per-plan", subscriptionId, logger, DefaultMaxEnvironmentsPerPlan);
+            var globalLimit = await SystemConfiguration.GetValueAsync("quota:max-environments-per-plan", logger, DefaultMaxEnvironmentsPerPlan);
+            var subscriptionLimit = await SystemConfiguration.GetSubscriptionValueAsync("quota:max-environments-per-plan", subscriptionId, logger, globalLimit);
+
+            return subscriptionLimit;
         }
 
         /// <summary>
@@ -92,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync<double>("setting:environment-archive-cuttoff-hours", logger, DefaultEnvironmentArchiveCutoffHours);
+            return SystemConfiguration.GetValueAsync("setting:environment-archive-cuttoff-hours", logger, DefaultEnvironmentArchiveCutoffHours);
         }
 
         /// <summary>
@@ -104,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync<int>("setting:environment-archive-batch-size", logger, DefaultEnvironmentArchiveBatchSize);
+            return SystemConfiguration.GetValueAsync("setting:environment-archive-batch-size", logger, DefaultEnvironmentArchiveBatchSize);
         }
 
         /// <summary>
@@ -116,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync<int>("setting:environment-archive-max-active-count", logger, DefaultEnvironmentArchiveMaxActiveCount);
+            return SystemConfiguration.GetValueAsync("setting:environment-archive-max-active-count", logger, DefaultEnvironmentArchiveMaxActiveCount);
         }
 
         /// <summary>
@@ -128,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-static-environment-monitoring", logger, false);
+            return SystemConfiguration.GetValueAsync("featureflag:enable-static-environment-monitoring", logger, false);
         }
 
         /// <summary>
@@ -140,7 +143,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync<bool>("featureflag:environment-archive-enabled", logger, DefaultEnvironmentArchiveEnabled);
+            return SystemConfiguration.GetValueAsync("featureflag:environment-archive-enabled", logger, DefaultEnvironmentArchiveEnabled);
         }
 
         /// <summary>
@@ -152,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync<bool>("featureflag:environment-failed-worker-enabled", logger, DefaultEnvironmentFailedWorkerEnabled);
+            return SystemConfiguration.GetValueAsync("featureflag:environment-failed-worker-enabled", logger, DefaultEnvironmentFailedWorkerEnabled);
         }
     }
 }

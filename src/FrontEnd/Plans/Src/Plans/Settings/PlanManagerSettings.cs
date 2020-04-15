@@ -47,12 +47,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
         /// <param name="subscriptionId">Target subscription id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public Task<int> MaxPlansPerSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
+        public async Task<int> MaxPlansPerSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
             Requires.NotNull(subscriptionId, nameof(subscriptionId));
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetSubscriptionValueAsync("quota:max-plans-per-sub", subscriptionId, logger, DefaultMaxPlansPerSubscription);
+            var globalLimit = await SystemConfiguration.GetValueAsync("quota:max-plans-per-sub", logger, DefaultMaxPlansPerSubscription);
+            var subscriptionLimit = await SystemConfiguration.GetSubscriptionValueAsync("quota:max-plans-per-sub", subscriptionId, logger, globalLimit);
+
+            return subscriptionLimit;
         }
 
         /// <summary>

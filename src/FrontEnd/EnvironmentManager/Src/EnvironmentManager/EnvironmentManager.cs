@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Management.Sql.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -434,6 +433,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         }
 
                         return result;
+                    }
+                    else
+                    {
+                        if (!IsValidSuspendTimeout(cloudEnvironment))
+                        {
+                            childLogger.LogError($"{LogBaseName}_create_invalidsuspendtimeout_error");
+
+                            result.MessageCode = MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid;
+                            result.HttpStatusCode = StatusCodes.Status400BadRequest;
+
+                            return result;
+                        }
                     }
 
                     if (cloudEnvironmentOptions.QueueResourceAllocation)
@@ -1315,6 +1326,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var storageResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
 
             return (computeResponse, storageResponse);
+        }
+
+        private bool IsValidSuspendTimeout(CloudEnvironment cloudEnvironment)
+        {
+            if (cloudEnvironment == null)
+            {
+                return false;
+            }
+
+            return PlanManagerSettings
+                .DefaultAutoSuspendDelayMinutesOptions
+                .Contains(cloudEnvironment.AutoShutdownDelayMinutes);
         }
     }
 }
