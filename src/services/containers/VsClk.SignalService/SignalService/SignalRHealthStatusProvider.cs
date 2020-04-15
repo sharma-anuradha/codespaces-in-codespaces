@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,22 +20,23 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class SignalRHealthStatusProvider : BackgroundService, IHealthStatusProvider
     {
         private const string EchoMessage = "signalr";
+        private const string MethodEchoHealthHubSucceedScope = "EchoHealthHubSucceed";
         private const string MethodEchoHealthHubFailedScope = "EchoHealthHubFailed";
         private const string MethodEchoHealthHubReconnectScope = "EchoHealthHubReconnect";
         private const string MethodEchoHealthHubOutOfCapacityScope = "EchoHealthOutOfCapacity";
 
         /// <summary>
-        /// Time in minutes to perform an echo when the state is 'healthy'
+        /// Time in minutes to perform an echo when the state is 'healthy'.
         /// </summary>
         private const int EchoMinutesSucceed = 5;
 
         /// <summary>
-        /// Time in secs to perform the echo when the state is 'unhealthy'
+        /// Time in secs to perform the echo when the state is 'unhealthy'.
         /// </summary>
         private const int EchoSecsFailure = 45;
 
         /// <summary>
-        /// Initial delay in secs after we can start perform our helthy tests
+        /// Initial delay in secs after we can start perform our helthy tests.
         /// </summary>
         private const int InitialDelayMinutes = 2;
 
@@ -42,6 +45,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly AppSettings appSettings;
         private readonly ILogger logger;
         private int errorCount;
+        private int results;
 
         public SignalRHealthStatusProvider(
             WarmupService warmupService,
@@ -56,10 +60,23 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.hostingEnvironment = hostingEnvironment;
             this.appSettings = appSettingsProvider.Value;
             this.logger = logger;
-            State = true;
+            IsHealthy = true;
         }
 
-        public bool State { get; private set; }
+        public bool IsHealthy { get; private set; }
+
+        public object Status => new
+        {
+            // if is Healthy
+            this.IsHealthy,
+
+            // report the actual error count of consecutiove failures
+            ErrorCount = this.errorCount,
+
+            // report the last states of the probe in binary format for example
+            // 111001 => succeeded in the last attempt but 2 failures before that.
+            SuccessResults = Convert.ToString(this.results, 2),
+        };
 
         private string HealthHubUrl => $"{appSettings.BaseUri}{Startup.HealthHubMap}";
 
@@ -72,12 +89,16 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             while (true)
             {
+                var start = Stopwatch.StartNew();
                 try
                 {
                     if (!string.IsNullOrEmpty(appSettings.BaseUri))
                     {
+                        // shift left results
+                        results = results << 1;
+
                         var result = await EchoHealthHubAsync(cancellationToken);
-                        if (State == false)
+                        if (IsHealthy == false)
                         {
                             using (logger.BeginMethodScope(MethodEchoHealthHubReconnectScope))
                             {
@@ -86,8 +107,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                         }
 
                         this.errorCount = 0;
-                        this.logger.LogDebug($"Succesfully received echo -> message:{result.Message}");
-                        State = true;
+                        using (logger.BeginMethodScope(MethodEchoHealthHubSucceedScope))
+                        {
+                            this.logger.LogDebug($"Succesfully received echo -> time(ms):{start.ElapsedMilliseconds} stamp:{result.Stamp} serviceId:{result.ServiceId} message:{result.Message}");
+                        }
+
+                        IsHealthy = true;
+                        ++results;
                     }
                 }
                 catch (Exception error)
@@ -103,32 +129,34 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                     else
                     {
-                        State = false;
+                        IsHealthy = false;
                         using (logger.BeginMethodScope(MethodEchoHealthHubFailedScope))
                         {
                             ++this.errorCount;
-                            const string HealthFailedConnectMessage = "Failed to connect to health hub with url:{0} errorCount:{1}";
+                            const string HealthFailedConnectMessage = "Failed to connect to health hub with url:{0} errorCount:{1} time(ms):{2}";
 
                             if (this.errorCount == 1)
                             {
-                                this.logger.LogWarning(error, HealthFailedConnectMessage, HealthHubUrl, 1);
+                                this.logger.LogWarning(error, HealthFailedConnectMessage, HealthHubUrl, 1, start.ElapsedMilliseconds);
                             }
                             else
                             {
-                                this.logger.LogError(error, HealthFailedConnectMessage, HealthHubUrl, this.errorCount);
+                                this.logger.LogError(error, HealthFailedConnectMessage, HealthHubUrl, this.errorCount, start.ElapsedMilliseconds);
                             }
                         }
                     }
                 }
 
                 // delay depending on the State
-                await Task.Delay(State ? TimeSpan.FromMinutes(EchoMinutesSucceed) : TimeSpan.FromSeconds(EchoSecsFailure), cancellationToken);
+                await Task.Delay(IsHealthy ? TimeSpan.FromMinutes(EchoMinutesSucceed) : TimeSpan.FromSeconds(EchoSecsFailure), cancellationToken);
             }
         }
 
         private async Task<EchoResult> EchoHealthHubAsync(CancellationToken cancellationToken)
         {
-            var hubConnection = new HubConnectionBuilder().WithUrl(HealthHubUrl).Build();
+            var hubConnection = new HubConnectionBuilder().WithUrl(HealthHubUrl, HttpTransportType.WebSockets).Build();
+            hubConnection.HandshakeTimeout = TimeSpan.FromSeconds(45);
+
             await hubConnection.StartAsync(cancellationToken);
             var result = await hubConnection.InvokeAsync<EchoResult>(nameof(HealthServiceHub.Echo), EchoMessage, cancellationToken);
             await hubConnection.StopAsync(cancellationToken);

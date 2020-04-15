@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public async Task<bool> CompletedValueAsync()
         {
             await CompletedAsync();
-            return this.warmupServices.OfType<IHealthStatusProvider>().FirstOrDefault(ws => !ws.State) == null;
+            return this.warmupServices.OfType<IHealthStatusProvider>().FirstOrDefault(ws => !ws.IsHealthy) == null;
         }
     }
 }

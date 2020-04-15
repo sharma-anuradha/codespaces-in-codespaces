@@ -28,7 +28,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             get
             {
-                return this.healthStatusProviders.FirstOrDefault(ws => !ws.State) == null;
+                return this.healthStatusProviders.FirstOrDefault(ws => !ws.IsHealthy) == null;
             }
         }
 
@@ -36,9 +36,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         ///  return each provider health state
         /// </summary>
         /// <returns></returns>
-        public (Type, bool)[] GetProvidersStatus()
+        public (Type, object)[] GetProvidersStatus()
         {
-            return this.healthStatusProviders.Select(p => (p.GetType(), p.State)).ToArray();
+            return this.healthStatusProviders.Select(p => (p.GetType(), p.Status)).ToArray();
         }
     }
 }

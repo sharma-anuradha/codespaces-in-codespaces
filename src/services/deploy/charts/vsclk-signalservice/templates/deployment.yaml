@@ -46,7 +46,7 @@ spec:
           initialDelaySeconds: 75
           periodSeconds: 120
           timeoutSeconds: 5
-          failureThreshold: 4
+          failureThreshold: 50
 {{ end -}}
 {{- if .Values.pods.readinessProbePath }}
         readinessProbe:

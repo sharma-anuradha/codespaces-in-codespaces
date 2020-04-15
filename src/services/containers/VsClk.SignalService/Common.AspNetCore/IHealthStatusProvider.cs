@@ -5,13 +5,18 @@
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Interface to provide a state that indicate health status
+    /// Interface to provide a state that indicate health status.
     /// </summary>
     public interface IHealthStatusProvider
     {
         /// <summary>
-        /// Return the health state.
+        /// Report the health state of this provider.
         /// </summary>
-        bool State { get; }
+        bool IsHealthy { get; }
+
+        /// <summary>
+        /// Report a status object to be shown on our Status controller.
+        /// </summary>
+        object Status { get; }
     }
 }

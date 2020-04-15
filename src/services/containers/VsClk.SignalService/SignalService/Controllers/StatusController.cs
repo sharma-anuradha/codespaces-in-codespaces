@@ -7,7 +7,9 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
@@ -24,6 +26,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         private readonly HealthService healthService;
         private readonly Startup startup;
         private readonly IList<ServiceEndpoint> serviceEndpoints;
+        private readonly ILogger logger;
 
         public StatusController(
             IOptions<AppSettings> appSettingsProvider,
@@ -31,7 +34,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             RelayService relayService,
             HealthService healthService,
             Startup startup,
-            IList<ServiceEndpoint> serviceEndpoints)
+            IList<ServiceEndpoint> serviceEndpoints,
+            ILogger<StatusController> logger)
         {
             this.appSettings = appSettingsProvider.Value;
             this.presenceService = presenceService;
@@ -39,6 +43,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             this.healthService = healthService;
             this.startup = startup;
             this.serviceEndpoints = serviceEndpoints;
+            this.logger = logger;
         }
 
         private IConfiguration Configuration => this.startup.Configuration;
@@ -49,7 +54,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         [HttpGet]
         public object Get()
         {
-            dynamic versionObj = new
+            dynamic statusObj = new
             {
                 this.presenceService.ServiceId,
                 Name = "vsclk-core-signalservice",
@@ -83,7 +88,9 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 RelayMetrics = this.relayService.GetMetrics(),
             };
 
-            return versionObj;
+            this.logger.LogDebug($"Status:{JsonConvert.SerializeObject(statusObj)}");
+
+            return statusObj;
         }
 
         private static string GetUriFromAzureConnectionString(string azureConnectionString)

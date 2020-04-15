@@ -24,7 +24,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             healthStatusProviders.Add(this);
         }
 
-        public virtual bool State => this.warmedUpResult.Task.IsCompleted && HealthState;
+        public virtual bool IsHealthy => this.warmedUpResult.Task.IsCompleted && HealthState;
+
+        public virtual object Status => IsHealthy;
 
         protected bool HealthState { get; set; }
 
