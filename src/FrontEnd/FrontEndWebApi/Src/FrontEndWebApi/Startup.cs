@@ -141,7 +141,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                                 currentOriginsDev.ToArray())
                             .WithExposedHeaders(vssaasHeaders)
                             .AllowAnyHeader()
-                            .AllowAnyMethod());
+                            .AllowAnyMethod()
+                            .SetIsOriginAllowedToAllowWildcardSubdomains());
                 });
 
             // Add the environment manager and the cloud environment repository.
