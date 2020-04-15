@@ -7,7 +7,7 @@ import {
     vscode,
     getVSCodeAssetPath,
     UrlCallbackProvider,
-    getVSCodeVersionString
+    getVSCodeVersionString,
 } from 'vso-workbench';
 
 import {
@@ -81,7 +81,9 @@ export class ServerlessWorkbench extends Component<
             true,
             /^\.\/(insider|stable)\-[a-f0-9]{7}\/[^\/]*\/package.json$/
         );
-        const keys = context.keys().filter((key) => key.startsWith(`./${getVSCodeVersionString()}`));
+        const keys = context
+            .keys()
+            .filter((key) => key.startsWith(`./${getVSCodeVersionString()}`));
 
         const packagesWithMainThatWork = ['vscode.python', 'ms-vscode.references-view'];
 
@@ -98,7 +100,9 @@ export class ServerlessWorkbench extends Component<
             return {
                 packageJSON,
                 extensionLocation: vscode.URI.parse(
-                    `https://${window.location.hostname}/workbench-page/static/web-standalone/server/${getVSCodeVersionString()}/extensions/${packageDirName}/`
+                    `https://${
+                        window.location.hostname
+                    }/workbench-page/web-standalone/server/${getVSCodeVersionString()}/extensions/${packageDirName}/`
                 ),
             };
         });
