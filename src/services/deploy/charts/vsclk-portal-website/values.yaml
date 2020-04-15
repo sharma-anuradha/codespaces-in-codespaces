@@ -56,6 +56,18 @@ pfingress:
       location /signin {
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
       }
+      location /favicon.ico {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /site.css {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /spinner-dark.svg {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /ms-logo.svg {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
   path: /
 
 appSettings:
