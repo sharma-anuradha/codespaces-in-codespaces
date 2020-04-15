@@ -51,6 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
             string metricNamespace,
             string metricEventName,
             IDictionary<string, string> eventProperties,
+            Guid? groupId,
+            DateTime? timeStamp,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(metricNamespace, nameof(metricNamespace));
@@ -61,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
             {
                 try
                 {
-                    listener.PostEvent(metricNamespace, metricEventName, eventProperties, logger);
+                    listener.PostEvent(metricNamespace, metricEventName, eventProperties, groupId, timeStamp, logger);
                 }
                 catch (Exception ex)
                 {
@@ -80,6 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
             AggregateType aggregateType,
             int aggregateValue,
             IDictionary<string, string> aggregateDimensions,
+            Guid? groupId,
+            DateTime? timeStamp,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(metricNamespace, nameof(metricNamespace));
@@ -91,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
             {
                 try
                 {
-                    listener.PostAggregate(metricNamespace, metricAggregateName, aggregateType, aggregateValue, aggregateDimensions, logger);
+                    listener.PostAggregate(metricNamespace, metricAggregateName, aggregateType, aggregateValue, aggregateDimensions, groupId, timeStamp, logger);
                 }
                 catch (Exception ex)
                 {

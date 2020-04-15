@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
@@ -18,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public void PostEnvironmentCount(CloudEnvironmentDimensions cloudEnvironmentDimensions, int count, IDiagnosticsLogger logger)
+        public void PostEnvironmentCount(CloudEnvironmentDimensions cloudEnvironmentDimensions, int count, Guid? aggregateId, DateTime? aggregateTimeStamp, IDiagnosticsLogger logger)
         {
         }
     }

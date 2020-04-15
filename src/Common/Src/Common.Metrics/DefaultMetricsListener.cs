@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
@@ -47,18 +48,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
         /// <inheritdoc/>
         public void PostEvent(
             string metricNamespace,
-            string metricEventName,
+            string metricName,
             IDictionary<string, string> eventProperties,
+            Guid? groupId,
+            DateTime? timeStamp,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(metricNamespace, nameof(metricNamespace));
-            Requires.NotNullOrEmpty(metricEventName, nameof(metricEventName));
+            Requires.NotNullOrEmpty(metricName, nameof(metricName));
             Requires.NotNull(logger, nameof(logger));
 
             // Add namespace and event name
-            var metricsLogger = MetricsDiagnosticsLogger.NewChildLogger()
-                .FluentAddValue(MetricsConstants.Namespace, metricNamespace)
-                .FluentAddValue(MetricsConstants.EventName, metricEventName);
+            var metricsLogger = MetricsDiagnosticsLogger.NewMetricsChildLogger(metricNamespace, metricName, groupId, timeStamp);
 
             // Add event properties, if specified
             if (eventProperties != null)
@@ -76,21 +77,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
         /// <inheritdoc/>
         public void PostAggregate(
             string metricNamespace,
-            string metricAggregateName,
+            string metricName,
             AggregateType aggregateType,
             int aggregateValue,
             IDictionary<string, string> aggregateDimensions,
+            Guid? groupId,
+            DateTime? timeStamp,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrEmpty(metricNamespace, nameof(metricNamespace));
-            Requires.NotNullOrEmpty(metricAggregateName, nameof(metricAggregateName));
+            Requires.NotNullOrEmpty(metricName, nameof(metricName));
             Requires.NotNull(aggregateDimensions, nameof(aggregateDimensions));
             Requires.NotNull(logger, nameof(logger));
 
-            // Add namespace and metric name
-            var metricsLogger = MetricsDiagnosticsLogger.NewChildLogger()
-                .FluentAddValue(MetricsConstants.Namespace, metricNamespace)
-                .FluentAddValue(MetricsConstants.AggregateName, metricAggregateName);
+            // Add namespace and metric name, and unique aggregate group identifiers
+            var metricsLogger = MetricsDiagnosticsLogger.NewMetricsChildLogger(metricNamespace, metricName, groupId, timeStamp);
 
             // Add dimensions
             foreach (var item in aggregateDimensions)
@@ -102,19 +103,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
             switch (aggregateType)
             {
                 case AggregateType.Average:
-                    metricsLogger.FluentAddValue(MetricsConstants.AggregateAverage, aggregateValue);
+                    metricsLogger.AddMetricsAverage(aggregateValue);
                     break;
 
                 case AggregateType.Count:
-                    metricsLogger.FluentAddValue(MetricsConstants.AggregateCount, aggregateValue);
+                    metricsLogger.AddMetricsCount(aggregateValue);
                     break;
 
                 case AggregateType.Sum:
-                    metricsLogger.FluentAddValue(MetricsConstants.AggregateSum, aggregateValue);
+                    metricsLogger.AddMetricsSum(aggregateValue);
                     break;
 
                 default:
-                    metricsLogger.FluentAddValue(MetricsConstants.AggregateOther, aggregateValue);
+                    metricsLogger.AddMetricsValue(aggregateValue);
                     break;
             }
 

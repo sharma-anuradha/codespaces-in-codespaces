@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
@@ -24,7 +25,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// </summary>
         /// <param name="cloudEnvironmentDimensions">The dimensions.</param>
         /// <param name="count">The count.</param>
+        /// <param name="aggregateId">The common id for a set of related aggregate values.</param>
+        /// <param name="aggregateTimeStamp">The common time stamp for a set of related aggregate values.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        void PostEnvironmentCount(CloudEnvironmentDimensions cloudEnvironmentDimensions, int count, IDiagnosticsLogger logger);
+        void PostEnvironmentCount(CloudEnvironmentDimensions cloudEnvironmentDimensions, int count, Guid? aggregateId, DateTime? aggregateTimeStamp, IDiagnosticsLogger logger);
     }
 }

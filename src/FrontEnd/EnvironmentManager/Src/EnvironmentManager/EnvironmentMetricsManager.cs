@@ -22,15 +22,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private const string EnvironmentMetricsNamespace = "Microsoft.VSOnline/Environments";
         private const string EnvironmentAgeInDaysProperty = "EnvironmentAgeInDays";
-        private const string EnvironmentAgeInHoursProperty = "EnvironmentAgeInHours";
+        private const string EnvironmentAgeInMinutesProperty = "EnvironmentAgeInMinutes";
         private const string EnvironmentAutoShutdownDelayMinutesProperty = "EnvironmentAutoShutdownDelayMinutes";
         private const string EnvironmentCreatedProperty = "EnvironmentCreated";
         private const string EnvironmentHasPersonalizationProperty = "EnvironmentHasPersonalization";
         private const string EnvironmentHasSeedInfoProperty = "EnvironmentHasSeedInfo";
         private const string EnvironmentIdProperty = "EnvironmentId";
         private const string EnvironmentLastActiveProperty = "EnvironmentLastActive";
-        private const string EnvironmentLastStateDurationInDaysProperty = "lastStateDurationInDays";
-        private const string EnvironmentLastStateDurationInHoursProperty = "lastStateDurationInHours";
+        private const string EnvironmentLastStateDurationInDaysProperty = "EnvironmentLastStateDurationInDays";
+        private const string EnvironmentLastStateDurationInMinutesProperty = "EnvironmentLastStateDurationInMinutes";
         private const string EnvironmentLastStateProperty = "EnvironmentLastState";
         private const string EnvironmentLastUsedProperty = "EnvironmentLastUsed";
         private const string EnvironmentLocationProperty = "EnvironmentLocation";
@@ -48,6 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string ClientVsoClientTypeProperty = "ClientVsoClientType";
         private const string EnvironmentCountMetricName = "EnvironmentCount";
 
+        // The state values are mapped to constant strings to avoid changes in telemetry if the programmatic state names change.
         private static readonly Dictionary<CloudEnvironmentState, string> StateEventNames = new Dictionary<CloudEnvironmentState, string>
         {
             { CloudEnvironmentState.Archived, "archived" },
@@ -56,22 +57,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             { CloudEnvironmentState.Created, "created" },
             { CloudEnvironmentState.Deleted, "deleted" },
             { CloudEnvironmentState.Failed, "failed" },
-            { CloudEnvironmentState.None, "none" },
             { CloudEnvironmentState.Queued, "queued" },
-            { CloudEnvironmentState.Provisioning, "provisioining" },
+            { CloudEnvironmentState.Provisioning, "provisioning" },
             { CloudEnvironmentState.Shutdown, "shutdown" },
             { CloudEnvironmentState.ShuttingDown, "shuttingDown" },
             { CloudEnvironmentState.Starting, "starting" },
             { CloudEnvironmentState.Unavailable, "unavailable" },
-        };
-
-        private static readonly Dictionary<CloudEnvironmentState, string> StateEndedEventNames = new Dictionary<CloudEnvironmentState, string>
-        {
-            { CloudEnvironmentState.Created, "createdStateEnded" },
-            { CloudEnvironmentState.Available, "availableStateEnded" },
-            { CloudEnvironmentState.Shutdown, "shutdownStateEnded" },
-            { CloudEnvironmentState.Archived, "archivedStateEnded" },
-            { CloudEnvironmentState.Queued, "queuedStateEnded" },
         };
 
         /// <summary>
@@ -114,12 +105,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             var now = DateTime.UtcNow; // get a consistent "now"
-            var ageInHours = (now - environment.Created).TotalHours;
+            var ageInMinutes = (now - environment.Created).TotalMinutes;
             var ageInDays = (now - environment.Created).TotalDays;
             var lastStateStarted = lastStateSnapshot.LastStateUpdated;
             var lastStateEnded = environment.LastStateUpdated;
-            var lastStateDuration = lastStateEnded - lastStateStarted;
-            var lastStateDurationInHours = lastStateDuration.TotalHours;
+            var lastStateDuration = lastState != CloudEnvironmentState.None ? lastStateEnded - lastStateStarted : TimeSpan.Zero;
+            var lastStateDurationInMinutes = lastStateDuration.TotalMinutes;
             var lastStateDurationInDays = lastStateDuration.TotalDays;
             var isoCountryCode = environment.CreationMetrics?.IsoCountryCode;
             var azureGeography = environment.CreationMetrics?.AzureGeography;
@@ -129,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 // WARNING: Do not emit any EUII in to metrics!
                 { EnvironmentAgeInDaysProperty, FormatValue(ageInDays) },
-                { EnvironmentAgeInHoursProperty, FormatValue(ageInHours) },
+                { EnvironmentAgeInMinutesProperty, FormatValue(ageInMinutes) },
                 { EnvironmentAutoShutdownDelayMinutesProperty, environment.AutoShutdownDelayMinutes.ToString() },
                 { EnvironmentCreatedProperty, FormatValue(environment.Created) },
                 { EnvironmentHasPersonalizationProperty, FormatValue(environment.Personalization != null) },
@@ -137,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 { EnvironmentIdProperty, environment.Id.ToString() },
                 { EnvironmentLastActiveProperty, FormatValue(environment.Active) },
                 { EnvironmentLastStateDurationInDaysProperty, FormatValue(lastStateDurationInDays) },
-                { EnvironmentLastStateDurationInHoursProperty, FormatValue(lastStateDurationInHours) },
+                { EnvironmentLastStateDurationInMinutesProperty, FormatValue(lastStateDurationInMinutes) },
                 { EnvironmentLastStateProperty, lastState.ToString() },
                 { EnvironmentLastUsedProperty, FormatValue(environment.LastUsed) },
                 { EnvironmentLocationProperty, environment.Location.ToString() },
@@ -155,21 +146,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 { ClientVsoClientTypeProperty, vsoClientType.ToString() },
             };
 
-            // Post the state-change event, if it is mapped
-            if (StateEventNames.TryGetValue(newState, out var stateEventName))
+            // Shared values for both events.
+            var groupId = Guid.NewGuid();
+            var timeStamp = now;
+
+            // Post the old-state-ended event, if it is mapped.
+            if (StateEventNames.TryGetValue(lastState, out var lastStateName))
             {
-                MetricsLogger.PostEvent(EnvironmentMetricsNamespace, stateEventName, properties, logger);
+                MetricsLogger.PostEvent(EnvironmentMetricsNamespace, $"{lastStateName}Ended", properties, groupId, timeStamp, logger);
             }
 
-            // Post the state-ended event, if it is mapped.
-            if (StateEndedEventNames.TryGetValue(lastState, out var stateEndedEventName))
+            // Post the new-state-started event, if it is mapped
+            if (StateEventNames.TryGetValue(newState, out var newStateName))
             {
-                MetricsLogger.PostEvent(EnvironmentMetricsNamespace, stateEndedEventName, properties, logger);
+                MetricsLogger.PostEvent(EnvironmentMetricsNamespace, newStateName, properties, groupId, timeStamp, logger);
             }
         }
 
         /// <inheritdoc/>
-        public void PostEnvironmentCount(CloudEnvironmentDimensions cloudEnvironmentDimensions, int count, IDiagnosticsLogger logger)
+        public void PostEnvironmentCount(CloudEnvironmentDimensions cloudEnvironmentDimensions, int count, Guid? groupId, DateTime? timeStamp, IDiagnosticsLogger logger)
         {
             var dimensions = new Dictionary<string, string>
             {
@@ -181,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 { ClientAzureGeographyProperty, cloudEnvironmentDimensions.AzureGeography.ToString() },
             };
 
-            MetricsLogger.PostAggregate(EnvironmentMetricsNamespace, EnvironmentCountMetricName, AggregateType.Count, count, dimensions, logger);
+            MetricsLogger.PostAggregate(EnvironmentMetricsNamespace, EnvironmentCountMetricName, AggregateType.Count, count, dimensions, groupId, timeStamp, logger);
         }
 
         private static string FormatValue(double value)

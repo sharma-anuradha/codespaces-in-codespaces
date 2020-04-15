@@ -101,6 +101,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             var countByDimensionsList = await GetCountByDimensionsForDataPlaneLocationsAsync(childLogger);
 
             // Send individual values
+            var aggregateId = Guid.NewGuid();
+            var aggregateTimestamp = DateTime.UtcNow;
             foreach (var countByDimensions in countByDimensionsList)
             {
                 var count = countByDimensions.Count;
@@ -114,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                            .FluentAddValue("EnvironmentCount", count)
                            .LogInfo("cloud_environment_individual_measure");
 
-                EnvironmentMetricsLogger.PostEnvironmentCount(countByDimensions, count, childLogger);
+                EnvironmentMetricsLogger.PostEnvironmentCount(countByDimensions, count, aggregateId, aggregateTimestamp, childLogger);
             }
 
             // Aggregate by State
