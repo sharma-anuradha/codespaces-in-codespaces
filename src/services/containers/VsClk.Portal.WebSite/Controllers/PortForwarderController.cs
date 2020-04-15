@@ -111,7 +111,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var (cascadeToken, error) = GetAuthToken(logger);
             if (cascadeToken == default)
             {
-                return ExceptionView(error);
+                return StatusCode(StatusCodes.Status401Unauthorized);
             }
 
             string sessionId;
@@ -128,7 +128,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, logger);
             if (!isUserAllowedToAccessEnvironment)
             {
-                return ExceptionView(PortForwardingFailure.NotAuthorized);
+                return StatusCode(StatusCodes.Status401Unauthorized);
             }
 
             Response.Headers.Add(PortForwardingHeaders.Token, cascadeToken);
@@ -138,44 +138,29 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Ok();
         }
 
+        [HttpGet("~/signin")]
+        public IActionResult AuthAsync([FromQuery(Name = "rd")] string returnUrl, [FromServices] IDiagnosticsLogger logger)
+        {
+            var (_, error) = GetAuthToken(logger);
+
+            return ExceptionView(error, returnUrl);
+        }
+
         private ActionResult ExceptionView(PortForwardingFailure failureReason = PortForwardingFailure.Unknown)
         {
-            var redirectUriBuilder = new UriBuilder(AppSettings.PortalEndpoint);
+            return ExceptionView(failureReason, Request.GetEncodedUrl());
+        }
+
+        private ActionResult ExceptionView(PortForwardingFailure failureReason, string redirectUrl)
+        {
             var redirectUriQuery = HttpUtility.ParseQueryString(string.Empty);
+            redirectUriQuery.Set("redirectUrl", redirectUrl);
 
-            redirectUriQuery.Set("redirectUrl", UriHelper.BuildAbsolute(Request.Scheme, Request.Host));
-            if (Uri.TryCreate(Request.GetEncodedUrl(), UriKind.Absolute, out Uri uri))
+            var redirectUriBuilder = new UriBuilder(AppSettings.PortalEndpoint)
             {
-                var query = HttpUtility.ParseQueryString(uri.Query);
-                var path = query.Get("path");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    if (!path.StartsWith("/"))
-                    {
-                        path = "/" + path;
-                    }
-
-                    var pathAndQuery = path.Split("?");
-                    if (pathAndQuery.Length == 1)
-                    {
-                        redirectUriQuery.Set("redirectUrl",
-                            UriHelper.BuildAbsolute(Request.Scheme, Request.Host, pathAndQuery[0]));
-                    }
-                    else if (pathAndQuery.Length == 2)
-                    {
-                        redirectUriQuery.Set(
-                            "redirectUrl",
-                            UriHelper.BuildAbsolute(
-                                Request.Scheme,
-                                Request.Host,
-                                path: pathAndQuery[0],
-                                query: QueryString.FromUriComponent("?" + pathAndQuery[1])));
-                    }
-                }
-            }
-
-            redirectUriBuilder.Path = "/login";
-            redirectUriBuilder.Query = redirectUriQuery.ToString();
+                Path = "/login",
+                Query = redirectUriQuery.ToString(),
+            };
 
             var details = new PortForwardingErrorDetails
             {
