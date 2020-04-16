@@ -529,7 +529,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             var resourceSku = resources
                 .Where(x => x.Details.Location == location
                     && x.Type == type
-                    && x.EnvironmentSkus.Contains(skuName));
+                    && x.LogicalSkus.Contains(skuName));
 
             if (!resourceSku.Any())
             {

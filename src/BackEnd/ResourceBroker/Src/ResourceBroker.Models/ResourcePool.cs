@@ -59,9 +59,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         public ResourcePoolResourceDetails Details { get; set; }
 
         /// <summary>
-        /// Gets or sets Environment Skus that use this Resource Unit.
+        /// Gets or sets the Frontend Environment/Plan Skus that use this Resource Unit.
         /// </summary>
-        public IEnumerable<string> EnvironmentSkus { get; set; }
+        public IEnumerable<string> LogicalSkus { get; set; }
 
         /// <summary>
         /// Gets the Max Create Batch Count.

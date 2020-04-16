@@ -2,10 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
     /// Input for next continuation.
@@ -17,6 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// </summary>
         /// <param name="trackingId">Tracking id to resume next phase.</param>
         /// <param name="azureResourceInfo">The azure resource info.</param>
+        /// <param name="retryAttempt">Retry attempt number.</param>
         [JsonConstructor]
         public NextStageInput(string trackingId, AzureResourceInfo azureResourceInfo, int retryAttempt = 0)
         {

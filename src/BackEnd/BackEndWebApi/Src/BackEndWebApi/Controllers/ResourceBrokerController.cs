@@ -13,7 +13,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 
@@ -78,11 +77,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [HttpOperationalScope("allocate")]
         public async Task<IActionResult> AllocateAsync(
-            [Required] Guid environmentId,
+            Guid environmentId,
             [FromBody, Required, MinLength(1)] IEnumerable<AllocateRequestBody> resourceRequests,
             [FromServices] IDiagnosticsLogger logger)
         {
-            logger.AddBaseEnvironmentId(environmentId);
+            if (environmentId != default)
+            {
+                logger.AddBaseEnvironmentId(environmentId);
+            }
 
             try
             {

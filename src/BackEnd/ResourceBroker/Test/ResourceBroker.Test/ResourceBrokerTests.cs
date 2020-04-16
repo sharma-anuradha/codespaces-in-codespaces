@@ -475,9 +475,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var definition = new List<ResourcePool>();
             if (!populateEmpty)
             {
-                definition.Add(new ResourcePool { Details = new ResourcePoolComputeDetails { Location = DefaultLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-                definition.Add(new ResourcePool { Details = new ResourcePoolStorageDetails { Location = DefaultLocation, SkuName = StorageResourceSkuName }, Type = ResourceType.StorageFileShare, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-                definition.Add(new ResourcePool { Details = new ResourcePoolComputeDetails { Location = WestLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
+                definition.Add(new ResourcePool { Details = new ResourcePoolComputeDetails { Location = DefaultLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, LogicalSkus = new List<string> { DefaultLogicalSkuName } });
+                definition.Add(new ResourcePool { Details = new ResourcePoolStorageDetails { Location = DefaultLocation, SkuName = StorageResourceSkuName }, Type = ResourceType.StorageFileShare, TargetCount = 10, LogicalSkus = new List<string> { DefaultLogicalSkuName } });
+                definition.Add(new ResourcePool { Details = new ResourcePoolComputeDetails { Location = WestLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, LogicalSkus = new List<string> { DefaultLogicalSkuName } });
 
                 DefaultPoolCode = definition[0].Details.GetPoolDefinition();
             }

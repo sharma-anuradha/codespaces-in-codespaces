@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// The Environment cold back-end storage blob resource type.
         /// </summary>
         StorageArchive = 3,
+
+        /// <summary>
+        /// The keyvault resource type.
+        /// </summary>
+        KeyVault = 4,
     }
 }

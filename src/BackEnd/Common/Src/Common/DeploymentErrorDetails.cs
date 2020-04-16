@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
 {
     /// <summary>
     /// Describes ARM Deployment errors.

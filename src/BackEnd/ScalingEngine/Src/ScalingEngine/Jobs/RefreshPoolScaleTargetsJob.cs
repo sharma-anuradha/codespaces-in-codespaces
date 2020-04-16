@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
@@ -34,16 +35,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         /// <param name="resourcePoolSettingsRepository">The settings repository where current settings
         /// overrides can be configured.</param>
         /// <param name="taskHelper">The task helper for triggering background jobs.</param>
+        /// <param name="azureSubscriptionCatalogOptions">The azure subscription catalog options.</param>
         public RefreshPoolScaleTargetsJob(
             ISystemCatalog systemCatalog,
             IResourceScalingHandler resourceScalingBroker,
             IResourcePoolSettingsRepository resourcePoolSettingsRepository,
-            ITaskHelper taskHelper)
+            ITaskHelper taskHelper,
+            IOptions<AzureSubscriptionCatalogOptions> azureSubscriptionCatalogOptions)
         {
             SystemCatalog = systemCatalog;
             ResourceScalingBroker = resourceScalingBroker;
             ResourcePoolSettingsRepository = resourcePoolSettingsRepository;
             TaskHelper = taskHelper;
+            DataPlaneSettings = azureSubscriptionCatalogOptions.Value.DataPlaneSettings;
         }
 
         private ISystemCatalog SystemCatalog { get; }
@@ -53,6 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         private IResourcePoolSettingsRepository ResourcePoolSettingsRepository { get; }
 
         private ITaskHelper TaskHelper { get; }
+
+        private DataPlaneSettings DataPlaneSettings { get; }
 
         /// <inheritdoc/>
         public Task WarmupCompletedAsync()
@@ -66,12 +72,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 
         private async Task<bool> UpdateScaleLevelsAsync(IDiagnosticsLogger logger)
         {
-            var resourceSkus = await FlattenResourceSkusAsync(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values, logger);
-            await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = resourceSkus });
+            var pools = new List<ResourcePool>();
+
+            var environmentSkus = await FlattenEnvironmentSkusAsync(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values, logger);
+            pools.AddRange(environmentSkus);
+
+            var keyVaultPools = GetKeyVaultPools(logger);
+            pools.AddRange(keyVaultPools);
+
+            await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = pools });
             return true;
         }
 
-        private async Task<IList<ResourcePool>> FlattenResourceSkusAsync(
+        private IList<ResourcePool> GetKeyVaultPools(IDiagnosticsLogger logger)
+        {
+            logger.LogInfo($"{GetType().FormatLogMessage(nameof(GetKeyVaultPools))}");
+
+            var keyVaultPools = new List<ResourcePool>();
+            foreach (var location in DataPlaneSettings.DefaultLocations)
+            {
+                var standardKeyVaultPoolSku = ConstructKeyVaultPool(location);
+                keyVaultPools.Add(standardKeyVaultPoolSku);
+            }
+
+            return keyVaultPools;
+        }
+
+        private ResourcePool ConstructKeyVaultPool(AzureLocation location)
+        {
+            const string KeyVaultAzureSkuName = "Standard";
+            const string logicalPlanSkuName = "standardPlan";
+            const int KeyVaultTargetPoolSize = 10;
+
+            var keyVaultSku = new ResourcePool
+            {
+                Details = new ResourcePoolKeyVaultDetails
+                {
+                    SkuName = KeyVaultAzureSkuName,
+                    Location = location,
+                },
+                LogicalSkus = new string[] { logicalPlanSkuName },
+                Id = Guid.NewGuid().ToString("D"),
+                IsEnabled = true,
+                TargetCount = KeyVaultTargetPoolSize,
+                Type = ResourceType.KeyVault,
+            };
+
+            return keyVaultSku;
+        }
+
+        private async Task<IList<ResourcePool>> FlattenEnvironmentSkusAsync(
             IEnumerable<ICloudEnvironmentSku> cloudEnvironmentSku,
             IDiagnosticsLogger logger)
         {
@@ -149,7 +199,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         "skuName": "Standard_F4s_v2",
                         "location": "westus2",
                         "targetCount": 10,
-                        "environmentSkus": [
+                        "logicalSkus": [
                             "Small-Linux-Preview"
                         ]
                     },
@@ -158,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         "skuName": "Standard_F4s_v2",
                         "location": "eastus",
                         "targetCount": 10,
-                        "environmentSkus": [
+                        "logicalSkus": [
                             "Small-Linux-Preview"
                         ]
                     },
@@ -167,7 +217,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         "skuName": "Standard_F8s_v2",
                         "location": "westus2",
                         "targetCount": 10,
-                        "environmentSkus": [
+                        "logicalSkus": [
                             "Medium-Linux-Preview"
                         ]
                     },
@@ -179,7 +229,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         "skuName": "Premium_LRS",
                         "location": "westus2",
                         "targetCount": 20,
-                        "environmentSkus": [
+                        "logicalSkus": [
                             "Small-Linux-Preview",
                             "Medium-Linux-Preview"
                         ]
@@ -189,7 +239,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         "skuName": "Premium_LRS",
                         "location": "eastus",
                         "targetCount": 10,
-                        "environmentSkus": [
+                        "logicalSkus": [
                             "Medium-Linux-Preview"
                         ]
                     },
@@ -314,7 +364,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                 Id = details.GetPoolDefinition(),
                 Type = resourceType,
                 TargetCount = distinctList.Select(poolLevelCallback).Sum(),
-                EnvironmentSkus = distinctList.Select(y => y.Environment.SkuName),
+                LogicalSkus = distinctList.Select(y => y.Environment.SkuName),
                 Details = details,
             };
         }

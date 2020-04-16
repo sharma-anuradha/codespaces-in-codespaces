@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -145,8 +146,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             var resourceName = "template_vm.json";
             var namespaceString = typeof(WindowsVirtualMachineManager).Namespace;
-            var fullResourceName = $"{namespaceString}.Templates.Windows.{resourceName}";
-            return GetEmbeddedResource(fullResourceName);
+            var fullyQualifiedResourceName = $"{namespaceString}.Templates.Windows.{resourceName}";
+            return CommonUtils.GetEmbeddedResourceContent(fullyQualifiedResourceName);
         }
 
         private static string GetVmName()

@@ -2,10 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Newtonsoft.Json;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
 {
     public static class NextStageInputExtension
     {

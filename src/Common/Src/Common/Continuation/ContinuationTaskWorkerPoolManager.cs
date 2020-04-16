@@ -84,6 +84,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// <inheritdoc/>
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Free up resources depending upon where the dispose call us made from.
+        /// </summary>
+        /// <param name="disposing">True when called from the <see cref="Dispose"/> method, false when called from finalizer.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (Disposed)
+            {
+                return;
+            }
+
+            /* Free unmanaged resources here. */
+
+            if (disposing)
+            {
+                // Free managed resources here, as this call is coming from
+                // the Dispose method, not from finalizer.
+            }
+
             Disposed = true;
         }
 

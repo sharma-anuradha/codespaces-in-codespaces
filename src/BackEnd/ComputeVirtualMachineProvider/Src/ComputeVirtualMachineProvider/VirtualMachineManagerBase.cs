@@ -5,9 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
@@ -18,9 +16,10 @@ using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Newtonsoft.Json;
@@ -156,21 +155,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <returns>Name of the network interface.</returns>
         public static string GetNetworkInterfaceName(string vmName) => $"{vmName}-nic";
 
-        /// <summary>
-        /// Gets the embedded resource as a string.
-        /// </summary>
-        /// <param name="resourceName">Resource name.</param>
-        /// <returns>Resource.</returns>
-        public static string GetEmbeddedResource(string resourceName)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
-        }
-
         /// <inheritdoc/>
         public abstract bool Accepts(ComputeOS computeOS);
 
@@ -225,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var azure = await ClientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
                 var deployment = await azure.Deployments.GetByResourceGroupAsync(input.AzureResourceInfo.ResourceGroup, input.TrackingId);
 
-                OperationState operationState = ParseResult(deployment.ProvisioningState);
+                OperationState operationState = DeploymentUtils.ParseProvisioningState(deployment.ProvisioningState);
                 if (operationState == OperationState.Failed)
                 {
                     var errorDetails = await DeploymentUtils.ExtractDeploymentErrors(deployment);
@@ -461,18 +445,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// </summary>
         /// <returns>VM template.</returns>
         protected abstract string GetVmTemplate();
-
-        private static OperationState ParseResult(string provisioningState)
-        {
-            if (provisioningState.Equals(OperationState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
-                   || provisioningState.Equals(OperationState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
-                   || provisioningState.Equals(OperationState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
-            {
-                return provisioningState.ToEnum<OperationState>();
-            }
-
-            return OperationState.InProgress;
-        }
 
         private static string CreateVmDeletionTrackingId(AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted)
         {

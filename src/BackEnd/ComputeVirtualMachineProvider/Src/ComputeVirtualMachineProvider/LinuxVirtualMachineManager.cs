@@ -111,8 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         protected override string GetVmTemplate()
         {
             var resourceName = "template_vm.json";
-            var fullResourceName = GetFullyQualifiedResourceName(resourceName);
-            return GetEmbeddedResource(fullResourceName);
+            var fullyQualifiedResourceName = GetFullyQualifiedResourceName(resourceName);
+            return CommonUtils.GetEmbeddedResourceContent(fullyQualifiedResourceName);
         }
 
         private string GetFullyQualifiedResourceName(string resourceName)
@@ -145,8 +145,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             QueueConnectionInfo inputQueueConnectionInfo,
             IDiagnosticsLogger logger)
         {
-            var fullResourceName = GetFullyQualifiedResourceName("vm_init.sh");
-            var initScript = GetEmbeddedResource(fullResourceName);
+            var fullyQualifiedResourceName = GetFullyQualifiedResourceName("vm_init.sh");
+            var initScript = CommonUtils.GetEmbeddedResourceContent(fullyQualifiedResourceName);
             initScript = ReplaceParams(
                 input.VMToken,
                 input.VmAgentBlobUrl,

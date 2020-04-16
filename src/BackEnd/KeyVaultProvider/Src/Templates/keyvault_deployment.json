@@ -1,0 +1,91 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "displayName": "Location.",
+        "description": "Azure data plane location."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the name of the keyvault",
+        "displayName": "KeyVault Name"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Premium",
+        "Standard"
+      ],
+      "metadata": {
+        "displayName": "KeyVault SKU",
+        "description": "Specifies the SKU for the keyvault"
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "metadata": {
+        "displayName": "Tenant Id.",
+        "description": "Azure tenant id"
+      }
+    },
+    "objectId": {
+      "type": "string",
+      "metadata": {
+        "displayName": "Object id.",
+        "description": "Service principal object id."
+      }
+    },
+    "resourceTags": {
+      "type": "object",
+      "metadata": {
+        "displayName": "Key Vault Tags",
+        "description": "An object/dictionary that represents the tags to be assigned to the keyvault."
+      }
+
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-10-01",
+      "location": "[parameters('location')]",
+      "name": "[parameters('keyVaultName')]",
+      "properties": {
+        "tenantId": "[parameters('tenantId')]",
+        "sku": {
+          "family": "A",
+          "name": "[parameters('skuName')]"
+        },
+        "accessPolicies": [
+          {
+            "tenantId": "[parameters('tenantId')]",
+            "objectId": "[parameters('objectId')]",
+            "permissions": {
+              "secrets": [
+                "Get",
+                "List",
+                "Set",
+                "Delete",
+                "Recover",
+                "Backup",
+                "Restore"
+              ]
+            }
+          }
+        ],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "enableSoftDelete": false
+      },
+      "tags": "[parameters('resourceTags')]",
+      "type": "Microsoft.KeyVault/vaults"
+    }
+  ]
+}

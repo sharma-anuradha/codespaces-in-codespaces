@@ -17,6 +17,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -43,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="computeProvider">Target compute provider.</param>
         /// <param name="storageProvider">Target storatge provider.</param>
+        /// <param name="keyVaultProvider">The keyvault provider.</param>
         /// <param name="controlPlaneAzureResourceAccessor">Target control plane resource accessor.</param>
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
@@ -56,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
+            IKeyVaultProvider keyVaultProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             IControlPlaneInfo controlPlaneInfo,
             ICapacityManager capacityManager,
@@ -67,6 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
+            KeyVaultProvider = keyVaultProvider;
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             ControlPlaneInfo = controlPlaneInfo;
             CapacityManager = capacityManager;
@@ -86,6 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IComputeProvider ComputeProvider { get; }
 
         private IStorageProvider StorageProvider { get; }
+
+        private IKeyVaultProvider KeyVaultProvider { get; }
 
         private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
 
@@ -214,6 +221,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     throw new NotSupportedException($"Pool storage details type is not selected - {input.ResourcePoolDetails.GetType()}");
                 }
             }
+            else if (resource.Value.Type == ResourceType.KeyVault)
+            {
+                if (input.ResourcePoolDetails is ResourcePoolKeyVaultDetails keyVaultDetails)
+                {
+                    // Set up the selection criteria and select a subscription/location.
+                    var criteria = new List<AzureResourceCriterion>
+                    {
+                        new AzureResourceCriterion { ServiceType = ServiceType.KeyVault, Quota = ServiceType.KeyVault.ToString(), Required = 1 },
+                    };
+
+                    var resourceLocation = await SelectAzureResourceLocation(
+                        criteria, keyVaultDetails.Location, logger.NewChildLogger());
+
+                    result = new KeyVaultProviderCreateInput
+                    {
+                        ResourceId = resource.Value.Id,
+                        AzureLocation = keyVaultDetails.Location,
+                        AzureSkuName = keyVaultDetails.SkuName,
+                        AzureSubscriptionId = resourceLocation.Subscription.SubscriptionId,
+                        AzureTenantId = resourceLocation.Subscription.ServicePrincipal.TenantId,
+                        AzureObjectId = resourceLocation.Subscription.ServicePrincipal.ClientId,
+                        AzureResourceGroup = resourceLocation.ResourceGroup,
+                        ResourceTags = resourceTags,
+                    };
+                }
+                else
+                {
+                    throw new NotSupportedException($"Pool keyvault details type is not selected - {input.ResourcePoolDetails.GetType()}");
+                }
+            }
             else
             {
                 throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");
@@ -235,6 +272,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             else if (resource.Value.Type == ResourceType.StorageFileShare)
             {
                 result = await StorageProvider.CreateAsync((FileShareProviderCreateInput)input.OperationInput, logger.NewChildLogger());
+            }
+            else if (resource.Value.Type == ResourceType.KeyVault)
+            {
+                result = await KeyVaultProvider.CreateAsync((KeyVaultProviderCreateInput)input.OperationInput, logger.NewChildLogger());
             }
             else
             {

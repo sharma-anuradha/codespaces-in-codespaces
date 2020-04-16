@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -57,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddBaseValue(nameof(input.AzureSkuName), input.AzureSkuName)
                         .FluentAddBaseValue(nameof(input.AzureVirtualMachineImage), input.AzureVirtualMachineImage);
 
-                    (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync(
+                    (azureResourceInfo, resultState, resultContinuationToken) = await DeploymentUtils.ExecuteOperationAsync(
                         input,
                         childLogger,
                         deploymentManager.BeginCreateComputeAsync,
@@ -145,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name)
                         .FluentAddBaseValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString());
 
-                    (azureResourceInfo, resultState, resultContinuationToken) = await ExecuteAsync<VirtualMachineProviderDeleteInput>(
+                    (azureResourceInfo, resultState, resultContinuationToken) = await DeploymentUtils.ExecuteOperationAsync(
                         input,
                         childLogger,
                         deploymentManager.BeginDeleteComputeAsync,
@@ -214,37 +215,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     return Task.FromResult(result);
                 },
                 swallowException: true);
-        }
-
-        private async Task<(AzureResourceInfo, OperationState, string)> ExecuteAsync<T>(
-            T input,
-            IDiagnosticsLogger logger,
-            Func<T, IDiagnosticsLogger, Task<(OperationState, NextStageInput)>> beginOperation,
-            Func<NextStageInput, IDiagnosticsLogger, Task<(OperationState, NextStageInput)>> checkOperationStatus)
-            where T : ContinuationInput
-        {
-            OperationState resultState;
-            NextStageInput nextStageInput;
-            string resultContinuationToken = default;
-            var continuationToken = input.ContinuationToken;
-
-            if (string.IsNullOrEmpty(continuationToken))
-            {
-                (resultState, nextStageInput) = await beginOperation(input, logger);
-            }
-            else
-            {
-                // Check status of deployment request
-                nextStageInput = continuationToken.ToNextStageInput();
-                (resultState, nextStageInput) = await checkOperationStatus(nextStageInput, logger);
-            }
-
-            if (resultState == OperationState.InProgress)
-            {
-                resultContinuationToken = nextStageInput.ToJson();
-            }
-
-            return (nextStageInput?.AzureResourceInfo, resultState, resultContinuationToken);
         }
 
         private IDeploymentManager SelectDeploymentManager(ComputeOS computeOS)

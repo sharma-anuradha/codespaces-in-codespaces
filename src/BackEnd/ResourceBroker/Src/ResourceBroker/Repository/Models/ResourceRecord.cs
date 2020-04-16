@@ -293,9 +293,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
 
             if (newState == OperationState.Succeeded)
             {
-                if (Type == ResourceType.StorageFileShare)
+                if (Type == ResourceType.StorageFileShare || Type == ResourceType.KeyVault)
                 {
-                    // Storage resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
+                    // Storage and Keyvault resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
                     IsReady = true;
                     Ready = time;
                 }
