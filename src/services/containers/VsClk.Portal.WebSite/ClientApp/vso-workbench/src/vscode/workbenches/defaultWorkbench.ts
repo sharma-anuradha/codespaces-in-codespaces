@@ -17,7 +17,7 @@ import { applicationLinksProviderFactory } from '../providers/applicationLinksPr
 
 export const getExtensions = (): string[] => {
     // TODO: move the extensions into the platform info payload instead
-    return isHostedOnGithub()
+    return (!isHostedOnGithub())
         ? [...DEFAULT_EXTENSIONS]
         : [...DEFAULT_EXTENSIONS, ...HOSTED_IN_GITHUB_EXTENSIONS];
 };

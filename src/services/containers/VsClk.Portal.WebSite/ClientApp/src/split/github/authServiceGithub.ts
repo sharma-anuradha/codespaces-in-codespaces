@@ -8,6 +8,7 @@ import {
 
 import { PostMessageRepoInfoRetriever, IRepoInfo } from './postMessageRepoInfoRetriever';
 import { parseCascadeToken } from './parseCascadeToken';
+import { getGitHubApiEndpoint } from '../../utils/getGitHubApiEndpoint';
 
 const vsoCascadeTokenKeychainKeyPrefix = 'vso-cascade-token';
 
@@ -92,8 +93,9 @@ export class AuthServiceGithub {
 
         const { ownerUsername, workspaceId } = this.repoInfo;
 
+        const url = new URL(`/workspaces/${ownerUsername}/${workspaceId}/token`, getGitHubApiEndpoint());
         const cascadeToken = await fetch(
-            `https://api.github.com/workspaces/${ownerUsername}/${workspaceId}/token`,
+            url.toString(),
             {
                 method: 'POST',
                 headers: {

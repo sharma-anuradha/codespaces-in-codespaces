@@ -1,4 +1,5 @@
 import { evaluateFeatureFlag, azureDevOpsOAuth } from './featureSet';
+import { getGitHubApiEndpoint } from "./getGitHubApiEndpoint";
 
 export enum SupportedGitService {
     Unknown,
@@ -174,7 +175,7 @@ export function getQueryableUrl(maybeUrl: string): string | undefined {
     switch (service) {
         case SupportedGitService.GitHub: {
             const repositoryName = getRepositoryName(url);
-            const queryableUrl = new URL(`/repos/${repositoryName}`, 'https://api.github.com');
+            const queryableUrl = new URL(`/repos/${repositoryName}`, getGitHubApiEndpoint());
             return queryableUrl.toString();
         }
 

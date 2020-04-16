@@ -12,7 +12,7 @@ const getLocalstorageKey = () => {
     const envId = getCurrentEnvironmentId();
 
     return `vso-github-repo-info-${envId}`;
-}
+};
 
 const isValidInfo = (info: IRepoInfo) => {
     return info.ownerUsername && info.workspaceId && info.repositoryId;
@@ -24,23 +24,23 @@ export class PostMessageRepoInfoRetriever {
     constructor() {
         const envId = location.pathname.split('/')[2];
         if (!envId) {
-            throw new Error('No environmentId found.'); 
+            throw new Error('No environmentId found.');
         }
 
         window.addEventListener('message', this.receiveMessage, false);
     }
 
     public static getStoredInfo() {
-        const storedInfoString = localStorage.getItem(getLocalstorageKey());
-        if (storedInfoString) {
-            try {
+        try {
+            const storedInfoString = localStorage.getItem(getLocalstorageKey());
+            if (storedInfoString) {
                 const storedInfo = JSON.parse(storedInfoString) as IRepoInfo;
 
                 if (isValidInfo(storedInfo)) {
                     return storedInfo;
                 }
-            } catch {}
-        }
+            }
+        } catch {}
     }
 
     public getRepoInfo = async (id = createUniqueId()): Promise<IRepoInfo> => {
