@@ -136,6 +136,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var originalState = cloudEnvironment.State;
                     var newState = originalState;
 
+                    logger.FluentAddBaseValue("CloudEnvironmentOldState", originalState)
+                        .FluentAddValue("CloudEnvironmentOldStateUpdated", cloudEnvironment.LastStateUpdated)
+                        .FluentAddValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
+                        .FluentAddValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason);
+
                     // TODO: Remove once Anu's update tracking is in.
                     // Check for an unavailable environment
                     switch (originalState)
@@ -145,11 +150,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                             // Timeout if environment has stayed in provisioning state for more than an hour
                             var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
+
+                            logger.FluentAddBaseValue("CloudEnvironmentTimeInProvisioningStateInMin", timeInProvisioningStateInMin);
+
                             if (timeInProvisioningStateInMin > 60)
                             {
                                 newState = CloudEnvironmentState.Failed;
 
-                                childLogger.LogErrorWithDetail($"{LogBaseName}_get_environment_state_refresh_error", $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.");
+                                childLogger.NewChildLogger()
+                                    .LogErrorWithDetail($"{LogBaseName}_get_environment_state_refresh_error", $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.");
                             }
 
                             break;
@@ -159,6 +168,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         case CloudEnvironmentState.Awaiting:
                             var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
                             var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
+
+                            logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
+                                .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
+                                .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
+
                             if (workspace == null)
                             {
                                 // In this case the workspace is deleted. There is no way of getting to an environment without it.
@@ -171,6 +185,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                             break;
                     }
+
+                    logger.FluentAddBaseValue("CloudEnvironmentNewState", newState);
 
                     // Update the new state before returning.
                     if (originalState != newState)

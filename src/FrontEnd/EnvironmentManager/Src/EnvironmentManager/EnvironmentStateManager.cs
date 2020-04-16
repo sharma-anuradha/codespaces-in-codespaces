@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public Task SetEnvironmentStateAsync(
             CloudEnvironment cloudEnvironment,
-            CloudEnvironmentState state,
+            CloudEnvironmentState newState,
             string trigger,
             string reason,
             IDiagnosticsLogger logger)
@@ -51,8 +51,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var oldState = cloudEnvironment.State;
                     var oldStateUpdated = cloudEnvironment.LastStateUpdated;
 
-                    logger.FluentAddBaseValue("OldState", oldState)
-                        .FluentAddBaseValue("OldStateUpdated", oldStateUpdated);
+                    logger.FluentAddBaseValue("CloudEnvironmentOldState", oldState)
+                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdated", oldStateUpdated)
+                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
+                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason)
+                        .FluentAddBaseValue("CloudEnvironmentNewState", newState)
+                        .FluentAddBaseValue("CloudEnvironmentNewUpdatedTrigger", trigger)
+                        .FluentAddBaseValue("CloudEnvironmentNewUpdatedReason", reason);
 
                     VsoPlanInfo plan;
                     if (cloudEnvironment.PlanId == default)
@@ -86,14 +91,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var stateChange = new BillingStateChange
                     {
                         OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
-                        NewValue = state.ToString(),
+                        NewValue = newState.ToString(),
                     };
 
                     await BillingEventManager.CreateEventAsync(
                         plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
                     var stateSnapshot = new CloudEnvironmentStateSnapshot(cloudEnvironment);
-                    cloudEnvironment.State = state;
+                    cloudEnvironment.State = newState;
                     cloudEnvironment.LastStateUpdateTrigger = trigger;
                     cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
 
