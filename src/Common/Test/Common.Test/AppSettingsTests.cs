@@ -81,7 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     if (!sku.SkuName.Equals("premiumWindows") &&
                         !sku.SkuName.Equals("internalWindows") &&
                         !sku.SkuName.Equals("internal64Server") &&
-                        !sku.SkuName.Equals("internal32Server"))
+                        !sku.SkuName.Equals("internal32Server") &&
+                        !sku.SkuName.Equals("internalDailyWindows"))
                     {
                         Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                         Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
