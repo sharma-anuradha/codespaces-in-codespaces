@@ -8,12 +8,11 @@ param(
     [string]$InternalClass = 'Windows'
 )
 $Content = Get-Content $AppSettingsFile
-$Pattern = if ($InternalImage) { "NexusInternal$($InternalClass)Image" } else { 'NexusWindowsImage' }
+$Pattern = if ($InternalImage) { "NexusInternal(Daily)?$($InternalClass)Image" } else { 'NexusWindowsImage' }
 Write-Host "Updating $Pattern in $AppSettingsFile"
 for ($Index = 0; $Index -lt $Content.Count;) {
     if ($Content[$Index++] -match """imageName"": ""$Pattern"",") {
         $Content[$Index] = $Content[$Index] -replace '(\d{4}\.){2}\d{3}', $ImageVersion
-        break
     }
 }
 # Strip the final newline that Get-Content adds before writing to file
