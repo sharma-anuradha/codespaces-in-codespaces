@@ -4,7 +4,6 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -24,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="deleteResourceGroupDeploymentsTask">Task to delete resource group deployments.</param>
         /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
         /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
+        /// <param name="watchOrphanedPoolTask">Target watch orphaned pool job.</param>
         /// <param name="watchPoolStateTask">Target watch pool state task.</param>
         /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
@@ -38,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDeleteResourceGroupDeploymentsTask deleteResourceGroupDeploymentsTask,
             IWatchPoolSizeTask watchPoolSizeJob,
             IWatchPoolVersionTask watchPoolVersionTask,
+            IWatchOrphanedPoolTask watchOrphanedPoolTask,
             IWatchPoolStateTask watchPoolStateTask,
             IWatchFailedResourcesTask watchFailedResourcesTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
@@ -52,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             DeleteResourceGroupDeploymentsTask = deleteResourceGroupDeploymentsTask;
             WatchPoolSizeJob = watchPoolSizeJob;
             WatchPoolVersionTask = watchPoolVersionTask;
+            WatchOrphanedPoolTask = watchOrphanedPoolTask;
             WatchPoolStateTask = watchPoolStateTask;
             WatchFailedResourcesTask = watchFailedResourcesTask;
             WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
@@ -70,6 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IWatchPoolSizeTask WatchPoolSizeJob { get; }
 
         private IWatchPoolVersionTask WatchPoolVersionTask { get; }
+
+        private IWatchOrphanedPoolTask WatchOrphanedPoolTask { get; }
 
         private IWatchPoolStateTask WatchPoolStateTask { get; }
 
@@ -198,6 +202,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedComputeImagesTask}_run",
                 (childLogger) => WatchOrphanedComputeImagesTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                TimeSpan.FromHours(1));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Delete orphaned pools.
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchOrphanedPoolTask}_run",
+                (childLogger) => WatchOrphanedPoolTask.RunAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromHours(1));
         }
     }

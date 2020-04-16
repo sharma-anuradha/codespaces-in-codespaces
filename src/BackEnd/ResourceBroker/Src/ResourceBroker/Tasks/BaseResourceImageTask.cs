@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         artifacts,
                         (artifactFamilyType, itemLogger) => CoreRunArtifactAsync(artifactFamilyType, itemLogger),
                         childLogger,
-                        (artifactFamilyType, itemLogger) => ObtainLease($"{LeaseBaseName}-{artifactFamilyType}", taskInterval, itemLogger));
+                        (artifactFamilyType, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{artifactFamilyType}", taskInterval, itemLogger));
 
                     return !Disposed;
                 },
@@ -120,9 +120,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         protected abstract Task ProcessArtifactAsync(IDiagnosticsLogger logger);
 
-        private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            return await ClaimedDistributedLease.Obtain(
+            return ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
 

@@ -12,7 +12,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -61,6 +60,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             Requires.NotNull(options, nameof(options));
             options.PartitioningStrategy = PartitioningStrategy.IdOnly;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetPoolCodesForUnassignedAsync(IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT DISTINCT VALUE c.poolReference.code 
+                FROM c
+                WHERE c.isAssigned = @isAssigned
+                    AND c.isDeleted = @isDeleted",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@isAssigned", Value = false },
+                    new SqlParameter { Name = "@isDeleted", Value = false },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<string>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
         }
 
         /// <inheritdoc/>

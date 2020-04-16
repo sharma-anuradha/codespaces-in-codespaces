@@ -524,7 +524,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)
         {
-            var resources = await ResourceScalingStore.RetrieveDefinitions();
+            var resources = await ResourceScalingStore.RetrieveDefinitionsAsync();
 
             var resourceSku = resources
                 .Where(x => x.Details.Location == location

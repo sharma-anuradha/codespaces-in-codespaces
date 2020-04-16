@@ -50,6 +50,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchPoolStateTask = "watch_pool_state_task";
 
         /// <summary>
+        /// Watch orphan pool task.
+        /// </summary>
+        public const string WatchOrphanedPoolTask = "watch_orphaned_pool_task";
+
+        /// <summary>
         /// Watch pool state task.
         /// </summary>
         public const string WatchPoolSettingsTask = "watch_pool_settings_task";

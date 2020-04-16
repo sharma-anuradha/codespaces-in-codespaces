@@ -11,7 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
     /// <summary>
-    /// Store which provides access to the Resource Pool Deginitions.
+    /// Store which provides access to the Resource Pool Definitions.
     /// </summary>
     public class ResourcePoolDefinitionStore : IResourcePoolDefinitionStore, IResourceScalingHandler
     {
@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<IList<ResourcePool>> RetrieveDefinitions()
+        public Task<IList<ResourcePool>> RetrieveDefinitionsAsync()
         {
             // If we don't have a result, wait a short time to see if it comes
             if (ResourceScaleLevels == null)

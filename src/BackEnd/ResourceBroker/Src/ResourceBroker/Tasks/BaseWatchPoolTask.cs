@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         resourceUnits,
                         (resourceUnit, itemLogger) => CoreRunPoolAsync(resourceUnit, claimSpan, itemLogger),
                         childLogger,
-                        (resourceUnit, itemLogger) => ObtainLease($"{LeaseBaseName}-{resourceUnit.Details.GetPoolDefinition()}", claimSpan, itemLogger));
+                        (resourceUnit, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{resourceUnit.Details.GetPoolDefinition()}", claimSpan, itemLogger));
 
                     return !Disposed;
                 },
@@ -138,12 +138,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IEnumerable<ResourcePool>> RetrieveResourceSkus()
         {
-            return (await ResourceScalingStore.RetrieveDefinitions()).Shuffle();
+            return (await ResourceScalingStore.RetrieveDefinitionsAsync()).Shuffle();
         }
 
-        private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            return await ClaimedDistributedLease.Obtain(
+            return ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }

@@ -37,6 +37,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             = new ConcurrentDictionary<string, ResourceRecord>();
 
         /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetPoolCodesForUnassignedAsync(IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.IsAssigned == false && x.IsDeleted == false)
+                .Select(x => x.Id);
+        }
+
+        /// <inheritdoc/>
         public async Task<ResourceRecord> GetPoolReadyUnassignedAsync(string poolCode, IDiagnosticsLogger logger)
         {
             await Task.Delay(Random.Next(100, 1000));
@@ -114,6 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 .Count();
         }
 
+        /// <inheritdoc/>
         public async Task<int> GetPoolUnassignedNotVersionCountAsync(string poolCode, string poolVersionCode, IDiagnosticsLogger logger)
         {
             await Task.Delay(Random.Next(100, 1000));
@@ -146,6 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 .Count();
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<string>> GetPoolUnassignedAsync(string poolCode, int count, IDiagnosticsLogger logger)
         {
             await Task.Delay(Random.Next(100, 1000));

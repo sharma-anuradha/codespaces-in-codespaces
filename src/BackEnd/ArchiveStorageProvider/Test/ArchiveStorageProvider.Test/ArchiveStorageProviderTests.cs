@@ -4,7 +4,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Xunit;

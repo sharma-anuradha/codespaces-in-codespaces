@@ -92,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
             services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
+            services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();
             services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
