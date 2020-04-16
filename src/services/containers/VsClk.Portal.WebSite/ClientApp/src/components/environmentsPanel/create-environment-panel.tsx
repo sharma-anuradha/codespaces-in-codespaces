@@ -299,7 +299,6 @@ const autoShutdownOptions: IDropdownOption[] = [
     { key: 5, text: '5 Minutes' },
     { key: 30, text: '30 Minutes' },
     { key: 120, text: '2 Hours' },
-    { key: 0, text: 'Never' },
 ];
 
 const openExternalUrl = (url: string) => {

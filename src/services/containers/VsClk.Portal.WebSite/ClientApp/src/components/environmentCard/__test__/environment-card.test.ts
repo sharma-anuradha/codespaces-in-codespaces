@@ -10,7 +10,7 @@ describe('environment-card', () => {
     describe('buildEnvironmentSettingsUpdateRequest', () => {
         const environment = <ILocalEnvironment>{
             skuName: 'skuName',
-            autoShutdownDelayMinutes: 0,
+            autoShutdownDelayMinutes: 5,
         };
 
         it('returns null if no settings are changed', async () => {
@@ -67,14 +67,14 @@ describe('environment-card', () => {
 
         const environment = <ILocalEnvironment>{
             skuName: sku1.name,
-            autoShutdownDelayMinutes: 0,
+            autoShutdownDelayMinutes: 5,
         };
 
         it('does not add current settings if present', async () => {
             expect(
                 getDropdownOptionForSettingsUpdates(
                     {
-                        allowedAutoShutdownDelayMinutes: [0, 1],
+                        allowedAutoShutdownDelayMinutes: [5, 30],
                         allowedSkus: [sku1, sku2],
                     },
                     environment,
@@ -93,12 +93,12 @@ describe('environment-card', () => {
                 ],
                 autoShutdownDelayEditOptions: [
                     {
-                        key: 0,
-                        text: 'Never',
+                        key: 5,
+                        text: 'After 5 minutes',
                     },
                     {
-                        key: 1,
-                        text: 'After 1 minutes',
+                        key: 30,
+                        text: 'After 30 minutes',
                     },
                 ],
             });
@@ -108,7 +108,7 @@ describe('environment-card', () => {
             expect(
                 getDropdownOptionForSettingsUpdates(
                     {
-                        allowedAutoShutdownDelayMinutes: [1],
+                        allowedAutoShutdownDelayMinutes: [30],
                         allowedSkus: [sku2],
                     },
                     environment,
@@ -127,12 +127,12 @@ describe('environment-card', () => {
                 ],
                 autoShutdownDelayEditOptions: [
                     {
-                        key: 0,
-                        text: 'Never',
+                        key: 5,
+                        text: 'After 5 minutes',
                     },
                     {
-                        key: 1,
-                        text: 'After 1 minutes',
+                        key: 30,
+                        text: 'After 30 minutes',
                     },
                 ],
             });
