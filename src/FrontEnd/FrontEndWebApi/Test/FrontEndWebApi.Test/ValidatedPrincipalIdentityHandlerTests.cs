@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -45,10 +46,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             var httpContext = MockHttpContext.Create();
 
+            var currentUser = new MockCurrentUserProvider();
             var handler = new ValidatedPrincipalIdentityHandler(
                 MockIdentityMapRepository(),
                 MockProfileRepository(),
-                MockCurrentUserProvider(),
+                currentUser,
                 MockHttpContextAccessor(httpContext),
                 MockWebHostEnvironment(),
                 new DefaultLoggerFactory(),
@@ -67,10 +69,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var principal = new ClaimsPrincipal();
             principal.AddIdentity(testIdentity);
 
-            await handler.ValidatedPrincipalAsync(principal, new JwtSecurityToken(DummyToken));
+            var newPrincipal = await handler.ValidatedPrincipalAsync(principal, new JwtSecurityToken(DummyToken));
 
-            Assert.Equal(testCase.ExpectedHttpContextPlan, httpContext.GetPlan());
-            Assert.Equal(testCase.ExpectedHttpContextScopes, httpContext.GetScopes());
+            Assert.IsType<VsoClaimsIdentity>(newPrincipal.Identity);
+            var vsoIdentity = (VsoClaimsIdentity)newPrincipal.Identity;
+            Assert.Equal(testCase.ExpectedHttpContextPlan, vsoIdentity.AuthorizedPlan);
+            Assert.Equal(testCase.ExpectedHttpContextScopes, vsoIdentity.Scopes);
         }
 
         private static TestCase MockVsClaims()
@@ -215,13 +219,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return mock.Object;
         }
 
-        private static ICurrentUserProvider MockCurrentUserProvider()
-        {
-            var mock = new Mock<ICurrentUserProvider>();
-
-            return mock.Object;
-        }
-
         private static IWebHostEnvironment MockWebHostEnvironment()
         {
             var mock = new Mock<IWebHostEnvironment>();
@@ -239,6 +236,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mock.Object.HttpContext = context;
 
             return mock.Object;
+        }
+
+        public class MockCurrentUserProvider : ICurrentUserProvider
+        {
+            public string BearerToken { get; set; }
+
+            public string CanonicalUserId { get; set; }
+
+            public UserIdSet CurrentUserIdSet { get; set; }
+
+            public string IdMapKey { get; set; }
+
+            public Profile Profile { get; set; }
+
+            public ClaimsPrincipal Principal { get; set; }
+
+            public VsoClaimsIdentity Identity
+            {
+                get { return (VsoClaimsIdentity)Principal.Identity; }
+            }
+
+            public void SetBearerToken(string token)
+            {
+                BearerToken = token;
+            }
+
+            public void SetPrincipal(ClaimsPrincipal principal)
+            {
+                Principal = principal;
+            }
+
+            public void SetProfile(Profile profile)
+            {
+                Profile = profile;
+            }
+
+            public void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId)
+            {
+                CurrentUserIdSet = new UserIdSet(canonicalUserId, profileId, profileProviderId);
+            }
         }
     }
 }

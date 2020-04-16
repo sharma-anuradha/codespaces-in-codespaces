@@ -31,11 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var planInfo = VsoPlanInfo.TryParse(planId);
 
             // with no Sku info.
-            var actionResult = await skuUtils.IsVisible(null, planInfo, userProvider.GetProfile());
+            var actionResult = await skuUtils.IsVisible(null, planInfo, userProvider.Profile);
             Assert.False(actionResult);
 
             // with no plan info.
-            actionResult = await skuUtils.IsVisible(sku, null, userProvider.GetProfile());
+            actionResult = await skuUtils.IsVisible(sku, null, userProvider.Profile);
             Assert.False(actionResult);
 
             // with no user profile info. its always true for any non-windows skus as of now.
@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.True(actionResult);
 
             // with all the valid inputs.
-            actionResult = await skuUtils.IsVisible(sku, planInfo, userProvider.GetProfile());
+            actionResult = await skuUtils.IsVisible(sku, planInfo, userProvider.Profile);
             Assert.True(actionResult);
         }
     }

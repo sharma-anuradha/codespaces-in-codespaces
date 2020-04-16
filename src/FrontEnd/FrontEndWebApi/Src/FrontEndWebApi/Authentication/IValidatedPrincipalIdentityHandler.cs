@@ -22,6 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <param name="token">The JWT security token (JWT only, null for Cookie).</param>
         /// <returns>An async task.</returns>
         /// <exception cref="IdentityValidationException">The principal identity was invalid or could not be handled.</exception>
-        Task ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken token);
+        Task<ClaimsPrincipal> ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken token);
     }
 }

@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            var authToken = CurrentUserProvider?.GetBearerToken();
+            var authToken = CurrentUserProvider?.BearerToken;
             if (!string.IsNullOrEmpty(authToken))
             {
                 request.Headers.Add(AuthHeaderName, AuthTokenPrefix + authToken);

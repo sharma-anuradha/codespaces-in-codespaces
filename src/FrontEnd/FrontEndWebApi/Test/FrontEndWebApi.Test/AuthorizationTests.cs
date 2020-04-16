@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Xunit;
 using Scopes = Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts.PlanAccessTokenScopes;
 
@@ -48,21 +51,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
 
             var mockHttpContext = new DefaultHttpContext();
-            mockHttpContext.SetScopes(test.Scopes);
-            mockHttpContext.SetEnvironments(test.Environments);
+            
+            var claimScopes = test.Scopes;
+            var claimEnvironments = test.Environments;
+            var claimPlanId = default(string);
             if (test.IsMatchingPlan == true)
             {
-                mockHttpContext.SetPlan(planId);
+                claimPlanId = planId;
             }
             else if (test.IsMatchingPlan == false)
             {
-                mockHttpContext.SetPlan("not-" + planId);
+                claimPlanId = "not-" + planId;
             }
+            var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
-            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider();
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
             if (test.IsOwner)
             {
-                mockEnv.OwnerId = mockCurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                mockEnv.OwnerId = mockCurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             }
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
@@ -137,21 +143,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
 
             var mockHttpContext = new DefaultHttpContext();
-            mockHttpContext.SetScopes(test.Scopes);
-            mockHttpContext.SetEnvironments(test.Environments);
+
+            var claimScopes = test.Scopes;
+            var claimEnvironments = test.Environments;
+            var claimPlanId = default(string);
             if (test.IsMatchingPlan == true)
             {
-                mockHttpContext.SetPlan(planId);
+                claimPlanId = planId;
             }
             else if (test.IsMatchingPlan == false)
             {
-                mockHttpContext.SetPlan("not-" + planId);
+                claimPlanId = "not-" + planId;
             }
+            var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
-            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider();
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
             if (test.IsOwner)
             {
-                mockEnv.OwnerId = mockCurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                mockEnv.OwnerId = mockCurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             }
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
@@ -252,32 +261,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockHttpContext = MockUtil.MockHttpContextFromUri(uri);
             var mockServiceUriBuilder = MockUtil.MockServiceUriBuilder(uri.ToString());
 
-            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider();
             var plan = await MockUtil.GeneratePlan(userId: test.IsOwner ?
-                mockCurrentUserProvider.GetCurrentUserIdSet().PreferredUserId : "other-user");
+                MockUtil.MockCurrentUserProvider().CurrentUserIdSet?.PreferredUserId : "other-user");
             if (!ownedPlan)
             {
                 Assert.False(test.IsOwner);
                 plan.UserId = null; // Create a "shared" plan that doesn't have a user ID.
             }
 
-            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan));
-
-            mockHttpContext.SetScopes(test.Scopes);
-            mockHttpContext.SetEnvironments(test.Environments);
+            var claimScopes = test.Scopes;
+            var claimEnvironments = test.Environments;
+            var claimPlanId = default(string);
             if (test.IsMatchingPlan == true)
             {
-                mockHttpContext.SetPlan(plan.Plan.ResourceId);
+                claimPlanId = plan.Plan.ResourceId;
             }
             else if (test.IsMatchingPlan == false)
             {
-                mockHttpContext.SetPlan("not-" + plan.Plan.ResourceId);
+                claimPlanId = "not-" + plan.Plan.ResourceId;
             }
+            var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
+
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
+
+            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan));
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
                 httpContext: mockHttpContext,
                 planManager: mockPlanManager,
-                serviceUriBuilder: mockServiceUriBuilder);
+                serviceUriBuilder: mockServiceUriBuilder,
+                currentUserProvider: mockCurrentUserProvider);
 
             var result = await environmentController.CreateAsync(body, logger);
             Assert.IsType(test.ExpectedResultType, result);
@@ -304,21 +317,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
 
             var mockHttpContext = new DefaultHttpContext();
-            mockHttpContext.SetScopes(test.Scopes);
-            mockHttpContext.SetEnvironments(test.Environments);
+
+            var claimScopes = test.Scopes;
+            var claimEnvironments = test.Environments;
+            var claimPlanId = default(string);
             if (test.IsMatchingPlan == true)
             {
-                mockHttpContext.SetPlan(planId);
+                claimPlanId = planId;
             }
             else if (test.IsMatchingPlan == false)
             {
-                mockHttpContext.SetPlan("not-" + planId);
+                claimPlanId = "not-" + planId;
             }
+            var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
-            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider();
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
             if (test.IsOwner)
             {
-                mockEnv.OwnerId = mockCurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+                mockEnv.OwnerId = mockCurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             }
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(

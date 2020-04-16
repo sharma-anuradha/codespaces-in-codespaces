@@ -58,13 +58,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             await Task.CompletedTask;
 
-            var profile = CurrentUserProvider.GetProfile();
+            var profile = CurrentUserProvider.Profile;
 
             // Only reveal the idMapKey for diagnostics purposes
             var idMapKey = default(string);
             if (hostingEnvironment.IsDevelopment())
             {
-                idMapKey = CurrentUserProvider.GetIdMapKey();
+                idMapKey = CurrentUserProvider.IdMapKey;
             }
 
             var avatarUri = profile?.AvatarUri;

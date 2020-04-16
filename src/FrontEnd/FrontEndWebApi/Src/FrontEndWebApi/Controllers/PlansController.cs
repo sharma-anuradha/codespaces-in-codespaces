@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromRoute]string resourceName,
             [FromServices]IDiagnosticsLogger logger)
         {
-            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
+            var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
             var planId = new VsoPlanInfo
             {
                 Subscription = subscriptionId,
@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public async Task<IActionResult> ListByOwnerAsync(
             [FromServices]IDiagnosticsLogger logger)
         {
-            var currentUserIdSet = CurrentUserProvider.GetCurrentUserIdSet();
+            var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
             var plans = await PlanManager.ListAsync(
                 currentUserIdSet, subscriptionId: null, resourceGroup: null, name: null, logger);
 
@@ -114,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 .Where((a) => a != null).ToArray();
 
             // If the global limit of plans is exceeded, the client should block new users from creating plans
-            var profile = CurrentUserProvider.GetProfile();
+            var profile = CurrentUserProvider.Profile;
             var isUserAllowedToCreatePlans =
                 result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(profile, logger);
             if (isUserAllowedToCreatePlans)

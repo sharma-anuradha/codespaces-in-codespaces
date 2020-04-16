@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
@@ -13,6 +12,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     public interface ICurrentUserProvider
     {
         /// <summary>
+        /// Gets the current user's bearer token.
+        /// </summary>
+        /// <returns>The token value.</returns>
+        /// <remarks>
+        /// TODO: token for which API/Audience.
+        /// </remarks>
+        string BearerToken { get; }
+
+        /// <summary>
+        /// Gets the current identity.
+        /// </summary>
+        /// <returns>Vso Claims Identity.</returns>
+        VsoClaimsIdentity Identity { get; }
+
+        /// <summary>
+        /// Gets the current users's profile.
+        /// </summary>
+        /// <returns>The <see cref="UserProfile.Profile"/> instance.</returns>
+        Profile Profile { get; }
+
+        /// <summary>
+        /// Gets the current user canonical user id.
+        /// </summary>
+        /// <returns>The profile provider id.</returns>
+        string CanonicalUserId { get; }
+
+        /// <summary>
+        /// Gets the current user's user id set.
+        /// </summary>
+        /// <returns>A new <see cref="UserIdSet"/> instance.</returns>
+        UserIdSet CurrentUserIdSet { get; }
+
+        /// <summary>
+        /// Gets the current user's id map key.
+        /// </summary>
+        /// <returns>The id map key, of the form "{email}:{tenantId}".</returns>
+        string IdMapKey { get; }
+
+        /// <summary>
         /// Sets the current user's bearer token.
         /// </summary>
         /// <remarks>
@@ -22,57 +60,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         void SetBearerToken(string token);
 
         /// <summary>
-        /// Gets the current user's bearer token.
-        /// </summary>
-        /// <returns>The token value.</returns>
-        /// <remarks>
-        /// TODO: token for which API/Audience.
-        /// </remarks>
-        string GetBearerToken();
-
-        /// <summary>
-        /// Gets the current users's profile.
-        /// </summary>
-        /// <returns>The <see cref="Profile"/> instance.</returns>
-        Profile GetProfile();
-
-        /// <summary>
         /// Sets the current user's profile.
         /// </summary>
-        /// <param name="profile">The <see cref="Profile"/> instance.</param>
+        /// <param name="profile">The <see cref="UserProfile.Profile"/> instance.</param>
         void SetProfile(Profile profile);
-
-        /// <summary>
-        /// Gets the current user's profile id.
-        /// </summary>
-        /// <returns>The profile id.</returns>
-        [Obsolete("Use GetCurrentUserIdSet instead.", true)]
-        string GetProfileId();
-
-        /// <summary>
-        /// Gets the current user profile provider id.
-        /// </summary>
-        /// <returns>The profile provider id.</returns>
-        [Obsolete("Use GetCurrentUserIdSet instead.", true)]
-        string GetProfileProviderId();
-
-        /// <summary>
-        /// Gets the current user canonical user id.
-        /// </summary>
-        /// <returns>The profile provider id.</returns>
-        string GetCanonicalUserId();
-
-        /// <summary>
-        /// Gets the current user's user id set.
-        /// </summary>
-        /// <returns>A new <see cref="UserIdSet"/> instance.</returns>
-        UserIdSet GetCurrentUserIdSet();
-
-        /// <summary>
-        /// Gets the current user's id map key.
-        /// </summary>
-        /// <returns>The id map key, of the form "{email}:{tenantId}".</returns>
-        string GetIdMapKey();
 
         /// <summary>
         /// Set the user  id values.

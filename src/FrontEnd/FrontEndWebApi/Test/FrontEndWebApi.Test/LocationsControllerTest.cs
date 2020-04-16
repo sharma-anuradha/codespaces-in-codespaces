@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
@@ -16,6 +17,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
 using Xunit;
 
@@ -96,10 +98,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 });
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
-            var currentUserProvider = MockCurrentUserProvider(new Dictionary<string, object>
-            {
-                { ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram, true },
-            });
+            var claimPlanId = "/subscriptions/8def34ce-053c-43ba-8501-37599fb7f010/resourceGroups/cloudEnvironments/providers/Microsoft.VSOnline/plans/samanoha-dev-stamp-plan";
+            var mockIdentity = new VsoClaimsIdentity(claimPlanId, null, null, new ClaimsIdentity());
+
+            var currentUserProvider = MockCurrentUserProvider(
+                new Dictionary<string, object>
+                {
+                    { ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram, true },
+                },
+                mockIdentity);
 
             var skuUtils = MockUtil.MockSkuUtils(true);
             var planManager = MockUtil.MockPlanManager(() => MockUtil.GeneratePlan(location: AzureLocation.WestUs));
@@ -142,7 +149,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;
             httpContext.SetLogger(logger);
-            httpContext.SetPlan("/subscriptions/8def34ce-053c-43ba-8501-37599fb7f010/resourceGroups/cloudEnvironments/providers/Microsoft.VSOnline/plans/samanoha-dev-stamp-plan");
 
             controller.ControllerContext = new ControllerContext
             {
@@ -188,17 +194,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         }
 
-        private ICurrentUserProvider MockCurrentUserProvider(Dictionary<string, object> programs = null)
+        private ICurrentUserProvider MockCurrentUserProvider(
+            Dictionary<string, object> programs = null,
+            VsoClaimsIdentity identity = null)
         {
             var moq = new Mock<ICurrentUserProvider>();
-            moq
-                .Setup(obj => obj.GetCurrentUserIdSet())
+            moq.Setup(obj => obj.CurrentUserIdSet)
                 .Returns(new UserIdSet("mock-profile-id"));
-            moq
-                .Setup(obj => obj.GetBearerToken())
+            moq.Setup(obj => obj.BearerToken)
                 .Returns("mock-bearer-token");
-            moq
-                .Setup(obj => obj.GetProfile())
+            moq.Setup(obj => obj.Profile)
                 .Returns(() =>
                 {
                     return new UserProfile.Profile
@@ -207,6 +212,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         Programs = programs
                     };
                 });
+            moq.Setup(obj => obj.Identity)
+                .Returns(identity);
 
             return moq.Object;
         }

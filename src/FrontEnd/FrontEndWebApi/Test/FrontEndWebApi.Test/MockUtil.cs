@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
 using Xunit;
 using Profile = Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Profile;
@@ -41,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             {
                 Id = MockEnvironmentId,
                 Location = AzureLocation.WestUs2,
-                OwnerId = ownerId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
+                OwnerId = ownerId ?? MockCurrentUserProvider().CurrentUserIdSet?.PreferredUserId,
                 PlanId = planId,
                 Connection = new EnvironmentManager.ConnectionInfo(),
             };
@@ -280,17 +282,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         }
 
         public static ICurrentUserProvider MockCurrentUserProvider(
-            Dictionary<string, object> programs = null, string email = default)
+            Dictionary<string, object> programs = null,
+            string email = default,
+            VsoClaimsIdentity identity = null)
         {
             var moq = new Mock<ICurrentUserProvider>();
-            moq
-                .Setup(obj => obj.GetCurrentUserIdSet())
+            moq.Setup(obj => obj.CurrentUserIdSet)
                 .Returns(new UserIdSet("mock-profile-id"));
-            moq
-                .Setup(obj => obj.GetBearerToken())
+            moq.Setup(obj => obj.BearerToken)
                 .Returns("mock-bearer-token");
-            moq
-                .Setup(obj => obj.GetProfile())
+            moq.Setup(obj => obj.Profile)
                 .Returns(() =>
                 {
                     return new UserProfile.Profile
@@ -300,6 +301,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         Email = email
                     };
                 });
+            moq.Setup(obj => obj.Identity)
+                .Returns(identity ?? new VsoClaimsIdentity(null, null, null, new ClaimsIdentity()));
 
             return moq.Object;
         }
@@ -441,7 +444,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Subscription = Guid.NewGuid().ToString(),
                     Location = location,
                 },
-                UserId = userId ?? MockCurrentUserProvider().GetCurrentUserIdSet().PreferredUserId,
+                UserId = userId ?? MockCurrentUserProvider().CurrentUserIdSet.PreferredUserId,
             };
 
             /*

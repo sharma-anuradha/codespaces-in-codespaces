@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
 using Xunit;
 
@@ -108,11 +110,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 });
 
             var mockHttpContext = MockHttpContext.Create();
-            mockHttpContext.SetPlan(tokenPlan);
+            var mockIdentity = new VsoClaimsIdentity(tokenPlan, null, null, new ClaimsIdentity());
+            var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
             var environmentController = CreateTestEnvironmentsController(
                 environmentManager: mockEnvManager.Object,
-                httpContext: mockHttpContext);
+                httpContext: mockHttpContext,
+                currentUserProvider: mockCurrentUserProvider);
 
             var actionResult = await environmentController.ListAsync(name: null, planId: queryParamPlan, logger: logger);
             Assert.IsType(expectedResultType, actionResult);
@@ -255,12 +259,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             var skuCatalog = LoadSkuCatalog("prod-rel");
 
-            var currentUser = MockUtil.MockCurrentUserProvider(new Dictionary<string, object>
+            var currentUser = MockUtil.MockCurrentUserProvider(
+                new Dictionary<string, object>
             {
                 { ProfileExtensions.VisualStudioOnlineWindowsSkuPreviewUserProgram, true },
             });
 
-            var environmentController = CreateTestEnvironmentsController(skuCatalog: skuCatalog, currentUserProvider: currentUser);
+            var environmentController = CreateTestEnvironmentsController(
+                skuCatalog: skuCatalog,
+                currentUserProvider: currentUser);
 
             // Not supported SKU
             var body = await CreateBodyAsync("bad-sku");

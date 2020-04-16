@@ -98,13 +98,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             var moq = new Mock<ICurrentUserProvider>();
             moq
-                .Setup(obj => obj.GetCurrentUserIdSet())
+                .Setup(obj => obj.CurrentUserIdSet)
                 .Returns(new UserIdSet("mock-profile-id"));
             moq
-                .Setup(obj => obj.GetBearerToken())
+                .Setup(obj => obj.BearerToken)
                 .Returns("mock-bearer-token");
             moq
-                .Setup(obj => obj.GetProfile())
+                .Setup(obj => obj.Profile)
                 .Returns(() => 
                 {
                     return new UserProfile.Profile

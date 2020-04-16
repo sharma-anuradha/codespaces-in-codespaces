@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices]IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(email, nameof(email));
-            var currentUserId = CurrentUserProvider.GetCurrentUserIdSet().PreferredUserId;
+            var currentUserId = CurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             var us = new UserSubscription()
             {
                 Id = email,

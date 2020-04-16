@@ -32,13 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerUtility.UserAuthenticationSchemes)]
     public class LocationsController : ControllerBase
     {
-        private readonly ICurrentLocationProvider locationProvider;
-        private readonly IControlPlaneInfo controlPlaneInfo;
-        private readonly ISkuCatalog skuCatalog;
-        private readonly ICurrentUserProvider currentUserProvider;
-        private readonly PlanManagerSettings planManagerSettings;
-        private readonly ISkuUtils skuUtils;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationsController"/> class.
         /// </summary>
@@ -56,13 +49,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             PlanManagerSettings planManagerSettings,
             ISkuUtils skuUtils)
         {
-            this.locationProvider = locationProvider;
-            this.controlPlaneInfo = controlPlaneInfo;
-            this.skuCatalog = skuCatalog;
-            this.currentUserProvider = currentUserProvider;
-            this.planManagerSettings = planManagerSettings;
-            this.skuUtils = skuUtils;
+            LocationProvider = locationProvider;
+            ControlPlaneInfo = controlPlaneInfo;
+            SkuCatalog = skuCatalog;
+            CurrentUserProvider = currentUserProvider;
+            PlanManagerSettings = planManagerSettings;
+            SkuUtils = skuUtils;
         }
+
+        private ICurrentLocationProvider LocationProvider { get; }
+
+        private IControlPlaneInfo ControlPlaneInfo { get; }
+
+        private ISkuCatalog SkuCatalog { get; }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
+
+        private PlanManagerSettings PlanManagerSettings { get; }
+
+        private ISkuUtils SkuUtils { get; }
 
         /// <summary>
         /// Get the current location and list of globally available locations.
@@ -76,10 +81,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public IActionResult GetCurrent(
             [FromServices]IDiagnosticsLogger logger)
         {
-            var allLocations = controlPlaneInfo.GetAllDataPlaneLocations().ToArray();
+            var allLocations = ControlPlaneInfo.GetAllDataPlaneLocations().ToArray();
             var result = new LocationsResult
             {
-                Current = locationProvider.CurrentLocation,
+                Current = LocationProvider.CurrentLocation,
                 Available = allLocations,
             };
 
@@ -109,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IControlPlaneStampInfo owningStamp;
             try
             {
-                owningStamp = controlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
+                owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(azureLocation);
             }
             catch (NotSupportedException)
             {
@@ -117,21 +122,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (owningStamp.Location != locationProvider.CurrentLocation)
+            if (owningStamp.Location != LocationProvider.CurrentLocation)
             {
                 return RedirectToLocation(owningStamp);
             }
 
-            var plan = HttpContext.GetPlan();
+            var plan = CurrentUserProvider.Identity.AuthorizedPlan;
             var skus = new List<ICloudEnvironmentSku>();
-            var skusFilteredByLocation = skuCatalog.EnabledInternalHardware().Values
+            var skusFilteredByLocation = SkuCatalog.EnabledInternalHardware().Values
                                         .Where((skuObj) => skuObj.SkuLocations.Contains(azureLocation));
 
             var planInfo = VsoPlanInfo.TryParse(plan);
 
             foreach (var sku in skusFilteredByLocation)
             {
-                var isEnabled = await skuUtils.IsVisible(sku, planInfo, currentUserProvider.GetProfile());
+                var isEnabled = await SkuUtils.IsVisible(sku, planInfo, CurrentUserProvider.Profile);
                 if (isEnabled)
                 {
                     skus.Add(sku);
@@ -154,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var result = new LocationInfoResult
             {
                 Skus = outputSkus,
-                DefaultAutoSuspendDelayMinutes = planManagerSettings.DefaultAutoSuspendDelayMinutesOptions,
+                DefaultAutoSuspendDelayMinutes = PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions,
             };
 
             return Ok(result);

@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -13,6 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// </summary>
     public class HttpContextCurrentUserProvider : ICurrentUserProvider
     {
+        private static readonly ClaimsPrincipal AnonomousUser = new ClaimsPrincipal(new VsoAnonymousClaimsIdentity(new ClaimsIdentity()));
         private static readonly string HttpContextCurrentUserTokenKey = $"{nameof(HttpContextCurrentUserProvider)}-UserToken";
         private static readonly string HttpContextCurrentUserIdMapKey = $"{nameof(HttpContextCurrentUserProvider)}-IdMapKey";
         private static readonly string HttpContextCurrentUserIdSetKey = $"{nameof(HttpContextCurrentUserProvider)}-UserIdSet";
@@ -30,6 +33,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
             ContextAccessor = Requires.NotNull(contextAccessor, nameof(contextAccessor));
         }
 
+        /// <inheritdoc/>
+        public string BearerToken
+        {
+            get { return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserTokenKey] as string; }
+        }
+
+        /// <inheritdoc/>
+        public VsoClaimsIdentity Identity
+        {
+            get
+            {
+                var vsoClaimsIdentity = ContextAccessor?.HttpContext?.User.Identity as VsoClaimsIdentity;
+                if (vsoClaimsIdentity == null)
+                {
+                    return (VsoClaimsIdentity)AnonomousUser.Identity;
+                }
+
+                return vsoClaimsIdentity;
+            }
+        }
+
+        /// <inheritdoc/>
+        public Profile Profile
+        {
+            get
+            {
+                var profileId = ContextAccessor?.HttpContext.GetCurrentUserProfileId();
+                return !string.IsNullOrEmpty(profileId) ? ProfileCache.GetProfile(profileId) : null;
+            }
+        }
+
+        /// <inheritdoc/>
+        public string CanonicalUserId
+        {
+            get { return ContextAccessor?.HttpContext?.GetCurrentUserCanonicalUserId(); }
+        }
+
+        /// <inheritdoc/>
+        public UserIdSet CurrentUserIdSet
+        {
+            get { return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdSetKey] as UserIdSet; }
+        }
+
+        /// <inheritdoc/>
+        public string IdMapKey
+        {
+            get { return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdMapKey] as string; }
+        }
+
         private IProfileCache ProfileCache { get; }
 
         private IHttpContextAccessor ContextAccessor { get; }
@@ -41,55 +93,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <inheritdoc/>
-        public string GetBearerToken()
-        {
-            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserTokenKey] as string;
-        }
-
-        /// <inheritdoc/>
-        public Profile GetProfile()
-        {
-            var profileId = GetProfileId();
-            return !string.IsNullOrEmpty(profileId) ? ProfileCache.GetProfile(profileId) : null;
-        }
-
-        /// <inheritdoc/>
         public void SetProfile(Profile profile)
         {
             Requires.NotNull(profile, nameof(profile));
             ProfileCache.SetProfile(profile);
             ContextAccessor.HttpContext.SetCurrentUserProfileId(profile.Id);
             ContextAccessor.HttpContext.SetCurrentUserProfileProviderId(profile.ProviderId);
-        }
-
-        /// <inheritdoc/>
-        public string GetProfileId()
-        {
-            return ContextAccessor?.HttpContext.GetCurrentUserProfileId();
-        }
-
-        /// <inheritdoc/>
-        public string GetProfileProviderId()
-        {
-            return ContextAccessor?.HttpContext?.GetCurrentUserProfileProviderId();
-        }
-
-        /// <inheritdoc/>
-        public string GetCanonicalUserId()
-        {
-            return ContextAccessor?.HttpContext?.GetCurrentUserCanonicalUserId();
-        }
-
-        /// <inheritdoc/>
-        public UserIdSet GetCurrentUserIdSet()
-        {
-            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdSetKey] as UserIdSet;
-        }
-
-        /// <inheritdoc/>
-        public string GetIdMapKey()
-        {
-            return ContextAccessor?.HttpContext?.Items[HttpContextCurrentUserIdMapKey] as string;
         }
 
         /// <inheritdoc/>

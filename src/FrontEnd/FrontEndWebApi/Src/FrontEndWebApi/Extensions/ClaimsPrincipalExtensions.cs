@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Security.Claims;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
 {
