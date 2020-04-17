@@ -217,9 +217,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var acivePools = new List<ResourcePool>();
             {
-                acivePools.Add(new ResourcePool { Id = "879008eb9d8896724ec87c9995d856decbe0379f", Details = new ResourcePoolComputeDetails { Location = DefaultLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-                acivePools.Add(new ResourcePool { Id = "c3d3a87287349029da7dd0e185c33a0563b3bb3a", Details = new ResourcePoolStorageDetails { Location = DefaultLocation, SkuName = StorageResourceSkuName }, Type = ResourceType.StorageFileShare, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
-                acivePools.Add(new ResourcePool { Id = "e906f19991035bf4191298d159733231f3b41143", Details = new ResourcePoolComputeDetails { Location = WestLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, EnvironmentSkus = new List<string> { DefaultLogicalSkuName } });
+                acivePools.Add(new ResourcePool { Id = "879008eb9d8896724ec87c9995d856decbe0379f", Details = new ResourcePoolComputeDetails { Location = DefaultLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, LogicalSkus = new List<string> { DefaultLogicalSkuName } });
+                acivePools.Add(new ResourcePool { Id = "c3d3a87287349029da7dd0e185c33a0563b3bb3a", Details = new ResourcePoolStorageDetails { Location = DefaultLocation, SkuName = StorageResourceSkuName }, Type = ResourceType.StorageFileShare, TargetCount = 10, LogicalSkus = new List<string> { DefaultLogicalSkuName } });
+                acivePools.Add(new ResourcePool { Id = "e906f19991035bf4191298d159733231f3b41143", Details = new ResourcePoolComputeDetails { Location = WestLocation, SkuName = DefaultResourceSkuName }, Type = DefaultType, TargetCount = 10, LogicalSkus = new List<string> { DefaultLogicalSkuName } });
             }
 
             var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>();
