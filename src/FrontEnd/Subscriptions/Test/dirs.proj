@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="Subscriptions.Test\Subscriptions.Test.csproj" />
+  </ItemGroup>
+
+</Project>

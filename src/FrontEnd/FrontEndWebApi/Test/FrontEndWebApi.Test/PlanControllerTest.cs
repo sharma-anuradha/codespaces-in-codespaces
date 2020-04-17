@@ -9,6 +9,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
@@ -19,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
     {
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
+        private readonly ISubscriptionManager subscriptionManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger; 
 
@@ -37,7 +40,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             planSettings.Init(mockSystemConfiguration.Object);
 
             accountRepository = new MockPlanRepository();
-            accountManager = new PlanManager(accountRepository, planSettings, new Mock<ISkuCatalog>().Object);
+            subscriptionManager = new MockSubscriptionManager();
+            accountManager = new PlanManager(accountRepository, planSettings, new Mock<ISkuCatalog>().Object, subscriptionManager);
         }
 
         public static TheoryData<IEnumerable<VsoPlan>, bool, Type> CapacityWarningTests = new TheoryData<IEnumerable<VsoPlan>, bool, Type>

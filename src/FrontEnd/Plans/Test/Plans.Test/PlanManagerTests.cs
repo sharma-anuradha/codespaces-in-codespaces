@@ -9,6 +9,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Moq;
 using Xunit;
 
@@ -19,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         private readonly IPlanRepository planRepository;
         private readonly PlanManager planManager;
         private readonly ISkuCatalog skuCatalog;
+        private readonly ISubscriptionManager subscriptionManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
         private static readonly string subscription = Guid.NewGuid().ToString();
@@ -46,7 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             skuCatalog = GetMockSKuCatalog().Object;
 
             planRepository = new MockPlanRepository();
-            planManager = new PlanManager(planRepository, settings, skuCatalog);
+            subscriptionManager = new MockSubscriptionManager();
+            planManager = new PlanManager(planRepository, settings, skuCatalog, subscriptionManager);
         }
 
         private Mock<ISkuCatalog> GetMockSKuCatalog()
@@ -312,7 +316,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                 .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
             settings.Init(mockSystemConfiguration.Object);
 
-            var planManager = new PlanManager(planRepository, settings, skuCatalog);
+            var planManager = new PlanManager(planRepository, settings, skuCatalog, subscriptionManager);
 
             var whiteListedUser = new Profile() { Programs = new Dictionary<string, object> { { "vs.cloudenvironements.previewuser", true }, } };
             var normalUser = new Profile() { Programs = new Dictionary<string, object> { } };

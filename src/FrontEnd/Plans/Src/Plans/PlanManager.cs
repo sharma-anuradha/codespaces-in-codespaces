@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
@@ -27,6 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(1);
         private readonly ISkuCatalog skuCatalog;
+        private readonly ISubscriptionManager subscriptionManager;
         private int cachedTotalPlansCount;
 
         /// <summary>
@@ -35,20 +37,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="planRepository">Target plan repository.</param>
         /// <param name="planManagerSettings">Target plan manager settings.</param>
         /// <param name="skuCatalog">The sku catalog.</param>
+        /// <param name="subscriptionManager">The subscription manager.</param>
         public PlanManager(
             IPlanRepository planRepository,
             PlanManagerSettings planManagerSettings,
-            ISkuCatalog skuCatalog)
+            ISkuCatalog skuCatalog,
+            ISubscriptionManager subscriptionManager)
         {
             this.planRepository = planRepository;
             this.planManagerSettings = Requires.NotNull(planManagerSettings, nameof(planManagerSettings));
             this.skuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
+            this.subscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
         }
 
         /// <inheritdoc/>
         public async Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, IDiagnosticsLogger logger)
         {
             var result = default(PlanManagerServiceResult);
+
+            // Validate subscription
+            if (await subscriptionManager.IsBannedAsync(model.Plan.Subscription, logger))
+            {
+                logger.LogError($"{LogBaseName}_create_bannedsubscription_error");
+
+                result.VsoPlan = null;
+                result.ErrorCode = Contracts.ErrorCodes.SubscriptionBanned;
+
+                return result;
+            }
 
             // Validate Plan quota is not reached.
             if (!await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))

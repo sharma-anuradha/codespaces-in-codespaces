@@ -25,6 +25,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
@@ -36,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
     {
         private readonly IPlanRepository accountRepository;
         private readonly PlanManager accountManager;
+        private readonly ISubscriptionManager subscriptionManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
 
@@ -55,7 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             planSettings.Init(mockSystemConfiguration.Object);
 
             accountRepository = new MockPlanRepository();
-            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog());
+            subscriptionManager = new MockSubscriptionManager();
+            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog(), subscriptionManager);
         }
 
         [Fact]

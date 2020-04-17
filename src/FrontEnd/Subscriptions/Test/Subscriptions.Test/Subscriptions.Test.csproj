@@ -11,9 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
-    <ProjectReference Include="..\..\Src\Plans.Contracts\Plans.Contracts.csproj" />
-    <ProjectReference Include="..\..\Src\Plans\Plans.csproj" />
+    <ProjectReference Include="..\..\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
+    <ProjectReference Include="..\..\Src\Subscriptions\Subscriptions.csproj" />
   </ItemGroup>
 
 </Project>

@@ -116,6 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IWatchSuspendedEnvironmentsToBeArchivedTask, WatchSuspendedEnvironmentsToBeArchivedTask>();
             services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
             services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
+            services.AddSingleton<IWatchDeletedPlanEnvironmentsTask, WatchDeletedPlanEnvironmentsTask>();
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();

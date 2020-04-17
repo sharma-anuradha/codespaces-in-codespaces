@@ -25,6 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="watchSuspendedEnvironmentsToBeArchivedTask">Target watch suspended environments to be archived task.</param>
         /// <param name="logCloudEnvironmentStateTask">Target Log Cloud Environment State task.</param>
         /// <param name="logSubscriptionStatisticsTask">Target Log Subscriptions Statistics task.</param>
+        /// <param name="cleanDeletedPlanEnvironmentsTask">Clean Deleted Environments task.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
@@ -34,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IWatchSuspendedEnvironmentsToBeArchivedTask watchSuspendedEnvironmentsToBeArchivedTask,
             ILogCloudEnvironmentStateTask logCloudEnvironmentStateTask,
             ILogSubscriptionStatisticsTask logSubscriptionStatisticsTask,
+            IWatchDeletedPlanEnvironmentsTask cleanDeletedPlanEnvironmentsTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             ITaskHelper taskHelper)
@@ -43,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             WatchSuspendedEnvironmentsToBeArchivedTask = watchSuspendedEnvironmentsToBeArchivedTask;
             LogCloudEnvironmentStateTask = logCloudEnvironmentStateTask;
             LogSubscriptionStatisticsTask = logSubscriptionStatisticsTask;
+            CleanDeletedPlanEnvironmentsTask = cleanDeletedPlanEnvironmentsTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
@@ -58,6 +61,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ILogCloudEnvironmentStateTask LogCloudEnvironmentStateTask { get; }
 
         private ILogSubscriptionStatisticsTask LogSubscriptionStatisticsTask { get; }
+
+        private IWatchDeletedPlanEnvironmentsTask CleanDeletedPlanEnvironmentsTask { get; }
 
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
@@ -115,10 +120,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 (childLogger) => LogCloudEnvironmentStateTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(1));
 
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
             // Job: Log Plan and Subscription Information
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.LogSubscriptionStatisticsTask}_run",
                 (childLogger) => LogSubscriptionStatisticsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
+            // Job: Delete Environments in deleted plans
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchDeletedPlanEnvironmentsTask}_run",
+                (childLogger) => CleanDeletedPlanEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
         }
     }

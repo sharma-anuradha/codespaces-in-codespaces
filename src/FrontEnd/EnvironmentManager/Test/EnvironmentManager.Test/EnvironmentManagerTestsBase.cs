@@ -20,6 +20,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Tokens;
 using Moq;
@@ -37,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IResourceBrokerResourcesExtendedHttpContract resourceBroker;
         public readonly ITokenProvider tokenProvider;
         public readonly EnvironmentManager environmentManager;
+        public readonly ISubscriptionManager subscriptionManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
@@ -109,6 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository) };
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
             this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
+            this.subscriptionManager = new MockSubscriptionManager();
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
@@ -122,7 +126,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentStateManager,
                 this.environmentRepairWorkflows,
                 this.resourceAllocationManager,
-                this.workspaceManager);
+                this.workspaceManager,
+                this.subscriptionManager);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")

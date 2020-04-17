@@ -3,6 +3,8 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Moq;
 using Newtonsoft.Json;
 using System;
@@ -68,7 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         public readonly IBillingEventRepository repository;
         public readonly IBillingOverrideRepository overrideRepository;
         public readonly PlanManagerSettings planManagerSettings;
-        public readonly IPlanRepository planRepository; 
+        public readonly IPlanRepository planRepository;
+        public readonly ISubscriptionManager subscriptionManager;
         public readonly BillingEventManager manager;
         public readonly PlanManager planManager;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
@@ -86,7 +89,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Setting up the plan manager
             planRepository = new MockPlanRepository();
             planManagerSettings = new PlanManagerSettings();
-            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object);
+            subscriptionManager = new MockSubscriptionManager();
+            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object, subscriptionManager);
             
             serializer = JsonSerializer.CreateDefault();
         }

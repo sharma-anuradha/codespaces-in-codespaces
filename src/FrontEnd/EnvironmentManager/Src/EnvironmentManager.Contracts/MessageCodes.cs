@@ -100,5 +100,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The list of file paths exceeds the maximum allowed number of elements
         /// </summary>
         TooManyRecentFolders = 17,
+
+        /// <summary>
+        /// The subscription has been banned.
+        /// </summary>
+        SubscriptionIsBanned = 18,
     }
 }

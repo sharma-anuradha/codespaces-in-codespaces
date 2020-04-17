@@ -9,6 +9,7 @@
     <ProjectReference Include="FrontEndWebApi\dirs.proj" />
     <ProjectReference Include="LiveShareWorkspace\dirs.proj" />
     <ProjectReference Include="LiveShareAuthentication\dirs.proj" />
+    <ProjectReference Include="Subscriptions\dirs.proj" />
     <ProjectReference Include="UserProfile\dirs.proj" />
   </ItemGroup>
 

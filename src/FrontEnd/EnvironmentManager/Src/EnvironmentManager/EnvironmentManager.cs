@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -20,9 +19,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkf
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -46,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentRepairWorkflows">The environment repair workflows.</param>
         /// <param name="resourceAllocationManager">The environment resource allocation manager.</param>
         /// <param name="workspaceManager">The workspace manager.</param>
+        /// <param name="subscriptionManager">The subscription manager.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
@@ -58,7 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentStateManager environmentStateManager,
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             IResourceAllocationManager resourceAllocationManager,
-            IWorkspaceManager workspaceManager)
+            IWorkspaceManager workspaceManager,
+            ISubscriptionManager subscriptionManager)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
@@ -72,6 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
             ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
+            SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -97,6 +99,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IResourceAllocationManager ResourceAllocationManager { get; }
 
         private IWorkspaceManager WorkspaceManager { get; }
+
+        private ISubscriptionManager SubscriptionManager { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -374,7 +378,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         result.MessageCode = MessageCodes.EnvironmentNameAlreadyExists;
                         result.HttpStatusCode = StatusCodes.Status409Conflict;
+                        return result;
+                    }
 
+                    if (await SubscriptionManager.IsBannedAsync(plan.Subscription, childLogger))
+                    {
+                        childLogger.LogError($"{LogBaseName}_create_subscriptionbanned_error");
+                        result.MessageCode = MessageCodes.SubscriptionIsBanned;
+                        result.HttpStatusCode = StatusCodes.Status403Forbidden;
                         return result;
                     }
 
@@ -384,10 +395,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
                     {
                         childLogger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
-
                         result.MessageCode = MessageCodes.ExceededQuota;
                         result.HttpStatusCode = StatusCodes.Status403Forbidden;
-
                         return result;
                     }
 

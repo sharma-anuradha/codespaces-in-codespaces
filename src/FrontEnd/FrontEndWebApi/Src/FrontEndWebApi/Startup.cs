@@ -34,6 +34,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions;
 using Newtonsoft.Json;
@@ -158,6 +159,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the billing event manager and the billing event repository
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 
+            // Add the subscription manager
+            services.AddSubscriptionManager(
+                options => { },
+                frontEndAppSettings.UseMocksForLocalDevelopment);
+
             if (!frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment)
             {
                 // Add the plan background worker
@@ -174,6 +180,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 {
                     services.AddPcfAgent(frontEndAppSettings.PrivacyCommandFeedSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
                 }
+
+                // Add subscription manager background workers
+                services.AddSubscriptionWorkers();
             }
 
             // Add the Live Share user profile and workspace providers.

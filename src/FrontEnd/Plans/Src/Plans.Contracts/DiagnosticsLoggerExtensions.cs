@@ -4,9 +4,8 @@
 
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
     /// <summary>
     /// Logging extensions for <see cref="BillingEvent"/>.

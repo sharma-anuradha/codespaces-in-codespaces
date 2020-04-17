@@ -15,12 +15,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         public const string WatchOrphanedSystemEnvironmentsTask = "watch_orphaned_system_environments_task";
 
         /// <summary>
-        /// Watch Orphaned System Environments Task.
+        /// Watch Suspended Environments to be Archived Task.
         /// </summary>
         public const string WatchSuspendedEnvironmentsToBeArchivedTask = "watch_suspended_environments_to_be_archived_task";
 
         /// <summary>
-        /// Watch Orphaned System Environments Task.
+        /// Watch Deleted Plan Environments Task.
+        /// </summary>
+        public const string WatchDeletedPlanEnvironmentsTask = "watch_deleted_plan_environments_task";
+
+        /// <summary>
+        /// Watch Failed Environment Task.
         /// </summary>
         public const string WatchFailedEnvironmentTask = "watch_failed_environment_task";
 

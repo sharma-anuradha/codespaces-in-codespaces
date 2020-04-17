@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         /// VsoPlan does not exist.
         /// </summary>
         PlanDoesNotExist = 2,
+
+        /// <summary>
+        /// Azure subscription has been marked as banned.
+        /// </summary>
+        SubscriptionBanned = 3,
     }
 }

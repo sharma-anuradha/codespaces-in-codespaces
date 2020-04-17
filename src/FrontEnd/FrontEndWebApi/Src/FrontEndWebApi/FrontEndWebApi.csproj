@@ -42,7 +42,9 @@
     <ProjectReference Include="..\..\..\Monitoring\Src\Monitoring\Monitoring.csproj" />
     <ProjectReference Include="..\..\..\PCFAgent\Src\PCFAgent\PCFAgent.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Plans\Test\Plans.Test\Plans.Test.csproj" />
+    <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
+    <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions\Subscriptions.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
   </ItemGroup>

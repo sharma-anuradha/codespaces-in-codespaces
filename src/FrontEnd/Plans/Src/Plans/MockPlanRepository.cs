@@ -9,6 +9,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
+    /// <summary>
+    /// Mock plan repository.
+    /// </summary>
     public class MockPlanRepository : MockRepository<VsoPlan>, IPlanRepository
     {
         /// <inheritdoc/>
