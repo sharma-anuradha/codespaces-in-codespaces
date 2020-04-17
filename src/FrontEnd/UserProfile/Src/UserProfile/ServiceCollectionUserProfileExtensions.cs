@@ -4,6 +4,8 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
@@ -49,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
             Action<ProfileHttpClientProviderOptions> configureOptions)
             => services
                 .Configure(configureOptions)
-                .AddSingleton<ICurrentUserHttpClientProvider<ProfileHttpClientProviderOptions>, ProfileHttpClientProvider>();
+                .AddSingleton<IHttpClientProvider<ProfileHttpClientProviderOptions>,
+                    CurrentUserHttpClientProvider<ProfileHttpClientProviderOptions>>();
     }
 }

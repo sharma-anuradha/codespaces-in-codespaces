@@ -8,8 +8,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker
 {
@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// </summary>
         /// <param name="httpClientProvider">The backend http client provider.</param>
         public HttpResourceBrokerClient(
-            ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
             : base(httpClientProvider)
         {
         }

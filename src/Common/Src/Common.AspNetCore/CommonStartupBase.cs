@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http.Headers;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -158,6 +160,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// <param name="loggingBaseValues">The common logging base values.</param>
         public void ConfigureCommonServices(IServiceCollection services, out LoggingBaseValues loggingBaseValues)
         {
+            var productInfo = new ProductInfoHeaderValue(
+                ServiceName, Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            services.AddSingleton(productInfo);
+
             var appSecrets = Configuration.GetSection(AppSecretsSectionName).Get<CommonAppSecretsProvider>();
             if (appSecrets != null)
             {

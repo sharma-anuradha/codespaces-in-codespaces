@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
@@ -24,9 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         /// </summary>
         /// <param name="httpClientProvider">Http client provider.</param>
         public HttpClientBase(
-            ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
         {
-            // TODO: janraj, ICurrentUserHttpClientProvider might not be the right client provider?
             HttpClientProvider = Requires.NotNull(httpClientProvider, nameof(httpClientProvider));
         }
 

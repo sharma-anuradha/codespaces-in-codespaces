@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
 {
@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
     /// Options for the back end HTTP client provider.
     /// </summary>
     public class BackEndHttpClientProviderOptions
-        : ICurrentUserHttpClientProviderOptions
+        : IHttpClientProviderOptions
     {
         /// <inheritdoc/>
         public string BaseAddress { get; set; }

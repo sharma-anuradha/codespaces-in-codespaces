@@ -6,10 +6,10 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <param name="currentUserProvider">The current user provider.</param>
         /// <param name="httpClientProvider">The http client provider.</param>
         public HttpClientProfileRepository(
-            ICurrentUserHttpClientProvider<ProfileHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<ProfileHttpClientProviderOptions> httpClientProvider)
         {
             HttpClientProvider = Requires.NotNull(httpClientProvider, nameof(httpClientProvider));
         }

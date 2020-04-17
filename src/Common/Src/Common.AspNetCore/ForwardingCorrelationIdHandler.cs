@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 {
     /// <summary>
     /// Forward the request correlation id header.

@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.HealthMonitor
 {
@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Health
         /// </summary>
         /// <param name="httpClientProvider">Http Client provider.</param>
         public HttpHealthMonitorClient(
-            ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
             : base(httpClientProvider)
         {
         }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// </summary>
         /// <param name="httpClientProvider">The http client provider.</param>
         public HttpClientWorkspaceRepository(
-            ICurrentUserHttpClientProvider<WorkspaceHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<WorkspaceHttpClientProviderOptions> httpClientProvider)
         {
             HttpClientProvider = httpClientProvider;
         }

@@ -8,7 +8,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Images;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images
 {
@@ -20,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images
         /// </summary>
         /// <param name="httpClientProvider">Http Client provider.</param>
         public ImagesHttpClient(
-            ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
             : base(httpClientProvider)
         {
         }

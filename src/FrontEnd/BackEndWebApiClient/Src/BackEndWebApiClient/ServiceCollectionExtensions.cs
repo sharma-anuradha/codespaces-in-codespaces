@@ -8,8 +8,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Fakes;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
 {
@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         {
             // Add the shared back end http client provider and the resource broker http client
             services.Configure(configureOptions)
-                .AddSingleton<ICurrentUserHttpClientProvider<BackEndHttpClientProviderOptions>, BackEndHttpClientProvider>()
+                .AddSingleton<IHttpClientProvider<BackEndHttpClientProviderOptions>, BackEndHttpClientProvider>()
                 .AddResourceBrokerClient(useMocks, useFakes, dockerImageName, publishedCLIPath)
                 .AddImagesClient(useMocks, useFakes)
                 .AddHeartBeatClient();

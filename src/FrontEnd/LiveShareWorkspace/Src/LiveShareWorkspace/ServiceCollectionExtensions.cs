@@ -4,7 +4,8 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
 {
@@ -27,7 +28,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         {
             services
                 .Configure(configureWorkspaceHttpClientProviderOptions)
-                .AddSingleton<ICurrentUserHttpClientProvider<WorkspaceHttpClientProviderOptions>, WorkspaceHttpClientProvider>();
+                .AddSingleton<IHttpClientProvider<WorkspaceHttpClientProviderOptions>,
+                    CurrentUserHttpClientProvider<WorkspaceHttpClientProviderOptions>>();
 
             if (useMocks)
             {

@@ -6,8 +6,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication
         /// Initializes a new instance of the <see cref="HttpClientAuthRepository"/> class.
         /// </summary>
         /// <param name="httpClientProvider">The client provider.</param>
-        public HttpClientAuthRepository(ICurrentUserHttpClientProvider<AuthHttpClientProviderOptions> httpClientProvider)
+        public HttpClientAuthRepository(IHttpClientProvider<AuthHttpClientProviderOptions> httpClientProvider)
         {
             HttpClientProvider = httpClientProvider;
         }

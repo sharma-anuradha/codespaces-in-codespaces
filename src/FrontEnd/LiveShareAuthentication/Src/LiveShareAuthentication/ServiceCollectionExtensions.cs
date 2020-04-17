@@ -4,8 +4,9 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareAuthentication;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication
 {
@@ -26,7 +27,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication
         {
             services
                 .Configure(configureAuthHttpClientProviderOptions)
-                .AddSingleton<ICurrentUserHttpClientProvider<AuthHttpClientProviderOptions>, AuthHttpClientProvider>();
+                .AddSingleton<IHttpClientProvider<AuthHttpClientProviderOptions>,
+                    CurrentUserHttpClientProvider<AuthHttpClientProviderOptions>>();
 
             services.AddSingleton<IAuthRepository, HttpClientAuthRepository>();
 
