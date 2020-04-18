@@ -14,7 +14,7 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $SourceSubscription = 'cd02057e-7b97-4159-b924-e8392142ee1e'
 
-$RegionCode = @{eastus='use';westus2='usw2';westeurope='euw';southeastasia='asse'}.$TargetLocation
+$RegionCode = @{eastus='use';westus2='usw2';westeurope='euw';southeastasia='asse';eastus2euap='usec'}.$TargetLocation
 if ($null -eq $RegionCode) {
     throw "Cannot convert $TargetLocation to a region code"
 }
