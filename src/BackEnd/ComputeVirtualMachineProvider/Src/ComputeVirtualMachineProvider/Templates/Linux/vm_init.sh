@@ -21,6 +21,9 @@ echo "Increase file watcher limit"
 echo "fs.inotify.max_user_watches=524288" | tee -a /etc/sysctl.conf
 sysctl -p
 
+echo "Create docker group with ID 800"
+groupadd -g 800 docker
+
 echo "Install docker ..."
 # Download specific docker version - 18.09.7-0ubuntu1~18.04.4
 #   URL below was taken from running 'apt-cache show docker.io=18.09.7-0ubuntu1~18.04.4'
