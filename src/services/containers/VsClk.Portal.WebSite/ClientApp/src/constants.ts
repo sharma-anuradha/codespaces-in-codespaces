@@ -8,7 +8,7 @@ export const DEFAULT_EXTENSIONS = [
     'GitHub.vscode-pull-request-github',
 ];
 
-export const HOSTED_IN_GITHUB_EXTENSIONS = ['thomaspink.theme-github'];
+export const HOSTED_IN_GITHUB_EXTENSIONS = ['github.github-vscode-theme'];
 
 const packageJson: IPackageJson = require('../package.json');
 

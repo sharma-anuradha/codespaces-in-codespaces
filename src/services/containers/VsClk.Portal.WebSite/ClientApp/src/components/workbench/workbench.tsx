@@ -341,7 +341,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         );
 
         const defaultSettings = isHostedOnGithub()
-            ? '{"workbench.colorTheme": "Github"}'
+            ? '{"workbench.colorTheme": "GitHub Light"}'
             : '';
 
         if (!isHostedOnGithub()) {

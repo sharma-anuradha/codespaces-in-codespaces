@@ -23,7 +23,7 @@ export const getExtensions = (): string[] => {
 };
 
 const getUserDataProvider = async () => {
-    const defaultSettings = isHostedOnGithub() ? '{"workbench.colorTheme": "Github"}' : '';
+    const defaultSettings = isHostedOnGithub() ? '{"workbench.colorTheme": "GitHub Light"}' : '';
 
     const userDataProvider = new UserDataProvider(defaultSettings);
     await userDataProvider.initializeDBProvider();
