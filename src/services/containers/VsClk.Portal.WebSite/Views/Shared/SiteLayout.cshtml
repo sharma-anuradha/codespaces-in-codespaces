@@ -2,12 +2,12 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <environment include="Development">
-        <link rel="stylesheet" href="~/site.css" />
-    </environment>
     @if (string.Equals(ViewData["RenderBranding"], "GitHub")) {
         <link id="js-favicon" rel="shortcut icon" href="https://github.githubassets.com/favicon.ico" />
     } 
+    <environment include="Development">
+        <link rel="stylesheet" href="~/site.css" />
+    </environment>
 </head>
 <body>
     @if (!string.Equals(ViewData["RenderBranding"], "GitHub")) {
