@@ -2,9 +2,11 @@ import { IWorkspace, IWorkspaceProvider, URI } from 'vscode-web';
 import { IEnvironment } from 'vso-client-core';
 
 import { vscode } from '../../vscodeAssets/vscode';
+import { parseWorkspacePayload } from '../../../utils/parseWorkspacePayload';
 
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
+    public readonly payload?: [string, any][];
 
     constructor(
         params: URLSearchParams,
@@ -14,6 +16,9 @@ export class WorkspaceProvider implements IWorkspaceProvider {
         const workspace = params.get('workspace');
         const folder = params.get('folder');
         const isEmpty = params.get('ew');
+        const playloadString = params.get('payload');
+
+        this.payload = parseWorkspacePayload(playloadString) || void 0;
 
         if (isEmpty === 'true') {
             this.workspace = undefined;
@@ -103,7 +108,7 @@ export class WorkspaceProvider implements IWorkspaceProvider {
             return;
         }
 
-        window.open(targetUrl.href, '_blank');
+        window.open(targetUrl.href, '_blank', 'noopener, noreferrer');
     }
 
     private isFolderToOpen(uriToOpen: IWorkspace): uriToOpen is { folderUri: URI } {

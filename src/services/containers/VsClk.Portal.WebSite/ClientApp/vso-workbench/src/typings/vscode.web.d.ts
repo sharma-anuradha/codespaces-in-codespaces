@@ -490,14 +490,23 @@ declare module 'vscode-web' {
          * The initial workspace to open.
          */
         readonly workspace: IWorkspace;
-
+    
+        /**
+         * Arbitrary payload from the `IWorkspaceProvider.open` call.
+         */
+        readonly payload?: object;
+    
         /**
          * Asks to open a workspace in the current or a new window.
          *
          * @param workspace the workspace to open.
-         * @param options wether to open inside the current window or a new window.
+         * @param options optional options for the workspace to open.
+         * - `reuse`: whether to open inside the current window or a new window
+         * - `payload`: arbitrary payload that should be made available
+         * to the opening window via the `IWorkspaceProvider.payload` property.
+         * @param payload optional payload to send to the workspace to open.
          */
-        open(workspace: IWorkspace, options?: { reuse?: boolean }): Promise<void>;
+        open(workspace: IWorkspace, options?: { reuse?: boolean, payload?: object }): Promise<void>;
     }
 
     interface IApplicationLink {
