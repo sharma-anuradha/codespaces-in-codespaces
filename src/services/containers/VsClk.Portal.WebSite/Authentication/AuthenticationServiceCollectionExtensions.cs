@@ -31,13 +31,28 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
     {
         public const string VsoAuthenticationScheme = "vso";
         public const string VsoBodyAuthenticationScheme = "vso-body";
-        public const string CookieNoSameSiteScheme = "cookies-no-same-site-scheme";
+        public const string CookieOldNoSameSiteScheme = "cookies-no-same-site-scheme";
+        /*
+         * "New cookies" below introduced to add the "__Host-" prefix to the existing cookie names to prevent
+         * cookie leakage to other subdomains [https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-05#section-4.1.3.2]
+         * Since the old client can hold the old cookie name, we have to support the old name for the single client load,
+         * otherwise the clients will get unauthenticated. We can delete
+         * `OldCookieName`/`CookieAuthenticationDefaults.AuthenticationScheme`/`CookieOldNoSameSiteScheme` names for the
+         * next prod deployment, ~ April 25 2020.
+         */
+        public const string CookieScheme = "vso-with-hostname-prefix-scheme";
+        public const string CookieNoSameSiteScheme = "vso-with-hostname-prefix-no-same-site-scheme";
+        public const string OldCookieName = "vssaas.session";
+        public const string CookieName = "__Host-vssaas.session";
 
         public const string JwtBearerAuthenticationSchemes =
             JwtBearerDefaults.AuthenticationScheme + "," + VsoAuthenticationScheme;
 
         public const string CookeAuthenticationSchemes =
-            CookieAuthenticationDefaults.AuthenticationScheme + "," + CookieNoSameSiteScheme;
+            CookieAuthenticationDefaults.AuthenticationScheme + ","
+            + CookieOldNoSameSiteScheme + ","
+            + CookieScheme + ","
+            + CookieNoSameSiteScheme;
 
         public static IServiceCollection AddPortalWebSiteAuthentication(
             this IServiceCollection services,
@@ -64,8 +79,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                     options.DefaultAuthenticateScheme = JwtBearerAuthenticationSchemes;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookieAuthentication(CookieAuthenticationDefaults.AuthenticationScheme, true)
-                .AddCookieAuthentication(CookieNoSameSiteScheme, false)
+                .AddCookieAuthentication(CookieAuthenticationDefaults.AuthenticationScheme, true, OldCookieName)
+                .AddCookieAuthentication(CookieOldNoSameSiteScheme, false, OldCookieName)
+                .AddCookieAuthentication(CookieScheme, true, CookieName)
+                .AddCookieAuthentication(CookieNoSameSiteScheme, false, CookieName)
                 .AddAadAuthentication()
                 .AddVsoAuthentication(appSettings, VsoAuthenticationScheme, false)
                 .AddVsoAuthentication(appSettings, VsoBodyAuthenticationScheme, true);
@@ -74,17 +91,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
         }
 
         private static AuthenticationBuilder AddCookieAuthentication(
-            this AuthenticationBuilder builder, string scheme, bool isSameSite)
+            this AuthenticationBuilder builder, string scheme, bool isSameSite, string cookieName)
         {
             return builder.AddCookie(scheme, options =>
             {
                 options.LoginPath = "/login";
                 options.LogoutPath = "/signout";
                 options.AccessDeniedPath = "/accessdenied";
-                options.Cookie.Name = "vssaas.session";
+                options.Cookie.Name = cookieName;
+
                 options.Cookie.SameSite = (isSameSite) ? SameSiteMode.Lax : SameSiteMode.None;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
+                
                 options.Events.OnRedirectToLogin = ctx =>
                 {
                     var logger = ctx.HttpContext.GetLogger();

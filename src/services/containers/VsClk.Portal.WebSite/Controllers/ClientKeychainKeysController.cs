@@ -105,8 +105,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         private async void SetAuthCookie()
         {
+            var cookieScheme = AuthenticationServiceCollectionExtensions.CookieScheme;
+
             var claimsIdentity = new ClaimsIdentity(
-                HttpContext.User.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                HttpContext.User.Claims, cookieScheme);
 
             var authProperties = new AuthenticationProperties
             {
@@ -116,7 +118,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             };
 
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
+                cookieScheme,
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
         }

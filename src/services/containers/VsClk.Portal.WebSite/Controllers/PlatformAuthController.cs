@@ -20,8 +20,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.VsoBodyAuthenticationScheme)]
         public async Task<IActionResult> PlatformAuth()
         {
+            var cookieScheme = AuthenticationServiceCollectionExtensions.CookieNoSameSiteScheme;
             var claimsIdentity = new ClaimsIdentity(
-                HttpContext.User.Claims, AuthenticationServiceCollectionExtensions.CookieNoSameSiteScheme);
+                HttpContext.User.Claims, cookieScheme);
 
             var authProperties = new AuthenticationProperties
             {
@@ -31,7 +32,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             };
 
             await HttpContext.SignInAsync(
-                AuthenticationServiceCollectionExtensions.CookieNoSameSiteScheme,
+                cookieScheme,
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
