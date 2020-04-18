@@ -4,13 +4,15 @@ import {
     MsalAuthStrategy as MsalAuthStrategyWorkbench,
     AADv2BrowserSyncStrategy as AADv2BrowserSyncStrategyWorkbench,
     LiveShareWebStrategy as LiveShareWebStrategyWorkbench,
+    LiveShareGithubAuthStrategy as LiveShareGithubAuthStrategyWorkbench,
 } from 'vso-workbench';
 
-import { localStorageKeychain } from 'vso-client-core';
+import { localStorageKeychain, getCurrentEnvironmentId, isHostedOnGithub } from 'vso-client-core';
 
 import { authService } from '../services/authService';
 import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
 import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
+import { createCascadeTokenKey } from '../split/github/createCascadeTokenKey';
 
 class MsalAuthStrategy extends MsalAuthStrategyWorkbench {
     async getToken(service: string, account: string): Promise<string | null> {
@@ -107,16 +109,37 @@ class GitHubStrategy implements IAuthStrategy {
             return await getStoredGitHubToken();
         }
 
-        return (await localStorageKeychain.get(`vso-${account}`)) || null;
+        const key = createCascadeTokenKey(getCurrentEnvironmentId());
+        const token = (await localStorageKeychain.get(key)) || null;
+
+        return token;
     }
 }
 
-export const credentialsProvider = new CredentialsProvider([
-    new AADv2BrowserSyncStrategy(),
-    new MsalAuthStrategy(),
-    new AzureAccountStrategy(),
-    new LiveShareWebStrategy(),
-    new GistPadStrategy(),
-    new GitHubStrategy(),
-    new AzureDevOpsStrategy(),
-]);
+class LiveShareGithubAuthStrategy extends LiveShareGithubAuthStrategyWorkbench {
+    async getToken(service: string, account: string): Promise<string | null> {
+        const key = createCascadeTokenKey(getCurrentEnvironmentId());
+
+        const token = (await localStorageKeychain.get(key)) || null;
+
+        return token;
+    }
+}
+
+const getProviders = () => {
+    return (isHostedOnGithub())
+        ? [
+            new GitHubStrategy(),
+            new LiveShareGithubAuthStrategy()
+        ]
+        : [
+            new AADv2BrowserSyncStrategy(),
+            new MsalAuthStrategy(),
+            new AzureAccountStrategy(),
+            new LiveShareWebStrategy(),
+            new GistPadStrategy(),
+            new AzureDevOpsStrategy(),
+        ];
+};
+
+export const credentialsProvider = new CredentialsProvider(getProviders());

@@ -1,6 +1,9 @@
 import {
     createTrace,
-    maybePii
+    maybePii,
+    isHostedOnGithub,
+    getCurrentEnvironmentId,
+    localStorageKeychain
 } from 'vso-client-core';
 
 import {
@@ -11,6 +14,7 @@ import {
 import { SupportedGitService, getSupportedGitServiceByHost } from '../utils/gitUrlNormalization';
 import { getGitHubAccessToken } from '../services/gitHubAuthenticationService';
 import { getAzDevAccessToken } from '../services/azDevAuthenticationService';
+import { createGitHubTokenKey } from '../split/github/createGitHubTokenKey';
 
 export const trace = createTrace('GitCredentialService');
 
@@ -41,8 +45,18 @@ export class GitCredentialService extends GitCredentialServiceBase {
 
     private async getTokenByHost(supportedGitService: SupportedGitService): Promise<string | null> {
         switch (supportedGitService) {
-            case SupportedGitService.GitHub:
+            case SupportedGitService.GitHub: {
+                if (isHostedOnGithub()) {
+                    const key = createGitHubTokenKey(getCurrentEnvironmentId());
+                    const token = await localStorageKeychain.get(key);
+                    
+                    if (token) {
+                        return token;
+                    }
+                }
+
                 return await getGitHubAccessToken();
+            }
             case SupportedGitService.AzureDevOps:
                 return await getAzDevAccessToken();
             default:

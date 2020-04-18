@@ -1,4 +1,4 @@
-import { addDefaultGithubKey, Signal, localStorageKeychain } from 'vso-client-core';
+import { addDefaultGithubKey, Signal, localStorageKeychain, setKeychainKeys, createKeys, getCurrentEnvironmentId } from 'vso-client-core';
 
 import {
     getGitHubAccessToken,
@@ -9,8 +9,11 @@ import {
 import { PostMessageRepoInfoRetriever, IRepoInfo } from './postMessageRepoInfoRetriever';
 import { parseCascadeToken } from './parseCascadeToken';
 import { getGitHubApiEndpoint } from '../../utils/getGitHubApiEndpoint';
-
-const vsoCascadeTokenKeychainKeyPrefix = 'vso-cascade-token';
+import { fetchKeychainKeys } from '../../services/authService';
+import { invalidateGitHubKey } from 'vso-client-core/src/keychain/localstorageKeychainKeys';
+import { createCascadeTokenKey } from './createCascadeTokenKey';
+import { createGitHubTokenKey } from './createGitHubTokenKey';
+import { HOUR_MS } from 'vso-client-core/src/constants';
 
 export class AuthServiceGithub {
     private initializeSignal = new Signal();
@@ -18,14 +21,14 @@ export class AuthServiceGithub {
     private repoInfo?: IRepoInfo;
 
     public init = async () => {
-        /**
-         * We temporary use static github encryption key
-         * until backend supports Cascade token auth.
-         */
-        addDefaultGithubKey();  
+        const keys = await fetchKeychainKeys();
+        if (keys) {
+            setKeychainKeys(keys);
+        } else {
+            addDefaultGithubKey();
+        }
 
         this.repoInfo = PostMessageRepoInfoRetriever.getStoredInfo();
-
         if (this.repoInfo) {
             this.initializeSignal.complete(undefined);
             return;
@@ -40,26 +43,13 @@ export class AuthServiceGithub {
             
             this.initializeSignal.complete(undefined);
         };
-
-        // ** Temporary disable until the service side support Cascade tokens
-        // const keys = await fetchKeychainKeys();
-        // if (keys) {
-        //     setKeychainKeys(keys);
-        // }
     };
 
-    private createCascadeTokenKey(environmentId: string) {
-        return `${vsoCascadeTokenKeychainKeyPrefix}_${environmentId}`;
-    }
-
-    public getCascadeToken = async () => {
-        await this.initializeSignal.promise;
-
-        if (!this.repoInfo) {
-            throw new Error('No repo info found.');
+    private getGitHubToken = async (repositoryId: string) => {
+        const token = await this.getCachedGitHubToken();
+        if (token) {
+            return token;
         }
-
-        const { repositoryId, environmentId } = this.repoInfo;
 
         const githubTokenResponse = await getStoredGitHubAccessTokenResponse();
 
@@ -70,25 +60,56 @@ export class AuthServiceGithub {
         }
 
         const { accessToken } = githubTokenResponse;
-        const cascadeToken = await this.getFreshCascadeToken(accessToken);
 
+        return accessToken;
+    };
+
+    public getCascadeToken = async () => {
+        await this.initializeSignal.promise;
+
+        if (!this.repoInfo) {
+            throw new Error('No repo info found.');
+        }
+
+        const { repositoryId, environmentId } = this.repoInfo;
+
+        const accessToken = await this.getGitHubToken(repositoryId);
+        if (!accessToken) {
+            throw new Error('No access token found.');
+        }
+
+        const cascadeToken = await this.getFreshCascadeToken();
         if (!cascadeToken) {
             return cascadeToken;
         }
 
-        // ** Temporary disable until the service side support Cascade tokens
-        // const keys = await createKeys(cascadeToken);
-        // setKeychainKeys(keys);
+        await this.fetchKeychainKeys(cascadeToken);
 
-        const cascadeKeychainKey = this.createCascadeTokenKey(environmentId);
+        const cascadeKeychainKey = createCascadeTokenKey(environmentId);
         await localStorageKeychain.set(cascadeKeychainKey, cascadeToken);
+        
+        const githubKeychainKey = createGitHubTokenKey(environmentId);
+        await localStorageKeychain.set(githubKeychainKey, accessToken);
 
         return cascadeToken;
     };
 
-    private getFreshCascadeToken = async (githubToken: string) => {
+    private fetchKeychainKeys = async (cascadeToken: string) => {
+        const keys = await createKeys(cascadeToken);
+        setKeychainKeys(keys);
+        invalidateGitHubKey();
+
+        await localStorageKeychain.rehash();
+    }
+
+    private getFreshCascadeToken = async (): Promise<string | null> => {
         if (!this.repoInfo) {
             throw new Error('No repo info found.');
+        }
+
+        const githubToken = await this.getGitHubToken(this.repoInfo.repositoryId);
+        if (!githubToken) {
+            return null;
         }
 
         const { ownerUsername, workspaceId } = this.repoInfo;
@@ -114,6 +135,28 @@ export class AuthServiceGithub {
             return null;
         }
 
+        const cascadeKeychainKey = createCascadeTokenKey(getCurrentEnvironmentId());
+        await localStorageKeychain.set(cascadeKeychainKey, token);
+
+        return token;
+    };
+
+    public getCachedGitHubToken = async () => {
+        await this.initializeSignal.promise;
+
+        if (!this.repoInfo) {
+            throw new Error('No repo info found.');
+        }
+
+        const { environmentId } = this.repoInfo;
+
+        const keychainKey = createGitHubTokenKey(environmentId);
+        const token = await localStorageKeychain.get(keychainKey);
+
+        if (!token) {
+            return null;
+        }
+
         return token;
     };
 
@@ -126,11 +169,11 @@ export class AuthServiceGithub {
 
         const { environmentId } = this.repoInfo;
 
-        const keychainKey = this.createCascadeTokenKey(environmentId);
+        const keychainKey = createCascadeTokenKey(environmentId);
         const token = await localStorageKeychain.get(keychainKey);
 
         if (!token) {
-            return null;
+            return await this.getFreshCascadeToken();
         }
 
         const parsedToken = parseCascadeToken(token);
@@ -140,13 +183,9 @@ export class AuthServiceGithub {
         }
 
         const tokenExpirationDelta = parsedToken.exp - Date.now();
-        if (tokenExpirationDelta <= 0) {
-            await localStorageKeychain.delete(keychainKey);
-            return null;
-        }
 
-        if (tokenExpirationDelta < expirationMs) {
-            return null;
+        if (tokenExpirationDelta <= 5 * HOUR_MS) {
+            return await this.getFreshCascadeToken();
         }
 
         return token;

@@ -3,9 +3,23 @@ import { randomBytes } from '../utils/randomBytes';
 
 const randomKeyId = 'vso-random-keychain-key';
 
-const getRandomKey = () => {
+const defaultGitHubKey: IKeychainKey = {
+    id: 'github-keychain-key',
+    key: new Buffer('ABCDEF0123456789'),
+    expiresOn: Date.now() + (31 * 24 * 60 * 60 * 1000),
+    method: 'AES',
+    methodMode: 'CBC',
+};
+
+export const addDefaultGithubKey = () => {
+    removeKey(defaultGitHubKey.id);
+    
+    keychainKeys.push(defaultGitHubKey);
+}
+
+const getKey = (keyId: string) => {
     const key = keychainKeys.find((key: IKeychainKey) => {
-        return (key.id === randomKeyId);
+        return (key.id === keyId);
     });
 
     return key;
@@ -15,9 +29,9 @@ const createRandomKeyExpirationTime = () => {
     return Date.now() + 24 * 60 * 60 * 1000;
 }
 
-export const removeRandomKey = () => {
+export const removeKey = (keyId: string) => {
     keychainKeys = keychainKeys.filter((key) => {
-        return (key.id !== randomKeyId);
+        return (key.id !== keyId);
     });
 }
 
@@ -25,24 +39,28 @@ const createInvalidKeyExpirationTime = () => {
     return Date.now() - 24 * 60 * 60 * 1000;
 }
 
-const invalidateRandomKey = () => {
-    const currentRandomKey = getRandomKey();
+const invalidateKey = (keyId: string) => {
+    const currentKey = getKey(keyId);
 
-    if (!currentRandomKey) {
+    if (!currentKey) {
         return;
     }
 
-    if (currentRandomKey) {
-        removeRandomKey();
+    if (currentKey) {
+        removeKey(keyId);
     }
 
     keychainKeys.push({
-        id: randomKeyId,
-        key: currentRandomKey.key,
+        id: keyId,
+        key: currentKey.key,
         expiresOn: createInvalidKeyExpirationTime(),
         method: 'AES',
         methodMode: 'CBC',
     });
+}
+
+export const invalidateGitHubKey = () => {
+    return invalidateKey(defaultGitHubKey.id);
 }
 
 export const defaultKey: IKeychainKey = {
@@ -64,7 +82,7 @@ export const getKeychainKeys = (): IKeychainKey[] => {
 }
 
 export const setKeychainKeys = (keys: IKeychainKey[]): IKeychainKey[] => {
-    const randomKey = getRandomKey();
+    const randomKey = getKey(randomKeyId);
 
     keychainKeys = [...keys];
 
@@ -72,7 +90,7 @@ export const setKeychainKeys = (keys: IKeychainKey[]): IKeychainKey[] => {
         keychainKeys.push({ ...randomKey });
     }
 
-    invalidateRandomKey();
+    invalidateKey(randomKeyId);
     
     return keychainKeys;
 }
@@ -81,30 +99,20 @@ export const setKeychainKeys = (keys: IKeychainKey[]): IKeychainKey[] => {
  * Function to add random key. If one already present, update its expiration time.
  */
 export const addRandomKey = () => {
-    const currentRandomKey = getRandomKey();
+    const currentRandomKey = getKey(randomKeyId);
 
     let key = (currentRandomKey)
         ? currentRandomKey.key
         : randomBytes(16);
 
     if (currentRandomKey) {
-        removeRandomKey();
+        removeKey(randomKeyId);
     }
 
     keychainKeys.push({
         id: randomKeyId,
         key,
         expiresOn: createRandomKeyExpirationTime(),
-        method: 'AES',
-        methodMode: 'CBC',
-    });
-}
-
-export const addDefaultGithubKey = () => {
-    keychainKeys.push({
-        id: 'github-keychain-key',
-        key: new Buffer('ABCDEF0123456789'),
-        expiresOn: Date.now() + (31 * 24 * 60 * 60 * 1000),
         method: 'AES',
         methodMode: 'CBC',
     });
