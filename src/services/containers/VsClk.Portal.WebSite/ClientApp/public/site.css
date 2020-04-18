@@ -71,8 +71,35 @@ html, body {
 .vsonline-port-forwarding__status {
     font-size: 2rem;
     font-weight: 700;
-    margin-top: 10rem;
+    margin-top: 2rem;
     text-align: center;
+}
+
+.github-icon {
+    margin-top: 10rem;
+    display: flex;
+    justify-content: center;
+}
+
+.anim-pulse {
+    animation-name: pulse;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.3;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.3;
+    }
 }
 
 h1, h2 {
