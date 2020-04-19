@@ -148,7 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 "file_share_storage_provider_helper_get_connection_info",
                 async (childLogger) =>
                 {
