@@ -104,15 +104,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             const string logicalPlanSkuName = "standardPlan";
             const int KeyVaultTargetPoolSize = 10;
 
+            var resourcePoolKeyVaultDetails = new ResourcePoolKeyVaultDetails
+            {
+                SkuName = KeyVaultAzureSkuName,
+                Location = location,
+            };
             var keyVaultSku = new ResourcePool
             {
-                Details = new ResourcePoolKeyVaultDetails
-                {
-                    SkuName = KeyVaultAzureSkuName,
-                    Location = location,
-                },
+                Details = resourcePoolKeyVaultDetails,
                 LogicalSkus = new string[] { logicalPlanSkuName },
-                Id = Guid.NewGuid().ToString("D"),
+                Id = resourcePoolKeyVaultDetails.GetPoolDefinition(),
                 IsEnabled = true,
                 TargetCount = KeyVaultTargetPoolSize,
                 Type = ResourceType.KeyVault,
