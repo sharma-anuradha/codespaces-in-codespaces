@@ -2,18 +2,14 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
-import {
-    IWorkbenchConstructionOptions,
-    IWebSocketFactory,
-    URI,
-} from 'vscode-web';
+import { IWorkbenchConstructionOptions, IWebSocketFactory, URI, IHomeIndicator } from 'vscode-web';
 
 import {
     createTrace,
     ILocalEnvironment,
     IEnvironment,
     isHostedOnGithub,
-    vsls
+    vsls,
 } from 'vso-client-core';
 
 import {
@@ -57,14 +53,15 @@ const getWorkspaceUrl = (defaultUrl: URL) => {
 
     const result = PostMessageRepoInfoRetriever.getStoredInfo();
     if (!result) {
-        throw new Error('No environmentId info found.'); 
+        throw new Error('No environmentId info found.');
     }
 
-    const url = new URL(`https://github.com/workspaces/${result.ownerUsername}/${result.workspaceId}`);
+    const url = new URL(
+        `https://github.com/workspaces/${result.ownerUsername}/${result.workspaceId}`
+    );
 
     return url;
-}
-
+};
 
 import { telemetry } from '../../utils/telemetry';
 import { updateFavicon } from '../../utils/updateFavicon';
@@ -96,7 +93,7 @@ export interface WorkbenchProps {
     apiEndpoint: string;
     token: string | undefined;
     environmentInfo: ILocalEnvironment | undefined;
-    getEnvironment: typeof envRegService.getEnvironment
+    getEnvironment: typeof envRegService.getEnvironment;
     params: URLSearchParams;
     correlationId?: string | null;
     isValidEnvironmentFound: boolean;
@@ -113,7 +110,7 @@ const logger = createTrace('WorkbenchView');
 class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     constructor(props: WorkbenchProps, state: IWorkbenchState) {
         super(props, state);
-        
+
         this.state = {
             connectError: null,
             connectRequested: false,
@@ -188,7 +185,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             return;
         }
 
-
         if (this.state && this.state.connectError) {
             return;
         }
@@ -202,7 +198,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             );
 
             if (environmentInfo.connection) {
-                try {   
+                try {
                     communicationAdapter.connect(environmentInfo.connection.sessionId);
                 } catch (e) {
                     logger.info(`Connection failed ${e}`);
@@ -268,12 +264,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
     // tslint:disable-next-line: max-func-body-length
     async mountWorkbench(environmentInfo: IEnvironment) {
-        const {
-            token,
-            liveShareEndpoint,
-            apiEndpoint,
-            getEnvironment,
-        } = this.props;
+        const { token, liveShareEndpoint, apiEndpoint, getEnvironment } = this.props;
 
         if (this.workbenchMounted) {
             return;
@@ -292,11 +283,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
 
         const envConnector = new EnvConnector(async (e) => {
-            const {
-                workspaceClient,
-                workspaceService,
-                rpcConnection
-            } = e;
+            const { workspaceClient, workspaceService, rpcConnection } = e;
 
             // Expose credential service
             const gitCredentialService = new GitCredentialService(workspaceService, rpcConnection);
@@ -306,7 +293,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             const sourceEventService = workspaceClient.getServiceProxy<vsls.SourceEventService>(
                 vsls.SourceEventService
             );
-            
+
             new BrowserSyncService(sourceEventService);
         });
 
@@ -318,7 +305,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             getVSCodeVersion(),
             getExtensions(),
             environmentInfo.id,
-            apiEndpoint,
+            apiEndpoint
         );
 
         const listener = () => {
@@ -347,7 +334,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         if (!isHostedOnGithub()) {
             localStorage.setItem('vscode.baseTheme', 'vs-dark');
         }
-        
+
         const userDataProvider = new UserDataProvider(defaultSettings);
         await userDataProvider.initializeDBProvider();
 
@@ -370,7 +357,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     getEnvironment,
                     getExtensions(),
                     environmentInfo.id,
-                    apiEndpoint,
+                    apiEndpoint
                 );
             },
         };
@@ -396,6 +383,27 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
         const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
 
+        const homeIndicator: IHomeIndicator | undefined = isHostedOnGithub()
+            ? {
+                  command: '_github.gohome',
+                  icon: 'github-inverted',
+                  title: 'Go Home',
+              }
+            : undefined;
+        const commands = [
+            {
+                id: '_github.gohome',
+                handler: () => {
+                    window.parent.postMessage(
+                        {
+                            type: 'vso-go-home',
+                        },
+                        document.referrer
+                    );
+                },
+            },
+        ];
+
         const config: IWorkbenchConstructionOptions = {
             remoteAuthority: `vsonline+${environmentInfo.id}`,
             webSocketFactory: VSLSWebSocketFactory,
@@ -408,6 +416,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             resolveExternalUri,
             resolveCommonTelemetryProperties,
             applicationLinks,
+            homeIndicator,
+            commands,
         };
 
         logger.info(`Creating workbench on #${this.workbenchRef}, with config: `, config);
@@ -463,10 +473,7 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         return e.id === props.match.params.id;
     });
 
-    const {
-        liveShareEndpoint,
-        apiEndpoint
-    } = state.configuration || defaultConfig;
+    const { liveShareEndpoint, apiEndpoint } = state.configuration || defaultConfig;
 
     const params = new URLSearchParams(props.location.search);
 

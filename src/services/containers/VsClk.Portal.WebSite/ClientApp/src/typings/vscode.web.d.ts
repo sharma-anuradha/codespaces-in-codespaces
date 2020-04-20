@@ -535,6 +535,25 @@ declare module 'vscode-web' {
         handler: (...args: any[]) => void;
     }
 
+    interface IHomeIndicator {
+
+        /**
+         * The identifier of the command to run when clicking the home indicator.
+         */
+        command: string;
+
+        /**
+         * The icon name for the home indicator. This needs to be one of the existing
+         * icons from our Codicon icon set. For example `sync`.
+         */
+        icon: string;
+
+        /**
+         * A tooltip that will appear while hovering over the home indicator.
+         */
+        title: string;
+    }
+
     export interface IWorkbenchConstructionOptions {
         /**
          * Experimental: the remote authority is the IP:PORT from where the workbench is served
@@ -643,6 +662,11 @@ declare module 'vscode-web' {
          * Note: commands can be called from extensions if the identifier is known!
          */
         readonly commands?: readonly IHostCommand[];
+
+        /**
+         * Optional home indicator to appear above the hamburger menu in the activity bar.
+         */
+        readonly homeIndicator?: IHomeIndicator;
     }
 
     export interface IWorkbench {
