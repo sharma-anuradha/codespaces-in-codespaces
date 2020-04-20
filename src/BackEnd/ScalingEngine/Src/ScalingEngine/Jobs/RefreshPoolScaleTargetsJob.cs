@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
@@ -35,19 +34,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         /// <param name="resourcePoolSettingsRepository">The settings repository where current settings
         /// overrides can be configured.</param>
         /// <param name="taskHelper">The task helper for triggering background jobs.</param>
-        /// <param name="azureSubscriptionCatalogOptions">The azure subscription catalog options.</param>
+        /// <param name="controlPlaneInfo">The control plane info.</param>
         public RefreshPoolScaleTargetsJob(
             ISystemCatalog systemCatalog,
             IResourceScalingHandler resourceScalingBroker,
             IResourcePoolSettingsRepository resourcePoolSettingsRepository,
             ITaskHelper taskHelper,
-            IOptions<AzureSubscriptionCatalogOptions> azureSubscriptionCatalogOptions)
+            IControlPlaneInfo controlPlaneInfo)
         {
             SystemCatalog = systemCatalog;
             ResourceScalingBroker = resourceScalingBroker;
             ResourcePoolSettingsRepository = resourcePoolSettingsRepository;
             TaskHelper = taskHelper;
-            DataPlaneSettings = azureSubscriptionCatalogOptions.Value.DataPlaneSettings;
+            ControlPlaneInfo = controlPlaneInfo;
         }
 
         private ISystemCatalog SystemCatalog { get; }
@@ -58,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 
         private ITaskHelper TaskHelper { get; }
 
-        private DataPlaneSettings DataPlaneSettings { get; }
+        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         /// <inheritdoc/>
         public Task WarmupCompletedAsync()
@@ -89,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             logger.LogInfo($"{GetType().FormatLogMessage(nameof(GetKeyVaultPools))}");
 
             var keyVaultPools = new List<ResourcePool>();
-            foreach (var location in DataPlaneSettings.DefaultLocations)
+            foreach (var location in ControlPlaneInfo.Stamp.DataPlaneLocations)
             {
                 var standardKeyVaultPoolSku = ConstructKeyVaultPool(location);
                 keyVaultPools.Add(standardKeyVaultPoolSku);
