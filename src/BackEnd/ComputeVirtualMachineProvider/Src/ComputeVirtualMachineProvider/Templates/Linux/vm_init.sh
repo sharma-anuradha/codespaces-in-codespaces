@@ -13,6 +13,7 @@ SCRIPT_PARAM_VM_USE_OUTPUT_QUEUE=0
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_NAME='__REPLACE_OUTPUT_QUEUE_NAME__'
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL='__REPLACE_OUTPUT_QUEUE_URL__'
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN='__REPLACE_OUTPUT_QUEUE_SASTOKEN__'
+SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 
 echo "Updating packages ..."
 apt-get -yq update || true
@@ -99,3 +100,6 @@ echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> /.vsonline/vsoagent
 echo "Start vso agent"
 # Switch to daemon process until service permission issue is fixed.
 bash -c 'nohup ./vso vmagent &>/dev/null & jobs -p %1'
+
+echo "delete ssh public key"
+rm -f $SCRIPT_PARAM_VM_PUBLIC_KEY_PATH

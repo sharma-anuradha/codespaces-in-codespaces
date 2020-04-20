@@ -2,10 +2,13 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminPassword": {
+    "adminUsername": {
       "type": "string"
     },
-    "adminUsername": {
+    "adminPublicKeyPath": {
+      "type": "string"
+    },
+    "adminPublicKey": {
       "type": "string"
     },
     "location": {
@@ -15,9 +18,6 @@
       "type": "string"
     },
     "virtualMachineName": {
-      "type": "string"
-    },
-    "virtualMachineRG": {
       "type": "string"
     },
     "virtualMachineSize": {
@@ -43,12 +43,12 @@
     {
       "name": "[parameters('networkInterfaceName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2018-10-01",
+      "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
       "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/',variables('vnetName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -80,7 +80,7 @@
     {
       "name": "[variables('vnetName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2019-02-01",
+      "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
       "tags": "[parameters('resourceTags')]",
       "properties": {
@@ -98,12 +98,14 @@
       }
     },
     {
-      "apiVersion": "2018-10-01",
+      "name": "[parameters('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
       ],
-      "location": "[parameters('location')]",
-      "name": "[parameters('virtualMachineName')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('virtualMachineSize')]"
@@ -111,7 +113,7 @@
         "storageProfile": {
           "osDisk": {
             "name": "[variables('diskName')]",
-            "createOption": "FromImage",
+            "createOption": "fromImage",
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             }
@@ -133,38 +135,46 @@
         "osProfile": {
           "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[parameters('adminPublicKeyPath')]",
+                  "keyData": "[parameters('adminPublicKey')]"
+                }
+              ]
+            }
+          }
         }
       },
       "resources": [
         {
-          "apiVersion": "2015-06-15",
+          "name": "update-vm",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2019-07-01",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
           ],
-          "location": "[parameters('location')]",
-          "name": "update-vm",
+          "tags": {
+            "displayName": "update-vm"
+          },
           "properties": {
-            "autoUpgradeMinorVersion": true,
-            "protectedSettings": {
-              "script": "[parameters('vmSetupScript')]"
-            },
             "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
             "settings": {
               "skipDos2Unix": false,
               "timestamp": 123456789
             },
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0"
-          },
-          "tags": {
-            "displayName": "update-vm"
-          },
-          "type": "Extensions"
+            "protectedSettings": {
+              "script": "[parameters('vmSetupScript')]"
+            }
+          }
         }
-      ],
-      "tags": "[parameters('resourceTags')]",
-      "type": "Microsoft.Compute/virtualMachines"
+      ]
     }
   ],
   "outputs": {

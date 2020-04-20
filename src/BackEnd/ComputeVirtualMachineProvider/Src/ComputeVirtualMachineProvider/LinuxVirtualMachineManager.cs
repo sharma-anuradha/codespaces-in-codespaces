@@ -23,6 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public class LinuxVirtualMachineManager : VirtualMachineManagerBase
     {
+        private const string VmPublicSshKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPYyB2V9q43oWBJINIZMzJ4zrYoNptGCK9i28qxj9cS2Af/FkrVYTSSRMPJforJRVkyY/6M63TFzfIeMe6b93g9Q4nDoxyUDMJ5SEkLp3kw3caxrimLQF2yJz4QySoiqaFlhfot9bP3En9i8AQYjogQtxQqpw77RRzQOkinP5gyga5W2Ia/inNGBRwF2guqZccsOrTI2WF6dnHTB28LIxhHox/WH+0CmMKQrP8yX3bzoReXvsmm8RztC6PWb3G9FzEXK6fDdaLApSIvO/sc5MSEEdbwx7yo2phWsv96x7wY3QZtUGg+ZZnrtr/RE05xQPHm+ufh7qwbF87Ekt70h9R vsonline@machine";
+        private const string AdminUserName = "cloudenv";
+        private static readonly string PublicKeyPath = $"/home/{AdminUserName}/.ssh/authorized_keys";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LinuxVirtualMachineManager"/> class.
         /// </summary>
@@ -78,12 +82,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
-                    { "adminUserName", new Dictionary<string, object>() { { Key, "cloudenv" } } },
-                    { "adminPassword", new Dictionary<string, object>() { { Key, Guid.NewGuid() } } },
+                    { "adminUserName", new Dictionary<string, object>() { { Key, AdminUserName } } },
                     { "vmSetupScript", new Dictionary<string, object>() { { Key, vmInitScript } } },
+                    { "adminPublicKeyPath", new Dictionary<string, object>() { { Key, PublicKeyPath } } },
+                    { "adminPublicKey", new Dictionary<string, object>() { { Key, VmPublicSshKey } } },
                     { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
                     { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName } } },
-                    { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
                     { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
                     { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
                     { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
@@ -136,6 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 .Replace("__REPLACE_VMTOKEN__", vmToken)
                 .Replace("__REPLACE_VMAGENT_BLOB_URl__", vmAgentBlobUrl)
                 .Replace("__REPLACE_RESOURCEID__", resourceId)
+                .Replace("__REPLACE_VM_PUBLIC_KEY_PATH__", PublicKeyPath)
                 .Replace("__REPLACE_FRONTEND_SERVICE_DNS_HOST_NAME__", frontEndDnsHostName);
         }
 
