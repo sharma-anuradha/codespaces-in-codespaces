@@ -6,6 +6,8 @@ export interface IRepoInfo {
     workspaceId: string;
     repositoryId: string;
     environmentId: string;
+    githubToken?: string;
+    cascadeToken?: string;
 }
 
 const getLocalstorageKey = () => {
@@ -22,10 +24,7 @@ export class PostMessageRepoInfoRetriever {
     private awaitResponsePromises: Map<string, [Function, Function]> = new Map();
 
     constructor() {
-        const envId = location.pathname.split('/')[2];
-        if (!envId) {
-            throw new Error('No environmentId found.');
-        }
+        getCurrentEnvironmentId();
 
         window.addEventListener('message', this.receiveMessage, false);
     }
@@ -69,7 +68,14 @@ export class PostMessageRepoInfoRetriever {
             );
         }
 
-        localStorage.setItem(getLocalstorageKey(), JSON.stringify(data, null, 2));
+        const cleanData = {
+            ...data
+        };
+
+        delete cleanData.githubToken;
+        delete cleanData.cascadeToken;
+
+        localStorage.setItem(getLocalstorageKey(), JSON.stringify(cleanData));
 
         return data;
     };

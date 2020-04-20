@@ -432,7 +432,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             return <Loader></Loader>;
         }
 
-        if (!isNotAvailable(environmentInfo!)) {
+        if (!isNotAvailable(environmentInfo)) {
             return (
                 <div className='vsonline-workbench'>
                     <div

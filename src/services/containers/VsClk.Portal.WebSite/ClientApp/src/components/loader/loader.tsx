@@ -1,8 +1,11 @@
-import React, { Component } from 'react';
-import './loader.css';
-import { Spinner, SpinnerLabelPosition } from 'office-ui-fabric-react/lib/Spinner';
+import React, { Component, Fragment } from 'react';
+import { SpinnerLabelPosition } from 'office-ui-fabric-react/lib/Spinner';
+import { isHostedOnGithub } from 'vso-client-core';
+import { VsoLoader } from './VsoLoader';
 
-interface LoaderProps {
+import './loader.css';
+
+export interface LoaderProps {
     message?: string;
     labelPosition?: SpinnerLabelPosition;
     className?: string;
@@ -10,20 +13,8 @@ interface LoaderProps {
 
 export class Loader extends Component<LoaderProps> {
     render() {
-        const {
-            message = 'Loading...',
-            labelPosition  = 'right',
-            className = '',
-        } = this.props;
-
-        return (
-            <Spinner
-                className={`vsonline-loader ${className}`}
-                label={message}
-                ariaLabel={message}
-                ariaLive='assertive'
-                labelPosition={labelPosition}
-            />
-        );
+        return (!isHostedOnGithub())
+            ? <VsoLoader {...this.props} />
+            : <Fragment />;
     }
 }

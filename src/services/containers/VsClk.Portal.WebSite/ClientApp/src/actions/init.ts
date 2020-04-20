@@ -1,3 +1,5 @@
+import { isHostedOnGithub } from 'vso-client-core';
+
 import { useActionCreator } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
 
@@ -45,12 +47,20 @@ export async function init(getAuthTokenAction: () => Promise<string>) {
         });
 
         await Promise.all([dispatch(configurationPromise), dispatch(tokenPromise)]);
-        await Promise.all([dispatch(getPlans()), dispatch(getUserInfo())]);
-        await Promise.all([
-            dispatch(fetchEnvironments()),
-            dispatch(tryGetGitHubCredentialsLocal()),
-            dispatch(tryGetAzDevCredentialsLocal()),
-        ]);
+
+        if (!isHostedOnGithub()) {
+            await Promise.all([dispatch(getPlans()), dispatch(getUserInfo())]);
+        }
+
+        const envsPromise = [dispatch(fetchEnvironments())];
+        if (!isHostedOnGithub()) {
+            envsPromise.push(
+                dispatch(tryGetGitHubCredentialsLocal()),
+                dispatch(tryGetAzDevCredentialsLocal()),
+            );
+        }
+
+        await Promise.all(envsPromise);
 
         dispatch(action(initActionSuccessType));
     } catch (err) {

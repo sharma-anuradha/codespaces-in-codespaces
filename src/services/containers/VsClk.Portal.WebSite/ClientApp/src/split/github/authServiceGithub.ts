@@ -34,15 +34,30 @@ export class AuthServiceGithub {
             return;
         }
 
-        window.onload = async () => {
-            const postMessageInfoRetriever = new PostMessageRepoInfoRetriever();
+        const postMessageInfoRetriever = new PostMessageRepoInfoRetriever();
 
-            this.repoInfo = await postMessageInfoRetriever.getRepoInfo();
+        this.repoInfo = await postMessageInfoRetriever.getRepoInfo();
+        postMessageInfoRetriever.dispose();
 
-            postMessageInfoRetriever.dispose();
-            
-            this.initializeSignal.complete(undefined);
-        };
+        // if tokens were passed, cache them
+        const { githubToken, cascadeToken }  = this.repoInfo;
+        const environmentId = getCurrentEnvironmentId();
+
+        if (typeof githubToken === 'string') {
+            const keychainKey = createGitHubTokenKey(environmentId);
+            await localStorageKeychain.set(keychainKey, githubToken);
+        }
+
+        if (typeof cascadeToken === 'string') {
+            const keychainKey = createCascadeTokenKey(environmentId);
+            const isValidToken = this.isValidCascadeToken(cascadeToken);
+
+            if (isValidToken) {
+                await localStorageKeychain.set(keychainKey, cascadeToken);
+            }
+        }
+
+        this.initializeSignal.complete(undefined);
     };
 
     private getGitHubToken = async (repositoryId: string) => {
@@ -160,7 +175,7 @@ export class AuthServiceGithub {
         return token;
     };
 
-    public getCachedCascadeToken = async (expirationMs = 60 * 60 * 1000) => {
+    public getCachedCascadeToken = async () => {
         await this.initializeSignal.promise;
 
         if (!this.repoInfo) {
@@ -176,19 +191,22 @@ export class AuthServiceGithub {
             return await this.getFreshCascadeToken();
         }
 
-        const parsedToken = parseCascadeToken(token);
-        if (!parsedToken) {
-            await localStorageKeychain.delete(keychainKey);
-            return null;
-        }
-
-        const tokenExpirationDelta = parsedToken.exp - Date.now();
-
-        if (tokenExpirationDelta <= 5 * HOUR_MS) {
+        const isValidToken = this.isValidCascadeToken(token);
+        if (!isValidToken) {
             return await this.getFreshCascadeToken();
         }
 
         return token;
+    };
+
+    private isValidCascadeToken = (cascadeToken: string) => {
+        const parsedToken = parseCascadeToken(cascadeToken);
+        if (!parsedToken) {
+            return false;
+        }
+
+        const tokenExpirationDelta = parsedToken.exp - Date.now();
+        return (tokenExpirationDelta > 2.1 * HOUR_MS);
     };
 }
 
