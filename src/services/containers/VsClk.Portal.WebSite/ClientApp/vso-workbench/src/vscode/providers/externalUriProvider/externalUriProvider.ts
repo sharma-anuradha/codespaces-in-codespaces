@@ -24,7 +24,7 @@ export abstract class BaseExternalUriProvider {
         await this.ensurePortIsForwarded(port);
 
         const pfDomain = location.origin.split('//').pop();
-        const newUri = new vscode.URI('https', `${this.sessionId}-${port}.${pfDomain}`, uri.path, uri.query);
+        const newUri = new vscode.URI('https', `${this.sessionId}-${port}.${pfDomain}`, uri.path, uri.query, uri.fragment);
 
         // set cookie to authenticate PortForwarding
         const token = await authService.getCachedToken();
