@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 1`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 1`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -38,7 +38,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 2`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 2`] = `
 Array [
   <div
     className="vsonline-splash-screen-main "
@@ -98,7 +98,7 @@ Array [
 ]
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 3`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 3`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -136,7 +136,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 4`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 4`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -184,7 +184,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 5`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 5`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -238,7 +238,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 6`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 6`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -276,7 +276,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 7`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 7`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -330,7 +330,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender environment states 8`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 8`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -364,7 +364,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
           >
             <p>
               Preparing your 
-              Visual Studio Online Environment
+              Visual Studio Codespace
             </p>
           </div>
           <div>
@@ -800,7 +800,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender environment states 
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender workbench states 1`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 1`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -848,7 +848,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender workbench states 1`
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender workbench states 2`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 2`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -886,7 +886,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender workbench states 2`
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender workbench states 3`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 3`] = `
 <div
   className="vsonline-splash-screen-main "
 >
@@ -940,7 +940,7 @@ exports[`WorkbechPageRender should render WorkbechPageRender workbench states 3`
 </div>
 `;
 
-exports[`WorkbechPageRender should render WorkbechPageRender workbench states 4`] = `
+exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 4`] = `
 <div
   className="vsonline-splash-screen-main "
 >

@@ -6,8 +6,8 @@ import { EnvironmentStateInfo } from 'vso-client-core';
 import { WorkbenchPageRender } from '../../../src/react-app/components/WorkbenchPage/WorkbenchPageRender';
 import { EnvironmentWorkspaceState } from '../../../src/interfaces/EnvironmentWorkspaceState';
 
-describe('WorkbechPageRender', () => {
-    it('should render WorkbechPageRender environment states', () => {
+describe('WorkbenchPageRender', () => {
+    it('should render WorkbenchPageRender environment states', () => {
         let i = 0;
         for (let state in EnvironmentStateInfo) {
             const message = `${i++}`;
@@ -26,7 +26,7 @@ describe('WorkbechPageRender', () => {
         }
     });
 
-    it('should render WorkbechPageRender workbench states', () => {
+    it('should render WorkbenchPageRender workbench states', () => {
         let i = 0;
         for (let state in EnvironmentWorkspaceState) {
             const message = `${i++}`;

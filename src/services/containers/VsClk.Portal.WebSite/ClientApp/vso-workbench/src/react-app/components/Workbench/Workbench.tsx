@@ -8,11 +8,11 @@ import { Workbench } from '../../../vscode/workbenches/defaultWorkbench';
 import './Workbench.css';
 import { SplashScreenMessage } from '../SplashScreenShellMessage/SplashScreenShellMessage';
 
-export interface IWorkbechPropsComponnet {
+export interface IWorkbenchPropsComponent  {
     onError: (e: Error) => any | Promise<any>
 }
 
-class WorkbenchComponent extends React.Component<IWorkbechPropsComponnet> {
+class WorkbenchComponent extends React.Component<IWorkbenchPropsComponent> {
     private readonly domElementId = 'js-vscode-workbench-placeholder';
 
     private workbench: Workbench | null = null;
