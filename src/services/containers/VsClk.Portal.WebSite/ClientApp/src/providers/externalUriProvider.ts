@@ -2,7 +2,7 @@ import { isHostedOnGithub, IEnvironment } from 'vso-client-core';
 
 import { EnvConnector } from 'vso-ts-agent';
 
-import { BaseExternalUriProvider as WorkbenchBaseExternalUriProvider } from 'vso-workbench';
+import { vscode, BaseExternalUriProvider as WorkbenchBaseExternalUriProvider } from 'vso-workbench';
 
 import { getPFDomain, getCurrentEnvironment } from '../utils/getPortForwardingDomain';
 
@@ -21,16 +21,18 @@ abstract class BaseExternalUriProvider extends WorkbenchBaseExternalUriProvider 
         sendTelemetry('vsonline/portal/resolve-external-uri', { port });
         await this.ensurePortIsForwarded(port);
 
-        uri.scheme = 'https';
+        let authority: string;
         if (isHostedOnGithub()) {
             const environment = getCurrentEnvironment();
             const pfDomain = getPFDomain(environment)
                 .split('//')
                 .pop();
-            uri.authority = `${this.sessionId}-${port}.${pfDomain}`;
+            authority = `${this.sessionId}-${port}.${pfDomain}`;
         } else {
-            uri.authority = `${this.sessionId}-${port}.app.${window.location.hostname}`;
+            authority = `${this.sessionId}-${port}.app.${window.location.hostname}`;
         }
+
+        const newUri = new vscode.URI('https', authority, uri.path, uri.query, uri.fragment);
 
         //set cookie to authenticate PortForwarding
         const getAuthToken = getAuthTokenAction();
@@ -38,9 +40,9 @@ abstract class BaseExternalUriProvider extends WorkbenchBaseExternalUriProvider 
         if (token === undefined) {
             throw new Error('No token available.');
         }
-        await setAuthCookie(token, `${uri.scheme}://${uri.authority}`);
+        await setAuthCookie(token, `${newUri.scheme}://${newUri.authority}`);
 
-        return uri;
+        return newUri;
     }
 }
 

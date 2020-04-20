@@ -1,4 +1,5 @@
 import { URI } from 'vscode-web';
+import { vscode } from '../../vscodeAssets/vscode';
 
 import { IEnvironment } from 'vso-client-core';
 import { EnvConnector } from 'vso-ts-agent';
@@ -11,7 +12,7 @@ import { AuthenticationError } from '../../../errors/AuthenticationError';
 export abstract class BaseExternalUriProvider {
     protected abstract ensurePortIsForwarded(port: number): Promise<void>;
 
-    constructor(protected readonly sessionId: string) {}
+    constructor(protected readonly sessionId: string) { }
 
     public async resolveExternalUri(uri: URI): Promise<URI> {
         const port = this.getLocalHostPortToForward(uri);
@@ -22,10 +23,8 @@ export abstract class BaseExternalUriProvider {
         sendTelemetry('vsonline/workbench/resolve-external-uri', { port });
         await this.ensurePortIsForwarded(port);
 
-        uri.scheme = 'https';
         const pfDomain = location.origin.split('//').pop();
-
-        uri.authority = `${this.sessionId}-${port}.${pfDomain}`;
+        const newUri = new vscode.URI('https', `${this.sessionId}-${port}.${pfDomain}`, uri.path, uri.query);
 
         // set cookie to authenticate PortForwarding
         const token = await authService.getCachedToken();
@@ -33,9 +32,9 @@ export abstract class BaseExternalUriProvider {
             throw new AuthenticationError('No token available.');
         }
 
-        await setAuthCookie(token, `${uri.scheme}://${uri.authority}`);
+        await setAuthCookie(token, `${newUri.scheme}://${newUri.authority}`);
 
-        return uri;
+        return newUri;
     }
 
     protected getLocalHostPortToForward(uri: URI): number | undefined {
