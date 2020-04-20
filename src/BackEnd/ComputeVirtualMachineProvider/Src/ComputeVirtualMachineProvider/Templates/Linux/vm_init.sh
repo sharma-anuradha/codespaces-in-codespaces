@@ -15,8 +15,12 @@ SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL='__REPLACE_OUTPUT_QUEUE_URL__'
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN='__REPLACE_OUTPUT_QUEUE_SASTOKEN__'
 SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 
+echo "Add packages.microsoft.com repository"
+curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+apt-add-repository https://packages.microsoft.com/ubuntu/18.04/prod
+
 echo "Updating packages ..."
-apt-get -yq update || true
+apt-get -yq update
 
 echo "Increase file watcher limit"
 echo "fs.inotify.max_user_watches=524288" | tee -a /etc/sysctl.conf
@@ -26,14 +30,7 @@ echo "Create docker group with ID 800"
 groupadd -g 800 docker
 
 echo "Install docker ..."
-# Download specific docker version - 18.09.7-0ubuntu1~18.04.4
-#   URL below was taken from running 'apt-cache show docker.io=18.09.7-0ubuntu1~18.04.4'
-#   OR visiting http://azure.archive.ubuntu.com/ubuntu/dists/bionic-updates/universe/binary-amd64/Packages.gz
-docker_debfile=$(mktemp)
-wget -qO- -O $docker_debfile http://azure.archive.ubuntu.com/ubuntu/pool/universe/d/docker.io/docker.io_18.09.7-0ubuntu1~18.04.4_amd64.deb
-dpkg --install $docker_debfile || true
-apt-get install -fy
-rm $docker_debfile
+apt-get -yq install moby-engine=3.0.11+azure-2
 docker --version
 
 echo "Install docker-compose"
