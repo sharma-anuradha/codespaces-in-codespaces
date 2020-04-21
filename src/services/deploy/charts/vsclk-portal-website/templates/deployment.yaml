@@ -29,6 +29,10 @@ spec:
         ports:
         - containerPort: {{ .Values.service.internalPort }}
         env:
+        - name: PORTAL_AppSettings__PortForwardingEnableEnvironmentEndpoints
+          value: {{ .Values.config.portForwardingEnableEnvironmentEndpoints | quote }}
+        - name: PORTAL_AppSettings__GitHubportForwardingEnableEnvironmentEndpoints
+          value: {{ .Values.config.gitHubportForwardingEnableEnvironmentEndpoints | quote }}
         {{- range $index, $hosts := .Values.portForwardingHosts }}
         {{- range $hostIndex, $host := $hosts.hosts }}
         - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__Hosts__{{ $hostIndex }}
@@ -37,7 +41,7 @@ spec:
         - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__CertificateSecretName
           value: {{ $hosts.certificateSecretName | quote }}
         - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__AllowEnvironmentIdBasedHosts
-          value: {{ $hosts.allowEnvironmentIdBasedHosts | quote }}
+          value: {{ $hosts.allowEnvironmentIdBasedHosts }}
         {{- end }}
         {{- range .Values.appSettings }}
         - name: {{ . }}
