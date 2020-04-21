@@ -1,4 +1,8 @@
-const KNOWN_GITHUB_HOSTNAMES = ['workspaces-dev.github.com'];
+const KNOWN_GITHUB_HOSTNAMES = [
+    'workspaces-dev.github.com',
+    'workspaces-ppe.github.com',
+    'workspaces.github.com'
+];
 
 export const isGitHubHostname = (urlString: string) => {
     const url = new URL(urlString);

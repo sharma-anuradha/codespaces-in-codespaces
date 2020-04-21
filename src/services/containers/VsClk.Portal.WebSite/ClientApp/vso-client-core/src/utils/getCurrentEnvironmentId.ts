@@ -11,14 +11,14 @@ export const getCurrentEnvironmentId = () => {
 
     const isKnownExactOrigin = KNOWN_VSO_HOSTNAMES.includes(hostname);
     if (!isKnownExactOrigin && !isGitHubHostname(href)) {
-        throw new Error('Unknown origin.');
+        throw new Error(`Unknown origin "${hostname}".`);
     }
 
     const split = pathname.split('/').slice(1);
     const [workspacePath, id] = split;
 
     if (!['workspace', 'environment'].includes(workspacePath)) {
-        throw new Error('Unexpected path.');
+        throw new Error(`Unexpected path "${workspacePath}".`);
     }
 
     if (typeof id !== 'string') {

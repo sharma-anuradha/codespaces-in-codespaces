@@ -1,4 +1,12 @@
-import { addDefaultGithubKey, Signal, localStorageKeychain, setKeychainKeys, createKeys, getCurrentEnvironmentId } from 'vso-client-core';
+import {
+    addDefaultGithubKey,
+    Signal,
+    localStorageKeychain,
+    setKeychainKeys,
+    createKeys,
+    getCurrentEnvironmentId,
+    timeConstants,
+} from 'vso-client-core';
 
 import {
     getGitHubAccessToken,
@@ -13,7 +21,7 @@ import { fetchKeychainKeys } from '../../services/authService';
 import { invalidateGitHubKey } from 'vso-client-core/src/keychain/localstorageKeychainKeys';
 import { createCascadeTokenKey } from './createCascadeTokenKey';
 import { createGitHubTokenKey } from './createGitHubTokenKey';
-import { HOUR_MS } from 'vso-client-core/src/constants';
+import { githubLoginPath } from './routesGithub';
 
 export class AuthServiceGithub {
     private initializeSignal = new Signal();
@@ -21,6 +29,15 @@ export class AuthServiceGithub {
     private repoInfo?: IRepoInfo;
 
     public init = async () => {
+        /**
+         * If GitHub embedder does not pass the GitHub token, we perform OAuth redirections
+         * to get the GitHub token with the OAuth app, in those circumstances, don't try to
+         * get the repoInfo since there is no embedder anyway.
+         */
+        if (location.pathname === githubLoginPath) {
+            return;
+        }
+
         const keys = await fetchKeychainKeys();
         if (keys) {
             setKeychainKeys(keys);
@@ -40,7 +57,7 @@ export class AuthServiceGithub {
         postMessageInfoRetriever.dispose();
 
         // if tokens were passed, cache them
-        const { githubToken, cascadeToken }  = this.repoInfo;
+        const { githubToken, cascadeToken } = this.repoInfo;
         const environmentId = getCurrentEnvironmentId();
 
         if (typeof githubToken === 'string') {
@@ -68,10 +85,11 @@ export class AuthServiceGithub {
 
         const githubTokenResponse = await getStoredGitHubAccessTokenResponse();
 
-        if (!githubTokenResponse || (githubTokenResponse.repoId !== repositoryId)) {
+        if (!githubTokenResponse || githubTokenResponse.repoId !== repositoryId) {
             clearGitHubAccessTokenResponse();
 
-            return await getGitHubAccessToken(true, location.pathname);
+            const redirectionUrl = location.pathname + location.search;
+            return await getGitHubAccessToken(true, redirectionUrl);
         }
 
         const { accessToken } = githubTokenResponse;
@@ -102,7 +120,7 @@ export class AuthServiceGithub {
 
         const cascadeKeychainKey = createCascadeTokenKey(environmentId);
         await localStorageKeychain.set(cascadeKeychainKey, cascadeToken);
-        
+
         const githubKeychainKey = createGitHubTokenKey(environmentId);
         await localStorageKeychain.set(githubKeychainKey, accessToken);
 
@@ -115,7 +133,7 @@ export class AuthServiceGithub {
         invalidateGitHubKey();
 
         await localStorageKeychain.rehash();
-    }
+    };
 
     private getFreshCascadeToken = async (): Promise<string | null> => {
         if (!this.repoInfo) {
@@ -129,16 +147,16 @@ export class AuthServiceGithub {
 
         const { ownerUsername, workspaceId } = this.repoInfo;
 
-        const url = new URL(`/workspaces/${ownerUsername}/${workspaceId}/token`, getGitHubApiEndpoint());
-        const cascadeToken = await fetch(
-            url.toString(),
-            {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${githubToken}`,
-                },
-            }
+        const url = new URL(
+            `/workspaces/${ownerUsername}/${workspaceId}/token`,
+            getGitHubApiEndpoint()
         );
+        const cascadeToken = await fetch(url.toString(), {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${githubToken}`,
+            },
+        });
 
         if (!cascadeToken.ok) {
             return null;
@@ -206,7 +224,7 @@ export class AuthServiceGithub {
         }
 
         const tokenExpirationDelta = parsedToken.exp - Date.now();
-        return (tokenExpirationDelta > 2.1 * HOUR_MS);
+        return tokenExpirationDelta > 2.1 * timeConstants.HOUR_MS;
     };
 }
 

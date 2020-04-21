@@ -44,7 +44,7 @@ export function GitHubLogin() {
                 if (redirectUrl) {
                     // hard redirect on-purpose in case of inline auth flow,
                     // to reinitialize all modules after auth
-                    location.href = redirectUrl.pathname;
+                    location.href = redirectUrl.pathname + (redirectUrl.search || '');
                 }
             }
         }
