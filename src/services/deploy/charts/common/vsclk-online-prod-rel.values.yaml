@@ -65,8 +65,8 @@ config:
   vsSaaSCertificateSecretName: vsls-prod-auth-cert-primary
   portForwardingDomainTemplate: "{0}.app.online.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.workspaces.githubusercontent.com"
-  portForwardingEnableEnvironmentEndpoints: false
-  gitHubportForwardingEnableEnvironmentEndpoints: true
+  portForwardingEnableEnvironmentEndpoints: "false"
+  gitHubportForwardingEnableEnvironmentEndpoints: "true"
 
 azure-secrets:
   # vsclk-core-dev

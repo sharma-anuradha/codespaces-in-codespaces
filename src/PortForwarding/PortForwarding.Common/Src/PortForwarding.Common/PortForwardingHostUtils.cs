@@ -19,7 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         private const string EnvironmentIdRegex = "[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}";
         private const string WorkspaceIdRegex = "[0-9A-Fa-f]{36}";
         private readonly string routingHostPartRegexAllowEnvironments = $"(?:(?<environmentId>{EnvironmentIdRegex})|(?<workspaceId>{WorkspaceIdRegex}))-(?<port>\\d{"{2,5}"})";
-        private readonly string routingHostPartRegex = $"(?:(?<workspaceId>{WorkspaceIdRegex}))-(?<port>\\d{"{2,5}"})";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PortForwardingHostUtils"/> class.
