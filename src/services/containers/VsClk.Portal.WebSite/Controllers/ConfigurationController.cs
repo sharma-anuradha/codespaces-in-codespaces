@@ -33,11 +33,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             {
                 case Partners.GitHub:
                     configuration.Add("portForwardingDomainTemplate", appSettings.GitHubPortForwardingDomainTemplate);
-                    configuration.Add("enableEnvironmentPortForwarding", appSettings.GitHubportForwardingEnableEnvironmentEndpoints);
+                    configuration.Add("enableEnvironmentPortForwarding", appSettings.GitHubportForwardingEnableEnvironmentEndpoints == "true");
                     break;
                 case Partners.VSOnline:
                     configuration.Add("portForwardingDomainTemplate", appSettings.PortForwardingDomainTemplate);
-                    configuration.Add("enableEnvironmentPortForwarding", appSettings.PortForwardingEnableEnvironmentEndpoints);
+                    configuration.Add("enableEnvironmentPortForwarding", appSettings.PortForwardingEnableEnvironmentEndpoints == "true");
                     break;
             }
 

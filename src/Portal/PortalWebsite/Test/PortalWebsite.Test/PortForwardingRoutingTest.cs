@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             var responseHtml = await response.Content.ReadAsStringAsync();
 
-            Assert.Contains("<title>Visual Studio Online</title>", responseHtml);
+            Assert.Contains("<title>Visual Studio Codespaces</title>", responseHtml);
         }
 
         [Theory]
@@ -198,7 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var response = await client.SendAsync(message);
             await response.ThrowIfFailedAsync();
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-         
+
             var cookies = response.Headers.GetValues("Set-Cookie");
             Assert.Contains(cookies,
                 (cookie) => cookie.StartsWith(Constants.PFCookieName, StringComparison.InvariantCultureIgnoreCase));

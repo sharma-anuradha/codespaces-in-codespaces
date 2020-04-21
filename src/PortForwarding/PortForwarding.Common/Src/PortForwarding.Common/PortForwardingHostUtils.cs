@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         public PortForwardingHostUtils(IEnumerable<HostsConfig> hostsConfigs)
         {
             HostRegexes = hostsConfigs.SelectMany(
-                hostConf => hostConf.Hosts.Select(host => string.Format(host, hostConf.AllowEnvironmentIdBasedHosts ? routingHostPartRegexAllowEnvironments : routingHostPartRegex)));
+                hostConf => hostConf.Hosts.Select(host => string.Format(host, routingHostPartRegexAllowEnvironments)));
         }
 
         private IEnumerable<string> HostRegexes { get; }
