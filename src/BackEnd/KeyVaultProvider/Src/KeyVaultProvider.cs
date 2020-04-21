@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                     .WithExistingResourceGroup(input.AzureResourceGroup)
                     .WithTemplate(KeyVaultTemplate)
                     .WithParameters(JsonConvert.SerializeObject(parameters))
-                    .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Complete)
+                    .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                     .BeginCreateAsync();
 
                 var azureResourceInfo = new AzureResourceInfo(input.AzureSubscriptionId, input.AzureResourceGroup, keyVaultName);
