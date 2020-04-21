@@ -45,7 +45,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <returns>PF subdomain.</returns>
         public static string GetPortForwardingSessionSubdomain(this ConnectionDetails connection)
         {
-            return $"{connection.WorkspaceId.ToLower()}-{connection.SourcePort}";
+            var id = string.IsNullOrEmpty(connection.EnvironmentId) ? connection.WorkspaceId : connection.EnvironmentId;
+            return $"{id.ToLower()}-{connection.SourcePort}";
         }
 
         /// <summary>

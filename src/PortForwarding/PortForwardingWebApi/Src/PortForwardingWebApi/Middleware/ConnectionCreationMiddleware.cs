@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
@@ -71,33 +72,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 return;
             }
 
-            // At this stage we only care about headers setting the PF context.
-            // TODO: Can we structure the helpers and services in a way that PFS would explicitly work only on top of headers?
-            if (!context.Request.Headers.TryGetValue(PortForwardingHeaders.WorkspaceId, out var workspaceIdValues) ||
-                !context.Request.Headers.TryGetValue(PortForwardingHeaders.Port, out var portStringValues) ||
-                !hostUtils.TryGetPortForwardingSessionDetails(
-                    workspaceIdValues.SingleOrDefault(),
-                    portStringValues.SingleOrDefault(),
-                    out var sessionDetails))
-            {
-                logger.LogInfo("connection_creation_middleware_missing_or_invalid_session_details");
-
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await context.Response.CompleteAsync();
-
-                return;
-            }
-
             // 2. Send the ConnectionRequest message to the queue
             // Note:
             // This message will be picked up by a Port Forwarding Agent and new LiveShare port forwarding session will be established.
             var connectionInfo = new ConnectionRequest
             {
-                WorkspaceId = sessionDetails.WorkspaceId,
-                Port = sessionDetails.Port,
                 Token = token,
                 VSLiveShareApiEndpoint = appSettings.VSLiveShareApiEndpoint,
             };
+
+            // At this stage we only care about headers setting the PF context.
+            // TODO: Can we structure the helpers and services in a way that PFS would explicitly work only on top of headers?
+            hostUtils.TryGetPortForwardingSessionDetails(context.Request, out var sessionDetails);
+            switch (sessionDetails)
+            {
+                case EnvironmentSessionDetails details:
+                    connectionInfo.WorkspaceId = details.WorkspaceId;
+                    connectionInfo.EnvironmentId = details.EnvironmentId;
+                    connectionInfo.Port = details.Port;
+                    break;
+                case WorkspaceSessionDetails details:
+                    connectionInfo.WorkspaceId = details.WorkspaceId;
+                    connectionInfo.Port = details.Port;
+                    break;
+                default:
+                    logger.LogInfo("connection_creation_middleware_missing_or_invalid_session_details");
+
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    await context.Response.CompleteAsync();
+                    return;
+            }
 
             await logger.OperationScopeAsync(
                 "connection_creation_middleware_send_create_new_message",
@@ -107,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
 
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, serializationOptions))
                     {
-                        SessionId = sessionDetails.WorkspaceId,
+                        SessionId = connectionInfo.WorkspaceId,
                     };
 
                     await client.SendAsync(message);

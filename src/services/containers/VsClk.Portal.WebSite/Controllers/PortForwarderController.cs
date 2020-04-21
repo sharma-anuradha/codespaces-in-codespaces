@@ -17,6 +17,7 @@ using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -86,7 +87,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 (cascadeToken, _) = GetAuthToken(logger);
                 try
                 {
-                    (sessionId, environmentId, _) = GetPortForwardingSessionDetails(logger);
+                    (sessionId, environmentId, _) = GetPortForwardingSessionDetails(logger) switch
+                    {
+                        EnvironmentSessionDetails details => (details.WorkspaceId, details.EnvironmentId, details.Port),
+                        WorkspaceSessionDetails s => (s.WorkspaceId, default, s.Port),
+                        _ => (default, default, default),
+                    };
                 }
                 catch
                 {
@@ -95,7 +101,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                 if (string.IsNullOrEmpty(cascadeToken) || string.IsNullOrEmpty(sessionId))
                 {
-                    return SignIn(new Uri(Request.GetEncodedUrl()), logger);
+                    return SignIn(new Uri(Request.GetEncodedUrl()));
                 }
             }
             else
@@ -155,7 +161,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             int port;
             try
             {
-                (sessionId, environmentId, port) = GetPortForwardingSessionDetails(logger);
+                (sessionId, environmentId, port) = GetPortForwardingSessionDetails(logger) switch
+                {
+                    EnvironmentSessionDetails details => (details.WorkspaceId, details.EnvironmentId, details.Port),
+                    WorkspaceSessionDetails s => (s.WorkspaceId, default, s.Port),
+                    _ => (default, default, default),
+                };
 
                 // Neither cookie nor host have the session id, we need to re-authenticate.
                 if (string.IsNullOrEmpty(sessionId))
@@ -186,11 +197,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/signin")]
-        public IActionResult SignIn([FromQuery(Name = "rd")] Uri returnUrl, [FromServices] IDiagnosticsLogger logger)
+        public IActionResult SignIn([FromQuery(Name = "rd")] Uri returnUrl)
         {
             var hostString = returnUrl.Host.ToString();
 
-            if (!HostUtils.TryGetPortForwardingSessionDetails(hostString, out var sessionDetails))
+            if (!HostUtils.TryGetPortForwardingSessionDetails(hostString, out var sessionDetails) || !(sessionDetails is PartialEnvironmentSessionDetails envDetails))
             {
                 return BadRequest();
             }
@@ -202,7 +213,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             });
 
             // TODO: ensure double / aren't a thing?
-            redirectUriBuilder.Path = $"{redirectUriBuilder.Path}/{sessionDetails.EnvironmentId}";
+            redirectUriBuilder.Path = $"{redirectUriBuilder.Path}/{envDetails.EnvironmentId}";
 
             var queryBuilder = HttpUtility.ParseQueryString(string.Empty);
             if (returnUrl.AbsolutePath != "/")
@@ -339,7 +350,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return true;
         }
 
-        private (string SessionId, string EnvironmentId, int Port) GetPortForwardingSessionDetails(IDiagnosticsLogger logger)
+        private PortForwardingSessionDetails GetPortForwardingSessionDetails(IDiagnosticsLogger logger)
         {
             if (!HostUtils.TryGetPortForwardingSessionDetails(Request, out var sessionDetails))
             {
@@ -357,7 +368,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             // TODO: Add support for environment id connection through headers?
-            if (sessionDetails.EnvironmentId != default)
+            if (sessionDetails is PartialEnvironmentSessionDetails envDetails)
             {
                 if (!TryGetCookiePayload(logger, out var cookiePayload))
                 {
@@ -366,7 +377,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                     throw new InvalidOperationException("No cookie set for environment authentication.");
                 }
-                else if (!string.Equals(cookiePayload.EnvironmentId, sessionDetails.EnvironmentId, StringComparison.InvariantCultureIgnoreCase))
+                else if (!string.Equals(cookiePayload.EnvironmentId, envDetails.EnvironmentId, StringComparison.InvariantCultureIgnoreCase))
                 {
                     logger.AddValue("reason", "cookie_environment_id_match");
                     logger.LogInfo("portforwarding_get_session_details_failed");
@@ -375,12 +386,21 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 }
 
                 // Since we don't get the WorkspaceId from the host, we'll take it from the cookie.
-                sessionDetails.WorkspaceId = cookiePayload.ConnectionSessionId;
+                sessionDetails = new EnvironmentSessionDetails(cookiePayload.ConnectionSessionId, envDetails.EnvironmentId, envDetails.Port);
             }
 
-            logger.AddValue("workspace_id", sessionDetails.WorkspaceId);
-            logger.AddValue("environment_id", sessionDetails.EnvironmentId);
+            if (sessionDetails is WorkspaceSessionDetails wsDetails)
+            {
+                logger.AddValue("workspace_id", wsDetails.WorkspaceId);
+            }
+
             logger.AddValue("port", sessionDetails.Port.ToString());
+
+            if (sessionDetails is EnvironmentSessionDetails details)
+            {
+                logger.AddValue("environment_id", details.EnvironmentId);
+            }
+
             logger.LogInfo("portforwarding_get_session_details");
 
             return sessionDetails;

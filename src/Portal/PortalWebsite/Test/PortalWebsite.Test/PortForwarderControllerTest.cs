@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com/");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
@@ -161,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com/stuff");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.app.online.visualstudio.com");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com/stuff?search=42");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("fake.portal.dev", redirectUri.Host);
@@ -199,7 +199,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.github.com/stuff?search=42");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);

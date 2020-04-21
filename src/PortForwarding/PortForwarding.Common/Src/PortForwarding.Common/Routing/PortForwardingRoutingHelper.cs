@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing
 {
@@ -35,9 +36,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Rout
             if (HostUtils.TryGetPortForwardingSessionDetails(context.Request, out var sessionDetails))
             {
                 logger?.AddBaseValue("routing_context", "PortForwarding");
-                logger?.AddBaseValue("workspace_id", sessionDetails.WorkspaceId);
-                logger?.AddBaseValue("environment_id", sessionDetails.EnvironmentId);
                 logger?.AddBaseValue("port", sessionDetails.Port.ToString());
+
+                switch (sessionDetails)
+                {
+                    case EnvironmentSessionDetails details:
+                        logger?.AddBaseValue("workspace_id", details.WorkspaceId);
+                        logger?.AddBaseValue("environment_id", details.EnvironmentId);
+                        break;
+                    case PartialEnvironmentSessionDetails details:
+                        logger?.AddBaseValue("environment_id", details.EnvironmentId);
+                        break;
+                    case WorkspaceSessionDetails details:
+                        logger?.AddBaseValue("workspace_id", details.WorkspaceId);
+                        break;
+                }
 
                 return true;
             }

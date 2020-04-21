@@ -78,6 +78,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <inheritdoc/>
         public async Task CreateAgentConnectionMappingAsync(ConnectionDetails mapping, IDiagnosticsLogger logger)
         {
+            if (mapping == default)
+            {
+                throw new ArgumentNullException(nameof(mapping));
+            }
+
             logger
                 .FluentAddBaseValue("workspace_id", mapping.WorkspaceId)
                 .FluentAddBaseValue("source_port", mapping.SourcePort)

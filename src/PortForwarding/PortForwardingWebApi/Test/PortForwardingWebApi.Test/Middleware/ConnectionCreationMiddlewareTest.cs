@@ -116,7 +116,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 hostUtils,
                 MockPortForwardingAppSettings.Settings);
 
-
             Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
         }
 

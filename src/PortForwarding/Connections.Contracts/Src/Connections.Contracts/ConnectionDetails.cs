@@ -15,6 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         public string WorkspaceId { get; set; }
 
         /// <summary>
+        /// Gets or sets the environment id for the connection.
+        /// </summary>
+        public string EnvironmentId { get; set; }
+
+        /// <summary>
         /// Gets or sets source port.
         /// </summary>
         public int SourcePort { get; set; }
