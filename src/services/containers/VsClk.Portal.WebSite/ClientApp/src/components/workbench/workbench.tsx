@@ -41,6 +41,7 @@ import {
     isActivating,
     isSuspended,
     isNotAvailable,
+    isStarting,
 } from '../../utils/environmentUtils';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
@@ -119,6 +120,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         };
     }
 
+    // Seconds for timeout when starting
+    private notifySeconds?: number
     // Communication provider for creation splash screen
     private communicationProvider?: SplashCommunicationProvider;
     // We need to stablish a liveshare connection until the environment
@@ -191,6 +194,11 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             return;
         }
 
+        if (this.notifySeconds && Date.now() >= this.notifySeconds) {
+            this.notifySeconds = undefined;
+            this.communicationProvider?.sendNotification('Looks like this is taking a little longer than usual but your environment will be ready soon');
+        }
+
         if (!this.hasConnectionStarted && this.communicationProvider) {
             this.hasConnectionStarted = true;
             const communicationAdapter = new CommunicationAdapter(
@@ -201,7 +209,20 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
             if (environmentInfo.connection) {
                 try {
-                    communicationAdapter.connect(environmentInfo.connection.sessionId);
+                    if (isStarting(environmentInfo)) {
+                        this.communicationProvider?.initializeSteps([
+                            {
+                                name: 'Resume Environment',
+                                data: {
+                                    status: 'Pending',
+                                    terminal: 'false',
+                                },
+                            }]);
+                        //Notify after 30 seconds
+                        this.notifySeconds = Date.now() + 30 * 1000;
+                    } else {
+                        communicationAdapter.connect(environmentInfo.connection.sessionId);
+                    }
                 } catch (e) {
                     logger.info(`Connection failed ${e}`);
                 }

@@ -61,6 +61,11 @@ export function isCreating(cloudenvironment: ILocalEnvironment): boolean {
     return cloudenvironment.state === EnvironmentStateInfo.Provisioning;
 }
 
+export function isStarting(cloudenvironment: ILocalEnvironment): boolean {
+    return cloudenvironment.state === EnvironmentStateInfo.Starting ||
+        cloudenvironment.state === EnvironmentStateInfo.Shutdown;
+}
+
 export function isActivating({ state }: Pick<ILocalEnvironment | IEnvironment, 'state'>) {
     switch (state) {
         case EnvironmentStateInfo.ShuttingDown:

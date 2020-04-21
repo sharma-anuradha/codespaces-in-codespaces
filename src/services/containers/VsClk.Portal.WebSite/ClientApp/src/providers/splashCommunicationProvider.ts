@@ -36,4 +36,11 @@ export class SplashCommunicationProvider implements ICommunicationChannel {
     public postEnvironmentId(environmentId: string) {
         window.postMessage({ environmentId });
     }
+
+    public sendNotification(message: string): void {
+        window.postMessage({ notification: {
+                    message,
+                }
+            });
+    }
 }
