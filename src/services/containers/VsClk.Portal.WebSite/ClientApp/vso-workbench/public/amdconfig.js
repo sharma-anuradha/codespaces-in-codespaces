@@ -16,7 +16,7 @@ if (vsoFeatureSet === insiderFlag) {
 }
 
 const commits = {
-    insider: 'ec0d19789f89d4c25895f4a0cf364276cfb0c6ed',
+    insider: 'b83339a3a7bd8e3ec8a8b79deda9c37e0d91f094',
     stable: 'ff915844119ce9485abfe8aa9076ec76b5300ddd',
 };
 
