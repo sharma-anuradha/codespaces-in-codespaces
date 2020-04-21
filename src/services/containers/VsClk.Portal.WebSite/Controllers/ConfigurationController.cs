@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -18,13 +18,30 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         //[Authorize]
         [HttpGet("/configuration")]
-        public ActionResult Index() => Json(new Dictionary<string, string> {
-            { "apiEndpoint", appSettings.ApiEndpoint },
-            { "environmentRegistrationEndpoint", appSettings.EnvironmentRegistrationEndpoint },
-            { "liveShareEndpoint", appSettings.LiveShareEndpoint },
-            { "portalEndpoint", appSettings.PortalEndpoint },
-            { "liveShareWebExtensionEndpoint", appSettings.LiveShareWebExtensionEndpoint},
-            { "environment", this.env.EnvironmentName.ToLower()},
-        });
+        public ActionResult Index()
+        {
+            var configuration = new Dictionary<string, object> {
+                { "apiEndpoint", appSettings.ApiEndpoint },
+                { "environmentRegistrationEndpoint", appSettings.EnvironmentRegistrationEndpoint },
+                { "liveShareEndpoint", appSettings.LiveShareEndpoint },
+                { "portalEndpoint", appSettings.PortalEndpoint },
+                { "liveShareWebExtensionEndpoint", appSettings.LiveShareWebExtensionEndpoint},
+                { "environment", this.env.EnvironmentName.ToLower()},
+            };
+
+            switch (HttpContext.GetPartner())
+            {
+                case Partners.GitHub:
+                    configuration.Add("portForwardingDomainTemplate", appSettings.GitHubPortForwardingDomainTemplate);
+                    configuration.Add("enableEnvironmentPortForwarding", appSettings.GitHubportForwardingEnableEnvironmentEndpoints);
+                    break;
+                case Partners.VSOnline:
+                    configuration.Add("portForwardingDomainTemplate", appSettings.PortForwardingDomainTemplate);
+                    configuration.Add("enableEnvironmentPortForwarding", appSettings.PortForwardingEnableEnvironmentEndpoints);
+                    break;
+            }
+
+            return Json(configuration);
+        }
     }
 }

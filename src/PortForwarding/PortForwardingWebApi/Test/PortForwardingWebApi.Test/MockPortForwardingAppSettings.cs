@@ -16,6 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test
                     {
                         new HostsConfig
                         {
+                            AllowEnvironmentIdBasedHosts = false,
                             Hosts = new[]
                             {
                                 "{0}.app.vso.io",
@@ -23,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test
                         },
                         new HostsConfig
                         {
+                            AllowEnvironmentIdBasedHosts = true,
                             Hosts = new[]
                             {
                                 "{0}.apps.github.com",

@@ -29,6 +29,18 @@ export const vscodeRemoteResourcePathComponent = 'vscode-remote-resource';
  */
 const containerDefaultHost = 'localhost:80';
 
+export type RoutingStrategy = (url: URL) => Readonly<RoutingDetails> | undefined;
+
+let strategies: RoutingStrategy[] = [
+    tryCreatePortForwardingRoutingDetails,
+    tryCreateVSCodeAssetRoutingDetails,
+    dev_PortForwardingOverride, // <<- DEV PortForwarding here
+];
+
+export function allowRequestsForEnvironment(environmentId: string, sessionId: string) {
+    strategies = [createEnvironmentRoutingStrategy(environmentId, sessionId), ...strategies];
+}
+
 export function getRoutingDetails(url: string): Readonly<RoutingDetails> | undefined {
     // As a part of embedding VSCode, we transform asset URLs into a form that we can easily
     // parse and it contains necessary information to route requests properly.
@@ -42,11 +54,15 @@ export function getRoutingDetails(url: string): Readonly<RoutingDetails> | undef
     //
     const originalUrl = new URL(url);
 
-    return (
-        tryCreatePortForwardingRoutingDetails(originalUrl) ||
-        tryCreateVSCodeAssetRoutingDetails(originalUrl) ||
-        dev_PortForwardingOverride(originalUrl) // <<- DEV PortForwarding here
-    );
+    for (const strategy of strategies) {
+        let routingParams = strategy(originalUrl);
+
+        if (routingParams) {
+            return routingParams;
+        }
+    }
+
+    return undefined;
 }
 
 function dev_PortForwardingOverride(originalUrl: URL): Readonly<RoutingDetails> | undefined {
@@ -104,6 +120,53 @@ function tryCreatePortForwardingRoutingDetails(
         port,
         originalUrl,
         containerUrl,
+    };
+}
+
+function createEnvironmentRoutingStrategy(
+    environmentId: string,
+    sessionId: string
+): RoutingStrategy {
+    return (originalUrl: URL) => {
+        const [targetSubdomain, app] = originalUrl.host.split('.');
+
+        // Port forwarding domains for environments are in form of:
+        // https://<environmentId>-<targetPort>.app.online.visualstudio.com/<user content path>
+        // https://<environmentId>-<targetPort>.apps.workspaces.githubusercontent.com/<user content path>
+        const appPrefixes = ['app', 'apps'];
+        if (!appPrefixes.includes(app)) {
+            return undefined;
+        }
+
+        const parts = targetSubdomain.split('-');
+
+        const maybeEnvironmentId = parts.slice(0, 5).join('-');
+        const maybePort = parts[5];
+
+        // If there's more data in the target subdomain, it's not us.
+        if (parts && parts.length > 6) {
+            return undefined;
+        }
+
+        if (maybeEnvironmentId !== environmentId) {
+            return undefined;
+        }
+
+        const port = Number(maybePort);
+        if (!isValidPort(port)) {
+            return undefined;
+        }
+
+        const containerUrl = new URL(originalUrl.href);
+        containerUrl.host = containerDefaultHost;
+
+        return {
+            shouldCacheResponse: false,
+            sessionId,
+            port,
+            originalUrl,
+            containerUrl,
+        };
     };
 }
 

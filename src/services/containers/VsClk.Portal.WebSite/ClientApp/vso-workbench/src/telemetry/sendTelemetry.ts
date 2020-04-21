@@ -35,12 +35,18 @@ type SendTelemetryProps =
     | ['vsonline/workbench/resolve-external-uri', { port: number }]
     | ['vsonline/workbench/error', IVSOWorkbenchError];
 
+let isTelemetryInitialized = false;
 export function sendTelemetry(...args: SendTelemetryProps): void;
 export function sendTelemetry(telemetryEventName: any, properties: any) {
     const event =
         properties instanceof Error
             ? new ExceptionTelemetryEvent(telemetryEventName, properties)
             : new PropertiesTelemetryEvent(telemetryEventName, properties);
+
+    if (!isTelemetryInitialized) {
+        telemetry.initializeTelemetry((_: string) => null);
+        isTelemetryInitialized = true;
+    }
 
     telemetry.track(event);
 }

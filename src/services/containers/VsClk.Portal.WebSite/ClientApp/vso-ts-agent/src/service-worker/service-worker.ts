@@ -9,7 +9,7 @@ import {
     updateLiveShareConnectionInfo,
     LiveShareConnectionInfo,
 } from './service-worker-messages';
-import { getRoutingDetails } from './lib/url-utils';
+import { getRoutingDetails, allowRequestsForEnvironment } from './lib/url-utils';
 import { ServiceWorkerConfiguration } from './service-worker-configuration';
 
 import { createLogger } from './lib/logger';
@@ -135,6 +135,13 @@ self.addEventListener('message', async (event) => {
             credentialsManager.setCredentials(message.payload.sessionId, {
                 token: message.payload.token,
             });
+
+            if (message.payload.environmentId) {
+                allowRequestsForEnvironment(
+                    message.payload.environmentId,
+                    message.payload.sessionId
+                );
+            }
 
             // In case your client is telling to be in non-shared connection info mode,
             // switch to it.

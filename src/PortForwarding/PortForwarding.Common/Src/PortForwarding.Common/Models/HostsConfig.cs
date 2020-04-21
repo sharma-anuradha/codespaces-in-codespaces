@@ -17,6 +17,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Mode
         public string CertificateSecretName { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether environment id based hosts are allowed.
+        /// </summary>
+        public bool AllowEnvironmentIdBasedHosts { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the list of port forwarding hosts.
         /// </summary>
         public IEnumerable<string> Hosts { get; set; }

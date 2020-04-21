@@ -1,0 +1,35 @@
+{{- if .Values.githubAuthEndpoint.enabled -}}
+{{- $serviceName := include "service.servicename" . -}}
+{{- $servicePort := .Values.service.externalPort -}}
+{{- $ingressPath := .Values.githubAuthEndpoint.path -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "service.fullname" . }}-gh-auth
+  {{ template "labels" . }}
+  annotations:
+  {{- range $key, $value := .Values.githubAuthEndpoint.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+spec:
+{{- if .Values.githubAuthEndpoint.tls }}
+  tls:
+  {{- range .Values.githubAuthEndpoint.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+{{- end }}
+  rules:
+  {{- range .Values.githubAuthEndpoint.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: {{ $ingressPath }}
+            backend:
+              serviceName: {{ $serviceName}}
+              servicePort: {{ $servicePort }}
+  {{- end }}
+{{- end }}

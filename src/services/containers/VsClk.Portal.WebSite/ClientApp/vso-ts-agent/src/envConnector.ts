@@ -10,14 +10,17 @@ import {
     IEnvironment,
     Signal,
     createTrace,
-    IVSCodeConfig
+    IVSCodeConfig,
 } from 'vso-client-core';
 
 import { WorkspaceClient } from './WorkspaceClient';
 import { LiveShareWebClient } from './liveShareWebClient';
 import { SshChannelOpenner } from './sshChannelOpenner';
 
-import { tryAuthenticateMessageType, updateLiveShareConnectionInfo } from './service-worker/service-worker-messages';
+import {
+    tryAuthenticateMessageType,
+    updateLiveShareConnectionInfo,
+} from './service-worker/service-worker-messages';
 import { postServiceWorkerMessage } from './service-worker/post-message';
 import { onMessage as onServiceWorkerMessage } from './service-worker/serviceWorker';
 import { sendTelemetry } from './telemetry/sendTelemetry';
@@ -28,10 +31,10 @@ export type RemoteVSCodeServerDescription = {
 };
 
 interface IOnServicesRegistrationEvent {
-    workspaceService: vsls.WorkspaceService,
-    workspaceClient: WorkspaceClient,
-    rpcConnection: MessageConnection,
-};
+    workspaceService: vsls.WorkspaceService;
+    workspaceClient: WorkspaceClient;
+    rpcConnection: MessageConnection;
+}
 
 const trace = createTrace(`vso-env-connector`);
 
@@ -49,9 +52,7 @@ export class EnvConnector {
     public readonly onVSCodeServerStarted: Event<RemoteVSCodeServerDescription> = this
         ._onVSCodeServerStarted.event;
 
-    constructor(
-        private onServicesRegistration: (e: IOnServicesRegistrationEvent) => any
-    ) {
+    constructor(private onServicesRegistration: (e: IOnServicesRegistrationEvent) => any) {
         this.disposables.push(
             onServiceWorkerMessage(async (message) => {
                 if (
@@ -80,7 +81,7 @@ export class EnvConnector {
         vscodeConfig: IVSCodeConfig,
         extensions: string[],
         environmentId: string,
-        serviceEndpoint: string,
+        serviceEndpoint: string
     ): Promise<number> => {
         if (this.vscodeServerPort && !this.vscodeServerPort.isRejected) {
             // This port will remain shared even if we lose connection.
@@ -118,7 +119,7 @@ export class EnvConnector {
         }
 
         return this.vscodeServerPort.promise;
-    }
+    };
 
     private async forwardVscodeServerPort(
         remotePort: number,
@@ -262,14 +263,14 @@ export class EnvConnector {
         vscodeConfig: IVSCodeConfig,
         extensions: string[],
         environmentId: string,
-        serviceEndpoint: string,
+        serviceEndpoint: string
     ): Promise<vsls.SharedServer> {
         const port = await this.startVscodeServer(
             workspaceClient,
             vscodeConfig,
             extensions,
             environmentId,
-            serviceEndpoint,
+            serviceEndpoint
         );
         trace.info(`Started VSCode server started on port [${port}].`);
 
@@ -292,7 +293,7 @@ export class EnvConnector {
         vscodeConfig: IVSCodeConfig,
         extensions: string[],
         environmentId: string,
-        serviceEndpoint: string,
+        serviceEndpoint: string
     ): Promise<{ sessionPath: string; port: number }> {
         // if already `connecting` or `connected`, return the result
         if (this.initializeConnectionSignal && !this.initializeConnectionSignal.isRejected) {
@@ -314,7 +315,13 @@ export class EnvConnector {
             const streamManagerClient = workspaceClient.getServiceProxy<vsls.StreamManagerService>(
                 vsls.StreamManagerService
             );
-            const vscodeServer = await this.getSharedVscodeServer(workspaceClient, vscodeConfig, extensions, environmentId, serviceEndpoint);
+            const vscodeServer = await this.getSharedVscodeServer(
+                workspaceClient,
+                vscodeConfig,
+                extensions,
+                environmentId,
+                serviceEndpoint
+            );
 
             trace.info(`Creating the stream.`);
             this.channelOpener = workspaceClient.createServerStream(
@@ -340,8 +347,8 @@ export class EnvConnector {
     public async ensurePortIsForwarded(
         environmentInfo: IEnvironment,
         accessToken: string,
-        port: number,
-        liveShareEndpoint: string
+        liveShareEndpoint: string,
+        port: number
     ): Promise<void> {
         const workspaceClient = await this.connectWorkspaceClient(
             environmentInfo.connection.sessionId,

@@ -3,12 +3,14 @@ import { useWebClient } from '../actions/middleware/useWebClient';
 export type TEnvironment = 'development' | 'local' | 'staging' | 'production';
 
 export interface IConfiguration {
-    portalEndpoint: string;
-    environmentRegistrationEndpoint: string;
-    apiEndpoint: string;
-    liveShareEndpoint: string;
-    liveShareWebExtensionEndpoint: string;
-    environment: TEnvironment;
+    readonly portalEndpoint: string;
+    readonly environmentRegistrationEndpoint: string;
+    readonly apiEndpoint: string;
+    readonly liveShareEndpoint: string;
+    readonly liveShareWebExtensionEndpoint: string;
+    readonly environment: TEnvironment;
+    readonly portForwardingDomainTemplate: string;
+    readonly enableEnvironmentPortForwarding: boolean;
 }
 
 export const defaultConfig: IConfiguration = {
@@ -18,6 +20,8 @@ export const defaultConfig: IConfiguration = {
     liveShareEndpoint: 'https://prod.liveshare.vsengsaas.visualstudio.com',
     liveShareWebExtensionEndpoint: 'https://vslsprod.blob.core.windows.net/webextension',
     environment: 'production',
+    portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
+    enableEnvironmentPortForwarding: false,
 };
 
 export const configurationEndpoint = '/configuration';

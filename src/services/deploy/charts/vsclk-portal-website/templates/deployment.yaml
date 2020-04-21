@@ -36,6 +36,8 @@ spec:
         {{- end }}
         - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__CertificateSecretName
           value: {{ $hosts.certificateSecretName | quote }}
+        - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__AllowEnvironmentIdBasedHosts
+          value: {{ $hosts.allowEnvironmentIdBasedHosts | quote }}
         {{- end }}
         {{- range .Values.appSettings }}
         - name: {{ . }}

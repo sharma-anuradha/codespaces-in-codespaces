@@ -12,3 +12,4 @@ export const githubPath = '/github/:org/:repoId/:commitId?';
 export const gistPath = '/gist/:id';
 export const azDevPath = '/azdev/:org/:projectName/:repoName/:commitId?';
 export const settingsPath = '/settings';
+export const portForwardingSignIn = '/port-forwarding-sign-in/:environmentId';

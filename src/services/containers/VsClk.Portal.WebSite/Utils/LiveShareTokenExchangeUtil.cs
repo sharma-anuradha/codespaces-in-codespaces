@@ -7,13 +7,13 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
-    public class AuthUtil
+    public class LiveShareTokenExchangeUtil : ILiveShareTokenExchangeUtil
     {
         const string authProvider = "microsoft";
 
         private static HttpClient client = new HttpClient();
 
-        public static async Task<string> ExchangeToken(string path, string externalToken)
+        public async Task<string> ExchangeToken(string path, string externalToken)
         {
             try
             {

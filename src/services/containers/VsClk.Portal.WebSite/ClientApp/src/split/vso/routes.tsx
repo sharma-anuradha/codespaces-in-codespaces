@@ -26,10 +26,12 @@ import {
     githubPath,
     gistPath,
     azDevPath,
+    portForwardingSignIn,
 } from '../../routerPaths';
 
 import { IRoute } from '../../interfaces/IRoute';
 import { RouterConfig } from './routerConfig';
+import { PortFowardingSingInPage } from '../../components/login/portForwardingSignIn';
 
 export const routes: IRoute[] = [
     {
@@ -103,6 +105,12 @@ export const routes: IRoute[] = [
         path: azDevPath,
         exact: false,
         component: AzDevWorkbench,
+    },
+    {
+        authenticated: true,
+        path: portForwardingSignIn,
+        exact: true,
+        component: PortFowardingSingInPage,
     },
     {
         authenticated: false,

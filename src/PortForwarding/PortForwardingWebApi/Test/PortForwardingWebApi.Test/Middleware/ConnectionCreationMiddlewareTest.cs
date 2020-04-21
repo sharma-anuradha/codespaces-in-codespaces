@@ -56,33 +56,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
         }
-
-        [Fact]
-        public async Task InvokeAsync_InvalidHost_400()
-        {
-            var queueClientProvider = new Mock<IServiceBusQueueClientProvider>();
-            var mappingClient = new Mock<IAgentMappingClient>();
-            var context = CreateMockContext(invalidHost: true);
-
-            await middleware.InvokeAsync(
-                context,
-                logger,
-                queueClientProvider.Object,
-                mappingClient.Object,
-                hostUtils,
-                MockPortForwardingAppSettings.Settings);
-
-            Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
-        }
         
         [Fact]
         public async Task InvokeAsync_ValidConfiguration_HeaderDetails_SendMessage()
         {
             var queueClientProvider = new Mock<IServiceBusQueueClientProvider>();
             var mappingClient = new Mock<IAgentMappingClient>();
-            var context = CreateMockContext(invalidHost: true);
-            context.Request.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
-            context.Request.Headers.Add(PortForwardingHeaders.Port, "8080");
+            var context = CreateMockContext();
 
             var queueClient = new Mock<IQueueClient>();
             queueClientProvider
@@ -114,6 +94,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 // Deserialize to string for readable assertion errors.
                 Encoding.UTF8.GetString(msg.Body) == JsonSerializer.Serialize(connectionRequest, jsonSerializerOptions)
             )));
+        }
+
+        [Fact]
+        public async Task InvokeAsync_InvalidConfiguration_HeaderDetails_SendMessage()
+        {
+            var queueClientProvider = new Mock<IServiceBusQueueClientProvider>();
+            var mappingClient = new Mock<IAgentMappingClient>();
+            var context = CreateMockContext(invalidHeaders: true);
+
+            var queueClient = new Mock<IQueueClient>();
+            queueClientProvider
+                .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(queueClient.Object);
+
+            await middleware.InvokeAsync(
+                context,
+                logger,
+                queueClientProvider.Object,
+                mappingClient.Object,
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
+
+
+            Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
         }
 
         [Fact]
@@ -182,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             Assert.Equal(StatusCodes.Status504GatewayTimeout, context.Response.StatusCode);
         }
 
-        private HttpContext CreateMockContext(bool invalidHost = false, bool isAuthenticated = true)
+        private HttpContext CreateMockContext(bool invalidHeaders = false, bool isAuthenticated = true)
         {
             var context = new DefaultHttpContext
             {
@@ -190,14 +194,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 {
                     Method = "GET",
                     Scheme = "https",
-                    Host = new HostString(invalidHost
-                        ? "testhost"
-                        : "a68c43fa9e015e45e046c85d502ec5e4b774-8080.app.vso.io"),
+                    Host = new HostString("testhost"),
                     PathBase = new PathString(string.Empty),
                     Path = new PathString("/test/path"),
                     QueryString = new QueryString(string.Empty)
                 }
             };
+
+            if (!invalidHeaders)
+            {
+                context.Request.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
+                context.Request.Headers.Add(PortForwardingHeaders.Port, "8080");
+            }
 
             if (isAuthenticated)
             {

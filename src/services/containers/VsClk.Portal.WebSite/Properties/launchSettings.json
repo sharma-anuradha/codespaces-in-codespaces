@@ -1,30 +1,28 @@
 {
-  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/launchsettings.json",
-  "profiles": {
-      "Production": {
-          "commandName": "Project"
-      },
-      "Local": {
-          "commandName": "Project",
+    "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/launchsettings.json",
+    "profiles": {
+        "Production": {
+            "commandName": "Project"
+        },
+        "Local": {
+            "commandName": "Project",
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Local",
+                "PORTAL_AppSettings__IsLocal": "true",
+                "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-cert.pfx"
+            },
+            "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
+            "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
+        },
+        "LocalGitHub": {
+            "commandName": "Project",
           "environmentVariables": {
-              "ASPNETCORE_ENVIRONMENT": "Local",
-              "PORTAL_AppSettings__IsLocal": "true",
-              "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-cert.pfx"
-          },
-          "launchBrowser": true,
-          "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
-          "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
-      },
-      "LocalGitHub": {
-        "commandName": "Project",
-        "environmentVariables": {
             "ASPNETCORE_ENVIRONMENT": "Local",
             "PORTAL_AppSettings__IsLocal": "true",
             "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-github-cert.pfx"
-        },
-        "launchBrowser": false,
-        "applicationUrl": "https://*.workspaces-dev.github.com",
-        "launchUrl": "https://*.workspaces-dev.github.com/environment/*"
+          },
+            "applicationUrl": "https://*.workspaces-dev.github.com",
+            "launchUrl": "https://*.workspaces-dev.github.com/environment/*"
+        }
     }
-  }
 }

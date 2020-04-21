@@ -18,6 +18,8 @@ export interface IConfiguration {
     liveShareEndpoint: string;
     liveShareWebExtensionEndpoint: string;
     environment: TEnvironment;
+    portForwardingDomainTemplate: string;
+    enableEnvironmentPortForwarding: boolean;
 }
 
 const CONFIG: IConfig = {
@@ -27,6 +29,8 @@ const CONFIG: IConfig = {
         liveShareEndpoint: 'https://prod.liveshare.vsengsaas.visualstudio.com',
         liveShareWebExtensionEndpoint: 'https://vslsprod.blob.core.windows.net/webextension',
         environment: 'production',
+        portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
+        enableEnvironmentPortForwarding: false,
     },
     partnerConfigs: {
         github: {
@@ -68,6 +72,14 @@ class Config {
 
     get api() {
         return CONFIG.portalConfig.apiEndpoint;
+    }
+
+    get enableEnvironmentPortForwarding() {
+        return CONFIG.portalConfig.enableEnvironmentPortForwarding;
+    }
+
+    get portForwardingDomainTemplate() {
+        return CONFIG.portalConfig.portForwardingDomainTemplate;
     }
 }
 

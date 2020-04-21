@@ -71,7 +71,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 return;
             }
 
-            if (!hostUtils.TryGetPortForwardingSessionDetails(context.Request, out var sessionDetails))
+            // At this stage we only care about headers setting the PF context.
+            // TODO: Can we structure the helpers and services in a way that PFS would explicitly work only on top of headers?
+            if (!context.Request.Headers.TryGetValue(PortForwardingHeaders.WorkspaceId, out var workspaceIdValues) ||
+                !context.Request.Headers.TryGetValue(PortForwardingHeaders.Port, out var portStringValues) ||
+                !hostUtils.TryGetPortForwardingSessionDetails(
+                    workspaceIdValues.SingleOrDefault(),
+                    portStringValues.SingleOrDefault(),
+                    out var sessionDetails))
             {
                 logger.LogInfo("connection_creation_middleware_missing_or_invalid_session_details");
 

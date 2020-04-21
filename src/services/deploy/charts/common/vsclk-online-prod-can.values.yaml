@@ -15,6 +15,14 @@ ingress:
         - "*.workspaces.github.com"
       secretName: ssl-cert-github-ws
 
+githubAuthEndpoint:
+  hosts:
+    - "auth.apps.workspaces.githubusercontent.com"
+  tls:
+    - hosts:
+        - "*.apps.workspaces.githubusercontent.com"
+      secretName: ssl-cert-github-pf
+
 pfingress:
   hosts:
     - "*.app.canary.online.visualstudio.com"
@@ -31,10 +39,11 @@ portForwardingHosts:
   - hosts:
       - "{0}.app.canary.online.visualstudio.com"
     certificateSecretName: ssl-cert
+    allowEnvironmentIdBasedHosts: false
   - hosts:
       - "{0}.apps.canary.workspaces.githubusercontent.com"
     certificateSecretName: ssl-cert-github-pf
-  
+    allowEnvironmentIdBasedHosts: true
 
 authentication:
   audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
@@ -54,6 +63,10 @@ config:
   azDevClientId: 282DE6CF-8729-4112-A472-CFB80960C5CD
   vsSaaSTokenIssuer: https://insiders.liveshare.vsengsaas.visualstudio.com/
   vsSaaSCertificateSecretName: vsls-prod-auth-cert-primary
+  portForwardingDomainTemplate: "{0}.app.canary.online.visualstudio.com"
+  gitHubPortForwardingDomainTemplate: "{0}.apps.workspaces.githubusercontent.com"
+  portForwardingEnableEnvironmentEndpoints: false
+  gitHubportForwardingEnableEnvironmentEndpoints: true
 
 azure-secrets:
   # vsclk-core-dev

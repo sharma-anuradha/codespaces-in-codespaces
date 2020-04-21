@@ -52,5 +52,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string VsSaaSCertificateSecretName { get; set; }
 
         public IEnumerable<HostsConfig> PortForwardingHostsConfigs { get; set; }
+        public string PortForwardingDomainTemplate { get; set; }
+        public string GitHubPortForwardingDomainTemplate { get; set; }
+
+        public bool PortForwardingEnableEnvironmentEndpoints { get; set; }
+        public bool GitHubportForwardingEnableEnvironmentEndpoints { get; set; }
     }
 }

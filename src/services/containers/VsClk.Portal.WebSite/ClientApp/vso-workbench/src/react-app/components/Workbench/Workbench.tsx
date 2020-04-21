@@ -8,11 +8,11 @@ import { Workbench } from '../../../vscode/workbenches/defaultWorkbench';
 import './Workbench.css';
 import { SplashScreenMessage } from '../SplashScreenShellMessage/SplashScreenShellMessage';
 
-export interface IWorkbenchPropsComponent  {
-    onError: (e: Error) => any | Promise<any>
+export interface IWorkbechPropsComponent {
+    onError: (e: Error) => any | Promise<any>;
 }
 
-class WorkbenchComponent extends React.Component<IWorkbenchPropsComponent> {
+class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
     private readonly domElementId = 'js-vscode-workbench-placeholder';
 
     private workbench: Workbench | null = null;
@@ -27,7 +27,7 @@ class WorkbenchComponent extends React.Component<IWorkbenchPropsComponent> {
         }
 
         await this.workbench.mount();
-    }
+    };
 
     async componentDidMount() {
         this.workbench = new Workbench({
@@ -36,23 +36,22 @@ class WorkbenchComponent extends React.Component<IWorkbenchPropsComponent> {
             liveShareEndpoint: config.liveShareApi,
             onConnection: this.onConnection,
             onError: this.props.onError,
+            enableEnvironmentPortForwarding: config.enableEnvironmentPortForwarding,
+            portForwardingDomainTemplate: config.portForwardingDomainTemplate,
         });
-    
+
         await this.workbench.connect();
     }
 
     render() {
         return (
             <Fragment>
-                <SplashScreenMessage
-                    message='Connecting...'
-                    isSpinner={true}
-                />
+                <SplashScreenMessage message='Connecting...' isSpinner={true} />
 
                 <div className='vso-workbench-root' id={this.domElementId} />
             </Fragment>
-        )
+        );
     }
-};
+}
 
 export { WorkbenchComponent as Workbench };

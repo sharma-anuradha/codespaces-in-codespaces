@@ -306,11 +306,11 @@ declare module 'vscode-web' {
     }
 
     export interface UriComponents {
-        scheme: string;
-        authority: string;
-        path: string;
-        query: string;
-        fragment: string;
+        readonly scheme: string;
+        readonly authority: string;
+        readonly path: string;
+        readonly query: string;
+        readonly fragment: string;
     }
 
     export interface URIInstance {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
+﻿namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
     public class Constants
     {

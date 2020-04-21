@@ -4,7 +4,7 @@ import { useActionContext } from '../actions/middleware/useActionContext';
 import { TEnvironment } from '../services/configurationService';
 
 const getGithubPFDomain = (subdomain: '' | 'dev.' | 'ppe.' = '') => {
-    return `https://apps.${subdomain}workspaces.githubusercontent.com`;
+    return `apps.${subdomain}workspaces.githubusercontent.com`;
 }
 
 export const getPFDomain = (domain: TEnvironment) => {

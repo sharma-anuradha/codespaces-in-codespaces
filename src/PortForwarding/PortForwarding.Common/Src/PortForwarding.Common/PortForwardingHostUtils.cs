@@ -16,15 +16,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
     /// </summary>
     public class PortForwardingHostUtils
     {
+        private const string EnvironmentIdRegex = "[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}";
+        private const string WorkspaceIdRegex = "[0-9A-Fa-f]{36}";
+        private readonly string routingHostPartRegexAllowEnvironments = $"(?:(?<environmentId>{EnvironmentIdRegex})|(?<workspaceId>{WorkspaceIdRegex}))-(?<port>\\d{"{2,5}"})";
+        private readonly string routingHostPartRegex = $"(?:(?<workspaceId>{WorkspaceIdRegex}))-(?<port>\\d{"{2,5}"})";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PortForwardingHostUtils"/> class.
         /// </summary>
         /// <param name="hostsConfigs">The port forwarding hosts.</param>
         public PortForwardingHostUtils(IEnumerable<HostsConfig> hostsConfigs)
         {
-            var routingHostPartRegex = "(?<workspaceId>[0-9A-Fa-f]{36})-(?<port>\\d{2,5})";
             HostRegexes = hostsConfigs.SelectMany(
-                hostConf => hostConf.Hosts.Select(host => string.Format(host, routingHostPartRegex)));
+                hostConf => hostConf.Hosts.Select(host => string.Format(host, hostConf.AllowEnvironmentIdBasedHosts ? routingHostPartRegexAllowEnvironments : routingHostPartRegex)));
         }
 
         private IEnumerable<string> HostRegexes { get; }
@@ -47,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         /// <returns>True if workspace and port are valid.</returns>
         public bool TryGetPortForwardingSessionDetails(
             string hostString,
-            out (string WorkspaceId, int Port) sessionDetails)
+            out (string WorkspaceId, string EnvironmentId, int Port) sessionDetails)
         {
             var currentHostRegex = HostRegexes.SingleOrDefault(reg => Regex.IsMatch(hostString, reg));
             if (currentHostRegex == default)
@@ -57,38 +61,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
             }
 
             var match = Regex.Match(hostString, currentHostRegex);
-            var workspaceId = match.Groups["workspaceId"].Value;
+
+            var id = string.Empty;
+            if (match.Groups["workspaceId"].Success)
+            {
+                id = match.Groups["workspaceId"].Value;
+            }
+            else if (match.Groups["environmentId"].Success)
+            {
+                id = match.Groups["environmentId"].Value;
+            }
+            else
+            {
+                sessionDetails = default;
+                return false;
+            }
+
             var portString = match.Groups["port"].Value;
 
-            return TryGetPortForwardingSessionDetails(workspaceId, portString, out sessionDetails);
+            return TryGetPortForwardingSessionDetails(id, portString, out sessionDetails);
         }
 
         /// <summary>
         /// Parses the host and extracts workspace id and port from it.
         /// </summary>
-        /// <param name="workspaceIdString">The workspace id string.</param>
+        /// <param name="idString">The workspace or environment id string.</param>
         /// <param name="portString">The port string.</param>
         /// <param name="sessionDetails">The output session details.</param>
         /// <returns>True if workspace and port are valid.</returns>
         public bool TryGetPortForwardingSessionDetails(
-            string workspaceIdString,
+            string idString,
             string portString,
-            out (string WorkspaceId, int Port) sessionDetails)
+            out (string WorkspaceId, string EnvironmentId, int Port) sessionDetails)
         {
-            if (string.IsNullOrEmpty(workspaceIdString) || string.IsNullOrEmpty(portString))
+            if (string.IsNullOrEmpty(idString) || string.IsNullOrEmpty(portString))
             {
                 sessionDetails = default;
                 return false;
             }
 
-            if (!Regex.IsMatch(workspaceIdString, "^[0-9A-Fa-f]{36}$") || !int.TryParse(portString, out var port))
+            if (!int.TryParse(portString, out var port))
             {
                 sessionDetails = default;
                 return false;
             }
 
-            sessionDetails = (workspaceIdString, port);
-            return true;
+            if (Regex.IsMatch(idString, $"^{WorkspaceIdRegex}$"))
+            {
+                sessionDetails = (idString, default, port);
+                return true;
+            }
+
+            if (Regex.IsMatch(idString, $"^{EnvironmentIdRegex}$"))
+            {
+                sessionDetails = (default, idString, port);
+                return true;
+            }
+
+            sessionDetails = default;
+            return false;
         }
 
         /// <summary>
@@ -99,7 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         /// <returns>True if workspace and port are valid.</returns>
         public bool TryGetPortForwardingSessionDetails(
             HttpRequest request,
-            out (string WorkspaceId, int Port) sessionDetails)
+            out (string WorkspaceId, string EnvironmentId, int Port) sessionDetails)
         {
             sessionDetails = default;
 

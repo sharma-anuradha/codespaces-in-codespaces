@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { IWorkbenchConstructionOptions, IWebSocketFactory, URI, IHomeIndicator } from 'vscode-web';
+import { IWorkbenchConstructionOptions, IWebSocketFactory, IHomeIndicator, URI } from 'vscode-web';
 
 import {
     createTrace,
@@ -44,7 +44,6 @@ import {
 } from '../../utils/environmentUtils';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
-import { EnvironmentsExternalUriProvider } from '../../providers/externalUriProvider';
 
 const getWorkspaceUrl = (defaultUrl: URL) => {
     if (!isHostedOnGithub()) {
@@ -77,6 +76,7 @@ import { Loader } from '../loader/loader';
 
 import './workbench.css';
 import { PostMessageRepoInfoRetriever } from '../../split/github/postMessageRepoInfoRetriever';
+import { EnvironmentsExternalUriProvider, PortForwardingExternalUriProvider } from '../../providers/externalUriProvider';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -91,6 +91,7 @@ export interface WorkbenchProps {
     PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
     apiEndpoint: string;
+    portForwardingDomainTemplate: string;
     token: string | undefined;
     environmentInfo: ILocalEnvironment | undefined;
     getEnvironment: typeof envRegService.getEnvironment;
@@ -103,6 +104,7 @@ export interface WorkbenchProps {
     pollEnvironment: (
         ...params: Parameters<typeof pollActivatingEnvironment>
     ) => ReturnType<typeof pollActivatingEnvironment>;
+    enableEnvironmentPortForwarding: boolean;
 }
 
 const logger = createTrace('WorkbenchView');
@@ -369,19 +371,33 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             environmentInfo,
             getWorkspaceUrl
         );
-
-        const externalUriProvider = new EnvironmentsExternalUriProvider(
-            environmentInfo,
-            token,
-            envConnector,
-            liveShareEndpoint
-        );
-
-        const resolveExternalUri = (uri: URI): Promise<URI> => {
-            return externalUriProvider.resolveExternalUri(uri);
-        };
-
         const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
+
+        let resolveExternalUri;
+        if (this.props.enableEnvironmentPortForwarding) {
+            const ensurePortIsForwarded = envConnector.ensurePortIsForwarded.bind(
+                envConnector,
+                environmentInfo,
+                token,
+                liveShareEndpoint
+            );
+            const externalUriProvider = new PortForwardingExternalUriProvider(
+                this.props.portForwardingDomainTemplate,
+                environmentInfo.id,
+                ensurePortIsForwarded
+            );
+            resolveExternalUri = externalUriProvider.resolveExternalUri;
+        } else {
+            const externalUriProvider = new EnvironmentsExternalUriProvider(
+                environmentInfo,
+                token,
+                envConnector,
+                liveShareEndpoint
+            );
+            resolveExternalUri = (uri: URI): Promise<URI> => {
+                return externalUriProvider.resolveExternalUri(uri);
+            };
+        }
 
         const homeIndicator: IHomeIndicator | undefined = isHostedOnGithub()
             ? {
@@ -473,7 +489,12 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         return e.id === props.match.params.id;
     });
 
-    const { liveShareEndpoint, apiEndpoint } = state.configuration || defaultConfig;
+    const {
+        liveShareEndpoint,
+        apiEndpoint,
+        portForwardingDomainTemplate,
+        enableEnvironmentPortForwarding,
+    } = state.configuration || defaultConfig;
 
     const params = new URLSearchParams(props.location.search);
 
@@ -488,6 +509,8 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         liveShareEndpoint,
         getEnvironment: envRegService.getEnvironment,
         apiEndpoint,
+        portForwardingDomainTemplate,
+        enableEnvironmentPortForwarding,
         correlationId: params.get('correlationId'),
         autoStart: params.get('autoStart') !== 'false',
         isValidEnvironmentFound,

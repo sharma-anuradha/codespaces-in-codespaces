@@ -16,6 +16,14 @@ ingress:
         - "*.workspaces-dev.github.com"
       secretName: ssl-cert-github-ws
 
+githubAuthEndpoint:
+  hosts:
+    - "auth.apps.dev.workspaces.githubusercontent.com"
+  tls:
+    - hosts:
+        - "*.apps.dev.workspaces.githubusercontent.com"
+      secretName: ssl-cert-github-pf
+
 pfingress:
   hosts:
     - "*.app.online-stg.dev.core.vsengsaas.visualstudio.com"
@@ -32,9 +40,11 @@ portForwardingHosts:
   - hosts:
       - "{0}.app.online-stg.dev.core.vsengsaas.visualstudio.com"
     certificateSecretName: ssl-cert
+    allowEnvironmentIdBasedHosts: true
   - hosts:
       - "{0}.apps.dev.workspaces.githubusercontent.com"
     certificateSecretName: ssl-cert-github-pf
+    allowEnvironmentIdBasedHosts: true
 
 authentication:
   audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
@@ -54,6 +64,10 @@ config:
   azDevClientId: B4074F41-EC85-4D4E-A3CA-4458F1A904CC
   vsSaaSTokenIssuer: https://ppe.liveshare.vsengsaas.visualstudio.com/
   vsSaaSCertificateSecretName: vsls-ppe-auth-cert-primary
+  portForwardingDomainTemplate: "{0}.app.online-stg.dev.core.vsengsaas.visualstudio.com"
+  gitHubPortForwardingDomainTemplate: "{0}.apps.dev.workspaces.githubusercontent.com"
+  portForwardingEnableEnvironmentEndpoints: true
+  gitHubportForwardingEnableEnvironmentEndpoints: true
 
 azure-secrets:
   # vsclk-core-dev

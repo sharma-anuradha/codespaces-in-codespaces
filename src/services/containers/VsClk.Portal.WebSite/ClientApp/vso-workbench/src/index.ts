@@ -1,4 +1,3 @@
-
 export { vscode } from './vscode/vscodeAssets/vscode';
 
 export { UserDataProvider } from './vscode/providers/userDataProvider/userDataProvider';
@@ -7,7 +6,10 @@ export { UrlCallbackProvider } from './vscode/providers/userDataProvider/urlCall
 export { resourceUriProviderFactory } from './vscode/providers/resourceUriProvider/resourceUriProviderFactory';
 export { applicationLinksProviderFactory } from './vscode/providers/applicationLinksProvider/applicationLinksProviderFactory';
 export { CredentialsProvider } from './vscode/providers/credentialsProvider/credentialsProvider';
-export { BaseExternalUriProvider } from './vscode/providers/externalUriProvider/externalUriProvider';
+export {
+    BaseExternalUriProvider,
+    PortForwardingExternalUriProvider,
+} from './vscode/providers/externalUriProvider/externalUriProvider';
 
 export { getVSCodeVersion, getVSCodeVersionString } from './utils/getVSCodeVersion';
 export { getVSCodeAssetPath } from './utils/getVSCodeAssetPath';

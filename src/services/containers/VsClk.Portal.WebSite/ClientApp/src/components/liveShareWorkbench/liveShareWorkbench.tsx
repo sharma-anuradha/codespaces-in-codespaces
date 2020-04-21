@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { URI, IApplicationLink } from 'vscode-web';
-import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
@@ -11,12 +10,15 @@ import { defaultConfig } from '../../services/configurationService';
 
 import { getShortEnvironmentName } from '../../utils/getShortEnvironmentName';
 import { telemetry } from '../../utils/telemetry';
-import { vscode } from 'vso-workbench';
+import { vscode, PortForwardingExternalUriProvider } from 'vso-workbench';
+import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
 
 export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareWebExtensionEndpoint: string;
     portalEndpoint: string;
+    portForwardingDomainTemplate: string;
     sessionId: string;
+    enableEnvironmentPortForwarding: boolean;
 }
 
 const liveShareEnvParam = (env: string, currentSearch: string): string | null => {
@@ -60,10 +62,18 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
     constructor(props: LiveShareWorkbenchProps) {
         super(props);
 
-        const externalUriProvider = new LiveShareExternalUriProvider(props.sessionId);
-        this.resolveExternalUri = (uri: URI): Promise<URI> => {
-            return externalUriProvider.resolveExternalUri(uri);
-        };
+        if (props.enableEnvironmentPortForwarding) {
+            const externalUriProvider = new PortForwardingExternalUriProvider(
+                props.portForwardingDomainTemplate,
+                props.sessionId
+            );
+            this.resolveExternalUri = externalUriProvider.resolveExternalUri;
+        } else {
+            const externalUriProvider = new LiveShareExternalUriProvider(props.sessionId);
+            this.resolveExternalUri = (uri: URI): Promise<URI> => {
+                return externalUriProvider.resolveExternalUri(uri);
+            };
+        }
 
         this.applicationLinksProvider = () => {
             const params = this.getSessionLinkParamsWithEnvironment([
@@ -132,11 +142,18 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
 const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: string }>) => {
     const sessionId = props.match.params.id;
 
-    const { liveShareWebExtensionEndpoint, portalEndpoint } = state.configuration || defaultConfig;
+    const {
+        liveShareWebExtensionEndpoint,
+        portalEndpoint,
+        portForwardingDomainTemplate,
+        enableEnvironmentPortForwarding,
+    } = state.configuration || defaultConfig;
     return {
         sessionId,
         portalEndpoint,
         liveShareWebExtensionEndpoint,
+        portForwardingDomainTemplate,
+        enableEnvironmentPortForwarding,
     };
 };
 

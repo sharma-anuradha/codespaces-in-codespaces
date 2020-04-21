@@ -1,3 +1,5 @@
+@using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,7 +12,7 @@
     </environment>
 </head>
 <body>
-    @if (!string.Equals(ViewData["RenderBranding"], "GitHub")) {
+    @if (!string.Equals(ViewData["RenderBranding"], Partners.GitHub)) {
         <div class="vsonline-titlebar part">
             <div class="vsonline-titlebar__caption" aria-label="Visual Studio logo">
                 <div class="vsonline-titlebar__logo"></div>

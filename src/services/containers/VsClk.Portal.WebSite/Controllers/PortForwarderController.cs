@@ -9,8 +9,10 @@ using System.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -22,15 +24,18 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private static AppSettings AppSettings { get; set; }
         private PortForwardingHostUtils HostUtils { get; }
+        public ICookieEncryptionUtils CookieEncryptionUtils { get; }
         private IHostEnvironment HostEnvironment { get; }
 
         public PortForwarderController(
             AppSettings appSettings,
             PortForwardingHostUtils hostUtils,
+            ICookieEncryptionUtils cookieEncryptionUtils,
             IHostEnvironment hostEnvironment)
         {
             AppSettings = appSettings;
             HostUtils = hostUtils;
+            CookieEncryptionUtils = cookieEncryptionUtils;
             HostEnvironment = hostEnvironment;
         }
 
@@ -50,8 +55,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [BrandedView]
         public async Task<IActionResult> Index(string path, [FromServices] IDiagnosticsLogger logger)
         {
-            var cascadeToken = string.Empty;
-            var sessionId = string.Empty;
+            string cascadeToken;
+            string sessionId = default;
+            string environmentId = default;
             if (Request.Headers.TryGetValue(PortForwardingHeaders.Token, out var tokenValues) &&
                 Request.Headers.TryGetValue(PortForwardingHeaders.WorkspaceId, out var connectionIdValues) &&
                 Request.Headers.TryGetValue(PortForwardingHeaders.Port, out var portStringValues))
@@ -73,6 +79,33 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 {
                     return ExceptionView(PortForwardingFailure.NotAuthenticated);
                 }
+            }
+            else if (AppSettings.IsLocal)
+            {
+                // When developing locally, there's no ngninx to set the headers.
+                (cascadeToken, _) = GetAuthToken(logger);
+                try
+                {
+                    (sessionId, environmentId, _) = GetPortForwardingSessionDetails(logger);
+                }
+                catch
+                {
+                    // Noop
+                }
+
+                if (string.IsNullOrEmpty(cascadeToken) || string.IsNullOrEmpty(sessionId))
+                {
+                    return SignIn(new Uri(Request.GetEncodedUrl()), logger);
+                }
+            }
+            else
+            {
+                return ExceptionView(PortForwardingFailure.NotAuthenticated);
+            }
+
+            if (Request.Headers.TryGetValue(PortForwardingHeaders.EnvironmentId, out var enironmentIdValues))
+            {
+                environmentId = enironmentIdValues.SingleOrDefault();
             }
 
             switch (path)
@@ -99,6 +132,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             {
                 CascadeToken = cascadeToken,
                 SessionId = sessionId,
+                EnvironmentId = environmentId,
                 LiveShareEndPoint = AppSettings.LiveShareEndpoint
             };
 
@@ -106,44 +140,85 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/auth")]
-        public async Task<IActionResult> AuthAsync([FromServices] IDiagnosticsLogger logger)
+        public async Task<IActionResult> AuthAsync(
+            [FromServices] IWorkspaceInfo workspaceInfo,
+            [FromServices] IDiagnosticsLogger logger)
         {
-            var (cascadeToken, error) = GetAuthToken(logger);
+            var (cascadeToken, _) = GetAuthToken(logger);
             if (cascadeToken == default)
             {
                 return StatusCode(StatusCodes.Status401Unauthorized);
             }
 
             string sessionId;
+            string environmentId;
             int port;
             try
             {
-                (sessionId, port) = GetPortForwardingSessionDetails(logger);
+                (sessionId, environmentId, port) = GetPortForwardingSessionDetails(logger);
+
+                // Neither cookie nor host have the session id, we need to re-authenticate.
+                if (string.IsNullOrEmpty(sessionId))
+                {
+                    return StatusCode(StatusCodes.Status401Unauthorized);
+                }
             }
             catch (InvalidOperationException)
             {
-                return BadRequest();
+                return StatusCode(StatusCodes.Status401Unauthorized);
             }
 
-            var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, logger);
+            var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, workspaceInfo, logger);
             if (!isUserAllowedToAccessEnvironment)
             {
-                return StatusCode(StatusCodes.Status401Unauthorized);
+                return StatusCode(StatusCodes.Status403Forbidden);
             }
 
             Response.Headers.Add(PortForwardingHeaders.Token, cascadeToken);
             Response.Headers.Add(PortForwardingHeaders.WorkspaceId, sessionId);
             Response.Headers.Add(PortForwardingHeaders.Port, port.ToString());
+            if (environmentId != default)
+            {
+                Response.Headers.Add(PortForwardingHeaders.EnvironmentId, environmentId);
+            }
 
             return Ok();
         }
 
         [HttpGet("~/signin")]
-        public IActionResult AuthAsync([FromQuery(Name = "rd")] string returnUrl, [FromServices] IDiagnosticsLogger logger)
+        public IActionResult SignIn([FromQuery(Name = "rd")] Uri returnUrl, [FromServices] IDiagnosticsLogger logger)
         {
-            var (_, error) = GetAuthToken(logger);
+            var hostString = returnUrl.Host.ToString();
 
-            return ExceptionView(error, returnUrl);
+            if (!HostUtils.TryGetPortForwardingSessionDetails(hostString, out var sessionDetails))
+            {
+                return BadRequest();
+            }
+
+            var redirectUriBuilder = new UriBuilder((HttpContext.GetPartner()) switch
+            {
+                Partners.GitHub => "https://github.com/workspaces/auth",
+                _ => $"{AppSettings.PortalEndpoint}/port-forwarding-sign-in",
+            });
+
+            // TODO: ensure double / aren't a thing?
+            redirectUriBuilder.Path = $"{redirectUriBuilder.Path}/{sessionDetails.EnvironmentId}";
+
+            var queryBuilder = HttpUtility.ParseQueryString(string.Empty);
+            if (returnUrl.AbsolutePath != "/")
+            {
+                queryBuilder.Add("path", returnUrl.AbsolutePath);
+            }
+            if (!string.IsNullOrEmpty(returnUrl.Query))
+            {
+                queryBuilder.Add("query", returnUrl.Query);
+            }
+
+            queryBuilder.Add("port", sessionDetails.Port.ToString());
+
+            redirectUriBuilder.Query = queryBuilder.ToString();
+
+            return Redirect(redirectUriBuilder.Uri.ToString());
         }
 
         private ActionResult ExceptionView(PortForwardingFailure failureReason = PortForwardingFailure.Unknown)
@@ -168,10 +243,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 RedirectUrl = redirectUriBuilder.Uri.ToString()
             };
 
-            Response.StatusCode = failureReason == PortForwardingFailure.Unknown
+            var response = View("exception", details);
+            response.StatusCode = failureReason == PortForwardingFailure.Unknown
                 ? StatusCodes.Status400BadRequest
                 : StatusCodes.Status401Unauthorized;
-            return View("exception", details);
+            return response;
         }
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)
@@ -201,39 +277,69 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return PhysicalFile(asset, mediaType);
         }
 
-        private (string, PortForwardingFailure) GetAuthToken(IDiagnosticsLogger logger)
+        private (string Token, PortForwardingFailure FailureReason) GetAuthToken(IDiagnosticsLogger logger)
         {
-            if (Request.Headers.TryGetValue("X-VSOnline-Authentication", out var tokenValues))
+            if (Request.Headers.TryGetValue(PortForwardingHeaders.Authentication, out var tokenValues))
             {
                 logger.AddValue("token_source", "header");
                 logger.LogInfo("portforwarding_get_token");
-                return (tokenValues.FirstOrDefault(), PortForwardingFailure.None);
+                return (tokenValues.SingleOrDefault(), PortForwardingFailure.None);
             }
 
+            if (!TryGetCookiePayload(logger, out var cookiePayload, out var reason))
+            {
+                return (default, reason);
+            }
+
+            return (cookiePayload.CascadeToken, PortForwardingFailure.None);
+        }
+
+        private bool TryGetCookiePayload(
+            IDiagnosticsLogger logger,
+            out PortForwardingAuthCookiePayload cookiePayload)
+        {
+            return TryGetCookiePayload(logger, out cookiePayload, out var _);
+        }
+
+        private bool TryGetCookiePayload(
+            IDiagnosticsLogger logger,
+            out PortForwardingAuthCookiePayload cookiePayload,
+            out PortForwardingFailure reason)
+        {
             var cookie = Request.Cookies[Constants.PFCookieName];
             if (string.IsNullOrEmpty(cookie))
             {
                 logger.AddValue("failure_reason", "not_authenticated");
-                logger.LogInfo("portforwarding_get_token_failed");
+                logger.LogInfo("portforwarding_try_get_cookie_payload_failed");
+
                 // In this case user probably try to access the portForwarding link directory without signing in, so will redirect to SignIn page and redirect back to PF
-                return (null, PortForwardingFailure.NotAuthenticated);
+                cookiePayload = default;
+                reason = PortForwardingFailure.NotAuthenticated;
+                return false;
             }
 
             logger.AddValue("token_source", "cookie");
-            var payload = AuthController.DecryptCookie(cookie, AppSettings.AesKey);
-            if (payload == null)
+            cookiePayload = CookieEncryptionUtils.DecryptCookie(cookie);
+            if (cookiePayload == default)
             {
                 logger.AddValue("failure_reason", "invalid_cookie_payload");
-                logger.LogInfo("portforwarding_get_token_failed");
+                logger.LogInfo("portforwarding_try_get_cookie_payload_failed");
+
                 // Cookie is expired or there was an error decrypting the cookie.
-                return (null, PortForwardingFailure.InvalidCookiePayload);
+                cookiePayload = default;
+                reason = PortForwardingFailure.InvalidCookiePayload;
+                return false;
             }
 
-            logger.LogInfo("portforwarding_get_token");
-            return (payload.CascadeToken, PortForwardingFailure.None);
+            logger.AddValue("environment_id", cookiePayload.EnvironmentId);
+            logger.AddValue("connection_session_id", cookiePayload.ConnectionSessionId);
+            logger.LogInfo("portforwarding_try_get_cookie_payload");
+
+            reason = PortForwardingFailure.None;
+            return true;
         }
 
-        private (string SessionId, int Port) GetPortForwardingSessionDetails(IDiagnosticsLogger logger)
+        private (string SessionId, string EnvironmentId, int Port) GetPortForwardingSessionDetails(IDiagnosticsLogger logger)
         {
             if (!HostUtils.TryGetPortForwardingSessionDetails(Request, out var sessionDetails))
             {
@@ -244,18 +350,43 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                         ? "headers"
                         : "host"
                 );
+                logger.AddValue("reason", "invalid_session_details");
                 logger.LogInfo("portforwarding_get_session_details_failed");
 
                 throw new InvalidOperationException("Cannot extract workspace id and port from current request.");
             }
 
+            // TODO: Add support for environment id connection through headers?
+            if (sessionDetails.EnvironmentId != default)
+            {
+                if (!TryGetCookiePayload(logger, out var cookiePayload))
+                {
+                    logger.AddValue("reason", "no_cookie_payload");
+                    logger.LogInfo("portforwarding_get_session_details_failed");
+
+                    throw new InvalidOperationException("No cookie set for environment authentication.");
+                }
+                else if (!string.Equals(cookiePayload.EnvironmentId, sessionDetails.EnvironmentId, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    logger.AddValue("reason", "cookie_environment_id_match");
+                    logger.LogInfo("portforwarding_get_session_details_failed");
+
+                    throw new InvalidOperationException("No cookie set for environment authentication.");
+                }
+
+                // Since we don't get the WorkspaceId from the host, we'll take it from the cookie.
+                sessionDetails.WorkspaceId = cookiePayload.ConnectionSessionId;
+            }
+
             logger.AddValue("workspace_id", sessionDetails.WorkspaceId);
+            logger.AddValue("environment_id", sessionDetails.EnvironmentId);
             logger.AddValue("port", sessionDetails.Port.ToString());
             logger.LogInfo("portforwarding_get_session_details");
+
             return sessionDetails;
         }
 
-        private async Task<bool> CheckUserAccessAsync(string cascadeToken, string sessionId, IDiagnosticsLogger logger)
+        private async Task<bool> CheckUserAccessAsync(string cascadeToken, string sessionId, IWorkspaceInfo workspaceInfo, IDiagnosticsLogger logger)
         {
             string userId;
             try
@@ -293,7 +424,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             logger.AddValue("workspace_id", sessionId);
             var lsWorkspaceQueryDuration = logger.StartDuration();
-            var ownerId = await WorkSpaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
+            var ownerId = await workspaceInfo.GetWorkSpaceOwner(cascadeToken, sessionId, AppSettings.LiveShareEndpoint);
             logger.AddDuration(lsWorkspaceQueryDuration);
             logger.LogInfo("portforwarding_check_user_access_query_workspace");
 

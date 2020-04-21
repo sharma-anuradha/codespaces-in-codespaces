@@ -27,6 +27,11 @@ ingress:
   annotations: {}
   path: /
 
+githubAuthEndpoint:
+  enabled: true
+  annotations: {}
+  path: /authenticate-workspace
+
 pfingress:
   enabled: true
   annotations:
@@ -47,6 +52,10 @@ pfingress:
         }
       }
       location /authenticate-port-forwarder {
+        proxy_pass_request_body on;
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /authenticate-codespace {
         proxy_pass_request_body on;
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
       }
@@ -95,3 +104,7 @@ appSettings:
   - PORTAL_AppSettings__AzDevAppClientSecret
   - PORTAL_AppSettings__VsSaaSTokenIssuer
   - PORTAL_AppSettings__VsSaaSCertificateSecretName
+  - PORTAL_AppSettings__PortForwardingDomainTemplate
+  - PORTAL_AppSettings__GitHubPortForwardingDomainTemplate
+  - PORTAL_AppSettings__PortForwardingEnableEnvironmentEndpoints
+  - PORTAL_AppSettings__GitHubportForwardingEnableEnvironmentEndpoints

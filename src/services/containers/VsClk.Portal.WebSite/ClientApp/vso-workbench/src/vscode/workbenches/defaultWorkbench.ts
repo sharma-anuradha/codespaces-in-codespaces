@@ -9,7 +9,10 @@ import { EnvConnector, registerServiceWorker } from 'vso-ts-agent';
 import { WorkspaceProvider } from '../providers/workspaceProvider/workspaceProvider';
 import { UrlCallbackProvider } from '../providers/userDataProvider/urlCallbackProvider';
 import { resourceUriProviderFactory } from '../providers/resourceUriProvider/resourceUriProviderFactory';
-import { EnvironmentsExternalUriProvider } from '../providers/externalUriProvider/externalUriProvider';
+import {
+    EnvironmentsExternalUriProvider,
+    PortForwardingExternalUriProvider,
+} from '../providers/externalUriProvider/externalUriProvider';
 import { credentialsProvider } from '../providers/credentialsProvider/credentialsProvider';
 import { URI } from 'vscode-web';
 import { telemetry } from '../../telemetry/telemetry';
@@ -17,7 +20,7 @@ import { applicationLinksProviderFactory } from '../providers/applicationLinksPr
 
 export const getExtensions = (): string[] => {
     // TODO: move the extensions into the platform info payload instead
-    return (!isHostedOnGithub())
+    return !isHostedOnGithub()
         ? [...DEFAULT_EXTENSIONS]
         : [...DEFAULT_EXTENSIONS, ...HOSTED_IN_GITHUB_EXTENSIONS];
 };
@@ -32,11 +35,13 @@ const getUserDataProvider = async () => {
 };
 
 interface IDefaultWorkbenchOptions {
-    domElementId: string;
-    liveShareEndpoint: string;
-    getToken: () => Promise<string | null>;
-    onConnection: () => Promise<void>;
-    onError?: (e: Error) => any | Promise<any>;
+    readonly domElementId: string;
+    readonly liveShareEndpoint: string;
+    readonly getToken: () => Promise<string | null>;
+    readonly onConnection: () => Promise<void>;
+    readonly onError?: (e: Error) => any | Promise<any>;
+    readonly enableEnvironmentPortForwarding: boolean;
+    readonly portForwardingDomainTemplate: string;
 }
 
 export class Workbench {
@@ -45,7 +50,15 @@ export class Workbench {
     constructor(private readonly options: IDefaultWorkbenchOptions) {}
 
     public connect = async () => {
-        const { getToken, domElementId, liveShareEndpoint, onConnection, onError } = this.options;
+        const {
+            getToken,
+            domElementId,
+            liveShareEndpoint,
+            onConnection,
+            onError,
+            enableEnvironmentPortForwarding,
+            portForwardingDomainTemplate,
+        } = this.options;
 
         try {
             const vscodeConfig = getVSCodeVersion();
@@ -70,7 +83,7 @@ export class Workbench {
                     const workspaceProvider = new WorkspaceProvider(
                         new URLSearchParams(location.search),
                         environmentInfo,
-                        url => url
+                        (url) => url
                     );
                     const urlCallbackProvider = new UrlCallbackProvider();
                     const resourceUriProvider = resourceUriProviderFactory(
@@ -79,16 +92,31 @@ export class Workbench {
                         connector
                     );
 
-                    const externalUriProvider = new EnvironmentsExternalUriProvider(
-                        environmentInfo,
-                        token,
-                        connector,
-                        liveShareEndpoint
-                    );
-
-                    const resolveExternalUri = (uri: URI): Promise<URI> => {
-                        return externalUriProvider.resolveExternalUri(uri);
-                    };
+                    let resolveExternalUri;
+                    if (enableEnvironmentPortForwarding) {
+                        const ensurePortIsForwarded = connector.ensurePortIsForwarded.bind(
+                            connector,
+                            environmentInfo,
+                            token,
+                            liveShareEndpoint
+                        );
+                        const externalUriProvider = new PortForwardingExternalUriProvider(
+                            portForwardingDomainTemplate,
+                            environmentInfo.id,
+                            ensurePortIsForwarded
+                        );
+                        resolveExternalUri = externalUriProvider.resolveExternalUri;
+                    } else {
+                        const externalUriProvider = new EnvironmentsExternalUriProvider(
+                            environmentInfo,
+                            token,
+                            connector,
+                            liveShareEndpoint
+                        );
+                        resolveExternalUri = (uri: URI): Promise<URI> => {
+                            return externalUriProvider.resolveExternalUri(uri);
+                        };
+                    }
 
                     const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(
                         telemetry

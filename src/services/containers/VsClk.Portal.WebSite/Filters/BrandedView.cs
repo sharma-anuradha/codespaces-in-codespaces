@@ -15,12 +15,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters
         {
             if (context.Controller is Controller controller)
             {
-                // Scheme doesn't matter for TLD checks
-                var hostString = $"https://{context.HttpContext.Request.Host.ToString()}/";
-                if (GitHubUtils.IsGithubTLD(hostString))
-                {
-                    controller.ViewData["RenderBranding"] = "GitHub";
-                }
+                controller.ViewData["RenderBranding"] = context.HttpContext.GetPartner();
             }
         }
     }

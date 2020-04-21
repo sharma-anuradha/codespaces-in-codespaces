@@ -1,9 +1,5 @@
 import * as React from 'react';
-import {
-    EnvironmentStateInfo,
-    createTrace,
-    timeConstants,
-} from 'vso-client-core';
+import { EnvironmentStateInfo, createTrace, timeConstants } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
@@ -28,7 +24,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
         this.state = { value: EnvironmentWorkspaceState.Unknown };
         this.startPollingEnvironment();
-    };
+    }
 
     private startPollingEnvironment = (interval = 2 * SECOND_MS) => {
         this.stopPollEnvironment();
@@ -45,14 +41,10 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
     private startEnvironment = async () => {
         trace.info(`Environment in shutdown state, starting.`);
 
-        await startEnvironment(
-            this.setState.bind(this),
-            this.handleAPIError,
-            trace.info
-        );
+        await startEnvironment(this.setState.bind(this), this.handleAPIError, trace.info);
 
         this.setState({
-            value: EnvironmentStateInfo.Starting
+            value: EnvironmentStateInfo.Starting,
         });
 
         this.startPollingEnvironment();
@@ -64,7 +56,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
             let environmentInfo = await getEnvironmentInfo(
                 this.setState.bind(this),
-                this.handleAPIError,
+                this.handleAPIError
             );
 
             if (!environmentInfo) {
@@ -83,7 +75,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
         }
     };
 
-    private handleAPIError = (e: Error)  => {
+    private handleAPIError = (e: Error) => {
         sendTelemetry('vsonline/workbench/error', e);
 
         const newState = errorToState(e);
@@ -98,7 +90,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
             this.stopPollEnvironment();
         }
     };
-    
+
     public async componentDidMount() {
         try {
             this.setState({ value: EnvironmentWorkspaceState.Initializing });
@@ -109,7 +101,10 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
             trace.info(`Getting environment info..`);
 
-            const environmentInfo = await getEnvironmentInfo(this.setState.bind(this), this.handleAPIError);
+            const environmentInfo = await getEnvironmentInfo(
+                this.setState.bind(this),
+                this.handleAPIError
+            );
             if (!environmentInfo) {
                 /**
                  * error state already handled by
@@ -139,7 +134,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
         } catch (e) {
             this.handleAPIError(e);
         }
-    };
+    }
 
     public render() {
         const { value, message } = this.state;
@@ -162,5 +157,5 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
                 onSignIn={authService.redirectToLogin}
             />
         );
-    };
-};
+    }
+}

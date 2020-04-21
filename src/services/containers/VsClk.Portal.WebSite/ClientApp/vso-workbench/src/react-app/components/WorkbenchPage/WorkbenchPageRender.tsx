@@ -17,65 +17,55 @@ export interface IWorkbenchPageRenderProps {
     startEnvironment: () => any;
     onSignIn: () => any;
     handleAPIError: (e: Error) => any;
-};
+}
 
-export const WorkbenchPageRender: React.FunctionComponent<IWorkbenchPageRenderProps> = (props: IWorkbenchPageRenderProps) => {
-    const {
-        state,
-        message,
-        startEnvironment,
-        handleAPIError,
-        onSignIn,
-    } = props;
+export const WorkbenchPageRender: React.FunctionComponent<IWorkbenchPageRenderProps> = (
+    props: IWorkbenchPageRenderProps
+) => {
+    const { state, message, startEnvironment, handleAPIError, onSignIn } = props;
 
     switch (state) {
         case EnvironmentWorkspaceState.Unknown:
         case EnvironmentWorkspaceState.Initializing: {
-            return (<SplashScreenMessage
-                        message='Getting things ready...'
-                        isSpinner={true}
-                        isSpinnerStopped={true}
-                    />);
+            return (
+                <SplashScreenMessage
+                    message='Getting things ready...'
+                    isSpinner={true}
+                    isSpinnerStopped={true}
+                />
+            );
         }
 
         case EnvironmentWorkspaceState.SignedOut: {
             const buttonProps: IButtonLinkProps = {
                 text: 'Sign in',
-                onClick: onSignIn
+                onClick: onSignIn,
             };
-            return (<SplashScreenMessage
-                        message='Please sign in to proceed.'
-                        button={buttonProps}
-                    />);
+            return (
+                <SplashScreenMessage message='Please sign in to proceed.' button={buttonProps} />
+            );
         }
 
         case EnvironmentWorkspaceState.Error: {
-            return (<SplashScreenMessage
-                        message={message || 'Workspace error.'}
-                    />);
+            return <SplashScreenMessage message={message || 'Workspace error.'} />;
         }
 
         case EnvironmentStateInfo.Starting: {
-            return (<SplashScreenMessage
-                        message='Starting the workspace...'
-                        isSpinner={true}
-                    />);
+            return <SplashScreenMessage message='Starting the workspace...' isSpinner={true} />;
         }
 
         case EnvironmentStateInfo.Deleted: {
-            return (<SplashScreenMessage
-                        message='The workspace has been deleted.'
-                    />);
+            return <SplashScreenMessage message='The workspace has been deleted.' />;
         }
 
         case EnvironmentStateInfo.Failed: {
-            return (<SplashScreenMessage
-                        message='The workspace failed.'
-                    />);
+            return <SplashScreenMessage message='The workspace failed.' />;
         }
 
         case EnvironmentStateInfo.Provisioning: {
-            const connection = React.useMemo(() => { return new ConnectionAdapter(); }, []);
+            const connection = React.useMemo(() => {
+                return new ConnectionAdapter();
+            }, []);
             return (
                 <SplashScreenShell>
                     <VSOSplashScreen connection={connection} />
@@ -84,38 +74,33 @@ export const WorkbenchPageRender: React.FunctionComponent<IWorkbenchPageRenderPr
         }
 
         case EnvironmentStateInfo.ShuttingDown: {
-            return (<SplashScreenMessage
-                        message='The workspace is shutting down.'
-                        isSpinner={true}
-                    />);
+            return (
+                <SplashScreenMessage message='The workspace is shutting down.' isSpinner={true} />
+            );
         }
 
         case EnvironmentStateInfo.Shutdown: {
-            return (<SplashScreenMessage
-                message='The workspace is shutdown.'
-                button={{
-                    text: 'Connect',
-                    onClick: startEnvironment
-                }}
-            />);
+            return (
+                <SplashScreenMessage
+                    message='The workspace is shutdown.'
+                    button={{
+                        text: 'Connect',
+                        onClick: startEnvironment,
+                    }}
+                />
+            );
         }
 
         case EnvironmentStateInfo.Unavailable: {
-            return (<SplashScreenMessage
-                        message='The workspace is not available.'
-                    />);
+            return <SplashScreenMessage message='The workspace is not available.' />;
         }
 
         case EnvironmentStateInfo.Available: {
-            return (<Workbench
-                        onError={handleAPIError}
-                    />);
+            return <Workbench onError={handleAPIError} />;
         }
-        
+
         default: {
-            return (<SplashScreenMessage
-                        message='Unknown workspace state.'
-                    />);
+            return <SplashScreenMessage message='Unknown workspace state.' />;
         }
     }
 };

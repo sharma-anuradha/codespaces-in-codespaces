@@ -15,14 +15,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         public static string WorkspaceId { get => "X-VSOnline-Forwarding-WorkspaceId"; }
 
         /// <summary>
+        /// Gets header name for environment id.
+        /// </summary>
+        public static string EnvironmentId { get => "X-VSOnline-Forwarding-EnvironmentId"; }
+
+        /// <summary>
         /// Gets header name for port.
         /// </summary>
         public static string Port { get => "X-VSOnline-Forwarding-Port"; }
 
         /// <summary>
-        /// Gets header name for port.
+        /// Gets header name for token.
         /// </summary>
         public static string Token { get => "X-VSOnline-Forwarding-Token"; }
+
+        /// <summary>
+        /// Gets header name for authentication.
+        /// </summary>
+        public static string Authentication { get => "X-VSOnline-Authentication"; }
 
         /// <summary>
         /// Gets header name for original url header.

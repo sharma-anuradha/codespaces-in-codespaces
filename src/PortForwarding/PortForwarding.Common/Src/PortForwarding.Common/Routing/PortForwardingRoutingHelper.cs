@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Rout
             {
                 logger?.AddBaseValue("routing_context", "PortForwarding");
                 logger?.AddBaseValue("workspace_id", sessionDetails.WorkspaceId);
+                logger?.AddBaseValue("environment_id", sessionDetails.EnvironmentId);
                 logger?.AddBaseValue("port", sessionDetails.Port.ToString());
 
                 return true;

@@ -5,18 +5,18 @@ using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
-    public class WorkSpaceInfo
+    public class WorkspaceInfo : IWorkspaceInfo
     {
-        private static HttpClient client = new HttpClient();
+        private readonly HttpClient client = new HttpClient();
 
-        public static async Task<string> GetWorkSpaceOwner(string token, string sessionId, string liveShareEndpoint)
+        public async Task<string> GetWorkSpaceOwner(string token, string sessionId, string liveShareEndpoint)
         {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var response = await client.GetAsync(liveShareEndpoint + Constants.LiveShareWorkspaceRoute + sessionId);
 
-            if (!response.IsSuccessStatusCode) 
-            { 
-                return null; 
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
             }
 
             var content = await response.Content.ReadAsStringAsync();

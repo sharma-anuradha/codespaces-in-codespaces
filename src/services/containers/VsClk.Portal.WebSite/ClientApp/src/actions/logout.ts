@@ -4,7 +4,6 @@ import { authService } from '../services/authService';
 import { useDispatch } from './middleware/useDispatch';
 
 import { INDEXEDDB_VSONLINE_DB, deleteDatabase as deleteIndexedDb } from '../utils/indexedDBFS';
-import { deleteAuthCookie } from '../utils/setAuthCookie';
 
 export const logoutActionType = 'async.authentication.clearData';
 const exemptCookieList = ['MSCC'];
@@ -65,7 +64,8 @@ export async function logout(props: { isExplicit: boolean }) {
     }
     // tslint:enable: no-cookies
 
-    await deleteAuthCookie();
+    // TODO: Logout PF cookies we don't see and don't know about here and
+    // won't see on server either as they are for unknown specific domains.
 }
 
 function clearLocalStorage(exemptKeys: string[]) {

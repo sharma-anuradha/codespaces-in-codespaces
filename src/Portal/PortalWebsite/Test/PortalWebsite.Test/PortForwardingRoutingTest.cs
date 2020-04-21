@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite;
 using Microsoft.VsSaaS.Azure.KeyVault;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Moq;
 
@@ -25,27 +26,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         {
             Factory = factory.WithWebHostBuilder(builder =>
             {
-                builder.ConfigureAppConfiguration((context, config) =>
-                {
-                    // Setup AppSettings configuration
-                    config.AddJsonFile("appsettings.Test.json");
-                });
-
-                builder.ConfigureServices((services) =>
-                {
-                    var mockKeyVaultSecretReader = new Mock<IKeyVaultSecretReader>();
-                    mockKeyVaultSecretReader
-                        .Setup(o => o.GetSecretVersionsAsync(It.IsAny<string>(), It.IsAny<string>(),
-                            It.IsAny<IDiagnosticsLogger>()))
-                        .ReturnsAsync((string vaultName, string secretName, IDiagnosticsLogger logger) => new[]
-                            {
-                                new KeyVaultSecret(
-                                    id:
-                                    $"https://{vaultName}.vault.azure.net/secrets/{secretName}/27a35d5d3731497bbbf64eede9eaf3d3",
-                                    attributes: new KeyVaultSecretAttributes(new DateTime(), new DateTime()))
-                            });
-                    services.Replace(ServiceDescriptor.Singleton(mockKeyVaultSecretReader.Object));
-                });
+                builder
+                    .ConfigureAppConfiguration((context, config) =>
+                    {
+                        // Setup AppSettings configuration
+                        config.AddJsonFile("appsettings.Test.json");
+                    })
+                    .ConfigureServices((services) =>
+                    {
+                        var mockKeyVaultSecretReader = new Mock<IKeyVaultSecretReader>();
+                        mockKeyVaultSecretReader
+                            .Setup(o => o.GetSecretVersionsAsync(It.IsAny<string>(), It.IsAny<string>(),
+                                It.IsAny<IDiagnosticsLogger>()))
+                            .ReturnsAsync((string vaultName, string secretName, IDiagnosticsLogger logger) => new[]
+                                {
+                                    new KeyVaultSecret(
+                                        id:
+                                        $"https://{vaultName}.vault.azure.net/secrets/{secretName}/27a35d5d3731497bbbf64eede9eaf3d3",
+                                        attributes: new KeyVaultSecretAttributes(new DateTime(), new DateTime()))
+                                });
+                        services.Replace(ServiceDescriptor.Singleton(mockKeyVaultSecretReader.Object));
+                    });
             });
         }
 
@@ -89,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var client = Factory.CreateClient();
 
             var message = new HttpRequestMessage(HttpMethod.Get, url);
+            message.Headers.Add(PortForwardingHeaders.Token, "super_secret_token");
             message.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
             message.Headers.Add(PortForwardingHeaders.Port, "8080");
 
@@ -99,6 +101,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var responseHtml = await response.Content.ReadAsStringAsync();
 
             Assert.Contains("Connecting to the forwarded port...", responseHtml);
+        }
+
+
+        [Theory]
+        [MemberData(nameof(UnhandledPaths))]
+        public async Task PortForwarding_Environment_PassesEnvrironmentIdToView(string url)
+        {
+            var client = Factory.CreateClient();
+
+            var message = new HttpRequestMessage(HttpMethod.Get, url);
+            message.Headers.Add(PortForwardingHeaders.Token, "super_secret_token");
+            message.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
+            message.Headers.Add(PortForwardingHeaders.EnvironmentId, "0b125897-9e5c-438f-b286-a795f0419c3b");
+            message.Headers.Add(PortForwardingHeaders.Port, "8080");
+
+            var response = await client.SendAsync(message);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var responseHtml = await response.Content.ReadAsStringAsync();
+
+            Assert.Contains("environmentId: '0b125897-9e5c-438f-b286-a795f0419c3b'", responseHtml);
         }
 
         [Fact]
@@ -114,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
-        
+
         [Fact]
         public async Task Nginx_Authentication_RespondsWith401()
         {
@@ -147,7 +171,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             var message = new HttpRequestMessage(HttpMethod.Post, "/authenticate-port-forwarder")
             {
-                Content = new FormUrlEncodedContent(new Dictionary<string, string> {["cascadeToken"] = "abc"})
+                Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["cascadeToken"] = "abc" })
             };
 
             var response = await client.SendAsync(message);
@@ -166,19 +190,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             var message = new HttpRequestMessage(HttpMethod.Post, "/authenticate-port-forwarder")
             {
-                Content = new FormUrlEncodedContent(new Dictionary<string, string> {["cascadeToken"] = "abc"})
+                Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["cascadeToken"] = "abc" })
             };
             message.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
             message.Headers.Add(PortForwardingHeaders.Port, "8080");
 
             var response = await client.SendAsync(message);
+            await response.ThrowIfFailedAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+         
             var cookies = response.Headers.GetValues("Set-Cookie");
-
             Assert.Contains(cookies,
                 (cookie) => cookie.StartsWith(Constants.PFCookieName, StringComparison.InvariantCultureIgnoreCase));
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
-        
+
         [Fact]
         public async Task Portal_LogOutPortForwarder_RespondsWith200()
         {
@@ -187,12 +212,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var message = new HttpRequestMessage(HttpMethod.Post, "/logout-port-forwarder");
 
             var response = await client.SendAsync(message);
+            await response.ThrowIfFailedAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
             var cookies = response.Headers.GetValues("Set-Cookie");
 
             Assert.Contains(cookies,
                 (cookie) => cookie.StartsWith(Constants.PFCookieName, StringComparison.InvariantCultureIgnoreCase));
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -205,14 +231,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             message.Headers.Add(PortForwardingHeaders.Port, "8080");
 
             var response = await client.SendAsync(message);
+            await response.ThrowIfFailedAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
             var cookies = response.Headers.GetValues("Set-Cookie");
 
             Assert.Contains(cookies,
                 (cookie) => cookie.StartsWith(Constants.PFCookieName, StringComparison.InvariantCultureIgnoreCase));
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
-        
+
         [Theory]
         [MemberData(nameof(StaticAssets))]
         public async Task Portal_StaticAssets_RespondWithRightMediaType(string asset, string contentType)

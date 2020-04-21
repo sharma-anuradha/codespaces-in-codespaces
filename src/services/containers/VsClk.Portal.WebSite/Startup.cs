@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -75,6 +76,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             PortForwardingHostUtils = new PortForwardingHostUtils(appSettings.PortForwardingHostsConfigs);
             services.AddSingleton(PortForwardingHostUtils);
             PortForwardingRoutingHelper = new PortForwardingRoutingHelper(PortForwardingHostUtils);
+
+            services.AddHttpClient<IFrontEndWebApiClient, FrontEndWebApiClient>();
+
+            services.AddSingleton<IWorkspaceInfo, WorkspaceInfo>();
+            services.AddSingleton<ICookieEncryptionUtils, CookieEncryptionUtils>();
+            services.AddSingleton<ILiveShareTokenExchangeUtil, LiveShareTokenExchangeUtil>();
 
             if (string.IsNullOrEmpty(AppSettings.AesKey)
                 || string.IsNullOrEmpty(AppSettings.AesIV)
