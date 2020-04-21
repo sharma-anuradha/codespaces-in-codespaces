@@ -41,7 +41,13 @@ import {
 } from '../../actions/environmentSettingsChanges';
 import { Loader } from '../loader/loader';
 import { ServiceResponseError } from '../../actions/middleware/useWebClient';
-import { Signal, ILocalEnvironment, EnvironmentStateInfo, isDefined, EnvironmentErrorCodes } from 'vso-client-core';
+import {
+    Signal,
+    ILocalEnvironment,
+    EnvironmentStateInfo,
+    isDefined,
+    EnvironmentErrorCodes,
+} from 'vso-client-core';
 
 const friendlyNameDisplayLength = 20;
 export interface EnvironmentCardProps {
@@ -201,6 +207,100 @@ const Actions = ({
     const [changeSettingDialogHidden, setChangeSettingDialogHidden] = useState(true);
     const [vscodeInstanceName, setVscodeInstanceName] = useState<string>();
 
+    const isWindowsEnv = environment.skuName?.toLowerCase().includes('windows');
+    const serviceUri = `https://${window.location.hostname}/api/v1/`;
+    const vsComServiceUri = btoa(serviceUri);
+
+    let items = [
+        {
+            key: 'open-vscode',
+            iconProps: { iconName: 'OpenInNewWindow' },
+            name: 'Open in VS Code',
+            disabled: environmentIsALie(environment) || isNotConnectable(environment),
+            onClick: async () => {
+                try {
+                    await tryOpeningUrl(environment, 'vscode');
+                } catch {
+                    setVscodeInstanceName('VS Code');
+                    setUnsuccessfulUrlDialogHidden(false);
+                }
+            },
+        },
+        {
+            key: 'open-vscode-insiders',
+            iconProps: { iconName: 'OpenInNewWindow' },
+            name: 'Open in VS Code Insiders',
+            disabled: environmentIsALie(environment) || isNotConnectable(environment),
+            onClick: async () => {
+                try {
+                    await tryOpeningUrl(environment, 'vscode-insiders');
+                } catch {
+                    setVscodeInstanceName('VS Code Insiders');
+                    setUnsuccessfulUrlDialogHidden(false);
+                }
+            },
+        },
+        {
+            key: 'open-web',
+            iconProps: { iconName: 'PlugConnected' },
+            name: 'Connect',
+            disabled: environmentIsALie(environment) || isNotConnectable(environment),
+            href: `environment/${environment.id!}`,
+        },
+        {
+            key: 'enable-editing',
+            iconProps: { iconName: 'Edit' },
+            name: 'Change Settings',
+            disabled: environmentIsALie(environment) || !isInStableState(environment),
+            onClick: () => {
+                if (!environment.id) {
+                    return;
+                }
+
+                if (environment.state === EnvironmentStateInfo.Available) {
+                    setChangeSettingDialogHidden(false);
+                } else {
+                    enableEditing();
+                }
+            },
+        },
+        {
+            key: 'shutdown',
+            iconProps: { iconName: 'PowerButton' },
+            name: 'Suspend',
+            disabled: environmentIsALie(environment) || isNotSuspendable(environment),
+            onClick: () => {
+                if (environment.id) {
+                    setShutdownDialogHidden(false);
+                }
+            },
+        },
+        {
+            key: 'delete',
+            iconProps: { iconName: 'Delete' },
+            name: isSelfHostedEnvironment(environment) ? 'Unregister' : 'Delete',
+            disabled: environmentIsALie(environment),
+            onClick: () => {
+                if (environment.id) setDeleteDialogHidden(false);
+            },
+        },
+    ];
+
+    if (isWindowsEnv) {
+        items = [
+            {
+                key: 'open-vs',
+                iconProps: { iconName: 'OpenInNewWindow' },
+                name: 'Open in Visual Studio',
+                disabled: environmentIsALie(environment) || isNotConnectable(environment),
+                onClick: async () => {
+                    const link = `https://visualstudio.microsoft.com/services/visual-studio-online/start-vs/?environmentId=${environment.id}&serviceUri=${vsComServiceUri}`;
+                    window.open(link, '_blank');
+                },
+            },
+            ...items,
+        ];
+    }
     return (
         <>
             <IconButton
@@ -209,85 +309,7 @@ const Actions = ({
                 menuIconProps={{ iconName: 'MoreVertical', style: { fontSize: '1.6rem' } }}
                 menuProps={{
                     isBeakVisible: false,
-                    items: [
-                        {
-                            key: 'open-vscode',
-                            iconProps: { iconName: 'OpenInNewWindow' },
-                            name: 'Open in VS Code',
-                            disabled:
-                                environmentIsALie(environment) || isNotConnectable(environment),
-                            onClick: async () => {
-                                try {
-                                    await tryOpeningUrl(environment, 'vscode');
-                                } catch {
-                                    setVscodeInstanceName('VS Code');
-                                    setUnsuccessfulUrlDialogHidden(false);
-                                }
-                            },
-                        },
-                        {
-                            key: 'open-vscode-insiders',
-                            iconProps: { iconName: 'OpenInNewWindow' },
-                            name: 'Open in VS Code Insiders',
-                            disabled:
-                                environmentIsALie(environment) || isNotConnectable(environment),
-                            onClick: async () => {
-                                try {
-                                    await tryOpeningUrl(environment, 'vscode-insiders');
-                                } catch {
-                                    setVscodeInstanceName('VS Code Insiders');
-                                    setUnsuccessfulUrlDialogHidden(false);
-                                }
-                            },
-                        },
-                        {
-                            key: 'open-web',
-                            iconProps: { iconName: 'PlugConnected' },
-                            name: 'Connect',
-                            disabled:
-                                environmentIsALie(environment) || isNotConnectable(environment),
-                            href: `environment/${environment.id!}`,
-                        },
-                        {
-                            key: 'enable-editing',
-                            iconProps: { iconName: 'Edit' },
-                            name: 'Change Settings',
-                            disabled:
-                                environmentIsALie(environment) || !isInStableState(environment),
-                            onClick: () => {
-                                if (!environment.id) {
-                                    return;
-                                }
-
-                                if (environment.state === EnvironmentStateInfo.Available) {
-                                    setChangeSettingDialogHidden(false);
-                                } else {
-                                    enableEditing();
-                                }
-                            },
-                        },
-                        {
-                            key: 'shutdown',
-                            iconProps: { iconName: 'PowerButton' },
-                            name: 'Suspend',
-                            disabled:
-                                environmentIsALie(environment) || isNotSuspendable(environment),
-                            onClick: () => {
-                                if (environment.id) {
-                                    setShutdownDialogHidden(false);
-                                }
-                            },
-                        },
-                        {
-                            key: 'delete',
-                            iconProps: { iconName: 'Delete' },
-                            name: isSelfHostedEnvironment(environment) ? 'Unregister' : 'Delete',
-                            disabled: environmentIsALie(environment),
-                            onClick: () => {
-                                if (environment.id) setDeleteDialogHidden(false);
-                            },
-                        },
-                    ],
+                    items,
                 }}
             />
             <ChangeSettingsDialog
