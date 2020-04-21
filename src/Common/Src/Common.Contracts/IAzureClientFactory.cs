@@ -6,8 +6,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.Storage.Fluent;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
@@ -46,6 +48,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="subscriptionId">Azure subscription id for resource.</param>
         /// <returns>Azure client.</returns>
         Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId);
+
+        /// <summary>
+        /// Get IStorageManagementClient client.
+        /// </summary>
+        /// <param name="subscriptionId">Azure subscription id for resource.</param>
+        /// <returns>Azure client.</returns>
+        Task<IStorageManagementClient> GetStorageManagementClient(Guid subscriptionId);
+
+        /// <summary>
+        /// Get IKeyVaultManagementClient client.
+        /// </summary>
+        /// <param name="subscriptionId">Azure subscription id for resource.</param>
+        /// <returns>Azure client.</returns>
+        Task<IKeyVaultManagementClient> GetKeyVaultManagementClient(Guid subscriptionId);
 
         /// <summary>
         /// Get IResourceManagementClient client.

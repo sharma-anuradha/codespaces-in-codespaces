@@ -6,9 +6,11 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -56,6 +58,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                .Build())
             { SubscriptionId = subscriptionId.ToString() };
             return await Task.FromResult<IComputeManagementClient>(azureClient);
+        }
+
+        /// <inheritdoc/>
+        public Task<IStorageManagementClient> GetStorageManagementClient(Guid subscriptionId)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<IKeyVaultManagementClient> GetKeyVaultManagementClient(Guid subscriptionId)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>

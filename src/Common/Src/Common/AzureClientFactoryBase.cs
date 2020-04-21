@@ -6,10 +6,12 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -92,6 +94,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 var restClient = await CreateRestClientAsync(sp);
                 var azureClient = new NetworkManagementClient(restClient)
+                {
+                    SubscriptionId = azureSubscriptionId,
+                };
+                return azureClient;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new AzureClientException(azureSubscriptionId, ex);
+            }
+        }
+
+        /// <summary>
+        /// Get a storage management client.
+        /// </summary>
+        /// <param name="subscriptionId">The subscription id.</param>
+        /// <param name="sp">The service principal.</param>
+        /// <returns>The client.</returns>
+        protected async Task<IStorageManagementClient> GetStorageManagementClient(Guid subscriptionId, IServicePrincipal sp)
+        {
+            var azureSubscriptionId = subscriptionId.ToString();
+            try
+            {
+                var restClient = await CreateRestClientAsync(sp);
+                var azureClient = new StorageManagementClient(restClient)
+                {
+                    SubscriptionId = azureSubscriptionId,
+                };
+                return azureClient;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new AzureClientException(azureSubscriptionId, ex);
+            }
+        }
+
+        /// <summary>
+        /// Get a key vault management client.
+        /// </summary>
+        /// <param name="subscriptionId">The subscription id.</param>
+        /// <param name="sp">The service principal.</param>
+        /// <returns>The client.</returns>
+        protected async Task<IKeyVaultManagementClient> GetKeyVaultManagementClient(Guid subscriptionId, IServicePrincipal sp)
+        {
+            var azureSubscriptionId = subscriptionId.ToString();
+            try
+            {
+                var restClient = await CreateRestClientAsync(sp);
+                var azureClient = new KeyVaultManagementClient(restClient)
                 {
                     SubscriptionId = azureSubscriptionId,
                 };

@@ -7,9 +7,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
+using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -85,6 +87,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 var sp = GetServicePrincipalForSubscription(subscriptionId);
                 return await GetNetworkManagementClient(subscriptionId, sp);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new AzureClientException(azureSubscriptionId, ex);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IStorageManagementClient> GetStorageManagementClient(Guid subscriptionId)
+        {
+            var azureSubscriptionId = subscriptionId.ToString();
+            try
+            {
+                var sp = GetServicePrincipalForSubscription(subscriptionId);
+                return await GetStorageManagementClient(subscriptionId, sp);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new AzureClientException(azureSubscriptionId, ex);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IKeyVaultManagementClient> GetKeyVaultManagementClient(Guid subscriptionId)
+        {
+            var azureSubscriptionId = subscriptionId.ToString();
+            try
+            {
+                var sp = GetServicePrincipalForSubscription(subscriptionId);
+                return await GetKeyVaultManagementClient(subscriptionId, sp);
             }
             catch (InvalidOperationException ex)
             {
