@@ -2100,7 +2100,7 @@
     diffie-hellman "^5.0.3"
     vscode-jsonrpc "^4.0.0"
 
-"@vs/vso-splash-screen@^1.0.2059":
+"@vs/vso-splash-screen@^1.0.1785", "@vs/vso-splash-screen@^1.0.2059":
   version "1.0.2059"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.2059.tgz#97fd2307417c87dbf122ecbcc4adf5c5d8650198"
   integrity sha1-l/0jB0F8h9vxIuy8xK31xdhlAZg=

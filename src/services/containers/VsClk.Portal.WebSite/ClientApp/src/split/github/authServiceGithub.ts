@@ -29,20 +29,23 @@ export class AuthServiceGithub {
     private repoInfo?: IRepoInfo;
 
     public init = async () => {
-        /**
-         * If GitHub embedder does not pass the GitHub token, we perform OAuth redirections
-         * to get the GitHub token with the OAuth app, in those circumstances, don't try to
-         * get the repoInfo since there is no embedder anyway.
-         */
-        if (location.pathname === githubLoginPath) {
-            return;
-        }
-
         const keys = await fetchKeychainKeys();
         if (keys) {
             setKeychainKeys(keys);
         } else {
             addDefaultGithubKey();
+        }
+
+        /**
+         * If GitHub embedder does not pass the GitHub token, we perform OAuth redirections
+         * to get the GitHub token with the OAuth app, in those circumstances, don't try to
+         * get the repoInfo since there is no embedder anyway.
+         * 
+         * !Note! This should go after we fetching the encryption keys because we need
+         *        those to set the encrypted GitHub token.
+         */
+        if (location.pathname === githubLoginPath) {
+            return;
         }
 
         this.repoInfo = PostMessageRepoInfoRetriever.getStoredInfo();
@@ -113,7 +116,7 @@ export class AuthServiceGithub {
 
         const cascadeToken = await this.getFreshCascadeToken();
         if (!cascadeToken) {
-            return cascadeToken;
+            return null;
         }
 
         await this.fetchKeychainKeys(cascadeToken);
@@ -170,6 +173,9 @@ export class AuthServiceGithub {
 
         const cascadeKeychainKey = createCascadeTokenKey(getCurrentEnvironmentId());
         await localStorageKeychain.set(cascadeKeychainKey, token);
+
+        const githubKeychainKey = createGitHubTokenKey(getCurrentEnvironmentId());
+        await localStorageKeychain.set(githubKeychainKey, githubToken);
 
         return token;
     };

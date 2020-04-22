@@ -7,12 +7,18 @@ import {
     LiveShareGithubAuthStrategy as LiveShareGithubAuthStrategyWorkbench,
 } from 'vso-workbench';
 
-import { localStorageKeychain, getCurrentEnvironmentId, isHostedOnGithub } from 'vso-client-core';
+import {
+    localStorageKeychain,
+    getCurrentEnvironmentId,
+    isHostedOnGithub,
+    getVSCodeScheme
+} from 'vso-client-core';
 
 import { authService } from '../services/authService';
 import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
 import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
 import { createCascadeTokenKey } from '../split/github/createCascadeTokenKey';
+import { createGitHubTokenKey } from '../split/github/createGitHubTokenKey';
 
 class MsalAuthStrategy extends MsalAuthStrategyWorkbench {
     async getToken(service: string, account: string): Promise<string | null> {
@@ -96,21 +102,44 @@ class AzureDevOpsStrategy implements IAuthStrategy {
     }
 }
 
+const githubPrExtensionServices = [
+    `${getVSCodeScheme()}-github.login`,
+    `vscode-pull-request-github`,
+];
+
+const githubPrExtensionAccounts = [
+    'github.com',
+    'account',
+];
+
 class GitHubStrategy implements IAuthStrategy {
     async canHandleService(service: string, account: string) {
-        return (
+        const isVSOGitHubRequest = (
             service === 'vso-github' &&
             (account.startsWith('github-token_') || account.startsWith('cascade-token_'))
         );
+
+        const isGithubAccount = githubPrExtensionAccounts.includes(account);
+        const isGithubService = githubPrExtensionServices.includes(service);
+
+        const isGitHubPullRequest = (isGithubService && isGithubAccount);
+
+        return isVSOGitHubRequest || isGitHubPullRequest;
     }
 
     async getToken(service: string, account: string): Promise<string | null> {
-        if (account.startsWith('github-token_')) {
-            return await getStoredGitHubToken();
+        const isGithubService = githubPrExtensionServices.includes(service);
+        const isGithubAccount = githubPrExtensionAccounts.includes(account);
+
+        if (account.startsWith('github-token_') || (isGithubService && isGithubAccount)) {
+            const githubKey = createGitHubTokenKey(getCurrentEnvironmentId());
+            const token = (await localStorageKeychain.get(githubKey)) || null;
+
+            return token;
         }
 
-        const key = createCascadeTokenKey(getCurrentEnvironmentId());
-        const token = (await localStorageKeychain.get(key)) || null;
+        const cascadeKey = createCascadeTokenKey(getCurrentEnvironmentId());
+        const token = (await localStorageKeychain.get(cascadeKey)) || null;
 
         return token;
     }
