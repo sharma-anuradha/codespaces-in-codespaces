@@ -173,7 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     query: null,
                     logger: logger));
 
-            Assert.Equal("https://environmentid-1234.fake.vso.io/", result.Url);
+            Assert.Equal("https://environmentid-1234.app.online.visualstudio.com/", result.Url);
         }
 
         [Fact]
@@ -201,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     query: null,
                     logger: logger));
 
-            Assert.Equal("https://environmentid-1234.fake.vso.io/some/deep/path/with.file.ext", result.Url);
+            Assert.Equal("https://environmentid-1234.app.online.visualstudio.com/some/deep/path/with.file.ext", result.Url);
         }
 
         [Fact]
@@ -229,7 +229,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     query: "and=query",
                     logger: logger));
 
-            Assert.Equal("https://environmentid-1234.fake.vso.io/some?and=query", result.Url);
+            Assert.Equal("https://environmentid-1234.app.online.visualstudio.com/some?and=query", result.Url);
         }
 
         [Fact]

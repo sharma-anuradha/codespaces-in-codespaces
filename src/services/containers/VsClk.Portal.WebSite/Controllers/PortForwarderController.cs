@@ -199,18 +199,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [HttpGet("~/signin")]
         public IActionResult SignIn([FromQuery(Name = "rd")] Uri returnUrl)
         {
-            var hostString = returnUrl.Host.ToString();
-
-            if (!HostUtils.TryGetPortForwardingSessionDetails(hostString, out var sessionDetails) || !(sessionDetails is PartialEnvironmentSessionDetails envDetails))
+            if (!HostUtils.TryGetPortForwardingSessionDetails(returnUrl.Host, out var sessionDetails) || !(sessionDetails is PartialEnvironmentSessionDetails envDetails))
             {
                 return BadRequest();
             }
 
-            var redirectUriBuilder = new UriBuilder((HttpContext.GetPartner()) switch
-            {
-                Partners.GitHub => "https://github.com/workspaces/auth",
-                _ => $"{AppSettings.PortalEndpoint}/port-forwarding-sign-in",
-            });
+            var redirectUriBuilder = new UriBuilder(GitHubUtils.IsGithubTLD(returnUrl)
+                ? "https://github.com/workspaces/auth"
+                : $"{AppSettings.PortalEndpoint}/port-forwarding-sign-in"
+            );
 
             // TODO: ensure double / aren't a thing?
             redirectUriBuilder.Path = $"{redirectUriBuilder.Path}/{envDetails.EnvironmentId}";

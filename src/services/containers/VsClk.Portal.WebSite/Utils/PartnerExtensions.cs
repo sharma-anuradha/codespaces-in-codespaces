@@ -8,7 +8,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         public static string GetPartner(this HttpContext context)
         {
             // Scheme doesn't matter for TLD checks
-            if (GitHubUtils.IsGithubTLD($"https://{context.Request.Host.ToString()}"))
+            if (GitHubUtils.IsGithubTLD($"https://{context.Request.Host}"))
             {
                 return Partners.GitHub;
             }
