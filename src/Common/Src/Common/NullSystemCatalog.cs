@@ -2,17 +2,18 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <inheritdoc/>
     public class NullSystemCatalog : ISystemCatalog
     {
         /// <inheritdoc/>
-        public IAzureSubscriptionCatalog AzureSubscriptionCatalog => throw new System.NotImplementedException();
+        public IAzureSubscriptionCatalog AzureSubscriptionCatalog => throw new NotSupportedException();
 
         /// <inheritdoc/>
-        public ISkuCatalog SkuCatalog => throw new System.NotImplementedException();
+        public ISkuCatalog SkuCatalog => throw new NotSupportedException();
     }
 }

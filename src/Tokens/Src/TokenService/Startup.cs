@@ -5,6 +5,8 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,7 +20,9 @@ using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.TokenService.Authentication;
 using Microsoft.VsSaaS.Services.TokenService.Settings;
 using Microsoft.VsSaaS.Tokens;
@@ -92,6 +96,13 @@ namespace Microsoft.VsSaaS.Services.TokenService
             this.ConfigureAuthentication(services);
             this.ConfigureTokenHandling(services);
 
+            // Add developer personal stamp settings and resource name builder.
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(
+                AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias);
+            services.AddSingleton(developerPersonalStampSettings);
+            services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
+            services.AddSingleton<ISystemCatalog, NullSystemCatalog>();
+
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
             {
@@ -133,6 +144,8 @@ namespace Microsoft.VsSaaS.Services.TokenService
         /// <param name="env">The hosting environment for the server.</param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            ConfigureAppCommon(app);
+
             var isProduction = env.IsProduction();
 
             // Frameworks
@@ -194,10 +207,13 @@ namespace Microsoft.VsSaaS.Services.TokenService
         /// <param name="services">Services collection to be configured.</param>
         protected virtual void ConfigureAuthentication(IServiceCollection services)
         {
-            services.AddAuthentication(JwtBearerUtility.AadAuthenticationScheme)
+            services.AddAuthentication()
                 .AddJwtBearerAuthentication2(
                     JwtBearerUtility.AadAuthenticationScheme,
-                    JwtBearerUtility.ConfigureAadOptions);
+                    JwtBearerUtility.ConfigureAadOptions)
+                .AddScheme<AuthenticationSchemeOptions, GithubAuthenticationHandler>(
+                    JwtBearerUtility.GithubAuthenticationScheme, (options) => { });
+            services.AddSingleton<IGithubApiHttpClientProvider, GithubApiHttpClientProvider>();
         }
 
         /// <summary>

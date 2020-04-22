@@ -21,19 +21,20 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
         /// </summary>
         /// <param name="tenantId">Service principal tenant ID.</param>
         /// <param name="clientId">Service principal client ID.</param>
-        /// <param name="clientSecret">Service principal client secret.</param>
+        /// <param name="clientSecretProvider">Callback for getting the service principal
+        /// client secret.</param>
         public ServicePrincipalIdentity(
             string tenantId,
             string clientId,
-            string clientSecret)
+            Func<Task<string>> clientSecretProvider)
         {
             Requires.NotNullOrEmpty(tenantId, nameof(tenantId));
             Requires.NotNullOrEmpty(clientId, nameof(clientId));
-            Requires.NotNullOrEmpty(clientSecret, nameof(clientSecret));
+            Requires.NotNull(clientSecretProvider, nameof(clientSecretProvider));
 
             TenantId = tenantId;
             ClientId = clientId;
-            ClientSecret = clientSecret;
+            ClientSecretProvider = clientSecretProvider;
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
         /// </summary>
         public string ClientId { get; }
 
-        private string ClientSecret { get; }
+        private Func<Task<string>> ClientSecretProvider { get; }
 
         /// <summary>
         /// Gets an authentication header that authenticates this service principal.
@@ -63,7 +64,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
             {
                 string authority = $"https://login.windows.net/{TenantId}/";
                 var authContext = new AuthenticationContext(authority, false);
-                var clientCredential = new ClientCredential(ClientId, ClientSecret);
+                var clientSecret = await ClientSecretProvider();
+                var clientCredential = new ClientCredential(ClientId, clientSecret);
                 this.authResult = await authContext.AcquireTokenAsync(resource, clientCredential);
             }
 

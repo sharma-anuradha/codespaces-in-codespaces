@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
@@ -37,7 +38,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         protected TokenServiceClient CreateSPAuthenticatedClient(string appId)
         {
             return new TokenServiceClient(
-                TokenService.ServiceUri, () => GetSPAuthHeaderAsync(appId));
+                new HttpClient { BaseAddress = TokenService.ServiceUri },
+                () => GetSPAuthHeaderAsync(appId));
         }
 
         protected static Task<AuthenticationHeaderValue> GetSPAuthHeaderAsync(string appId)
@@ -56,7 +58,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         protected TokenServiceClient CreateUserAuthenticatedClient(string name, string email)
         {
             return new TokenServiceClient(
-                TokenService.ServiceUri, () => GetUserAuthHeaderAsync(name, email));
+                new HttpClient { BaseAddress = TokenService.ServiceUri },
+                () => GetUserAuthHeaderAsync(name, email));
         }
 
         protected static Task<AuthenticationHeaderValue> GetUserAuthHeaderAsync(
@@ -76,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
 
         protected TokenServiceClient CreateUnauthenticatedClient()
         {
-            return new TokenServiceClient(TokenService.ServiceUri);
+            return new TokenServiceClient(new HttpClient { BaseAddress = TokenService.ServiceUri });
         }
 
         protected static JwtPayload DecodeToken(
@@ -99,7 +102,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             DateTime? expires = null)
         {
             var tokenClient = new TokenServiceClient(
-                TokenService.ServiceUri, () => GetSPAuthHeaderAsync(TestAppId1));
+                new HttpClient { BaseAddress = TokenService.ServiceUri },
+                () => GetSPAuthHeaderAsync(TestAppId1));
 
             var payload = new JwtPayload(
                 TestIssuer1,

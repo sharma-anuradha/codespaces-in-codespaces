@@ -30,9 +30,20 @@ namespace Microsoft.VsSaaS.Services.TokenService.Authentication
     public static class JwtBearerUtility
     {
         /// <summary>
-        /// The JWT authentication scheme for AAD tokens.
+        /// The authentication scheme for AAD tokens.
         /// </summary>
         public const string AadAuthenticationScheme = "aad";
+
+        /// <summary>
+        /// The authentication scheme for GitHub tokens.
+        /// </summary>
+        public const string GithubAuthenticationScheme = "github";
+
+        /// <summary>
+        /// All authentication schemes supported by the token service.
+        /// </summary>
+        public const string AllAuthenticationSchemes =
+            AadAuthenticationScheme + "," + GithubAuthenticationScheme;
 
         /// <summary>Service principals that issue tokens must be given this role.</summary>
         public const string IssuerRole = "Issuer";
@@ -61,8 +72,6 @@ namespace Microsoft.VsSaaS.Services.TokenService.Authentication
         /// <returns>Async task.</returns>
         public static Task TokenValidatedAsync(TokenValidatedContext context)
         {
-            context.HttpContext.SetTokenClaims((context.SecurityToken as JwtSecurityToken)?.Claims);
-
             var identity = (ClaimsIdentity)context.Principal.Identity;
             try
             {

@@ -9,8 +9,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -53,13 +51,12 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         /// <param name="jwtWriter">JWT writer.</param>
         /// <param name="jwtReader">JWT reader.</param>
         /// <param name="authSchemeProvider">Authentication scheme provider.</param>
-        /// <param name="authHandlerProvider">Authentication handler provider.</param>
         /// <param name="settings">Token service app settings.</param>
         public TokensController(
-            [FromServices]IJwtWriter jwtWriter,
-            [FromServices]IJwtReader jwtReader,
-            [FromServices]IAuthenticationSchemeProvider authSchemeProvider,
-            [FromServices]TokenServiceAppSettings settings)
+            IJwtWriter jwtWriter,
+            IJwtReader jwtReader,
+            IAuthenticationSchemeProvider authSchemeProvider,
+            TokenServiceAppSettings settings)
         {
             this.jwtWriter = Requires.NotNull(jwtWriter, nameof(jwtWriter));
             this.jwtReader = Requires.NotNull(jwtReader, nameof(jwtReader));
@@ -235,7 +232,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>An issue result including the issued token.</returns>
         [HttpPost("exchange")]
-        [Authorize(AuthenticationSchemes = AadAuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = AllAuthenticationSchemes)]
         [AllowAnonymous]
         [ProducesResponseType(typeof(IssueResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -251,38 +248,27 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 return Problem("Missing exchange issuer configuration.");
             }
 
-            var claims = HttpContext.GetTokenClaims();
+            var provider = parameters?.Provider ?? ProviderNames.Microsoft;
+            var identity = User.Identity as ClaimsIdentity;
 
             if (!string.IsNullOrEmpty(parameters?.Token))
             {
-                if (claims != null)
+                if (identity?.IsAuthenticated == true)
                 {
                     return Problem("Include token in either header or body, not both.");
                 }
 
-                if (string.IsNullOrEmpty(parameters.Provider) ||
-                    parameters.Provider == "microsoft")
+                var authScheme = provider == ProviderNames.Microsoft ? AadAuthenticationScheme : provider;
+                var authenticateResult = await ReauthenticateAsync(authScheme, parameters.Token);
+                if (!authenticateResult.Succeeded ||
+                    (identity = authenticateResult.Principal.Identity as ClaimsIdentity) == null)
                 {
-                    var authenticateResult = await ReauthenticateAsync(
-                        AadAuthenticationScheme, parameters.Token);
-                    if (!authenticateResult.Succeeded)
-                    {
-                        logger.LogError("token_exchange_unauthorized");
-                        return Unauthorized();
-                    }
-
-                    claims = HttpContext.GetTokenClaims();
-                }
-                else
-                {
-                    logger.LogErrorWithDetail(
-                        "token_exchange_unsupported_provider",
-                        "Provider: " + parameters.Provider);
-                    return Problem("Unsupported token provider: " + parameters.Provider);
+                    logger.LogError("token_exchange_unauthorized");
+                    return Unauthorized();
                 }
             }
 
-            if (claims == null)
+            if (identity?.IsAuthenticated != true)
             {
                 logger.LogError("token_exchange_missing_claims");
                 return Unauthorized();
@@ -314,7 +300,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 payload.AddClaim(JwtWriter.CreateDateTimeClaim(JwtRegisteredClaimNames.Exp, exp));
             }
 
-            var claimsError = CopyAadIdentityClaims(claims, payload, logger);
+            var claimsError = CopyIdentityClaims(provider, identity.Claims, payload, logger);
             if (claimsError != null)
             {
                 return claimsError;
@@ -347,7 +333,9 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             string token)
         {
             // Place the token into the auth header before re-authenticating the request.
-            Request.Headers["Authorization"] = $"Bearer {token}";
+            var headerAuthScheme = authenticationScheme == AadAuthenticationScheme
+                ? "Bearer" : authenticationScheme;
+            Request.Headers["Authorization"] = $"{headerAuthScheme} {token}";
 
             // Create a new instance of the authentication handler for the scheme.
             // (The existing instance of the handler for the request has already failed.)
@@ -453,35 +441,38 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             return validAudience.AudienceUri;
         }
 
-        private IActionResult? CopyAadIdentityClaims(
+        private IActionResult? CopyIdentityClaims(
+            string providerName,
             IEnumerable<Claim> fromClaims,
             JwtPayload toPayload,
             IDiagnosticsLogger logger)
         {
+            const string tidClaimType = "http://schemas.microsoft.com/identity/claims/tenantid";
+            const string oidClaimType = "http://schemas.microsoft.com/identity/claims/objectidentifier";
+
             var clientSettings = HttpContext.GetClientSettings();
 
-            string? GetClaimValue(string claimName)
+            string? GetClaimValue(string claimName, string? altClaimName = null)
             {
-                return fromClaims.SingleOrDefault((c) => c.Type == claimName)?.Value;
+                return fromClaims.SingleOrDefault(
+                    (c) => c.Type == claimName || c.Type == altClaimName)?.Value;
             }
 
-            var tid = GetClaimValue(CustomClaims.TenantId);
+            var tid = GetClaimValue(CustomClaims.TenantId, tidClaimType);
             if (string.IsNullOrEmpty(tid))
             {
                 logger.LogError("token_exchange_missing_tid");
                 return Problem($"Missing claim: '{CustomClaims.TenantId}'");
             }
 
-            var oid = GetClaimValue(CustomClaims.OId);
+            var oid = GetClaimValue(CustomClaims.OId, oidClaimType);
             if (string.IsNullOrEmpty(oid))
             {
                 logger.LogError("token_exchange_missing_oid");
                 return Problem($"Missing claim: '{CustomClaims.OId}'");
             }
 
-            // Currently only AAD authentication is supported for exchanging,
-            // so the provider is always "microsoft".
-            toPayload.AddClaim(new Claim(CustomClaims.Provider, "microsoft"));
+            toPayload.AddClaim(new Claim(CustomClaims.Provider, providerName));
             toPayload.AddClaim(new Claim(CustomClaims.TenantId, tid));
             toPayload.AddClaim(new Claim(CustomClaims.OId, oid));
 
@@ -500,8 +491,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 toPayload.AddClaim(new Claim(claimName, value!));
             }
 
-            var name = GetClaimValue(CustomClaims.DisplayName);
-            var email = GetClaimValue(CustomClaims.Email);
+            var name = GetClaimValue(CustomClaims.DisplayName, ClaimTypes.Name);
+            var email = GetClaimValue(CustomClaims.Email, ClaimTypes.Email);
             var username = GetClaimValue(CustomClaims.Username);
 
             if (string.IsNullOrEmpty(email) && username?.Contains('@') == true)

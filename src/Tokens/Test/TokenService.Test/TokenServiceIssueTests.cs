@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +23,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         public async Task IssueTokenWithDefaults()
         {
             var tokenClient = new TokenServiceClient(
-                TokenService.ServiceUri, () => GetSPAuthHeaderAsync(TestAppId1));
+                new HttpClient { BaseAddress = TokenService.ServiceUri },
+                () => GetSPAuthHeaderAsync(TestAppId1));
 
             var payload = new JwtPayload();
             payload.AddClaim(new Claim(JwtRegisteredClaimNames.Aud, TestAudience1));
@@ -96,10 +98,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
                 notBefore: null,
                 expires: DateTime.UtcNow.AddHours(1));
 
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
+            var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 await tokenClient.IssueAsync(payload, CancellationToken.None);
             });
+            Assert.Contains("issuer", ex.Message);
         }
 
         [Fact]
@@ -115,10 +118,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
                 notBefore: null,
                 expires: DateTime.UtcNow.AddHours(1));
 
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
+            var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 await tokenClient.IssueAsync(payload, CancellationToken.None);
             });
+            Assert.Contains("audience", ex.Message);
         }
 
         [Fact]
@@ -133,10 +137,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
                 notBefore: null,
                 expires: DateTime.UtcNow.AddHours(-1));
 
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
+            var ex = await Assert.ThrowsAsync<ArgumentException>(async () =>
             {
                 await tokenClient.IssueAsync(payload, CancellationToken.None);
             });
+            Assert.Contains("exp", ex.Message);
         }
 
         [Fact]

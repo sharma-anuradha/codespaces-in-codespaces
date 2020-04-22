@@ -25,6 +25,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
     /// </summary>
     public class TokenServiceClient : IDisposable
     {
+        private const string VisualStudioServicesApiAppId = "9bd5ab7f-4031-4045-ace9-6bebbad202f6";
+        private const string CertificatesApiPath = "/api/v1/certificates";
+        private const string TokensApiPath = "/api/v1/tokens";
+
         private static readonly MediaTypeFormatter[] Formatters = CreateFormatters();
 
         private readonly HttpClient httpClient;
@@ -32,54 +36,58 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TokenServiceClient"/> class
-        /// with a token service URI and no client authentication.
+        /// with an HTTP client and no client authentication callback.
         /// </summary>
-        /// <param name="tokenServiceUri">Base URI for the token service.</param>
+        /// <param name="httpClient">HttpClient with base address set to the token service
+        /// (not including any API path).</param>
         /// <remarks>
         /// Only some of the token service APIs can be called with no authentication.
         /// </remarks>
-        public TokenServiceClient(Uri tokenServiceUri)
+        public TokenServiceClient(HttpClient httpClient)
         {
-            this.httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(tokenServiceUri, "/api/v1/tokens/"),
-            };
-
+            this.httpClient = Requires.NotNull(httpClient, nameof(httpClient));
             this.authCallback = () => Task.FromResult<AuthenticationHeaderValue?>(null);
+
+            if (httpClient.BaseAddress == null)
+            {
+                throw new ArgumentException(
+                    "A base address is required.",
+                    $"{nameof(httpClient)}.{nameof(HttpClient.BaseAddress)}");
+            }
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TokenServiceClient"/> class
-        /// with a token service URI and client authentication callback.
+        /// with an HTTP client and a client authentication callback.
         /// </summary>
-        /// <param name="tokenServiceUri">Base URI for the token service.</param>
+        /// <param name="httpClient">HttpClient with base address set to the token service
+        /// (not including any API path).</param>
         /// <param name="authCallback">Async callback for retrieving a client auth token.</param>
         public TokenServiceClient(
-            Uri tokenServiceUri,
+            HttpClient httpClient,
             Func<Task<AuthenticationHeaderValue?>> authCallback)
-            : this(tokenServiceUri)
+            : this(httpClient)
         {
             this.authCallback = Requires.NotNull(authCallback, nameof(authCallback));
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TokenServiceClient"/> class
-        /// with a token service URI and client identity parameters.
+        /// with an HTTP client and client identity parameters.
         /// </summary>
-        /// <param name="tokenServiceUri">Base URI for the token service.</param>
-        /// <param name="tokenServiceAppId">AppID of the the token service.</param>
+        /// <param name="httpClient">HttpClient with base address set to the token service
+        /// (not including any API path).</param>
         /// <param name="servicePrincipalIdentity">Identity of the service principal that is
         /// acting as a client of the token service.</param>
         public TokenServiceClient(
-            Uri tokenServiceUri,
-            string tokenServiceAppId,
+            HttpClient httpClient,
             ServicePrincipalIdentity servicePrincipalIdentity)
-            : this(tokenServiceUri)
+            : this(httpClient)
         {
             Requires.NotNull(servicePrincipalIdentity, nameof(servicePrincipalIdentity));
 
             this.authCallback = () =>
-                servicePrincipalIdentity.GetAuthenticationHeaderAsync(tokenServiceAppId);
+                servicePrincipalIdentity.GetAuthenticationHeaderAsync(VisualStudioServicesApiAppId);
         }
 
         /// <summary>
@@ -208,7 +216,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();
             var response = await this.httpClient.PostAsJsonAsync(
-                "issue",
+                TokensApiPath + "/issue",
                 requestParameters,
                 cancellation);
 
@@ -256,7 +264,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();
             var response = await this.httpClient.PostAsJsonAsync(
-                "validate",
+                TokensApiPath + "/validate",
                 requestParameters,
                 cancellation);
 
@@ -312,7 +320,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();
             var response = await this.httpClient.PostAsJsonAsync(
-                "exchange",
+                TokensApiPath + "/exchange",
                 requestParameters,
                 cancellation);
 
@@ -339,7 +347,9 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();
 
             var query = issuer == null ? string.Empty : $"?issuer={HttpUtility.UrlEncode(issuer)}";
-            var response = await this.httpClient.GetAsync("../certificates" + query, cancellation);
+            var response = await this.httpClient.GetAsync(
+                CertificatesApiPath + query,
+                cancellation);
 
             var result = await ConvertResponseAsync<CertificateSetResult>(
                 response,

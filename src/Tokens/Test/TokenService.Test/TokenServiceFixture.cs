@@ -134,7 +134,9 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             {
                 services.AddAuthentication()
                     .AddScheme<JwtBearerOptions, MockAuthenticationHandler>(
-                        JwtBearerUtility.AadAuthenticationScheme, configureOptions: null);
+                        JwtBearerUtility.AadAuthenticationScheme, configureOptions: null)
+                    .AddScheme<JwtBearerOptions, MockAuthenticationHandler>(
+                        JwtBearerUtility.GithubAuthenticationScheme, (options) => { });
             }
 
             protected override void ConfigureTokenHandling(IServiceCollection services)
