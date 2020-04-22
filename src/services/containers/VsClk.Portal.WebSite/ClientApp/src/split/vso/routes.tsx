@@ -89,7 +89,7 @@ export const routes: IRoute[] = [
         component: LiveShareWorkbench,
     },
     {
-        authenticated: true,
+        authenticated: false,
         path: githubPath,
         exact: false,
         component: GitHubWorkbench,
@@ -101,7 +101,7 @@ export const routes: IRoute[] = [
         component: GistWorkbench,
     },
     {
-        authenticated: true,
+        authenticated: false,
         path: azDevPath,
         exact: false,
         component: AzDevWorkbench,
