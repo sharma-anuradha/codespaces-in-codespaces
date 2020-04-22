@@ -130,12 +130,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
         /// <returns>The corresponding <see cref="AzureGeography"/>.</returns>
         public static AzureGeography? IsoCountryCodeToAzurePublicGeography(string isoCountryCode)
         {
-            if (!CountryToGeoMap.TryGetValue(isoCountryCode, out var azurePublicGeography))
+            if (!string.IsNullOrEmpty(isoCountryCode))
             {
-                return default;
+                if (CountryToGeoMap.TryGetValue(isoCountryCode, out var azurePublicGeography))
+                {
+                    return azurePublicGeography;
+                }
             }
 
-            return azurePublicGeography;
+            return default;
         }
 
         /// <summary>
