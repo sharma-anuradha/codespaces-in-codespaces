@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -32,16 +33,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="controlPlaneInfo">Control plane info.</param>
         public WatchOrphanedSystemEnvironmentsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IControlPlaneInfo controlPlaneInfo)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             ResourceBrokerHttpClient = resourceBrokerHttpClient;
+            ControlPlaneInfo = controlPlaneInfo;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedSystemEnvironmentsTask)}Lease");
@@ -49,6 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private string LogBaseName => EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask;
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerHttpClient { get; }
+
+        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -61,14 +67,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     // NOTE: If over time we needed an additional dimention, we could add region
                     //       and do a cross product with it.
                     var idShards = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
+                    var currentControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
 
                     // Run through found resources in the background
                     await TaskHelper.RunConcurrentEnumerableAsync(
                         $"{LogBaseName}_run_unit_check",
                         idShards,
-                        (idShard, itemLogger) => CoreRunUnitAsync(idShard, itemLogger),
+                        (idShard, itemLogger) => CoreRunUnitAsync(idShard, currentControlPlaneLocation, itemLogger),
                         childLogger,
-                        (idShard, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{idShard}", claimSpan, itemLogger));
+                        (idShard, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{currentControlPlaneLocation}-{idShard}", claimSpan, itemLogger));
 
                     return !Disposed;
                 },
@@ -76,13 +83,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 swallowException: true);
         }
 
-        private Task CoreRunUnitAsync(string idShard, IDiagnosticsLogger logger)
+        private Task CoreRunUnitAsync(string idShard, AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskResourceIdShard", idShard);
 
             // Get record so we can tell if it exists
             return CloudEnvironmentRepository.ForEachAsync(
                 x => x.Id.StartsWith(idShard)
+                    && x.Location == controlPlaneLocation // TODO: It needs to be updated to ControlPlaneLocation field, once data migration happens.
                     && (x.Storage != null || x.Compute != null),
                 logger.NewChildLogger(),
                 (environment, innerLogger) =>
