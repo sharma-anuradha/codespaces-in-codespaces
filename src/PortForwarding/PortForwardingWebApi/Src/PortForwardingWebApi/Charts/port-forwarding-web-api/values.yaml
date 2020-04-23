@@ -28,7 +28,7 @@ image:
   repositoryName: port-forwarding-web-api
   tag:
   agentRepositoryName: port-forwarding-agent
-  agentTag: latest
+  agentTag: 1.0.2075-ga1f39b44dc5dddfbd852b3b368ec6cc9582937a1-release754
   imagePullSecret:
 
 serviceAccount:
