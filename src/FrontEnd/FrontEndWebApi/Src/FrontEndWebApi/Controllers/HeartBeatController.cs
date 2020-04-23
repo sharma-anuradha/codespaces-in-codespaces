@@ -111,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                    {
                        CloudEnvironment environment = null;
 
-                       var environmentId = collectedData.FirstOrDefault(c => c.EnvironmentId != default)?.EnvironmentId;
+                       var environmentId = collectedData.FirstOrDefault(c => !string.IsNullOrEmpty(c.EnvironmentId))?.EnvironmentId;
                        if (!string.IsNullOrWhiteSpace(environmentId))
                        {
                            environment = await environmentManager.GetAsync(environmentId, childLogger);
