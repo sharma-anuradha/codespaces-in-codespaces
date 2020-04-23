@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 
@@ -291,7 +292,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
                     // Update state to be archived
                     await EnvironmentStateManager.SetEnvironmentStateAsync(
-                        environment, CloudEnvironmentState.Archived, "ArchiveComplete", null, innerLogger);
+                        environment, CloudEnvironmentState.Archived, "ArchiveComplete", MessageCodes.EnvironmentArchived.ToString(), innerLogger);
 
                     return true;
                 },

@@ -105,5 +105,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The subscription has been banned.
         /// </summary>
         SubscriptionIsBanned = 18,
+
+        /// <summary>
+        /// Restoring From Archive.
+        /// </summary>
+        EnvironmentArchived = 19,
     }
 }
