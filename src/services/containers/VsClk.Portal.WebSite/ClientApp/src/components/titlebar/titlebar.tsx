@@ -126,7 +126,7 @@ function TitleBarNoRouter(props: RouteComponentProps) {
                 <div className='vsonline-titlebar__caption-text'>
                     {getDevelopmentEmojiPrefix()}
                     {getIsInternalEmojiPrefix()}
-                    &nbsp;Visual Studio Codespaces
+                    &nbsp;Visual Studio Online
                 </div>
                 {planSelector}
             </div>

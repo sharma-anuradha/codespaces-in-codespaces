@@ -25,7 +25,7 @@
                     message.type === 'vsonline/connectionFailed' &&
                     message.payload.sessionId === '@Model.SessionId'
                 ) {
-                    throw new Error('Failed connecting to Visual Studio Codespace.');
+                    throw new Error('Failed connecting to Visual Studio Online environment.');
                 }
             } catch (err) {
                 navigator.serviceWorker.ready.then((registration) => {

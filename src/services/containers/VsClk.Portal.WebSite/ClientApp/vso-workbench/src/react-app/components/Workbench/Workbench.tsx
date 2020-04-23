@@ -9,7 +9,7 @@ import './Workbench.css';
 import { SplashScreenMessage } from '../SplashScreenShellMessage/SplashScreenShellMessage';
 
 export interface IWorkbechPropsComponent {
-    onError: (e: Error) => any | Promise<any>;
+    onError: (e: Error) => any | Promise<any>
 }
 
 class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {

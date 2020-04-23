@@ -218,10 +218,10 @@ export class LiveShareHttpClient implements IHttpClient {
             }
 
             if (responseMetadata.headers) {
-                responseMetadata.headers['X-Powered-By'] = 'Visual Studio Codespaces Service Worker';
+                responseMetadata.headers['X-Powered-By'] = 'Visual Studio Online Service Worker';
             } else {
                 responseMetadata.headers = {};
-                responseMetadata.headers['X-Powered-By'] = 'Visual Studio Codespaces Service Worker';
+                responseMetadata.headers['X-Powered-By'] = 'Visual Studio Online Service Worker';
             }
 
             try {
