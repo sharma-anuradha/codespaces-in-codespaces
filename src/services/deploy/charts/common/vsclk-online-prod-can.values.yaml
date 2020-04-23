@@ -64,7 +64,7 @@ config:
   portForwardingDomainTemplate: "{0}.app.canary.online.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.workspaces.githubusercontent.com"
   portForwardingEnableEnvironmentEndpoints: "false"
-  gitHubportForwardingEnableEnvironmentEndpoints: "true"
+  gitHubportForwardingEnableEnvironmentEndpoints: "false"
 
 azure-secrets:
   # vsclk-core-dev
