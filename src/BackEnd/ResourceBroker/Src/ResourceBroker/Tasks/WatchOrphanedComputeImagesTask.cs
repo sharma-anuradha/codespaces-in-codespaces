@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
@@ -186,16 +187,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                    // Fetch all the images and find out the orphan images (images that has no versions) and delete them, if they are not active.
                    var images = await computeManagementClient.Images.ListByResourceGroupAsync(resourceGroupName);
-                   var imagesHasNoVersions = images.Where((image) => !lookupImageInfo.Values.ToList().Contains(image.Name));
+                   var imagesWithVersions = lookupImageInfo.Values.ToImmutableHashSet();
+                   var imagesWithNoVersions = images
+                                       .Where(x => !imagesWithVersions.Contains(x.Name))
+                                       .OrderByDescending(x => x.Name).ToList();
 
-                   foreach (var image in imagesHasNoVersions)
+                   for (var index = 0; index < imagesWithNoVersions.Count(); index++)
                    {
-                       await ProcessOrphanImagesAsync(
-                           computeManagementClient,
-                           resourceGroupName,
-                           image.Name,
-                           activeImages,
-                           childLogger);
+                        await ProcessOrphanImageAsync(
+                            computeManagementClient,
+                            resourceGroupName,
+                            imagesWithNoVersions.ElementAt(index).Name,
+                            index,
+                            imageCountToBeRetained,
+                            activeImages,
+                            childLogger);
                    }
                });
         }
@@ -230,6 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddValue("ImageVersionCreatedTime", imageVersionPublishedTimeInUtc)
                         .FluentAddValue("ImageVersionCutoffTime", CutOffTime)
                         .FluentAddValue("ImageVersionIsActive", isActiveImage)
+                        .FluentAddValue("ImageVersionIsToBeRetained", isToBeRetained)
                         .FluentAddValue("ImageVersionShouldDelete", shouldDelete);
 
                     // This list is used to prevent while deleting orphan images, if they are active.
@@ -254,10 +261,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 });
         }
 
-        private Task ProcessOrphanImagesAsync(
+        private Task ProcessOrphanImageAsync(
            IComputeManagementClient computeManagementClient,
            string resourceGroupName,
            string imageName,
+           int index,
+           int imageIndexToBeRetained,
            IEnumerable<string> activeImages,
            IDiagnosticsLogger logger)
         {
@@ -269,13 +278,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     // Hence they dont have to be retained, if they are not active.
                     // We are having these values for telemetry purpose.
                     var isActiveImage = activeImages.Any((activeImage) => string.Equals(activeImage, imageName, StringComparison.OrdinalIgnoreCase));
+                    var isToBeRetained = index < imageIndexToBeRetained;
+                    var shouldDelete = !isActiveImage && !isToBeRetained;
 
                     childLogger
                         .FluentAddValue("ImageName", imageName)
                         .FluentAddValue("ImageHasVersion", false)
-                        .FluentAddValue("ImageIsActive", isActiveImage);
+                        .FluentAddValue("ImageIsActive", isActiveImage)
+                        .FluentAddValue("ImageIsToBeRetained", isToBeRetained)
+                        .FluentAddValue("ImageShouldDelete", shouldDelete);
 
-                    if (!isActiveImage)
+                    if (shouldDelete)
                     {
                         await computeManagementClient.Images.DeleteAsync(resourceGroupName, imageName);
 
