@@ -75,9 +75,12 @@ import { SplashCommunicationProvider } from '../../providers/splashCommunication
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
 
-import './workbench.css';
-import { PostMessageRepoInfoRetriever } from '../../split/github/postMessageRepoInfoRetriever';
+import {
+    PostMessageRepoInfoRetriever,
+} from '../../split/github/postMessageRepoInfoRetriever';
 import { EnvironmentsExternalUriProvider, PortForwardingExternalUriProvider } from '../../providers/externalUriProvider';
+
+import './workbench.css';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -427,16 +430,12 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                   title: 'Go Home',
               }
             : undefined;
+        
         const commands = [
             {
                 id: '_github.gohome',
                 handler: () => {
-                    window.parent.postMessage(
-                        {
-                            type: 'vso-go-home',
-                        },
-                        document.referrer
-                    );
+                    PostMessageRepoInfoRetriever.sendGoHomeMessage();
                 },
             },
         ];

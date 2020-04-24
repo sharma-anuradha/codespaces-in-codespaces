@@ -8,6 +8,7 @@ export interface IRepoInfo {
     environmentId: string;
     githubToken?: string;
     cascadeToken?: string;
+    referrer: string;
 }
 
 const getLocalstorageKey = () => {
@@ -48,12 +49,13 @@ export class PostMessageRepoInfoRetriever {
             return storedInfo;
         }
 
+        const { referrer } = document;
         window.parent.postMessage(
             {
                 type: 'vso-retrieve-repository-info',
                 id,
             },
-            document.referrer
+            referrer
         );
 
         const timeout = 5000;
@@ -68,8 +70,9 @@ export class PostMessageRepoInfoRetriever {
             );
         }
 
-        const cleanData = {
-            ...data
+        const cleanData: IRepoInfo = {
+            ...data,
+            referrer,
         };
 
         delete cleanData.githubToken;
@@ -117,5 +120,17 @@ export class PostMessageRepoInfoRetriever {
     public dispose() {
         window.removeEventListener('message', this.receiveMessage, false);
         this.awaitResponsePromises = new Map();
+    }
+
+    public static sendGoHomeMessage = () => {
+        const storedInfo = PostMessageRepoInfoRetriever.getStoredInfo();
+        const referrer = storedInfo?.referrer || 'https://github.com';
+
+        window.parent.postMessage(
+            {
+                type: 'vso-go-home',
+            },
+            referrer,
+        );
     }
 }
