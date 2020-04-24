@@ -80,9 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     // for launch we're disabling windows billing
                     if (!sku.SkuName.Equals("premiumWindows") &&
                         !sku.SkuName.Equals("internalWindows") &&
-                        !sku.SkuName.Equals("internal64Server") &&
-                        !sku.SkuName.Equals("internal32Server") &&
-                        !sku.SkuName.Equals("internalDailyWindows"))
+                        !sku.SkuName.Equals("premiumWindowsStaging") &&
+                        !sku.SkuName.Equals("premiumWindowsInternalStaging"))
                     {
                         Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                         Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
@@ -94,8 +93,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     {
                         if (sku.SkuName.Equals("premiumLinux") ||
                             sku.SkuName.Equals("basicLinux") ||
-                            sku.SkuName.Equals("internal64Server") ||
-                            sku.SkuName.Equals("internal32Server"))
+                            sku.SkuName.Equals("premiumWindows") ||
+                            sku.SkuName.Equals("premiumWindowsStaging") ||
+                            sku.SkuName.Equals("premiumWindowsInternalStaging"))
                         {
                             Assert.True(sku.StoragePoolLevel == 0);
                             Assert.True(sku.ComputePoolLevel == 0);

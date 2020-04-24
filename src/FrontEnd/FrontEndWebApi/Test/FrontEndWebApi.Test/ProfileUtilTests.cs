@@ -15,8 +15,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
     public class ProfileUtilTests
     {
         private readonly string internalWindowsSkuName = "internalWindows";
-        private readonly string internal64ServerSkuName = "internal64Server";
-        private readonly string internal32ServerSkuName = "internal32Server";
+        private readonly string premiumWindowsStaging = "premiumWindowsStaging";
+        private readonly string premiumWindowsInternalStaging = "premiumWindowsInternalStaging";
 
         private readonly Profile msProfile = new Profile
         {
@@ -134,11 +134,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         }
 
         [Fact]
-        public void Internal64ServerSkuVisibility()
+        public void PremiumWindowsStagingSkuVisibility()
         {
-            var windows64Sku = new CloudEnvironmentSku(internal64ServerSkuName,
+            var windowsStaging = new CloudEnvironmentSku(premiumWindowsStaging,
                 SkuTier.Premium,
-                internal64ServerSkuName,
+                premiumWindowsStaging,
                 true,
                 new[] { AzureLocation.WestUs2 },
                 "computeSkuFamily",
@@ -176,20 +176,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 new ReadOnlyCollection<string>(new string[0]),
                 1);
 
-            Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windows64Sku));
-            Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windows64Sku));
-            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windows64Sku));
-            Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windows64Sku));
-            Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windows64Sku));
-            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windows64Sku));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windowsStaging));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windowsStaging));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windowsStaging));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windowsStaging));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windowsStaging));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windowsStaging));
         }
 
         [Fact]
-        public void Internal32ServerSkuVisibility()
+        public void PremiumWindowsInternalStagingSkuVisibility()
         {
-            var windows32Sku = new CloudEnvironmentSku(internal32ServerSkuName,
+            var windowsInternalStaging = new CloudEnvironmentSku(premiumWindowsInternalStaging,
                 SkuTier.Premium,
-                internal32ServerSkuName,
+                premiumWindowsStaging,
                 true,
                 new[] { AzureLocation.WestUs2 },
                 "computeSkuFamily",
@@ -211,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     "vmImageVersion",
                     "vmImageSubscriptionId",
                     currentImageInfoProvider.Object),
-                    "storageSkuName",
+                "storageSkuName",
                 new BuildArtifactImageFamily(
                     ImageFamilyType.Storage,
                     "storageImageFamily",
@@ -227,12 +227,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 new ReadOnlyCollection<string>(new string[0]),
                 1);
 
-            Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windows32Sku));
-            Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windows32Sku));
-            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windows32Sku));
-            Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windows32Sku));
-            Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windows32Sku));
-            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windows32Sku));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(msProfile, windowsInternalStaging));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(ms2Profile, windowsInternalStaging));
+            Assert.True(ProfileUtils.IsSkuVisibleToProfile(featureFlagEnabledProfile, windowsInternalStaging));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(outsideProfile, windowsInternalStaging));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(fakeProfile, windowsInternalStaging));
+            Assert.False(ProfileUtils.IsSkuVisibleToProfile(nullEmailProfile, windowsInternalStaging));
         }
     }
 }

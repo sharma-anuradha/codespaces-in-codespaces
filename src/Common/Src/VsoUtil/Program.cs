@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     SetPoolSettingsCommand,
                     DeletePoolSettingsCommand,
                     PrepareDevCLICommand,
-                    SetNexusInternalImageCommand,
+                    SetSkuImageVersionCommand,
                     CleanDevStamp,
                     ListDevStamps>(args)
                     .MapResult(
@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                         (SetPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
                         (DeletePoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
                         (PrepareDevCLICommand command) => command.Execute(Console.Out, Console.Error),
-                        (SetNexusInternalImageCommand command) => command.Execute(Console.Out, Console.Error),
+                        (SetSkuImageVersionCommand command) => command.Execute(Console.Out, Console.Error),
                         (CleanDevStamp command) => command.Execute(Console.Out, Console.Error),
                         (ListDevStamps command) => command.Execute(Console.Out, Console.Error),
                         errs => 1);
