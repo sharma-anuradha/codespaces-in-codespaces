@@ -3,12 +3,10 @@ param(
     [string]$AppSettingsFile,
     [Parameter(Mandatory)]
     [string]$ImageVersion,
-    [switch]$InternalImage,
-    [ValidateSet("Windows", "32Server", "64Server")]
-    [string]$InternalClass = 'Windows'
+    [switch]$InternalImage
 )
 $Content = Get-Content $AppSettingsFile
-$Pattern = if ($InternalImage) { "NexusInternal(Daily)?$($InternalClass)Image" } else { 'NexusWindowsImage' }
+$Pattern = if ($InternalImage) { 'WindowsInternal(Staging)?' } else { 'Windows(Staging)?' }
 Write-Host "Updating $Pattern in $AppSettingsFile"
 for ($Index = 0; $Index -lt $Content.Count;) {
     if ($Content[$Index++] -match """imageName"": ""$Pattern"",") {
