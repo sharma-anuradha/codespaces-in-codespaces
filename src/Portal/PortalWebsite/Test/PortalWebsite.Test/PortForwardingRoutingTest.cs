@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
             var responseHtml = await response.Content.ReadAsStringAsync();
 
-            Assert.Contains("<title>Visual Studio Codespaces</title>", responseHtml);
+            Assert.Contains("<title>Visual Studio ", responseHtml);
         }
 
         [Theory]
@@ -192,6 +192,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             {
                 Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["cascadeToken"] = "abc" })
             };
+            message.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
+            message.Headers.Add(PortForwardingHeaders.Port, "8080");
+
+            var response = await client.SendAsync(message);
+            await response.ThrowIfFailedAsync();
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var cookies = response.Headers.GetValues("Set-Cookie");
+            Assert.Contains(cookies,
+                (cookie) => cookie.StartsWith(Constants.PFCookieName, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        [Fact]
+        public async Task PortForwarding_AuthenticatePortForwarder_OnNginxHost_RespondsWith200()
+        {
+            var client = Factory.CreateClient();
+
+            var message = new HttpRequestMessage(HttpMethod.Post, "/authenticate-port-forwarder")
+            {
+                Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["cascadeToken"] = "abc" })
+            };
+
+            message.Headers.Add(PortForwardingHeaders.OriginalUrl, "a68c43fa9e015e45e046c85d502ec5e4b774");
             message.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
             message.Headers.Add(PortForwardingHeaders.Port, "8080");
 

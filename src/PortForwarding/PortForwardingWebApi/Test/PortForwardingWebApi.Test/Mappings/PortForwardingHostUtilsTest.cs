@@ -113,6 +113,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         }
 
         [Fact]
+        public void PortForwardingHostUtils_WorkspaceId_HeadersAndHost()
+        {
+            var utils = new PortForwardingHostUtils(settings.HostsConfigs);
+
+            var context = MockHttpContext.Create();
+            context.Request.Host = HostString.FromUriComponent("a68c43fa9e015e45e046c85d502ec5e4b774-8080.app.vso.io");
+            context.Request.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
+            context.Request.Headers.Add(PortForwardingHeaders.Port, "8080");
+
+            Assert.True(utils.TryGetPortForwardingSessionDetails(context.Request, out var sessionDetails));
+            Assert.Equal(new WorkspaceSessionDetails("a68c43fa9e015e45e046c85d502ec5e4b774", 8080), sessionDetails);
+        }
+
+        [Fact]
+        public void PortForwardingHostUtils_WorkspaceId_HeadersAndOriginalUrl()
+        {
+            var utils = new PortForwardingHostUtils(settings.HostsConfigs);
+
+            var context = MockHttpContext.Create();
+            context.Request.Headers.Add(PortForwardingHeaders.OriginalUrl, "a68c43fa9e015e45e046c85d502ec5e4b774-8080.app.vso.io");
+            context.Request.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
+            context.Request.Headers.Add(PortForwardingHeaders.Port, "8080");
+
+            Assert.True(utils.TryGetPortForwardingSessionDetails(context.Request, out var sessionDetails));
+            Assert.Equal(new WorkspaceSessionDetails("a68c43fa9e015e45e046c85d502ec5e4b774", 8080), sessionDetails);
+        }
+
+        [Fact]
         public void PortForwardingHostUtils_EnvironmentHostMustMatchHeaderHost_False()
         {
             var utils = new PortForwardingHostUtils(settings.HostsConfigs);

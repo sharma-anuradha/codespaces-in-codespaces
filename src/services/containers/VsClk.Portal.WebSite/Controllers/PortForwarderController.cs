@@ -9,7 +9,6 @@ using System.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
@@ -101,7 +100,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                 if (string.IsNullOrEmpty(cascadeToken) || string.IsNullOrEmpty(sessionId))
                 {
-                    return SignIn(new Uri(Request.GetEncodedUrl()));
+                    return SignIn(new Uri(Request.GetEncodedUrl()), logger);
                 }
             }
             else
@@ -197,9 +196,31 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpGet("~/signin")]
-        public IActionResult SignIn([FromQuery(Name = "rd")] Uri returnUrl)
+        public IActionResult SignIn([FromQuery(Name = "rd")] Uri returnUrl,
+            [FromServices] IDiagnosticsLogger logger)
         {
-            if (!HostUtils.TryGetPortForwardingSessionDetails(returnUrl.Host, out var sessionDetails) || !(sessionDetails is PartialEnvironmentSessionDetails envDetails))
+            if (!HostUtils.TryGetPortForwardingSessionDetails(returnUrl.Host, out var sessionDetails))
+            {
+                return BadRequest();
+            }
+
+            var isGithub = GitHubUtils.IsGithubTLD(returnUrl);
+
+            if (sessionDetails is WorkspaceSessionDetails)
+            {
+                if (!isGithub)
+                {
+                    var (_, error) = GetAuthToken(logger);
+
+                    return ExceptionView(error, returnUrl.ToString());
+                }
+                else
+                {
+                    return Redirect("https://github.com/404");
+                }
+            }
+
+            if (!(sessionDetails is PartialEnvironmentSessionDetails envDetails))
             {
                 return BadRequest();
             }

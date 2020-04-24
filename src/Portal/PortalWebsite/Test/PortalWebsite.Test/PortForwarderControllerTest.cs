@@ -137,12 +137,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         }
 
         [Fact]
+        public void SignIn_VSO_WorkspaceIdServiceWorkerResponse()
+        {
+            var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
+
+            var returnUrl = new Uri("https://4a048223cc254c1aeeba1c1e8078a6b3d761-8080.app.online.visualstudio.com/");
+            var result = Assert.IsAssignableFrom<ViewResult>(controller.SignIn(returnUrl, logger));
+
+            Assert.Equal("exception", result.ViewName);
+        }
+
+        [Fact]
+        public void SignIn_Github_WorkspaceIdServiceWorkerResponse()
+        {
+            var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
+
+            var returnUrl = new Uri("https://4a048223cc254c1aeeba1c1e8078a6b3d761-8080.apps.test.workspaces.githubusercontent.com/");
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
+
+            Assert.Equal("https://github.com/404", result.Url);
+        }
+
+        [Fact]
         public void SignIn_GitHub_RedirectsWithEnvironmentId()
         {
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
@@ -161,7 +183,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/stuff");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
@@ -180,7 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.app.online.visualstudio.com/stuff?search=42");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("fake.portal.dev", redirectUri.Host);
@@ -199,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = CreateController(host: "portal-vsclk-portal-website.default.svc.cluster.local");
 
             var returnUrl = new Uri("https://92617f60-2f2c-4986-85a0-ce95ceb3a658-8080.apps.test.workspaces.githubusercontent.com/stuff?search=42");
-            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl));
+            var result = Assert.IsAssignableFrom<RedirectResult>(controller.SignIn(returnUrl, logger));
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);

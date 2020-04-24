@@ -217,6 +217,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
                 logger.AddBaseValue("routing_context", "Portal");
                 logger.AddBaseValue("endpoint", endpoint?.DisplayName);
+                if (context.Request.Headers.TryGetValue(PortForwardingHeaders.OriginalUrl, out var originalUrlValues))
+                {
+                    logger.AddBaseValue("HttpOriginalUrl", originalUrlValues.ToString());
+                }
 
                 await next();
             });
@@ -273,6 +277,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
                 logger.AddBaseValue("routing_context", "PortForwarding");
                 logger.AddBaseValue("endpoint", endpoint?.DisplayName);
+                if (context.Request.Headers.TryGetValue(PortForwardingHeaders.OriginalUrl, out var originalUrlValues))
+                {
+                    logger.AddBaseValue("HttpOriginalUrl", originalUrlValues.ToString());
+                }
 
                 await next();
             });
