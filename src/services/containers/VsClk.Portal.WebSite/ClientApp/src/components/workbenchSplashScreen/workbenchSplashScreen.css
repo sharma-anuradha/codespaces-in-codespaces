@@ -1,92 +1,245 @@
-/* Main Pane */
-.vsonline-splash-screen-main {
+
+*{margin:0;padding:0;list-style:none;box-sizing:border-box}
+
+@keyframes shimmer {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+}
+  
+.sidebar {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    border-right: 1px solid #DDE0E4;
+}
+
+.is-vs-codespaces .sidebar {
+    background: rgb(51, 51, 51);
+    border-right: 1px solid #181818;
+}
+
+.container {
+    display: grid;
+    height: 100vh;
+    width: 100vw;
+    grid-template-columns: 48px 300px 0.5fr 0.5fr;
+    grid-template-rows: 35px auto 22px;
+    background: white;
+}
+
+.is-vs-codespaces {
+    background: rgb(30, 30, 30);
+}
+  
+.logo {
+    width: 26px;
+    height: 26px;
+    margin: 12px auto;
+    fill: #959DA5;
+    display: block; 
+}
+
+.tree { 
+    grid-column: 2;
+    grid-row: 1 / 3;
+    padding: 0 20px;
+    background: #F5F7F9;
+    border-right: 1px solid #DDE0E4;
+}
+
+.is-vs-codespaces .tree{
+    background: #252526;
+    border-right: 1px solid #181818;
+}
+
+.lines {
+    position: relative;
+    list-style-type: none;
+    padding: 0;
+}
+
+.code {
+    grid-column: 3;
+    grid-row: 2;
+    border-right: 1px solid #DDE0E4;
+}
+
+.is-vs-codespaces .code {
+    background: rgb(30, 30, 30);
+    border-right: 1px solid #181818;
+}
+
+.tabs-code {
+    grid-column: 3;
+    border-right: 1px solid #DDE0E4;
+    list-style-type: none;
+    padding: 0;
+}
+
+.is-vs-codespaces .tabs-code{
+    background: rgb(30, 30, 30);
+    border-right: 1px solid #181818;
+}
+
+.lines:before {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(244,247,249,0), rgba(244,247,249,1));
+    content: "";
+    position: absolute;
+    z-index: 5;
+}
+  
+.code .lines:before {
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+    left: 0px;
+}
+
+.is-vs-codespaces .lines:before {
+    background: linear-gradient(to bottom, rgba(244,247,249,0), rgba(37,37,38,1));
+}
+  
+.is-vs-codespaces .code .lines:before {
+    background: linear-gradient(to bottom,  rgb(30, 30, 30,0), rgba(30,30,30,1));
+}
+
+.tree .lines { padding-top: 4px; }
+
+.code .lines {
+  padding-left: 14px;
+  padding-top: 5px;
+}
+
+.l {
+    height: 12px;
+    width: 96px;
+    background: linear-gradient(to right, #D1D5DA 40%, #eee 50%, #D1D5DA 60%);
+    background-size: 1000px 100%;
+    margin: 10px 0 14px;
+    position: relative;
+    animation: shimmer 2s infinite;
+}
+
+.is-vs-codespaces .l {
+    background: linear-gradient(to right, #5a5a5a 40%, #868686 50%, #5a5a5a 60%);
+    background-size: 1000px 100%;
+}
+
+  
+.tree .lines { padding-top: 4px; }
+  
+.code .lines {
+    padding-left: 14px;
+    padding-top: 5px;
+}
+  
+.code .l { 
+    min-width: 16px;
+    background: linear-gradient(to right, #E1E4E8 40%, #f1f1f1 50%, #E1E4E8 60%);
+    background-size: 1000px 100%;
+    animation-delay: 0.25s
+}
+
+.is-vs-codespaces .code .l {
+    background: linear-gradient(to right, #464545 40%, #7d7d7d 50%, #464545 60%);
+    background-size: 1000px 100%;
+}
+  
+.code li:before {
+    content: "";
+    display: block;
+    position: absolute;
+    background: #fff;
+    width: 16px;
+    height: 12px;
+    left: 16px;
+}
+
+.is-vs-codespaces .code li:before {
+    background: rgb(30, 30, 30);
+}
+
+.tabs {
+    grid-row: 1;
     display: flex;
 }
-
-/* Editor side of the splash screen */
-.vsonline-splash-screen-editor {
-    flex: 1;
+  
+.tabs-steps {
+    grid-column: 4;
+}
+  
+.tabs li { padding: 0 14px; }
+ 
+.is-vs-codespaces .tab1 {
+    background: rgb(30, 30, 30);
 }
 
-/* Splash screen body */
-
-.vsonline-splash-screen-body {
-    background: #1E1E1E;
-    height: 100vh;
-    box-sizing: border-box;
+.tab1 .l {
+    background: linear-gradient(to right, #959DA5 40%, #bbb 50%, #959DA5 60%);
+    background-size: 1000px 100%;
+    animation-delay: 0.25s
 }
 
-/* Github splash screen body */
-
-.is-github .vsonline-splash-screen-body {
-    background: #FFFFFF;
+.is-vs-codespaces .tab1 .l {
+    background: linear-gradient(to right, #404040 40%, #757575 50%, #404040 60%);
+    background-size: 1000px 100%;
+}
+  
+.tabs-steps .l {
+    animation-delay: 0.6s   
 }
 
-/* Editor Header */
-.vsonline-splash-screen-titlebar {
-    position: relative;
-    height: 35px;
-    left: 0px;
-    right: 0px;
-    top: 0px;
-    background: #252526;
+.tab2 {
+    flex-grow: 1;
+    background: #F5F7F9;
+    border-left: 1px solid #DDE0E4;
+    border-bottom: 1px solid #DDE0E4;
 }
 
-/* Github Editor Header */
-.is-github .vsonline-splash-screen-titlebar {
-    background: #F3F3F3;
+.is-vs-codespaces .tab2 {
+    background: rgb(37, 37, 38);
+    border-left: 1px solid #272727;
+    border-bottom: 1px solid #272727;
+}
+  
+.tab2 .l {
+    animation-delay: 0.35s
 }
 
-/* Tabs */
-.vsonline-splash-screen-titlebar-tab {
-    position: relative;
-    width: 122px;
-    height: 35px;
-    left: 0px;
-    top: 0px;
-    background: #1E1E1E;
+.bottom {
+    grid-column: 1 / 5;
+    grid-row: 3;
+    background: #FAFBFD;
+    border-top: 1px solid #DCE0E5;
 }
 
-/* Github Tabs */
-.is-github .vsonline-splash-screen-titlebar-tab {
-    background: #FFFFFF;
+.is-vs-codespaces .bottom {
+    background: rgb(0, 122, 204);
+    border-top: #181818;
 }
 
-/* Sidebar */
-.vsonline-splash-screen-tree-pane {
-    position: relative;
-    width: 169px;
-    bottom: 22px;
-    /* Dark / Base / Base 20 */
-    background: #252526;
+.connection-stack {
+    background: 'white';
 }
 
-/* Github Sidebar */
-.is-github .vsonline-splash-screen-tree-pane {
-    background: #FAFBFC;
+.is-vs-codespaces .connection-stack {
+    background: rgb(30, 30, 30);
 }
 
-/* Template / Default */
-.vsonline-splash-screen-extensions-pane {
-    position: relative;
-    width: 48px;
-    left: 0px;
-    bottom: 1px;
-    /* Dark / Base / Base 17 */
-    background: #333333;
-}
-
-/* Github extensions pane */
-.is-github .vsonline-splash-screen-extensions-pane {
-    background: #24292e;
-}
-
-/* Github main text color */
-.is-github .text-color {
-    color: #616161;
-}
-
-/* Main text color */
-.text-color {
-    color: #B4B4B4;
+@media (max-width: 1500px) {
+    .code, .tabs-code {
+      display: none;
+    }
+    .steps, .tabs-steps {
+      grid-column: 3 / 5;
+    }
+    .tabs-steps .l {
+      animation-delay: 0.25s   
+    }
+    .steps {
+      max-width: 700px;
+    }
 }
