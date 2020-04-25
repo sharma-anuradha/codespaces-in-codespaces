@@ -18,6 +18,7 @@ const passwordPlaceholder = '{{TEST_PASSWORD}}';
 const PROD_URL = 'https://online.visualstudio.com';
 const DEV_URL = 'https://online.dev.core.vsengsaas.visualstudio.com';
 const PPE_URL = 'https://online-ppe.core.vsengsaas.visualstudio.com';
+const CANARY_URL = 'https://canary.online.visualstudio.com';
 const isLocal = env && env.toLowerCase() === 'local' ? true : false;
 const url = env ? getURL(env) : DEV_URL;
 const TEST_DIR = path.join('test', 'uitest', 'actions');
@@ -132,6 +133,8 @@ function getURL(env) {
             return PPE_URL;
         case 'prod':
             return PROD_URL;
+        case 'canary':
+            return CANARY_URL;
         default:
             return DEV_URL;
     }
