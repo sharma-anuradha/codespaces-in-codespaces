@@ -167,7 +167,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(CloudEnvironmentResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpOperationalScope("list")]
-        [Audit(AuditEventCategory.ResourceManagement, "planId", "Plan")]
+        [Audit(AuditEventCategory.ResourceManagement, targetResourceName: "User")]
         public async Task<IActionResult> ListAsync(
             [FromQuery]string name,
             [FromQuery]string planId,
@@ -175,6 +175,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             // In the case of a authentication using a plan access token, infer the plan from the token if not set
             planId ??= CurrentUserProvider.Identity.AuthorizedPlan;
+
+            AuditAttribute.SetTargetResourceId(HttpContext, CurrentUserProvider?.CurrentUserIdSet?.PreferredUserId);
 
             if (CurrentUserProvider.Identity.IsPlanAuthorized(planId) == false)
             {

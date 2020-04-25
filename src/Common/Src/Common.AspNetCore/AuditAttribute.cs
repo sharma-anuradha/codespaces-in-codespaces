@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 // If we couldn't find a resource id throw
                 if (string.IsNullOrEmpty(resourceId))
                 {
-                    throw new NotSupportedException("Resource id was not provided via ");
+                    resourceId = "Unknown";
                 }
 
                 // Derive if successful or not
