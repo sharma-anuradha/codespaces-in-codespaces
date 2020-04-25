@@ -24,3 +24,8 @@ export { LiveShareGithubAuthStrategy } from './vscode/providers/credentialsProvi
 export { CrossDomainPFAuthenticator } from './auth/portForwarding/CrossDomainPFAuthenticator';
 
 export { getExtensions } from './vscode/workbenches/defaultWorkbench';
+
+export {
+    DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+    DEFAULT_MICROSFT_VSCODE_AUTH_PROVIDER_ID
+} from './constants';

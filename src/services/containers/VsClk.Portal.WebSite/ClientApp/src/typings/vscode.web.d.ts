@@ -1,4 +1,14 @@
 declare module 'vscode-web' {
+    interface SessionData {
+        id: string;
+        account?: {
+            displayName: string;
+            id: string;
+        }
+        scopes: string[];
+        accessToken: string;
+    }
+    
     import * as vscodeTypes from 'vscode-jsonrpc';
 
     export interface IWebSocket {
