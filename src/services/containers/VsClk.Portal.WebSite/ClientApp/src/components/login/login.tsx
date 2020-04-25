@@ -14,6 +14,7 @@ import { login, complete2FA } from '../../actions/login';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
+import { ITokenWithMsalAccount } from '../../typings/ITokenWithMsalAccount';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
 
@@ -27,7 +28,7 @@ interface LoginProps {
     isAuthenticated: boolean;
     isAuthenticating: boolean;
     isInteractionRequired: boolean;
-    complete2FA: () => void;
+    complete2FA: () => Promise<ITokenWithMsalAccount>;
     login: (...name: Parameters<typeof login>) => Promise<unknown>;
 }
 

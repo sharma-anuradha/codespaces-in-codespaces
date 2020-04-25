@@ -3,48 +3,53 @@ import * as msal from '@vs/msal';
 import { localStorageKeychain } from 'vso-client-core';
 
 class StorageAdapter extends msal.CustomStorage {
-    private keyvalues: Map<string, string>;
-
-    constructor() {
-        super();
-
-        // read unencrypted 
-        this.keyvalues = new Map();
+    async setItem(key: string, value: string) {
+        await localStorageKeychain.set(key, value);
     }
-
-    async init() {
-        // read encrypted keys
-        let storageAdapterValue = await localStorageKeychain.get('vso-storageadapter');
-        if (storageAdapterValue) {
-            this.keyvalues = (JSON.parse(storageAdapterValue) as any).reduce((m: any, [key, val]: any) => m.set(key, val), new Map());
-        }
+    async getItem(key: string) {
+        return await localStorageKeychain.get(key) || '';
     }
-
-    setItem(key: string, value: string) {
-        this.keyvalues.set(key, value);
-        localStorageKeychain.set('vso-storageadapter', JSON.stringify([...this.keyvalues.entries()]));
+    async removeItem(key: string) {
+        await localStorageKeychain.delete(key);
     }
-    getItem(key: string) {
-        return this.keyvalues.get(key) || '';
+    async clear() {
+        await localStorageKeychain.deleteAll();
     }
-    removeItem(key: string) {
-        this.keyvalues.delete(key);
-        localStorageKeychain.set('vso-storageadapter', JSON.stringify([...this.keyvalues.entries()]));
+    async key(index: number) {
+        const keys = localStorageKeychain.getAllKeys();
+        return keys[index];
     }
-    clear() {
-        this.keyvalues.clear();
-        localStorageKeychain.set('vso-storageadapter', JSON.stringify([...this.keyvalues.entries()]));
+    async getAllKeys() {
+        return localStorageKeychain.getAllKeys();
     }
-    key(index: number) {
-        return this.getAllKeys()[index];
-    }
-    getAllKeys() {
-        let a = [];
-        for (let key of this.keyvalues.keys()) {
-            a.push(key);
-        }
-        return a;
+    *[Symbol.iterator]() {
+        yield* localStorageKeychain.getAllKeys();
     }
 }
 
-export const storageAdapter = new StorageAdapter();
+const defaultPropertyDescriptor = {
+    enumerable: false,
+    configurable: true,
+};
+
+export const storageAdapter = new Proxy(new StorageAdapter(), {
+    ownKeys() {
+        return localStorageKeychain.getAllKeys();
+    },
+    getOwnPropertyDescriptor(target, key) {
+        if (typeof key === 'symbol') {
+            return defaultPropertyDescriptor;
+        }
+        const hasTheKey = localStorageKeychain.has(key);
+        if (!hasTheKey) {
+            return defaultPropertyDescriptor;
+        }
+        return {
+            ...defaultPropertyDescriptor,
+            enumerable: true
+        };
+    },
+    set(_, key) {
+        throw new Error(`Cannot set the key "${key as string}" directly on the keychain, please use "setItem" setter for the purpose.`);
+    }
+});

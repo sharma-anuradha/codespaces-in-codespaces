@@ -9,7 +9,7 @@ export const msalConfig: msal.Configuration = {
         authority: aadAuthorityUrlCommon,
         validateAuthority: false,
         navigateToLoginRequestUrl: false,
-        redirectUri: `${window.location.origin}/aad-auth-callback`,
+        redirectUri: location.origin,
     },
     cache: {
         cacheLocation: storageAdapter
@@ -18,11 +18,6 @@ export const msalConfig: msal.Configuration = {
 
 export let clientApplication: msal.UserAgentApplication | null = null;
 
-export const initializeMsal = async () => {
-    await storageAdapter.init();
+export const initializeMsal = () => {
     clientApplication = new msal.UserAgentApplication(msalConfig);
-
-    await clientApplication.handleRedirectCallback(() => {
-        // msal requires a redirect callback
-    });
 }

@@ -28,7 +28,7 @@ describe('getUserInfo', () => {
     });
 
     it('gets user info from graph', async () => {
-        jest.spyOn(acquireTokenModule, 'acquireTokenSilentWith2FA').mockReturnValue(Promise.resolve(testMsalToken));
+        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(testMsalToken));
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
