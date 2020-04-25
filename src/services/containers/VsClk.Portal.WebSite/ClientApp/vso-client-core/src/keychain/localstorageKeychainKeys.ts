@@ -95,17 +95,22 @@ export const setKeychainKeys = (keys: IKeychainKey[]): IKeychainKey[] => {
     return keychainKeys;
 }
 
+export const getRandomKey = () => {
+    return getKey(randomKeyId);
+}
+
 /**
  * Function to add random key. If one already present, update its expiration time.
  */
-export const addRandomKey = () => {
+export const addRandomKey = (randomKey?: Buffer) => {
     const currentRandomKey = getKey(randomKeyId);
 
-    let key = (currentRandomKey)
-        ? currentRandomKey.key
+    let key = (randomKey)
+        ? randomKey
         : randomBytes(16);
 
     if (currentRandomKey) {
+        key = currentRandomKey.key;
         removeKey(randomKeyId);
     }
 
@@ -119,7 +124,7 @@ export const addRandomKey = () => {
 }
 
 /**
- * Function to add random key. If one already present, update its expiration time.
+ * Check if key is expired
  */
 export const isExpiredKey = (keyId: string) => {
     const key = keychainKeys.find((k) => {

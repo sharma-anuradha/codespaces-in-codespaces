@@ -12,8 +12,8 @@ import { getAuthTokenSuccessAction } from '../actions/getAuthTokenActions';
 import { IToken } from '../typings/IToken';
 
 import { sendTelemetry } from '../utils/telemetry';
-import { clientApplication, initializeMsal } from './msalConfig';
-import { acquireToken, acquireTokenSilent } from './acquireToken';
+import { clientApplication, initializeMsal, msalConfig } from './msalConfig';
+import { acquireTokenSilentWith2FA, acquireTokenSilent } from './acquireToken';
 
 import { autServiceTrace } from './autServiceTrace';
 import {
@@ -24,8 +24,10 @@ import {
     setKeychainKeys,
     addRandomKey,
     debounceInterval,
+    getRandomKey,
 } from 'vso-client-core';
 import { getUserFromMsalToken } from '../utils/getUserFromMsalToken';
+import { AuthResponse } from '@vs/msal';
 
 const SCOPES = ['email openid offline_access api://9db1d849-f699-4cfb-8160-64bed3335c72/All'];
 
@@ -58,16 +60,35 @@ interface IAuthCode {
 class AuthService {
     private initializeSignal = new Signal();
 
+    private readonly loginRequest = {
+        scopes: SCOPES,
+        authority: msalConfig.auth.authority,
+        state: '',
+    };
+
     public async init() {
+        const stateParam = new URLSearchParams(window.location.hash.replace('#', '?')).get('state');
+        let buffer: Buffer | undefined;
+        if (stateParam && stateParam.split('|').length === 2) {
+            buffer = Buffer.from(stateParam.split('|')[1], 'base64');
+            if (buffer.length !== 16) {
+                buffer = undefined;
+            }
+        }
+
         const keychainKeys = await fetchKeychainKeys();
 
-        keychainKeys ? setKeychainKeys(keychainKeys) : addRandomKey();
+        keychainKeys ? setKeychainKeys(keychainKeys) : addRandomKey(buffer);
+        const state = getRandomKey()?.key.toString('base64');
+        if (state) {
+            this.loginRequest.state = state;
+        }
 
-        initializeMsal();
+        await initializeMsal();
 
         this.initializeSignal.complete(void 0);
 
-        const token = this.getCachedToken();
+        const token = await this.getCachedToken();
 
         if (!token) {
             return;
@@ -92,16 +113,15 @@ class AuthService {
     public async login() {
         await this.initializeSignal.promise;
 
-        const loginRequest = {
-            scopes: SCOPES,
-        };
-
         if (!clientApplication) {
             throw new Error('Initialize MSAL client application first.');
         }
 
-        await clientApplication.loginPopup(loginRequest);
-        const token = await clientApplication!.acquireTokenSilent(loginRequest);
+        clientApplication.loginRedirect(this.loginRequest);
+    }
+
+    public async loginSilent(): Promise<AuthResponse> {
+        const token = await clientApplication!.acquireTokenSilent(this.loginRequest);
 
         await tokenCache.cacheToken(LOCAL_STORAGE_KEY, token);
 
@@ -111,6 +131,14 @@ class AuthService {
         this.keepUserAuthenticated();
 
         return token;
+    }
+
+    public acquireTokenRedirect() {
+        if (!clientApplication) {
+            throw new Error('Initialize MSAL client application first.');
+        }
+
+        clientApplication.acquireTokenRedirect(this.loginRequest);
     }
 
     public getCachedToken = async (
@@ -174,7 +202,7 @@ class AuthService {
 
     private async acquireTokenInternal(): Promise<ITokenWithMsalAccount | undefined> {
         try {
-            const token = await acquireToken(SCOPES);
+            const token = await acquireTokenSilentWith2FA(SCOPES);
             if (!token) {
                 return;
             }
