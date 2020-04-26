@@ -44,7 +44,6 @@ export interface IEnvironmentConnection {
     readonly sessionId: string;
     readonly sessionPath: string;
 }
-    
 
 export interface IEnvironment {
     readonly id: string;

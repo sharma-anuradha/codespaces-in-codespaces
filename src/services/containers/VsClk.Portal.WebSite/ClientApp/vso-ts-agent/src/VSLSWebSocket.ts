@@ -1,7 +1,15 @@
 import { SshChannel } from '@vs/vs-ssh';
 import { Event, Emitter } from 'vscode-jsonrpc';
 
-import { bufferToArrayBuffer, IVSCodeConfig, createTrace, IEnvironment, EnvironmentStateInfo} from 'vso-client-core';
+import {
+    bufferToArrayBuffer,
+    IVSCodeConfig,
+    createTrace,
+    IEnvironment,
+    EnvironmentStateInfo,
+    getCurrentEnvironmentId
+} from 'vso-client-core';
+
 import { EnvConnector } from './envConnector';
 import { IWebSocket } from 'vscode-web';
 import { sendTelemetry } from './telemetry/sendTelemetry';
@@ -51,7 +59,11 @@ export class VSLSWebSocket implements IWebSocket {
         info(`[${this.getWebSocketIdentifier()}] Ssh channel closed by VSCode.`);
 
         if (!this.channel) {
-            throw new Error('No channel found');
+            throw new Error('No channel found.');
+        }
+
+        if (!this.environmentInfo) {
+            throw new Error('No environmentInfo found.');
         }
 
         sendTelemetry('vsonline/portal/ls-connection-close', {
@@ -74,7 +86,6 @@ export class VSLSWebSocket implements IWebSocket {
     constructor(
         private readonly url: string,
         private readonly accessToken: string,
-        private readonly environmentInfo: IEnvironment,
         private readonly liveShareEndpoint: string,
         private readonly correlationId: string,
         private readonly vscodeConfig: IVSCodeConfig,
@@ -82,7 +93,6 @@ export class VSLSWebSocket implements IWebSocket {
         private readonly logContent: debug.Debugger,
         private readonly getEnvironmentInfo: (envId: string) => Promise<IEnvironment | undefined>,
         private readonly extensions: string[],
-        private readonly environmentId: string,
         private readonly serviceEndpoint: string,
     ) {
         this.id = VSLSWebSocket.socketCnt++;
@@ -90,8 +100,16 @@ export class VSLSWebSocket implements IWebSocket {
         this.initializeChannel(url);
     }
 
+    private environmentInfo?: IEnvironment;
+
     // tslint:disable-next-line: max-func-body-length
     private async initializeChannel(url: string, retry = 3) {
+        this.environmentInfo = await this.getEnvironmentInfo(getCurrentEnvironmentId());
+
+        if (!this.environmentInfo) {
+            throw new Error('No environment info found.');
+        }
+
         window.performance.mark(
             `VSLSWebSocket.initializeChannel[${this.id}] - ls-connection-initializing`
         );
@@ -111,7 +129,7 @@ export class VSLSWebSocket implements IWebSocket {
             setTimeout(reject, 20 * 1000, new Error('VSLSSocketTimeout'));
         });
 
-        const environmentCheck = this.getEnvironmentInfo(this.environmentInfo.id).then(
+        const environmentCheck = this.getEnvironmentInfo(getCurrentEnvironmentId()).then(
             (environment) => {
                 if (environment && environment.state !== EnvironmentStateInfo.Available) {
                     throw new Error('EnvironmentNotAvailable');
@@ -143,7 +161,6 @@ export class VSLSWebSocket implements IWebSocket {
                     this.liveShareEndpoint,
                     this.vscodeConfig,
                     this.extensions,
-                    this.environmentId,
                     this.serviceEndpoint,
                 ),
                 combinedTimeoutEnvCheck,

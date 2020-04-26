@@ -10,9 +10,13 @@ export const getFeatureSet = (): FeatureSet => {
     if (paramsFeatureSet === FeatureSet.Insider) {
         vscodeQuality = FeatureSet.Insider;
     }
-
+    
     if (vsoFeatureSet === FeatureSet.Insider) {
         vscodeQuality = FeatureSet.Insider;
+    }
+
+    if (vsoFeatureSet === FeatureSet.Stable) {
+        vscodeQuality = FeatureSet.Stable;
     }
 
     return vscodeQuality;

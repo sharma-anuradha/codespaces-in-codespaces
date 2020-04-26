@@ -330,7 +330,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             liveShareEndpoint,
             getVSCodeVersion(),
             getExtensions(),
-            environmentInfo.id,
             apiEndpoint
         );
 
@@ -374,7 +373,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 return new VSLSWebSocket(
                     url,
                     token,
-                    environmentInfo,
                     liveShareEndpoint,
                     correlationId,
                     getVSCodeVersion(),
@@ -382,7 +380,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     logger.verbose,
                     getEnvironment,
                     getExtensions(),
-                    environmentInfo.id,
                     apiEndpoint
                 );
             },

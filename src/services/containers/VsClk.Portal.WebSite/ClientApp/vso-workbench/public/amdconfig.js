@@ -15,6 +15,10 @@ if (vsoFeatureSet === insiderFlag) {
     vscodeQuality = insiderFlag;
 }
 
+if (vsoFeatureSet === stableFlag) {
+    vscodeQuality = stableFlag;
+}
+
 const commits = {
     insider: 'a250df703de955a38aed427a917bce8278ab3331',
     stable: 'ff915844119ce9485abfe8aa9076ec76b5300ddd',

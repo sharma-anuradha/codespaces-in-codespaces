@@ -71,7 +71,6 @@ export class VSCodeWorkbench {
                 liveShareEndpoint,
                 vscodeConfig,
                 extensions,
-                getCurrentEnvironmentId(),
                 `${config.api}/environments`
             ),
         ]);
@@ -115,7 +114,6 @@ export class VSCodeWorkbench {
                 return new VSLSWebSocket(
                     url,
                     token,
-                    environmentInfo,
                     liveShareEndpoint,
                     randomString(),
                     vscodeConfig,
@@ -130,7 +128,6 @@ export class VSCodeWorkbench {
                         return await vsoAPI.getEnvironmentInfo(id, authToken);
                     },
                     extensions,
-                    getCurrentEnvironmentId(),
                     `${config.api}/environments`
                 );
             },

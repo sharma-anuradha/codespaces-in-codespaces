@@ -292,7 +292,6 @@ export class EnvConnector {
         liveShareEndpoint: string,
         vscodeConfig: IVSCodeConfig,
         extensions: string[],
-        environmentId: string,
         serviceEndpoint: string
     ): Promise<{ sessionPath: string; port: number }> {
         // if already `connecting` or `connected`, return the result
@@ -319,7 +318,7 @@ export class EnvConnector {
                 workspaceClient,
                 vscodeConfig,
                 extensions,
-                environmentId,
+                environmentInfo.id,
                 serviceEndpoint
             );
 
