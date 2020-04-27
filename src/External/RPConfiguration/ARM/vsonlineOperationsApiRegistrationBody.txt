@@ -1,0 +1,41 @@
+{
+    "Contents": [
+        {
+            "Name": "Microsoft.VSOnline/plans/read",
+            "Display": {
+                "Provider": "Microsoft.VSOnline",
+                "Resource": "plans",
+                "Operation": "Gets/Lists plan resources",
+                "Description": "Reads plans"
+            }
+        },
+        {
+            "Name": "Microsoft.VSOnline/plans/write",
+            "Display": {
+                "Provider": "Microsoft.VSOnline",
+                "Resource": "plans",
+                "Operation": "Creates/updates plan resources",
+                "Description": "Writes plans"
+            }
+        },
+        {
+            "Name": "Microsoft.VSOnline/plans/delete",
+            "Display": {
+                "Provider": "Microsoft.VSOnline",
+                "Resource": "plans",
+                "Operation": "Deletes plan resource",
+                "Description": "Deletes plans"
+            }
+        },
+        {
+            "Name": "Microsoft.VSOnline/RegisteredSubscriptions/read",
+            "IsDataAction": false,
+            "Display": {
+                "Provider": "Microsoft.VSOnline",
+                "Resource": "RegisteredSubscriptions",
+                "Operation": "Gets/Lists registered subscriptions",
+                "Description": "Reads registered subscriptions"
+            }
+        }
+    ]
+}

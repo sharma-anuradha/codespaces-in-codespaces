@@ -304,6 +304,9 @@
     {
       "name": "operations",
       "routingType": "ProxyOnly, Tenant",
+      "allowedUnauthorizedActions": [
+            "Microsoft.VSOnline/operations/read"
+        ],
       "endpoints": [
         {
           "apiVersions": [
