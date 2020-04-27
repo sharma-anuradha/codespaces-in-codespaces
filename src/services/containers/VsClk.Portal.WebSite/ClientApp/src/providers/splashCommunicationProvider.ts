@@ -25,22 +25,18 @@ export class SplashCommunicationProvider implements ICommunicationChannel {
         this.postStep(step);
     }
 
-    private postSteps(steps: {}) {
-        window.postMessage({ steps }, window.origin);
-    }
-
-    public initializeSteps(steps: {}[]) {
-        this.postSteps(steps);
-    }
-
     public postEnvironmentId(environmentId: string) {
         window.postMessage({ environmentId });
     }
 
     public sendNotification(message: string): void {
         window.postMessage({ notification: {
-                    message,
-                }
-            });
+                message,
+            }
+        });
+    }
+
+    public appendSteps(steps: {}[]) {
+        window.postMessage({ appendSteps: steps });
     }
 }

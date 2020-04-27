@@ -132,7 +132,7 @@ export const StepsPaneTabBar: React.FunctionComponent<{}> = () => {
 }
 
 export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProps> = (props) => {
-    const mainClass = classnames('container', {'is-vs-codespaces': props.isOnVSCodespaces});
+    const mainClass = classnames('vso-splash-screen container', {'is-vs-codespaces': props.isOnVSCodespaces});
     return (
         <div className={mainClass}>
             <SideBar

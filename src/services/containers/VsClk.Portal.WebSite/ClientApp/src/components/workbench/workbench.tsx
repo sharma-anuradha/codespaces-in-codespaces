@@ -213,7 +213,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             if (environmentInfo.connection) {
                 try {
                     if (isStarting(environmentInfo)) {
-                        this.communicationProvider?.initializeSteps([
+                        this.communicationProvider?.appendSteps([
                             {
                                 name: 'Resume Environment',
                                 data: {

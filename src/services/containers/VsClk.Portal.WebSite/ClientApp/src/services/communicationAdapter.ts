@@ -115,15 +115,15 @@ export class CommunicationAdapter {
     }
 
     private processData(data: string): string {
-        if (Object.keys(this.stepIdentifiers).length === 0) {
-            // Regex to match the log header with the step declarations
-            // Example: ########0-100-InitializeEnvironment-noterminal
-            const headerRegex = /#{8}0-\d+-[A-Za-z]\w+-[A-Za-z]\w+/g;
-            const match = data.match(headerRegex);
-            let steps: {}[] = [];
-            if (match) {
-                for (const step of match) {
-                    const [, code, name, terminal] = step.split('-');
+        // Regex to match the log header with the step declarations
+        // Example: ########0-100-InitializeEnvironment-noterminal
+        const headerRegex = /#{8}0-\d+-[A-Za-z]\w+-[A-Za-z]\w+/g;
+        const match = data.match(headerRegex);
+        let steps: {}[] = [];
+        if (match) {
+            for (const step of match) {
+                const [, code, name, terminal] = step.split('-');
+                if (!this.stepIdentifiers[name]) {
                     try {
                         // Regex to match the step codes
                         // Example: ########100-Running
@@ -140,9 +140,11 @@ export class CommunicationAdapter {
                         this.logger.error(e);
                     }
                 }
-                this.communicationProvider.initializeSteps(steps);
-                data = data.replace(headerRegex, '');
             }
+            if (steps) {
+                this.communicationProvider.appendSteps(steps);
+            }
+            data = data.replace(headerRegex, '');
         }
         Object.entries(this.stepIdentifiers).forEach(([name, expr]) => {
             const regex = expr as RegExp;

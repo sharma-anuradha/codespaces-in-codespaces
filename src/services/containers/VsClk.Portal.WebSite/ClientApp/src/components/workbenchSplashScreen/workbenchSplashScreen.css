@@ -1,5 +1,10 @@
 
-*{margin:0;padding:0;list-style:none;box-sizing:border-box}
+.vso-splash-screen * {
+    margin:0;
+    padding:0;
+    list-style:none;
+    box-sizing:border-box
+}
 
 @keyframes shimmer {
     0% {

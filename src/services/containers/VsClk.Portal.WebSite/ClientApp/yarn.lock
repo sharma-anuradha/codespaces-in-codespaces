@@ -2100,10 +2100,10 @@
     diffie-hellman "^5.0.3"
     vscode-jsonrpc "^4.0.0"
 
-"@vs/vso-splash-screen@^1.0.1785", "@vs/vso-splash-screen@^1.0.2096":
-  version "1.0.2096"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.2096.tgz#dd0c86f2d689e01cf8fd4cc27417197cc6d3fdee"
-  integrity sha1-3QyG8taJ4Bz4/UzCdBcZfMbT/e4=
+"@vs/vso-splash-screen@^1.0.2110":
+  version "1.0.2110"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vso-splash-screen/-/vso-splash-screen-1.0.2110.tgz#051310841182e35badfe087bb062a51d8268f072"
+  integrity sha1-BRMQhBGC41ut/gh7sGKlHYJo8HI=
   dependencies:
     "@types/classnames" "^2.2.9"
     "@types/react" "^16.9.19"
@@ -2113,7 +2113,6 @@
     eslint "^6.6.0"
     react-app-polyfill "^1.0.5"
     react-dev-utils "^10.0.0"
-    react-toastify "^5.5.0"
     typescript "^3.7.4"
     xterm "^4.3.0"
     xterm-addon-fit "^0.3.0"
