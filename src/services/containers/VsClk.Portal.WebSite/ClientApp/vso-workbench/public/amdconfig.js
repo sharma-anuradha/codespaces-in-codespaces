@@ -32,7 +32,8 @@ self.require = {
     paths: {
         'vscode-textmate': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/vscode-textmate/release/main`,
         'onigasm-umd': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/onigasm-umd/release/main`,
-        xterm: `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm/lib/xterm.js`,
+        'vscode-oniguruma': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/vscode-oniguruma/release/main`,
+        'xterm': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm/lib/xterm.js`,
         'xterm-addon-search': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm-addon-search/lib/xterm-addon-search.js`,
         'xterm-addon-web-links': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js`,
         'semver-umd': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/semver-umd/lib/semver-umd.js`,

@@ -31,7 +31,9 @@ export class GitHubStrategy implements IAuthStrategy {
         const isVSOGitHubRequest = (service === 'vso-github' &&
             (account.startsWith('github-token_') || account.startsWith('cascade-token_')));
 
-        return isVSOGitHubRequest || isGithubRequest(service, account);
+        const result = isVSOGitHubRequest || isGithubRequest(service, account);
+
+        return result;
     }
 
     async getToken(service: string, account: string): Promise<string | null> {
@@ -65,7 +67,7 @@ export class GitHubStrategy implements IAuthStrategy {
             const githubSessionPR: SessionData = {
                 id: 'github-session-github-pr',
                 accessToken: token,
-                scopes: ['read:user', 'user:email', 'repo'],
+                scopes: ['read:user', 'user:email', 'repo'].sort(),
             };
 
             const githubSessions = JSON.stringify([ githubSession, githubSessionPR ]);

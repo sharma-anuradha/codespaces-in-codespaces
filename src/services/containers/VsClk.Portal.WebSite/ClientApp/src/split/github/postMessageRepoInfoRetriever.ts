@@ -21,6 +21,8 @@ const isValidInfo = (info: IRepoInfo) => {
     return info.ownerUsername && info.workspaceId && info.repositoryId;
 };
 
+const DEFAULT_REFERRER = 'https://github.com';
+
 export class PostMessageRepoInfoRetriever {
     private awaitResponsePromises: Map<string, [Function, Function]> = new Map();
 
@@ -55,7 +57,7 @@ export class PostMessageRepoInfoRetriever {
                 type: 'vso-retrieve-repository-info',
                 id,
             },
-            referrer
+            referrer || DEFAULT_REFERRER
         );
 
         const timeout = 5000;
@@ -124,7 +126,7 @@ export class PostMessageRepoInfoRetriever {
 
     public static sendGoHomeMessage = () => {
         const storedInfo = PostMessageRepoInfoRetriever.getStoredInfo();
-        const referrer = storedInfo?.referrer || 'https://github.com';
+        const referrer = storedInfo?.referrer || DEFAULT_REFERRER;
 
         window.parent.postMessage(
             {
