@@ -41,15 +41,12 @@ namespace Microsoft.VsSaaS.Services.TokenService
             TokenServiceAppSettings tokenServiceSettings = appSettings.TokenService;
             ControlPlaneSettings controlPlaneSettings = appSettings.ControlPlaneSettings;
 
-            // TODO: Switch to a separate key vault for the token service.
-            ////string serviceName = "tokens";
-            string serviceName = "online";
-
             var vaultName = string.Join(
                 '-',
                 controlPlaneSettings.Prefix,
-                serviceName,
+                "core",
                 controlPlaneSettings.EnvironmentName,
+                "sts",
                 "kv");
 
             var logger = loggerFactory.New();

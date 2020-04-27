@@ -622,7 +622,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
-                    var token = tokenProvider.GenerateVsSaaSToken(
+                    var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         new[] { PlanAccessTokenScopes.ReadEnvironments, },
                         HttpContext.User.Claims,
@@ -681,7 +681,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
-                    var token = tokenProvider.GenerateVsSaaSToken(
+                    var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         new[] { PlanAccessTokenScopes.WriteEnvironments, },
                         HttpContext.User.Claims,
@@ -740,7 +740,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
-                    var token = tokenProvider.GenerateVsSaaSToken(
+                    var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         new[] { PlanAccessTokenScopes.ReadEnvironments, PlanAccessTokenScopes.DeleteEnvironments, },
                         HttpContext.User.Claims,
@@ -848,7 +848,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
 
-                    var token = tokenProvider.GenerateDelegatedVsSaaSToken(
+                    var token = await tokenProvider.GenerateDelegatedVsSaaSTokenAsync(
                         plan,
                         partner,
                         scopesArray,

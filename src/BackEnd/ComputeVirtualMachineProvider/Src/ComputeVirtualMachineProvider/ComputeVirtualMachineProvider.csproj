@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <RootNamespace>Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine</RootNamespace>
   </PropertyGroup>
 

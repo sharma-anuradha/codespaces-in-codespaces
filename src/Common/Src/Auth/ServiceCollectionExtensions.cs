@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
@@ -44,15 +45,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions
             Requires.NotNull(services, nameof(services));
             Requires.NotNull(authSettings, nameof(authSettings));
 
-            var writer = new JwtWriter();
-            writer.UnencryptedClaims.Add(JwtRegisteredClaimNames.Exp);
+            if (authSettings.UseTokenService)
+            {
+                return services
+                    .Configure((TokenServiceHttpClientProviderOptions options) =>
+                    {
+                        options.BaseAddress = ValidationUtil.IsRequired(
+                            authSettings.TokenServiceBaseAddress,
+                            nameof(authSettings.TokenServiceBaseAddress));
+                    })
+                    .AddSingleton<IHttpClientProvider<TokenServiceHttpClientProviderOptions>,
+                        TokenServiceHttpClientProvider>()
+                    .AddSingleton<ITokenProvider, RemoteTokenProvider>();
+            }
+            else
+            {
+                var writer = new JwtWriter();
+                writer.UnencryptedClaims.Add(JwtRegisteredClaimNames.Exp);
 
-            return services
-                .AddTokenSettingsToJwtWriter(writer, authSettings.VmTokenSettings)
-                .AddTokenSettingsToJwtWriter(writer, authSettings.VsSaaSTokenSettings)
-                .AddTokenSettingsToJwtWriter(writer, authSettings.ConnectionTokenSettings)
-                .AddSingleton<IJwtWriter>(writer)
-                .AddSingleton<ITokenProvider, TokenProvider>();
+                return services
+                    .AddSingleton<IJwtCertificateCredentialsKeyVaultCacheFactory,
+                        JwtCertificateCredentialsKeyVaultCacheFactory>()
+                    .AddTokenSettingsToJwtWriter(writer, authSettings.VmTokenSettings)
+                    .AddTokenSettingsToJwtWriter(writer, authSettings.VsSaaSTokenSettings)
+                    .AddTokenSettingsToJwtWriter(writer, authSettings.ConnectionTokenSettings)
+                    .AddSingleton<IJwtWriter>(writer)
+                    .AddSingleton<ITokenProvider, LocalTokenProvider>();
+            }
         }
 
         /// <summary>

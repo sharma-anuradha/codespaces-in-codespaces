@@ -1201,7 +1201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 throw new ArgumentException($"Invalid SKU: {cloudEnvironment.SkuName}");
             }
 
-            var connectionToken = TokenProvider.GenerateEnvironmentConnectionToken(
+            var connectionToken = await TokenProvider.GenerateEnvironmentConnectionTokenAsync(
                 cloudEnvironment, sku, startCloudEnvironmentParameters.UserProfile, logger);
 
             // Construct the start-compute environment variables

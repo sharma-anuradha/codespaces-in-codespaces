@@ -7,13 +7,14 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
-using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
 {
@@ -34,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// <param name="requestedExpiration">The expiration of the token.</param>
         /// <param name="logger">logger.</param>
         /// <returns>security token.</returns>
-        public static string GenerateVsSaaSToken(
+        public static async Task<string> GenerateVsSaaSTokenAsync(
             this ITokenProvider provider,
             VsoPlan plan,
             string[] scopes,
@@ -65,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                 sourceTokenExpiration = DateTime.UnixEpoch.AddSeconds(secSinceEpoch);
             }
 
-            return GenerateVsSaaSToken(
+            return await GenerateVsSaaSTokenAsync(
                 provider,
                 plan,
                 scopes,
@@ -93,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// scoped to.</param>
         /// <param name="logger">logger.</param>
         /// <returns>security token.</returns>
-        public static string GenerateDelegatedVsSaaSToken(
+        public static async Task<string> GenerateDelegatedVsSaaSTokenAsync(
             this ITokenProvider provider,
             VsoPlan plan,
             Partner? partner,
@@ -131,7 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                     environmentIds.Select((e) => new Claim(CustomClaims.Environments, e)));
             }
 
-            return GenerateVsSaaSToken(
+            return await GenerateVsSaaSTokenAsync(
                 provider,
                 plan,
                 scopes,
@@ -146,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                 extraClaims);
         }
 
-        private static string GenerateVsSaaSToken(
+        private static async Task<string> GenerateVsSaaSTokenAsync(
             ITokenProvider provider,
             VsoPlan plan,
             string[] scopes,
@@ -205,13 +206,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                 claims.AddRange(extraClaims);
             }
 
-            var token = provider.JwtWriter.WriteToken(
-                logger,
+            var token = await provider.IssueTokenAsync(
                 provider.Settings.VsSaaSTokenSettings.Issuer,
                 provider.Settings.VsSaaSTokenSettings.Audience,
                 expiresAt,
-                claims.ToArray());
-
+                claims,
+                logger);
             return token;
         }
 

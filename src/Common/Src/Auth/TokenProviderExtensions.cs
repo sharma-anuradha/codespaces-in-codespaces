@@ -3,9 +3,11 @@
 // </copyright>
 
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
 {
@@ -21,29 +23,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Auth
         /// </summary>
         /// <param name="provider">The token provider.</param>
         /// <param name="identifier">Id of the resource.</param>
-        /// <param name="logger">logger.</param>
+        /// <param name="logger">Diagnostic logger.</param>
         /// <returns>security token.</returns>
-        public static Task<string> GenerateVmTokenAsync(
+        public static async Task<string> GenerateVmTokenAsync(
             this ITokenProvider provider,
             string identifier,
             IDiagnosticsLogger logger)
         {
             Requires.NotNullOrWhiteSpace(identifier, nameof(identifier));
-            Requires.NotNull(logger, nameof(logger));
 
             var expiresAt = DateTime.UtcNow.Add(
                 provider.Settings.VmTokenSettings.Lifetime ?? DefaultVmTokenLifetime);
 
-            logger.AddValue("jwt_sub", identifier);
-
-            var token = provider.JwtWriter.WriteToken(
-                issuer: provider.Settings.VmTokenSettings.Issuer,
-                audience: provider.Settings.VmTokenSettings.Audience,
-                expires: expiresAt,
-                subject: identifier,
-                logger: logger);
-
-            return Task.FromResult(token);
+            var token = await provider.IssueTokenAsync(
+                provider.Settings.VmTokenSettings.Issuer,
+                provider.Settings.VmTokenSettings.Audience,
+                expiresAt,
+                new[] { new Claim(JwtRegisteredClaimNames.Sub, identifier) },
+                logger);
+            return token;
         }
     }
 }

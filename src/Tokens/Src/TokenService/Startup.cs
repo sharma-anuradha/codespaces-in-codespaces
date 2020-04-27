@@ -11,7 +11,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
@@ -75,8 +77,8 @@ namespace Microsoft.VsSaaS.Services.TokenService
                 IdentityModelEventSource.ShowPII = true;
             }
 
-            // TODO: Switch to separate SP.
-            ////AppSettings.ApplicationServicePrincipal = tokenServiceAppSettings.ServicePrincipal;
+            // Switch the SP credentials so the token service uses a separate SP from the other services.
+            AppSettings.ApplicationServicePrincipal = tokenServiceAppSettings.ServicePrincipal;
 
             // Add front-end/back-end/port-forwarding common services -- secrets, service principal, control-plane resources.
             ConfigureCommonServices(services, out var loggingBaseValues);
@@ -190,6 +192,19 @@ namespace Microsoft.VsSaaS.Services.TokenService
             });
 
             Warmup(app);
+        }
+
+        /// <inheritdoc/>
+        protected override void ConfigureAppSecrets(
+            IServiceCollection services,
+            IConfigurationSection configSection)
+        {
+            var appSecrets = configSection.Get<TokenServiceSecretProvider>();
+            if (appSecrets != null)
+            {
+                // Some integration tests can run without any secrets.
+                services.TryAddSingleton<ISecretProvider>(appSecrets);
+            }
         }
 
         /// <inheritdoc/>

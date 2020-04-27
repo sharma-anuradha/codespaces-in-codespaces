@@ -171,7 +171,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                     keyVaultSecretOptions.ServicePrincipalClientId = servicePrincipal.ClientId;
                     keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetClientSecretAsync;
                 })
-                .AddCertificateCredentialCacheFactory()
                 .AddTokenProvider(appSettings.AuthenticationSettings);
 
             // OpenAPI/swagger

@@ -4,13 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -32,14 +30,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// <param name="userProfile">Profile of the environment owner.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>JWT.</returns>
-        public static string GenerateEnvironmentConnectionToken(
+        public static async Task<string> GenerateEnvironmentConnectionTokenAsync(
             this ITokenProvider provider,
             CloudEnvironment environment,
             ICloudEnvironmentSku environmentSku,
             Profile userProfile,
             IDiagnosticsLogger logger)
         {
-            var requiredClaims = new[]
+            var claims = new List<Claim>
             {
                 // Copy the user identity claims. The user may have authenticated using a
                 // different scheme, but they must have a profile at this point. This normalizes
@@ -50,40 +48,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
 
             var settings = provider.Settings.ConnectionTokenSettings;
             var lifetime = settings.Lifetime ?? DefaultConnectionTokenLifetime;
-            var payload = new JwtPayload(
-                issuer: settings.Issuer,
-                audience: settings.Audience,
-                requiredClaims,
-                notBefore: null,
-                expires: DateTime.UtcNow + lifetime);
 
             if (environmentSku.ComputeOS == ComputeOS.Linux)
             {
                 // For Linux environments, make the token scoped to this one sharing session.
                 // Credential helpers in the environment also need access to join the session.
                 // TODO: Enable scoped tokens for Windows (Nexus) environments also.
-                payload.AddClaim(new Claim(CustomClaims.Scope, string.Join(
+                claims.Add(new Claim(CustomClaims.Scope, string.Join(
                     ' ',
                     PlanAccessTokenScopes.ShareSession,
                     PlanAccessTokenScopes.JoinSession)));
-                payload.AddClaim(
+                claims.Add(
                     new Claim(CustomClaims.Session, environment.Connection.ConnectionSessionId));
             }
 
             // Copy additional optional identity claims from the authenticated user.
-            AddOptionalClaim(payload, CustomClaims.DisplayName, userProfile.Name);
-            AddOptionalClaim(payload, CustomClaims.Email, userProfile.Email);
-            AddOptionalClaim(payload, CustomClaims.Username, userProfile.UserName);
+            AddOptionalClaim(claims, CustomClaims.DisplayName, userProfile.Name);
+            AddOptionalClaim(claims, CustomClaims.Email, userProfile.Email);
+            AddOptionalClaim(claims, CustomClaims.Username, userProfile.UserName);
 
-            var token = provider.JwtWriter.WriteToken(payload, logger);
+            var token = await provider.IssueTokenAsync(
+                settings.Issuer,
+                settings.Audience,
+                DateTime.UtcNow + lifetime,
+                claims,
+                logger);
             return token;
         }
 
-        private static void AddOptionalClaim(JwtPayload payload, string name, string value)
+        private static void AddOptionalClaim(IList<Claim> claims, string name, string value)
         {
             if (!string.IsNullOrEmpty(value))
             {
-                payload.AddClaim(new Claim(name, value));
+                claims.Add(new Claim(name, value));
             }
         }
     }

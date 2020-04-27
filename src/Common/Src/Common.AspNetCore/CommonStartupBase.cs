@@ -140,11 +140,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         protected List<string> AppSettingsJsonFiles { get; } = new List<string>();
 
         /// <summary>
+        /// Checks whether the RUNNING_IN_AZURE variable is set.
+        /// </summary>
+        /// <returns>True if the variable is set to 'true'.</returns>
+        protected static bool IsRunningInAzure()
+        {
+            return Environment.GetEnvironmentVariable(RunningInAzureEnvironmentVariable) == "true";
+        }
+
+        /// <summary>
         /// Load and configure the AppSettings.
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
-        public TAppSettings ConfigureAppSettings(IServiceCollection services)
+        protected TAppSettings ConfigureAppSettings(IServiceCollection services)
         {
             var appSettingsConfiguration = Configuration.GetSection(AppSettingsSectionName);
             AppSettings = appSettingsConfiguration.Get<TAppSettings>();
@@ -154,22 +163,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         }
 
         /// <summary>
-        /// Add the <see cref="CommonAppSecretsProvider"/>.
+        /// Configures the secret provider.
         /// </summary>
         /// <param name="services">The service collection.</param>
-        /// <param name="loggingBaseValues">The common logging base values.</param>
-        public void ConfigureCommonServices(IServiceCollection services, out LoggingBaseValues loggingBaseValues)
+        /// <param name="configSection">The app secrets configuration section.</param>
+        protected virtual void ConfigureAppSecrets(
+            IServiceCollection services,
+            IConfigurationSection configSection)
         {
-            var productInfo = new ProductInfoHeaderValue(
-                ServiceName, Assembly.GetExecutingAssembly().GetName().Version.ToString());
-            services.AddSingleton(productInfo);
-
-            var appSecrets = Configuration.GetSection(AppSecretsSectionName).Get<CommonAppSecretsProvider>();
+            var appSecrets = configSection.Get<CommonAppSecretsProvider>();
             if (appSecrets != null)
             {
                 // Some integration tests can run without any secrets.
                 services.TryAddSingleton<ISecretProvider>(appSecrets);
             }
+        }
+
+        /// <summary>
+        /// Add various DI services common to all VSO services.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="loggingBaseValues">The common logging base values.</param>
+        protected void ConfigureCommonServices(IServiceCollection services, out LoggingBaseValues loggingBaseValues)
+        {
+            var productInfo = new ProductInfoHeaderValue(
+                ServiceName, Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            services.AddSingleton(productInfo);
+
+            ConfigureAppSecrets(services, Configuration.GetSection(AppSecretsSectionName));
 
             services.AddApplicationServicePrincipal(AppSettings.ApplicationServicePrincipal);
 
@@ -228,15 +249,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             {
                 options.MdsdEventSource = AppSettings.MetricsLoggerMdsdEventSource;
             });
-        }
-
-        /// <summary>
-        /// Checks whether the RUNNING_IN_AZURE variable is set.
-        /// </summary>
-        /// <returns>True if the variable is set to 'true'.</returns>
-        protected static bool IsRunningInAzure()
-        {
-            return Environment.GetEnvironmentVariable(RunningInAzureEnvironmentVariable) == "true";
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -183,14 +185,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             key.KeyId = Guid.NewGuid().ToString();
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            moq.Setup(obj => obj.JwtWriter)
-                .Returns(() =>
-                {
-                    var writer = new JwtWriter();
-                    writer.AddIssuer(issuer, signingCredentials);
-                    writer.AddAudience(audience);
-                    return writer;
-                });
+            var jwtWriter = new JwtWriter();
+            jwtWriter.AddIssuer(issuer, signingCredentials);
+            jwtWriter.AddAudience(audience);
+
+            moq.Setup(obj => obj.IssueTokenAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<IEnumerable<Claim>>(),
+                It.IsAny<IDiagnosticsLogger>()))
+                .Returns((
+                    string issuer,
+                    string audience,
+                    DateTime expires,
+                    IEnumerable<Claim> claims,
+                    IDiagnosticsLogger logger)
+                    => Task.FromResult(jwtWriter.WriteToken(
+                        logger, issuer, audience, expires, claims.ToArray())));
 
             moq.Setup(obj => obj.Settings)
                 .Returns(() => new AuthenticationSettings

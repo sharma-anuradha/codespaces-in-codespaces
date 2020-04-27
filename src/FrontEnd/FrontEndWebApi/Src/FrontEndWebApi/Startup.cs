@@ -293,9 +293,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add user-subscriptions
             services.AddVsoDocumentDbCollection<UserSubscription, IUserSubscriptionRepository, UserSubscriptionRepository>(UserSubscriptionRepository.ConfigureOptions);
 
-            services
-                .AddCertificateCredentialCacheFactory()
-                .AddTokenProvider(appSettings.AuthenticationSettings);
+            services.AddTokenProvider(appSettings.AuthenticationSettings);
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
