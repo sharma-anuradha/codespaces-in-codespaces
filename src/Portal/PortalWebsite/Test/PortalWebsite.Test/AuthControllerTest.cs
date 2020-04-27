@@ -8,9 +8,10 @@ using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Moq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Web;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
@@ -233,6 +234,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         }
 
         [Fact]
+        public async Task AuthenticateEnvironmentAsync_GitHub_ConnectionSessionId_KeepsQuery()
+        {
+            var client = new Mock<IFrontEndWebApiClient>();
+            var environment = new CloudEnvironmentResult
+            {
+                Connection = new ConnectionInfoBody
+                {
+                    ConnectionSessionId = "ABCDEF0123456789"
+                }
+            };
+            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                  .ReturnsAsync(environment);
+
+            var headers = new Dictionary<string, string>
+            {
+                [PortForwardingHeaders.OriginalUrl] = "https://environmentId-8080.apps.test.workspaces.githubusercontent.com/",
+            };
+
+            var controller = CreateController(client.Object, host: "portal-vsclk-portal-website.default.svc.cluster.local", headers: headers);
+            var result = Assert.IsAssignableFrom<RedirectResult>(
+                await controller.AuthenticateCodespaceAsync(
+                    "environmentId",
+                    token: null,
+                    cascadeToken: "cascadeToken",
+                    port: 1234,
+                    path: "/some",
+                    query: "and=query",
+                    logger: logger));
+
+            Assert.Equal("https://environmentid-1234.apps.test.workspaces.githubusercontent.com/some?and=query", result.Url);
+        }
+
+        [Fact]
         public async Task AuthenticateEnvironmentAsync_ConnectionSessionId_CookieHasConnectionSessionId()
         {
             var client = new Mock<IFrontEndWebApiClient>();
@@ -320,7 +354,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             ILiveShareTokenExchangeUtil tokenExchangeUtil = null,
             string host = null,
             string path = null,
-            string query = null)
+            string query = null,
+            IDictionary<string, string> headers = default)
         {
             currentContext = MockHttpContext.Create();
 
@@ -337,6 +372,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             if (query != null)
             {
                 currentContext.Request.QueryString = new QueryString(query);
+            }
+
+            if (headers == default)
+            {
+                headers = new Dictionary<string, string>();
+            }
+
+            foreach (var header in headers)
+            {
+                currentContext.Request.Headers.Add(header.Key, header.Value);
             }
 
             var controller = new AuthController(

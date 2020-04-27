@@ -7,6 +7,8 @@ using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using System.Linq;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -187,7 +189,18 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return StatusCode(StatusCodes.Status403Forbidden);
             }
 
-            string host = (HttpContext.GetPartner()) switch
+            string partner;
+            if (Request.Headers.TryGetValue(PortForwardingHeaders.OriginalUrl, out var originalUrlValues) &&
+                Uri.TryCreate(originalUrlValues.SingleOrDefault(), UriKind.Absolute, out var originalUrl) &&
+                GitHubUtils.IsGithubTLD(originalUrl))
+            {
+                partner = Partners.GitHub;
+            } else
+            {
+                partner = HttpContext.GetPartner();
+            }
+
+            string host = partner switch
             {
                 Partners.GitHub => string.Format(AppSettings.GitHubPortForwardingDomainTemplate, $"{environmentId}-{port}"),
                 _ => string.Format(AppSettings.PortForwardingDomainTemplate, $"{environmentId}-{port}"),
