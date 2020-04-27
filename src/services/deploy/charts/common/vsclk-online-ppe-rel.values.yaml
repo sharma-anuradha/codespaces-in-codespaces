@@ -65,7 +65,7 @@ config:
   portForwardingDomainTemplate: "{0}.app.online-ppe.core.vsengsaas.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.ppe.workspaces.githubusercontent.com"
   portForwardingEnableEnvironmentEndpoints: "false"
-  gitHubportForwardingEnableEnvironmentEndpoints: "false"
+  gitHubportForwardingEnableEnvironmentEndpoints: "true"
 
 azure-secrets:
   # vsclk-core-dev
