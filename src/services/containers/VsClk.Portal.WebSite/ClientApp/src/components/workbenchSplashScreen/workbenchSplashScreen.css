@@ -26,7 +26,7 @@
     border-right: 1px solid #181818;
 }
 
-.vso-splash-screen.container {
+.vso-splash-screen .container {
     display: grid;
     height: 100vh;
     width: 100vw;

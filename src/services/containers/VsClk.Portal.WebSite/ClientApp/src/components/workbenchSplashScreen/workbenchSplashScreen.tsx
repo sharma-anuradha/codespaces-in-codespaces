@@ -132,17 +132,19 @@ export const StepsPaneTabBar: React.FunctionComponent<{}> = () => {
 }
 
 export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProps> = (props) => {
-    const mainClass = classnames('vso-splash-screen container', {'is-vs-codespaces': props.isOnVSCodespaces});
+    const mainClass = classnames('container', {'is-vs-codespaces': props.isOnVSCodespaces});
     return (
-        <div className={mainClass}>
-            <SideBar
-                isOnVSCodespaces={props.isOnVSCodespaces}/>
-            <TreePane/>
-            <CodePane/>
-            <CodePaneTabBar/>
-            <StepsPaneTabBar/>
-            {props.children}
-            <div className="bottom"></div>
+        <div className='vso-splash-screen'>
+            <div className={mainClass}>
+                <SideBar
+                    isOnVSCodespaces={props.isOnVSCodespaces}/>
+                <TreePane/>
+                <CodePane/>
+                <CodePaneTabBar/>
+                <StepsPaneTabBar/>
+                {props.children}
+                <div className="bottom"></div>
+            </div>
         </div>
     );
 };
