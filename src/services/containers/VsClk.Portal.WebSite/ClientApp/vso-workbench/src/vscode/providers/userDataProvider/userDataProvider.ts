@@ -38,6 +38,8 @@ export class UserDataProvider implements IFileSystemProvider {
     private readonly userSettingsPath = path.join('/', 'User', 'settings.json');
     private storageProvider!: IAsyncStorage;
 
+    public isFirstRun: boolean = false;
+
     constructor(private defaultSettings: string) {}
 
     public async initializeDBProvider() {
@@ -59,9 +61,10 @@ export class UserDataProvider implements IFileSystemProvider {
             await this.storageProvider.setValue(this.globalPath, JSON.stringify(options));
 
             const userSettingsValue = await this.storageProvider.getValue(this.userSettingsPath);
-
             if (!userSettingsValue) {
                 await this.storageProvider.setValue(this.userSettingsPath, this.defaultSettings);
+
+                this.isFirstRun = true;
             }
         }
     }

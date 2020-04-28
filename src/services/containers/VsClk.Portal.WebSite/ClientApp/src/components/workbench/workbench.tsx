@@ -2,7 +2,12 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { IWorkbenchConstructionOptions, IWebSocketFactory, IHomeIndicator, URI } from 'vscode-web';
+import {
+    IWorkbenchConstructionOptions,
+    IWebSocketFactory,
+    IHomeIndicator,
+    URI
+} from 'vscode-web';
 
 import {
     createTrace,
@@ -28,7 +33,10 @@ import {
     vscode,
     getVSCodeVersion,
     getExtensions,
+    DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
 } from 'vso-workbench';
+
+import { getWorkbenchDefaultLayout } from './getWorkbenchDefaultLayout';
 
 import * as envRegService from '../../services/envRegService';
 
@@ -75,10 +83,11 @@ import { SplashCommunicationProvider } from '../../providers/splashCommunication
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
 
+import { PostMessageRepoInfoRetriever } from '../../split/github/postMessageRepoInfoRetriever';
 import {
-    PostMessageRepoInfoRetriever,
-} from '../../split/github/postMessageRepoInfoRetriever';
-import { EnvironmentsExternalUriProvider, PortForwardingExternalUriProvider } from '../../providers/externalUriProvider';
+    EnvironmentsExternalUriProvider,
+    PortForwardingExternalUriProvider,
+} from '../../providers/externalUriProvider';
 
 import './workbench.css';
 
@@ -124,7 +133,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     }
 
     // Seconds for timeout when starting
-    private notifySeconds?: number
+    private notifySeconds?: number;
     // Communication provider for creation splash screen
     private communicationProvider?: SplashCommunicationProvider;
     // We need to stablish a liveshare connection until the environment
@@ -199,7 +208,9 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
         if (this.notifySeconds && Date.now() >= this.notifySeconds) {
             this.notifySeconds = undefined;
-            this.communicationProvider?.sendNotification('Looks like this is taking a little longer than usual but your environment will be ready soon');
+            this.communicationProvider?.sendNotification(
+                'Looks like this is taking a little longer than usual but your environment will be ready soon'
+            );
         }
 
         if (!this.hasConnectionStarted && this.communicationProvider) {
@@ -220,7 +231,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                                     status: 'Pending',
                                     terminal: 'false',
                                 },
-                            }]);
+                            },
+                        ]);
                         //Notify after 30 seconds
                         this.notifySeconds = Date.now() + 30 * 1000;
                     } else {
@@ -427,7 +439,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                   title: 'Go Home',
               }
             : undefined;
-        
+
         const commands = [
             {
                 id: '_github.gohome',
@@ -436,6 +448,15 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 },
             },
         ];
+
+        const defaultLayout = getWorkbenchDefaultLayout(
+            environmentInfo,
+            userDataProvider.isFirstRun
+        );
+
+        const authenticationSessionId = isHostedOnGithub()
+            ? DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID
+            : undefined;
 
         const config: IWorkbenchConstructionOptions = {
             remoteAuthority: `vsonline+${environmentInfo.id}`,
@@ -451,6 +472,9 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             applicationLinks,
             homeIndicator,
             commands,
+            authenticationSessionId,
+            enableSyncByDefault: false,
+            defaultLayout,
         };
 
         logger.info(`Creating workbench on #${this.workbenchRef}, with config: `, config);

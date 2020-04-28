@@ -564,6 +564,52 @@ declare module 'vscode-web' {
         title: string;
     }
 
+    interface IDefaultSideBarLayout {
+        visible?: boolean;
+        containers?: ({
+            id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+            active: true;
+            order?: number;
+            views?: {
+                id: string;
+                order?: number;
+                visible?: boolean;
+                collapsed?: boolean;
+            }[];
+        } | {
+            id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+            active?: false | undefined;
+            order?: number;
+            visible?: boolean;
+            views?: {
+                id: string;
+                order?: number;
+                visible?: boolean;
+                collapsed?: boolean;
+            }[];
+        })[];
+    }
+
+    interface IDefaultPanelLayout {
+        visible?: boolean;
+        containers?: ({
+            id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+            order?: number;
+            active: true;
+        } | {
+            id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+            order?: number;
+            active?: false | undefined;
+            visible?: boolean;
+        })[];
+    }
+
+    interface IDefaultLayout {
+        sidebar?: IDefaultSideBarLayout;
+        panel?: IDefaultPanelLayout;
+        // editors?: IDefaultWorkspaceEditorsLayout
+    }
+
     export interface IWorkbenchConstructionOptions {
         /**
          * Experimental: the remote authority is the IP:PORT from where the workbench is served
@@ -602,6 +648,16 @@ declare module 'vscode-web' {
          * state like settings, keybindings, UI state (e.g. opened editors) and snippets.
          */
         userDataProvider?: IFileSystemProvider;
+
+        /**
+         * Session id of the current authenticated user
+         */
+        readonly authenticationSessionId?: string;
+
+        /**
+         * Enables user data sync by default and syncs into the current authenticated user account using the provided [authenticationSessionId}(#authenticationSessionId).
+         */
+        readonly enableSyncByDefault?: boolean;
 
         /**
          * A factory for web sockets.
@@ -677,6 +733,8 @@ declare module 'vscode-web' {
          * Optional home indicator to appear above the hamburger menu in the activity bar.
          */
         readonly homeIndicator?: IHomeIndicator;
+
+        defaultLayout?: IDefaultLayout;
     }
 
     export interface IWorkbench {
