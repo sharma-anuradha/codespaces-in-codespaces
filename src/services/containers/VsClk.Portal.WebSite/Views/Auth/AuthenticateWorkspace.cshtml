@@ -1,10 +1,20 @@
 ﻿@model Microsoft.VsCloudKernel.Services.Portal.WebSite.Models.AuthenticateWorkspaceFormDetails
 
-<form action="@Model.Action" method="POST" id="tokenForm">
-    <input type="hidden" name="cascadeToken" value="@Model.CascadeToken" />
-</form>
+@{ Layout = "~/Views/Shared/_EmptyLayout.cshtml"; }
 
-<script>
-    const formElement = document.getElementById("tokenForm");
-    formElement.submit();
-</script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <form action="@Model.Action" method="POST" id="tokenForm">
+        <input type="hidden" name="cascadeToken" value="@Model.CascadeToken" />
+    </form>
+
+    <script>
+        const formElement = document.getElementById("tokenForm");
+        formElement.submit();
+    </script>
+</body>
+</html>
