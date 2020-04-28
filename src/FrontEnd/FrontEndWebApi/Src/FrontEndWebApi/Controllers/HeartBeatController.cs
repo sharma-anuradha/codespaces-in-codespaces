@@ -90,6 +90,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             if (!string.IsNullOrWhiteSpace(heartBeat.EnvironmentId))
             {
                 var environment = await environmentManager.GetAsync(heartBeat.EnvironmentId, logger);
+                if (environment == null)
+                {
+                    return UnprocessableEntity();
+                }
+
                 if (environment.Type == EnvironmentType.StaticEnvironment)
                 {
                     shouldSendBackendTask = false;
@@ -218,7 +223,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsTrue(tokenResourceId == heartbeat.ResourceId, $"Heartbeat received with conflicting resourceId in body ({heartbeat.ResourceId}), and in token ({tokenResourceId})");
             if (!string.IsNullOrWhiteSpace(heartbeat.EnvironmentId))
             {
-                var collectedDataEnvIds = heartbeat.CollectedDataList.Select(d => d.EnvironmentId).Where(id => id != default);
+                var collectedDataEnvIds = heartbeat.CollectedDataList.Where(d => d != default).Select(d => d.EnvironmentId).Where(id => id != default);
                 ValidationUtil.IsTrue(collectedDataEnvIds.All(id => id == heartbeat.EnvironmentId), $"Heartbeat received with conflicting environmentId in body and in collected data");
             }
         }
