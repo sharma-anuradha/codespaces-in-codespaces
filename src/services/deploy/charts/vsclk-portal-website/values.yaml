@@ -58,6 +58,7 @@ pfingress:
       location /authenticate-codespace {
         proxy_pass_request_body on;
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+        proxy_set_header Host $http_host;
       }
       location /logout-port-forwarder {
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
