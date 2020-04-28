@@ -135,4 +135,17 @@ export class PostMessageRepoInfoRetriever {
             referrer,
         );
     }
+
+    public static sendConnectToWorkspace(id: string) {
+        const storedInfo = PostMessageRepoInfoRetriever.getStoredInfo();
+        const referrer = storedInfo?.referrer || DEFAULT_REFERRER;
+        
+        window.parent.postMessage(
+            {
+                type: 'vso-connect-to-workspace',
+                environmentId: id,
+            },
+            referrer
+        );
+    }
 }

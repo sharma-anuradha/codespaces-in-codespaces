@@ -1,4 +1,4 @@
-import { vsls } from 'vso-client-core';
+import { vsls, isHostedOnGithub } from 'vso-client-core';
 
 import {
     BrowserSyncService as BrowserSyncServiceBase,
@@ -8,6 +8,7 @@ import {
 import { authService } from '../services/authService';
 
 import { loginPath, environmentsPath } from '../routerPaths';
+import { PostMessageRepoInfoRetriever } from '../split/github/postMessageRepoInfoRetriever';
 
 export class BrowserSyncService extends BrowserSyncServiceBase {
     public async onSourceEvent(e: vsls.SourceEventArgs) {
@@ -15,7 +16,12 @@ export class BrowserSyncService extends BrowserSyncServiceBase {
             case BrowserConnectorMessages.ConnectToEnvironment: {
                 const payload = JSON.parse(e.jsonContent);
                 const { id } = payload;
-                location.href = `/environment/${id}`;
+
+                if (isHostedOnGithub()) {
+                    PostMessageRepoInfoRetriever.sendConnectToWorkspace(id);
+                } else {
+                    location.href = `/environment/${id}`;
+                }
                 return;
             }
             case BrowserConnectorMessages.DisconnectFromEnvironment: {
