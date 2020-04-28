@@ -497,7 +497,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     render() {
         const content = this.renderWorkbench();
 
-        return <div className='connect-to-environment'>{content}</div>;
+        return <div>{content}</div>;
     }
 }
 
