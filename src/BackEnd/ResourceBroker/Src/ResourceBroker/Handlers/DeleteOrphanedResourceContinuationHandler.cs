@@ -8,6 +8,8 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
@@ -28,17 +30,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="computeProvider">Target compute provider.</param>
         /// <param name="storageProvider">Target storage provider.</param>
+        /// <param name="keyVaultProvider">Target key vault provider.</param>
         public DeleteOrphanedResourceContinuationHandler(
             IComputeProvider computeProvider,
-            IStorageProvider storageProvider)
+            IStorageProvider storageProvider,
+            IKeyVaultProvider keyVaultProvider)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
+            KeyVaultProvider = keyVaultProvider;
         }
 
         private IComputeProvider ComputeProvider { get; set; }
 
         private IStorageProvider StorageProvider { get; set; }
+
+        private IKeyVaultProvider KeyVaultProvider { get; }
 
         private string DefaultTarget => DefaultQueueTarget;
 
@@ -60,6 +67,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             else if (input is FileShareProviderDeleteInput storageInput)
             {
                 result = await StorageProvider.DeleteAsync(storageInput, logger.WithValues(new LogValueSet()));
+            }
+            else if (input is KeyVaultProviderDeleteInput keyVaultInput)
+            {
+                result = await KeyVaultProvider.DeleteAsync(keyVaultInput, logger.WithValues(new LogValueSet()));
             }
             else
             {

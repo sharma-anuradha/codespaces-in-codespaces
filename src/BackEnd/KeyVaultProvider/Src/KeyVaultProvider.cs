@@ -4,11 +4,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -79,7 +80,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         /// <inheritdoc/>
         public Task<KeyVaultProviderDeleteResult> DeleteAsync(KeyVaultProviderDeleteInput input, IDiagnosticsLogger logger)
         {
-            throw new System.NotImplementedException();
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            return logger.OperationScopeAsync(
+                $"{LoggingBaseName}_delete",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
+                        .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name)
+                        .FluentAddBaseValue(nameof(input.AzureLocation), input.AzureLocation.ToString());
+
+                    var keyVaultName = input.AzureResourceInfo.Name;
+                    var resourceGroup = input.AzureResourceInfo.ResourceGroup;
+                    var azure = await AzureClientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
+                    var keyVault = await azure.Vaults.GetByResourceGroupAsync(resourceGroup, keyVaultName);
+
+                    if (keyVault != null)
+                    {
+                        var keyVaultManagementClient = await AzureClientFactory.GetKeyVaultManagementClient(input.AzureResourceInfo.SubscriptionId);
+                        await keyVaultManagementClient.Vaults.DeleteAsync(resourceGroup, keyVaultName);
+                    }
+
+                    var result = new KeyVaultProviderDeleteResult() { Status = OperationState.Succeeded };
+                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString());
+                    return result;
+                },
+                (ex, childLogger) =>
+                {
+                    var result = new KeyVaultProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString());
+                    return Task.FromResult(result);
+                },
+                swallowException: true);
         }
 
         private async Task<(OperationState OperationState, NextStageInput NextInput)> BeginCreateKeyVaultAsync(KeyVaultProviderCreateInput input, IDiagnosticsLogger logger)
@@ -99,6 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                 var keyVaultName = GenerateKeyVaultName();
                 var deploymentName = $"Create-KeyVault-{keyVaultName}";
                 var resourceTags = input.ResourceTags;
+                resourceTags.Add(ResourceTagName.ResourceName, keyVaultName);
 
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {

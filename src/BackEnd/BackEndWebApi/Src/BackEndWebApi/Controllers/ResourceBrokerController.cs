@@ -167,11 +167,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("delete")]
         public async Task<IActionResult> DeleteAsync(
-            [Required] Guid environmentId,
+            Guid environmentId,
             [FromBody, Required, MinLength(1)] IEnumerable<Guid> resourceRequests,
             [FromServices]IDiagnosticsLogger logger)
         {
-            logger.AddBaseEnvironmentId(environmentId);
+            if (environmentId != default)
+            {
+                logger.AddBaseEnvironmentId(environmentId);
+            }
 
             var result = await ResourceBrokerHttp.DeleteAsync(environmentId, resourceRequests, logger.NewChildLogger());
             return Ok(result);
@@ -250,7 +253,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             var resourceResults = await ResourceBroker.AllocateAsync(
-                environmentId, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger());
+                environmentId, resourceInput, "FrontEndService", logger.NewChildLogger());
 
             var resourceResponses = new List<AllocateResponseBody>();
             foreach (var resourceResult in resourceResults)
@@ -317,7 +320,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             return await ResourceBroker.DeleteAsync(
-                environmentId, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger());
+                environmentId, resourceInput, "FrontEndService", logger.NewChildLogger());
         }
 
         /// <inheritdoc/>

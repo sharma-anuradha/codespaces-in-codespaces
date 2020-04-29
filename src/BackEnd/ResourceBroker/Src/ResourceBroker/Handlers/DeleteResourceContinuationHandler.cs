@@ -11,6 +11,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -36,17 +38,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
+        /// <param name="keyVaultProvider">KeyVault provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service Provider.</param>
         public DeleteResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
+            IKeyVaultProvider keyVaultProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider)
             : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
+            KeyVaultProvider = keyVaultProvider;
         }
 
         /// <inheritdoc/>
@@ -61,6 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IComputeProvider ComputeProvider { get; set; }
 
         private IStorageProvider StorageProvider { get; set; }
+
+        private IKeyVaultProvider KeyVaultProvider { get; }
 
         /// <inheritdoc/>
         protected override Task<ContinuationResult> InitiallyQueueContinuationAsync(
@@ -77,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override Task<ContinuationInput> BuildOperationInputAsync(DeleteResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
-            var operationInput = (ContinuationInput)null;
+            var operationInput = default(ContinuationInput);
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
                 var didParseLocation = Enum.TryParse(resource.Value.Location, true, out AzureLocation azureLocation);
@@ -109,6 +116,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                     BlobName = blobStorageDetails.ArchiveStorageBlobName,
                     BlobContainerName = blobStorageDetails.ArchiveStorageBlobContainerName,
+                };
+            }
+            else if (resource.Value.Type == ResourceType.KeyVault)
+            {
+                var didParseLocation = Enum.TryParse(resource.Value.Location, true, out AzureLocation azureLocation);
+                if (!didParseLocation)
+                {
+                    throw new NotSupportedException($"Provided location of '{resource.Value.Location}' is not supported.");
+                }
+
+                operationInput = new KeyVaultProviderDeleteInput
+                {
+                    AzureLocation = azureLocation,
+                    AzureResourceInfo = resource.Value.AzureResourceInfo,
                 };
             }
             else
@@ -143,6 +164,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     || resource.Value.Type == ResourceType.StorageArchive)
                 {
                     result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
+                }
+                else if (resource.Value.Type == ResourceType.KeyVault)
+                {
+                    result = await KeyVaultProvider.DeleteAsync((KeyVaultProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
                 }
                 else
                 {

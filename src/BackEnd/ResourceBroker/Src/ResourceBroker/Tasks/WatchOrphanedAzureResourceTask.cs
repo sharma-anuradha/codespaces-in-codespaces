@@ -168,6 +168,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                                 "OrphanedAzureResourceTask",
                                 childLogger.NewChildLogger());
                         }
+                        else if (resourceType == ResourceType.KeyVault)
+                        {
+                            await ResourceContinuationOperations.DeleteOrphanedKeyVaultAsync(
+                                Guid.Parse(resource.Id),
+                                Guid.Parse(capacityUnit.Subscription.SubscriptionId),
+                                capacityUnit.ResourceGroup,
+                                resource.Name,
+                                resourceLocation,
+                                resource.ResourceTags,
+                                "OrphanedAzureResourceTask",
+                                childLogger.NewChildLogger());
+                        }
                     }
                     else
                     {

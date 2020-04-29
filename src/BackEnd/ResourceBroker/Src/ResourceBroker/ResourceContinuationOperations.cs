@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
@@ -238,6 +239,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var input = new FileShareProviderDeleteInput()
             {
+                AzureResourceInfo = new AzureResourceInfo(subscriptionId, resourceGroup, name),
+            };
+            var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
+
+            return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ContinuationResult> DeleteOrphanedKeyVaultAsync(
+            Guid resourceId,
+            Guid subscriptionId,
+            string resourceGroup,
+            string name,
+            AzureLocation location,
+            IDictionary<string, string> resourceTags,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(
+                resourceId, ResourceType.KeyVault, resourceTags, reason);
+
+            var input = new KeyVaultProviderDeleteInput()
+            {
+                AzureLocation = location,
                 AzureResourceInfo = new AzureResourceInfo(subscriptionId, resourceGroup, name),
             };
             var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;

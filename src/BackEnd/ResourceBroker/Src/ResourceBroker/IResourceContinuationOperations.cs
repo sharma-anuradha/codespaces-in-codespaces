@@ -147,6 +147,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Delete orphaned keyvault resource by invoking the continuation activator.
+        /// </summary>
+        /// <param name="resourceId">Target resource id.</param>
+        /// <param name="subscriptionId">The azure subscription id.</param>
+        /// <param name="resourceGroup">The azure resource group.</param>
+        /// <param name="name">The resource name.</param>
+        /// <param name="location">The resource location.</param>
+        /// <param name="resourceTags">Azure resource tags.</param>
+        /// <param name="reason">Trigger for operation.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Resulting continuation result.</returns>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<ContinuationResult> DeleteOrphanedKeyVaultAsync(
+            Guid resourceId,
+            Guid subscriptionId,
+            string resourceGroup,
+            string name,
+            AzureLocation location,
+            IDictionary<string, string> resourceTags,
+            string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Create custom resources.
         /// </summary>
         /// <param name="resourceId">resource id.</param>
