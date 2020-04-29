@@ -22,13 +22,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// <summary>
     /// Sets the specified SKU's image version.
     /// </summary>
-    [Verb("setskuimageversion", HelpText = "Sets the specified SKU's image version.")]
+    [Verb("setskuimageversion", HelpText = "Sets the specified SKU's image version. Defaults are set for updating Nexus windowsInternal SKU.")]
     public class SetSkuImageVersionCommand : CommandBase
     {
         /// <summary>
         /// Gets or sets the name of the sku whose image version to update.
         /// </summary>
-        [Option('n', "name", Default = "internalWindows", HelpText = "Sku name. Defaults to internalWindows Sku.")]
+        [Option('s', "sku", Default = "internalWindows", HelpText = "Sku name. Defaults to internalWindows Sku.")]
         public string SkuName { get; set; }
 
         /// <summary>
@@ -49,9 +49,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             ExecuteAsync(services, stdout).Wait();
         }
 
-        private string GetConfigurationKey()
+        private string GetConfigurationKey(string imageName)
         {
-            return $"images:compute:{SkuName}:version";
+            return $"images:compute:{imageName}:version";
         }
 
         private async Task ExecuteAsync(IServiceProvider services, TextWriter stdout)
@@ -62,13 +62,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             var logger = loggerFactory.New();
 
             var sku = skuCatalog.CloudEnvironmentSkus.Values.Where(t => t.SkuName == SkuName).First();
+            var imageFamilyName = sku.ComputeImage.ImageFamilyName;
 
             if (string.IsNullOrEmpty(ImageVersion))
             {
                 ImageVersion = sku.ComputeImage.DefaultImageVersion;
             }
 
-            var documentId = GetConfigurationKey();
+            var documentId = GetConfigurationKey(imageFamilyName);
             var newOverride = new SystemConfigurationRecord
             {
                 Id = documentId,
