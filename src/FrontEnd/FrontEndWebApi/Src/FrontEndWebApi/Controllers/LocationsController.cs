@@ -92,6 +92,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
+        /// Get the list of available control plane stamps.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>JSON-serialized IControlPlaneStampInfo[]</returns>
+        [HttpGet("control-planes")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(ControlPlaneLocationResult[]), StatusCodes.Status200OK)]
+        [HttpOperationalScope("control_planes")]
+        public IActionResult GetControlPlaneStamps(
+            [FromServices]IDiagnosticsLogger logger)
+        {
+            var stamps = ControlPlaneInfo.GetControlPlaneStamps();
+            var data = new List<ControlPlaneLocationResult>();
+            foreach (var stamp in stamps)
+            {
+                data.Add(new ControlPlaneLocationResult()
+                {
+                    Location = stamp.Location,
+                    DnsHostName = stamp.DnsHostName.ToString(),
+                });
+            }
+
+            return Ok(data);
+        }
+
+        /// <summary>
         /// Gets info about a specific location including what SKUs are available at that location.
         /// </summary>
         /// <param name="location">The requested location.</param>
