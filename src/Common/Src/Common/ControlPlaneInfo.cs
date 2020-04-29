@@ -117,12 +117,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public IEnumerable<IControlPlaneStampInfo> GetControlPlaneStamps()
-        {
-            return AllStamps.Values;
-        }
-
-        /// <inheritdoc/>
         public IControlPlaneStampInfo GetOwningControlPlaneStamp(AzureLocation dataPlaneLocation)
         {
             try

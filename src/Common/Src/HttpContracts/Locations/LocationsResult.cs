@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -28,5 +29,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
             PropertyName = "available",
             ItemConverterType = typeof(StringEnumConverter))]
         public AzureLocation[] Available { get; set; }
+
+        /// <summary>
+        /// Gets or sets the hostnames of the control plane instance for each location.
+        /// </summary>
+        [JsonProperty(Required = Required.Always, PropertyName = "hostnames")]
+        public Dictionary<string, string> Hostnames { get; set; } = new Dictionary<string, string>();
     }
 }

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -88,33 +89,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 Available = allLocations,
             };
 
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Get the list of available control plane stamps.
-        /// </summary>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>JSON-serialized IControlPlaneStampInfo[]</returns>
-        [HttpGet("control-planes")]
-        [AllowAnonymous]
-        [ProducesResponseType(typeof(ControlPlaneLocationResult[]), StatusCodes.Status200OK)]
-        [HttpOperationalScope("control_planes")]
-        public IActionResult GetControlPlaneStamps(
-            [FromServices]IDiagnosticsLogger logger)
-        {
-            var stamps = ControlPlaneInfo.GetControlPlaneStamps();
-            var data = new List<ControlPlaneLocationResult>();
-            foreach (var stamp in stamps)
+            foreach (var location in allLocations)
             {
-                data.Add(new ControlPlaneLocationResult()
-                {
-                    Location = stamp.Location,
-                    DnsHostName = stamp.DnsHostName.ToString(),
-                });
+                var controlPlane = ControlPlaneInfo.GetOwningControlPlaneStamp(location);
+                result.Hostnames[location.ToString()] = controlPlane.DnsHostName.ToString();
             }
 
-            return Ok(data);
+            return Ok(result);
         }
 
         /// <summary>

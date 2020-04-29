@@ -77,12 +77,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         IEnumerable<AzureLocation> GetAllDataPlaneLocations();
 
         /// <summary>
-        /// Get the list of available control plane stamps.
-        /// </summary>
-        /// <returns>TBD</returns>
-        IEnumerable<IControlPlaneStampInfo> GetControlPlaneStamps();
-
-        /// <summary>
         /// Gets the owning control plane stamp for a given data plane location.
         /// </summary>
         /// <param name="dataPlaneLocation">The data plane location to search for.</param>
