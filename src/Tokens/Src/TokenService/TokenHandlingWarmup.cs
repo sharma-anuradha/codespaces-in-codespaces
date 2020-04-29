@@ -44,9 +44,8 @@ namespace Microsoft.VsSaaS.Services.TokenService
             var vaultName = string.Join(
                 '-',
                 controlPlaneSettings.Prefix,
-                "core",
+                "online",
                 controlPlaneSettings.EnvironmentName,
-                "sts",
                 "kv");
 
             var logger = loggerFactory.New();
