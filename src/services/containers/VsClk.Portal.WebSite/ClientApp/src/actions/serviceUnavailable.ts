@@ -1,7 +1,7 @@
 import { action } from './middleware/useActionCreator';
 
 export const unavailableErrorMessage =
-    'Due to overwhelming demand, environment creation is temporarily disabled. ' +
+    'Due to overwhelming demand, Codespace creation is temporarily disabled. ' +
     'We’re working hard to accommodate the interest, so please check back soon as we continually onboard more users.';
 
 export const serviceUnavailableAtTheMomentActionType = 'async.plan.getPlans.serviceUnavailable';

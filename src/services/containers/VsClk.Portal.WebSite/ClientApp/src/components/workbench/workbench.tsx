@@ -209,7 +209,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         if (this.notifySeconds && Date.now() >= this.notifySeconds) {
             this.notifySeconds = undefined;
             this.communicationProvider?.sendNotification(
-                'Looks like this is taking a little longer than usual but your environment will be ready soon'
+                'Looks like this is taking a little longer than usual but your Codespace will be ready soon'
             );
         }
 
@@ -226,7 +226,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     if (isStarting(environmentInfo)) {
                         this.communicationProvider?.appendSteps([
                             {
-                                name: 'Resume Environment',
+                                name: 'Resume Codespace',
                                 data: {
                                     status: 'Pending',
                                     terminal: 'false',

@@ -366,7 +366,7 @@ function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: Delete
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Delete environment ${environment.friendlyName}`,
+                title: `Delete Codespace ${environment.friendlyName}`,
                 subText: `You are about to delete the ${environment.friendlyName}. Are you sure?`,
             }}
             modalProps={{
@@ -410,7 +410,7 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Suspend environment ${environment.friendlyName}`,
+                title: `Suspend Codespace ${environment.friendlyName}`,
                 subText: `You are about to suspend ${environment.friendlyName}. Are you sure?`,
             }}
             modalProps={{
@@ -456,7 +456,7 @@ function ChangeSettingsDialog({
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Suspend environment ${environment.friendlyName}`,
+                title: `Suspend Codespace ${environment.friendlyName}`,
                 subText: `Changing the settings of ${environment.friendlyName} requires it be suspended first.  Do you want to continue?`,
             }}
             modalProps={{

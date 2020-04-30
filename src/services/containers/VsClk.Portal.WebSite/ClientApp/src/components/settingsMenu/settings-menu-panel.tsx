@@ -79,13 +79,13 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
         let deleteText = <div></div>;
         let envs = (
             <span>
-                <b>{this.props.environmentsInPlan.length}</b> environments
+                <b>{this.props.environmentsInPlan.length}</b> Codespaces
             </span>
         );
         if (this.props.environmentsInPlan.length === 1) {
             envs = (
                 <span>
-                    <b>1</b> environment
+                    <b>1</b> Codespace
                 </span>
             );
         }
@@ -129,7 +129,7 @@ export class SettingsMenuPanel extends Component<ISettingsMenuProps, ISettingsMe
                     <div className='vsonline-settings-panel__separator' />
                     <h3>Plans</h3>
                     <div className='vsonline-settings-panel__delete-text'>
-                        When a plan is deleted, the associated environments will be deleted as well.
+                        When a plan is deleted, the associated Codespaces will be deleted as well.
                     </div>
                     {this.getPlanSelector()}
                     <DefaultButton

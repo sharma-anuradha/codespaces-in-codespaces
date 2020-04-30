@@ -171,7 +171,7 @@ export const validationMessages = {
     nameIsTooLong: 'Maximum name length is 90.',
     nameIsInvalid:
         'Invalid characters. The name can include alphanumeric, underscore, parentheses, hyphen, period and space.',
-    unableToConnect: 'Unable to connect to this repository. Create an empty environment.',
+    unableToConnect: 'Unable to connect to this repository. Create an empty Codespace.',
     invalidGitUrl: 'We are unable to clone this repository automatically.',
     noAccess:
         'The repository does not exist, or you do not have access to it. Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.',
@@ -421,7 +421,7 @@ export class CreateEnvironmentPanelView extends Component<
 
         return (
             <div className='create-environment-panel__overlay'>
-                <Loader message='Creating the environment...' />
+                <Loader message='Creating the Codespace...' />
             </div>
         );
     }

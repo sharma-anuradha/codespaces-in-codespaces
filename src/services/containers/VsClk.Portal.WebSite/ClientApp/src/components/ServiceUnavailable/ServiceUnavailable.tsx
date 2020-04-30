@@ -56,7 +56,7 @@ const FormWithEmail: FC<{ defaultUserEmail: string }> = ({ defaultUserEmail }) =
             <Stack horizontalAlign='center'>
                 <Stack.Item>
                     <Label id='email-label' htmlFor='email'>
-                        We can send you an email when we are ready to enable environment creation
+                        We can send you an email when we are ready to enable Codespace creation
                         again.
                     </Label>
                 </Stack.Item>

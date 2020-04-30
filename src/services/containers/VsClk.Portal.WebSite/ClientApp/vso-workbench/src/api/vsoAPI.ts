@@ -36,7 +36,7 @@ export class VsoAPI {
         });
 
         if (!environmentInfoResponse.ok) {
-            const message = 'Cannot fetch environment info';
+            const message = 'Cannot fetch Codespace info';
 
             if (environmentInfoResponse.status === 401) {
                 throw new AuthenticationError(message);

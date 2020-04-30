@@ -41,7 +41,7 @@ export const WorkbenchSplashScreenGithub = (props: IWorkbenchSplashScreenProps) 
 
     if (connectError !== null) {
         return (
-            <RenderSplashScreen message={`Connecting to environment ${friendlyName} failed. ${connectError}`}>
+            <RenderSplashScreen message={`Connecting to Codespace ${friendlyName} failed. ${connectError}`}>
                 <PrimaryButton onClick={onRetry}>Retry</PrimaryButton>
             </RenderSplashScreen>
         );
@@ -49,7 +49,7 @@ export const WorkbenchSplashScreenGithub = (props: IWorkbenchSplashScreenProps) 
 
     const envState = stateToDisplayName(environment.state).toLocaleLowerCase();
     return (
-        <RenderSplashScreen message={`Environment "${friendlyName}" is ${envState}.`}>
+        <RenderSplashScreen message={`Codespace "${friendlyName}" is ${envState}.`}>
             {
                 isActivating(environment)
                     ? <Loader />

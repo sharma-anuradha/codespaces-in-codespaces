@@ -101,29 +101,29 @@ export function stateToDisplayName(state: EnvironmentStateInfo) {
 export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
     switch (code) {
         case EnvironmentErrorCodes.exceededQuota:
-            return 'You have exceeded the environment quota.';
+            return 'You have exceeded the Codespace quota.';
         case EnvironmentErrorCodes.environmentNameAlreadyExists:
-            return 'Cloud environment already exists.';
+            return 'Cloud Codespace already exists.';
         case EnvironmentErrorCodes.environmentDoesNotExist:
-            return 'Cloud environment does not exist.';
+            return 'Cloud Codespace does not exist.';
         case EnvironmentErrorCodes.environmentNotAvailable:
-            return 'Environment is not in available state.';
+            return 'Codespace is not in available state.';
         case EnvironmentErrorCodes.environmentNotShutdown:
-            return 'Environment is not in suspended state.';
+            return 'Codespace is not in suspended state.';
         case EnvironmentErrorCodes.unableToAllocateResources:
             return 'Please try again in a few minutes or select a plan in another location.';
         case EnvironmentErrorCodes.unableToAllocateResourcesWhileStarting:
-            return 'Unable to start the environment. Please try again in a few minutes.';
+            return 'Unable to start the Codespace. Please try again in a few minutes.';
         case EnvironmentErrorCodes.unableToUpdateSku:
-            return 'Environment\'s current instance type does not support any changes.';
+            return 'Codespace\'s current instance type does not support any changes.';
         case EnvironmentErrorCodes.requestedSkuIsInvalid:
-            return 'Environment\'s current instance type does not support the requested instance type.';
+            return 'Codespace\'s current instance type does not support the requested instance type.';
         case EnvironmentErrorCodes.requestedAutoShutdownDelayMinutesIsInvalid:
             return 'Requested auto-suspend delay is invalid.';
         case  EnvironmentErrorCodes.heartbeatUnhealthy:
-            return 'The environment was reported as unhealthy, suspend and restart the environment.';
+            return 'The Codespace was reported as unhealthy, suspend and restart the Codespace.';
         case  EnvironmentErrorCodes.customContainersCreationFailed: 
-            return 'The environment creation based on devcontainer.json failed, please review the console for more details.';
+            return 'The Codespace creation based on devcontainer.json failed, please review the console for more details.';
         case  EnvironmentErrorCodes.shutdownFailed: 
             return 'Error Code: 1001';
         case  EnvironmentErrorCodes.cMBMutexFailure: 
@@ -141,7 +141,7 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
         case  EnvironmentErrorCodes.startEnvironmentHandlerMoreThanOneContainerFoundOnRestart: 
             return 'Error Code: 1008';
         case  EnvironmentErrorCodes.customContainersGeneralError: 
-            return 'Unknown error in environment creation.';
+            return 'Unknown error in Codespace creation.';
         case  EnvironmentErrorCodes.customContainersKitchensinkCreationFailed: 
             return 'Failed to create container with standard image.';
         case  EnvironmentErrorCodes.customContainersKitchensinkStartFailed: 
