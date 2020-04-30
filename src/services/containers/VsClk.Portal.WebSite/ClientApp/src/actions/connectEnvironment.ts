@@ -21,21 +21,21 @@ export const connectEnvironmentFailureAction = (environmentId: string, error: Er
 
 // Exposed - callable actions that have side-effects
 export async function connectEnvironment(
-    id: string,
-    environmentState: EnvironmentStateInfo
+    environmentInfo: IEnvironment,
 ): Promise<IEnvironment | undefined> {
+    const { id, state } = environmentInfo;
     // 1. Try to connect environment
     const dispatch = useDispatch();
 
     dispatch(connectEnvironmentAction(id));
-    let isSuspended = environmentState === EnvironmentStateInfo.Shutdown;
+    let isSuspended = state === EnvironmentStateInfo.Shutdown;
 
     try {
         if (isSuspended) {
             dispatch(stateChangeEnvironmentAction(id, EnvironmentStateInfo.Starting, EnvironmentStateInfo.Shutdown));
         }
 
-        const environment = await envRegService.connectEnvironment(id, environmentState);
+        const environment = await envRegService.connectEnvironment(environmentInfo);
         dispatch(connectEnvironmentSuccessAction(id));
         return environment;
     } catch (err) {

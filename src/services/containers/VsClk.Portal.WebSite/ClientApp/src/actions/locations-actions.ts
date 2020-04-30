@@ -15,8 +15,8 @@ export const getLocationFailureActionType = 'async.locations.getLocation.failure
 
 const getLocationsAction = () => action(getLocationsActionType);
 
-const getLocationsSuccessAction = (LocationsList: ILocations) => {
-    return action(getLocationsSuccessActionType, { LocationsList });
+const getLocationsSuccessAction = (locations: ILocations) => {
+    return action(getLocationsSuccessActionType, { locations });
 };
 
 const getLocationsFailureAction = (error: Error) => {
@@ -25,8 +25,8 @@ const getLocationsFailureAction = (error: Error) => {
 
 const getLocationAction = () => action(getLocationActionType);
 
-const getLocationSuccessAction = (LocationsList: ILocation) => {
-    return action(getLocationSuccessActionType, { LocationsList });
+const getLocationSuccessAction = (locations: ILocation) => {
+    return action(getLocationSuccessActionType, { locations });
 };
 
 const getLocationFailureAction = (error: Error) => {
@@ -41,13 +41,16 @@ export type GetLocationAction = ReturnType<typeof getLocationAction>;
 export type GetLocationSuccessAction = ReturnType<typeof getLocationSuccessAction>;
 export type GetLocationFailureAction = ReturnType<typeof getLocationFailureAction>;
 
+export const locationsEndpoint = '/api/v1/locations';
 export async function getLocations() {
     const dispatch = useDispatch();
 
     try {
         dispatch(getLocationsAction());
 
-        const locations = await doApiGetRequest<ILocations>(`/locations`);
+        const webClient = useWebClient();
+
+        const locations = await webClient.request<ILocations>(locationsEndpoint, {}, { requiresAuthentication: false });
 
         dispatch(getLocationsSuccessAction(locations));
         return locations;

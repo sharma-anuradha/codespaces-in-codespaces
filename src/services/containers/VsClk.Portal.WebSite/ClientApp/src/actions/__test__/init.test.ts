@@ -12,6 +12,7 @@ import { authService } from '../../services/authService';
 
 import { defaultConfig, configurationEndpoint } from '../../services/configurationService';
 import { getAuthToken } from '../getAuthToken';
+import { defaultLocations } from '../../reducers/locations';
 
 jest.mock('../getUserInfo', () => {
     return {
@@ -54,6 +55,9 @@ describe('actions - init', () => {
                     // don't care about config
                     {
                         body: defaultConfig,
+                    },
+                    {
+                        body: defaultLocations,
                     },
                     // get some environments (or empty ¯\_(ツ)_/¯)
                     {
@@ -147,6 +151,7 @@ describe('actions - init', () => {
                 'async.app.init',
                 'async.authentication.getToken',
                 'async.configuration.fetch',
+                "async.locations.getLocations",
                 'async.authentication.getToken.failure',
                 'async.app.init.failure'
             );
@@ -169,6 +174,10 @@ describe('actions - init', () => {
                         body: defaultConfig,
                     },
                     {
+                        body: defaultLocations,
+                        requestDelay: 10,
+                    },
+                    {
                         body: [],
                     },
                     {
@@ -187,8 +196,10 @@ describe('actions - init', () => {
                 'async.app.init',
                 'async.authentication.getToken',
                 'async.configuration.fetch',
+                'async.locations.getLocations',
                 'async.authentication.getToken.success',
                 'async.configuration.fetch.success',
+                'async.locations.getLocations.success',
                 'async.plans.getPlans',
                 'async.plans.getPlans.success',
                 'async.environments.fetch',

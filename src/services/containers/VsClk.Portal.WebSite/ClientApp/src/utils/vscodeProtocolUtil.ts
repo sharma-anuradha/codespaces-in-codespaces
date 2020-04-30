@@ -1,34 +1,46 @@
-import { ILocalEnvironment, EnvironmentStateInfo } from 'vso-client-core';
+import { ILocalEnvironment, EnvironmentStateInfo, IEnvironment } from 'vso-client-core';
 
 import protocolCheck from 'custom-protocol-check';
 import { connectEnvironment } from '../services/envRegService';
 import { createUniqueId } from '../dependencies';
 
 //tslint:disable-next-line: export-name
-export async function tryOpeningUrl(environment: ILocalEnvironment, protocol: 'vscode' | 'vscode-insiders') {
-	if (environment.state === EnvironmentStateInfo.Shutdown) {
-		await connectEnvironment(environment.id!, environment.state);
-	}
+export async function tryOpeningUrl(
+    environment: ILocalEnvironment,
+    protocol: 'vscode' | 'vscode-insiders'
+) {
+    if (environment.state === EnvironmentStateInfo.Shutdown) {
+        await connectEnvironment(environment as IEnvironment);
+    }
 
-	const url = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(
-		environment.id!
-	)}&sessionPath=${
-		environment.connection!.sessionPath
-	}&correlationId=${createUniqueId()}`;
+    const { id, connection } = environment;
 
-	await checkProtocol(`${protocol}://${url}`);
+    if (!id) {
+        throw new Error('No environment "id" set.');
+    }
+
+    if (!connection) {
+        throw new Error('No environment "connection" set.');
+    }
+
+    const url = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(id)}&sessionPath=${
+        connection.sessionPath
+    }&correlationId=${createUniqueId()}`;
+
+    await checkProtocol(`${protocol}://${url}`);
 }
 
-export async function checkProtocol(url: string){
-	return new Promise((resolve, reject) => {
-        protocolCheck(url, 
+export async function checkProtocol(url: string) {
+    return new Promise((resolve, reject) => {
+        protocolCheck(
+            url,
             () => {
                 reject(new Error('Failed to open url:' + url));
-            }, 
-            () => resolve(), 
+            },
+            () => resolve(),
             () => {
-				reject(new Error('Failed unexpectedly: ' + url));
-			}
+                reject(new Error('Failed unexpectedly: ' + url));
+            }
         );
     });
 }

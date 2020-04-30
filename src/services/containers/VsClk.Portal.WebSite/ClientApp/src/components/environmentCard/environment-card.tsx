@@ -47,6 +47,7 @@ import {
     EnvironmentStateInfo,
     isDefined,
     EnvironmentErrorCodes,
+    IEnvironment,
 } from 'vso-client-core';
 
 const friendlyNameDisplayLength = 20;
@@ -400,7 +401,7 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
             return;
         }
 
-        shutdownEnvironment(environment.id, environment.state);
+        shutdownEnvironment(environment as IEnvironment);
         close();
     }, [shutdownEnvironment, close, environment.id, environment.state]);
 
@@ -445,7 +446,7 @@ function ChangeSettingsDialog({
             return;
         }
 
-        shutdownEnvironment(environment.id, environment.state);
+        shutdownEnvironment(environment as IEnvironment);
         enableEditing();
         close();
     }, [shutdownEnvironment, close, environment.id, environment.state]);
@@ -659,7 +660,7 @@ type FooterProps = {
     settingsChangeState: EnvironmentSettingsChangeState;
 
     deleteEnvironment: (id: string) => void;
-    shutdownEnvironment: (id: string, state: EnvironmentStateInfo) => void;
+    shutdownEnvironment: (environmentInfo: IEnvironment) => void;
     submitSettingsUpdate: () => void;
 
     startEditing: () => void;

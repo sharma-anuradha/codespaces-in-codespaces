@@ -251,7 +251,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         if (!this.isConnecting && isSuspended(environmentInfo) && environmentInfo.id) {
             this.isConnecting = true;
             this.props
-                .connectEnvironment(environmentInfo.id, environmentInfo.state)
+                .connectEnvironment(environmentInfo as IEnvironment)
                 .catch((error) => {
                     this.setState({ connectError: error });
                 })

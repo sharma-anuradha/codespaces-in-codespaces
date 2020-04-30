@@ -15,6 +15,7 @@ import { registerServiceWorker } from 'vso-ts-agent';
 import { getPlans } from './plans-actions';
 import { useActionContext } from './middleware/useActionContext';
 import { setCommonAuthTokenAction } from './getAuthTokenActionCommon';
+import { getLocations } from './locations-actions';
 
 export const initActionType = 'async.app.init';
 export const initActionSuccessType = 'async.app.init.success';
@@ -46,7 +47,13 @@ export async function init(getAuthTokenAction: () => Promise<string>) {
             return configuration;
         });
 
-        await Promise.all([dispatch(configurationPromise), dispatch(tokenPromise)]);
+        const initPromises: Promise<any>[] = [
+            dispatch(configurationPromise),
+            dispatch(tokenPromise),
+            dispatch(getLocations()),
+        ];
+
+        await Promise.all(initPromises);
 
         if (!isHostedOnGithub()) {
             await Promise.all([dispatch(getPlans()), dispatch(getUserInfo())]);

@@ -21,7 +21,6 @@ import { armAPIVersion } from '../../constants';
 import { getPlans } from '../../actions/plans-actions';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ConfigurationState } from '../../reducers/configuration';
-import { getLocations } from '../../actions/locations-actions';
 
 import { IAzureSubscription } from '../../interfaces/IAzureSubscription';
 import { Collapsible } from '../collapsible/collapsible';
@@ -31,12 +30,14 @@ import { PlanCreationError, PlanCreationFailureReason } from './PlanCreationErro
 import { createPlan } from '../../actions/createPlan';
 import { createResourceGroup } from '../../actions/createResourceGroup';
 import { locationToDisplayName } from '../../utils/locations';
+import { ILocations } from '../../interfaces/ILocation';
 
 export interface CreatePlanPanelProps {
     hidePanel: (canContinueToEnvironment?: boolean) => void;
     createPlan: typeof createPlan;
     createResourceGroup: typeof createResourceGroup;
     configuration: ConfigurationState;
+    locations: ILocations;
 }
 
 interface IStringOption {
@@ -421,7 +422,7 @@ export class CreatePlanPanelComponent extends Component<
 
     private async getClosestLocation() {
         try {
-            const { configuration } = this.props;
+            const { configuration, locations } = this.props;
 
             if (!configuration) {
                 return;
@@ -429,12 +430,11 @@ export class CreatePlanPanelComponent extends Component<
 
             this.setState({ isGettingClosestLocation: true });
 
-            const locations = await getLocations();
             const closestLocation: string = locations.current;
 
             const { selectedLocation } = this.state;
 
-            const locationsList = locations.available.map((l) => {
+            const locationsList = locations.available.map((l: string) => {
                 return {
                     key: l,
                     text: locationToDisplayName(l),
@@ -637,8 +637,9 @@ export class CreatePlanPanelComponent extends Component<
 }
 
 export const CreatePlanPanel = connect(
-    ({ configuration }: ApplicationState) => ({
+    ({ configuration, locations }: ApplicationState) => ({
         configuration,
+        locations
     }),
     {
         createResourceGroup,

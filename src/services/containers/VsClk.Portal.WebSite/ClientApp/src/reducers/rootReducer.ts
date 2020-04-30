@@ -2,6 +2,7 @@ import { combineReducers } from 'redux';
 
 import { authentication } from './authentication';
 import { configuration } from './configuration';
+import { locations } from './locations';
 import { environments } from './environments';
 import { githubAuthentication } from './githubAuthenticationReducer';
 import { azDevAuthentication } from './azDevAuthenticationReducer';
@@ -20,6 +21,7 @@ type ReducersToState<T extends Reducers> = { [k in keyof T]: ReturnType<T[k]> };
 const reducers = {
     authentication,
     configuration,
+    locations,
     environments,
     githubAuthentication,
     azDevAuthentication,

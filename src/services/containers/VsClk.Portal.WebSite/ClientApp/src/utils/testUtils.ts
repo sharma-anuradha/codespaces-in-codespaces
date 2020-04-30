@@ -161,6 +161,7 @@ export type MockMakeRequestOptions = {
         readonly trailer?: Promise<Headers>;
         readonly type?: ResponseType;
         readonly body?: string | object | null | undefined;
+        readonly requestDelay?: number;
     }[];
 };
 
@@ -198,7 +199,6 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
         if (typeof requestOptions === 'string') {
             url = requestOptions;
         }
-        await wait(delay);
 
         let {
             body = undefined,
@@ -206,11 +206,14 @@ export function createMockMakeRequestFactory(options: MockMakeRequestOptions = {
             status = responseDefaults.status,
             shouldFailConnection = responseDefaults.shouldFailConnection ||
             options.shouldFailConnection === true,
+            requestDelay = 0,
             ...rest
         } = responses.shift() || {};
 
+        await wait(delay || requestDelay);
+
         if (shouldFailConnection) {
-            await wait(delay);
+            await wait(delay || requestDelay);
             throw new Error('MockFailedConnection');
         }
 

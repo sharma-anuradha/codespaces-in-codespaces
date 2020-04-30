@@ -10,6 +10,7 @@ import { pollActivatingEnvironment } from '../actions/pollEnvironment';
 import { isActivating, isNotAvailable } from '../utils/environmentUtils';
 import { wait } from '../dependencies';
 import { evaluateFeatureFlag, customContainers } from '../utils/featureSet';
+import { getApiEndpoint } from '../actions/getApiEndpoint';
 
 // Webpack configuration enforces isolatedModules use on typescript
 // and prevents direct re-exporting of types.
@@ -131,17 +132,14 @@ export async function deleteEnvironment(id: string): Promise<void> {
     });
 }
 
-export async function shutdownEnvironment(id: string): Promise<void> {
+export async function shutdownEnvironment(environmentInfo: IEnvironment): Promise<void> {
     const actionContext = useActionContext();
-    const configuration = actionContext.state.configuration;
-    if (!configuration) {
-        throw new Error('Configuration must be fetched before calling EnvReg service.');
-    }
-
-    const { environmentRegistrationEndpoint } = configuration;
     const webClient = useWebClient();
 
-    await webClient.post(`${environmentRegistrationEndpoint}/${id}/shutdown`, null, {
+    const { id } = environmentInfo;
+    const apiEndpoint = getApiEndpoint(environmentInfo);
+
+    await webClient.post(`${apiEndpoint}/${id}/shutdown`, null, {
         retryCount: 2,
     });
 
@@ -161,19 +159,16 @@ export async function shutdownEnvironment(id: string): Promise<void> {
 }
 
 export async function connectEnvironment(
-    id: string,
-    state: EnvironmentStateInfo
+    environment: IEnvironment,
 ): Promise<IEnvironment | undefined> {
+    const { state, id } = environment;
+
     const actionContext = useActionContext();
-    const configuration = actionContext.state.configuration;
-    if (!configuration) {
-        throw new Error('Configuration must be fetched before calling EnvReg service.');
-    }
 
     if (state === EnvironmentStateInfo.Shutdown) {
-        const { environmentRegistrationEndpoint } = configuration;
         const webClient = useWebClient();
-        await webClient.post(`${environmentRegistrationEndpoint}/${id}/start`, null, {
+        const apiEndpoint = getApiEndpoint(environment);
+        await webClient.post(`${apiEndpoint}/${id}/start`, null, {
             retryCount: 2,
         });
 
