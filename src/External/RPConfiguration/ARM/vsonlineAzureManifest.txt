@@ -1,364 +1,393 @@
 {
-  "providerAuthorizations": [
+    "providerAuthorizations": [
         {
             "applicationId": "9bd5ab7f-4031-4045-ace9-6bebbad202f6",
             "roleDefinitionId": "b879ac78-f1e6-448d-ab4c-5908cd5967c1"
         }
-  ],
-  "namespace": "Microsoft.VSOnline",
-  "providerVersion": "2.0",
-  "providerType": "Internal",
-  "requestHeaderOptions": {
-    "optInHeaders": "SignedUserToken"
-  },
-  "notificationOptions": "NotSpecified",
-  "resourceTypes": [
-    {
-      "name": "accounts",
-      "routingType": "Default",
-      "endpoints": [
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://westeurope.metarp.azure.com",
-          "locations": [
-            "West Europe"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://eastus.metarp.azure.com",
-          "locations": [
-            "East US"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://westus2.metarp.azure.com",
-          "locations": [
-            "West Us 2"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://southeastasia.metarp.azure.com",
-          "locations": [
-            "Southeast Asia"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://westeurope.metarp.azure.com",
-          "locations": [
-            "West Europe"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://eastus.metarp.azure.com",
-          "locations": [
-            "East US"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://westus2.metarp.azure.com",
-          "locations": [
-            "West Us 2"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://southeastasia.metarp.azure.com",
-          "locations": [
-            "Southeast Asia"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://westeurope.metarp.azure.com",
-          "locations": [
-            "West Europe"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://eastus.metarp.azure.com",
-          "locations": [
-            "East US"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://westus2.metarp.azure.com",
-          "locations": [
-            "West Us 2"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://southeastasia.metarp.azure.com",
-          "locations": [
-            "Southeast Asia"
-          ],
-          "timeout": "PT2M"
-        }
-      ]
-    },
-    {
-      "name": "plans",
-      "routingType": "Default",
-      "authorizationActionMappings": [
-        {
-          "original": "Microsoft.VSOnline/plans/readAllEnvironments/action",
-          "desired": "Microsoft.VSOnline/plans/allEnvironments/read"
-        },
-        {
-          "original": "Microsoft.VSOnline/plans/writeEnvironments/action",
-          "desired": "Microsoft.VSOnline/plans/environments/write"
-        },
-        {
-          "original": "Microsoft.VSOnline/plans/deleteAllEnvironments/action",
-          "desired": "Microsoft.VSOnline/plans/allEnvironments/delete"
-        },
-        {
-          "original": "Microsoft.VSOnline/plans/readDelegates/action",
-          "desired": "Microsoft.VSOnline/plans/delegates/read"
-        },
-        {
-          "original": "Microsoft.VSOnline/plans/writeDelegates/action",
-          "desired": "Microsoft.VSOnline/plans/delegates/write"
-        },
-        {
-          "original": "Microsoft.VSOnline/plans/deleteDelegates/action",
-          "desired": "Microsoft.VSOnline/plans/delegates/delete"
-        }
-      ],
-      "endpoints": [
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://westeurope.metarp.azure.com",
-          "locations": [
-            "West Europe"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://eastus.metarp.azure.com",
-          "locations": [
-            "East US"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://westus2.metarp.azure.com",
-          "locations": [
-            "West Us 2"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://southeastasia.metarp.azure.com",
-          "locations": [
-            "Southeast Asia"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://westeurope.metarp.azure.com",
-          "locations": [
-            "West Europe"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://eastus.metarp.azure.com",
-          "locations": [
-            "East US"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://westus2.metarp.azure.com",
-          "locations": [
-            "West Us 2"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://southeastasia.metarp.azure.com",
-          "locations": [
-            "Southeast Asia"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://westeurope.metarp.azure.com",
-          "locations": [
-            "West Europe"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://eastus.metarp.azure.com",
-          "locations": [
-            "East US"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://westus2.metarp.azure.com",
-          "locations": [
-            "West Us 2"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://southeastasia.metarp.azure.com",
-          "locations": [
-            "Southeast Asia"
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-              "2019-07-01-privatepreview"
-          ],
-          "endpointUri": "https://eastus2euap.metarp.azure.com",
-          "locations": [
-              "East US 2 EUAP"
-          ],
-          "timeout": "PT2M"
-        }
-      ]
-    },
-    {
-      "name": "operations",
-      "routingType": "ProxyOnly, Tenant",
-      "allowedUnauthorizedActions": [
-            "Microsoft.VSOnline/operations/read"
-        ],
-      "endpoints": [
-        {
-          "apiVersions": [
-            "2019-07-01-preview"
-          ],
-          "endpointUri": "https://westus.metarp.azure.com",
-          "locations": [
-            ""
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-alpha"
-          ],
-          "endpointUri": "https://westus.metarp.azure.com",
-          "locations": [
-            ""
-          ],
-          "timeout": "PT2M"
-        },
-        {
-          "apiVersions": [
-            "2019-07-01-beta"
-          ],
-          "endpointUri": "https://westus.metarp.azure.com",
-          "locations": [
-            ""
-          ],
-          "timeout": "PT2M"
-        }
-      ]
-    }
-  ],
-  "management": {
-    "manifestOwners": [
-      "VSEngSaaS-PlatformServiceAdministrator",
-      "SPARTA-PlatformServiceAdministrator"
     ],
-    "incidentRoutingService": "Azure Resource Manager",
-    "incidentRoutingTeam": "Azure Resource Manager",
-    "incidentContactEmail": "VSAnywhereDevTeam@microsoft.com"
-  },
-  "capabilities": [
-    {
-      "quotaId": "CSP_2015-05-01",
-      "effect": "Allow"
+    "namespace": "Microsoft.VSOnline",
+    "providerVersion": "2.0",
+    "providerType": "Internal",
+    "requestHeaderOptions": {
+        "optInHeaders": "SignedUserToken"
     },
-    {
-      "quotaId": "CSP_MG_2017-12-01",
-      "effect": "Allow"
-    }
-  ],
-  "enableTenantLinkedNotification": false
+    "notificationOptions": "NotSpecified",
+    "resourceTypes": [
+        {
+            "name": "accounts",
+            "routingType": "Default",
+            "endpoints": [
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://westeurope.metarp.azure.com",
+                    "locations": [
+                        "West Europe"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://eastus.metarp.azure.com",
+                    "locations": [
+                        "East US"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://westus2.metarp.azure.com",
+                    "locations": [
+                        "West Us 2"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://southeastasia.metarp.azure.com",
+                    "locations": [
+                        "Southeast Asia"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://westeurope.metarp.azure.com",
+                    "locations": [
+                        "West Europe"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://eastus.metarp.azure.com",
+                    "locations": [
+                        "East US"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://westus2.metarp.azure.com",
+                    "locations": [
+                        "West Us 2"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://southeastasia.metarp.azure.com",
+                    "locations": [
+                        "Southeast Asia"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://westeurope.metarp.azure.com",
+                    "locations": [
+                        "West Europe"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://eastus.metarp.azure.com",
+                    "locations": [
+                        "East US"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://westus2.metarp.azure.com",
+                    "locations": [
+                        "West Us 2"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://southeastasia.metarp.azure.com",
+                    "locations": [
+                        "Southeast Asia"
+                    ],
+                    "timeout": "PT2M"
+                }
+            ]
+        },
+        {
+            "name": "plans",
+            "routingType": "Default",
+            "authorizationActionMappings": [
+                {
+                    "original": "Microsoft.VSOnline/plans/readAllEnvironments/action",
+                    "desired": "Microsoft.VSOnline/plans/allEnvironments/read"
+                },
+                {
+                    "original": "Microsoft.VSOnline/plans/writeEnvironments/action",
+                    "desired": "Microsoft.VSOnline/plans/environments/write"
+                },
+                {
+                    "original": "Microsoft.VSOnline/plans/deleteAllEnvironments/action",
+                    "desired": "Microsoft.VSOnline/plans/allEnvironments/delete"
+                },
+                {
+                    "original": "Microsoft.VSOnline/plans/readDelegates/action",
+                    "desired": "Microsoft.VSOnline/plans/delegates/read"
+                },
+                {
+                    "original": "Microsoft.VSOnline/plans/writeDelegates/action",
+                    "desired": "Microsoft.VSOnline/plans/delegates/write"
+                },
+                {
+                    "original": "Microsoft.VSOnline/plans/deleteDelegates/action",
+                    "desired": "Microsoft.VSOnline/plans/delegates/delete"
+                }
+            ],
+            "endpoints": [
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://westeurope.metarp.azure.com",
+                    "locations": [
+                        "West Europe"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://eastus.metarp.azure.com",
+                    "locations": [
+                        "East US"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://westus2.metarp.azure.com",
+                    "locations": [
+                        "West Us 2"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://southeastasia.metarp.azure.com",
+                    "locations": [
+                        "Southeast Asia"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://westeurope.metarp.azure.com",
+                    "locations": [
+                        "West Europe"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://eastus.metarp.azure.com",
+                    "locations": [
+                        "East US"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://westus2.metarp.azure.com",
+                    "locations": [
+                        "West Us 2"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://southeastasia.metarp.azure.com",
+                    "locations": [
+                        "Southeast Asia"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://westeurope.metarp.azure.com",
+                    "locations": [
+                        "West Europe"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://eastus.metarp.azure.com",
+                    "locations": [
+                        "East US"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://westus2.metarp.azure.com",
+                    "locations": [
+                        "West Us 2"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://southeastasia.metarp.azure.com",
+                    "locations": [
+                        "Southeast Asia"
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-privatepreview",
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://eastus2euap.metarp.azure.com",
+                    "locations": [
+                        "East US 2 EUAP"
+                    ],
+                    "requiredFeatures": [
+                        "Microsoft.VSOnline/CanaryUSEC"
+                    ],
+                    "timeout": "PT2M"
+                }
+            ],
+            "identityManagement": {
+                "type": "SystemAssigned"
+            }
+        },
+        {
+            "name": "operations",
+            "routingType": "ProxyOnly, Tenant",
+            "allowedUnauthorizedActions": [
+                "Microsoft.VSOnline/operations/read"
+            ],
+            "endpoints": [
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://westus.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://westus.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://westus.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-privatepreview"
+                    ],
+                    "endpointUri": "https://westus.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                }
+            ]
+        }
+    ],
+    "management": {
+        "manifestOwners": [
+            "VSEngSaaS-PlatformServiceAdministrator",
+            "SPARTA-PlatformServiceAdministrator"
+        ],
+        "incidentRoutingService": "Azure Resource Manager",
+        "incidentRoutingTeam": "Azure Resource Manager",
+        "incidentContactEmail": "VSAnywhereDevTeam@microsoft.com",
+        "resourceAccessPolicy": "NotSpecified"
+    },
+    "capabilities": [
+        {
+            "quotaId": "CSP_2015-05-01",
+            "effect": "Allow"
+        },
+        {
+            "quotaId": "CSP_MG_2017-12-01",
+            "effect": "Allow"
+        }
+    ],
+    "metadata": {
+        "Microsoft.ManagedIdentity": {
+            "applicationId": "9bd5ab7f-4031-4045-ace9-6bebbad202f6"
+        }
+    },
+    "globalNotificationEndpoints": [
+        {
+            "enabled": true,
+            "endpointUri": "https://westus.metarp.azure.com"
+        }
+    ],
+    "enableTenantLinkedNotification": false
 }

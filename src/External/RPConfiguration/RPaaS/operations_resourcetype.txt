@@ -2,6 +2,9 @@
   "properties": {
     "name": "operations",
     "routingType": "ProxyOnly, Tenant",
+    "allowedUnauthorizedActions": [
+      "Microsoft.VSOnline/operations/read"
+    ],
     "regionality": "Global",
     "endpoints": [
       {
@@ -33,14 +36,25 @@
         ],
         "extensions": [],
         "timeout": "PT2M"
-      }
+      },
+      {
+        "apiVersions": [
+          "2019-07-01-privatepreview"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      }      
     ],
     "swaggerSpecifications": [
       {
         "apiVersions": [
           "2019-07-01-preview",
           "2019-07-01-alpha",
-          "2019-07-01-beta"
+          "2019-07-01-beta",
+          "2019-07-01-privatepreview"
         ],
         "swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/"
       }
