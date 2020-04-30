@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly string fileShareTemplateStorageAccount = "vsodevciusw2siusw2";
         private static readonly string fileShareTemplateContainerName = "templates";
 
-        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.1734-gf34369168a44efd2d88c436db6cace160979f9c7.release538";
+        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.2089-g1dc5bc293ef42efa683585df9031b92ba7cd1a75.release765";
         // The name of the Windows blob is implied by the name of the Linux blob.
         // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
         // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.

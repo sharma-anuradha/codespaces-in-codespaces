@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobPrepareCommandLines)}\"",
                 Constraints = new TaskConstraints
                 {
-                    RetentionTime = TimeSpan.FromDays(1),
+                    RetentionTime = TimeSpan.FromDays(7),
                     MaxWallClockTime = TimeSpan.FromMinutes(10),
                     MaxTaskRetryCount = 3,
                 },
@@ -104,7 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             job.JobReleaseTask = new JobReleaseTask
             {
                 CommandLine = $"/bin/bash -cxe \"printenv && rm -rf {jobWorkingDir}\"",
-                RetentionTime = TimeSpan.FromDays(1),
+                RetentionTime = TimeSpan.FromDays(7),
                 MaxWallClockTime = TimeSpan.FromMinutes(10),
             };
             job.Metadata = jobMetadata;
@@ -148,7 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(10), retentionTime: TimeSpan.FromDays(1)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromMinutes(10), retentionTime: TimeSpan.FromDays(7)),
             };
             return task;
         }

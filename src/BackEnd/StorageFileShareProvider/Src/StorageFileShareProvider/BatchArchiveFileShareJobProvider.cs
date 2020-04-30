@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobPrepareCommandLines)}\"",
                 Constraints = new TaskConstraints
                 {
-                    RetentionTime = TimeSpan.FromDays(1),
+                    RetentionTime = TimeSpan.FromDays(7),
                     MaxWallClockTime = TimeSpan.FromMinutes(10),
                     MaxTaskRetryCount = 3,
                 },
@@ -151,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             var task = new CloudTask(taskId, taskCommandLine)
             {
-                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromHours(1), retentionTime: TimeSpan.FromDays(1)),
+                Constraints = new TaskConstraints(maxTaskRetryCount: 0, maxWallClockTime: TimeSpan.FromHours(1), retentionTime: TimeSpan.FromDays(7)),
                 UserIdentity = new UserIdentity(new AutoUserSpecification(elevationLevel: ElevationLevel.Admin)),
             };
 
