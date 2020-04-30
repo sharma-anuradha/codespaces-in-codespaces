@@ -151,7 +151,6 @@ describe('actions - init', () => {
                 'async.app.init',
                 'async.authentication.getToken',
                 'async.configuration.fetch',
-                "async.locations.getLocations",
                 'async.authentication.getToken.failure',
                 'async.app.init.failure'
             );
@@ -196,9 +195,9 @@ describe('actions - init', () => {
                 'async.app.init',
                 'async.authentication.getToken',
                 'async.configuration.fetch',
-                'async.locations.getLocations',
                 'async.authentication.getToken.success',
                 'async.configuration.fetch.success',
+                'async.locations.getLocations',
                 'async.locations.getLocations.success',
                 'async.plans.getPlans',
                 'async.plans.getPlans.success',

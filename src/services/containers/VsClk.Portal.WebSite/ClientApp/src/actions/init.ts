@@ -47,13 +47,12 @@ export async function init(getAuthTokenAction: () => Promise<string>) {
             return configuration;
         });
 
-        const initPromises: Promise<any>[] = [
+        await Promise.all([
             dispatch(configurationPromise),
             dispatch(tokenPromise),
-            dispatch(getLocations()),
-        ];
+        ]);
 
-        await Promise.all(initPromises);
+        await dispatch(getLocations());
 
         if (!isHostedOnGithub()) {
             await Promise.all([dispatch(getPlans()), dispatch(getUserInfo())]);

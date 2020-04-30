@@ -41,16 +41,27 @@ export type GetLocationAction = ReturnType<typeof getLocationAction>;
 export type GetLocationSuccessAction = ReturnType<typeof getLocationSuccessAction>;
 export type GetLocationFailureAction = ReturnType<typeof getLocationFailureAction>;
 
-export const locationsEndpoint = '/api/v1/locations';
 export async function getLocations() {
     const dispatch = useDispatch();
 
+    const { state } = useActionContext();
+    const { configuration } = state;
+
+    if (!configuration) {
+        throw new Error('Fetch configuration first.');
+    }
+
+    const { apiEndpoint } = configuration;
     try {
         dispatch(getLocationsAction());
 
         const webClient = useWebClient();
 
-        const locations = await webClient.request<ILocations>(locationsEndpoint, {}, { requiresAuthentication: false });
+        const locations = await webClient.request<ILocations>(
+            `${apiEndpoint}/locations`,
+            {},
+            { requiresAuthentication: false }
+        );
 
         dispatch(getLocationsSuccessAction(locations));
         return locations;
