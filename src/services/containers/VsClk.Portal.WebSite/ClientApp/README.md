@@ -1,4 +1,4 @@
-# Visual Studio Online
+# Visual Studio Codespaces
 
 ## Tip & Tricks
 

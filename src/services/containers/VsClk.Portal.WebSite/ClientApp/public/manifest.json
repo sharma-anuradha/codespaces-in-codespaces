@@ -1,6 +1,6 @@
 {
   "short_name": "VS Online",
-  "name": "Visual Studio Online",
+  "name": "Visual Studio Codespaces",
   "icons": [
     {
       "src": "favicon.ico",

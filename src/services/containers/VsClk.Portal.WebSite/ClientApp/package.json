@@ -12,7 +12,7 @@
     "@uifabric/utilities": "7.8.0",
     "@vs/msal": "1.2.1",
     "@vs/vs-ssh": "^2.0.10",
-    "@vs/vso-splash-screen": "^1.0.2110",
+    "@vs/vso-splash-screen": "^1.0.2126",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",
     "babel-preset-react-app": "^7.0.2",

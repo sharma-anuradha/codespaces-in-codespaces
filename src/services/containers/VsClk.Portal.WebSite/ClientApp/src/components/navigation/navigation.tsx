@@ -15,7 +15,7 @@ function NavigationItem({ text, iconName, to }: NIProps) {
 
 export function Navigation() {
     const navItems = [
-        { iconName: 'FrontCamera', text: 'Environments', to: '/environments', selected: true },
+        { iconName: 'FrontCamera', text: 'Codespaces', to: '/environments', selected: true },
     ];
 
     const toElement = (e: NIProps, index: number) => {

@@ -60,7 +60,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
     return (
         <Fragment>
             <Stack.Item>
-                <Text className='login-page__title'>Visual Studio Online</Text>
+                <Text className='login-page__title'>Visual Studio Codespaces</Text>
             </Stack.Item>
             <Stack.Item>
                 <Text className='login-page__subtitle'>

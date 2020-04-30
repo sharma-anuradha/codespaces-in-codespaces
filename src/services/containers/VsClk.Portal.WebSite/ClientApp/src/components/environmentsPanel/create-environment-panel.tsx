@@ -401,7 +401,7 @@ export class CreateEnvironmentPanelView extends Component<
                 type={PanelType.smallFixedFar}
                 isFooterAtBottom={true}
                 onDismiss={this.dismissPanel}
-                headerText='Create Environment'
+                headerText='Create Codespace'
                 closeButtonAriaLabel='Close'
                 onRenderFooterContent={this.onRenderFooterContent}
             >
@@ -476,8 +476,8 @@ export class CreateEnvironmentPanelView extends Component<
         return (
             <Stack tokens={{ childrenGap: 4 }}>
                 <TextField
-                    label='Environment Name'
-                    ariaLabel='Environment Name'
+                    label='Codespace Name'
+                    ariaLabel='Codespace Name'
                     className={this.state.friendlyName.style}
                     placeholder=''
                     onKeyDown={this.submitForm}
@@ -507,8 +507,8 @@ export class CreateEnvironmentPanelView extends Component<
                 />
                 {this.renderSkuSelector()}
                 <Dropdown
-                    label='Suspend idle environment after...'
-                    ariaLabel='Suspend idle environment after...'
+                    label='Suspend idle Codespace after...'
+                    ariaLabel='Suspend idle Codespace after...'
                     options={autoShutdownOptions}
                     onChange={this.onChangeAutoShutdownDelayMinutes}
                     selectedKey={this.state.autoShutdownDelayMinutes.value}

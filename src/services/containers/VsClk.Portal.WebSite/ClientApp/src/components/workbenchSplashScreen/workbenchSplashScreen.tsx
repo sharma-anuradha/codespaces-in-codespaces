@@ -183,7 +183,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
         return (
             <ConnectSplashScreen
             isOnVSCodespaces={isOnVSCodespaces}
-                title={`Connecting to environment ${friendlyName} failed. ${connectError}`}
+                title={`Connecting to Codespace ${friendlyName} failed. ${connectError}`}
                 buttonText='Retry'
                 onConnect={onRetry}
                 >
@@ -193,8 +193,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
     
     const envState = stateToDisplayName(environment!.state).toLocaleLowerCase();
     if (showPrompt) {
-        const containerNaming = isOnVSCodespaces ? 'Environment' : 'Workspace';
-        const title = `${containerNaming} "${friendlyName}" is ${envState}.`
+        const title = `Codespace "${friendlyName}" is ${envState}.`
         return (
             <ConnectSplashScreen
                 isOnVSCodespaces={isOnVSCodespaces}

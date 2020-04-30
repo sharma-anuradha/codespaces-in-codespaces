@@ -12,13 +12,13 @@ export const NoEnvironments = ({ onClick }: NoEnvironmentProps) => {
     return (
         <div className='environments-panel__no-environments' key='no-envs'>
             <span className='environments-panel__no-environments-label'>
-                You don't have any environments
+                You don't have any Codespaces
             </span>
 
             <EverywhereImage className='environments-panel__no-environments-image' />
 
             <DefaultButton onClick={onClick} primary={true}>
-                Create environment
+                Create Codespace
             </DefaultButton>
         </div>
     );

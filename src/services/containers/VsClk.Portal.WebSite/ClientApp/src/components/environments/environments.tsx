@@ -86,7 +86,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
                         <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg3 environments-panel__tar'>
                             <PrimaryButton
                                 componentRef={this.createEnvironmentButtonRef}
-                                text='Create environment'
+                                text='Create Codespace'
                                 className='environments-panel__create-button'
                                 onClick={this.showCreateEnvPanel}
                                 onBlur={blurCreateEnvironmentButton}
@@ -124,7 +124,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
         return (
             <Spinner
                 className='environments-panel__environments-spinner'
-                label='Fetching your environments...'
+                label='Fetching your Codespaces...'
                 ariaLive='assertive'
                 labelPosition='right'
             />

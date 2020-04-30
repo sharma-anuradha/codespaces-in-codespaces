@@ -121,7 +121,7 @@ export const ServiceUnavailable: FC = () => {
                 className='service-unavailable-page'
             >
                 <Stack.Item>
-                    <Text className='service-unavailable-page__title'>Visual Studio Online</Text>
+                    <Text className='service-unavailable-page__title'>Visual Studio Codespaces</Text>
                 </Stack.Item>
 
                 <StackItem>
