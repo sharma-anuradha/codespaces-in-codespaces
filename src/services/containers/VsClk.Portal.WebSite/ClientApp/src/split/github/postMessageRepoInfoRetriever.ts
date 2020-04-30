@@ -124,28 +124,25 @@ export class PostMessageRepoInfoRetriever {
         this.awaitResponsePromises = new Map();
     }
 
-    public static sendGoHomeMessage = () => {
+    public static getReferrer(): string {
         const storedInfo = PostMessageRepoInfoRetriever.getStoredInfo();
         const referrer = storedInfo?.referrer || DEFAULT_REFERRER;
 
-        window.parent.postMessage(
-            {
-                type: 'vso-go-home',
-            },
-            referrer,
-        );
+        return referrer;
     }
 
-    public static sendConnectToWorkspace(id: string) {
-        const storedInfo = PostMessageRepoInfoRetriever.getStoredInfo();
-        const referrer = storedInfo?.referrer || DEFAULT_REFERRER;
-        
+    public static sendMessage(...args: SendMessageArgs): void;
+    public static sendMessage(type: TKnownMessageTypes, data: object = {}) {
         window.parent.postMessage(
-            {
-                type: 'vso-connect-to-workspace',
-                environmentId: id,
-            },
-            referrer
+            { ...data, type, },
+            PostMessageRepoInfoRetriever.getReferrer(),
         );
     }
 }
+
+type SendMessageArgs =
+    | ['vso-go-home']
+    | ['vso-connect-to-workspace', { environmentId: string }]
+    | ['vso-setup-complete'];
+
+type TKnownMessageTypes = 'vso-go-home' | 'vso-connect-to-workspace' | 'vso-setup-complete';

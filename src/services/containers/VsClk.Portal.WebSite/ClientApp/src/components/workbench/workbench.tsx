@@ -444,7 +444,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             {
                 id: '_github.gohome',
                 handler: () => {
-                    PostMessageRepoInfoRetriever.sendGoHomeMessage();
+                    PostMessageRepoInfoRetriever.sendMessage('vso-go-home');
                 },
             },
         ];
@@ -487,6 +487,10 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         const { environmentInfo, SplashScreenComponent } = this.props;
         if (!environmentInfo) {
             return <Loader></Loader>;
+        }
+
+        if (isHostedOnGithub()) {
+            PostMessageRepoInfoRetriever.sendMessage('vso-setup-complete');
         }
 
         if (!isNotAvailable(environmentInfo)) {

@@ -18,7 +18,7 @@ export class BrowserSyncService extends BrowserSyncServiceBase {
                 const { id } = payload;
 
                 if (isHostedOnGithub()) {
-                    PostMessageRepoInfoRetriever.sendConnectToWorkspace(id);
+                    PostMessageRepoInfoRetriever.sendMessage('vso-connect-to-workspace', { environmentId: id });
                 } else {
                     location.href = `/environment/${id}`;
                 }
