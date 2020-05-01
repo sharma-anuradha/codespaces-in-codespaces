@@ -4,13 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Storage.Blob;
-using Microsoft.Extensions.Options;
-using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -22,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// WatchOrphanedArtifactImagesTask to delete artifacts(kitchen sink images/blobs).
     /// </summary>
-    public class WatchOrphanedStorageImagesTask : BaseResourceImageTask, IWatchOrphanedStorageImagesTask
+    public class WatchOrphanedStorageImagesTask : BaseResourceImageTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedStorageImagesTask"/> class.
@@ -54,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override string TaskName { get; } = nameof(WatchOrphanedComputeImagesTask);
+        protected override string TaskName { get; } = nameof(WatchOrphanedStorageImagesTask);
 
         /// <inheritdoc/>
         protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedStorageImagesTask;
@@ -72,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ShareConnectionInfo>> GetStorageAccountsAsync()
+        protected override async Task<IEnumerable<ShareConnectionInfo>> GetStorageAccountsAsync()
         {
             var locations = ControlPlaneInfo.Stamp.DataPlaneLocations;
             var accounts = new List<ShareConnectionInfo>();
@@ -91,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<string>> GetActiveImagesAsync(IDiagnosticsLogger logger)
+        protected override async Task<IEnumerable<string>> GetActiveImagesAsync(IDiagnosticsLogger logger)
         {
             var activeImages = new HashSet<string>();
             foreach (var item in SkuCatalog.BuildArtifactStorageImageFamilies.Values)
@@ -103,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public string GetContainerName()
+        protected override string GetContainerName()
         {
             return ControlPlaneInfo.FileShareTemplateContainerName;
         }
@@ -115,94 +110,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override int GetMinimumCountToBeRetained() => 15;
+        protected override int GetMinimumBlobCountToBeRetained() => 15;
 
         /// <inheritdoc/>
-        protected override async Task ProcessArtifactAsync(IDiagnosticsLogger logger)
-        {
-            await logger.OperationScopeAsync(
-                $"{LogBaseName}_run_process_accounts",
-                async (childLogger) =>
-                {
-                    // Fetch accounts with account name and key
-                    var accounts = await GetStorageAccountsAsync();
-                    foreach (var account in accounts)
-                    {
-                        await ProcessAccountAsync(account, childLogger);
-                    }
-                },
-                swallowException: true);
-        }
-
-        private Task ProcessAccountAsync(ShareConnectionInfo account, IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_artifacts",
-                async (childLogger) =>
-                {
-                    childLogger
-                        .FluentAddBaseValue("ImageAccountName", account.StorageAccountName)
-                        .FluentAddBaseValue("ImageTaskId", Guid.NewGuid());
-
-                    // Fetch blob details
-                    var containerName = GetContainerName();
-                    var blobStorageClientOptions = new BlobStorageClientOptions
-                    {
-                        AccountName = account.StorageAccountName,
-                        AccountKey = account.StorageAccountKey,
-                    };
-                    var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
-                    var blobContainer = blobClientProvider.GetCloudBlobContainer(containerName);
-
-                    // Fetch list of blobs
-                    var blobsList = await blobContainer.ListBlobsSegmentedAsync(default);
-                    var blobCountToBeRetained = GetMinimumCountToBeRetained();
-
-                    childLogger
-                        .FluentAddValue("ImageResultsFound", blobsList.Results.Count())
-                        .FluentAddValue("ImageCounToBeRetained", blobCountToBeRetained);
-
-                    // Doing this object conversion to access the created date of the blob. Since its is not accessible with IListBlobItem object.
-                    var blobs = blobsList.Results.Cast<CloudBlockBlob>();
-                    blobs = blobs.OrderByDescending((blob) => blob.Properties.Created);
-
-                    for (var index = 0; index < blobs.Count(); index++)
-                    {
-                        await ProcessAccountBlobAsync(blobs.ElementAt(index), index, blobCountToBeRetained, await GetActiveImagesAsync(logger), childLogger);
-                    }
-                });
-        }
-
-        private Task ProcessAccountBlobAsync(CloudBlockBlob blob, int index, int blobCountToBeRetained, IEnumerable<string> activeImage, IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_run_images",
-                async (childLogger) =>
-                {
-                    var blobCreatedTimeInUtc = blob.Properties.Created.Value.UtcDateTime;
-                    var isOutsideOfDateRange = DateTime.Compare(blobCreatedTimeInUtc, CutOffTime) > 0 ? true : false;
-                    var isActiveImage = activeImage.Any(image => image.Equals(blob.Name, StringComparison.OrdinalIgnoreCase));
-                    var isToBeRetained = index < blobCountToBeRetained;
-                    var shouldDelete = !isOutsideOfDateRange && !isActiveImage && !isToBeRetained;
-
-                    childLogger
-                        .FluentAddValue("BlobCreatedTime", blobCreatedTimeInUtc)
-                        .FluentAddValue("BlobCutoffTime", CutOffTime)
-                        .FluentAddValue("BlobName", blob.Name)
-                        .FluentAddValue("BlobIsOutsideOfDateRange", isOutsideOfDateRange)
-                        .FluentAddValue("BlobIsActiveImage", isActiveImage)
-                        .FluentAddValue("BlobIsToBeRetained", isToBeRetained)
-                        .FluentAddValue("BlobShouldDelete", shouldDelete);
-
-                    if (shouldDelete)
-                    {
-                        // Deleting the image blob from Azure storage account.
-                        await blob.DeleteAsync();
-
-                        // Slow down for rate limit & Database RUs
-                        await Task.Delay(LoopDelay);
-                    }
-                });
-        }
+        protected override ImageFamilyType GetImageFamilyType() => ImageFamilyType.Storage;
     }
 }

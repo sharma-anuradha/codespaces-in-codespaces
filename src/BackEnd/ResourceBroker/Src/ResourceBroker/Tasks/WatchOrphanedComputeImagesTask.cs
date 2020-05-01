@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// WatchOrphanedComputeImagesTask to delete artifacts(Nexus windows images).
     /// </summary>
-    public class WatchOrphanedComputeImagesTask : BaseResourceImageTask, IWatchOrphanedComputeImagesTask
+    public class WatchOrphanedComputeImagesTask : IBackgroundTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedComputeImagesTask"/> class.
@@ -43,49 +43,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
             IControlPlaneAzureClientFactory controlPlaneAzureClientFactory)
-            : base(
-                  resourceBrokerSettings,
-                  taskHelper,
-                  claimedDistributedLease,
-                  resourceNameBuilder)
         {
+            ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
+            TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
+            ClaimedDistributedLease = Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
+            ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
             SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             ControlPlaneAzureClientFactory = Requires.NotNull(controlPlaneAzureClientFactory, nameof(controlPlaneAzureClientFactory));
         }
 
-        /// <inheritdoc/>
-        protected override string TaskName { get; } = nameof(WatchOrphanedComputeImagesTask);
-
-        /// <inheritdoc/>
-        protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedComputeImagesTask;
-
-        /// <inheritdoc/>
-        protected override DateTime CutOffTime => DateTime.Now.AddMonths(-1).ToUniversalTime();
-
-        private ISkuCatalog SkuCatalog { get; }
-
-        private IControlPlaneInfo ControlPlaneInfo { get; }
-
-        private IControlPlaneAzureClientFactory ControlPlaneAzureClientFactory { get; }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<string>> GetActiveImageVersionsAsync(IDiagnosticsLogger logger)
-        {
-            var activeImages = new HashSet<string>();
-            foreach (var item in SkuCatalog.BuildArtifactComputeImageFamilies.Values)
-            {
-                activeImages.Add(await Task.FromResult(item.GetDefaultImageVersion()));
-            }
-
-            return activeImages;
-        }
-
-        /// <inheritdoc/>
-        protected override IEnumerable<ImageFamilyType> GetArtifactTypesToCleanup()
-        {
-            return new List<ImageFamilyType> { ImageFamilyType.Compute, };
-        }
+        /// <summary>
+        /// Gets the loop delay between each resource being processed.
+        /// </summary>
+        private static TimeSpan LoopDelay { get; } = TimeSpan.FromMilliseconds(500);
 
         /// <summary>
         /// Gets the minimum image count to be retained.
@@ -94,10 +65,72 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// for each active image versions.
         /// </summary>
         /// <returns>Returns the count of minimum images to be retained.</returns>
-        protected override int GetMinimumCountToBeRetained() => 40;
+        private int MinimumImageCountToBeRetained => 40;
+
+        private string TaskName { get; } = nameof(WatchOrphanedComputeImagesTask);
+
+        private string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedComputeImagesTask;
+
+        private DateTime CutOffTime => DateTime.Now.AddMonths(-1).ToUniversalTime();
+
+        private ISkuCatalog SkuCatalog { get; }
+
+        private IControlPlaneInfo ControlPlaneInfo { get; }
+
+        private IControlPlaneAzureClientFactory ControlPlaneAzureClientFactory { get; }
+
+        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{TaskName}Lease");
+
+        private ResourceBrokerSettings ResourceBrokerSettings { get; }
+
+        private ITaskHelper TaskHelper { get; }
+
+        private IClaimedDistributedLease ClaimedDistributedLease { get; }
+
+        private IResourceNameBuilder ResourceNameBuilder { get; }
+
+        private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        protected override async Task ProcessArtifactAsync(IDiagnosticsLogger logger)
+        public void Dispose()
+        {
+            Disposed = true;
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_run",
+                async (childLogger) =>
+                {
+                    // Fetch target images/blobs
+                    var artifacts = GetArtifactTypesToCleanup();
+
+                    // Run through found resources types (eg, VM/storage) in the background
+                    await TaskHelper.RunEnumerableAsync(
+                        $"{LogBaseName}_run_artifact_images",
+                        artifacts,
+                        (artifactFamilyType, itemLogger) => CoreRunArtifactAsync(artifactFamilyType, itemLogger),
+                        childLogger,
+                        (artifactFamilyType, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{artifactFamilyType}", taskInterval, itemLogger));
+
+                    return !Disposed;
+                },
+                (e, childLogger) => Task.FromResult(!Disposed),
+                swallowException: true);
+        }
+
+        private async Task CoreRunArtifactAsync(ImageFamilyType artifactFamilyType, IDiagnosticsLogger logger)
+        {
+            logger.FluentAddBaseValue("ImageFamilyType", artifactFamilyType);
+
+            // Tracking the task duration
+            await logger.TrackDurationAsync(
+                "RunArtifactAction", () => ProcessArtifactAsync(logger));
+        }
+
+        private async Task ProcessArtifactAsync(IDiagnosticsLogger logger)
         {
             await logger.OperationScopeAsync(
                 $"{LogBaseName}_run_locations",
@@ -161,14 +194,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                async (childLogger) =>
                {
                    var activeImageVersions = await GetActiveImageVersionsAsync(logger);
-                   var imageCountToBeRetained = GetMinimumCountToBeRetained();
                    var activeImages = new HashSet<string>();
 
                    // Fetch all the ImageInfo
                    var lookupImageInfo = await FetchLookupImageInfo(computeManagementClient, resourceGroupName, galleryName, imageDefinitionName);
 
                    // sorting to retain the most recent images using index
-                   var sortedImageVersions = lookupImageInfo.OrderByDescending((versions) => versions.Key.Name);
+                   var sortedImageVersions = lookupImageInfo.OrderByDescending((versions) => versions.Key.Name).ToList();
 
                    for (var index = 0; index < sortedImageVersions.Count(); index++)
                    {
@@ -179,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                            imageDefinitionName,
                            sortedImageVersions.ElementAt(index),
                            index,
-                           imageCountToBeRetained,
+                           MinimumImageCountToBeRetained,
                            activeImageVersions,
                            activeImages,
                            childLogger);
@@ -199,7 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             resourceGroupName,
                             imagesWithNoVersions.ElementAt(index).Name,
                             index,
-                            imageCountToBeRetained,
+                            MinimumImageCountToBeRetained,
                             activeImages,
                             childLogger);
                    }
@@ -226,17 +258,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var imageVersionName = imageVersion.Name;
                     var imageName = keyValuePair.Value;
                     var imageVersionPublishedTimeInUtc = imageVersion.PublishingProfile.PublishedDate.Value.ToUniversalTime();
-                    var isOutsideOfDateRange = DateTime.Compare(imageVersionPublishedTimeInUtc, CutOffTime) > 0 ? true : false;
+                    var isNewerThanCutoff = DateTime.Compare(imageVersionPublishedTimeInUtc, CutOffTime) > 0;
                     var isToBeRetained = index < imageIndexToBeRetained;
                     var isActiveImage = activeImageVersions.Any((activeImageVersion) => string.Equals(activeImageVersion, imageVersionName, StringComparison.OrdinalIgnoreCase));
-                    var shouldDelete = !isOutsideOfDateRange && !isActiveImage && !isToBeRetained;
+                    var shouldDelete = !isNewerThanCutoff && !isActiveImage && !isToBeRetained;
 
                     childLogger
                         .FluentAddValue("ImageVersionName", imageVersionName)
                         .FluentAddValue("ImageVersionCreatedTime", imageVersionPublishedTimeInUtc)
                         .FluentAddValue("ImageVersionCutoffTime", CutOffTime)
                         .FluentAddValue("ImageVersionIsActive", isActiveImage)
-                        .FluentAddValue("ImageVersionIsToBeRetained", isToBeRetained)
+                        .FluentAddValue("ImageVersionIsNewerThanCutoff", isNewerThanCutoff)
+                        .FluentAddValue("ImageVersionsToKeep", imageIndexToBeRetained)
+                        .FluentAddValue("ImageVersionPosition", index)
                         .FluentAddValue("ImageVersionShouldDelete", shouldDelete);
 
                     // This list is used to prevent while deleting orphan images, if they are active.
@@ -285,7 +319,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddValue("ImageName", imageName)
                         .FluentAddValue("ImageHasVersion", false)
                         .FluentAddValue("ImageIsActive", isActiveImage)
-                        .FluentAddValue("ImageIsToBeRetained", isToBeRetained)
+                        .FluentAddValue("ImagesToKeep", imageIndexToBeRetained)
+                        .FluentAddValue("ImagePosition", index)
                         .FluentAddValue("ImageShouldDelete", shouldDelete);
 
                     if (shouldDelete)
@@ -328,6 +363,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 var imageName = obj.PublishingProfile.Source.ManagedImage.Id.Split('/').ToList().Last();
                 lookupImageInfo.Add(obj, imageName);
             }
+        }
+
+        private async Task<IEnumerable<string>> GetActiveImageVersionsAsync(IDiagnosticsLogger logger)
+        {
+            var activeImages = new HashSet<string>();
+            foreach (var item in SkuCatalog.BuildArtifactComputeImageFamilies.Values)
+            {
+                activeImages.Add(await Task.FromResult(item.GetDefaultImageVersion()));
+            }
+
+            return activeImages;
+        }
+
+        private IEnumerable<ImageFamilyType> GetArtifactTypesToCleanup()
+        {
+            return new List<ImageFamilyType> { ImageFamilyType.Compute, };
+        }
+
+        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        {
+            return ClaimedDistributedLease.Obtain(
+                ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }
 }

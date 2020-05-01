@@ -102,9 +102,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
-            services.AddSingleton<IWatchOrphanedVmAgentImagesTask, WatchOrphanedVmAgentImagesTask>();
-            services.AddSingleton<IWatchOrphanedStorageImagesTask, WatchOrphanedStorageImagesTask>();
-            services.AddSingleton<IWatchOrphanedComputeImagesTask, WatchOrphanedComputeImagesTask>();
+            services.AddSingleton<WatchOrphanedVmAgentImagesTask>();
+            services.AddSingleton<WatchOrphanedStorageImagesTask>();
+            services.AddSingleton<WatchOrphanedComputeImagesTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

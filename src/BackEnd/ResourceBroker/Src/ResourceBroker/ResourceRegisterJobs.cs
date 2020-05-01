@@ -42,9 +42,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolStateTask watchPoolStateTask,
             IWatchFailedResourcesTask watchFailedResourcesTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
-            IWatchOrphanedVmAgentImagesTask watchOrphanedVmAgentImagesTask,
-            IWatchOrphanedStorageImagesTask watchOrphanedStorageImagesTask,
-            IWatchOrphanedComputeImagesTask watchOrphanedComputeImagesTask,
+            WatchOrphanedVmAgentImagesTask watchOrphanedVmAgentImagesTask,
+            WatchOrphanedStorageImagesTask watchOrphanedStorageImagesTask,
+            WatchOrphanedComputeImagesTask watchOrphanedComputeImagesTask,
             IWatchOrphanedSystemResourceTask watchOrphanedSystemResourceTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
@@ -81,11 +81,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
 
-        private IWatchOrphanedVmAgentImagesTask WatchOrphanedVmAgentImagesTask { get; }
+        private WatchOrphanedVmAgentImagesTask WatchOrphanedVmAgentImagesTask { get; }
 
-        private IWatchOrphanedStorageImagesTask WatchOrphanedStorageImagesTask { get; }
+        private WatchOrphanedStorageImagesTask WatchOrphanedStorageImagesTask { get; }
 
-        private IWatchOrphanedComputeImagesTask WatchOrphanedComputeImagesTask { get; }
+        private WatchOrphanedComputeImagesTask WatchOrphanedComputeImagesTask { get; }
 
         private IWatchOrphanedSystemResourceTask WatchOrphanedSystemResourceTask { get; }
 
