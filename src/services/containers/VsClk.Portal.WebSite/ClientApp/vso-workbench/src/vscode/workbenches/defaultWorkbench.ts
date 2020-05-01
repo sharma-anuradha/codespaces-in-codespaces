@@ -1,5 +1,4 @@
 import { isHostedOnGithub, getCurrentEnvironmentId } from 'vso-client-core';
-import { DEFAULT_EXTENSIONS, HOSTED_IN_GITHUB_EXTENSIONS } from '../../constants';
 import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 import { getVSCodeVersion } from '../../utils/getVSCodeVersion';
 import { AuthenticationError } from '../../errors/AuthenticationError';
@@ -17,13 +16,7 @@ import { credentialsProvider } from '../providers/credentialsProvider/credential
 import { URI } from 'vscode-web';
 import { telemetry } from '../../telemetry/telemetry';
 import { applicationLinksProviderFactory } from '../providers/applicationLinksProvider/applicationLinksProviderFactory';
-
-export const getExtensions = (): string[] => {
-    // TODO: move the extensions into the platform info payload instead
-    return !isHostedOnGithub()
-        ? [...DEFAULT_EXTENSIONS]
-        : [...DEFAULT_EXTENSIONS, ...HOSTED_IN_GITHUB_EXTENSIONS];
-};
+import { getExtensions } from './getExtensions';
 
 const getUserDataProvider = async () => {
     const defaultSettings = isHostedOnGithub() ? '{"workbench.colorTheme": "GitHub Light"}' : '';
@@ -71,15 +64,15 @@ export class Workbench {
                 getCurrentEnvironmentId(),
                 token
             );
-
+            
+            const userDataProvider = await getUserDataProvider();
             this.workbench = new VSCodeWorkbench({
                 domElementId,
                 vscodeConfig,
                 environmentInfo,
-                extensions: getExtensions(),
+                extensions: getExtensions(userDataProvider.isFirstRun),
                 onConnection,
                 getProviders: async (connector: EnvConnector) => {
-                    const userDataProvider = await getUserDataProvider();
                     const workspaceProvider = new WorkspaceProvider(
                         new URLSearchParams(location.search),
                         environmentInfo,

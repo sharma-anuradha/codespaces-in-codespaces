@@ -335,13 +335,20 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             new BrowserSyncService(sourceEventService);
         });
 
+        const defaultSettings = isHostedOnGithub()
+            ? '{"workbench.colorTheme": "GitHub Light"}'
+            : '';
+
+        const userDataProvider = new UserDataProvider(defaultSettings);
+        await userDataProvider.initializeDBProvider();
+
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(
             environmentInfo,
             token,
             liveShareEndpoint,
             getVSCodeVersion(),
-            getExtensions(),
+            getExtensions(userDataProvider.isFirstRun),
             apiEndpoint
         );
 
@@ -364,16 +371,9 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             envConnector
         );
 
-        const defaultSettings = isHostedOnGithub()
-            ? '{"workbench.colorTheme": "GitHub Light"}'
-            : '';
-
         if (!isHostedOnGithub()) {
             localStorage.setItem('vscode.baseTheme', 'vs-dark');
         }
-
-        const userDataProvider = new UserDataProvider(defaultSettings);
-        await userDataProvider.initializeDBProvider();
 
         const correlationId = this.correlationId;
         if (!correlationId) {
@@ -391,7 +391,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     envConnector,
                     logger.verbose,
                     getEnvironment,
-                    getExtensions(),
+                    getExtensions(userDataProvider.isFirstRun),
                     apiEndpoint
                 );
             },
