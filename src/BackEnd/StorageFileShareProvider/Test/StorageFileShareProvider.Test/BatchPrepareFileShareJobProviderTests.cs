@@ -202,6 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => batchPrepareFileShareJobProvider.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, STORAGE_SIZE_IN_GB, logger)));
 
                 var fileShareStatus = new BatchTaskStatus[NUM_STORAGE_TO_CREATE];
+                var taskMaxWaitTime = TimeSpan.FromMinutes(30);
 
                 var stopWatch = new Stopwatch();
                 stopWatch.Start();
@@ -209,7 +210,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 while (fileShareStatus.Any(x => x == BatchTaskStatus.Pending || x == BatchTaskStatus.Running) && stopWatch.Elapsed < TimeSpan.FromMinutes(PREPARE_TIMEOUT_MINS))
                 {
                     Thread.Sleep(TimeSpan.FromSeconds(60));
-                    fileShareStatus = await Task.WhenAll(storageAccounts.Zip(prepareFileShareTaskInfos, (sa, prepareInfo) => batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(sa, prepareInfo, logger)));
+                    fileShareStatus = await Task.WhenAll(storageAccounts.Zip(prepareFileShareTaskInfos, (sa, prepareInfo) => batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(sa, prepareInfo, taskMaxWaitTime, logger)));
                 }
 
                 stopWatch.Stop();

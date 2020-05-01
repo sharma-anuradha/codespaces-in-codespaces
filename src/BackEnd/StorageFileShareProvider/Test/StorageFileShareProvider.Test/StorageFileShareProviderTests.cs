@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.StartPrepareFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageCopyItem[]>(), It.IsAny<int>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockPrepareTaskInfo);
             batchPrepareFileShareJobProviderMoq
-                .SetupSequence(x => x.CheckBatchTaskStatusAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<BatchTaskInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .SetupSequence(x => x.CheckBatchTaskStatusAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<BatchTaskInfo>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(mockCheckPrepareResults[0])
                 .ReturnsAsync(mockCheckPrepareResults[1])
                 .ReturnsAsync(mockCheckPrepareResults[2])
@@ -345,7 +345,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.StartArchiveFileShareAsync(It.IsAny<AzureResourceInfo>(), MockStorageSrcFileShareUriWithSas, MockStorageDestBlobUriWithSas, It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockPrepareTaskInfo);
             batchArchiveFileShareJobProviderMoq
-                .SetupSequence(x => x.CheckBatchTaskStatusAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<BatchTaskInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .SetupSequence(x => x.CheckBatchTaskStatusAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<BatchTaskInfo>(), It.IsAny<TimeSpan>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(mockCheckPrepareResults[0])
                 .ReturnsAsync(mockCheckPrepareResults[1])
                 .ReturnsAsync(mockCheckPrepareResults[2])

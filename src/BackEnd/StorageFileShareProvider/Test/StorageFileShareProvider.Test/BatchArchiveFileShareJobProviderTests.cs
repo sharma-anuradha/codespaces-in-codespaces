@@ -119,7 +119,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                             "run_workflow_check_prepare_status",
                             async (innerLogger) =>
                             {
-                                var result = await batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(storageAccount, prepareBatchInfo, innerLogger);
+                                var taskMaxWaitTime = default(TimeSpan);
+                                var result = await batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(storageAccount, prepareBatchInfo, taskMaxWaitTime, innerLogger);
                                 if (result == BatchTaskStatus.Failed)
                                 {
                                     throw new Exception("Prepare batch operation failed.");
@@ -145,7 +146,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                             "run_workflow_check_archive_status",
                             async (innerLogger) =>
                             {
-                                var result = await batchArchiveFileShareJobProvider.CheckBatchTaskStatusAsync(storageAccount, archiveBatchInfo, innerLogger);
+                                var taskMaxWaitTime = default(TimeSpan);
+                                var result = await batchArchiveFileShareJobProvider.CheckBatchTaskStatusAsync(storageAccount, archiveBatchInfo, taskMaxWaitTime, innerLogger);
                                 if (result == BatchTaskStatus.Failed)
                                 {
                                     throw new Exception("Archive batch operation failed.");

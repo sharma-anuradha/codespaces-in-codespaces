@@ -78,6 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         public Task<BatchTaskStatus> CheckBatchTaskStatusAsync(
             AzureResourceInfo azureResourceInfo,
             BatchTaskInfo taskInfo,
+            TimeSpan maxWaitTime,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
@@ -96,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                             .FluentAddValue("TaskJobId", taskInfo.JobId)
                             .FluentAddValue("TaskUrl", task.Url)
                             .FluentAddValue("TaskState", task.State)
+                            .FluentAddValue("TaskCreatedAt", task.CreationTime)
                             .FluentAddValue("TaskStateTransitionTime", task.StateTransitionTime)
                             .FluentAddValue("TaskStartedAt", task.ExecutionInformation.StartTime)
                             .FluentAddValue("TaskCompletedAt", task.ExecutionInformation.EndTime)
@@ -130,6 +132,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         else
                         {
                             batchTaskStatus = BatchTaskStatus.Pending;
+                            if (task.State == TaskState.Active && maxWaitTime != default)
+                            {
+                                var pendingDeadline = task.CreationTime + maxWaitTime;
+                                var pendingDeadlineExceeded = pendingDeadline < DateTime.UtcNow;
+                                childLogger.FluentAddValue("TaskPendingTimeout", maxWaitTime)
+                                    .FluentAddValue("TaskPendingDeadlineTime", pendingDeadline)
+                                    .FluentAddValue("TaskPendingDeadlineExceeded", pendingDeadlineExceeded);
+                                if (pendingDeadlineExceeded)
+                                {
+                                    await task.TerminateAsync();
+                                    childLogger.FluentAddValue("TaskFailureCategory", ErrorCategory.UserError)
+                                        .FluentAddValue("TaskFailureCode", "TaskPendingDeadlineExceeded")
+                                        .FluentAddValue("TaskFailureMessage", "Task took too long to start running");
+                                    batchTaskStatus = BatchTaskStatus.Failed;
+                                }
+                            }
                         }
 
                         childLogger.FluentAddValue("TaskBatchStatus", batchTaskStatus);

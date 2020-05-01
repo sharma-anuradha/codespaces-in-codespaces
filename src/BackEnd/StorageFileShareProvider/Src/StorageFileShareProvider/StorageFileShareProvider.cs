@@ -227,7 +227,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         nextState = FileShareProviderCreateState.CheckFileShare;
                         break;
                     case FileShareProviderCreateState.CheckFileShare:
-                        var prepareStatus = await batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, logger);
+                        var taskMaxWaitTime = TimeSpan.FromMinutes(30);
+                        var prepareStatus = await batchPrepareFileShareJobProvider.CheckBatchTaskStatusAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, taskMaxWaitTime, logger);
                         if (prepareStatus == BatchTaskStatus.Succeeded)
                         {
                             nextState = default;
@@ -303,7 +304,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             else
             {
                 var prevContinuation = JsonConvert.DeserializeObject<FileShareProviderArchiveContinuationToken>(continuationToken);
-                var prepareStatus = await batchArchiveFileShareJobProvider.CheckBatchTaskStatusAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, logger);
+                var taskMaxWaitTime = default(TimeSpan);
+                var prepareStatus = await batchArchiveFileShareJobProvider.CheckBatchTaskStatusAsync(prevContinuation.AzureResourceInfo, prevContinuation.PrepareTaskInfo, taskMaxWaitTime, logger);
                 if (prepareStatus == BatchTaskStatus.Succeeded)
                 {
                     nextState = default;
