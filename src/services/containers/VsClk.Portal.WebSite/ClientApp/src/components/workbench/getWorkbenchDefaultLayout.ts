@@ -2,6 +2,8 @@ import * as path from 'path';
 import { IEnvironment } from 'vso-client-core';
 
 import { SupportedGitService, getSupportedGitService } from '../../utils/gitUrlNormalization';
+import { IDefaultEditor } from 'vscode-web';
+import { vscode } from 'vso-workbench';
 
 const isGitHubPRUrl = (url: string | undefined) => {
     if ((typeof url !== 'string') || !url) {
@@ -33,13 +35,18 @@ const getContainers = (environmentInfo: IEnvironment) => {
 
 const getEditors = (environmentInfo: IEnvironment) => {
     const sessionPath = environmentInfo.connection?.sessionPath || '';
-    
-    return [
-        {
-            path: path.join(sessionPath, 'README.md'),
+
+    const readmeEditor: IDefaultEditor = {
+        uri: vscode.URI.from({
             scheme: 'vscode-remote',
-            active: true,
-        }
+            path: path.join(sessionPath, 'README.md'),
+        }),
+        openOnlyIfExists: true,
+        active: true,
+    };
+
+    return [
+        readmeEditor,
     ];
 };
 

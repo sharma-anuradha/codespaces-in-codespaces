@@ -604,6 +604,12 @@ declare module 'vscode-web' {
         })[];
     }
 
+    interface IDefaultEditor {
+        readonly uri: UriComponents;
+        readonly openOnlyIfExists?: boolean;
+        readonly active: boolean;
+    }
+
     interface IDefaultLayout {
         sidebar?: IDefaultSideBarLayout;
         panel?: IDefaultPanelLayout;

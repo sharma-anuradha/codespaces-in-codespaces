@@ -29,7 +29,7 @@
     }
   },
   "vscodeCommit": {
-    "insider": "a0fe37870c42e0704a492cdc6b8550b4cf23f63c",
+    "insider": "2a36b7d0d527bf408bae4f96b8386db9d9455113",
     "stable": "ff915844119ce9485abfe8aa9076ec76b5300ddd"
   },
   "devDependencies": {
