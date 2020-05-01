@@ -3,6 +3,7 @@
 // </copyright>
 
 using AutoMapper;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -11,16 +12,17 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Model
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 {
     /// <summary>
-    ///
+    /// Mapper configuration extension.
     /// </summary>
     public static class MapperConfigurationExpressionExtensions
     {
         /// <summary>
-        ///
+        /// Add mapping.
         /// </summary>
-        /// <param name="cfg"></param>
+        /// <param name="cfg">Mapper configuration.</param>
         public static void AddResourceBroker(this IMapperConfigurationExpression cfg)
         {
+            cfg.CreateMap<AllocateRequestBody, AllocateInput>();
             cfg.CreateMap<ResourceRecord, AllocateResult>();
             cfg.CreateMap<ResourcePool, ResourcePool>();
             cfg.CreateMap<FileShareProviderAssignResult, ShareConnectionInfo>();

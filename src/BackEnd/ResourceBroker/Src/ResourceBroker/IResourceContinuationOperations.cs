@@ -41,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="environmentId">The environment id.</param>
         /// <param name="computeResourceId">Target compute resource id.</param>
+        /// <param name="osDiskResourceId">Target osdisk resource id.</param>
         /// <param name="storageResourceId">Target storage resource id.</param>
         /// <param name="archiveStorageResourceId">Target blob storage resource id.</param>
         /// <param name="environmentVariables">Input environment variables for the compute.</param>
@@ -50,7 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         Task<ContinuationResult> StartEnvironmentAsync(
             Guid environmentId,
             Guid computeResourceId,
-            Guid storageResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
             string reason,
@@ -101,71 +103,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Delete orphaned compute resource by invoking the continution activator.
+        /// Delete orphaned resource by invoking the continuation activator.
         /// </summary>
         /// <param name="resourceId">Target resource id.</param>
         /// <param name="subscriptionId">The azure subscription id.</param>
         /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="name">The resource name.</param>
-        /// <param name="location">The resource location.</param>
+        /// <param name="azureLocation">Azure location.</param>
         /// <param name="resourceTags">Azure resource tags.</param>
-        /// <param name="reason">Trigger for operation.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Resuling continuation result.</returns>
-        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<ContinuationResult> DeleteOrphanedComputeAsync(
-            Guid resourceId,
-            Guid subscriptionId,
-            string resourceGroup,
-            string name,
-            AzureLocation location,
-            IDictionary<string, string> resourceTags,
-            string reason,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Delete orphaned storage resource by invoking the continuation activator.
-        /// </summary>
-        /// <param name="resourceId">Target resource id.</param>
-        /// <param name="subscriptionId">The azure subscription id.</param>
-        /// <param name="resourceGroup">The azure resource group.</param>
-        /// <param name="name">The resource name.</param>
-        /// <param name="location">The resource location.</param>
-        /// <param name="resourceTags">Azure resource tags.</param>
+        /// <param name="resourceType">Resource type.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resulting continuation result.</returns>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<ContinuationResult> DeleteOrphanedStorageAsync(
+        Task<ContinuationResult> DeleteOrphanedResourceAsync(
             Guid resourceId,
             Guid subscriptionId,
             string resourceGroup,
             string name,
-            AzureLocation location,
+            AzureLocation azureLocation,
             IDictionary<string, string> resourceTags,
-            string reason,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Delete orphaned keyvault resource by invoking the continuation activator.
-        /// </summary>
-        /// <param name="resourceId">Target resource id.</param>
-        /// <param name="subscriptionId">The azure subscription id.</param>
-        /// <param name="resourceGroup">The azure resource group.</param>
-        /// <param name="name">The resource name.</param>
-        /// <param name="location">The resource location.</param>
-        /// <param name="resourceTags">Azure resource tags.</param>
-        /// <param name="reason">Trigger for operation.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Resulting continuation result.</returns>
-        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<ContinuationResult> DeleteOrphanedKeyVaultAsync(
-            Guid resourceId,
-            Guid subscriptionId,
-            string resourceGroup,
-            string name,
-            AzureLocation location,
-            IDictionary<string, string> resourceTags,
+            ResourceType resourceType,
             string reason,
             IDiagnosticsLogger logger);
 
@@ -183,6 +141,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ResourceType type,
             ResourcePoolResourceDetails details,
             string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Create compute resources.
+        /// </summary>
+        /// <param name="resourceId">resource id.</param>
+        /// <param name="type">resource type.</param>
+        /// <param name="details">pool details.</param>
+        /// <param name="reason">reason.</param>
+        /// <param name="osDiskResourceId">os disk resource id.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<ResourceRecord> QueueCreateComputeAsync(
+            Guid resourceId,
+            ResourceType type,
+            ResourcePoolResourceDetails details,
+            string reason,
+            string osDiskResourceId,
             IDiagnosticsLogger logger);
     }
 }

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="DiskProvider\DiskProvider.csproj" />
+    <ProjectReference Include="DiskProvider.Abstractions\DiskProvider.Abstractions.csproj" />
+    <ProjectReference Include="DiskProvider.Extensions\DiskProvider.Extensions.csproj" />
+    <ProjectReference Include="DiskProvider.Models\DiskProvider.Models.csproj" />
+  </ItemGroup>
+
+</Project>

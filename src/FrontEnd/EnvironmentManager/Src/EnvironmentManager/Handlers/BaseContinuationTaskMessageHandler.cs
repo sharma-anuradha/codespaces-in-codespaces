@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public BaseContinuationTaskMessageHandler(
             ICloudEnvironmentRepository cloudEnvironmentRepository)
         {
-            CloudEnvironmentRepository = cloudEnvironmentRepository;
+            CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
         }
 
         /// <summary>

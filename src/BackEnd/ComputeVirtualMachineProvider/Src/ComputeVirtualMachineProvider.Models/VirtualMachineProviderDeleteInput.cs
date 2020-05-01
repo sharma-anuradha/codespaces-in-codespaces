@@ -28,5 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the ComputeOS.
         /// </summary>
         public ComputeOS ComputeOS { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the OS Disk should be deleted or not.
+        /// </summary>
+        public bool PreserveOSDisk { get; set; }
     }
 }

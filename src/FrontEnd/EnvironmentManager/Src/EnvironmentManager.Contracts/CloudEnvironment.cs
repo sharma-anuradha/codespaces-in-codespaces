@@ -223,6 +223,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public ResourceAllocation Compute { get; set; }
 
         /// <summary>
+        /// Gets or sets the environment OS disk.
+        /// </summary>
+        /// <remarks>
+        /// Returned by back-end resource broker AllocateResult.
+        /// </remarks>
+        [JsonProperty(Required = Required.Default, PropertyName = "osDisk")]
+        public ResourceAllocation OSDisk { get; set; }
+
+        /// <summary>
         /// Gets or sets the last time the record is updated based on heartbeat.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]

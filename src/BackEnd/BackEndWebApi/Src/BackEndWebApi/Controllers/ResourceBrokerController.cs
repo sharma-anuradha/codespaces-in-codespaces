@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Diagnostics;
@@ -30,13 +31,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         /// Initializes a new instance of the <see cref="ResourceBrokerController"/> class.
         /// </summary>
         /// <param name="resourceBroker">The resource broker.</param>
+        /// <param name="mapper">The mapper.</param>
         public ResourceBrokerController(
-            IResourceBroker resourceBroker)
+            IResourceBroker resourceBroker,
+            IMapper mapper)
         {
             ResourceBroker = Requires.NotNull(resourceBroker, nameof(resourceBroker));
+            Mapper = Requires.NotNull(mapper, nameof(mapper));
         }
 
         private IResourceBroker ResourceBroker { get; }
+
+        private IMapper Mapper { get; }
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerHttp { get => this; }
 
@@ -238,18 +244,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
         /// <inheritdoc/>
         async Task<IEnumerable<AllocateResponseBody>> IResourceBrokerResourcesHttpContract.AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateRequestBody> resourceRequests, IDiagnosticsLogger logger)
+            Guid environmentId,
+            IEnumerable<AllocateRequestBody> resourceRequests,
+            IDiagnosticsLogger logger)
         {
             var resourceInput = new List<AllocateInput>();
             foreach (var resourceRequest in resourceRequests)
             {
-                resourceInput.Add(new AllocateInput
-                {
-                    Location = resourceRequest.Location,
-                    SkuName = resourceRequest.SkuName,
-                    Type = resourceRequest.Type,
-                    QueueCreateResource = resourceRequest.QueueCreateResource,
-                });
+                var input = Mapper.Map<AllocateInput>(resourceRequest);
+                resourceInput.Add(input);
             }
 
             var resourceResults = await ResourceBroker.AllocateAsync(
@@ -273,9 +276,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
         /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.StartAsync(
-            Guid environmentId, StartRequestAction resorceAction, IEnumerable<StartRequestBody> resourceRequests, IDiagnosticsLogger logger)
+            Guid environmentId, StartRequestAction resourceAction, IEnumerable<StartRequestBody> resourceRequests, IDiagnosticsLogger logger)
         {
-            var actionInput = (StartAction)((int)resorceAction);
+            var actionInput = (StartAction)((int)resourceAction);
             var resourceInput = new List<StartInput>();
             foreach (var resourceRequest in resourceRequests)
             {

@@ -9,12 +9,14 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
 
@@ -55,6 +57,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IResourcePoolDefinitionStore>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
             services.AddSingleton<IResourceHeartBeatManager, ResourceHeartBeatManager>();
             services.AddSingleton<IResourceContinuationOperations, ResourceContinuationOperations>();
+
+            // Resource broker strategies
+            services.AddSingleton<IAllocationStrategy, AllocationBasicStrategy>();
+            services.AddSingleton<IAllocationStrategy, AllocationOSDiskStrategy>();
 
             // Continuation
             services.AddSingleton<IContinuationTaskWorkerPoolManager, ContinuationTaskWorkerPoolManager>();

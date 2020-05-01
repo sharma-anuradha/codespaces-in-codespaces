@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     public class ResourcePoolManager : IResourcePoolManager
     {
         private const string LogBaseName = ResourceLoggingConstants.ResourcePoolManager;
+        private const int MaxTries = 3;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourcePoolManager"/> class.
@@ -48,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     var item = (ResourceRecord)null;
 
                     // Iterate around if we need to
-                    while (item == null && trys < 3)
+                    while (item == null && trys < MaxTries)
                     {
                         // Conduct core operation
                         (item, tryAgain) = await TryGetAttemptAsync(poolCode, trys, childLogger);

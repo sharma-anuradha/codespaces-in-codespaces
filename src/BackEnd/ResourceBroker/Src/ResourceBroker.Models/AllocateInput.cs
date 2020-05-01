@@ -31,5 +31,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets a value indicating whether to create resource on the fly.
         /// </summary>
         public bool QueueCreateResource { get; set; }
+
+        /// <summary>
+        /// Gets or sets extended properties.
+        /// </summary>
+        public AllocateExtendedProperties ExtendedProperties { get; set; }
     }
 }

@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Resume environment.
+        /// Create environment.
         /// </summary>
         /// <param name="environmentId">target env id.</param>
         /// <param name="lastStateUpdated">Target last state updated.</param>
@@ -44,6 +44,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid environmentId,
             DateTime lastStateUpdated,
             CloudEnvironmentOptions cloudEnvironmentOptions,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            string reason,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Resume environment.
+        /// </summary>
+        /// <param name="environmentId">target env id.</param>
+        /// <param name="lastStateUpdated">Target last state updated.</param>
+        /// <param name="startCloudEnvironmentParameters">env parameters.</param>
+        /// <param name="reason">reason.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<ContinuationResult> ResumeAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
             string reason,
             IDiagnosticsLogger logger);

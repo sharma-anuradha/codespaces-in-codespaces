@@ -76,10 +76,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var computeOs = compute.Value.PoolReference.GetComputeOS();
 
             // Start storage
-            var storageResult = await StartStorageAsync(input, input.StorageResourceId, computeOs, logger);
-            if (storageResult.Status != OperationState.Succeeded)
+            FileShareProviderAssignResult storageResult = null;
+            if (input.StorageResourceId != null)
             {
-                return null;
+                storageResult = await StartStorageAsync(input, input.StorageResourceId.Value, computeOs, logger);
+                if (storageResult.Status != OperationState.Succeeded)
+                {
+                    return null;
+                }
             }
 
             // Parse location
@@ -95,17 +99,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 await SetupArchiveStorageInfo(input, input.ArchiveStorageResourceId.Value, logger);
             }
 
-            // Add target stroage id
+            // Add target storage id
             input.EnvironmentVariables.Add("computeResourceId", input.ResourceId.ToString());
-            input.EnvironmentVariables.Add("storageResourceId", input.StorageResourceId.ToString());
 
-            return new VirtualMachineProviderStartComputeInput(
-                compute.Value.AzureResourceInfo,
-                new ShareConnectionInfo(
+            if (input.StorageResourceId != null)
+            {
+                input.EnvironmentVariables.Add("storageResourceId", input.StorageResourceId.Value.ToString());
+            }
+
+            ShareConnectionInfo shareConnectionInfo = null;
+            if (input.StorageResourceId != null)
+            {
+                shareConnectionInfo = new ShareConnectionInfo(
                     storageResult.StorageAccountName,
                     storageResult.StorageAccountKey,
                     storageResult.StorageShareName,
-                    storageResult.StorageFileName),
+                    storageResult.StorageFileName);
+            }
+
+            return new VirtualMachineProviderStartComputeInput(
+                compute.Value.AzureResourceInfo,
+                shareConnectionInfo,
                 input.EnvironmentVariables,
                 computeOs,
                 azureLocation,

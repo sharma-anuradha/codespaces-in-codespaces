@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     await azure.CreateResourceGroupIfNotExistsAsync(azureResourceGroup, azureRegion);
                     var storageAccountName = await GenerateStorageAccountName(azure, childLogger);
 
-                    resourceTags.Add(ResourceTagName.ResourceName, storageAccountName);
+                    resourceTags[ResourceTagName.ResourceName] = storageAccountName;
 
                     // Premium_LRS for Files requires a different kind of FileStorage
                     // See https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts

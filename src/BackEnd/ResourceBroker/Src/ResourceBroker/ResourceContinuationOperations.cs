@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -71,42 +72,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceRecord> QueueCreateAsync(
+        public Task<ResourceRecord> QueueCreateAsync(
             Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails details,
             string reason,
             IDiagnosticsLogger logger)
         {
-            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
+            return QueueCreateAsync(resourceId, type, details, reason, null, logger);
+        }
 
-            var input = new CreateResourceContinuationInput()
+        /// <inheritdoc/>
+        public Task<ResourceRecord> QueueCreateComputeAsync(
+            Guid resourceId,
+            ResourceType type,
+            ResourcePoolResourceDetails details,
+            string reason,
+            string osDiskResourceId,
+            IDiagnosticsLogger logger)
+        {
+            var options = new CreateComputeContinuationInputOptions
             {
-                Type = type,
-                ResourcePoolDetails = details,
-                ResourceId = resourceId,
-                Reason = reason,
-                IsAssigned = true,
+                OSDiskResourceId = osDiskResourceId,
             };
-            var target = CreateResourceContinuationHandler.DefaultQueueTarget;
 
-            await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
-            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
-
-            return resource;
+            return QueueCreateAsync(resourceId, type, details, reason, options, logger);
         }
 
         /// <inheritdoc/>
         public async Task<ContinuationResult> StartEnvironmentAsync(
             Guid environmentId,
             Guid computeResourceId,
-            Guid storageResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
             string reason,
             IDiagnosticsLogger logger)
         {
-            logger.FluentAddBaseValue("StorageResourceId", storageResourceId);
+            logger.FluentAddBaseValue("StorageResourceId", storageResourceId)
+                .FluentAddBaseValue("OSDiskResourceId", osDiskResourceId)
+                .FluentAddBaseValue("OSDiskResourceId", archiveStorageResourceId);
 
             var loggingProperties = await BuildLoggingProperties(computeResourceId, reason, logger);
 
@@ -114,6 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             {
                 EnvironmentId = environmentId,
                 ResourceId = computeResourceId,
+                OSDiskResourceId = osDiskResourceId,
                 StorageResourceId = storageResourceId,
                 ArchiveStorageResourceId = archiveStorageResourceId,
                 EnvironmentVariables = environmentVariables,
@@ -190,84 +197,61 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> DeleteOrphanedComputeAsync(
+        public async Task<ContinuationResult> DeleteOrphanedResourceAsync(
             Guid resourceId,
             Guid subscriptionId,
             string resourceGroup,
             string name,
             AzureLocation location,
             IDictionary<string, string> resourceTags,
+            ResourceType resourceType,
             string reason,
             IDiagnosticsLogger logger)
         {
             var loggingProperties = BuildLoggingProperties(
-                resourceId, ResourceType.StorageFileShare, resourceTags, reason);
+                resourceId,
+                resourceType,
+                resourceTags,
+                reason);
 
-            var input = new VirtualMachineProviderDeleteInput()
-            {
-                AzureVmLocation = location,
-                AzureResourceInfo = new AzureResourceInfo(subscriptionId, resourceGroup, name),
-            };
-            if (resourceTags != null && resourceTags.ContainsKey(ResourceTagName.ComputeOS))
-            {
-                if (!Enum.TryParse(resourceTags[ResourceTagName.ComputeOS], true, out ComputeOS computeOS))
-                {
-                    throw new NotSupportedException($"Resource has a compute OS of {resourceTags[ResourceTagName.ComputeOS]} which is not supported");
-                }
-
-                input.ComputeOS = computeOS;
-            }
-
-            var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
-
-            return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
-        }
-
-        /// <inheritdoc/>
-        public async Task<ContinuationResult> DeleteOrphanedStorageAsync(
-            Guid resourceId,
-            Guid subscriptionId,
-            string resourceGroup,
-            string name,
-            AzureLocation location,
-            IDictionary<string, string> resourceTags,
-            string reason,
-            IDiagnosticsLogger logger)
-        {
-            var loggingProperties = BuildLoggingProperties(
-                resourceId, ResourceType.StorageFileShare, resourceTags, reason);
-
-            var input = new FileShareProviderDeleteInput()
+            var input = new DeleteOrphanedResourceContinuationInput()
             {
                 AzureResourceInfo = new AzureResourceInfo(subscriptionId, resourceGroup, name),
-            };
-            var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
-
-            return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
-        }
-
-        /// <inheritdoc/>
-        public async Task<ContinuationResult> DeleteOrphanedKeyVaultAsync(
-            Guid resourceId,
-            Guid subscriptionId,
-            string resourceGroup,
-            string name,
-            AzureLocation location,
-            IDictionary<string, string> resourceTags,
-            string reason,
-            IDiagnosticsLogger logger)
-        {
-            var loggingProperties = BuildLoggingProperties(
-                resourceId, ResourceType.KeyVault, resourceTags, reason);
-
-            var input = new KeyVaultProviderDeleteInput()
-            {
+                Reason = reason,
+                Type = resourceType,
+                ResourceTags = resourceTags,
                 AzureLocation = location,
-                AzureResourceInfo = new AzureResourceInfo(subscriptionId, resourceGroup, name),
             };
             var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
+        }
+
+        private async Task<ResourceRecord> QueueCreateAsync(
+            Guid resourceId,
+            ResourceType type,
+            ResourcePoolResourceDetails details,
+            string reason,
+            CreateResourceContinuationInputOptions options,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
+
+            var input = new CreateResourceContinuationInput()
+            {
+                Type = type,
+                ResourcePoolDetails = details,
+                ResourceId = resourceId,
+                Reason = reason,
+                Options = options,
+                IsAssigned = true,
+            };
+            var target = CreateResourceContinuationHandler.DefaultQueueTarget;
+
+            await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
+
+            return resource;
         }
 
         private IDictionary<string, string> BuildLoggingProperties(

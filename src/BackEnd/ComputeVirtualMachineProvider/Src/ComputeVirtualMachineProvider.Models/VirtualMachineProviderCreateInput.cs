@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
@@ -69,5 +70,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the front end service dns host name.
         /// </summary>
         public string FrontDnsHostName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the dependent resources.
+        /// </summary>
+        public IList<ResourceComponent> CustomComponents { get; set; } = new List<ResourceComponent>();
     }
 }

@@ -226,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// <param name="id">Target id.</param>
         /// <param name="time">Target time.</param>
         /// <param name="type">Target type.</param>
-        /// <param name="locaiton">Targert location.</param>
+        /// <param name="location">Targert location.</param>
         /// <param name="skuName">Target sku.</param>
         /// <param name="poolReference">Target pool reference.</param>
         /// <param name="properties">Target properties.</param>
@@ -235,7 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             Guid id,
             DateTime time,
             ResourceType type,
-            AzureLocation locaiton,
+            AzureLocation location,
             string skuName = null,
             ResourcePoolDefinitionRecord poolReference = null,
             IDictionary<string, string> properties = null)
@@ -249,7 +249,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     IsAssigned = false,
                     Assigned = null,
                     Created = time,
-                    Location = locaiton.ToString().ToLowerInvariant(),
+                    Location = location.ToString().ToLowerInvariant(),
                     SkuName = skuName,
                     PoolReference = poolReference,
                 };

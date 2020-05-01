@@ -135,6 +135,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                 var resourceTags = input.ResourceTags;
                 resourceTags.Add(ResourceTagName.ResourceName, keyVaultName);
 
+                resourceTags[ResourceTagName.ResourceName] = keyVaultName;
+
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
                     { "location", new Dictionary<string, object>() { { Key, input.AzureLocation.ToString() } } },

@@ -55,6 +55,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string PoolImageName = nameof(PoolImageName);
 
         /// <summary>
+        /// Create with resources name .
+        /// </summary>
+        public const string PropertiesName = nameof(PropertiesName);
+
+        /// <summary>
         /// Pool Target Count name.
         /// </summary>
         public const string PoolTargetCount = nameof(PoolTargetCount);

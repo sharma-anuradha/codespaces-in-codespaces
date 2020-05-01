@@ -9,6 +9,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\..\..\BackEnd\Common\Src\Common.Models\Common.Models.csproj" />
     <ProjectReference Include="..\..\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\Src\Common.AspNetCore\Common.AspNetCore.csproj" />
     <ProjectReference Include="..\..\Src\Common\Common.csproj" />
@@ -17,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\Settings\**" >
+    <Content Include="..\..\..\Settings\**">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>

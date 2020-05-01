@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Initializes a new instance of the <see cref="VirtualMachineProviderStartComputeInput"/> class.
         /// </summary>
         /// <param name="azureResourceInfo">The compute azure resource info.</param>
-        /// <param name="shareConnectionInfo">The file share connection info.</param>
+        /// <param name="shareConnectionInfo">The file share connection info. This is optional.</param>
         /// <param name="inputParams">The VM params.</param>
         /// <param name="computeOS">The ComputeOS.</param>
         /// <param name="location">Azure VM location.</param>
@@ -43,12 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             string continuationToken)
             : base(continuationToken)
         {
-            AzureResourceInfo = azureResourceInfo;
+            AzureResourceInfo = Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             FileShareConnection = shareConnectionInfo;
-            VmInputParams = inputParams;
+            VmInputParams = Requires.NotNull(inputParams, nameof(inputParams));
             ComputeOS = computeOS;
             Location = location;
-            SkuName = skuName;
+            SkuName = Requires.NotNull(skuName, nameof(skuName));
         }
 
         /// <summary>

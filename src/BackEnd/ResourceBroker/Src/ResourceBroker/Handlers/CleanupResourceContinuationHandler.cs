@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -11,9 +12,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
@@ -54,8 +57,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private IComputeProvider ComputeProvider { get; set; }
 
+        private IDiskProvider DiskProvider { get; set; }
+
         /// <inheritdoc/>
-        protected override Task<ContinuationInput> BuildOperationInputAsync(CleanupResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
+        protected override Task<ContinuationInput> BuildOperationInputAsync(
+            CleanupResourceContinuationInput input,
+            ResourceRecordRef resource,
+            IDiagnosticsLogger logger)
         {
             // Handle compute case only, don't need to do anything with storage here as its already circuited.
             if (resource.Value.Type == ResourceType.ComputeVM)
@@ -66,6 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     throw new NotSupportedException($"Provided location of '{resource.Value.Location}' is not supported.");
                 }
 
+                var keepDisk = resource.Value.GetComputeDetails().OSDiskRecordId != default;
+
                 return Task.FromResult<ContinuationInput>(
                     new VirtualMachineProviderShutdownInput
                     {
@@ -73,6 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureVmLocation = azureLocation,
                         ComputeOS = resource.Value.PoolReference.GetComputeOS(),
                         EnvironmentId = input.EnvironmentId.ToString(),
+                        PreserveOSDisk = keepDisk,
                     });
             }
 

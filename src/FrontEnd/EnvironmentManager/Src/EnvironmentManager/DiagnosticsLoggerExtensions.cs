@@ -21,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueSessionId = "SessionId";
         private const string LogValueComputeResourceId = "ComputeResourceId";
         private const string LogValueStorageResourceId = "StorageResourceId";
+        private const string LogValueOSDiskResourceId = "OSDiskResourceId";
         private const string LogValueCloudEnvironmentType = "CloudEnvironmentType";
         private const string LogValueCloudEnvironmentState = "CloudEnvironmentState";
         private const string LogValueAutoShutdownDelay = "AutoShutdownDelay";
@@ -51,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddCloudEnvironmentType(cloudEnvironment.Type)
                     .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
                     .AddComputeResourceId(cloudEnvironment.Compute?.ResourceId)
+                    .AddOSDiskResourceId(cloudEnvironment.OSDisk?.ResourceId)
                     .AddStorageResourceId(cloudEnvironment.Storage?.ResourceId)
                     .AddAutoShutdownDelay(cloudEnvironment.AutoShutdownDelayMinutes)
                     .AddSkuName(cloudEnvironment.SkuName)
@@ -94,13 +96,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             => logger.FluentAddBaseValue(LogValueComputeResourceId, computeId?.ToString());
 
         /// <summary>
+        /// Add the environment osdisk id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="osDiskId">The environment osdisk id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddOSDiskResourceId(this IDiagnosticsLogger logger, Guid? osDiskId)
+            => logger.FluentAddBaseValue(LogValueOSDiskResourceId, osDiskId?.ToString());
+
+        /// <summary>
         /// Add the environment connection compute id to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="storageId">The environment connection storage id.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddStorageResourceId(this IDiagnosticsLogger logger, Guid? storageId)
-            => logger.FluentAddBaseValue(LogValueStorageResourceId, storageId.ToString());
+            => logger.FluentAddBaseValue(LogValueStorageResourceId, storageId?.ToString());
 
         /// <summary>
         /// Add the environment type to the logger.

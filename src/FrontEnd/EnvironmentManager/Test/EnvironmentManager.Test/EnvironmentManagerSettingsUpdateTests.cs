@@ -253,8 +253,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceAllocationManager = new ResourceAllocationManager(resourceBroker);
             var workspaceManager = new WorkspaceManager(workspaceRepository);
             var subscriptionManager = new MockSubscriptionManager();
+            var systemConfiguration = new Mock<ISystemConfiguration>().Object;
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
+            var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
 
             return new EnvironmentManager(
                 environmentRepository,
@@ -272,7 +274,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentRepairWorkflows,
                 resourceAllocationManager,
                 workspaceManager,
-                subscriptionManager);
+                subscriptionManager,
+                resourceSelector);
         }
 
         private static ICloudEnvironmentSku MockSku(

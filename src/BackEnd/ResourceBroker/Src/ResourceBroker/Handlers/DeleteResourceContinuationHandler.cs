@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -11,6 +12,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -40,10 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="keyVaultProvider">KeyVault provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="diskProvider">Disk provider.</param>
         /// <param name="serviceProvider">Service Provider.</param>
         public DeleteResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
+            IDiskProvider diskProvider,
             IKeyVaultProvider keyVaultProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider)
@@ -51,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
+            DiskProvider = diskProvider;
             KeyVaultProvider = keyVaultProvider;
         }
 
@@ -66,6 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IComputeProvider ComputeProvider { get; set; }
 
         private IStorageProvider StorageProvider { get; set; }
+
+        private IDiskProvider DiskProvider { get; set; }
 
         private IKeyVaultProvider KeyVaultProvider { get; }
 
@@ -93,11 +101,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     throw new NotSupportedException($"Provided location of '{resource.Value.Location}' is not supported.");
                 }
 
+                var keepDisk = resource.Value.GetComputeDetails().OSDiskRecordId != default;
+
                 operationInput = new VirtualMachineProviderDeleteInput
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                     AzureVmLocation = azureLocation,
                     ComputeOS = resource.Value.PoolReference.GetComputeOS(),
+                    PreserveOSDisk = keepDisk,
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)
@@ -116,6 +127,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                     BlobName = blobStorageDetails.ArchiveStorageBlobName,
                     BlobContainerName = blobStorageDetails.ArchiveStorageBlobContainerName,
+                };
+            }
+            else if (resource.Value.Type == ResourceType.OSDisk)
+            {
+                operationInput = new DiskProviderDeleteInput
+                {
+                    AzureResourceInfo = resource.Value.AzureResourceInfo,
                 };
             }
             else if (resource.Value.Type == ResourceType.KeyVault)
@@ -153,7 +171,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 result = new ContinuationResult() { Status = OperationState.Succeeded };
             }
 
-            // Run create operation if we have something to do
+            // Run delete operation if we have something to do
             if (result == null)
             {
                 if (resource.Value.Type == ResourceType.ComputeVM)
@@ -164,6 +182,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     || resource.Value.Type == ResourceType.StorageArchive)
                 {
                     result = await StorageProvider.DeleteAsync((FileShareProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
+                }
+                else if (resource.Value.Type == ResourceType.OSDisk)
+                {
+                    result = await DiskProvider.DeleteDiskAsync((DiskProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
                 }
                 else if (resource.Value.Type == ResourceType.KeyVault)
                 {
@@ -184,7 +206,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Perform core operation first
             var result = await base.RunOperationAsync(input, record, logger);
 
-            // Make sure we bring over the Resource info if we have it
             if (result.Status == OperationState.Succeeded)
             {
                 var deleted = await logger.RetryOperationScopeAsync(
@@ -205,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, "DeleteResourceContinuation");
 
-            // Since we don't have the azyre resource, we are just goignt to delete this record
+            // Since we don't have the azure resource, we are just going to delete this record
             return await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());
         }
     }

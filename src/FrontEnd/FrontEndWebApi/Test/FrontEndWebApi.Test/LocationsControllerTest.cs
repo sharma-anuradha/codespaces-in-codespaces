@@ -78,7 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     5,
                     5,
                     new ReadOnlyCollection<string>(new string[0]),
-                    new ReadOnlyCollection<string>(new string[0]),1);
+                    new ReadOnlyCollection<string>(new string[0]),
+                    1);
             }
 
             var skuCatalog = new Mock<ISkuCatalog>();

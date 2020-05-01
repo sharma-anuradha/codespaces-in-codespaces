@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -61,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             var resourceTags = input.ResourceTags;
 
-            resourceTags.Add(ResourceTagName.ResourceName, virtualMachineName);
+            UpdateResourceTags(input.CustomComponents, virtualMachineName, resourceTags);
 
             var deploymentName = $"Create-LinuxVm-{virtualMachineName}";
 
@@ -79,6 +80,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         input,
                         inputQueueConnectionInfo,
                         logger);
+
+                if (input.CustomComponents.Any())
+                {
+                    throw new InvalidOperationException("Unsupported now.");
+                }
 
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
@@ -101,7 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                     .BeginCreateAsync();
 
-                var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName);
+                var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName, input.CustomComponents);
+
                 return (OperationState.InProgress, new NextStageInput(result.Name, azureResourceInfo));
             }
             catch (Exception ex)
@@ -117,6 +124,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var resourceName = "template_vm.json";
             var fullyQualifiedResourceName = GetFullyQualifiedResourceName(resourceName);
             return CommonUtils.GetEmbeddedResourceContent(fullyQualifiedResourceName);
+        }
+
+        /// <inheritdoc/>
+        protected override string GetVmCreateWithExisingDiskTemplate()
+        {
+            // TODO: not implemented yet.
+            return null;
         }
 
         private string GetFullyQualifiedResourceName(string resourceName)

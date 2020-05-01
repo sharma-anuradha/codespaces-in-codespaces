@@ -28,5 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// The keyvault resource type.
         /// </summary>
         KeyVault = 4,
+
+        /// <summary>
+        /// The Environment back-end OS disk resource type.
+        /// </summary>
+        OSDisk = 5,
     }
 }

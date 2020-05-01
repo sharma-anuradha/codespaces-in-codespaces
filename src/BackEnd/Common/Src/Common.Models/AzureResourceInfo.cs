@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
@@ -25,11 +27,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <param name="subscriptionId">The azure subscription id.</param>
         /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="name">The resource name.</param>
+        /// <param name="components">Resource components.</param>
         public AzureResourceInfo(
             string subscriptionId,
             string resourceGroup,
-            string name)
-            : this(Guid.Parse(subscriptionId), resourceGroup, name)
+            string name,
+            IList<ResourceComponent> components = null)
+            : this(Guid.Parse(subscriptionId), resourceGroup, name, components)
         {
         }
 
@@ -39,10 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <param name="subscriptionId">The azure subscription id.</param>
         /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="name">The resource name.</param>
+        /// <param name="components">Resource components.</param>
         public AzureResourceInfo(
             Guid subscriptionId,
             string resourceGroup,
-            string name)
+            string name,
+            IList<ResourceComponent> components = null)
         {
             Requires.NotEmpty(subscriptionId, nameof(subscriptionId));
             Requires.NotNullOrEmpty(resourceGroup, nameof(resourceGroup));
@@ -51,6 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             SubscriptionId = subscriptionId;
             ResourceGroup = resourceGroup;
             Name = name;
+
+            Components = components;
         }
 
         /// <summary>
@@ -71,6 +79,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the resource components.
+        /// </summary>
+        [JsonProperty(PropertyName = "components")]
+        public IList<ResourceComponent> Components { get; set; }
+
         /// <inheritdoc/>
         public bool Equals(AzureResourceInfo other)
         {
@@ -90,6 +104,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             }
 
             if (!Name.Equals(other.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (Components?.Count != other.Components?.Count)
+            {
+                return false;
+            }
+
+            if (Components?.Count > 0 && !Components.All(other.Components.Contains))
             {
                 return false;
             }

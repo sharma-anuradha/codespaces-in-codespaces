@@ -18,6 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             Archiving = new TransitionState();
             Provisioning = new TransitionState();
+            Resuming = new TransitionState();
         }
 
         /// <summary>
@@ -31,5 +32,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(PropertyName = "createEnvironment")]
         public TransitionState Provisioning { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resume environment transitions.
+        /// </summary>
+        [JsonProperty(PropertyName = "resumeEnvironment")]
+        public TransitionState Resuming { get; set; }
     }
 }

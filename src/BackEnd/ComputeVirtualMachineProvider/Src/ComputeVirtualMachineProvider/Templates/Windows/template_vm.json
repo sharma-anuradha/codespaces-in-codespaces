@@ -5,9 +5,6 @@
     "location": {
       "type": "string"
     },
-    "imageReferenceId": {
-      "type": "string"
-    },
     "virtualMachineRG": {
       "type": "string"
     },
@@ -15,9 +12,6 @@
       "type": "string"
     },
     "virtualMachineSize": {
-      "type": "string"
-    },
-    "osDiskName": {
       "type": "string"
     },
     "networkSecurityGroupName": {
@@ -52,6 +46,9 @@
     },
     "vmInitScriptBase64ParametersBlob": {
       "type": "string"
+    },
+    "storageProfileDetails": {
+      "type": "object"
     }
   },
   "variables": {
@@ -129,18 +126,7 @@
         "hardwareProfile": {
           "vmSize": "[parameters('virtualMachineSize')]"
         },
-        "storageProfile": {
-          "osDisk": {
-            "name": "[parameters('osDiskName')]",
-            "createOption": "FromImage",
-            "managedDisk": {
-              "storageAccountType": "Premium_LRS"
-            }
-          },
-          "imageReference": {
-            "id": "[parameters('imageReferenceId')]"
-          }
-        },
+        "storageProfile": "[parameters('storageProfileDetails')]",
         "networkProfile": {
           "networkInterfaces": [
             {

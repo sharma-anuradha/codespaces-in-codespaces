@@ -27,6 +27,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
@@ -156,6 +157,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // KeyVault Provider
             services.AddKeyVaultProvider(appSettings.BackEnd.MocksSettings);
+
+            // Disk Provider
+            services.AddDiskProvider(appSettings.BackEnd.MocksSettings);
 
             // Capacity Manager
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);

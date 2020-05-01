@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// <summary>
         /// Gets or sets the storage resource id.
         /// </summary>
-        public Guid StorageResourceId { get; set; }
+        public Guid? StorageResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the archive storage resource id.
@@ -31,5 +31,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets the compute environment variables.
         /// </summary>
         public IDictionary<string, string> EnvironmentVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the os disk source id.
+        /// </summary>
+        public Guid? OSDiskResourceId { get; set; }
     }
 }

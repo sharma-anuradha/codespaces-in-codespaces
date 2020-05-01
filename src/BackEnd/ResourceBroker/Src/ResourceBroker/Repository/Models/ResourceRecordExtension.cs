@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     public static class ResourceRecordExtension
     {
         /// <summary>
-        /// Builds wrapping compute details object to proxy through to
+        /// Builds wrapping details object to proxy through to
         /// underlying backing properties.
         /// </summary>
         /// <param name="record">Target record.</param>
@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <summary>
-        /// Builds wrapping compute details object to proxy through to
+        /// Builds wrapping storage details object to proxy through to
         /// underlying backing properties.
         /// </summary>
         /// <param name="record">Target record.</param>

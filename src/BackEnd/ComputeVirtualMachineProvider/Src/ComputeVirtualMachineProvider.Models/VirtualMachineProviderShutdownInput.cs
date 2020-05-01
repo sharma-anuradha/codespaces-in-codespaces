@@ -33,5 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the environment id.
         /// </summary>
         public string EnvironmentId { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to preserve the OS disk.
+        /// </summary>
+        public bool PreserveOSDisk { get; set; }
     }
 }

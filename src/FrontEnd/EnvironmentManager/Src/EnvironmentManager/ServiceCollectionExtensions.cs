@@ -68,6 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
 
             services.AddSingleton<IEnvironmentMonitor, EnvironmentMonitor>();
+            services.AddSingleton<IResourceSelectorFactory, ResourceSelectorFactory>();
 
             // Continuation - Cross region.
             services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
@@ -99,11 +100,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IArchiveEnvironmentContinuationHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
 
-            services.AddSingleton<CreateEnvironmentContinuationHandler>();
-            services.AddSingleton<ICreateEnvironmentContinuationHandler>(x => x.GetRequiredService<CreateEnvironmentContinuationHandler>());
-            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateEnvironmentContinuationHandler>());
+            services.AddSingleton<StartEnvironmentContinuationHandler>();
+            services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
 
-            // The environment mangaer
+            // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
             services.AddSingleton<IEnvironmentContinuationOperations, EnvironmentContinuationOperations>();
 

@@ -17,6 +17,8 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -90,6 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             this.ControlPlaneAzureResourceAccessor = Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));
             this.ClientFactory = Requires.NotNull(clientFactory, nameof(clientFactory));
             VmTemplateJson = GetVmTemplate();
+            VmTemplateWithExistingDiskJson = GetVmCreateWithExisingDiskTemplate();
             SetUseOutputQueueFlag();
         }
 
@@ -114,6 +117,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         public string VmTemplateJson { get; }
 
         /// <summary>
+        /// Gets the VM template which creates with an existing disk.
+        /// </summary>
+        public string VmTemplateWithExistingDiskJson { get; }
+
+        /// <summary>
         /// Gets name of the output queue.
         /// </summary>
         /// <param name="vmName">Virtual machine name.</param>
@@ -128,10 +136,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         public static string GetInputQueueName(string vmName) => $"{vmName.ToLowerInvariant()}-input-queue";
 
         /// <summary>
-        /// Gets name of the Os Disk.
+        /// Gets name of the OS Disk.
         /// </summary>
         /// <param name="vmName">Virtual machine name.</param>
-        /// <returns>Name of the Os disk.</returns>
+        /// <returns>Name of the OS disk.</returns>
         public static string GetOsDiskName(string vmName) => $"{vmName}-disk";
 
         /// <summary>
@@ -154,6 +162,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <param name="vmName">Virtual machine name.</param>
         /// <returns>Name of the network interface.</returns>
         public static string GetNetworkInterfaceName(string vmName) => $"{vmName}-nic";
+
+        /// <summary>
+        /// Adds relevant tags for the resource, so that it orphaned resource worker knows what to do.
+        /// </summary>
+        /// <param name="components">Resource components.</param>
+        /// <param name="virtualMachineName">Virtual machine name.</param>
+        /// <param name="resourceTags">Resource tag dictionary.</param>
+        public static void UpdateResourceTags(IList<ResourceComponent> components, string virtualMachineName, IDictionary<string, string> resourceTags)
+        {
+            resourceTags[ResourceTagName.ResourceName] = virtualMachineName;
+
+            var componentRecordIds = default(string);
+            if (components != default)
+            {
+                componentRecordIds = string.Join(",", components.Where(x => !string.IsNullOrWhiteSpace(x.ResourceRecordId)).Select(x => x.ResourceRecordId));
+            }
+
+            if (componentRecordIds != default)
+            {
+                resourceTags[ResourceTagName.ResourceComponentRecordIds] = componentRecordIds;
+            }
+        }
 
         /// <inheritdoc/>
         public abstract bool Accepts(ComputeOS computeOS);
@@ -186,8 +216,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resourcesToBeDeleted.Add(NicNameKey, (GetNetworkInterfaceName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(NsgNameKey, (GetNetworkSecurityGroupName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(VnetNameKey, (GetVirtualNetworkName(vmName), OperationState.NotStarted));
-                resourcesToBeDeleted.Add(DiskNameKey, (GetOsDiskName(vmName), OperationState.NotStarted));
                 resourcesToBeDeleted.Add(InputQueueNameKey, (GetInputQueueName(vmName), OperationState.NotStarted));
+
+                if (vm != null && !input.PreserveOSDisk)
+                {
+                    resourcesToBeDeleted.Add(DiskNameKey, (await GetOSDiskNameAsync(vm), OperationState.NotStarted));
+                }
+
                 AddOutputQueue(vmName, resourcesToBeDeleted);
 
                 return (OperationState.InProgress, new NextStageInput(
@@ -210,6 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var deployment = await azure.Deployments.GetByResourceGroupAsync(input.AzureResourceInfo.ResourceGroup, input.TrackingId);
 
                 OperationState operationState = DeploymentUtils.ParseProvisioningState(deployment.ProvisioningState);
+
                 if (operationState == OperationState.Failed)
                 {
                     var errorDetails = await DeploymentUtils.ExtractDeploymentErrors(deployment);
@@ -241,7 +277,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             try
             {
                 var (computeVmLocation, resourcesToBeDeleted) = JsonConvert
-                .DeserializeObject<(AzureLocation, Dictionary<string, VmResourceState>)>(input.TrackingId);
+                    .DeserializeObject<(AzureLocation, Dictionary<string, VmResourceState>)>(input.TrackingId);
+
                 string resourceGroup = input.AzureResourceInfo.ResourceGroup;
                 var azure = await ClientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
                 var networkClient = await ClientFactory.GetNetworkManagementClient(input.AzureResourceInfo.SubscriptionId);
@@ -274,12 +311,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                 DeleteOutputQueue(logger, computeVmLocation, resourcesToBeDeleted, taskList);
 
-                taskList.Add(
-                CheckResourceStatus(
-                    (resourceName) => computeClient.Disks.BeginDeleteAsync(resourceGroup, resourceName),
-                    (resourceName) => azure.Disks.GetByResourceGroupAsync(resourceGroup, resourceName),
-                    resourcesToBeDeleted,
-                    DiskNameKey));
+                if (resourcesToBeDeleted.ContainsKey(DiskNameKey))
+                {
+                    taskList.Add(
+                    CheckResourceStatus(
+                        (resourceName) => computeClient.Disks.BeginDeleteAsync(resourceGroup, resourceName),
+                        (resourceName) => azure.Disks.GetByResourceGroupAsync(resourceGroup, resourceName),
+                        resourcesToBeDeleted,
+                        DiskNameKey));
+                }
 
                 taskList.Add(
                     CheckResourceStatus(
@@ -377,10 +417,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     jobParameters.Add(kvp.Key, kvp.Value);
                 }
 
-                jobParameters.Add("storageAccountName", input.FileShareConnection.StorageAccountName);
-                jobParameters.Add("storageAccountKey", input.FileShareConnection.StorageAccountKey);
-                jobParameters.Add("storageShareName", input.FileShareConnection.StorageShareName);
-                jobParameters.Add("storageFileName", input.FileShareConnection.StorageFileName);
+                if (input.FileShareConnection != null)
+                {
+                    jobParameters.Add("storageAccountName", input.FileShareConnection.StorageAccountName);
+                    jobParameters.Add("storageAccountKey", input.FileShareConnection.StorageAccountKey);
+                    jobParameters.Add("storageShareName", input.FileShareConnection.StorageShareName);
+                    jobParameters.Add("storageFileName", input.FileShareConnection.StorageFileName);
+                }
 
                 // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.
                 jobParameters.Add("skuName", input.SkuName);
@@ -445,6 +488,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// </summary>
         /// <returns>VM template.</returns>
         protected abstract string GetVmTemplate();
+
+        /// <summary>
+        /// Gets VM template which creates a VM with an existing disk.
+        /// </summary>
+        /// <returns>VM template.</returns>
+        protected abstract string GetVmCreateWithExisingDiskTemplate();
+
+        private static async Task<string> GetOSDiskNameAsync(IVirtualMachine virtualMachine)
+        {
+            var disk = await virtualMachine.Manager.Disks.GetByIdAsync(virtualMachine.OSDiskId);
+            return disk.Name;
+        }
+
+        private static OperationState ParseResult(string provisioningState)
+        {
+            if (provisioningState.Equals(OperationState.Succeeded.ToString(), StringComparison.OrdinalIgnoreCase)
+                   || provisioningState.Equals(OperationState.Failed.ToString(), StringComparison.OrdinalIgnoreCase)
+                   || provisioningState.Equals(OperationState.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                return provisioningState.ToEnum<OperationState>();
+            }
+
+            return OperationState.InProgress;
+        }
 
         private static string CreateVmDeletionTrackingId(AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted)
         {

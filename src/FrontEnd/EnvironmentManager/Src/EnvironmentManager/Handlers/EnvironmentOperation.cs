@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Create Environment operation.
         /// </summary>
         Provisioning,
+
+        /// <summary>
+        /// Resuming Environment operation.
+        /// </summary>
+        Resuming,
     }
 }

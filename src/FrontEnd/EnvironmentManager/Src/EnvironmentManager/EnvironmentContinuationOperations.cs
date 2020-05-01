@@ -63,16 +63,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
 
-            var input = new CreateEnvironmentContinuationInput()
+            var input = new StartEnvironmentContinuationInput(cloudEnvironmentOptions, true)
             {
                 EnvironmentId = environmentId,
                 LastStateUpdated = lastStateUpdated,
-                CloudEnvironmentOptions = cloudEnvironmentOptions,
                 StartCloudEnvironmentParameters = startCloudEnvironmentParameters,
                 Reason = reason,
             };
 
-            var target = CreateEnvironmentContinuationHandler.DefaultQueueTarget;
+            var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
+
+            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ContinuationResult> ResumeAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(environmentId, reason);
+            var options = new CloudEnvironmentOptions()
+            {
+                QueueResourceAllocation = true,
+            };
+
+            var input = new StartEnvironmentContinuationInput(options, false)
+            {
+                EnvironmentId = environmentId,
+                LastStateUpdated = lastStateUpdated,
+                StartCloudEnvironmentParameters = startCloudEnvironmentParameters,
+                Reason = reason,
+            };
+
+            var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }

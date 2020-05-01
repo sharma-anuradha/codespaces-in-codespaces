@@ -142,44 +142,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             throw new NotSupportedException($"Resource has a location of {resource.Location} which is not supported");
                         }
 
-                        // Now we can delete the azure resource
-                        if (resourceType == ResourceType.ComputeVM)
-                        {
-                            await ResourceContinuationOperations.DeleteOrphanedComputeAsync(
+                        await ResourceContinuationOperations.DeleteOrphanedResourceAsync(
                                 Guid.Parse(resource.Id),
                                 Guid.Parse(capacityUnit.Subscription.SubscriptionId),
                                 capacityUnit.ResourceGroup,
                                 resource.Name,
                                 resourceLocation,
                                 resource.ResourceTags,
+                                resourceType,
                                 "OrphanedAzureResourceTask",
                                 childLogger.NewChildLogger());
-                        }
-                        else if (resourceType == ResourceType.StorageFileShare
-                            || resourceType == ResourceType.StorageArchive)
-                        {
-                            await ResourceContinuationOperations.DeleteOrphanedStorageAsync(
-                                Guid.Parse(resource.Id),
-                                Guid.Parse(capacityUnit.Subscription.SubscriptionId),
-                                capacityUnit.ResourceGroup,
-                                resource.Name,
-                                resourceLocation,
-                                resource.ResourceTags,
-                                "OrphanedAzureResourceTask",
-                                childLogger.NewChildLogger());
-                        }
-                        else if (resourceType == ResourceType.KeyVault)
-                        {
-                            await ResourceContinuationOperations.DeleteOrphanedKeyVaultAsync(
-                                Guid.Parse(resource.Id),
-                                Guid.Parse(capacityUnit.Subscription.SubscriptionId),
-                                capacityUnit.ResourceGroup,
-                                resource.Name,
-                                resourceLocation,
-                                resource.ResourceTags,
-                                "OrphanedAzureResourceTask",
-                                childLogger.NewChildLogger());
-                        }
                     }
                     else
                     {

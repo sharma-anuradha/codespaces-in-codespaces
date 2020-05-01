@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -32,6 +33,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             get
             {
                 return (ComputeOS)Enum.Parse(typeof(ComputeOS), Record.PoolReference.Dimensions.GetValueOrDefault(ComputeOSName), true);
+            }
+        }
+
+        /// <summary>
+        /// Gets the OS disk record if exists.
+        /// </summary>
+        public string OSDiskRecordId
+        {
+            get
+            {
+                return Record.AzureResourceInfo?
+                    .Components?
+                    .SingleOrDefault(x => x.ComponentType == Common.Models.ComponentType.OSDisk)?
+                    .ResourceRecordId;
             }
         }
     }

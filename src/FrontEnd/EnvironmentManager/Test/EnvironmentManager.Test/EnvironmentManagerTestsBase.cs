@@ -42,6 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly ITokenProvider tokenProvider;
         public readonly EnvironmentManager environmentManager;
         public readonly ISubscriptionManager subscriptionManager;
+        private readonly ResourceSelectorFactory resourceSelector;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
@@ -103,6 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var skuMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
             skuMock.Setup((s) => s.ComputeOS).Returns(ComputeOS.Linux);
+
             var skuDictionary = new Dictionary<string, ICloudEnvironmentSku>
             {
                 ["test"] = skuMock.Object,
@@ -115,6 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
             this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
             this.subscriptionManager = new MockSubscriptionManager();
+            this.resourceSelector = new ResourceSelectorFactory(this.skuCatalog, new Mock<ISystemConfiguration>().Object);
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
@@ -129,7 +132,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentRepairWorkflows,
                 this.resourceAllocationManager,
                 this.workspaceManager,
-                this.subscriptionManager);
+                this.subscriptionManager,
+                this.resourceSelector);
         }
 
         public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")

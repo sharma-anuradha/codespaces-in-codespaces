@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj" />
+    <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider.Extensions\DiskProvider.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Models\ResourceBroker.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Abstractions\Common.Abstractions.csproj" />

@@ -35,5 +35,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Gets or sets a value indicating whether to queue create resource.
         /// </summary>
         public bool QueueCreateResource { get; set; }
+
+        /// <summary>
+        /// Gets or sets allocate extended properties.
+        /// </summary>
+        public AllocateExtendedProperties ExtendedProperties { get; set; }
     }
 }

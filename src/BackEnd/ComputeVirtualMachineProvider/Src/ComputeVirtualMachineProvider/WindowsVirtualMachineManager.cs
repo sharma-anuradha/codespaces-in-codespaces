@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
@@ -64,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var virtualMachineName = GetVmName();
 
             var resourceTags = input.ResourceTags;
-            resourceTags.Add(ResourceTagName.ResourceName, virtualMachineName);
+            resourceTags[ResourceTagName.ResourceName] = virtualMachineName;
 
             var deploymentName = $"Create-WindowsVm-{virtualMachineName}";
             try
@@ -97,19 +99,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     { "userName", userName },
                 };
 
+                var createWithOSDisk = input.CustomComponents.Any(x =>
+                                            x.ComponentType == ComponentType.OSDisk &&
+                                            !string.IsNullOrEmpty(x.AzureResourceInfo?.Name));
+
+                if (!createWithOSDisk)
+                {
+                    initScriptParametersBlob["firstBoot"] = "true";
+                }
+
                 // b64 encode the parameters json blob, this gets forwarded onto the VM agent script through the custom script extension.
                 var parametersBlob = JsonConvert.SerializeObject(initScriptParametersBlob);
                 var encodedBytes = Encoding.UTF8.GetBytes(parametersBlob);
                 var b64ParametersBlob = Convert.ToBase64String(encodedBytes);
 
+                var vmTemplate = default(string);
+                var storageProfile = default(StorageProfile);
+                if (createWithOSDisk)
+                {
+                    vmTemplate = VmTemplateWithExistingDiskJson;
+                    var osDiskInfo = input.CustomComponents.Single(x => x.ComponentType == ComponentType.OSDisk).AzureResourceInfo;
+                    var disk = await azure.Disks.GetByResourceGroupAsync(osDiskInfo.ResourceGroup, osDiskInfo.Name);
+
+                    if (disk.IsAttachedToVirtualMachine)
+                    {
+                        throw new InvalidOperationException("Should not try to use a disk which is already attached.");
+                    }
+
+                    storageProfile = new StorageProfile()
+                    {
+                        OsDisk = new OSDisk(
+                            DiskCreateOptionTypes.Attach,
+                            OperatingSystemTypes.Windows,
+                            managedDisk: new ManagedDiskParametersInner(
+                                storageAccountType: StorageAccountTypes.PremiumLRS,
+                                id: disk.Id)),
+                    };
+                }
+                else
+                {
+                    vmTemplate = VmTemplateJson;
+
+                    storageProfile = new StorageProfile()
+                    {
+                        ImageReference = new ImageReferenceInner(
+                            input.AzureVirtualMachineImage),
+                        OsDisk = new OSDisk(
+                            DiskCreateOptionTypes.FromImage,
+                            OperatingSystemTypes.Windows,
+                            name: GetOsDiskName(virtualMachineName),
+                            managedDisk: new ManagedDiskParametersInner(storageAccountType: StorageAccountTypes.PremiumLRS)),
+                    };
+                }
+
                 var parameters = new Dictionary<string, Dictionary<string, object>>()
                 {
                     { "location", new Dictionary<string, object>() { { Key, input.AzureVmLocation.ToString() } } },
-                    { "imageReferenceId", new Dictionary<string, object>() { { Key, input.AzureVirtualMachineImage } } },
                     { "virtualMachineRG", new Dictionary<string, object>() { { Key, input.AzureResourceGroup } } },
                     { "virtualMachineName", new Dictionary<string, object>() { { Key, virtualMachineName } } },
                     { "virtualMachineSize", new Dictionary<string, object>() { { Key, input.AzureSkuName } } },
-                    { "osDiskName", new Dictionary<string, object>() { { Key, GetOsDiskName(virtualMachineName) } } },
                     { "networkSecurityGroupName", new Dictionary<string, object>() { { Key, GetNetworkSecurityGroupName(virtualMachineName) } } },
                     { "networkInterfaceName", new Dictionary<string, object>() { { Key, GetNetworkInterfaceName(virtualMachineName) } } },
                     { "virtualNetworkName", new Dictionary<string, object>() { { Key, GetVirtualNetworkName(virtualMachineName) } } },
@@ -121,17 +169,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     { "vmInitScriptStorageAccountName", new Dictionary<string, object>() { { Key, storageAccountName } } },
                     { "vmInitScriptStorageAccountKey", new Dictionary<string, object>() { { Key, storageAccountAccessKey } } },
                     { "vmInitScriptBase64ParametersBlob", new Dictionary<string, object>() { { Key, b64ParametersBlob } } },
+                    { "storageProfileDetails", new Dictionary<string, object>() { { Key, storageProfile } } },
                 };
 
                 // Create virtual machine
                 var result = await azure.Deployments.Define(deploymentName)
                     .WithExistingResourceGroup(input.AzureResourceGroup)
-                    .WithTemplate(VmTemplateJson)
+                    .WithTemplate(vmTemplate)
                     .WithParameters(JsonConvert.SerializeObject(parameters))
                     .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
                     .BeginCreateAsync();
 
-                var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName);
+                var azureResourceInfo = new AzureResourceInfo(input.AzureSubscription, input.AzureResourceGroup, virtualMachineName, input.CustomComponents);
+
                 return (OperationState.InProgress, new NextStageInput(result.Name, azureResourceInfo));
             }
             catch (Exception ex)
@@ -145,9 +195,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         protected override string GetVmTemplate()
         {
             var resourceName = "template_vm.json";
+            return GetTemplate(resourceName);
+        }
+
+        /// <inheritdoc/>
+        protected override string GetVmCreateWithExisingDiskTemplate()
+        {
+            var resourceName = "template_vm_createwithdisk.json";
+            return GetTemplate(resourceName);
+        }
+
+        private static string GetTemplate(string resourceName)
+        {
             var namespaceString = typeof(WindowsVirtualMachineManager).Namespace;
-            var fullyQualifiedResourceName = $"{namespaceString}.Templates.Windows.{resourceName}";
-            return CommonUtils.GetEmbeddedResourceContent(fullyQualifiedResourceName);
+            var fullResourceName = $"{namespaceString}.Templates.Windows.{resourceName}";
+            return CommonUtils.GetEmbeddedResourceContent(fullResourceName);
         }
 
         private static string GetVmName()

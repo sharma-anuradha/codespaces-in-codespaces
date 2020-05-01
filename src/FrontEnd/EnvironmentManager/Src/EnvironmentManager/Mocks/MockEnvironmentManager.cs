@@ -29,7 +29,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironmentServiceResult> CreateAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, StartCloudEnvironmentParameters startCloudEnvironmentParameters, VsoPlanInfo plan, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentServiceResult> CreateAsync(
+            CloudEnvironment environmentRegistration,
+            CloudEnvironmentOptions options,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            VsoPlanInfo plan,
+            IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -83,7 +88,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<bool> StartComputeAsync(CloudEnvironment cloudEnvironment, Guid computeResourceId, Guid storageResourceId, Guid? archiveStorageResourceId, CloudEnvironmentOptions cloudEnvironmentOptions, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger)
+        public Task<bool> StartComputeAsync(
+            CloudEnvironment cloudEnvironment,
+            Guid computeResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
+            Guid? archiveStorageResourceId,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

@@ -6,11 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -31,38 +28,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Initializes a new instance of the <see cref="ResourceBroker"/> class.
         /// </summary>
         /// <param name="resourceRepository">Resource repository that should be used.</param>
-        /// <param name="resourcePool">Resource pool that should be used.</param>
-        /// <param name="resourceScalingStore">Target resource scaling store.</param>
         /// <param name="resourceContinuationOperations">Target continuation task sctivator.</param>
-        /// <param name="taskHelper">Target task helper.</param>
-        /// <param name="mapper">Mapper that should be used.</param>
+        /// <param name="allocationStrategies">Allocation strategies.</param>
         public ResourceBroker(
             IResourceRepository resourceRepository,
-            IResourcePoolManager resourcePool,
-            IResourcePoolDefinitionStore resourceScalingStore,
             IResourceContinuationOperations resourceContinuationOperations,
-            ITaskHelper taskHelper,
-            IMapper mapper)
+            IEnumerable<IAllocationStrategy> allocationStrategies)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
-            ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
-            ResourceScalingStore = Requires.NotNull(resourceScalingStore, nameof(resourceScalingStore));
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
-            TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
-            Mapper = Requires.NotNull(mapper, nameof(mapper));
+            AllocationStrategies = Requires.NotNull(allocationStrategies, nameof(allocationStrategies));
         }
 
         private IResourceRepository ResourceRepository { get; }
 
-        private IResourcePoolManager ResourcePool { get; }
-
-        private IResourcePoolDefinitionStore ResourceScalingStore { get; }
-
         private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
-        private ITaskHelper TaskHelper { get; }
-
-        private IMapper Mapper { get; }
+        /// <summary>
+        /// Gets the allocation strategies.
+        /// Note: Currently allocation strategies handle exclusive inputs.
+        /// In future, when multiple allocators can handle the given set, make sure to pick the allocator predictably.
+        /// </summary>
+        private IEnumerable<IAllocationStrategy> AllocationStrategies { get; }
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
@@ -72,119 +59,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_allocate_set",
                 async (childLogger) =>
                 {
-                    var failedInput = default(AllocateInput);
-                    var resourceResults = new List<(AllocateInput Input, ResourceRecord Record, ResourcePool ResourceSku)>();
-
-                    // Work through each input
-                    foreach (var input in inputs)
+                    var allocationHandler = AllocationStrategies.FirstOrDefault(x => x.CanHandle(inputs));
+                    if (allocationHandler == default)
                     {
-                        (AllocateInput Input, ResourceRecord Resource, ResourcePool ResourceSku) resourceResult = default;
-
-                        // Setting up logger
-                        logger.FluentAddBaseValue("ResourceLocation", input.Location.ToString())
-                            .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
-                            .FluentAddBaseValue("ResourceType", input.Type.ToString())
-                            .FluentAddBaseValue("ResourceQueueAllocation", input.QueueCreateResource);
-
-                        // Try and get item from the pool
-                        resourceResult = await childLogger.OperationScopeAsync(
-                            $"{LogBaseName}_allocate",
-                            async (itemLogger) =>
-                            {
-                                (ResourceRecord Resource, ResourcePool ResourceSku) assignResult = default;
-
-                                if (input.QueueCreateResource)
-                                {
-                                    // Try to create resource for request.
-                                    assignResult = await TryQueueAsync(input, itemLogger);
-                                }
-                                else
-                                {
-                                    // Try and get item from the pool
-                                    assignResult = await TryGetAsync(input, itemLogger);
-                                }
-
-                                // Deal with case that it didn't exist
-                                if (assignResult.Resource == null)
-                                {
-                                    failedInput = input;
-                                }
-                                else
-                                {
-                                    itemLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, assignResult.Resource.Id);
-                                }
-
-                                return (Input: input, Resource: assignResult.Resource, ResourceSku: assignResult.ResourceSku);
-                            });
-
-                        // Abort things at the first fail we hit
-                        if (resourceResult.Resource == null)
-                        {
-                            break;
-                        }
-
-                        // Add to result set
-                        resourceResults.Add(resourceResult);
+                        throw new NotSupportedException("Inputs not supported.");
                     }
 
-                    // Valdiate that things worked as expected
-                    var isValid = resourceResults.Count == inputs.Count() && failedInput == null;
-
-                    childLogger.FluentAddValue("AllocationIsValid", isValid)
-                               .FluentAddValue("AllocationAllocationCount", resourceResults.Count);
-
-                    if (isValid)
-                    {
-                        var results = new List<AllocateResult>();
-
-                        // Map results and trigger create to replace allocated items if needed
-                        foreach (var resourceResult in resourceResults)
-                        {
-                            var resourceSku = resourceResult.ResourceSku;
-                            var record = resourceResult.Record;
-
-                            // Only trigger pool refresh if its a pool resource
-                            if (resourceSku != null && !resourceResult.Input.QueueCreateResource)
-                            {
-                                // Trigger auto pool create to replace assigned item
-                                TaskHelper.RunBackground(
-                                    $"{LogBaseName}_run_create",
-                                    (taskLogger) => ResourceContinuationOperations.CreateAsync(
-                                        Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", taskLogger),
-                                    childLogger);
-                            }
-
-                            results.Add(Mapper.Map<AllocateResult>(record));
-                        }
-
-                        return (IEnumerable<AllocateResult>)results;
-                    }
-
-                    // Release each of the items that had been assigned so far
-                    foreach (var resourceResult in resourceResults)
-                    {
-                        var input = resourceResult.Input;
-                        var record = resourceResult.Record;
-
-                        // Try and get item from the pool
-                        await childLogger.OperationScopeAsync(
-                                $"{LogBaseName}_release",
-                                async (itemLogger) =>
-                                {
-                                    itemLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, record.Id)
-                                        .FluentAddBaseValue("ResourceLocation", record.Location)
-                                        .FluentAddBaseValue("ResourceSystemSkuName", input.SkuName)
-                                        .FluentAddBaseValue("ResourceType", record.Type);
-
-                                    await ResourcePool.ReleaseGetAsync(
-                                        record.Id,
-                                        itemLogger.NewChildLogger());
-                                },
-                                swallowException: true);
-                    }
-
-                    // Throw exception since we failed to allocate
-                    throw new OutOfCapacityException(failedInput.SkuName, failedInput.Type, failedInput.Location.ToString().ToLowerInvariant());
+                    return await allocationHandler.AllocateAsync(environmentId, inputs, trigger, logger);
                 });
         }
 
@@ -196,39 +77,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{LogBaseName}_allocate",
                 async (childLogger) =>
                 {
-                    (ResourceRecord Resource, ResourcePool ResourceSku) assignResult = default;
-
-                    if (input.QueueCreateResource)
+                    var allocationHandler = AllocationStrategies.FirstOrDefault(x => x.CanHandle(new[] { input }));
+                    if (allocationHandler == default)
                     {
-                        // Try to create resource for request.
-                        assignResult = await TryQueueAsync(input, childLogger);
-                    }
-                    else
-                    {
-                        // Try and get item from the pool
-                        assignResult = await TryGetAsync(input, childLogger);
+                        throw new NotSupportedException("Inputs not supported.");
                     }
 
-                    // Deal with case that it didn't exist
-                    if (assignResult.Resource == null)
-                    {
-                        throw new OutOfCapacityException(input.SkuName, input.Type, input.Location.ToString().ToLowerInvariant());
-                    }
-
-                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, assignResult.Resource.Id);
-
-                    // Only trigger pool refresh if its a pool resource
-                    if (assignResult.ResourceSku != null)
-                    {
-                        // Trigger auto pool create to replace assigned item
-                        TaskHelper.RunBackground(
-                            $"{LogBaseName}_run_create",
-                            (taskLogger) => ResourceContinuationOperations.CreateAsync(
-                                Guid.NewGuid(), assignResult.ResourceSku.Type, assignResult.ResourceSku.Details, "ResourceAssignedReplace", taskLogger),
-                            childLogger);
-                    }
-
-                    return Mapper.Map<AllocateResult>(assignResult.Resource);
+                    return await allocationHandler.AllocateAsync(environmentId, input, trigger, logger);
                 });
         }
 
@@ -259,18 +114,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             {
                                 // Select target resorces
                                 var computeResource = backingResources.Single(x => x.Record.Type == ResourceType.ComputeVM);
-                                var storageResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageFileShare);
+                                var osDiskResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.OSDisk);
+                                var storageResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.StorageFileShare);
                                 var archiveStorageResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.StorageArchive);
 
                                 childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, computeResource.Resource.ResourceId)
                                     .FluentAddBaseValue("StorageResourceId", storageResource.Resource?.ResourceId)
+                                    .FluentAddBaseValue("OSDiskResourceId", osDiskResource.Resource?.ResourceId)
                                     .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource.Resource?.ResourceId);
 
                                 // Trigger environment start
                                 await ResourceContinuationOperations.StartEnvironmentAsync(
                                     environmentId,
                                     computeResource.Resource.ResourceId,
-                                    storageResource.Resource.ResourceId,
+                                    osDiskResource.Resource?.ResourceId,
+                                    storageResource.Resource?.ResourceId,
                                     archiveStorageResource.Resource?.ResourceId,
                                     computeResource.Resource.Variables,
                                     trigger,
@@ -462,100 +320,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                     return exists;
                 });
-        }
-
-        private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryGetAsync(AllocateInput input, IDiagnosticsLogger itemLogger)
-        {
-            // If a blob is being created, we don't need to go to the pool for that
-            if (input.Type == ResourceType.StorageArchive)
-            {
-                // Common properties
-                var id = Guid.NewGuid();
-                var time = DateTime.UtcNow;
-                var type = input.Type;
-                var location = input.Location;
-                var skuName = "ShrunkBlob";
-
-                // Core recrod
-                var resource = ResourceRecord.Build(id, time, type, location, skuName);
-                resource.IsAssigned = true;
-                resource.Assigned = time;
-                resource.IsReady = true;
-                resource.Ready = time;
-
-                // Copy across extended details
-                await MapSourceComputeOS(input, resource);
-
-                // Create the actual record
-                resource = await ResourceRepository.CreateAsync(resource, itemLogger.NewChildLogger());
-
-                return (resource, null);
-            }
-            else
-            {
-                // Map logical sku to resource sku
-                var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
-
-                itemLogger.FluentAddBaseValue("ResourceResourceSkuName", resourceSku.Details.SkuName);
-
-                // Try and get item from the pool
-                var resource = await ResourcePool.TryGetAsync(
-                    resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
-
-                itemLogger.FluentAddBaseValue("ResourceAllocateFound", resource != null);
-
-                return (resource, resourceSku);
-            }
-        }
-
-        private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryQueueAsync(
-            AllocateInput input,
-            IDiagnosticsLogger logger)
-        {
-            // Map logical sku to resource sku
-            var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
-
-            var resourceId = Guid.NewGuid();
-            var resource = await ResourceContinuationOperations.QueueCreateAsync(
-            resourceId, input.Type, resourceSku.Details, "ResourceQueueAllocate", logger.NewChildLogger());
-
-            return (Resource: resource, ResourceSku: resourceSku);
-        }
-
-        private async Task<ResourcePool> MapLogicalSkuToResourceSku(string skuName, ResourceType type, AzureLocation location)
-        {
-            var resources = await ResourceScalingStore.RetrieveDefinitionsAsync();
-
-            var resourceSku = resources
-                .Where(x => x.Details.Location == location
-                    && x.Type == type
-                    && x.LogicalSkus.Contains(skuName));
-
-            if (!resourceSku.Any())
-            {
-                throw new ArgumentException($"Sku resource match was not found. SkuName = {skuName}, Type = {type}, Location = {location}");
-            }
-
-            if (resourceSku.Count() > 1)
-            {
-                throw new ArgumentException($"More than one Sku resource match was found. SkuName = {skuName}, Type = {type}, Location = {location}");
-            }
-
-            return resourceSku.Single();
-        }
-
-        private async Task MapSourceComputeOS(AllocateInput input, ResourceRecord resource)
-        {
-            if (input.Type == ResourceType.StorageArchive || input.Type == ResourceType.StorageFileShare)
-            {
-                // Capture source vm type
-                var resourceSku = await MapLogicalSkuToResourceSku(input.SkuName, ResourceType.ComputeVM, input.Location);
-                var targetOS = ((ResourcePoolComputeDetails)resourceSku.Details).OS;
-
-                // Persist target os type
-                var archiveShareResource = resource.GetStorageDetails();
-                archiveShareResource.SourceComputeOS = targetOS;
-            }
         }
     }
 }

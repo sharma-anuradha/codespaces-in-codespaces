@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     public interface IResourcePoolManager
     {
         /// <summary>
-        /// Tries to obtain resource record from a pool witht the target attributes.
+        /// Tries to obtain resource record from a pool with the target attributes.
         /// </summary>
         /// <param name="poolCode">Target pool code.</param>
         /// <param name="logger">Target logger.</param>

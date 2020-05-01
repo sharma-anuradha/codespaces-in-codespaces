@@ -2,21 +2,22 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using AutoMapper;
-using Moq;
-using Xunit;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
-using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies;
+using Moq;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
 {
@@ -25,6 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         private Guid EnvironmentId = Guid.NewGuid();
         private Guid ResourceId1 = Guid.NewGuid();
         private Guid ResourceId2 = Guid.NewGuid();
+        private Guid ResourceId3 = Guid.NewGuid();
         private string Reason = "Test";
         private string DefaultPoolCode = "PoolCode";
         private const AzureLocation DefaultLocation = AzureLocation.EastUs;
@@ -42,33 +44,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         public void Ctor_throws_if_null()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourcePool = new Mock<IResourcePoolManager>().Object;
-            var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>().Object;
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
-            var taskHelper = new Mock<ITaskHelper>().Object;
-            var mapper = new Mock<IMapper>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, null, null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, null, null, mapper));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, null, taskHelper, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null, resourceContinuationOperations, null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, resourceScalingStore, null, null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, resourcePool, null, null, null, null));
-            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(resourceRepository, null, null, null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, null, allocationStrategies));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(null, resourceContinuationOperations, null));
+            Assert.Throws<ArgumentNullException>(() => new ResourceBroker(resourceRepository, null, null));
         }
 
         [Fact]
         public void Ctor_ok()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourcePool = new Mock<IResourcePoolManager>().Object;
-            var resourceScalingStore = new Mock<IResourcePoolDefinitionStore>().Object;
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
-            var taskHelper = new Mock<ITaskHelper>().Object;
-            var mapper = new Mock<IMapper>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, resourceScalingStore, resourceContinuationOperations, taskHelper, mapper);
-
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies);
             Assert.NotNull(provider);
         }
 
@@ -88,7 +82,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool.Object, scalingStore.Object, resourceContinuationOperations, taskHelper, mapper);
+            var provider = new AllocationBasicStrategy(
+                resourceRepository, 
+                resourcePool.Object,
+                scalingStore.Object,
+                resourceContinuationOperations,
+                taskHelper,
+                mapper);
+
             var result = await provider.AllocateAsync(EnvironmentId, input, Reason, logger);
 
             Assert.NotNull(result);
@@ -112,9 +113,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool.Object, scalingStore.Object, resourceContinuationOperations, taskHelper, mapper);
+            var provider = new AllocationBasicStrategy(
+                resourceRepository,
+                resourcePool.Object,
+                scalingStore.Object,
+                resourceContinuationOperations,
+                taskHelper,
+                mapper);
 
             Assert.ThrowsAsync<OutOfCapacityException>(async () => await provider.AllocateAsync(EnvironmentId, input, Reason, logger));
+        }
+
+        [Fact]
+        public async void ResourceBroker_Allocate_Set_AskJustOneResource_ReturnsResource()
+        {
+            var input = BuildAllocateInput();
+            var rawResult = BuildResourceRecord();
+
+            var scalingStore = BuildResourceScalingStore();
+            var mapper = BuildMapper();
+            var taskHelper = new Mock<ITaskHelper>().Object;
+            var logger = BuildLogger().Object;
+
+            var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
+            var resourceRepository = new Mock<IResourceRepository>().Object;
+            var resourcePool = new Mock<IResourcePoolManager>();
+            resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
+
+            var provider = new AllocationBasicStrategy(
+                resourceRepository,
+                resourcePool.Object,
+                scalingStore.Object,
+                resourceContinuationOperations,
+                taskHelper,
+                mapper);
+            var result = await provider.AllocateAsync(EnvironmentId, new List<AllocateInput> { input }, Reason, logger);
+
+            Assert.NotNull(result);
+            Assert.True(result.Count() == 1);
+
+            Assert.Equal(rawResult.Created, result.First().Created);
+            Assert.Equal(rawResult.SkuName, result.First().SkuName);
+            Assert.Equal(rawResult.Type, result.First().Type);
         }
 
         [Fact]
@@ -131,8 +171,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
-            
-            var provider = new ResourceBroker(resourceRepository, resourcePool.Object, scalingStore.Object, resourceContinuationOperations, taskHelper, mapper);
+
+            var provider = new AllocationBasicStrategy(
+                resourceRepository,
+                resourcePool.Object,
+                scalingStore.Object,
+                resourceContinuationOperations,
+                taskHelper,
+                mapper);
 
             Assert.ThrowsAsync<ArgumentException>(async () => await provider.AllocateAsync(EnvironmentId, input, Reason, logger));
         }
@@ -142,16 +188,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildStartInput(ResourceId1);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
-            var logger = BuildLogger().Object;
-
-            var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourcePool = new Mock<IResourcePoolManager>().Object;
+            var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies);
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations, taskHelper, mapper);
+            var logger = BuildLogger().Object;
 
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartArchive, input, Reason, logger));
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartCompute, input, Reason, logger));
@@ -164,21 +207,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var input1 = BuildStartInput(ResourceId1);
             input1.Variables = variables;
             var input2 = BuildStartInput(ResourceId2);
-
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
+            var input3 = BuildStartInput(ResourceId3);
+            
             var logger = BuildLogger().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.StartEnvironmentAsync(EnvironmentId, input1.ResourceId, input2.ResourceId, null, variables, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.StartEnvironmentAsync(EnvironmentId, input1.ResourceId, input2.ResourceId, input3.ResourceId, null, variables, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>();
             resourceRepository.Setup(x => x.GetAsync(ResourceId1.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId1.ToString(), Type = ResourceType.ComputeVM })).Verifiable();
-            resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.StorageFileShare })).Verifiable();
+            resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.OSDisk })).Verifiable();
+            resourceRepository.Setup(x => x.GetAsync(ResourceId3.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.StorageFileShare })).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
-            var result = await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput> { input1, input2 }, Reason, logger);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies);
+            var result = await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput> { input1, input2, input3 }, Reason, logger);
 
             Assert.True(result);
             resourceContinuationOperations.Verify();
@@ -189,16 +233,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildStartInput(ResourceId1);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
+            var resourceRepository = new Mock<IResourceRepository>().Object;
+            var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
             var logger = BuildLogger().Object;
 
-            var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
-            var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourcePool = new Mock<IResourcePoolManager>().Object;
-
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies);
 
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput>() { input }, Reason, logger));
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartCompute, new List<StartInput>() { input, input, input }, Reason, logger));
@@ -212,9 +253,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var input1 = BuildStartInput(ResourceId1);
             var input2 = BuildStartInput(ResourceId2);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
             var logger = BuildLogger().Object;
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
@@ -224,7 +264,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.StorageFileShare })).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies);
             var result = await provider.StartAsync(EnvironmentId, StartAction.StartArchive, new List<StartInput> { input1, input2 }, Reason, logger);
 
             Assert.True(result);
@@ -236,16 +276,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildStartInput(ResourceId1);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
             var logger = BuildLogger().Object;
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
             var resourceRepository = new Mock<IResourceRepository>().Object;
-            var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations, allocationStrategies);
 
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartArchive, new List<StartInput>() { input }, Reason, logger));
             Assert.ThrowsAsync<NotSupportedException>(async () => await provider.StartAsync(EnvironmentId, StartAction.StartArchive, new List<StartInput>() { input, input, input }, Reason, logger));
@@ -258,17 +296,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildSuspendInput(ResourceId1);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
             var logger = BuildLogger().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
             resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies);
             var result = await provider.SuspendAsync(EnvironmentId, input, Reason, logger);
 
             Assert.True(result);
@@ -281,10 +318,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var input1 = BuildSuspendInput(ResourceId1);
             var input2 = BuildSuspendInput(ResourceId2);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
             var logger = BuildLogger().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
             resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
@@ -292,7 +328,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies);
             var result = await provider.SuspendAsync(EnvironmentId, new List<SuspendInput>() { input1, input2 }, Reason, logger);
 
             Assert.True(result);
@@ -304,17 +340,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var input = BuildDeleteInput(ResourceId1);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
             var logger = BuildLogger().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
             resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies);
             var result = await provider.DeleteAsync(EnvironmentId, input, Reason, logger);
 
             Assert.True(result);
@@ -326,9 +361,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var input1 = BuildDeleteInput(ResourceId1);
             var input2 = BuildDeleteInput(ResourceId2);
 
-            var scalingStore = BuildResourceScalingStore(true);
-            var mapper = BuildMapper();
-            var taskHelper = new Mock<ITaskHelper>().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
             var logger = BuildLogger().Object;
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
@@ -337,7 +371,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository, resourceContinuationOperations.Object, allocationStrategies);
             var result = await provider.DeleteAsync(EnvironmentId, new List<DeleteInput>() { input1, input2 }, Reason, logger);
 
             Assert.True(result);
@@ -366,14 +400,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var scalingStore = BuildResourceScalingStore(true);
             var mapper = BuildMapper();
             var taskHelper = new Mock<ITaskHelper>().Object;
-            var logger = BuildLogger().Object;
+            var logger = BuildLogger().Object; 
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
             var resourceRepository = new Mock<IResourceRepository>();
             resourceRepository.Setup(x => x.GetAsync(ResourceId1.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(resource)).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies);
             var result = await provider.StatusAsync(EnvironmentId, input, Reason, logger);
 
             Assert.Equal(resource.Id, result.ResourceId.ToString());
@@ -428,6 +464,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var mapper = BuildMapper();
             var taskHelper = new Mock<ITaskHelper>().Object;
             var logger = BuildLogger().Object;
+            var allocationStrategy = new Mock<IAllocationStrategy>().Object;
+            var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
             var resourceRepository = new Mock<IResourceRepository>();
@@ -435,7 +473,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(resource2)).Verifiable();
             var resourcePool = new Mock<IResourcePoolManager>().Object;
 
-            var provider = new ResourceBroker(resourceRepository.Object, resourcePool, scalingStore.Object, resourceContinuationOperations.Object, taskHelper, mapper);
+            var provider = new ResourceBroker(resourceRepository.Object, resourceContinuationOperations.Object, allocationStrategies);
             var resultList = await provider.StatusAsync(EnvironmentId, new List<StatusInput>() { input1, input2 }, Reason, logger);
 
             Assert.Equal(2, resultList.Count());
@@ -501,13 +539,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             return logger;
         }
 
-        private AllocateInput BuildAllocateInput()
+        private AllocateInput BuildAllocateInput(ResourceType type = DefaultType)
         {
             return new AllocateInput
             {
                 Location = DefaultLocation,
                 SkuName = DefaultLogicalSkuName,
-                Type = DefaultType
+                Type = type
             };
         }
 
@@ -543,15 +581,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             };
         }
 
-        private ResourceRecord BuildResourceRecord()
+        private ResourceRecord BuildResourceRecord(ResourceType type = DefaultType)
         {
             return new ResourceRecord
             {
+                Id = Guid.NewGuid().ToString(),
                 SkuName = DefaultResourceSkuName,
-                Type = DefaultType,
+                Type = type,
                 Created = DateTime.UtcNow,
                 IsAssigned = false,
-                Assigned = DateTime.UtcNow
+                Assigned = DateTime.UtcNow,
             };
         }
 

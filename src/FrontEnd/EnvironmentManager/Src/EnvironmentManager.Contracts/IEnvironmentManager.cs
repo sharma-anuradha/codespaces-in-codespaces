@@ -174,12 +174,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="cloudEnvironment">cloud environment.</param>
         /// <param name="computeResourceId">compute resource id.</param>
+        /// <param name="osDiskResourceId">os disk resource id.</param>
         /// <param name="storageResourceId">storage resource id.</param>
         /// <param name="archiveStorageResourceId">archive storage id.</param>
         /// <param name="cloudEnvironmentOptions">cloud environment options.</param>
         /// <param name="startCloudEnvironmentParameters">start environment params.</param>
         /// <param name="logger">logger.</param>
         /// <returns>resule.</returns>
-        Task<bool> StartComputeAsync(CloudEnvironment cloudEnvironment, Guid computeResourceId, Guid storageResourceId, Guid? archiveStorageResourceId, CloudEnvironmentOptions cloudEnvironmentOptions, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger);
+        Task<bool> StartComputeAsync(
+            CloudEnvironment cloudEnvironment,
+            Guid computeResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
+            Guid? archiveStorageResourceId,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            IDiagnosticsLogger logger);
     }
 }

@@ -63,5 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models
         /// Operation Reason.
         /// </summary>
         public static readonly string OperationReason = "OperationReason";
+
+        /// <summary>
+        /// Resource component record ids.
+        /// </summary>
+        public static readonly string ResourceComponentRecordIds = "ResourceComponentRecordIds";
     }
 }

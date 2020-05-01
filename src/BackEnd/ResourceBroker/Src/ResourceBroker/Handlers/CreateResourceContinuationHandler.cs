@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -17,6 +19,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -56,17 +60,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="serviceProvider">Service provider.</param>
         /// <param name="tokenProvider">Token provider.</param>
         /// <param name="imageUrlGenerator">Image URL generator.</param>
+        /// <param name="azureSubscriptionCatalog">Subscription catalog.</param>
+        /// <param name="diskProvider">Disk provider.</param>
         public CreateResourceContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IKeyVaultProvider keyVaultProvider,
+            IDiskProvider diskProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             IControlPlaneInfo controlPlaneInfo,
             ICapacityManager capacityManager,
             ITokenProvider tokenProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
-            IImageUrlGenerator imageUrlGenerator)
+            IImageUrlGenerator imageUrlGenerator,
+            IAzureSubscriptionCatalog azureSubscriptionCatalog)
             : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
@@ -77,6 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             CapacityManager = capacityManager;
             TokenProvider = tokenProvider;
             ImageUrlGenerator = imageUrlGenerator;
+            AzureSubscriptionCatalog = azureSubscriptionCatalog;
+            DiskProvider = diskProvider;
         }
 
         /// <inheritdoc/>
@@ -104,6 +114,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private IImageUrlGenerator ImageUrlGenerator { get; }
 
+        private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
+
+        private IDiskProvider DiskProvider { get; }
+
         /// <inheritdoc/>
         protected override async Task<ResourceRecordRef> FetchReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
         {
@@ -122,33 +136,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var result = default(ContinuationInput);
 
             // Base resource tags that will be attached
-            var resourceTags = new Dictionary<string, string>()
-            {
-                { ResourceTagName.ResourceId, resource.Value.Id ?? "unknown" },
-                { ResourceTagName.ResourceType, resource.Value.Type.ToString() },
-                { ResourceTagName.PoolLocation, resource.Value.Location ?? "unknown" },
-                { ResourceTagName.PoolSkuName, resource.Value.PoolReference.Dimensions.GetValueOrDefault("skuName", "unknown") },
-                { ResourceTagName.PoolDefinition, resource.Value.PoolReference.Code ?? "unknown" },
-                { ResourceTagName.PoolVersionDefinition, resource.Value.PoolReference.VersionCode ?? "unknown" },
-                { ResourceTagName.PoolImageFamilyName, resource.Value.PoolReference.Dimensions.GetValueOrDefault("imageFamilyName", "unknown") },
-                { ResourceTagName.PoolImageName, resource.Value.PoolReference.Dimensions.GetValueOrDefault("imageName", "unknown") },
-                { ResourceTagName.OperationReason, input.Reason ?? "unknown" },
-            };
+            var resourceTags = resource.Value.GetResourceTags(input.Reason);
 
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
                 // Ensure that the details type is correct
                 if (input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails)
                 {
-                    // Set up the selection criteria and select a subscription/location.
-                    var criteria = new List<AzureResourceCriterion>
+                    var components = new List<ResourceComponent>();
+                    var resourceLocation = default(IAzureResourceLocation);
+                    var existingOSDisk = default(ResourceRecord);
+
+                    if (input.Options is CreateComputeContinuationInputOptions computeOption)
                     {
-                        // SkuFamily must be first as the primary criterion for ordering candidate subscriptions.
-                        new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = computeDetails.SkuFamily, Required = computeDetails.Cores },
-                        new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
-                    };
-                    var resourceLocation = await SelectAzureResourceLocation(
-                        criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
+                        var osDiskId = computeOption.OSDiskResourceId;
+
+                        if (osDiskId != default)
+                        {
+                            existingOSDisk = await ResourceRepository.GetAsync(osDiskId, logger.NewChildLogger());
+
+                            components.Add(new ResourceComponent(ComponentType.OSDisk, existingOSDisk.AzureResourceInfo, osDiskId));
+                        }
+
+                        if (existingOSDisk?.AzureResourceInfo?.Name != default)
+                        {
+                            // Creates VM with an already existing resource.
+                            // TODO: janraj, this overrides the criteria based selection, because the OSDisk is still in the same place it was originally created. Future WI.
+                            // TODO: janraj, copy disk to target subscription and create VM. copying azure managed disks takes ~10 seconds.
+                            var azureSubscription = AzureSubscriptionCatalog.AzureSubscriptions.Single(x => x.SubscriptionId == existingOSDisk.AzureResourceInfo.SubscriptionId.ToString());
+                            var azureLocation = existingOSDisk.Location.ToEnum<AzureLocation>();
+
+                            resourceLocation = new AzureResourceLocation(
+                                azureSubscription,
+                                existingOSDisk.AzureResourceInfo.ResourceGroup,
+                                azureLocation);
+                        }
+                    }
+
+                    if (resourceLocation == default)
+                    {
+                        // Set up the selection criteria and select a subscription/location.
+                        var criteria = new List<AzureResourceCriterion>
+                        {
+                            // SkuFamily must be first as the primary criterion for ordering candidate subscriptions.
+                            new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = computeDetails.SkuFamily, Required = computeDetails.Cores },
+                            new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
+                        };
+
+                        resourceLocation = await SelectAzureResourceLocation(
+                            criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
+                    }
 
                     // Get VM Agent Blob Url
                     var token = await TokenProvider.GenerateVmTokenAsync(resource.Value.Id, logger);
@@ -170,6 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         ResourceTags = resourceTags,
                         ComputeOS = computeDetails.OS,
                         FrontDnsHostName = ControlPlaneInfo.Stamp.DnsHostName,
+                        CustomComponents = components,
                     };
                 }
                 else
@@ -283,22 +321,92 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             // Make sure we bring over the Resource info if we have it
-            if (resource.Value.AzureResourceInfo == null && result.AzureResourceInfo != null)
+            if (result.AzureResourceInfo != default)
             {
-                // Retry till we succeed
-                await logger.RetryOperationScopeAsync(
-                    $"{LogBaseName}_record_update",
-                    async (IDiagnosticsLogger innerLogger) =>
+                // Update the components provisioning status.
+                if (result.Status == OperationState.Succeeded && result.AzureResourceInfo.Components != default)
+                {
+                    foreach (var component in result.AzureResourceInfo.Components)
                     {
-                        resource.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
+                        if (component.ResourceRecordId != default)
+                        {
+                            var componentResourceReference = await FetchReferenceAsync(Guid.Parse(component.ResourceRecordId), logger.NewChildLogger());
 
-                        resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+                            if (component.AzureResourceInfo == default)
+                            {
+                                component.AzureResourceInfo = await AcquireComponentAzureResourceAsync(resource, result, logger, component, componentResourceReference);
 
-                        resource.Value = await ResourceRepository.UpdateAsync(resource.Value, innerLogger.NewChildLogger());
-                    });
+                                if (componentResourceReference.Value.ProvisioningStatus != result.Status ||
+                                    !component.AzureResourceInfo.Equals(componentResourceReference.Value.AzureResourceInfo))
+                                {
+                                    await UpdateRecordAsync(
+                                        input,
+                                        componentResourceReference,
+                                        (componentRecord, childLogger) =>
+                                        {
+                                            componentRecord.ProvisioningStatus = result.Status;
+                                            componentRecord.ProvisioningStatusChanged = DateTime.UtcNow;
+                                            componentRecord.AzureResourceInfo = component.AzureResourceInfo;
+
+                                            return true;
+                                        },
+                                        logger.NewChildLogger());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (resource.Value.AzureResourceInfo == default || !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo))
+                {
+                    // Retry till we succeed
+                    await logger.RetryOperationScopeAsync(
+                        $"{LogBaseName}_record_update",
+                        async (IDiagnosticsLogger innerLogger) =>
+                        {
+                            resource.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
+
+                            resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+
+                            resource.Value = await ResourceRepository.UpdateAsync(resource.Value, innerLogger.NewChildLogger());
+                        });
+                }
             }
 
             return result;
+        }
+
+        private async Task<AzureResourceInfo> AcquireComponentAzureResourceAsync(
+            ResourceRecordRef resource,
+            ResourceCreateContinuationResult resourceCreateContinuationResult,
+            IDiagnosticsLogger logger,
+            ResourceComponent component,
+            ResourceRecordRef componentResourceReference)
+        {
+            if (component.ComponentType == ComponentType.OSDisk)
+            {
+                var computeResourceTags = new Dictionary<string, string>
+                {
+                    [ResourceTagName.ResourceComponentRecordIds] = componentResourceReference.Value.Id,
+                };
+
+                var diskResourceResult = await DiskProvider.AcquireOSDiskAsync(
+                    new DiskProviderAcquireOSDiskInput()
+                    {
+                        VirtualMachineResourceInfo = resourceCreateContinuationResult.AzureResourceInfo,
+                        AzureVmLocation = resource.Value.Location.ToEnum<AzureLocation>(),
+                        OSDiskResourceTags = componentResourceReference.Value.GetResourceTags("QueuedAllocation"),
+                        AdditionalComputeResourceTags = computeResourceTags,
+                    },
+                    logger.NewChildLogger());
+
+                return diskResourceResult.AzureResourceInfo;
+            }
+            else
+            {
+                // No other case for now.
+                return default;
+            }
         }
 
         private async Task<ResourceRecordRef> CreateReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)

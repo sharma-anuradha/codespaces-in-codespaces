@@ -190,9 +190,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-                    // Use linux provider as this path will be same for windows and linux VMs.
-                    // TODO:: move common pieces in abstract base class.
-                    var deploymentManager = SelectDeploymentManager(ComputeOS.Linux);
+                    var deploymentManager = SelectDeploymentManager(input.ComputeOS);
 
                     var getRetryAttempt = int.TryParse(input.ContinuationToken, out var count);
                     var retryAttemptCount = getRetryAttempt ? count : 0;

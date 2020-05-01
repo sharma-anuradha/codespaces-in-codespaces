@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkf
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
@@ -46,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="resourceAllocationManager">The environment resource allocation manager.</param>
         /// <param name="workspaceManager">The workspace manager.</param>
         /// <param name="subscriptionManager">The subscription manager.</param>
+        /// <param name="resourceSelector">Resource selector.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
@@ -59,7 +61,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             IResourceAllocationManager resourceAllocationManager,
             IWorkspaceManager workspaceManager,
-            ISubscriptionManager subscriptionManager)
+            ISubscriptionManager subscriptionManager,
+            IResourceSelectorFactory resourceSelector)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
@@ -74,6 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
             SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
+            ResourceSelector = Requires.NotNull(resourceSelector, nameof(resourceSelector));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -101,6 +105,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IWorkspaceManager WorkspaceManager { get; }
 
         private ISubscriptionManager SubscriptionManager { get; }
+
+        private IResourceSelectorFactory ResourceSelector { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -357,6 +363,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
             ValidationUtil.IsRequired(cloudEnvironment.PlanId == plan.ResourceId);
 
+            SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
+
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_create",
                 async (childLogger) =>
@@ -474,15 +482,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     if (cloudEnvironmentOptions.QueueResourceAllocation)
                     {
-                        return await QueueCreateAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, plan, logger);
+                        return await QueueCreateAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, logger);
                     }
 
-                    // Allocate Storage and Compute
+                    // Allocate Storage, Disk and Compute depending on the sku type.
                     try
                     {
-                        var allocationResult = await AllocateComputeAndStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        var allocationResult = await AllocateRequiredResourcesAsync(cloudEnvironment, cloudEnvironmentOptions, childLogger.NewChildLogger());
                         cloudEnvironment.Storage = allocationResult.Storage;
                         cloudEnvironment.Compute = allocationResult.Compute;
+                        cloudEnvironment.OSDisk = allocationResult.OSDisk;
                     }
                     catch (Exception ex) when (ex is RemoteInvocationException || ex is HttpResponseStatusException)
                     {
@@ -509,6 +518,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         if (cloudEnvironment.Compute != null)
                         {
                             await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                        }
+
+                        if (cloudEnvironment.OSDisk != null)
+                        {
+                            await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.OSDisk.ResourceId, childLogger.NewChildLogger());
                         }
 
                         if (cloudEnvironment.Storage != null)
@@ -542,7 +556,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     await StartComputeAsync(
                         cloudEnvironment,
                         cloudEnvironment.Compute.ResourceId,
-                        cloudEnvironment.Storage.ResourceId,
+                        cloudEnvironment.OSDisk?.ResourceId,
+                        cloudEnvironment.Storage?.ResourceId,
                         null,
                         cloudEnvironmentOptions,
                         startCloudEnvironmentParameters,
@@ -614,6 +629,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                    await ResourceBrokerClient.DeleteAsync(
                                        Guid.Parse(cloudEnvironment.Id),
                                        computeIdToken.Value,
+                                       innerLogger.NewChildLogger());
+                               },
+                               swallowException: true);
+                        }
+
+                        var osDiskIdToken = cloudEnvironment.OSDisk?.ResourceId;
+                        if (osDiskIdToken != null)
+                        {
+                            await childLogger.OperationScopeAsync(
+                               $"{LogBaseName}_delete_osdisk",
+                               async (innerLogger) =>
+                               {
+                                   innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
+                                        .FluentAddBaseValue(nameof(osDiskIdToken), osDiskIdToken.Value);
+
+                                   await ResourceBrokerClient.DeleteAsync(
+                                       Guid.Parse(cloudEnvironment.Id),
+                                       osDiskIdToken.Value,
                                        innerLogger.NewChildLogger());
                                },
                                swallowException: true);
@@ -699,6 +732,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Connection.ConnectionSessionId = null;
                     }
 
+                    SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
+
+                    if (sku.ComputeOS == ComputeOS.Windows)
+                    {
+                        // Windows can only be queued resume because the VM has to be constructed from the given OS disk.
+                        return await QueueResumeAsync(cloudEnvironment, startCloudEnvironmentParameters, logger);
+                    }
+
                     // Allocate Compute
                     try
                     {
@@ -750,6 +791,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Setup variables for easier use
                     var computerResource = cloudEnvironment.Compute;
                     var storageResource = cloudEnvironment.Storage;
+                    var osDiskResource = cloudEnvironment.OSDisk;
                     var archiveStorageResource = storageResource.Type == ResourceType.StorageArchive
                         ? storageResource : null;
                     var isArchivedEnvironment = archiveStorageResource != null;
@@ -763,7 +805,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Persist updates madee to date
                     await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
-                    // Provision new stroage if environment has been archvied but don't switch until complete
+                    // Provision new storage if environment has been archvied but don't switch until complete
                     if (archiveStorageResource != null)
                     {
                         storageResource = await AllocateStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -776,7 +818,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     await StartComputeAsync(
                         cloudEnvironment,
                         computerResource.ResourceId,
-                        storageResource.ResourceId,
+                        osDiskResource?.ResourceId,
+                        storageResource?.ResourceId,
                         archiveStorageResource?.ResourceId,
                         null,
                         startCloudEnvironmentParameters,
@@ -900,7 +943,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_suspsend",
+                $"{LogBaseName}_suspend",
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
@@ -1185,7 +1228,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<bool> StartComputeAsync(
             CloudEnvironment cloudEnvironment,
             Guid computeResourceId,
-            Guid storageResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             CloudEnvironmentOptions cloudEnvironmentOptions,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
@@ -1220,11 +1264,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         ResourceId = computeResourceId,
                         Variables = environmentVariables,
                     },
-                    new StartRequestBody
-                    {
-                        ResourceId = storageResourceId,
-                    },
                 };
+
+            if (storageResourceId.HasValue)
+            {
+                resources.Add(new StartRequestBody
+                {
+                    ResourceId = storageResourceId.Value,
+                });
+            }
+
+            if (osDiskResourceId.HasValue)
+            {
+                resources.Add(new StartRequestBody
+                {
+                    ResourceId = osDiskResourceId.Value,
+                });
+            }
+
             if (archiveStorageResourceId.HasValue)
             {
                 resources.Add(new StartRequestBody
@@ -1245,7 +1302,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
            CloudEnvironment cloudEnvironment,
            CloudEnvironmentOptions cloudEnvironmentOptions,
            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
-           VsoPlanInfo plan,
            IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
@@ -1260,12 +1316,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Create the cloud environment record in the provisioning state -- before starting.
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                     // Highly unlikely, but still...
-                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Queued, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(
+                        cloudEnvironment,
+                        CloudEnvironmentState.Queued,
+                        CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
+                        string.Empty,
+                        childLogger.NewChildLogger());
 
                     // Persist core cloud environment record
                     cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
-                    await EnvironmentContinuation.CreateAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.LastStateUpdated, cloudEnvironmentOptions, startCloudEnvironmentParameters, "createnewenvironment", logger.NewChildLogger());
+                    await EnvironmentContinuation.CreateAsync(
+                        Guid.Parse(cloudEnvironment.Id),
+                        cloudEnvironment.LastStateUpdated,
+                        cloudEnvironmentOptions,
+                        startCloudEnvironmentParameters,
+                        "createnewenvironment",
+                        logger.NewChildLogger());
 
                     var result = new CloudEnvironmentServiceResult()
                     {
@@ -1291,6 +1358,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             return AllocateResourceAsync(cloudEnvironment, ResourceType.ComputeVM, logger);
+        }
+
+        private Task<CloudEnvironmentServiceResult> QueueResumeAsync(
+           CloudEnvironment cloudEnvironment,
+           StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+           IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_queue_resume",
+                async (childLogger) =>
+                {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
+                    // Initialize connection, if it is null, client will fail to get environment list.
+                    cloudEnvironment.Connection = new ConnectionInfo();
+
+                    // Create the cloud environment record in the provisioning state -- before starting.
+                    // This avoids a race condition where the record doesn't exist but the callback could be invoked.
+                    // Highly unlikely, but still...
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(
+                        cloudEnvironment,
+                        CloudEnvironmentState.Queued,
+                        CloudEnvironmentStateUpdateTriggers.StartEnvironment,
+                        string.Empty,
+                        childLogger.NewChildLogger());
+
+                    // Persist core cloud environment record
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                    await EnvironmentContinuation.ResumeAsync(
+                        Guid.Parse(cloudEnvironment.Id),
+                        cloudEnvironment.LastStateUpdated,
+                        startCloudEnvironmentParameters,
+                        "resumeenvironment",
+                        logger.NewChildLogger());
+
+                    var result = new CloudEnvironmentServiceResult()
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+
+                    return result;
+                },
+                async (ex, childLogger) =>
+                {
+                    await SuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                    return default(CloudEnvironmentServiceResult);
+                });
         }
 
         private Task<ResourceAllocation> AllocateStorageAsync(
@@ -1320,37 +1437,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return resultResponse.Single();
         }
 
-        private async Task<(ResourceAllocation Compute, ResourceAllocation Storage)> AllocateComputeAndStorageAsync(
-           CloudEnvironment cloudEnvironment,
-           IDiagnosticsLogger logger)
+        private async Task<ResourceAllocationResult> AllocateRequiredResourcesAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentOptions cloudEnvironmentOptions,
+            IDiagnosticsLogger logger)
         {
-            var computeRequest = new AllocateRequestBody
-            {
-                Type = ResourceType.ComputeVM,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-                QueueCreateResource = false,
-            };
-
-            var storageRequest = new AllocateRequestBody
-            {
-                Type = ResourceType.StorageFileShare,
-                SkuName = cloudEnvironment.SkuName,
-                Location = cloudEnvironment.Location,
-                QueueCreateResource = false,
-            };
-
-            var inputRequest = new List<AllocateRequestBody> { computeRequest, storageRequest };
+            var requests = await ResourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, cloudEnvironmentOptions, logger);
 
             var resultResponse = await ResourceAllocationManager.AllocateResourcesAsync(
                 Guid.Parse(cloudEnvironment.Id),
-                inputRequest,
+                requests,
                 logger.NewChildLogger());
 
-            var computeResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.ComputeVM);
-            var storageResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
+            var resourceAllocationResult = new ResourceAllocationResult()
+            {
+                Compute = resultResponse.SingleOrDefault(x => x.Type == ResourceType.ComputeVM),
+                Storage = resultResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare),
+                OSDisk = resultResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk),
+            };
 
-            return (computeResponse, storageResponse);
+            return resourceAllocationResult;
         }
 
         private bool IsValidSuspendTimeout(CloudEnvironment cloudEnvironment)
