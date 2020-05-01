@@ -44,17 +44,13 @@ const getEditors = (environmentInfo: IEnvironment) => {
 };
 
 const getPanel = (environmentInfo: IEnvironment) => {
-    const defaultPanel = {
-        visible: true,
-    };
-
     const githubUrl = environmentInfo.seed?.moniker;
     if (!isGitHubPRUrl(githubUrl)) {
-        return defaultPanel;
+        return;
     }
 
     return {
-        ...defaultPanel,
+        visible: true,
         containers: [{ id: 'comments', order: 0, active: true }]
     };
 }
