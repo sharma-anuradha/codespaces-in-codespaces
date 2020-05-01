@@ -3,10 +3,12 @@ param(
     [string]$AppSettingsFile,
     [Parameter(Mandatory)]
     [string]$ImageVersion,
-    [switch]$InternalImage
+    [switch]$InternalImage,
+    [switch]$IsPromotion
 )
 $Content = Get-Content $AppSettingsFile
-$Pattern = if ($InternalImage) { 'WindowsInternal(Staging)?' } else { 'Windows(Staging)?' }
+$Pattern = if ($InternalImage) { 'WindowsInternal' } else { 'Windows' }
+if (!$IsPromotion) { $Pattern += 'Staging' }
 Write-Host "Updating $Pattern in $AppSettingsFile"
 for ($Index = 0; $Index -lt $Content.Count;) {
     if ($Content[$Index++] -match """imageName"": ""$Pattern"",") {
