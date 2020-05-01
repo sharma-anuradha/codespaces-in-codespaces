@@ -109,7 +109,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                         this.errorCount = 0;
                         using (logger.BeginMethodScope(MethodEchoHealthHubSucceedScope))
                         {
-                            this.logger.LogDebug($"Succesfully received echo -> time(ms):{start.ElapsedMilliseconds} stamp:{result.Stamp} serviceId:{result.ServiceId} message:{result.Message}");
+                            this.logger.LogInformation($"Succesfully received echo -> time(ms):{start.ElapsedMilliseconds} stamp:{result.Stamp} serviceId:{result.ServiceId} message:{result.Message}");
                         }
 
                         IsHealthy = true;

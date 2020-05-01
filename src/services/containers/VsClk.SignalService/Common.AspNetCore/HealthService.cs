@@ -22,7 +22,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Return the overall health status of the app
+        /// Gets the overall health status of the app.
         /// </summary>
         public bool State
         {
@@ -33,9 +33,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        ///  return each provider health state
+        ///  return each provider health state.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Array of (Type, object) for each provider.</returns>
         public (Type, object)[] GetProvidersStatus()
         {
             return this.healthStatusProviders.Select(p => (p.GetType(), p.Status)).ToArray();

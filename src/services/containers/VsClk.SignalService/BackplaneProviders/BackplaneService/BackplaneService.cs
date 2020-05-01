@@ -59,21 +59,27 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             Logger.LogMethodScope(LogLevel.Error, exception, $"OnDisconnectedAsync -> serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(OnDisconnected));
         }
 
-        protected bool TrackDataChanged(DataChanged dataChanged)
+        protected bool TrackDataChanged(DataChanged dataChanged, TrackDataChangedOptions options = TrackDataChangedOptions.None)
         {
-            return BackplaneManager.TrackDataChanged(dataChanged);
+            return BackplaneManager.TrackDataChanged(dataChanged, options);
         }
 
         protected ActionBlock<(Stopwatch, T)> CreateActionBlock<T>(
             string name,
-            Func<T, Task> callbackItem,
-            int? maxDegreeOfParallelism)
-            where T : DataChanged
+            Func<TimeSpan, T, Task> callbackItem,
+            Func<T, string> changeIdResolver,
+            int? maxDegreeOfParallelism,
+            int? boundedCapacity)
         {
             var blockOptions = new ExecutionDataflowBlockOptions();
             if (maxDegreeOfParallelism.HasValue)
             {
                 blockOptions.MaxDegreeOfParallelism = maxDegreeOfParallelism.Value;
+            }
+
+            if (boundedCapacity.HasValue)
+            {
+                blockOptions.BoundedCapacity = boundedCapacity.Value;
             }
 
             ActionBlock<(Stopwatch, T)> actionBlock = null;
@@ -82,12 +88,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 {
                     try
                     {
-                        await callbackItem(item.Item2);
+                        await callbackItem(item.Item1.Elapsed, item.Item2);
                         Logger.LogMethodScope(LogLevel.Debug, $"input count:{actionBlock.InputCount}", name, item.Item1.ElapsedMilliseconds);
                     }
                     catch (Exception error)
                     {
-                        Logger.LogWarning(error, $"Failed to process change id:{item.Item2.ChangeId} block:{name}");
+                        Logger.LogWarning(error, $"Failed to process change id:{changeIdResolver(item.Item2)} block:{name}");
                     }
                 }, blockOptions);
             return actionBlock;

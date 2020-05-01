@@ -21,6 +21,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         [JsonProperty("stamp")]
         public string Stamp { get; set; }
 
+        [JsonProperty("serviceType")]
+        public string ServiceType { get; set; }
+
         [JsonProperty("metrics")]
         public ContactServiceMetrics Metrics { get; set; }
 

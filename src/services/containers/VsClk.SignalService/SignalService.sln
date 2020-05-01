@@ -70,6 +70,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackplaneService.CLI", "BackplaneProviders\BackplaneService.CLI\BackplaneService.CLI.csproj", "{772FEDB2-C2C5-48C7-9B3D-6681F122C5D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -188,6 +190,10 @@ Global
 		{4D7AE430-A753-4752-8488-4548E15B09D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D7AE430-A753-4752-8488-4548E15B09D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D7AE430-A753-4752-8488-4548E15B09D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{772FEDB2-C2C5-48C7-9B3D-6681F122C5D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{772FEDB2-C2C5-48C7-9B3D-6681F122C5D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{772FEDB2-C2C5-48C7-9B3D-6681F122C5D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{772FEDB2-C2C5-48C7-9B3D-6681F122C5D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -211,6 +217,7 @@ Global
 		{3E03E89C-33A6-4393-B348-034D2AE99730} = {F8547F92-92EF-447C-BA4B-416BCEAA217A}
 		{C890FC11-371A-4F28-8C37-1D90378B10C9} = {F8547F92-92EF-447C-BA4B-416BCEAA217A}
 		{F3E2B605-F29F-40B3-B807-52C95ED7C640} = {F8547F92-92EF-447C-BA4B-416BCEAA217A}
+		{772FEDB2-C2C5-48C7-9B3D-6681F122C5D5} = {F8547F92-92EF-447C-BA4B-416BCEAA217A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2E7F43C5-21DA-4025-BD03-6CEE8EB2EB2F}

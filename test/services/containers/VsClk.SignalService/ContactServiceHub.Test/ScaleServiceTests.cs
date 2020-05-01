@@ -547,7 +547,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 await Task.WhenAll(this.messageReceivedAsyncs.Select(c => c.Invoke(messageData, cancellationToken)));
             }
 
-            public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+            public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
             {
                 ContactDataInfo contactDataInfo;
                 if (!this.contactDataMap.TryGetValue(contactDataChanged.ContactId, out contactDataInfo))
@@ -557,6 +557,11 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 }
 
                 contactDataInfo.UpdateConnectionProperties(contactDataChanged);
+                await UpdateContactDataInfoAsync(contactDataChanged, contactDataInfo, cancellationToken);
+            }
+
+            public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+            {
                 var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
                     CreateChangeId(),
                     contactDataChanged.ServiceId,
@@ -566,8 +571,8 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                     contactDataInfo);
 
                 await Task.WhenAll(this.contactChangedAsyncs.Select(c => c.Invoke(contactDataInfoChanged, contactDataChanged.Data.Keys.ToArray(), cancellationToken)));
-                return contactDataInfo;
             }
+
 
             public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
             {
@@ -583,7 +588,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return Task.CompletedTask;
             }
 
-            public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
+            public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }

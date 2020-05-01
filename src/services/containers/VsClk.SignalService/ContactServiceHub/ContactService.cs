@@ -44,7 +44,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 backplaneManager.ContactChangedAsync += OnContactChangedAsync;
                 backplaneManager.MessageReceivedAsync += OnMessageReceivedAsync;
-                backplaneManager.MetricsFactory = () => ((ServiceId, options.Stamp), GetMetrics());
+                backplaneManager.MetricsFactory = () => ((ServiceId, options.Stamp, nameof(ContactService)), GetMetrics());
             }
         }
 
@@ -87,7 +87,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 FormatProvider,
                 (LoggerScopeHelpers.MethodPerfScope, start.ElapsedMilliseconds)))
             {
-                Logger.LogInformation($"initialProperties:{initialProperties?.ConvertToString(FormatProvider)}");
+                Logger.LogDebug($"initialProperties:{initialProperties?.ConvertToString(FormatProvider)}");
             }
         }
 
@@ -293,7 +293,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodSendMessage, contactReference, FormatProvider, (ContactServiceScopes.MessageTypeScope, messageType)))
             {
-                Logger.LogDebug($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType} body:{Format("{0:K}", body?.ToString())}");
+                Logger.LogInformation($"targetContact:{targetContactReference.ToString(FormatProvider)} messageType:{messageType}");
             }
 
             // Note: next line will enforce the contact who attempt to send the message to be already registered
@@ -537,19 +537,19 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     var selfContact = selfContactFactory();
                     stubContact.ResolvedContact = selfContact;
-                    this.resolvedContacts.AddOrUpdate(selfContact.ContactId, (key) =>
+                    this.resolvedContacts.AddOrUpdate(
+                        selfContact.ContactId,
+                        (key) =>
                         {
                             var set = new ConcurrentHashSet<StubContact>(new StubContactComparer());
                             set.Add(stubContact);
                             return set;
                         },
-#pragma warning disable SA1117 // Parameters should be on same line or separate lines
                         (key, value) =>
                         {
                             value.Add(stubContact);
                             return value;
                         });
-#pragma warning restore SA1117 // Parameters should be on same line or separate lines
 
                     await stubContact.SendUpdatePropertiesAsync(
                         connectionId,
@@ -649,13 +649,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 using (Logger.BeginContactReferenceScope(ContactServiceScopes.MethodOnMessageReceived, messageData.TargetContact, FormatProvider))
                 {
-                    Logger.LogDebug($"fromContact:{messageData.FromContact.ToString(FormatProvider)} messageType:{messageData.Type}");
+                    Logger.LogInformation($"changeId:{messageData.ChangeId} fromContact:{messageData.FromContact.ToString(FormatProvider)} messageType:{messageData.Type}");
                 }
 
+                // Note: since we typically receive the message trough a backplane rpc callback
+                // we will extract a 'raw' object instead of passing the JObject/JToken type in case
+                // the serialization was done using the Newtonsoft lib
                 await targetContact.SendReceiveMessageAsync(
                     messageData.FromContact,
                     messageData.Type,
-                    messageData.Body,
+                    NewtonsoftHelpers.ToRawObject(messageData.Body),
                     messageData.TargetContact.ConnectionId,
                     cancellationToken);
             }

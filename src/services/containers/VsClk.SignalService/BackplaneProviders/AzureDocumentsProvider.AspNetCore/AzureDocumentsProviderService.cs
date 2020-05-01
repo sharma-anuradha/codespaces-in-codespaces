@@ -41,7 +41,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger = logger;
         }
 
-        private (string ServiceId, string Stamp) ServiceInfo => (this.startup.ServiceId, this.startup.Stamp);
+        private (string ServiceId, string Stamp, string ServiceType) ServiceInfo => (this.startup.ServiceId, this.startup.Stamp, this.startup.ServiceType);
 
         private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
 

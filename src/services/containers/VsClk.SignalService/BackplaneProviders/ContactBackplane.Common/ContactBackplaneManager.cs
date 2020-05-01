@@ -18,7 +18,7 @@ using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Co
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// A backplane manager that can host multiple backplane providers
+    /// A backplane manager that can host multiple backplane providers.
     /// </summary>
     public class ContactBackplaneManager : BackplaneManagerBase<IContactBackplaneProvider, ContactBackplaneProviderSupportLevel, ContactServiceMetrics>,  IContactBackplaneManager
     {
@@ -34,15 +34,22 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public event OnMessageReceivedAsync MessageReceivedAsync;
 
-        public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
             await WaitAll(
                 GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactAsync(contactDataChanged, cancellationToken) as Task, p)),
                 nameof(IContactBackplaneProvider.UpdateContactAsync),
                 $"contactId:{ToTraceText(contactDataChanged.ContactId)}");
+        }
 
-            return null;
+        public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+        {
+            await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
+            await WaitAll(
+                GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactDataInfoAsync(contactDataChanged, contactDataInfo, cancellationToken) as Task, p)),
+                nameof(IContactBackplaneProvider.UpdateContactDataInfoAsync),
+                $"contactId:{ToTraceText(contactDataChanged.ContactId)}");
         }
 
         public async Task SendMessageAsync(

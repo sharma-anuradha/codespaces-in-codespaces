@@ -28,7 +28,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public async Task CreateAsync((string ServiceId, string Stamp) serviceInfo, DatabaseSettings databaseSettings, CancellationToken cancellationToken)
+        public async Task CreateAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, DatabaseSettings databaseSettings, CancellationToken cancellationToken)
         {
             var backplaneProvider = await AzureDocumentsProvider.CreateAsync(
                 serviceInfo,

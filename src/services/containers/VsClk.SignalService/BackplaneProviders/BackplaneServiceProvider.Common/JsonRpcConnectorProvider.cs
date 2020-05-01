@@ -24,6 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly int port;
         private readonly bool useMessagePack;
         private readonly Dictionary<string, Delegate> targetHandlers = new Dictionary<string, Delegate>();
+        private readonly AsyncSemaphore connectSemaphore = new AsyncSemaphore(1);
         private JsonRpc jsonRpc;
 
         public JsonRpcConnectorProvider(string host, int port, bool useMessagePack, ILogger logger)
@@ -39,45 +40,72 @@ namespace Microsoft.VsCloudKernel.SignalService
         public event EventHandler Disconnected;
 
         /// <inheritdoc/>
-        public bool IsConnected => this.jsonRpc != null;
+        public bool IsConnected => this.jsonRpc != null && !this.jsonRpc.IsDisposed;
 
         private ILogger Logger { get; }
 
         /// <inheritdoc/>
         public async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
-            var retries = 0;
-            while (true)
+            using (await connectSemaphore.EnterAsync(cancellationToken))
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                try
+                if (IsConnected)
                 {
-                    Logger.LogDebug($"ConnectAsync -> host:{this.host} port:{this.port} retries:{retries}");
-                    var tcpStream = await ConnectAsync(this.host, this.port, null, cancellationToken);
-                    Attach(tcpStream);
-
-                    Logger.LogDebug($"Succesfully connected...");
-                    break;
+                    // this thread just enter but the connection was already completed
+                    return;
                 }
-                catch (Exception err)
+
+                var retries = 0;
+                while (true)
                 {
-                    ++retries;
-                    Logger.LogDebug($"Failed to connect-> name:{err.GetType().Name} err:{err.Message}");
-                    await Task.Delay(2000, cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        Logger.Log(retries > 5 ? LogLevel.Information : LogLevel.Debug, $"ConnectAsync -> host:{this.host} port:{this.port} retries:{retries}");
+                        var tcpStream = await ConnectAsync(this.host, this.port, null, cancellationToken);
+                        Attach(tcpStream);
+
+                        Logger.LogDebug($"Succesfully connected...");
+                        break;
+                    }
+                    catch (Exception err)
+                    {
+                        ++retries;
+                        Logger.LogError(err, $"Failed to connect-> name:{err.GetType().Name} err:{err.Message}");
+                        await Task.Delay(2000, cancellationToken);
+                    }
                 }
             }
         }
 
         /// <inheritdoc/>
-        public Task<TResult> InvokeAsync<TResult>(string targetName, object[] arguments, CancellationToken cancellationToken)
+        public async Task<TResult> InvokeAsync<TResult>(string targetName, object[] arguments, CancellationToken cancellationToken)
         {
-            return this.jsonRpc.InvokeWithCancellationAsync<TResult>(targetName, arguments, cancellationToken);
+            EnsureConnected();
+            try
+            {
+                return await this.jsonRpc.InvokeWithCancellationAsync<TResult>(targetName, arguments, cancellationToken);
+            }
+            catch (SocketException socketException)
+            {
+                ForceDisconnect(socketException);
+                throw;
+            }
         }
 
         /// <inheritdoc/>
-        public Task SendAsync(string targetName, object[] arguments, CancellationToken cancellationToken)
+        public async Task SendAsync(string targetName, object[] arguments, CancellationToken cancellationToken)
         {
-            return this.jsonRpc.NotifyAsync(targetName, arguments);
+            EnsureConnected();
+            try
+            {
+                await this.jsonRpc.NotifyAsync(targetName, arguments);
+            }
+            catch (SocketException socketException)
+            {
+                ForceDisconnect(socketException);
+                throw;
+            }
         }
 
         /// <inheritdoc/>
@@ -154,21 +182,39 @@ namespace Microsoft.VsCloudKernel.SignalService
             return new JsonRpc(handler);
         }
 
+        private void ForceDisconnect(Exception error)
+        {
+            Logger.LogError(error, $"ForceDisconnect");
+            this.jsonRpc?.Dispose();
+        }
+
+        private void EnsureConnected()
+        {
+            if (!IsConnected)
+            {
+                throw new InvalidOperationException("json rpc not connected");
+            }
+        }
+
         private void Attach(Stream tcpStream)
         {
-            this.jsonRpc = this.useMessagePack ? CreateJsonRpcWithMessagePack(tcpStream) : new JsonRpc(tcpStream);
+            var jsonRpc = this.useMessagePack ? CreateJsonRpcWithMessagePack(tcpStream) : new JsonRpc(tcpStream);
             foreach (var kvp in this.targetHandlers)
             {
-                this.jsonRpc.AddLocalRpcMethod(kvp.Key, kvp.Value);
+                jsonRpc.AddLocalRpcMethod(kvp.Key, kvp.Value);
             }
 
-            this.jsonRpc.Disconnected += (s, e) =>
+            EventHandler<JsonRpcDisconnectedEventArgs> disconnectHandler = null;
+            disconnectHandler = (s, e) =>
             {
+                jsonRpc.Disconnected -= disconnectHandler;
                 Logger.LogError(e.Exception, $"Disconnected reason:{e.Reason}");
                 this.jsonRpc = null;
                 Disconnected?.Invoke(this, EventArgs.Empty);
             };
-            this.jsonRpc.StartListening();
+            jsonRpc.Disconnected += disconnectHandler;
+            jsonRpc.StartListening();
+            this.jsonRpc = jsonRpc;
         }
     }
 }

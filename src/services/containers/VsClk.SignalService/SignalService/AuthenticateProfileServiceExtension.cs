@@ -166,7 +166,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                         (LoggerScopeHelpers.MethodScope, MethodAuthenticateFailedScope),
                         (ValidTo, validTo)))
                     {
-                        logger.LogError(error, $"Error retrieving profile from Url:'{authenticateProfileServiceUri}'");
+                        logger.LogWarning(error, $"Error retrieving profile from Url:'{authenticateProfileServiceUri}'");
                     }
                 }
 

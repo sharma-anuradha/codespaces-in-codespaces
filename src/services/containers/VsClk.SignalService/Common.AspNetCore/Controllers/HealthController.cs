@@ -2,9 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
@@ -28,7 +30,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         public IActionResult GetAsync()
         {
             bool healthState = this.healthService.State;
-            this.logger.LogDebug($"State:{healthState}");
+            this.logger.Log(healthState ? LogLevel.Debug : LogLevel.Error, $"State:{healthState} => [{string.Join(',', this.healthService.GetProvidersStatus().Select(t => $"({t.Item1.GetFriendlyName()}, {t.Item2})"))}]");
 
             if (!healthState)
             {

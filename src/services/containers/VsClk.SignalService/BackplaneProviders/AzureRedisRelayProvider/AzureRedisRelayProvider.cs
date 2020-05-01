@@ -44,7 +44,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private IDatabaseAsync DatabaseAsync => this.redisConnectionPool.DatabaseAsync;
 
         public static async Task<AzureRedisRelayProvider> CreateAsync(
-            (string ServiceId, string Stamp) serviceInfo,
+            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
             RedisConnectionPool redisConnectionPool,
             ILogger<AzureRedisRelayProvider> logger)
         {
@@ -66,7 +66,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             return false;
         }
 
-        public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
+        public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
@@ -129,7 +129,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private async Task InitializeAsync((string ServiceId, string Stamp) serviceInfo)
+        private async Task InitializeAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo)
         {
             await ConectionSubscribeAsync(this.redisConnectionPool.SubscribeConnection);
         }

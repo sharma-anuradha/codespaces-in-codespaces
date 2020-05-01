@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -11,8 +10,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Threading;
-using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Client;
 using Microsoft.VsCloudKernel.SignalService.Common;
 
@@ -24,6 +21,7 @@ namespace SignalService.Client.CLI
     internal abstract class SignalRAppBase
     {
         private const string SignalRHubName = "signalrhub";
+        private const string SignalRHubDevName = "signalrhub-dev";
 
         private const string DefaultServiceEndpointBase = "http://localhost:5000/";
 
@@ -42,7 +40,7 @@ namespace SignalService.Client.CLI
         public async Task<int> RunAsync(Program cli)
         {
             string serviceEndpoint = cli.ServiceEndpointOption.Value();
-            HubProxyOptions = cli.HubName.HasValue() || serviceEndpoint?.EndsWith(SignalRHubName) == false ? HubProxyOptions.None : HubProxyOptions.UseSignalRHub;
+            HubProxyOptions = cli.HubName.HasValue() || !IsUniversalHubUri(serviceEndpoint) ? HubProxyOptions.None : HubProxyOptions.UseSignalRHub;
             HubName = cli.HubName.HasValue() ? cli.HubName.Value() : SignalRHubName;
             if (string.IsNullOrEmpty(serviceEndpoint))
             {
@@ -145,6 +143,16 @@ namespace SignalService.Client.CLI
         protected abstract Task HandleKeyAsync(char key);
 
         protected virtual bool CanProcessKey(char key) => true;
+
+        private static bool IsUniversalHubUri(string serviceEndpoint)
+        {
+            if (string.IsNullOrEmpty(serviceEndpoint))
+            {
+                return true;
+            }
+
+            return serviceEndpoint.EndsWith(SignalRHubName) || serviceEndpoint.EndsWith(SignalRHubDevName);
+        }
 
         private static TraceSource CreateTraceSource(string name)
         {

@@ -21,6 +21,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.warmupServices = warmupServices;
         }
 
+        public IHealthStatusProvider[] HealthStatusProviders => this.warmupServices.OfType<IHealthStatusProvider>().ToArray();
+
         public Task CompletedAsync()
         {
             return WarmupUtility.WhenAllWarmupCompletedAsync(this.warmupServices);

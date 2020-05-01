@@ -11,5 +11,11 @@
     <MessagePackVersion>1.7.3.7</MessagePackVersion>
     <Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version>3.1.3</Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version>
     <Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>3.1.3</Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>
+    <Microsoft_Extensions_CommandLineUtils>1.1.1</Microsoft_Extensions_CommandLineUtils>
+    <Microsoft_Extensions_Logging_Console_Version>3.1.1</Microsoft_Extensions_Logging_Console_Version>
+    <StackExchange_Redis_Version>2.0.601</StackExchange_Redis_Version>
+    <Microsoft_Azure_Cosmos>3.8.0</Microsoft_Azure_Cosmos>
+    <!-- override the version used by the VSO projects -->
+    <VsSaaSPackageVersion>1.0.29</VsSaaSPackageVersion>
   </PropertyGroup>
 </Project>

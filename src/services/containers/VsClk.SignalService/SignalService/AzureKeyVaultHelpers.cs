@@ -28,29 +28,31 @@ namespace Microsoft.VsCloudKernel.SignalService
             string keyVaultName,
             Func<string, bool> secretNameFilter)
         {
-            var keyVaultClient = CreateKeyVaultClient(applicationServicePrincipal);
-            var vaultBaseUrl = $"https://{keyVaultName}.vault.azure.net";
-            var pageSecretItems = await keyVaultClient.GetSecretsAsync(vaultBaseUrl);
-
-            var secretItems = new List<KeyValuePair<string, string>>();
-
-            while (true)
+            using (var keyVaultClient = CreateKeyVaultClient(applicationServicePrincipal))
             {
-                foreach (var secretItem in pageSecretItems.Where(s => secretNameFilter(s.Identifier.Name)))
+                var vaultBaseUrl = $"https://{keyVaultName}.vault.azure.net";
+                var pageSecretItems = await keyVaultClient.GetSecretsAsync(vaultBaseUrl);
+
+                var secretItems = new List<KeyValuePair<string, string>>();
+
+                while (true)
                 {
-                    var secretBundle = await keyVaultClient.GetSecretAsync(vaultBaseUrl, secretItem.Identifier.Name);
-                    secretItems.Add(new KeyValuePair<string, string>(secretItem.Identifier.Name, secretBundle.Value));
+                    foreach (var secretItem in pageSecretItems.Where(s => secretNameFilter(s.Identifier.Name)))
+                    {
+                        var secretBundle = await keyVaultClient.GetSecretAsync(vaultBaseUrl, secretItem.Identifier.Name);
+                        secretItems.Add(new KeyValuePair<string, string>(secretItem.Identifier.Name, secretBundle.Value));
+                    }
+
+                    if (string.IsNullOrEmpty(pageSecretItems.NextPageLink))
+                    {
+                        break;
+                    }
+
+                    pageSecretItems = await keyVaultClient.GetSecretsNextAsync(pageSecretItems.NextPageLink);
                 }
 
-                if (string.IsNullOrEmpty(pageSecretItems.NextPageLink))
-                {
-                    break;
-                }
-
-                pageSecretItems = await keyVaultClient.GetSecretsNextAsync(pageSecretItems.NextPageLink);
+                return secretItems.ToArray();
             }
-
-            return secretItems.ToArray();
         }
 
         private static IKeyVaultClient CreateKeyVaultClient(ApplicationServicePrincipal applicationServicePrincipal)

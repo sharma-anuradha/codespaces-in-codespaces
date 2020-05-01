@@ -3,31 +3,36 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
+using Microsoft.VsCloudKernel.Services.Backplane.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
     public abstract class BackplaneServiceProviderBase
     {
         private const int TimeoutConnectionMillisecs = 2000;
+        private const int MaxAttemptsToWait = 5;
         private const string RegisterServiceMethod = "RegisterService";
 
         private TaskCompletionSource<bool> connectedTcs;
+        private int numberOfAttempts;
 
         protected BackplaneServiceProviderBase(
             IBackplaneConnectorProvider backplaneConnectorProvider,
             string hostServiceId,
+            ILogger logger,
             CancellationToken stoppingToken)
         {
-            BackplaneConnectorProvider = backplaneConnectorProvider;
+            BackplaneConnectorProvider = Requires.NotNull(backplaneConnectorProvider, nameof(backplaneConnectorProvider));
             HostServiceId = hostServiceId;
+            Logger = Requires.NotNull(logger, nameof(logger));
 
             backplaneConnectorProvider.Disconnected += (s, e) =>
             {
+                this.numberOfAttempts = 0;
                 Task.Run(() => AttemptConnectAsync(stoppingToken)).Forget();
             };
         }
@@ -35,6 +40,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected IBackplaneConnectorProvider BackplaneConnectorProvider { get; }
 
         protected abstract string ServiceType { get; }
+
+        protected ILogger Logger { get; }
 
         protected string HostServiceId { get; }
 
@@ -55,8 +62,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             if (!IsConnected)
             {
+                if (this.numberOfAttempts > MaxAttemptsToWait)
+                {
+                    throw new BackplaneNotAvailableException();
+                }
+
                 if (await Task.WhenAny(ConnectedTask, Task.Delay(TimeoutConnectionMillisecs, cancellationToken)) != ConnectedTask)
                 {
+                    ++this.numberOfAttempts;
                     throw new TimeoutException("Waiting to connect on backplane server");
                 }
             }

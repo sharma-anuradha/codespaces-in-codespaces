@@ -15,7 +15,7 @@ using StackExchange.Redis;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Implements IBackplaneProvider based on an Azure redis cache
+    /// Implements IBackplaneProvider based on an Azure redis cache.
     /// </summary>
     public class AzureRedisContactsProvider : DocumentDatabaseProvider
     {
@@ -26,7 +26,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string ContactsId = "backplaneProvider:contacts";
         private const string MessagesId = "backplaneProvider:messages";
 
+        private const int ContactsDrainThreshold = 500;
+
         private readonly RedisConnectionPool redisConnectionPool;
+        private ChannelMessageQueue serviceDocumentsChannel;
+        private ChannelMessageQueue contactDocumentsChannel;
+        private ChannelMessageQueue messageDocumentsChannel;
 
         private AzureRedisContactsProvider(
             RedisConnectionPool redisConnectionPool,
@@ -40,7 +45,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private IDatabaseAsync DatabaseAsync => this.redisConnectionPool.DatabaseAsync;
 
         public static async Task<AzureRedisContactsProvider> CreateAsync(
-            (string ServiceId, string Stamp) serviceInfo,
+            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
             RedisConnectionPool redisConnectionPool,
             ILogger<AzureRedisContactsProvider> logger,
             IFormatProvider formatProvider)
@@ -102,6 +107,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var json = JsonConvert.SerializeObject(contactDocument);
             tasks.Add(DatabaseAsync.StringSetAsync(contactKey, json));
             tasks.Add(DatabaseAsync.PublishAsync(ContactsId, json));
+            tasks.Add(DrainChannelMessageQueue<ContactDocument>(this.contactDocumentsChannel, OnContactDocumentsChangedAsync, ContactsDrainThreshold));
             await Task.WhenAll(tasks);
         }
 
@@ -169,6 +175,35 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
+        private static async Task<ChannelMessageQueue> InitializeChannelMessageQueueAsync<T>(
+            ISubscriber subscriber,
+            RedisChannel redisChannel,
+            Func<IReadOnlyCollection<T>, CancellationToken, Task> onMessageCallback)
+        {
+            var channelMessageQueue = await subscriber.SubscribeAsync(redisChannel);
+            channelMessageQueue.OnMessage(message => onMessageCallback(new T[] { JsonConvert.DeserializeObject<T>(message.Message.ToString()) }, default));
+            return channelMessageQueue;
+        }
+
+        private async Task DrainChannelMessageQueue<T>(
+            ChannelMessageQueue channelMessageQueue,
+            Func<IReadOnlyCollection<T>, CancellationToken, Task> onMessageCallback,
+            int threshold)
+        {
+            if (channelMessageQueue.TryGetCount(out var count) && count > threshold)
+            {
+                Logger.LogDebug($"Drain channel:{channelMessageQueue.Channel} count:{count}");
+
+                ChannelMessage item;
+                var docs = new T[1];
+                while (channelMessageQueue.TryRead(out item))
+                {
+                    docs[0] = JsonConvert.DeserializeObject<T>(item.Message.ToString());
+                    await onMessageCallback(docs, default);
+                }
+            }
+        }
+
         private async Task<List<T>> GetDocumentsAsync<T>(RedisValue[] values)
         {
             return (await DatabaseAsync.StringGetAsync(values
@@ -184,7 +219,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .ToList();
         }
 
-        private async Task InitializeAsync((string ServiceId, string Stamp) serviceInfo)
+        private async Task InitializeAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo)
         {
             // define service Id
             await InitializeServiceIdAsync(serviceInfo);
@@ -195,36 +230,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         private async Task ConectionSubscribeAsync(ConnectionMultiplexer connection)
         {
             var subscriber = connection.GetSubscriber();
-
-            (await subscriber.SubscribeAsync(ServicesId)).OnMessage((message) =>
-            {
-                return OnServiceDocumentsChangedAsync(new IDocument[] { new Document(message.Message.ToString()) });
-            });
-            (await subscriber.SubscribeAsync(ContactsId)).OnMessage((message) =>
-            {
-                return OnContactDocumentsChangedAsync(new IDocument[] { new Document(message.Message.ToString()) });
-            });
-            (await subscriber.SubscribeAsync(MessagesId)).OnMessage((message) =>
-            {
-                return OnMessageDocumentsChangedAsync(new IDocument[] { new Document(message.Message.ToString()) });
-            });
-        }
-
-        private class Document : IDocument
-        {
-            private readonly JObject jObject;
-
-            public Document(string json)
-            {
-                this.jObject = JsonConvert.DeserializeObject<JObject>(json);
-            }
-
-            public string Id => this.jObject["id"].ToString();
-
-            public Task<T> ReadAsAsync<T>()
-            {
-                return Task.FromResult(this.jObject.ToObject<T>());
-            }
+            this.serviceDocumentsChannel = await InitializeChannelMessageQueueAsync<ServiceDocument>(subscriber, ServicesId, OnServiceDocumentsChangedAsync);
+            this.contactDocumentsChannel = await InitializeChannelMessageQueueAsync<ContactDocument>(subscriber, ContactsId, OnContactDocumentsChangedAsync);
+            this.messageDocumentsChannel = await InitializeChannelMessageQueueAsync<MessageDocument>(subscriber, MessagesId, OnMessageDocumentsChangedAsync);
         }
     }
 }

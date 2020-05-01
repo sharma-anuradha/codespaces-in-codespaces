@@ -19,8 +19,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// </summary>
     public class RelayBackplaneService : BackplaneService<IRelayBackplaneManager, IRelayBackplaneServiceNotification>, IHostedService
     {
+        private const int MaxSendDataHubBuffer = 5000;
+
         private const string HubIdScope = "HubId";
-        private readonly ActionBlock<(Stopwatch, SendRelayDataHub)> sendDataHubActionBlock;
 
         public RelayBackplaneService(
             IEnumerable<IRelayBackplaneServiceNotification> relayBackplaneServiceNotifications,
@@ -28,14 +29,28 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             IRelayBackplaneManager backplaneManager)
             : base(backplaneManager, relayBackplaneServiceNotifications, logger)
         {
-            this.sendDataHubActionBlock = CreateActionBlock<SendRelayDataHub>(
-                nameof(this.sendDataHubActionBlock),
-                (dataChanged) => BackplaneManager.SendDataHubAsync(dataChanged, DisposeToken),
-                1);
+            SendDataHubActionBlock = CreateActionBlock<SendRelayDataHub>(
+                nameof(SendDataHubActionBlock),
+                async (elapsed, dataChanged) =>
+                {
+                    try
+                    {
+                        await BackplaneManager.SendDataHubAsync(dataChanged, DisposeToken);
+                    }
+                    finally
+                    {
+                        TrackDataChanged(dataChanged, TrackDataChangedOptions.Refresh);
+                    }
+                },
+                item => item.ChangeId,
+                1,
+                MaxSendDataHubBuffer);
             BackplaneManager.ParticipantChangedAsync += OnParticipantChangedAsync;
             BackplaneManager.RelayHubChangedAsync += OnRelayHubChangedAsync;
             BackplaneManager.SendDataChangedAsync += OnSendDataChangedAsync;
         }
+
+        private ActionBlock<(Stopwatch, SendRelayDataHub)> SendDataHubActionBlock { get; }
 
         private RelayHubManager RelayHubManager { get; } = new RelayHubManager();
 
@@ -48,7 +63,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <inheritdoc/>
         public async Task DisposeAsync()
         {
-            await CompleteActionBlockAsync(this.sendDataHubActionBlock, nameof(this.sendDataHubActionBlock));
+            await CompleteActionBlockAsync(SendDataHubActionBlock, nameof(SendDataHubActionBlock));
         }
 
         public async Task<Dictionary<string, Dictionary<string, object>>> GetRelayInfoAsync(string hubId, CancellationToken cancellationToken)
@@ -69,10 +84,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 Log(dataChanged);
             }
 
-            TrackDataChanged(dataChanged);
+            TrackDataChanged(dataChanged, TrackDataChangedOptions.Lock);
 
             await FireSendDataHubAsync(dataChanged, cancellationToken);
-            await this.sendDataHubActionBlock.SendAsync((Stopwatch.StartNew(), dataChanged));
+            await SendDataHubActionBlock.SendAsync((Stopwatch.StartNew(), dataChanged));
         }
 
         public async Task NotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)

@@ -73,9 +73,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public bool EnableAuthentication { get; private set; }
 
-        protected override Type AppType => typeof(Startup);
+        public override string ServiceType => "SignalR";
 
-        protected override string ServiceType => "SignalR";
+        protected override Type AppType => typeof(Startup);
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -215,7 +215,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<ContactServiceHub, AuthorizedSignalRHub>>();
                 services.AddSingleton<IHubContextHost, SignalRHubContextHost<RelayServiceHub, AuthorizedSignalRHub>>();
             }
-            else
+
+            if (IsDevelopmentEnv || !EnableAuthentication)
             {
                 services.AddSingleton<IHubContextHost, HubContextHost<ContactServiceHub, ContactServiceHub>>();
 
@@ -265,6 +266,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
                         routes.MapHub<AuthorizedContactServiceHub>(PresenceHubMap);
+                        if (IsDevelopmentEnv)
+                        {
+                            routes.MapHub<SignalRHub>(SignalRHubDevMap);
+                            routes.MapHub<ContactServiceHub>(PresenceHubDevMap);
+                        }
                     }
                     else
                     {
@@ -284,6 +290,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         routes.MapHub<AuthorizedSignalRHub>(SignalRHubMap);
                         routes.MapHub<AuthorizedContactServiceHub>(PresenceHubMap);
+                        if (IsDevelopmentEnv)
+                        {
+                            routes.MapHub<SignalRHub>(SignalRHubDevMap);
+                            routes.MapHub<ContactServiceHub>(PresenceHubDevMap);
+                        }
                     }
                     else
                     {

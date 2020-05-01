@@ -24,7 +24,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
         }
 
-        protected override string ServiceType => "Backplane";
+        public override string ServiceType => "Backplane";
 
         protected override Type AppType => typeof(Startup);
 

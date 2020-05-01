@@ -18,7 +18,6 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class JsonRpcBackplaneServiceProviderService<TBackplaneManagerType, TBackplaneServiceProviderType> : WarmupServiceBase
         where TBackplaneServiceProviderType : BackplaneServiceProviderBase
     {
-        private const int Port = 3150;
         private const string RegisterProviderMethod = "RegisterProvider";
 
         private readonly IOptions<AppSettings> appSettingsProvider;
@@ -48,13 +47,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             var backplaneConnectorProvider = new JsonRpcConnectorProvider(
                 AppSettings.BackplaneHostName,
-                Port,
+                AppSettings.JsonRpcPort,
                 AppSettings.IsJsonRpcMessagePackEnabled,
                 this.logger);
             var backplaneProviderService = Activator.CreateInstance(
                 typeof(TBackplaneServiceProviderType),
                 backplaneConnectorProvider,
                 this.startup.ServiceId,
+                this.logger,
                 stoppingToken) as BackplaneServiceProviderBase;
             await backplaneProviderService.AttemptConnectAsync(stoppingToken);
 

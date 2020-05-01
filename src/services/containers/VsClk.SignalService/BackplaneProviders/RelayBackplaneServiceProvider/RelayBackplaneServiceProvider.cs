@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -14,8 +16,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         public RelayBackplaneServiceProvider(
             IBackplaneConnectorProvider backplaneConnectorProvider,
             string hostServiceId,
+            ILogger logger,
             CancellationToken stoppingToken)
-            : base(backplaneConnectorProvider, hostServiceId, stoppingToken)
+            : base(backplaneConnectorProvider, hostServiceId, logger, stoppingToken)
         {
             Func<SendRelayDataHub, CancellationToken, Task> onFireSendDataCallback = (dataChanged, ct) =>
             {
@@ -80,7 +83,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
+        public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }
@@ -94,19 +97,61 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public bool HandleException(string methodName, Exception error) => false;
 
-        public Task FireSendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
+        public async Task FireSendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
         {
-            return SendDataChangedAsync?.Invoke(dataChanged, cancellationToken);
+            try
+            {
+                if (SendDataChangedAsync != null)
+                {
+                    await SendDataChangedAsync.Invoke(dataChanged, cancellationToken);
+                }
+            }
+            catch (Exception err)
+            {
+                Logger.LogMethodScope(
+                    LogLevel.Error,
+                    err,
+                    $"Failed to handle hub data changeId:{dataChanged.ChangeId} hubId:{dataChanged.HubId} id:{dataChanged.UniqueId} type:{dataChanged.Type}",
+                    nameof(FireSendDataHubAsync));
+            }
         }
 
-        public Task FireNotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
+        public async Task FireNotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
         {
-            return ParticipantChangedAsync?.Invoke(dataChanged, cancellationToken);
+            try
+            {
+                if (ParticipantChangedAsync != null)
+                {
+                    await ParticipantChangedAsync.Invoke(dataChanged, cancellationToken);
+                }
+            }
+            catch (Exception err)
+            {
+                Logger.LogMethodScope(
+                    LogLevel.Error,
+                    err,
+                    $"Failed to handle participant data changeId:{dataChanged.ChangeId} hubId:{dataChanged.HubId} participantId:{dataChanged.ParticipantId} changeType:{dataChanged.ChangeType}",
+                    nameof(FireNotifyParticipantChangedAsync));
+            }
         }
 
-        public Task FireNotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
+        public async Task FireNotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
         {
-            return RelayHubChanged?.Invoke(dataChanged, cancellationToken);
+            try
+            {
+                if (RelayHubChanged != null)
+                {
+                    await RelayHubChanged.Invoke(dataChanged, cancellationToken);
+                }
+            }
+            catch (Exception err)
+            {
+                Logger.LogMethodScope(
+                    LogLevel.Error,
+                    err,
+                    $"Failed to handle hub changed changeId:{dataChanged.ChangeId} hubId:{dataChanged.HubId} changeType:{dataChanged.ChangeType}",
+                    nameof(FireNotifyParticipantChangedAsync));
+            }
         }
     }
 }

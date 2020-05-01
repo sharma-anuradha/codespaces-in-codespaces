@@ -27,7 +27,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.formatProvider = formatProvider;
         }
 
-        public async Task CreateAsync((string ServiceId, string Stamp) serviceInfo, RedisConnectionPool redisConnectionPool, CancellationToken cancellationToken)
+        public async Task CreateAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, RedisConnectionPool redisConnectionPool, CancellationToken cancellationToken)
         {
             var backplaneProvider = await AzureRedisContactsProvider.CreateAsync(
                 serviceInfo,
@@ -39,7 +39,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             // so when used with another provider with better support it will be discarded
             var supportsLevel = new ContactBackplaneProviderSupportLevel()
             {
-                GetContacts = BackplaneProviderSupportLevelConst.MinimumSupportThreshold,
+                GetContacts = BackplaneProviderSupportLevelConst.NoSupportThreshold,
+                GetContact = BackplaneProviderSupportLevelConst.NoSupportThreshold,
+                UpdateContact = BackplaneProviderSupportLevelConst.NoSupportThreshold,
             };
             this.backplaneManager.RegisterProvider(
                 backplaneProvider,

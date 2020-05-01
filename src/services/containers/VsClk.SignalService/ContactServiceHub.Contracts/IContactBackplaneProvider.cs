@@ -124,12 +124,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Update the contact properties
+        /// Update the contact properties.
         /// </summary>
         /// <param name="contactDataChanged">The contact data info that changed</param>
         /// <param name="cancellationToken"></param>
-        /// <returns>The consolidated contactd data info</returns>
-        Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
+        /// <returns>Completion task.</returns>
+        Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
     }
 
     /// <summary>
@@ -166,6 +166,18 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Task completion.</returns>
         Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Update a consolidated contact.
+        /// </summary>
+        /// <param name="contactDataChanged">Contact data change entity.</param>
+        /// <param name="contactDataInfo">The updated contact info.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Completion task.</returns>
+        Task UpdateContactDataInfoAsync(
+            ContactDataChanged<ConnectionProperties> contactDataChanged,
+            ContactDataInfo contactDataInfo,
+            CancellationToken cancellationToken);
     }
 
     /// <summary>

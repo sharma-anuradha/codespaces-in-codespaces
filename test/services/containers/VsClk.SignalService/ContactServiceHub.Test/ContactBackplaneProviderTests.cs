@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         public async Task InitializeAsync()
         {
             this.backplaneProvider = await CreateBackplaneProviderAsync();
-            await this.backplaneProvider.UpdateMetricsAsync(("serviceId", null), default, default);
+            await this.backplaneProvider.UpdateMetricsAsync(("serviceId", null, null), default, default);
         }
 
         public Task DisposeAsync()

@@ -32,7 +32,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// <inheritdoc/>
         Task IContactBackplaneServiceNotification.FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken)
         {
-            return InvokeAllAsync(nameof(IContactBackplaneServiceNotification.FireOnUpdateContactAsync), contactDataChanged, affectedProperties);
+            return NotifyAllAsync(nameof(IContactBackplaneServiceNotification.FireOnUpdateContactAsync), contactDataChanged, affectedProperties);
         }
 
         /// <inheritdoc/>
@@ -41,19 +41,19 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return InvokeAllAsync(nameof(IContactBackplaneServiceNotification.FireOnSendMessageAsync), messageData);
         }
 
-        public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>
-            BackplaneService.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken);
+        public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>
+            InvokeBackplaneService(b => b.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), nameof(UpdateMetricsAsync));
 
         public Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken) =>
-            BackplaneService.UpdateContactAsync(contactDataChanged, cancellationToken);
+            InvokeBackplaneService(b => b.UpdateContactAsync(contactDataChanged, cancellationToken), nameof(UpdateContactAsync));
 
         public Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken) =>
-            BackplaneService.GetContactDataAsync(contactId, cancellationToken);
+            InvokeBackplaneService(b => b.GetContactDataAsync(contactId, cancellationToken), nameof(UpdateMetricsAsync));
 
         public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken) =>
-            BackplaneService.GetContactsDataAsync(matchProperties, cancellationToken);
+            InvokeBackplaneService(b => b.GetContactsDataAsync(matchProperties, cancellationToken), nameof(GetContactsDataAsync));
 
         public Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken) =>
-            BackplaneService.SendMessageAsync(messageData, cancellationToken);
+            InvokeBackplaneService(b => b.SendMessageAsync(messageData, cancellationToken), nameof(SendMessageAsync));
     }
 }

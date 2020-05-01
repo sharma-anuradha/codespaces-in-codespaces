@@ -20,11 +20,13 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         where TServiceMetrics : struct
     {
         private const string MethodDisposeDataChanges = nameof(DisposeDataChangesAsync);
-        private const string MethodUpdateBackplaneMetrics = nameof(UpdateBackplaneMetrics);
+        private const string MethodUpdateBackplaneMetrics = nameof(UpdateBackplaneMetricsAsync);
+        private const string MethodDisposeExpiredDataChangesAsync = nameof(DisposeExpiredDataChangesAsync);
+        private const string BackplaneChangesCountProperty = "BackplaneChangesCount";
 
         private readonly object backplaneProvidersLock = new object();
         private readonly Dictionary<TBackplaneProvider, TBackplaneProviderSupportLevel> backplaneProviders = new Dictionary<TBackplaneProvider, TBackplaneProviderSupportLevel>();
-        private readonly Dictionary<string, (DateTime, DataChanged)> backplaneChanges = new Dictionary<string, (DateTime, DataChanged)>();
+        private readonly Dictionary<string, (DateTime, DataChanged, bool)> backplaneChanges = new Dictionary<string, (DateTime, DataChanged, bool)>();
         private readonly object backplaneChangesLock = new object();
 
         protected BackplaneManagerBase(ILogger logger, IDataFormatProvider formatProvider = null)
@@ -33,7 +35,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             FormatProvider = formatProvider;
         }
 
-        public Func<((string ServiceId, string Stamp), TServiceMetrics)> MetricsFactory { get; set; }
+        public Func<((string ServiceId, string Stamp, string ServiceType), TServiceMetrics)> MetricsFactory { get; set; }
 
         /// <summary>
         /// Gets the list of backplane providers, note this is a thread safe property
@@ -49,6 +51,17 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             }
         }
 
+        public int BackplaneChangesCount
+        {
+            get
+            {
+                lock (this.backplaneChangesLock)
+                {
+                    return this.backplaneChanges.Count;
+                }
+            }
+        }
+
         protected IDataFormatProvider FormatProvider { get; }
 
         protected ILogger Logger { get; }
@@ -59,7 +72,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
 
             Logger.LogDebug($"RunAsync");
 
-            await UpdateBackplaneMetrics(stoppingToken);
+            await UpdateBackplaneMetricsAsync(stoppingToken);
 
             var updateMetricsCounter = new SecondsCounter(BackplaneManagerConst.UpdateMetricsSecs, TimespanUpdateSecs);
             while (true)
@@ -67,7 +80,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
                 // update metrics if factory is defined
                 if (updateMetricsCounter.Next())
                 {
-                    await UpdateBackplaneMetrics(stoppingToken);
+                    await UpdateBackplaneMetricsAsync(stoppingToken);
                 }
 
                 // purge data changes (every 5 secs)
@@ -109,14 +122,14 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             OnRegisterProvider(backplaneProvider);
         }
 
-        public async Task UpdateBackplaneMetrics(
-            (string ServiceId, string Stamp) serviceInfo,
+        public async Task UpdateBackplaneMetricsAsync(
+            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
             TServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
             await WaitAll(
                 GetSupportedProviders(s => s.UpdateMetrics).Select(p => (p.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), p)),
-                nameof(UpdateBackplaneMetrics),
+                nameof(UpdateBackplaneMetricsAsync),
                 $"serviceId:{serviceInfo.ServiceId}");
         }
 
@@ -125,11 +138,11 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             const int SecondsExpired = 60;
             var expiredThreshold = DateTime.Now.Subtract(TimeSpan.FromSeconds(SecondsExpired));
 
-            KeyValuePair<string, (DateTime, DataChanged)>[] expiredCacheItems = null;
+            KeyValuePair<string, (DateTime, DataChanged, bool)>[] expiredCacheItems = null;
             lock (this.backplaneChangesLock)
             {
                 // Note: next block will remove the 'stale' changes
-                var possibleExpiredCacheItems = this.backplaneChanges.Where(kvp => kvp.Value.Item1 < expiredThreshold);
+                var possibleExpiredCacheItems = this.backplaneChanges.Where(kvp => !kvp.Value.Item3 && kvp.Value.Item1 < expiredThreshold);
                 if (maxCount.HasValue)
                 {
                     possibleExpiredCacheItems = possibleExpiredCacheItems.Take(maxCount.Value);
@@ -147,23 +160,51 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
 
             if (expiredCacheItems?.Length > 0)
             {
-                // have the backplane providers to dispose this items
-                await DisposeDataChangesAsync(expiredCacheItems.Select(i => i.Value.Item2).ToArray(), cancellationToken);
+                try
+                {
+                    // have the backplane providers to dispose this items
+                    await DisposeDataChangesAsync(expiredCacheItems.Select(i => i.Value.Item2).ToArray(), cancellationToken);
+                }
+                catch (Exception error)
+                {
+                    Logger.LogMethodScope(LogLevel.Error, error, "Failed to dispose expired data changes", MethodDisposeExpiredDataChangesAsync);
+                }
             }
         }
 
-        public bool TrackDataChanged(DataChanged dataChanged)
+        public bool TrackDataChanged(DataChanged dataChanged, TrackDataChangedOptions options = TrackDataChangedOptions.None)
         {
             lock (this.backplaneChangesLock)
             {
-                if (this.backplaneChanges.ContainsKey(dataChanged.ChangeId))
+                if (options.HasFlag(TrackDataChangedOptions.ForceRemove))
                 {
-                    return true;
+                    return this.backplaneChanges.Remove(dataChanged.ChangeId);
                 }
 
-                // track this data changed
-                this.backplaneChanges.Add(dataChanged.ChangeId, (DateTime.Now, dataChanged));
-                return false;
+                (DateTime, DataChanged, bool) item;
+                bool result = this.backplaneChanges.TryGetValue(dataChanged.ChangeId, out item);
+
+                bool isLocked = options.HasFlag(TrackDataChangedOptions.Lock);
+                if (result)
+                {
+                    if (options.HasFlag(TrackDataChangedOptions.Refresh))
+                    {
+                        item.Item1 = DateTime.Now;
+                    }
+
+                    if (options.HasFlag(TrackDataChangedOptions.Refresh) || item.Item3 != isLocked)
+                    {
+                        item.Item3 = isLocked;
+                        this.backplaneChanges[dataChanged.ChangeId] = item;
+                    }
+                }
+                else
+                {
+                    item = (DateTime.Now, dataChanged, isLocked);
+                    this.backplaneChanges.Add(dataChanged.ChangeId, item);
+                }
+
+                return result;
             }
         }
 
@@ -289,32 +330,43 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         private static bool ShouldLogException(Exception error)
         {
             return !(
+                error is BackplaneNotAvailableException ||
                 error is OperationCanceledException ||
                 error.GetType().Name == "ServiceUnavailableException");
         }
 
-        private async Task UpdateBackplaneMetrics(CancellationToken cancellationToken)
+        private async Task UpdateBackplaneMetricsAsync(CancellationToken cancellationToken)
         {
             if (MetricsFactory != null)
             {
                 var metrics = MetricsFactory();
 
-                // update metrics
-                await UpdateBackplaneMetricsWithLogging(metrics.Item1, metrics.Item2, cancellationToken);
+                try
+                {
+                    // update metrics
+                    await UpdateBackplaneMetricsWithLoggingAsync(metrics.Item1, metrics.Item2, cancellationToken);
+                }
+                catch (Exception error)
+                {
+                    Logger.LogMethodScope(LogLevel.Error, error, "Failed to update backplane metrics", MethodUpdateBackplaneMetrics);
+                }
             }
         }
 
-        private Task UpdateBackplaneMetricsWithLogging(
-            (string ServiceId, string Stamp) serviceInfo,
+        private async Task UpdateBackplaneMetricsWithLoggingAsync(
+            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
             TServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
             var memoryInfo = LoggerScopeHelpers.GetProcessMemoryInfo();
+            var cpuUsage = await LoggerScopeHelpers.GetCpuUsageForProcessAsync();
 
             var metricsScope = new List<(string, object)>();
             metricsScope.Add((LoggerScopeHelpers.MethodScope, MethodUpdateBackplaneMetrics));
             metricsScope.Add((LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize));
             metricsScope.Add((LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory));
+            metricsScope.Add((LoggerScopeHelpers.CpuUsageProperty, cpuUsage));
+            metricsScope.Add((BackplaneChangesCountProperty, BackplaneChangesCount));
             AddMetricsScope(metricsScope, metrics);
 
             using (LoggerScopeHelpers.BeginScope(Logger, metricsScope.ToArray()))
@@ -322,7 +374,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
                 Logger.LogInformation($"serviceInfo:{serviceInfo}");
             }
 
-            return UpdateBackplaneMetrics(serviceInfo, metrics, cancellationToken);
+            await UpdateBackplaneMetricsAsync(serviceInfo, metrics, cancellationToken);
         }
 
         private async Task DisposeDataChangesAsync(

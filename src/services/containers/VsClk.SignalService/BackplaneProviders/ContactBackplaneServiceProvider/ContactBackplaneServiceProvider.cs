@@ -6,18 +6,26 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
+
 using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
 using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
+    /// <summary>
+    /// This class is intented to update/receive data into/from a backplane service for multiple
+    /// contact services running on the same machine or AKS cluster.
+    /// </summary>
     public class ContactBackplaneServiceProvider : BackplaneServiceProviderBase, IContactBackplaneProvider
     {
         public ContactBackplaneServiceProvider(
             IBackplaneConnectorProvider backplaneConnectorProvider,
             string hostServiceId,
+            ILogger logger,
             CancellationToken stoppingToken)
-            : base(backplaneConnectorProvider, hostServiceId, stoppingToken)
+            : base(backplaneConnectorProvider, hostServiceId, logger, stoppingToken)
         {
             Func<ContactDataChanged<ContactDataInfo>, string[], CancellationToken, Task> onUpdateCallback = (contactDataChanged, affectedProperties, ct) =>
             {
@@ -58,11 +66,17 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public async Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            var result = await BackplaneConnectorProvider.InvokeAsync<ContactDataInfo>(nameof(UpdateContactAsync), new object[] { contactDataChanged }, cancellationToken);
-            return result;
+            await BackplaneConnectorProvider.SendAsync(nameof(UpdateContactAsync), new object[] { contactDataChanged }, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+        {
+            await EnsureConnectedAsync(cancellationToken);
+            await BackplaneConnectorProvider.InvokeAsync<ContactDataInfo>(nameof(UpdateContactDataInfoAsync), new object[] { contactDataChanged, contactDataInfo }, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -73,7 +87,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public async Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
+        public async Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
             await BackplaneConnectorProvider.InvokeAsync<object>(nameof(UpdateMetricsAsync), new object[] { serviceInfo, metrics }, cancellationToken);
@@ -88,14 +102,42 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public bool HandleException(string methodName, Exception error) => false;
 
-        public Task FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken)
+        public async Task FireOnUpdateContactAsync(ContactDataChanged<ContactDataInfo> contactDataChanged, string[] affectedProperties, CancellationToken cancellationToken)
         {
-            return ContactChangedAsync?.Invoke(contactDataChanged, affectedProperties, cancellationToken);
+            try
+            {
+                if (ContactChangedAsync != null)
+                {
+                    await ContactChangedAsync.Invoke(contactDataChanged, affectedProperties, cancellationToken);
+                }
+            }
+            catch (Exception err)
+            {
+                Logger.LogMethodScope(
+                    LogLevel.Error,
+                    err,
+                    $"Failed to handle contact update changeId:{contactDataChanged.ChangeId} id:{contactDataChanged.ContactId} type:{contactDataChanged.ChangeType}",
+                    nameof(FireOnUpdateContactAsync));
+            }
         }
 
-        public Task FireOnSendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
+        public async Task FireOnSendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
-            return MessageReceivedAsync?.Invoke(messageData, cancellationToken);
+            try
+            {
+                if (MessageReceivedAsync != null)
+                {
+                    await MessageReceivedAsync.Invoke(messageData, cancellationToken);
+                }
+            }
+            catch (Exception err)
+            {
+                Logger.LogMethodScope(
+                    LogLevel.Error,
+                    err,
+                    $"Failed to handle message payload changeId:{messageData.ChangeId} from:{messageData.FromContact} target:{messageData.TargetContact} type:{messageData.Type}",
+                    nameof(FireOnSendMessageAsync));
+            }
         }
     }
 }

@@ -4,13 +4,14 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsCloudKernel.SignalService.Common
 {
     /// <summary>
-    /// Helper class to allow pushing a scope usign a key value pair
+    /// Helper class to allow pushing a scope usign a key value pair.
     /// </summary>
     public static class LoggerScopeHelpers
     {
@@ -18,6 +19,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         public const string MethodPerfScope = "MethodPerf";
         public const string MemorySizeProperty = "MemorySize";
         public const string TotalMemoryProperty = "TotalMemory";
+        public const string CpuUsageProperty = "CpuUsage";
 
         public static IDisposable BeginScope(this ILogger logger, params (string, object)[] scopes)
         {
@@ -83,9 +85,66 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         {
             const long OneMb = 1024 * 1024;
 
+            /**
+             * Note: uncomment this code if you want to aggresively run the GC to track memory leaks.
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+             */
             using (var proc = Process.GetCurrentProcess())
             {
                 return (proc.WorkingSet64 / OneMb, GC.GetTotalMemory(false) / OneMb);
+            }
+        }
+
+        public static async Task<double> GetCpuUsageForProcessAsync()
+        {
+            var startTime = DateTime.UtcNow;
+            var startCpuUsage = GetCurrentProcessProcessorTime();
+
+            await Task.Delay(500);
+
+            var endTime = DateTime.UtcNow;
+            var endCpuUsage = GetCurrentProcessProcessorTime();
+
+            var cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
+            var totalMsPassed = (endTime - startTime).TotalMilliseconds;
+
+            var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
+
+            return cpuUsageTotal * 100;
+        }
+
+        public static string GetFriendlyName(this Type type)
+        {
+            string friendlyName = type.Name;
+            if (type.IsGenericType)
+            {
+                int iBacktick = friendlyName.IndexOf('`');
+                if (iBacktick > 0)
+                {
+                    friendlyName = friendlyName.Remove(iBacktick);
+                }
+
+                friendlyName += "<";
+                Type[] typeParameters = type.GetGenericArguments();
+                for (int i = 0; i < typeParameters.Length; ++i)
+                {
+                    string typeParamName = GetFriendlyName(typeParameters[i]);
+                    friendlyName += i == 0 ? typeParamName : "," + typeParamName;
+                }
+
+                friendlyName += ">";
+            }
+
+            return friendlyName;
+        }
+
+        private static TimeSpan GetCurrentProcessProcessorTime()
+        {
+            using (var proc = Process.GetCurrentProcess())
+            {
+                return proc.TotalProcessorTime;
             }
         }
     }

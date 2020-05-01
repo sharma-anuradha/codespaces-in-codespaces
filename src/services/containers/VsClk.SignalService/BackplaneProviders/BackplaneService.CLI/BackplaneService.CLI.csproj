@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>BackplaneService.CLI</AssemblyName>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <IsPublishable>true</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="$(Microsoft_Extensions_CommandLineUtils)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(Microsoft_Extensions_Logging_Console_Version)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BackplaneServiceProvider.Common\BackplaneServiceProvider.Common.csproj" />
+    <ProjectReference Include="..\ContactBackplaneServiceProvider\ContactBackplaneServiceProvider.csproj" />
+  </ItemGroup>
+
+</Project>

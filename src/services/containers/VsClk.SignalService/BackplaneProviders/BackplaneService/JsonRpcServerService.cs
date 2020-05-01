@@ -23,7 +23,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// </summary>
     public class JsonRpcServerService : BackgroundService
     {
-        private const int Port = 3150;
         private const string RegisterServiceMethod = "RegisterService";
 
         private readonly IEnumerable<IJsonRpcSessionFactory> jsonRpcSessionFactories;
@@ -45,8 +44,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var listener = CreateListener(Port);
+            var listener = CreateListener(AppSettings.JsonRpcPort);
             listener.Start();
+            Logger.LogInformation($"Listening json-rpc on port:{AppSettings.JsonRpcPort}");
 
             while (true)
             {

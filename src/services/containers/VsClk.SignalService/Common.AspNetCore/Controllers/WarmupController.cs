@@ -2,10 +2,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService.Controllers
 {
@@ -27,7 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         public async Task<IActionResult> GetAsync()
         {
             bool completedValue = await this.warmupService.CompletedValueAsync();
-            this.logger.LogDebug($"CompletedValue:{completedValue}");
+            this.logger.Log(completedValue ? LogLevel.Debug : LogLevel.Error, $"CompletedValue:{completedValue} => [{string.Join(',', this.warmupService.HealthStatusProviders.Select(p => $"({p.GetType().GetFriendlyName()}, {p.IsHealthy})"))}]");
 
             if (!completedValue)
             {

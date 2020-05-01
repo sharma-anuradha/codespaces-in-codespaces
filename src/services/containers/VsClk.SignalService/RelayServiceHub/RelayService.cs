@@ -40,7 +40,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 backplaneManager.SendDataChangedAsync += OnSendDataChangedAsync;
                 backplaneManager.ParticipantChangedAsync += OnNotifyParticipantChangedAsync;
                 backplaneManager.RelayHubChangedAsync += OnRelayHubChangedAsync;
-                backplaneManager.MetricsFactory = () => ((ServiceId, options.Stamp), GetMetrics());
+                backplaneManager.MetricsFactory = () => ((ServiceId, options.Stamp, nameof(RelayService)), GetMetrics());
             }
         }
 

@@ -4,20 +4,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.ChangeFeedProcessor;
-using Microsoft.Azure.Documents.ChangeFeedProcessor.PartitionManagement;
-using Microsoft.Azure.Documents.Client;
-using Microsoft.Azure.Documents.Linq;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -27,6 +21,8 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class AzureDocumentsProvider : DocumentDatabaseProvider, IContactBackplaneProvider
     {
         public static readonly string DatabaseId = "presenceService";
+
+        private const string DefaultPartitionKeyPath = "/_partitionKey";
 
         // RU values for production
         private const int ServicesRUThroughput = 400;
@@ -46,8 +42,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static readonly string LeaseCollectionBaseId = "leases-";
 
         private readonly DatabaseSettings databaseSettings;
-        private readonly List<IChangeFeedProcessor> feedProcessors = new List<IChangeFeedProcessor>();
-        private DocumentCollection providerLeaseColletion;
+        private readonly List<ChangeFeedProcessor> changeFeedProcessors = new List<ChangeFeedProcessor>();
+
+        private Container servicesContainer;
+        private Container contactsContainer;
+        private Container messagesContainer;
+        private Container providerLeaseContainer;
 
         private AzureDocumentsProvider(
             DatabaseSettings databaseSettings,
@@ -60,20 +60,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             Requires.NotNullOrEmpty(databaseSettings.AuthorizationKey, nameof(databaseSettings.AuthorizationKey));
 
             // initialize document client
-            Client = new DocumentClient(
-                new Uri(databaseSettings.EndpointUrl),
-                databaseSettings.AuthorizationKey,
-                new ConnectionPolicy
-                {
-                    ConnectionMode = ConnectionMode.Direct,
-                    ConnectionProtocol = Protocol.Tcp,
-                });
+            Client = new CosmosClient(
+                databaseSettings.EndpointUrl,
+                databaseSettings.AuthorizationKey);
         }
 
-        public DocumentClient Client { get; }
+        public CosmosClient Client { get; }
 
         public static async Task<AzureDocumentsProvider> CreateAsync(
-            (string ServiceId, string Stamp) serviceInfo,
+            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
             DatabaseSettings databaseSettings,
             ILogger<AzureDocumentsProvider> logger,
             IFormatProvider formatProvider,
@@ -85,9 +80,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 try
                 {
-                    await databaseBackplaneProvider.Client.DeleteDatabaseAsync(UriFactory.CreateDatabaseUri(DatabaseId));
+                    await databaseBackplaneProvider.Client.GetDatabase(DatabaseId).DeleteAsync();
                 }
-                catch (DocumentClientException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                catch (CosmosException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     // the database was not found
                 }
@@ -99,12 +94,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task DisposeInternalAsync()
         {
-            foreach (var feedProcessor in this.feedProcessors)
+            foreach (var feedProcessor in this.changeFeedProcessors)
             {
                 await feedProcessor.StopAsync();
             }
 
-            await Client.DeleteDocumentCollectionAsync(this.providerLeaseColletion.SelfLink);
+            await this.providerLeaseContainer.DeleteContainerAsync();
             Client.Dispose();
         }
 
@@ -112,7 +107,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             var results = Enumerable.Repeat(0, emails.Length).Select(i => new List<ContactDocument>()).ToArray();
 
-            var sqlParameters = new SqlParameterCollection();
+            var queryParameters = new List<(string, string)>();
             int next = 0;
             var emailIndexMap = new Dictionary<string, int>();
             var whereCondition = new StringBuilder();
@@ -127,14 +122,19 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 whereCondition.Append($"c.email = {paramName}");
                 emailIndexMap[email] = next;
-                sqlParameters.Add(new SqlParameter(paramName, email));
+                queryParameters.Add((paramName, email));
                 ++next;
             }
 
-            var queryable = Client.CreateDocumentQuery<ContactDocument>(
-                UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId), new SqlQuerySpec($"SELECT * FROM c where {whereCondition.ToString()}", sqlParameters));
+            var queryDefinition = new QueryDefinition($"SELECT * FROM c where {whereCondition.ToString()}");
+            queryParameters.ForEach(i => queryDefinition.WithParameter(i.Item1, i.Item2));
 
-            var allMatchingContacts = await ToListAsync(queryable, cancellationToken);
+            var allMatchingContacts = await ExecuteWithRetries(() =>
+            {
+                var feedIterator = this.contactsContainer.GetItemQueryIterator<ContactDocument>(queryDefinition);
+                return ToListAsync(feedIterator, cancellationToken);
+            });
+
             foreach (var item in allMatchingContacts)
             {
                 var emailBucket = results[emailIndexMap[item.Email]];
@@ -146,31 +146,27 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken)
         {
-            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId);
-            await Client.UpsertDocumentAsync(documentCollectionUri, serviceDocument, cancellationToken: cancellationToken);
+            var response = await ExecuteWithRetries(() => this.servicesContainer.UpsertItemAsync(serviceDocument, cancellationToken: cancellationToken));
         }
 
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)
         {
-            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, MessageCollectionId);
-            var response = await ExecuteWithRetries(() => Client.CreateDocumentAsync(documentCollectionUri, messageDocument, cancellationToken: cancellationToken));
+            var response = await ExecuteWithRetries(() => this.messagesContainer.CreateItemAsync(messageDocument, cancellationToken: cancellationToken));
         }
 
         protected override async Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
-            var documentCollectionUri = UriFactory.CreateDocumentCollectionUri(DatabaseId, ContactCollectionId);
-            var resonse = await ExecuteWithRetries(() => Client.UpsertDocumentAsync(documentCollectionUri, contactDocument, cancellationToken: cancellationToken));
+            var response = await ExecuteWithRetries(() => this.contactsContainer.UpsertItemAsync(contactDocument, cancellationToken: cancellationToken));
         }
 
         protected override async Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
-                var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ContactCollectionId, contactId);
-                var response = await ExecuteWithRetries(() => Client.ReadDocumentAsync<ContactDocument>(documentUri, cancellationToken: cancellationToken));
-                return response.Document;
+                var response = await ExecuteWithRetries(() => this.contactsContainer.ReadItemAsync<ContactDocument>(id: contactId, PartitionKey.None, cancellationToken: cancellationToken));
+                return response.Resource;
             }
-            catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            catch (CosmosException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
                 return null;
             }
@@ -178,58 +174,40 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task<List<ServiceDocument>> GetServiceDocuments(CancellationToken cancellationToken)
         {
-            var queryable = Client.CreateDocumentQuery<ServiceDocument>(
-                UriFactory.CreateDocumentCollectionUri(DatabaseId, ServiceCollectionId));
-
-            return await ToListAsync(queryable, cancellationToken);
+            return await ToListAsync(this.servicesContainer.GetItemQueryIterator<ServiceDocument>(), cancellationToken);
         }
 
-        protected override Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken)
+        protected override async Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken)
         {
-            var documentUri = UriFactory.CreateDocumentUri(DatabaseId, ServiceCollectionId, serviceId);
-            return Client.DeleteDocumentAsync(documentUri, cancellationToken: cancellationToken);
+            var response = await this.servicesContainer.DeleteItemAsync<ServiceDocument>(id: serviceId, PartitionKey.None, cancellationToken: cancellationToken);
         }
 
         protected override async Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken)
         {
             foreach (var changeId in changeIds)
             {
-                var documentUri = UriFactory.CreateDocumentUri(DatabaseId, MessageCollectionId, changeId);
                 try
                 {
-                    var response = await ExecuteWithRetries(() => Client.DeleteDocumentAsync(documentUri, cancellationToken: cancellationToken));
+                    var response = await ExecuteWithRetries(() => this.messagesContainer.DeleteItemAsync<MessageDocument>(changeId, PartitionKey.None, cancellationToken: cancellationToken));
                 }
-                catch (DocumentClientException e) when (e.StatusCode == HttpStatusCode.NotFound)
+                catch (CosmosException e) when (e.StatusCode == HttpStatusCode.NotFound)
                 {
                     // the record was not found
                 }
             }
         }
 
-        private static DocumentCollection CreateDocumentCollectionDefinition(string resourceId)
-        {
-            var collectionDefinition = new DocumentCollection();
-            collectionDefinition.Id = resourceId;
-            collectionDefinition.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
-            return collectionDefinition;
-        }
-
-        private static async Task<List<T>> ToListAsync<T>(IDocumentQuery<T> queryable, CancellationToken token)
+        private static async Task<List<T>> ToListAsync<T>(FeedIterator<T> feedIterator, CancellationToken token)
         {
             var list = new List<T>();
-            while (queryable.HasMoreResults)
+            while (feedIterator.HasMoreResults)
             {
-                // Note that ExecuteNextAsync can return many records in each call
-                var response = await queryable.ExecuteNextAsync<T>(token);
+                // Note that ReadNextAsync can return many records in each call
+                var response = await feedIterator.ReadNextAsync(token);
                 list.AddRange(response);
             }
 
             return list;
-        }
-
-        private static Task<List<T>> ToListAsync<T>(IQueryable<T> query, CancellationToken token)
-        {
-            return ToListAsync(query.AsDocumentQuery(), token);
         }
 
 #pragma warning disable SA1314 // Type parameter names should begin with T
@@ -243,209 +221,139 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     return await function();
                 }
-                catch (DocumentClientException de)
+                catch (CosmosException de)
                 {
                     if ((int)de.StatusCode != StatusCodes.Status429TooManyRequests)
                     {
                         throw;
                     }
 
-                    sleepTime = de.RetryAfter;
+                    sleepTime = de.RetryAfter.HasValue ? de.RetryAfter.Value : TimeSpan.FromMilliseconds(100);
                 }
                 catch (AggregateException ae)
                 {
-                    if (!(ae.InnerException is DocumentClientException ||
-                        ae.InnerExceptions.Any(e => e is DocumentClientException)))
+                    if (!(ae.InnerException is CosmosException ||
+                        ae.InnerExceptions.Any(e => e is CosmosException)))
                     {
                         throw;
                     }
 
-                    DocumentClientException de = (DocumentClientException)ae.InnerException;
+                    CosmosException de = (CosmosException)ae.InnerException;
                     if ((int)de.StatusCode != StatusCodes.Status429TooManyRequests)
                     {
                         throw;
                     }
 
-                    sleepTime = de.RetryAfter;
+                    sleepTime = de.RetryAfter.HasValue ? de.RetryAfter.Value : TimeSpan.FromMilliseconds(100);
                 }
 
                 await Task.Delay(sleepTime);
             }
         }
 
-        private Task OnServiceDocumentsChangedAsync(IReadOnlyList<Document> docs)
+        private async Task CreateChangeFeedProcessorAsync<TDocument>(
+            Container container,
+            Container leaseContainer,
+            string processorName,
+            string instanceName,
+            Func<IReadOnlyCollection<TDocument>, CancellationToken, Task> onDocumentsChanged)
         {
-            return OnServiceDocumentsChangedAsync(docs.Select(d => new AzureDocument(d)).ToList());
+            Logger.LogInformation($"CreateChangeFeedProcessorAsync collectionId:{container.Id} processorName:{processorName}");
+
+            var changeFeedProcessor = container
+                .GetChangeFeedProcessorBuilder<TDocument>(processorName, (changes, ct) => onDocumentsChanged(changes, ct))
+                    .WithLeaseContainer(leaseContainer)
+                    .WithInstanceName(instanceName)
+                    .Build();
+
+            await changeFeedProcessor.StartAsync();
+            this.changeFeedProcessors.Add(changeFeedProcessor);
         }
 
-        private Task OnContactDocumentsChangedAsync(IReadOnlyList<Document> docs)
-        {
-            return OnContactDocumentsChangedAsync(docs.Select(d => new AzureDocument(d)).ToList());
-        }
-
-        private Task OnMessageDocumentsChangedAsync(IReadOnlyList<Document> docs)
-        {
-            return OnMessageDocumentsChangedAsync(docs.Select(d => new AzureDocument(d)).ToList());
-        }
-
-        /// <summary>
-        /// Create a change feed processor based on a collection id
-        /// </summary>
-        /// <param name="collectionId">The target collection id</param>
-        /// <param name="leaseCollectionId">The lease collection id to use</param>
-        /// <param name="hostName">Reference host name</param>
-        /// <param name="onDocumentsChanged">Callback</param>
-        /// <returns></returns>
-        private async Task<IChangeFeedProcessor> CreateChangeFeedProcessorAsync(
-            string collectionId,
-            string leaseCollectionId,
-            string hostName,
-            Func<IReadOnlyList<Document>, Task> onDocumentsChanged)
-        {
-            Logger.LogInformation($"CreateChangeFeedProcessorAsync collectionId:{collectionId} hostName:{hostName}");
-
-            var feedCollectionInfo = new DocumentCollectionInfo()
-            {
-                DatabaseName = DatabaseId,
-                CollectionName = collectionId,
-                Uri = new Uri(this.databaseSettings.EndpointUrl),
-                MasterKey = this.databaseSettings.AuthorizationKey,
-            };
-
-            var leaseCollectionInfo = new DocumentCollectionInfo()
-            {
-                DatabaseName = DatabaseId,
-                CollectionName = leaseCollectionId,
-                Uri = new Uri(this.databaseSettings.EndpointUrl),
-                MasterKey = this.databaseSettings.AuthorizationKey,
-            };
-
-            var builder = new ChangeFeedProcessorBuilder();
-            var feedProcessor = await builder
-                .WithHostName(hostName)
-                .WithFeedCollection(feedCollectionInfo)
-                .WithLeaseCollection(leaseCollectionInfo)
-                .WithObserverFactory(new CallbackFeedObserverFactory(hostName, onDocumentsChanged, Logger))
-                .BuildAsync();
-
-            await feedProcessor.StartAsync();
-            return feedProcessor;
-        }
-
-        private async Task InitializeAsync((string ServiceId, string Stamp) serviceInfo, bool isProduction)
+        private async Task InitializeAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, bool isProduction, CancellationToken cancellationToken = default)
         {
             Logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
             // Create the database
-            var databaseResponse = await Client.CreateDatabaseIfNotExistsAsync(new Database { Id = DatabaseId });
+            Database database = await Client.CreateDatabaseIfNotExistsAsync(DatabaseId);
 
             // Create 'services'
             Logger.LogInformation($"Creating Collection:{ServiceCollectionId}");
-            await Client.CreateDocumentCollectionIfNotExistsAsync(
-                UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(ServiceCollectionId),
-                new RequestOptions
-                {
-                    OfferThroughput = isProduction ? ServicesRUThroughput : ServicesRUThroughputDev,
-                });
+            this.servicesContainer = await database.CreateContainerIfNotExistsAsync(
+                ServiceCollectionId,
+                DefaultPartitionKeyPath,
+                isProduction ? ServicesRUThroughput : ServicesRUThroughputDev);
 
             // Ensure we create an entry that backup our leases collection
             await InitializeServiceIdAsync(serviceInfo);
 
             // Create 'contacts'
             Logger.LogInformation($"Creating Collection:{ContactCollectionId}");
-            await Client.CreateDocumentCollectionIfNotExistsAsync(
-                UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(ContactCollectionId),
-                new RequestOptions
-                {
-                    OfferThroughput = isProduction ? ContactsRUThroughput : ContactsRUThroughputDev,
-                });
+            this.contactsContainer = await database.CreateContainerIfNotExistsAsync(
+                ContactCollectionId,
+                DefaultPartitionKeyPath,
+                isProduction ? ContactsRUThroughput : ContactsRUThroughputDev);
 
             // Create 'message'
             Logger.LogInformation($"Creating Collection:{MessageCollectionId}");
-            await Client.CreateDocumentCollectionIfNotExistsAsync(
-                UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(MessageCollectionId),
-                new RequestOptions
-                {
-                    OfferThroughput = isProduction ? MessageRUThroughput : MessageRUThroughputDev,
-                });
+            this.messagesContainer = await database.CreateContainerIfNotExistsAsync(
+                MessageCollectionId,
+                DefaultPartitionKeyPath,
+                isProduction ? MessageRUThroughput : MessageRUThroughputDev);
 
             // cleanup all 'stale' leases collections
             var servicesIds = (await GetServiceDocuments(CancellationToken.None)).Select(d => d.Id);
-            var staleLeaseCollections = Client.CreateDocumentCollectionQuery(databaseResponse.Resource.SelfLink)
-                .ToList()
-                .Where(d => d.Id.StartsWith(LeaseCollectionBaseId) && !servicesIds.Contains(d.Id.Substring(LeaseCollectionBaseId.Length)));
+            var allContainers = await ToListAsync(database.GetContainerQueryIterator<ContainerProperties>(), cancellationToken);
+            var staleLeaseContainers = allContainers
+                .Where(props => props.Id.StartsWith(LeaseCollectionBaseId) && !servicesIds.Contains(props.Id.Substring(LeaseCollectionBaseId.Length)));
 
-            foreach (var docCollection in staleLeaseCollections)
+            foreach (var staleLeaseContainer in staleLeaseContainers)
             {
                 try
                 {
-                    Logger.LogInformation($"Delete stale lease collection:{docCollection.Id}");
-                    await Client.DeleteDocumentCollectionAsync(docCollection.SelfLink);
+                    Logger.LogInformation($"Delete stale lease collection:{staleLeaseContainer.Id}");
+                    await database.GetContainer(staleLeaseContainer.Id).DeleteContainerAsync();
                 }
                 catch (Exception error)
                 {
-                    Logger.LogError(error, $"Failed to delete stale lease collection:{docCollection.Id}");
+                    Logger.LogError(error, $"Failed to delete stale lease collection:{staleLeaseContainer.Id}");
                 }
             }
 
-            var leaseCollectionId = $"{LeaseCollectionBaseId}{serviceInfo.ServiceId}";
+            var leaseContainerId = $"{LeaseCollectionBaseId}{serviceInfo.ServiceId}";
 
             // Create 'leases'
-            Logger.LogInformation($"Creating Collection:{leaseCollectionId}");
-            this.providerLeaseColletion = (await Client.CreateDocumentCollectionIfNotExistsAsync(
-                UriFactory.CreateDatabaseUri(DatabaseId),
-                CreateDocumentCollectionDefinition(leaseCollectionId),
-                new RequestOptions
-                {
-                    OfferThroughput = isProduction ? LeasesRUThroughput : LeasesRUThroughputDev,
-                })).Resource;
+            Logger.LogInformation($"Creating Collection:{leaseContainerId}");
+            this.providerLeaseContainer = await database.CreateContainerIfNotExistsAsync(
+                leaseContainerId,
+                "/id",
+                isProduction ? LeasesRUThroughput : LeasesRUThroughputDev);
+
+            var instanceName = $"{serviceInfo.ServiceId}-instance";
 
             // Create 'services' processor
-            this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
-                ServiceCollectionId,
-                leaseCollectionId,
+            await CreateChangeFeedProcessorAsync<ServiceDocument>(
+                this.servicesContainer,
+                this.providerLeaseContainer,
                 "PresenceServiceR-Services",
-                OnServiceDocumentsChangedAsync));
+                instanceName,
+                OnServiceDocumentsChangedAsync);
 
             // Create 'contacts' processor
-            this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
-                ContactCollectionId,
-                leaseCollectionId,
+            await CreateChangeFeedProcessorAsync<ContactDocument>(
+                this.contactsContainer,
+                this.providerLeaseContainer,
                 "PresenceServiceR-Contacts",
-                OnContactDocumentsChangedAsync));
+                instanceName,
+                OnContactDocumentsChangedAsync);
 
             // Create 'message' processor
-            this.feedProcessors.Add(await CreateChangeFeedProcessorAsync(
-                MessageCollectionId,
-                leaseCollectionId,
+            await CreateChangeFeedProcessorAsync<MessageDocument>(
+                this.messagesContainer,
+                this.providerLeaseContainer,
                 "PresenceServiceR-Messages",
-                OnMessageDocumentsChangedAsync));
-        }
-
-        private class AzureDocument : IDocument
-        {
-            private Document azureDocument;
-
-            public AzureDocument(Document azureDocument)
-            {
-                this.azureDocument = azureDocument;
-            }
-
-            public string Id => this.azureDocument.Id;
-
-            public async Task<T> ReadAsAsync<T>()
-            {
-                using (var ms = new MemoryStream())
-                using (var reader = new StreamReader(ms))
-                {
-                    this.azureDocument.SaveTo(ms);
-                    ms.Position = 0;
-                    return JsonConvert.DeserializeObject<T>(await reader.ReadToEndAsync());
-                }
-            }
+                instanceName,
+                OnMessageDocumentsChangedAsync);
         }
     }
 }

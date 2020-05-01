@@ -130,7 +130,7 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
                 return Task.CompletedTask;
             }
 
-            public Task UpdateMetricsAsync((string ServiceId, string Stamp) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
+            public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }

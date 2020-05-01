@@ -17,6 +17,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 case "email":
                     return "E";
 
+                // from our factory liveshare properties being published
+                case "avatarUri":
+                case "name":
                 // ContactProperties.ContactId
                 case "contactId":
                 // ContactProperties.IdReserved

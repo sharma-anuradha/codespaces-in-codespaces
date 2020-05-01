@@ -7,8 +7,7 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.ChangeFeedProcessor" Version="$(AzureDocumentDBChangeFeedProcessorPackageVersion)" />
-    <PackageReference Include="Microsoft.Azure.DocumentDB.Core" Version="$(AzureDocumentDBCorePackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="$(Microsoft_Azure_Cosmos)" />
     <PackageReference Include="Microsoft.Azure.Management.CosmosDB.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
   </ItemGroup>
 

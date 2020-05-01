@@ -17,7 +17,7 @@ using ContactDataInfo = System.Collections.Generic.IDictionary<string, System.Co
 namespace Microsoft.VsCloudKernel.BackplaneService
 {
     /// <summary>
-    /// Implements IBackplaneServiceDataProvider interface using memory storage types
+    /// Implements IBackplaneServiceDataProvider interface using memory storage types.
     /// </summary>
     public class MemoryBackplaneDataProvider : IBackplaneServiceDataProvider
     {
@@ -29,17 +29,21 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             this.formatProvider = formatProvider;
         }
 
+        public int TotalContacts => Contacts.Count;
+
+        public int TotalConnections => Contacts.Values.Sum(item => item.ConnectionsCount);
+
         public string[] ActiveServices { get; set; } = Array.Empty<string>();
 
         /// <summary>
-        /// Store a dictionary with contact data info
+        /// Gets the dictionary with contact data info in json format.
         /// </summary>
         private ConcurrentDictionary<string, ContactDataInfoHolder> Contacts { get; } = new ConcurrentDictionary<string, ContactDataInfoHolder>();
 
         private ILogger Logger { get; }
 
         /// <summary>
-        /// Dictionary of email -> contactId
+        /// Gets the Dictionary of email -> contactId.
         /// </summary>
         private ConcurrentDictionary<string, string> Emails { get; } = new ConcurrentDictionary<string, string>();
 
@@ -70,7 +74,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return Task.FromResult<ContactDataInfo>(null);
         }
 
-        public Task<ContactDataInfo> UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        public Task<ContactDataInfo> UpdateContactDataChangedAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
             var result = Contacts.AddOrUpdate(
                 contactDataChanged.ContactId,
@@ -94,6 +98,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             LogUpdateContact(contactDataChanged.ContactId, nameof(UpdateContactAsync));
             return Task.FromResult(result.Data);
+        }
+
+        public Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        {
+            return UpdateContactDataChangedAsync(contactDataChanged, cancellationToken);
         }
 
         public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] allMatchProperties, CancellationToken cancellationToken)
@@ -128,7 +137,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         }
 
         /// <summary>
-        /// Thread safe to hold a ContactDataInfo structure
+        /// Thread safe to hold a ContactDataInfo structure.
         /// </summary>
         private class ContactDataInfoHolder
         {
@@ -144,6 +153,17 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             {
                 // ensure we clone the structure we hold
                 this.contactDataInfo = contactDataInfo.Clone();
+            }
+
+            public int ConnectionsCount
+            {
+                get
+                {
+                    lock (this.lockDataInfo)
+                    {
+                        return this.contactDataInfo.Count;
+                    }
+                }
             }
 
             public ContactDataInfo Data

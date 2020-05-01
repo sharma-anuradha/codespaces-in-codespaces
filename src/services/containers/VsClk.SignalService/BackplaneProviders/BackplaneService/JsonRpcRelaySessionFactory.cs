@@ -42,15 +42,15 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         }
 
         public Task SendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken) =>
-            BackplaneService.SendDataHubAsync(dataChanged, cancellationToken);
+            InvokeBackplaneService(b => b.SendDataHubAsync(dataChanged, cancellationToken), nameof(SendDataHubAsync));
 
         public Task NotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken) =>
-            BackplaneService.NotifyParticipantChangedAsync(dataChanged, cancellationToken);
+            InvokeBackplaneService(b => b.NotifyParticipantChangedAsync(dataChanged, cancellationToken), nameof(NotifyParticipantChangedAsync));
 
         public Task NotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken) =>
-            BackplaneService.NotifyRelayHubChangedAsync(dataChanged, cancellationToken);
+            InvokeBackplaneService(b => b.NotifyRelayHubChangedAsync(dataChanged, cancellationToken), nameof(NotifyRelayHubChangedAsync));
 
         public Task<Dictionary<string, Dictionary<string, object>>> GetRelayInfoAsync(string hubId, CancellationToken cancellationToken) =>
-            BackplaneService.GetRelayInfoAsync(hubId, cancellationToken);
+            InvokeBackplaneService(b => b.GetRelayInfoAsync(hubId, cancellationToken), nameof(GetRelayInfoAsync));
     }
 }

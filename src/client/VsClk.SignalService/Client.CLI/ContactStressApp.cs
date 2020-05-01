@@ -30,6 +30,7 @@ namespace SignalService.Client.CLI
         private int numberOfEmailRequests = 100;
 
         private int sendBatchDelayMillsecs = 500;
+        private int updateDelayMillsecs = 500;
         private int receivedMessages = 0;
         private int numberOfTotalMessage = 0;
         private TimeSpan totalCloudTime;
@@ -37,12 +38,14 @@ namespace SignalService.Client.CLI
 
         private int currentBatchId;
         private Dictionary<int, Dictionary<string, PresenceEndpoint>> allEndpoints = new Dictionary<int, Dictionary<string, PresenceEndpoint>>();
-        private CancellationTokenSource sendCts;
+        private CancellationTokenSource finishCts;
 
         public ContactStressApp(CommandOption contactsFilePathOption)
         {
             this.contactsFilePathOption = contactsFilePathOption;
         }
+
+        private CancellationToken FinishToken => this.finishCts.Token;
 
         private string ContactsFilePath => this.contactsFilePathOption.HasValue() ? contactsFilePathOption.Value() : null;
 
@@ -102,9 +105,15 @@ namespace SignalService.Client.CLI
 
                 var task = SendAllAsync(enforceCrossService);
             }
+            else if (key == 'u')
+            {
+                Utils.ReadIntValue("Enter number of contacts per batch:", ref this.numberOfContactsPerBatch);
+                Utils.ReadIntValue("Enter update delay in millisecs:", ref this.updateDelayMillsecs);
+                var task = UpdateContactsAsync();
+            }
             else if (key == 'e')
             {
-                this.sendCts?.Cancel();
+                this.finishCts?.Cancel();
             }
             else if (key == 'r')
             {
@@ -199,7 +208,7 @@ namespace SignalService.Client.CLI
 
         private void OnMessageReceived(object sender, ReceiveMessageEventArgs e)
         {
-            if (e.Type == TypeTestMessage && this.sendCts?.IsCancellationRequested == false)
+            if (e.Type == TypeTestMessage && this.finishCts?.IsCancellationRequested == false)
             {
                 var messageObject = ((JObject)e.Body).ToObject<MessageBody>();
                 var messageDeliveryTime = DateTime.Now - messageObject.SentTimestamp;
@@ -211,7 +220,7 @@ namespace SignalService.Client.CLI
 
             if (Interlocked.Increment(ref this.receivedMessages) == this.numberOfTotalMessage)
             {
-                this.sendCts?.Cancel();
+                this.finishCts?.Cancel();
                 Task.Run(async () =>
                 {
                     await Task.Delay(5000);
@@ -220,17 +229,53 @@ namespace SignalService.Client.CLI
             }
         }
 
-        private async Task SendAllAsync(bool enforceCrossService)
+        private async Task UpdateContactsAsync()
         {
-            this.sendCts = new CancellationTokenSource();
+            var rand = new Random();
+
+            this.finishCts = new CancellationTokenSource();
+            Console.WriteLine("Starting update..press esc to finish");
+
+            var updateProperties = new Dictionary<string, object>()
+            {
+                { "status", null },
+            };
+            var statusOptions = new string[] { "available", "busy" };
             try
             {
-                while (!this.sendCts.IsCancellationRequested)
+                int nextOption = 0;
+                while (!this.finishCts.IsCancellationRequested)
+                {
+                    nextOption = (nextOption + 1) % 1;
+                    foreach (var connections in allEndpoints.Values)
+                    {
+                        var items = GetRandomItems(connections).Where(i => i.Value.HubClient.State == HubConnectionState.Connected).Take(this.numberOfContactsPerBatch).ToList();
+                        updateProperties["status"] = statusOptions[nextOption];
+                        foreach (var item in items)
+                        {
+                            await item.Value.Proxy.PublishPropertiesAsync(updateProperties, FinishToken);
+                        }
+                    }
+                }
+
+                await Task.Delay(this.updateDelayMillsecs, FinishToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private async Task SendAllAsync(bool enforceCrossService)
+        {
+            this.finishCts = new CancellationTokenSource();
+            try
+            {
+                while (!this.finishCts.IsCancellationRequested)
                 {
                     foreach (var connections in allEndpoints.Values)
                     {
-                        await SendMessagesAsync(connections, this.numberOfContactsPerBatch, TraceSource, enforceCrossService, this.sendCts.Token);
-                        await Task.Delay(this.sendBatchDelayMillsecs, this.sendCts.Token);
+                        await SendMessagesAsync(connections, this.numberOfContactsPerBatch, TraceSource, enforceCrossService, this.finishCts.Token);
+                        await Task.Delay(this.sendBatchDelayMillsecs, this.finishCts.Token);
                     }
                 }
             }

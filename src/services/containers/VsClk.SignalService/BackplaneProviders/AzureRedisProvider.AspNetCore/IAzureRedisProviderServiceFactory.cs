@@ -13,7 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     public interface IAzureRedisProviderServiceFactory
     {
         Task CreateAsync(
-            (string ServiceId, string Stamp) serviceInfo,
+            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
             RedisConnectionPool redisConnectionPool,
             CancellationToken cancellationToken);
     }

@@ -4,11 +4,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.VsSaaS.AspNetCore.TelemetryProvider;
 using Microsoft.VsSaaS.Common.Warmup;
 
@@ -19,10 +22,16 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private const string ServiceValue = "signlr";
 
+        private const string UseTelemetryProviderOption = "useTelemetryProvider";
+        private const string PrivacyEnabledOption = "privacyEnabled";
+        private const string JsonRpcPortOption = "jsonRpcPort";
+
         private const string ServiceProperty = "Service";
         private const string ServiceIdProperty = "ServiceId";
         private const string ServiceTypeProperty = "ServiceType";
         private const string StampProperty = "Stamp";
+
+        private const string CriticalExceptionMessage = "Critical exception found";
 
         private readonly IWebHostEnvironment hostEnvironment;
 
@@ -49,7 +58,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public string Stamp { get; private set; }
 
-        protected abstract string ServiceType { get; }
+        public abstract string ServiceType { get; }
 
         protected abstract Type AppType { get; }
 
@@ -85,7 +94,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             Stamp = AppSettingsConfiguration.GetValue<string>(nameof(AppSettingsBase.Stamp));
 
             // If telemetry console provider is wanted
-            if (AppSettingsConfiguration.GetValue<bool>(nameof(AppSettingsBase.UseTelemetryProvider)))
+            if (GetBoolConfiguration(UseTelemetryProviderOption) || AppSettingsConfiguration.GetValue<bool>(nameof(AppSettingsBase.UseTelemetryProvider)))
             {
                 // inject the Telemetry logger provider
                 services.ReplaceConsoleTelemetry((opts) =>
@@ -98,6 +107,25 @@ namespace Microsoft.VsCloudKernel.SignalService
                         { ServiceTypeProperty, ServiceType },
                         { StampProperty, Stamp },
                     };
+
+                    bool failFast = false;
+                    opts.ExceptionProvider = ex =>
+                    {
+                        if (!failFast && IsAggregateCriticalException(ex))
+                        {
+                            failFast = true;
+                            Task.Run(async () =>
+                            {
+                                Logger.LogError(ex, $"Fail fast due to:{CriticalExceptionMessage}");
+
+                                // wait to have our telemetry to upload the original exception and this last event logging
+                                await Task.Delay(500);
+                                System.Environment.FailFast(CriticalExceptionMessage, ex);
+                            });
+                        }
+
+                        return null;
+                    };
                 });
 
                 var serviceProvider = services.BuildServiceProvider();
@@ -108,12 +136,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             Logger.LogInformation($"ConfigureServices -> env:{this.hostEnvironment.EnvironmentName}");
 
             // If privacy is enabled
-            if (AppSettingsConfiguration.GetValue<bool>(nameof(AppSettingsBase.IsPrivacyEnabled)))
+            if (GetBoolConfiguration(PrivacyEnabledOption) || AppSettingsConfiguration.GetValue<bool>(nameof(AppSettingsBase.IsPrivacyEnabled)))
             {
                 Logger.LogInformation("Privacy enabled...");
 
                 // define our IServiceFormatProvider
                 services.AddSingleton<IDataFormatProvider, DataFormatter>();
+            }
+
+            // override json-rpc port if needed
+            int jsonRpcPort = Configuration.GetValue<int>(JsonRpcPortOption, -1);
+            if (jsonRpcPort != -1)
+            {
+                AppSettingsConfiguration[nameof(AppSettingsBase.JsonRpcPort)] = jsonRpcPort.ToString();
             }
 
             // DI for ApplicationServicePrincipal
@@ -137,6 +172,19 @@ namespace Microsoft.VsCloudKernel.SignalService
             // DI this instance
             services.AddSingleton<IStartupBase>(this);
             services.AddSingleton(AppType, this);
+        }
+
+        private static bool IsAggregateCriticalException(Exception exception)
+        {
+            return IsCriticalException(exception) || exception.GetInnerExceptions().Any(e => IsCriticalException(e));
+        }
+
+        private static bool IsCriticalException(Exception exception)
+        {
+            return exception is StackOverflowException
+                || exception is OutOfMemoryException
+                || exception is InsufficientExecutionStackException
+                || exception is InsufficientMemoryException;
         }
     }
 }

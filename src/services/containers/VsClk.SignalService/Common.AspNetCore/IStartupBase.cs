@@ -13,5 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         string ServiceId { get; }
 
         string Stamp { get; }
+
+        string ServiceType { get; }
     }
 }
