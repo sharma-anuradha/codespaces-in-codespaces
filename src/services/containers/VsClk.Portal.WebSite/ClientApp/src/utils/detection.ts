@@ -16,7 +16,7 @@ export function isSupportedBrowser() {
     }
 
     return (
-        info.name === 'chrome' || info.name === 'chromium-webview' || info.name === 'edge-chromium'
+        info.name === 'chrome' || info.name === 'chromium-webview' || info.name === 'edge-chromium' || info.name === 'edge-ios'
     );
 }
 
@@ -25,5 +25,9 @@ export function isPartiallySupportedBrowser() {
         return false;
     }
 
-    return isHostedOnGithub() && info.name === 'safari';
+    if (info.name === 'edge-ios') {
+        return false;
+    }
+
+    return isHostedOnGithub() && (info.name === 'safari' || info.os === 'iOS');
 }
