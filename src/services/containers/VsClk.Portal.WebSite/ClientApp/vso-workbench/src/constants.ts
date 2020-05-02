@@ -14,3 +14,5 @@ export const HOSTED_IN_GITHUB_EXTENSIONS = ['github.github-vscode-theme'];
 export const DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID = 'default-vso-github-vscode-auth-provider';
 
 export const DEFAULT_MICROSFT_VSCODE_AUTH_PROVIDER_ID = 'default-vso-microsoft-vscode-auth-provider';
+
+export const DOGFOOD_CHANNEL_QUERY_PARAM_NAME = 'dogfoodChannel';

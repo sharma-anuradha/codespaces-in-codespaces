@@ -3,6 +3,7 @@ import { IEnvironment } from 'vso-client-core';
 
 import { vscode } from '../../vscodeAssets/vscode';
 import { parseWorkspacePayload } from '../../../utils/parseWorkspacePayload';
+import { DOGFOOD_CHANNEL_QUERY_PARAM_NAME } from '../../../constants';
 
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
@@ -79,6 +80,7 @@ export class WorkspaceProvider implements IWorkspaceProvider {
         options: { reuse?: boolean | undefined; payload?: [string, string][] } = {}
     ): Promise<void> {
         const defaultUrl = new URL(document.location.pathname, document.location.origin);
+        const currentParams = new URLSearchParams(location.search);
 
         /**
          * If don't open new tab, use the default url even in GitHub case
@@ -88,6 +90,11 @@ export class WorkspaceProvider implements IWorkspaceProvider {
         const targetUrl = (!options || (options.reuse === true))
             ? defaultUrl
             : this.getWorkspaceUrl(defaultUrl);
+
+        const dogfoodChannelParam = currentParams.get(DOGFOOD_CHANNEL_QUERY_PARAM_NAME)
+        if (typeof dogfoodChannelParam === 'string' && dogfoodChannelParam.trim()) {
+            targetUrl.searchParams.set(DOGFOOD_CHANNEL_QUERY_PARAM_NAME, dogfoodChannelParam);
+        }
 
         if (!workspace) {
             targetUrl.searchParams.set('ew', 'true');
