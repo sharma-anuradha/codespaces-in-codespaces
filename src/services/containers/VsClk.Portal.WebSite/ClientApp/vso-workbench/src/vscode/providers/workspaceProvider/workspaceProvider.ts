@@ -4,6 +4,7 @@ import { IEnvironment } from 'vso-client-core';
 import { vscode } from '../../vscodeAssets/vscode';
 import { parseWorkspacePayload } from '../../../utils/parseWorkspacePayload';
 import { DOGFOOD_CHANNEL_QUERY_PARAM_NAME } from '../../../constants';
+import { getUriAuthority } from '../../../utils/getUriAuthority';
 
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
@@ -27,14 +28,14 @@ export class WorkspaceProvider implements IWorkspaceProvider {
             const workspaceUri = vscode.URI.from({
                 path: workspace,
                 scheme: 'vscode-remote',
-                authority: `vsonline+${environmentInfo.id}`,
+                authority: getUriAuthority(environmentInfo),
             });
             this.workspace = { workspaceUri };
         } else {
             const folderUri = vscode.URI.from({
                 path: this.normalizeVSCodePath(folder || environmentInfo.connection.sessionPath),
                 scheme: 'vscode-remote',
-                authority: `vsonline+${environmentInfo.id}`,
+                authority: getUriAuthority(environmentInfo),
             });
             this.workspace = { folderUri };
         }

@@ -13,6 +13,7 @@ export {
 
 export { getVSCodeVersion, getVSCodeVersionString } from './utils/getVSCodeVersion';
 export { getVSCodeAssetPath } from './utils/getVSCodeAssetPath';
+export { getUriAuthority } from './utils/getUriAuthority';
 
 export { IAuthStrategy } from './interfaces/IAuthStrategy';
 

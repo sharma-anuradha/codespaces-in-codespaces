@@ -16,6 +16,7 @@ import { vsoAPI } from '../../api/vsoAPI';
 import { authService } from '../../auth/authService';
 import { vscode } from '../vscodeAssets/vscode';
 import { config } from '../../config/config';
+import { getUriAuthority } from '../../utils/getUriAuthority';
 
 interface IWorkbenchOptions {
     domElementId: string;
@@ -147,7 +148,7 @@ export class VSCodeWorkbench {
         window.addEventListener('beforeunload', listener);
 
         const workbenchConfig: IWorkbenchConstructionOptions = {
-            remoteAuthority: `vsonline+${environmentInfo.id}`,
+            remoteAuthority: getUriAuthority(environmentInfo),
             webSocketFactory: VSLSWebSocketFactory,
             connectionToken: vscodeConfig.commit,
             ...providers,
