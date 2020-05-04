@@ -45,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private static IEnumerable<string> DefaultAudiences { get; } = new string[]
         {
             "https://management.core.windows.net/",
+            "https://management.azure.com/",
         };
 
         private static IJwtReader SignedUserJwtReader { get; set; } = null;
