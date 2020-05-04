@@ -17,6 +17,7 @@ spec:
     rollingUpdate:
       maxSurge: 0
       maxUnavailable: 1
+  progressDeadlineSeconds: {{ .Values.pods.progressDeadlineSeconds }}
   template:
     metadata:
       labels:
@@ -50,6 +51,7 @@ spec:
           resources:
             {{- toYaml .Values.agentResources | nindent 12 }}
       {{- with .Values.nodeSelector }}
+      restartPolicy: Never
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
