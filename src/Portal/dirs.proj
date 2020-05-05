@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
   <ItemGroup>
+    <ProjectReference Include="..\services\containers\VsClk.Portal.WebSite\VsClk.Portal.WebSite.csproj" />
     <ProjectReference Include="PortalWebsite\Test\PortalWebsite.Test\PortalWebsite.Test.csproj" />
   </ItemGroup>
 

@@ -1,0 +1,54 @@
+# Reference: https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki/308/Pipeline-Spec-YAML-Stage-Commands
+
+environment:
+  host:
+    os: "linux"
+  runtime:
+    provider: "appcontainer"
+    image: "cdpxlinux.azurecr.io/global/ubuntu-1804-all:5.0"
+    source_mode: "link"
+
+restore:
+  commands:
+    - !!defaultcommand
+      name: "portal restore"
+      command: "build/portal/restore.sh"
+
+build:
+  commands:
+    - !!buildcommand
+      name: "portal build"
+      command: "build/portal/build.sh"
+      artifacts:
+        - from: "bin/release"
+          to: "binaries"
+          include:
+            - "**/*"
+
+test:
+  commands:
+    - !!testcommand
+      name: "portal test"
+      command: "build/portal/test.sh"
+      testresults:
+        - from: "bin/release/testresults"
+          title: "Test Results"
+          type: "vstest"
+          include:
+            - "*.trx"
+        - from: 'src/services/containers/VsClk.Portal.WebSite/ClientApp'
+          title: 'Portal Test Results'
+          type: 'JUnit'
+          include:
+            - 'junit.xml'
+
+static_analysis_options:
+  moderncop_options:  
+    disable_tool_scan: true
+
+package_sources:
+  npm:
+    config_files:
+        - include:
+          - 'src/services/containers/VsClk.Portal.WebSite/ClientApp/.npmrc'
+          - 'src/services/containers/VsClk.Portal.WebSite/ClientApp/*/.npmrc'

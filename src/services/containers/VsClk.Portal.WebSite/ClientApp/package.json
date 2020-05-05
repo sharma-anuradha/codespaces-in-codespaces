@@ -207,7 +207,8 @@
       "<rootDir>/dist/",
       "<rootDir>/public/",
       "<rootDir>/vso-workbench/dist",
-      "<rootDir>/vso-workbench/public"
+      "<rootDir>/vso-workbench/public",
+      "<rootDir>/build/workbench-page/web-standalone/"
     ],
     "moduleNameMapper": {
       "^react-native$": "react-native-web",

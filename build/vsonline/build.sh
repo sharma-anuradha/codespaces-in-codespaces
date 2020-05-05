@@ -1,5 +1,5 @@
 #!/bin/bash
-source $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/helpers.sh
+source $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../common/helpers.sh
 
 echo "Build Nuget packages"
 execute "dotnet pack --include-source --include-symbols --no-restore --configuration Release /m /v:m /p:BuildPortal=false /p:BuildOtherServices=false $REPO_ROOT/dirs.proj"
