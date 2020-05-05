@@ -5,7 +5,6 @@
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
-using Microsoft.VsSaas.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;

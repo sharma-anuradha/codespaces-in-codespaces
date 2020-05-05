@@ -11,7 +11,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
-using Microsoft.VsSaas.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Diagnostics;

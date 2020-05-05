@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Threading.Tasks;
-using Microsoft.VsSaas.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
