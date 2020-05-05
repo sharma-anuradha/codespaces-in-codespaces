@@ -133,8 +133,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                 var keyVaultName = GenerateKeyVaultName();
                 var deploymentName = $"Create-KeyVault-{keyVaultName}";
                 var resourceTags = input.ResourceTags;
-                resourceTags.Add(ResourceTagName.ResourceName, keyVaultName);
-
                 resourceTags[ResourceTagName.ResourceName] = keyVaultName;
 
                 var parameters = new Dictionary<string, Dictionary<string, object>>()

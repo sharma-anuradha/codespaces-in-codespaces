@@ -122,7 +122,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 servicePrincipalSettings.ClientId,
                 servicePrincipalSettings.ClientSecretName,
                 servicePrincipalSettings.TenantId,
-                SecretProvider);
+                SecretProvider,
+                servicePrincipalSettings.ObjectId);
 
             var computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
             var storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);

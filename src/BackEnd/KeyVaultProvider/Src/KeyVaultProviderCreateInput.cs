@@ -2,11 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models
 {
@@ -31,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models
         public string AzureTenantId { get; set; }
 
         /// <summary>
-        /// Gets or sets objectId / clientId for the keyvault.
+        /// Gets or sets objectId for keyvault access policy.
         /// </summary>
         public string AzureObjectId { get; set; }
 

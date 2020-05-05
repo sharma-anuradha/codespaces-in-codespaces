@@ -20,6 +20,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string ClientId { get; set; }
 
         /// <summary>
+        /// Gets or sets the service principal object id.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string ObjectId { get; set; }
+
+        /// <summary>
         /// Gets or sets serivce principal client secret name for use with ISecretProvider.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
