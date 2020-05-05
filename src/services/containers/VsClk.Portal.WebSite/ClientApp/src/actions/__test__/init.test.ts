@@ -45,7 +45,7 @@ describe('actions - init', () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(testMsalToken)
         );
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(
+        jest.spyOn(acquireTokenModule, 'acquireTokenSilentWith2FA').mockReturnValue(
             Promise.resolve(testMsalToken)
         );
 
@@ -82,7 +82,7 @@ describe('actions - init', () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(testMsalToken)
         );
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(
+        jest.spyOn(acquireTokenModule, 'acquireTokenSilentWith2FA').mockReturnValue(
             Promise.resolve(testMsalToken)
         );
 
@@ -126,7 +126,7 @@ describe('actions - init', () => {
 
     it('fails to get auth token', async () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(Promise.resolve(undefined));
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(Promise.resolve(undefined!));
+        jest.spyOn(acquireTokenModule, 'acquireTokenSilentWith2FA').mockReturnValue(Promise.resolve(undefined!));
 
         test_setMockRequestFactory(
             createMockMakeRequestFactory({
@@ -161,7 +161,7 @@ describe('actions - init', () => {
         jest.spyOn(authService, 'getCachedToken').mockReturnValue(
             Promise.resolve(testMsalToken)
         );
-        jest.spyOn(acquireTokenModule, 'acquireToken').mockReturnValue(
+        jest.spyOn(acquireTokenModule, 'acquireTokenSilentWith2FA').mockReturnValue(
             Promise.resolve(testMsalToken)
         );
 
@@ -204,6 +204,7 @@ describe('actions - init', () => {
                 'async.environments.fetch',
                 'async.authentication.clearData',
                 'async.environments.fetch.failure',
+                "async.authentication.clearData.failure",
                 'async.app.init.failure'
             );
         }

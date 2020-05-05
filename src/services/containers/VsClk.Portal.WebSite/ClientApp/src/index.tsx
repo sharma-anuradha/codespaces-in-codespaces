@@ -33,7 +33,7 @@ async function startApplication() {
 
     cleanupLegacyMSALCookies();
 
-    authService.init();
+    await authService.init();
 
     window.addEventListener('beforeunload', () => {
         sendTelemetry('vsonline/application/before-unload', {});

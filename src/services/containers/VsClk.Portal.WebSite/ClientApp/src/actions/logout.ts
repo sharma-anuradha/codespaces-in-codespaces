@@ -6,6 +6,7 @@ import { useDispatch } from './middleware/useDispatch';
 import { INDEXEDDB_VSONLINE_DB, deleteDatabase as deleteIndexedDb } from '../utils/indexedDBFS';
 
 export const logoutActionType = 'async.authentication.clearData';
+export const logoutFailureType = 'async.authentication.clearData.failure';
 const exemptCookieList = ['MSCC'];
 const exemptLocalStorageItems = [
     'azDevAccessTokenEncrypted',
@@ -17,6 +18,9 @@ const alwaysExemptLocalStorageItems = ['vso_machine_id', 'vso.marketing.blog.pos
 
 // Basic actions dispatched for reducers
 const logoutAction = () => action(logoutActionType);
+const logoutFailureAction = (error: Error) => {
+    return action(logoutFailureType, error);
+};
 
 interface LocalStorageItems {
     [key: string]: string;
@@ -33,7 +37,9 @@ export async function logout(props: { isExplicit: boolean }) {
     // clear indexedDb
     try {
         await deleteIndexedDb(INDEXEDDB_VSONLINE_DB);
-    } catch {}
+    } catch (err) {
+        dispatch(logoutFailureAction(err));
+    }
 
     // clear storage
     try {
@@ -42,16 +48,22 @@ export async function logout(props: { isExplicit: boolean }) {
         } else {
             clearLocalStorage([...alwaysExemptLocalStorageItems, ...exemptLocalStorageItems]);
         }
-    } catch {}
+    } catch (err) {
+        dispatch(logoutFailureAction(err));
+    }
 
     try {
         sessionStorage.clear();
-    } catch {}
+    } catch (err) {
+        dispatch(logoutFailureAction(err));
+    }
 
     // clear msa aad
     try {
         await authService.logout();
-    } catch {}
+    } catch (err) {
+        dispatch(logoutFailureAction(err));
+    }
 
     // clear cookie and auth cookie
     // tslint:disable: no-cookies

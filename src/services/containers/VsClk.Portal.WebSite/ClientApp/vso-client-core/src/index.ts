@@ -5,7 +5,7 @@ export { authService } from './auth/authService';
 
 // keychain
 export { addDefaultGithubKey } from './keychain/localstorageKeychainKeys';
-export { setKeychainKeys, addRandomKey } from './keychain/localstorageKeychainKeys';
+export { setKeychainKeys, addRandomKey, getRandomKey } from './keychain/localstorageKeychainKeys';
 
 // utils
 export { Signal, CancellationError } from './utils/Signal';

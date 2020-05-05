@@ -13,7 +13,7 @@ const defaultGitHubKey: IKeychainKey = {
 
 export const addDefaultGithubKey = () => {
     removeKey(defaultGitHubKey.id);
-    
+
     keychainKeys.push(defaultGitHubKey);
 }
 
@@ -91,19 +91,32 @@ export const setKeychainKeys = (keys: IKeychainKey[]): IKeychainKey[] => {
     }
 
     invalidateKey(randomKeyId);
-    
+
     return keychainKeys;
+}
+
+export const getRandomKey = (): IKeychainKey => {
+    const randomKey = getKey(randomKeyId);
+    if (!randomKey) {
+        throw new Error('Random key has to be present.');
+    }
+    return randomKey;
 }
 
 /**
  * Function to add random key. If one already present, update its expiration time.
  */
-export const addRandomKey = () => {
+export const addRandomKey = (randomKey?: Buffer) => {
     const currentRandomKey = getKey(randomKeyId);
 
     let key = (currentRandomKey)
         ? currentRandomKey.key
         : randomBytes(16);
+
+    if (randomKey) {
+        // overwrite the random key if auth passes it via URL
+        key = randomKey;
+    }
 
     if (currentRandomKey) {
         removeKey(randomKeyId);
@@ -119,7 +132,7 @@ export const addRandomKey = () => {
 }
 
 /**
- * Function to add random key. If one already present, update its expiration time.
+ * Check if key is expired
  */
 export const isExpiredKey = (keyId: string) => {
     const key = keychainKeys.find((k) => {

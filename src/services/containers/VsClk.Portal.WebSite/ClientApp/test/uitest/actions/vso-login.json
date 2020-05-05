@@ -21,29 +21,24 @@
                         "css=.ms-Button",
                         "xpath=//button[normalize-space(.)='Sign in']"
                     ]
-                }
-            },
-            "signals": [
-                {
-                    "name": "popup",
-                    "checked": true,
-                    "popup": "elk"
                 },
-                {
-                    "name": "node",
-                    "selector": {
-                        "one": "zs=\"Signing in...\"^",
-                        "all": [
-                            "zs=\"Signing in...\"^"
-                        ]
-                    },
-                    "checked": true
-                }
-            ]
+                "signals": [
+                    {
+                        "name": "node",
+                        "selector": {
+                            "one": "zs=\"Signing in...\"^",
+                            "all": [
+                                "zs=\"Signing in...\"^"
+                            ]
+                        },
+                        "checked": true
+                    }
+                ]
+            }
         },
         {
             "name": "click",
-            "target": "elk",
+            "target": "main",
             "params": {
                 "button": "left",
                 "modifiers": 0,
@@ -61,7 +56,7 @@
         },
         {
             "name": "fill",
-            "target": "elk",
+            "target": "main",
             "params": {
                 "selector": {
                     "one": "id=i0116",
@@ -99,7 +94,7 @@
         },
         {
             "name": "click",
-            "target": "elk",
+            "target": "main",
             "params": {
                 "button": "left",
                 "modifiers": 0,
@@ -153,7 +148,7 @@
         },
         {
             "name": "click",
-            "target": "elk",
+            "target": "main",
             "params": {
                 "button": "left",
                 "modifiers": 0,
@@ -172,7 +167,7 @@
         },
         {
             "name": "fill",
-            "target": "elk",
+            "target": "main",
             "params": {
                 "selector": {
                     "one": "zs=\"Password\"",
@@ -189,7 +184,7 @@
         },
         {
             "name": "click",
-            "target": "elk",
+            "target": "main",
             "params": {
                 "button": "left",
                 "modifiers": 0,
@@ -203,27 +198,7 @@
                         "xpath=//input[normalize-space(@type)='submit' and normalize-space(@value)='Sign in']"
                     ]
                 }
-            },
-            "signals": [
-                {
-                    "name": "navigation",
-                    "checked": true,
-                    "url": {
-                        "url": "{{TEST_URL}}/",
-                        "allowExtraQueryParams": false
-                    }
-                },
-                {
-                    "name": "network",
-                    "checked": false,
-                    "url": {
-                        "url": "{{TEST_URL}}/",
-                        "allowExtraQueryParams": false
-                    },
-                    "method": "GET",
-                    "status": 200
-                }
-            ]
+            }
         },
         {
             "name": "navigate",

@@ -2076,12 +2076,12 @@
     office-ui-fabric-react "^7.90.0"
     tslib "^1.10.0"
 
-"@vs/msal@1.2.1":
-  version "1.2.1"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/msal/-/msal-1.2.1.tgz#39202a3a5c0893dfa3c0dbba4e64cd0915152a4c"
-  integrity sha1-OSAqOlwIk9+jwNu6TmTNCRUVKkw=
+"@vs/msal@1.2.2-3":
+  version "1.2.2-3"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/msal/-/msal-1.2.2-3.tgz#8fea0bfb90ddd924863b61549635ebd5547376b0"
+  integrity sha1-j+oL+5Dd2SSGO2FUljXr1VRzdrA=
   dependencies:
-    tslib "^1.10.0"
+    tslib "^1.9.3"
 
 "@vs/vs-ssh@^2.0.10":
   version "2.0.10"

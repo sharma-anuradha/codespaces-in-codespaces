@@ -2,6 +2,7 @@ import { NewEnvironment } from '../../components/newEnvironment/new-environment'
 import { NewPlan } from '../../components/newPlan/new-plan';
 import { EnvironmentsPanel } from '../../components/environments/environments';
 import { Login } from '../../components/login/login';
+import { LoginCallback } from '../../components/login/loginCallback';
 import { WorkbenchPage } from '../../components/workbenchPage/workbenchPage';
 import { LiveShareWorkbench } from '../../components/liveShareWorkbench/liveShareWorkbench';
 import { GitHubWorkbench } from '../../components/gitHubWorkbench/gitHubWorkbench';
@@ -26,6 +27,7 @@ import {
     githubPath,
     gistPath,
     azDevPath,
+    loginCallbackPath,
     portForwardingSignIn,
 } from '../../routerPaths';
 
@@ -111,6 +113,12 @@ export const routes: IRoute[] = [
         path: portForwardingSignIn,
         exact: true,
         component: PortFowardingSingInPage,
+    },
+    {
+        authenticated: false,
+        path: loginCallbackPath,
+        exact: true,
+        component: LoginCallback,
     },
     {
         authenticated: false,

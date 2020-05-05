@@ -25,7 +25,7 @@ export async function acquireTokenSilent(scopes: string[]): Promise<ITokenWithMs
     }
 }
 
-export async function acquireToken(scopes: string[]): Promise<ITokenWithMsalAccount | null> {
+export async function acquireTokenSilentWith2FA(scopes: string[]): Promise<ITokenWithMsalAccount | null> {
     const tokenRequest = {
         scopes,
         authority: msalConfig.auth.authority,
