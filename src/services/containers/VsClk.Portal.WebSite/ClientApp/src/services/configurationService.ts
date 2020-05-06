@@ -13,6 +13,7 @@ export interface IConfiguration {
     readonly portForwardingDomainTemplate: string;
     readonly enableEnvironmentPortForwarding: boolean;
     readonly environmentsApiPath: string;
+    readonly richNavWebExtensionEndpoint: string;
 }
 
 export const defaultConfig: IConfiguration = {
@@ -21,6 +22,7 @@ export const defaultConfig: IConfiguration = {
     apiEndpoint: 'https://online.visualstudio.com/api/v1',
     liveShareEndpoint: 'https://prod.liveshare.vsengsaas.visualstudio.com',
     liveShareWebExtensionEndpoint: 'https://vslsprod.blob.core.windows.net/webextension',
+    richNavWebExtensionEndpoint: 'https://intellinavstgprod.blob.core.windows.net/webextension',
     environment: 'production',
     portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
     enableEnvironmentPortForwarding: false,

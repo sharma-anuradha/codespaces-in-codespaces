@@ -26,6 +26,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 { "liveShareEndpoint", appSettings.LiveShareEndpoint },
                 { "portalEndpoint", appSettings.PortalEndpoint },
                 { "liveShareWebExtensionEndpoint", appSettings.LiveShareWebExtensionEndpoint},
+                { "richNavWebExtensionEndpoint", appSettings.RichNavWebExtensionEndpoint },
                 { "environment", this.env.EnvironmentName.ToLower()},
             };
 

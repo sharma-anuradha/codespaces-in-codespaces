@@ -57,6 +57,7 @@ config:
   apiEndpoint: https://online-ppe.core.vsengsaas.visualstudio.com/api/v1
   liveShareEndpoint: https://ppe.liveshare.vsengsaas.visualstudio.com
   liveShareWebExtensionEndpoint: https://vslsppe.blob.core.windows.net/webextension
+  richNavWebExtensionEndpoint: https://intellinavstgint.blob.core.windows.net/webextension
   githubClientId: f9230262d5d51925eb34
   githubNativeClientId: Iv1.b8a6cd24769ffe8c
   azDevClientId: 5C18C196-3608-49D9-8CBC-EFD45228AAF8

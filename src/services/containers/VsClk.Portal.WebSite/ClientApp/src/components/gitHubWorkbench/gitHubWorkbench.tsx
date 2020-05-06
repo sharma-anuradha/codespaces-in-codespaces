@@ -4,25 +4,19 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench, RepoType_QueryParam } from '../serverlessWorkbench/serverlessWorkbench';
-import { PageNotFound } from '../pageNotFound/pageNotFound';
+import { defaultConfig } from '../../services/configurationService';
 
 export interface GitHubWorkbenchProps extends RouteComponentProps<{ id: string }> {
     org: string;
     repoId: string;
     commitId: string;
     filePath: string;
+    richNavWebExtensionEndpoint: string;
 }
 
 class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenchProps> {
     render() {
-        // Enable this only for dev currently while we explore the idea.
-        if (!window.location.hostname.includes('online.dev')) {
-            return <PageNotFound />;
-        }
-
-        const extensionUrls = [
-            'https://testrichcodenavext.blob.core.windows.net/richnavext/vscode-lsif-browser',
-        ];
+        const extensionUrls = [this.props.richNavWebExtensionEndpoint];
 
          // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
          const uriQueryObj = {
@@ -52,12 +46,14 @@ const getProps = (
 
     const fileParam = new URLSearchParams(props.location.search).get("filePath");
     const filePath = fileParam ? fileParam : "";
+    const { richNavWebExtensionEndpoint } = state.configuration || defaultConfig;
 
     return {
         org,
         repoId,
         commitId,
-        filePath
+        filePath,
+        richNavWebExtensionEndpoint,
     };
 };
 

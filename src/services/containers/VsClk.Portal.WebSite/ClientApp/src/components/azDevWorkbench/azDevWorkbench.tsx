@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-
-import { ApplicationState } from '../../reducers/rootReducer';
-import { ServerlessWorkbench, RepoType_QueryParam } from '../serverlessWorkbench/serverlessWorkbench';
-import { PageNotFound } from '../pageNotFound/pageNotFound';
-import { Loader } from '../loader/loader';
 import { getAzDevCredentials } from '../../actions/getAzDevCredentials';
+import { ApplicationState } from '../../reducers/rootReducer';
+import { defaultConfig } from '../../services/configurationService';
+import { Loader } from '../loader/loader';
+import { PageNotFound } from '../pageNotFound/pageNotFound';
+import { RepoType_QueryParam, ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
 
 export interface AzDevWorkbenchProps extends RouteComponentProps<{ id: string }> {
     org: string;
@@ -14,6 +14,7 @@ export interface AzDevWorkbenchProps extends RouteComponentProps<{ id: string }>
     repoName: string;
     filePath: string;
     commitId: string;
+    richNavWebExtensionEndpoint: string;
 }
 
 export interface AzDevWorkbenchState {
@@ -45,9 +46,7 @@ class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchSt
             return <Loader message='Logging into Azure DevOps...'></Loader>;
         }
 
-        const extensionUrls = [
-            'https://testrichcodenavext.blob.core.windows.net/richnavext/vscode-lsif-browser',
-        ];
+        const extensionUrls = [this.props.richNavWebExtensionEndpoint];
 
         // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
         const uriQueryObj = {
@@ -81,6 +80,7 @@ const getProps = (
 
     const fileParam = new URLSearchParams(props.location.search).get('filePath');
     const filePath = fileParam ? fileParam : '';
+    const { richNavWebExtensionEndpoint } = state.configuration || defaultConfig;
 
     return {
         org,
@@ -88,6 +88,7 @@ const getProps = (
         repoName,
         filePath,
         commitId,
+        richNavWebExtensionEndpoint,
     };
 };
 
