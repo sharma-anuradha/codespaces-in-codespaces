@@ -2,10 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Common;

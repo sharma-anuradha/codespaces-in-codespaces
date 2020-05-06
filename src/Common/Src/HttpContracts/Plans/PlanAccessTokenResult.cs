@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Newtonsoft.Json;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans
 {
     /// <summary>

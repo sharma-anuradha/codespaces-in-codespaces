@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
 {

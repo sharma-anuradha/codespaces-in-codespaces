@@ -4,7 +4,6 @@
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Common;

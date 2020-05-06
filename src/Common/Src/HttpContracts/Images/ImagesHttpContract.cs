@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Net.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
