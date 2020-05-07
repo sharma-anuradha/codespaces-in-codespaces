@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 {
@@ -11,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
     /// KeyVault Exception.
     /// </summary>
     [Serializable]
-    internal class KeyVaultException : ResourceBrokerException
+    internal class KeyVaultException : Exception
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="KeyVaultException"/> class.

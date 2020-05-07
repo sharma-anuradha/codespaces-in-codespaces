@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="KeyVaultProvider\KeyVaultProvider.csproj" />
+    <ProjectReference Include="KeyVaultProvider.Abstractions\KeyVaultProvider.Abstractions.csproj" />
+    <ProjectReference Include="KeyVaultProvider.Extensions\KeyVaultProvider.Extensions.csproj" />
+    <ProjectReference Include="KeyVaultProvider.Models\KeyVaultProvider.Models.csproj" />
+  </ItemGroup>
+
+</Project>

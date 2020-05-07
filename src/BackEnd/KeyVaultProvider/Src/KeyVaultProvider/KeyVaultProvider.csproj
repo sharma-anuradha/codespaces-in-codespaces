@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,10 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\Common\Common.csproj" />
-    <ProjectReference Include="..\..\Common\Src\Common\BackEnd.Common.csproj" />
-    <ProjectReference Include="..\..\ResourceBroker\Src\ResourceBroker.Models\ResourceBroker.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+    <ProjectReference Include="..\KeyVaultProvider.Abstrations\KeyVaultProvider.Abstrations.csproj" />
+    <ProjectReference Include="..\KeyVaultProvider.Models\KeyVaultProvider.Models.csproj" />
   </ItemGroup>
 
 </Project>
