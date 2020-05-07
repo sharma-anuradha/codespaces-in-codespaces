@@ -5,13 +5,13 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
 {
     /// <summary>
     /// Sends a queue message to vmagent.
     /// </summary>
     [DataContract]
-    internal class QueueMessage
+    public class QueueMessage
     {
         /// <summary>
         /// Gets or sets the job command name.

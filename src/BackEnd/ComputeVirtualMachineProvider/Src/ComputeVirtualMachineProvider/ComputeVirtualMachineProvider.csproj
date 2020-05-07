@@ -14,23 +14,34 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider.Abstractions\DiskProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\NetworkInterfaceProvider\Src\NetworkInterfaceProvider.Abstractions\NetworkInterfaceProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
-    
+
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Templates\template_nic.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Templates\Linux\template_vm.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Templates\Linux\template_vm_with_custom_nic.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Templates\Linux\vm_init.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Templates\Windows\template_vm_with_custom_nic.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Templates\Windows\template_vm.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Templates\Windows\template_vm_createwithdisk.json">
+    <EmbeddedResource Include="Templates\Windows\template_vm_with_custom_disk.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>

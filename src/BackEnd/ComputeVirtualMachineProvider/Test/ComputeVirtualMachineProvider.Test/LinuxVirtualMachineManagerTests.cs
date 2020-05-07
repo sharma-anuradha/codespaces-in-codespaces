@@ -9,8 +9,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Xunit;
 
@@ -31,10 +33,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public async Task LinuxCompute_Create_Start_Delete_Ok()
         {
             var clientFactory = new AzureClientFactory(testContext.SystemCatalog.AzureSubscriptionCatalog);
-            var azureDeploymentManager = new LinuxVirtualMachineManager(
+            var queueProvider = new VirtualMachineQueueProvider(testContext.ResourceAccessor);
+            var azureDeploymentManager = new VirtualMachineDeploymentManager(
                 clientFactory,
-               testContext.ResourceAccessor);
-            var computeProvider = new VirtualMachineProvider(new[] { azureDeploymentManager });
+                queueProvider,
+                new List<ICreateVirtualMachineStrategy>() { new CreateLinuxVirtualMachineBasicStrategy(clientFactory, queueProvider) });
+            var computeProvider = new VirtualMachineProvider(azureDeploymentManager);
 
             var vmResourceInfo = await Create_Compute_Ok(computeProvider, ComputeOS.Linux, "Standard_F4s_v2", "Canonical.UbuntuServer.18.04-LTS.latest", ComputeVsoAgentImageBlobName);
             await Start_Compute_Ok(computeProvider, vmResourceInfo);

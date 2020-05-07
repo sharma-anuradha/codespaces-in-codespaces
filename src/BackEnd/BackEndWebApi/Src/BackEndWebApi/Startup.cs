@@ -29,6 +29,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions;
@@ -160,6 +161,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Disk Provider
             services.AddDiskProvider(appSettings.BackEnd.MocksSettings);
+
+            // Network Interface Provider
+            services.AddNetworkInterfaceProvider(appSettings.BackEnd.MocksSettings);
 
             // Capacity Manager
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);

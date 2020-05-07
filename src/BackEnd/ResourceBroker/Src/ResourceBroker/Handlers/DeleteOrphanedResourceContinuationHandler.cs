@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
@@ -89,14 +90,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var result = default(ContinuationResult);
             if (input.Type == ResourceType.ComputeVM)
             {
-                var keepOSDisk = await ShouldKeepOSDiskAsync(input.ResourceTags, logger);
+                // TODO:: Handle Network Interface deletion by keeping the compute record unless deletion complets successfully.
+                // or add resource record for Network Interface.
+                var osDiskResourceInfo = await GetBackingOSDiskResourceComponentAsync(input.ResourceTags, logger);
                 var computeOS = input.ResourceTags.GetComputeOS();
+                var customComponents = new List<ResourceComponent>() { osDiskResourceInfo };
 
                 var computeDeleteInput = new VirtualMachineProviderDeleteInput()
                 {
                     AzureResourceInfo = input.AzureResourceInfo,
+                    CustomComponents = customComponents,
                     AzureVmLocation = input.AzureLocation,
-                    PreserveOSDisk = keepOSDisk,
                     ComputeOS = computeOS,
                 };
 
@@ -138,9 +142,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return result;
         }
 
-        private async Task<bool> ShouldKeepOSDiskAsync(IDictionary<string, string> resourceTags, IDiagnosticsLogger logger)
+        private async Task<ResourceComponent> GetBackingOSDiskResourceComponentAsync(IDictionary<string, string> resourceTags, IDiagnosticsLogger logger)
         {
-            return await resourceTags.HasBackingComponentRecordAsync(ResourceRepository, ResourceType.OSDisk, logger);
+            return await resourceTags.GetBackingComponentRecordAsync(ResourceRepository, ResourceType.OSDisk, logger);
         }
     }
 }

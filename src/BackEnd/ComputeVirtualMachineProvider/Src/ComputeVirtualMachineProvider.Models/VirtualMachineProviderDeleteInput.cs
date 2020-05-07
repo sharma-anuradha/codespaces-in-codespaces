@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -30,8 +31,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         public ComputeOS ComputeOS { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the OS Disk should be deleted or not.
+        /// Gets or sets the dependent resources.
         /// </summary>
-        public bool PreserveOSDisk { get; set; }
+        public IList<ResourceComponent> CustomComponents { get; set; } = new List<ResourceComponent>();
     }
 }

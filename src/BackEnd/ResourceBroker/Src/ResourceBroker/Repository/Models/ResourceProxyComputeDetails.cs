@@ -43,9 +43,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         {
             get
             {
-                return Record.AzureResourceInfo?
+                return Record
                     .Components?
-                    .SingleOrDefault(x => x.ComponentType == Common.Models.ComponentType.OSDisk)?
+                    .Items?
+                    .Values
+                    .SingleOrDefault(x => x.ComponentType == ResourceType.OSDisk)?
                     .ResourceRecordId;
             }
         }

@@ -23,6 +23,8 @@
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider.Abstractions\DiskProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider.csproj" />
+    <ProjectReference Include="..\..\..\NetworkInterfaceProvider\Src\NetworkInterfaceProvider.Abstractions\NetworkInterfaceProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
     <ProjectReference Include="..\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />

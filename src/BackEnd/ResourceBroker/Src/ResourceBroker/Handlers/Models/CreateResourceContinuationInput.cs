@@ -2,7 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -34,5 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets resource creation options.
         /// </summary>
         public CreateResourceContinuationInputOptions Options { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to preserve component on resource deletion.
+        /// </summary>
+        public bool Preserve { get; set; }
     }
 }

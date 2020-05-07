@@ -154,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         {
                             existingOSDisk = await ResourceRepository.GetAsync(osDiskId, logger.NewChildLogger());
 
-                            components.Add(new ResourceComponent(ComponentType.OSDisk, existingOSDisk.AzureResourceInfo, osDiskId));
+                            components.Add(new ResourceComponent(ResourceType.OSDisk, existingOSDisk.AzureResourceInfo, osDiskId));
                         }
 
                         if (existingOSDisk?.AzureResourceInfo?.Name != default)
@@ -278,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSkuName = keyVaultDetails.SkuName,
                         AzureSubscriptionId = resourceLocation.Subscription.SubscriptionId,
                         AzureTenantId = resourceLocation.Subscription.ServicePrincipal.TenantId,
-                        AzureObjectId = resourceLocation.Subscription.ServicePrincipal.ObjectId,
+                        AzureObjectId = resourceLocation.Subscription.ServicePrincipal.ClientId,
                         AzureResourceGroup = resourceLocation.ResourceGroup,
                         ResourceTags = resourceTags,
                     };
@@ -323,9 +323,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             if (result.AzureResourceInfo != default)
             {
                 // Update the components provisioning status.
-                if (result.Status == OperationState.Succeeded && result.AzureResourceInfo.Components != default)
+                if (result.Status == OperationState.Succeeded && result.Components?.Items != default)
                 {
-                    foreach (var component in result.AzureResourceInfo.Components)
+                    foreach (var component in result.Components.Items.Values)
                     {
                         if (component.ResourceRecordId != default)
                         {
@@ -356,7 +356,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     }
                 }
 
-                if (resource.Value.AzureResourceInfo == default || !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo))
+                if (resource.Value.AzureResourceInfo == default
+                    || !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo)
+                    || (result.Components != default && (resource.Value.Components == default || !resource.Value.Components.Equals(result.Components))))
                 {
                     // Retry till we succeed
                     await logger.RetryOperationScopeAsync(
@@ -366,6 +368,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                             resource.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
 
                             resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+
+                            resource.Value.Components = result.Components;
 
                             resource.Value = await ResourceRepository.UpdateAsync(resource.Value, innerLogger.NewChildLogger());
                         });
@@ -382,7 +386,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             ResourceComponent component,
             ResourceRecordRef componentResourceReference)
         {
-            if (component.ComponentType == ComponentType.OSDisk)
+            if (component.ComponentType == ResourceType.OSDisk)
             {
                 var computeResourceTags = new Dictionary<string, string>
                 {

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -100,14 +101,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     throw new NotSupportedException($"Provided location of '{resource.Value.Location}' is not supported.");
                 }
 
-                var keepDisk = resource.Value.GetComputeDetails().OSDiskRecordId != default;
-
                 operationInput = new VirtualMachineProviderDeleteInput
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
+                    CustomComponents = resource.Value.Components?.Items?.Values.ToList(),
                     AzureVmLocation = azureLocation,
                     ComputeOS = resource.Value.PoolReference.GetComputeOS(),
-                    PreserveOSDisk = keepDisk,
                 };
             }
             else if (resource.Value.Type == ResourceType.StorageFileShare)

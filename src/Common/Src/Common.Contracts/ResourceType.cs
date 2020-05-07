@@ -33,5 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// The Environment back-end OS disk resource type.
         /// </summary>
         OSDisk = 5,
+
+        /// <summary>
+        /// Network interface for VNet Injection.
+        /// </summary>
+        NetworkInterface = 6,
     }
 }

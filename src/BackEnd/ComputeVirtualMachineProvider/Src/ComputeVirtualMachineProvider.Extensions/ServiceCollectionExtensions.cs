@@ -5,7 +5,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions
 {
@@ -34,9 +37,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
 
             // Core services
             services.AddSingleton<IComputeProvider, VirtualMachineProvider>();
-            services.AddSingleton<IDeploymentManager, LinuxVirtualMachineManager>();
-            services.AddSingleton<IDeploymentManager, WindowsVirtualMachineManager>();
-
+            services.AddSingleton<IQueueProvider, VirtualMachineQueueProvider>();
+            services.AddSingleton<IDeploymentManager, VirtualMachineDeploymentManager>();
+            services.AddSingleton<ICreateVirtualMachineStrategy, CreateLinuxVirtualMachineBasicStrategy>();
+            services.AddSingleton<ICreateVirtualMachineStrategy, CreateLinuxVirtualMachineWithNicStrategy>();
+            services.AddSingleton<ICreateVirtualMachineStrategy, CreateWindowsVirtualMachineBasicStrategy>();
+            services.AddSingleton<ICreateVirtualMachineStrategy, CreateWindowsVirtualMachineWithOSDiskStrategy>();
+            services.AddSingleton<ICreateVirtualMachineStrategy, CreateWindowsVirtualMachineWithNicStrategy>();
+            services.AddSingleton<ICreateVirtualMachineStrategy, CreateWindowsVirtualMachineWithNicAndOSDiskStrategy>();
             return services;
         }
     }

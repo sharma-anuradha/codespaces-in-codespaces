@@ -49,6 +49,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public AzureResourceInfo AzureResourceInfo { get; set; }
 
         /// <summary>
+        /// Gets or sets the azure resource info from the compute or storage provider.
+        /// </summary>
+        [JsonProperty(PropertyName = "components")]
+        public ResourceComponentDetail Components { get; set; }
+
+        /// <summary>
         /// Gets or sets the azure location.
         /// </summary>
         [JsonProperty(PropertyName = "location")]

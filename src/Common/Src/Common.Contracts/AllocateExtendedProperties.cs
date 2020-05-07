@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
@@ -13,6 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets or sets the OS disk resource id.
         /// </summary>
         public string OSDiskResourceID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Azure subnet.
+        /// </summary>
+        public AzureSubnetResourceInfo SubnetResourceInfo { get; set; }
 
         /// <summary>
         /// Gets or sets the allocation request id.

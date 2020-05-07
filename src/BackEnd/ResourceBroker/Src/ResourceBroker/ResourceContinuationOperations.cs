@@ -68,31 +68,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<ResourceRecord> QueueCreateAsync(
+        public async Task<ResourceRecord> QueueCreateAsync(
             Guid resourceId,
             ResourceType type,
+            AllocateExtendedProperties extendedProperties,
             ResourcePoolResourceDetails details,
             string reason,
             IDiagnosticsLogger logger)
         {
-            return QueueCreateAsync(resourceId, type, details, reason, null, logger);
-        }
-
-        /// <inheritdoc/>
-        public Task<ResourceRecord> QueueCreateComputeAsync(
-            Guid resourceId,
-            ResourceType type,
-            ResourcePoolResourceDetails details,
-            string reason,
-            string osDiskResourceId,
-            IDiagnosticsLogger logger)
-        {
-            var options = new CreateComputeContinuationInputOptions
+            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
+            var options = (CreateResourceContinuationInputOptions)default;
+            if (extendedProperties != default)
             {
-                OSDiskResourceId = osDiskResourceId,
-            };
+                options = new CreateComputeContinuationInputOptions
+                {
+                    OSDiskResourceId = extendedProperties.OSDiskResourceID,
+                    SubnetResourceInfo = extendedProperties.SubnetResourceInfo,
+                };
+            }
 
-            return QueueCreateAsync(resourceId, type, details, reason, options, logger);
+            var input = new CreateResourceContinuationInput()
+            {
+                Type = type,
+                ResourcePoolDetails = details,
+                ResourceId = resourceId,
+                Reason = reason,
+                Options = options,
+                IsAssigned = true,
+            };
+            var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
+
+            await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
+
+            return resource;
         }
 
         /// <inheritdoc/>
@@ -221,33 +230,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
-        }
-
-        private async Task<ResourceRecord> QueueCreateAsync(
-            Guid resourceId,
-            ResourceType type,
-            ResourcePoolResourceDetails details,
-            string reason,
-            CreateResourceContinuationInputOptions options,
-            IDiagnosticsLogger logger)
-        {
-            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
-
-            var input = new CreateResourceContinuationInput()
-            {
-                Type = type,
-                ResourcePoolDetails = details,
-                ResourceId = resourceId,
-                Reason = reason,
-                Options = options,
-                IsAssigned = true,
-            };
-            var target = CreateResourceContinuationHandler.DefaultQueueTarget;
-
-            await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
-            var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
-
-            return resource;
         }
 
         private IDictionary<string, string> BuildLoggingProperties(

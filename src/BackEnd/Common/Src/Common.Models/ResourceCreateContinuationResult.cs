@@ -15,5 +15,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// Gets or sets the azure resource info for the newly created resource.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the azure resource info for the newly created resource.
+        /// </summary>
+        public ResourceComponentDetail Components { get; set; }
     }
 }

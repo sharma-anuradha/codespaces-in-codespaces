@@ -2,13 +2,16 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeNetworkInterfaceProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
@@ -76,6 +79,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<CreateResourceContinuationHandler>();
             services.AddSingleton<ICreateResourceContinuationHandler>(x => x.GetRequiredService<CreateResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateResourceContinuationHandler>());
+            services.AddSingleton<CreateResourceContinuationHandlerV2>();
+            services.AddSingleton<ICreateResourceContinuationHandler>(x => x.GetRequiredService<CreateResourceContinuationHandlerV2>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateResourceContinuationHandlerV2>());
             services.AddSingleton<StartEnvironmentContinuationHandler>();
             services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
@@ -90,6 +96,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<ICleanupResourceContinuationHandler>(x => x.GetRequiredService<CleanupResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CleanupResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteOrphanedResourceContinuationHandler>());
+
+            // Create resource strategies
+            services.AddSingleton<ICreateResourceStrategy, CreateResourceBasicStrategy>();
+            services.AddSingleton<ICreateResourceStrategy, CreateComputeWithComponentsStrategy>();
+            services.AddSingleton<ICreateComponentStrategy, CreateComputeStrategy>();
+            services.AddSingleton<ICreateComponentStrategy, CreateNetworkInterfaceStrategy>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);

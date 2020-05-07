@@ -14,6 +14,9 @@
     "location": {
       "type": "string"
     },
+    "osDiskName": {
+      "type": "string"
+    },
     "networkInterfaceName": {
       "type": "string"
     },
@@ -31,7 +34,6 @@
     }
   },
   "variables": {
-    "diskName": "[concat(parameters('virtualMachineName'),'-disk')]",
     "nsgName": "[concat(parameters('virtualMachineName'),'-nsg')]",
     "vnetName": "[concat(parameters('virtualMachineName'),'-vnet')]",
     "ipName": "[concat(parameters('virtualMachineName'),'-ip')]",
@@ -112,7 +114,7 @@
         },
         "storageProfile": {
           "osDisk": {
-            "name": "[variables('diskName')]",
+            "name": "[parameters('osDiskName')]",
             "createOption": "fromImage",
             "managedDisk": {
               "storageAccountType": "Premium_LRS"

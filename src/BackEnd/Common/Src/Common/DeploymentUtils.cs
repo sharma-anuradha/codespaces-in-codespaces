@@ -3,9 +3,13 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -108,6 +112,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
             }
 
             return OperationState.InProgress;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="azure"></param>
+        /// <param name="deploymentName"></param>
+        /// <param name="resourceGroup"></param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        public static async Task<OperationState> CheckArmResourceDeploymentState(
+            IAzure azure,
+            string deploymentName,
+            string resourceGroup)
+        {
+            var deployment = await azure.Deployments.GetByResourceGroupAsync(resourceGroup, deploymentName);
+
+            OperationState operationState = DeploymentUtils.ParseProvisioningState(deployment.ProvisioningState);
+            if (operationState == OperationState.Failed)
+            {
+                var errorDetails = await ExtractDeploymentErrors(deployment);
+                throw new DeploymentException(errorDetails);
+            }
+
+            return operationState;
+        }
+
+        /// <summary>
+        /// Submit Resource deployment request to ARM.
+        /// </summary>
+        /// <param name="resourceGroup">resource group.</param>
+        /// <param name="azure">Azure client.</param>
+        /// <param name="resourceTemplate">resource Template.</param>
+        /// <param name="parameters">template parameters.</param>
+        /// <param name="deploymentName">deployment name.</param>
+        /// <returns>result.</returns>
+        public static async Task<IDeployment> BeginCreateArmResource(
+            string resourceGroup,
+            IAzure azure,
+            string resourceTemplate,
+            Dictionary<string, Dictionary<string, object>> parameters,
+            string deploymentName)
+        {
+            return await azure.Deployments.Define(deploymentName)
+                .WithExistingResourceGroup(resourceGroup)
+                .WithTemplate(resourceTemplate)
+                .WithParameters(JsonConvert.SerializeObject(parameters))
+                .WithMode(DeploymentMode.Incremental)
+                .BeginCreateAsync();
         }
     }
 }

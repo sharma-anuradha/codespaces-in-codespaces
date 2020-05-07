@@ -132,6 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="resourceId">resource id.</param>
         /// <param name="type">resource type.</param>
+        /// <param name="extendedProperties">extended properties.</param>
         /// <param name="details">pool details.</param>
         /// <param name="reason">reason.</param>
         /// <param name="logger">logger.</param>
@@ -139,26 +140,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         Task<ResourceRecord> QueueCreateAsync(
             Guid resourceId,
             ResourceType type,
+            AllocateExtendedProperties extendedProperties,
             ResourcePoolResourceDetails details,
             string reason,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Create compute resources.
-        /// </summary>
-        /// <param name="resourceId">resource id.</param>
-        /// <param name="type">resource type.</param>
-        /// <param name="details">pool details.</param>
-        /// <param name="reason">reason.</param>
-        /// <param name="osDiskResourceId">os disk resource id.</param>
-        /// <param name="logger">logger.</param>
-        /// <returns>result.</returns>
-        Task<ResourceRecord> QueueCreateComputeAsync(
-            Guid resourceId,
-            ResourceType type,
-            ResourcePoolResourceDetails details,
-            string reason,
-            string osDiskResourceId,
             IDiagnosticsLogger logger);
     }
 }

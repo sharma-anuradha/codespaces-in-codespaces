@@ -3,14 +3,12 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -24,15 +22,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     {
         private const int VmCreationRetryAfterSeconds = 60;
         private const int VmDeletionRetryAfterSeconds = 60;
-        private readonly IEnumerable<IDeploymentManager> managers = null;
+        private readonly IDeploymentManager manager = null;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VirtualMachineProvider"/> class.
         /// </summary>
-        /// <param name="managers">Create / Update / Delete VM.</param>
-        public VirtualMachineProvider(IEnumerable<IDeploymentManager> managers)
+        /// <param name="manager">Create / Update / Delete VM.</param>
+        public VirtualMachineProvider(IDeploymentManager manager)
         {
-            this.managers = Requires.NotNull(managers, nameof(managers));
+            this.manager = Requires.NotNull(manager, nameof(manager));
         }
 
         /// <inheritdoc/>
@@ -46,11 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 "virtual_machine_compute_provider_create",
                 async (childLogger) =>
                 {
-                    string resultContinuationToken = default;
-                    OperationState resultState;
-                    AzureResourceInfo azureResourceInfo = default;
-
-                    var deploymentManager = SelectDeploymentManager(input.ComputeOS);
+                    var deploymentManager = manager;
 
                     childLogger.FluentAddBaseValue(nameof(input.AzureSubscription), input.AzureSubscription.ToString())
                         .FluentAddBaseValue(nameof(input.AzureVmLocation), input.AzureVmLocation.ToString())
@@ -58,21 +52,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddBaseValue(nameof(input.AzureSkuName), input.AzureSkuName)
                         .FluentAddBaseValue(nameof(input.AzureVirtualMachineImage), input.AzureVirtualMachineImage);
 
+                    string resultContinuationToken = default;
+                    OperationState resultState;
+                    AzureResourceInfo azureResourceInfo = default;
+
                     (azureResourceInfo, resultState, resultContinuationToken) = await DeploymentUtils.ExecuteOperationAsync(
-                        input,
-                        childLogger,
-                        deploymentManager.BeginCreateComputeAsync,
-                        deploymentManager.CheckCreateComputeStatusAsync);
+                                input,
+                                childLogger,
+                                manager.BeginCreateComputeAsync,
+                                manager.CheckCreateComputeStatusAsync);
+
+                    var vmComponents = new ResourceComponentDetail()
+                    {
+                        Items = input.CustomComponents?.ToDictionary(c =>
+                        {
+                            if (c is null)
+                            {
+                                throw new ArgumentNullException($"ResourceComponent is null in {input.CustomComponents}.");
+                            }
+
+                            if (string.IsNullOrEmpty(c.ComponentId))
+                            {
+                                throw new ArgumentNullException($"ResourceComponent id is null or empty for {c.ComponentType}.");
+                            }
+
+                            return c.ComponentId;
+                        }),
+                    };
 
                     var result = new VirtualMachineProviderCreateResult()
                     {
                         AzureResourceInfo = azureResourceInfo,
+                        Components = vmComponents,
                         Status = resultState,
                         RetryAfter = TimeSpan.FromSeconds(VmCreationRetryAfterSeconds),
                         NextInput = input.BuildNextInput(resultContinuationToken),
                     };
 
-                    // TODO:: Add correlation id
                     childLogger.FluentAddValue(nameof(result.AzureResourceInfo), result.AzureResourceInfo?.Name)
                        .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
                        .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
@@ -83,13 +99,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 (ex, childLogger) =>
                 {
                     var result = new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                                   .FluentAddValue(nameof(result.ErrorReason), result.ErrorReason);
                     return Task.FromResult(result);
                 },
                 swallowException: true);
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderShutdownResult> ShutdownAsync(VirtualMachineProviderShutdownInput input, IDiagnosticsLogger logger)
+        public Task<VirtualMachineProviderShutdownResult> ShutdownAsync(
+            VirtualMachineProviderShutdownInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
@@ -98,8 +117,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                "virtual_machine_compute_provider_shutdown_compute",
                async (childLogger) =>
                {
-                   var deploymentManager = SelectDeploymentManager(input.ComputeOS);
-                   var duration = logger.StartDuration();
                    childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name)
@@ -107,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                    var getRetryAttempt = int.TryParse(input.ContinuationToken, out var count);
                    var retryAttemptCount = getRetryAttempt ? count : 0;
-                   var shutdownOperationResult = await deploymentManager.ShutdownComputeAsync(input, retryAttemptCount, logger);
+                   var shutdownOperationResult = await manager.ShutdownComputeAsync(input, retryAttemptCount, logger);
                    var result = new VirtualMachineProviderShutdownResult
                    {
                        Status = shutdownOperationResult.OperationState,
@@ -120,13 +137,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                (ex, childLogger) =>
                {
                    var result = new VirtualMachineProviderShutdownResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                   childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                       .FluentAddValue(nameof(result.ErrorReason), result.ErrorReason);
                    return Task.FromResult(result);
                },
                swallowException: true);
         }
 
         /// <inheritdoc/>
-        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
+        public Task<VirtualMachineProviderDeleteResult> DeleteAsync(
+            VirtualMachineProviderDeleteInput input, IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
@@ -138,8 +158,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     string resultContinuationToken = default;
                     OperationState resultState;
                     AzureResourceInfo azureResourceInfo;
-                    var deploymentManager = SelectDeploymentManager(input.ComputeOS);
-                    var duration = childLogger.StartDuration();
 
                     childLogger.FluentAddBaseValue(nameof(input.AzureResourceInfo.SubscriptionId), input.AzureResourceInfo.SubscriptionId.ToString())
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
@@ -149,8 +167,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     (azureResourceInfo, resultState, resultContinuationToken) = await DeploymentUtils.ExecuteOperationAsync(
                         input,
                         childLogger,
-                        deploymentManager.BeginDeleteComputeAsync,
-                        deploymentManager.CheckDeleteComputeStatusAsync);
+                        manager.BeginDeleteComputeAsync,
+                        manager.CheckDeleteComputeStatusAsync);
 
                     var result = new VirtualMachineProviderDeleteResult()
                     {
@@ -161,15 +179,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     // TODO:: Add correlation id
                     childLogger
-                       .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
-                       .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
-                       .FluentAddValue(nameof(result.Status), result.Status.ToString());
+               .FluentAddValue(nameof(result.RetryAfter), result.RetryAfter.ToString())
+               .FluentAddValue(nameof(result.NextInput.ContinuationToken), result.NextInput?.ContinuationToken)
+               .FluentAddValue(nameof(result.Status), result.Status.ToString());
 
                     return result;
                 },
                 (ex, childLogger) =>
                 {
                     var result = new VirtualMachineProviderDeleteResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                       .FluentAddValue(nameof(result.ErrorReason), result.ErrorReason);
                     return Task.FromResult(result);
                 },
                 swallowException: true);
@@ -190,11 +210,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.ResourceGroup), input.AzureResourceInfo.ResourceGroup)
                         .FluentAddBaseValue(nameof(input.AzureResourceInfo.Name), input.AzureResourceInfo.Name);
 
-                    var deploymentManager = SelectDeploymentManager(input.ComputeOS);
-
                     var getRetryAttempt = int.TryParse(input.ContinuationToken, out var count);
                     var retryAttemptCount = getRetryAttempt ? count : 0;
-                    var startComputeResult = await deploymentManager.StartComputeAsync(input, retryAttemptCount, childLogger.NewChildLogger());
+                    var startComputeResult = await manager.StartComputeAsync(input, retryAttemptCount, childLogger.NewChildLogger());
                     var result = new VirtualMachineProviderStartComputeResult()
                     {
                         Status = startComputeResult.OperationState,
@@ -203,27 +221,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
                     // TODO:: Add correlation id
                     childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
-                       .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
+               .FluentAddValue(nameof(result.NextInput), result.NextInput?.ToString());
 
                     return result;
                 },
                 (ex, childLogger) =>
                 {
                     var result = new VirtualMachineProviderStartComputeResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                    childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                       .FluentAddValue(nameof(result.ErrorReason), result.ErrorReason);
                     return Task.FromResult(result);
                 },
                 swallowException: true);
-        }
-
-        private IDeploymentManager SelectDeploymentManager(ComputeOS computeOS)
-        {
-            var acceptsDeploymentManager = managers.Where(x => x.Accepts(computeOS));
-            if (acceptsDeploymentManager == null || acceptsDeploymentManager.Count() != 1)
-            {
-                throw new NotSupportedException($"One and only one deployment manager is allowed to process request.");
-            }
-
-            return acceptsDeploymentManager.First();
         }
     }
 }

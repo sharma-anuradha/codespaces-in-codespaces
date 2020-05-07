@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using ResourceType = Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.ResourceType;
@@ -56,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// <param name="resourceType">Resource type.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>True if the component is backed by a record.</returns>
-        public static async Task<bool> HasBackingComponentRecordAsync(
+        public static async Task<ResourceComponent> GetBackingComponentRecordAsync(
             this IDictionary<string, string> resourceTags,
             IResourceRepository resourceRepository,
             ResourceType resourceType,
@@ -76,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                             if (resourceRecord != null && resourceRecord.Type == resourceType && string.IsNullOrEmpty(resourceRecord.AzureResourceInfo?.Name))
                             {
                                 // Return true, if there is a backing record of the same type and has a valid AzureResourceInfo.
-                                return true;
+                                return new ResourceComponent(resourceRecord.Type, resourceRecord.AzureResourceInfo, recordId, true);
                             }
                         }
                         catch
@@ -87,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
                 }
             }
 
-            return false;
+            return default;
         }
 
         /// <summary>
@@ -112,12 +113,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
 
         private static string GetResourceComponentIds(this ResourceRecord resource)
         {
-            if (resource == default || resource.AzureResourceInfo == default || resource.AzureResourceInfo.Components == default)
+            if (resource == default || resource.AzureResourceInfo == default || resource.Components?.Items == default)
             {
                 return UnknownString;
             }
 
-            var result = string.Join(",", resource.AzureResourceInfo.Components.Where(x => !string.IsNullOrWhiteSpace(x.ResourceRecordId)).Select(x => x.ResourceRecordId));
+            var result = string.Join(",", resource.Components?.Items?.Values.Where(x => !string.IsNullOrWhiteSpace(x.ResourceRecordId)).Select(x => x.ResourceRecordId));
             if (string.IsNullOrWhiteSpace(result))
             {
                 return UnknownString;

@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
@@ -57,8 +56,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             SubscriptionId = subscriptionId;
             ResourceGroup = resourceGroup;
             Name = name;
-
-            Components = components;
         }
 
         /// <summary>
@@ -79,12 +76,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Gets or sets the resource components.
-        /// </summary>
-        [JsonProperty(PropertyName = "components")]
-        public IList<ResourceComponent> Components { get; set; }
-
         /// <inheritdoc/>
         public bool Equals(AzureResourceInfo other)
         {
@@ -104,16 +95,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             }
 
             if (!Name.Equals(other.Name, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            if (Components?.Count != other.Components?.Count)
-            {
-                return false;
-            }
-
-            if (Components?.Count > 0 && !Components.All(other.Components.Contains))
             {
                 return false;
             }

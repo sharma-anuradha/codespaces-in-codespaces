@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models
 {
     /// <summary>
     /// Provides azure queue sas token and url.

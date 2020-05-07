@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider\QueueProvider.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
   </ItemGroup>

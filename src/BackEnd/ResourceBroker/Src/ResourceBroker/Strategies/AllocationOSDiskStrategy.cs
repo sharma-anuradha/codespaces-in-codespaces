@@ -120,6 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                         {
                             allocationResults = await TryQueueComputeAndOSDisk(
                                 resourceSku,
+                                computeRequest.ExtendedProperties,
                                 trigger,
                                 logger.NewChildLogger());
                         }
@@ -135,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                             allocationResults = await TryQueueComputeWithExistingOSDisk(
                                 resourceSku,
                                 trigger,
-                                osDiskRequest.ExtendedProperties.OSDiskResourceID,
+                                osDiskRequest.ExtendedProperties,
                                 logger.NewChildLogger());
                         }
                         else
@@ -223,13 +224,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     {
                         computeResource = await ResourceRepository.GetAsync(computeResource.Id, innerLogger.NewChildLogger());
 
-                        computeResource.AzureResourceInfo.Components = new List<ResourceComponent>()
-                        {
-                            new ResourceComponent(
-                                ComponentType.OSDisk,
-                                osDiskResource.AzureResourceInfo,
-                                osDiskResource.Id),
-                        };
+                        computeResource.Components.Items[osDiskResource.Id] = new ResourceComponent(
+                                                                                    ResourceType.OSDisk,
+                                                                                    osDiskResource.AzureResourceInfo,
+                                                                                    osDiskResource.Id,
+                                                                                    preserve: true);
 
                         computeResource = await ResourceRepository.UpdateAsync(computeResource, innerLogger.NewChildLogger());
                     });
@@ -240,42 +239,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryQueueComputeWithExistingOSDisk(
             ResourcePool resourceSku,
             string reason,
-            string osDiskResourceId,
+            AllocateExtendedProperties extendedProperties,
             IDiagnosticsLogger logger)
         {
-            var osDiskResource = await ResourceRepository.GetAsync(osDiskResourceId, logger.NewChildLogger());
+            var osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
 
             if (!await DiskProvider.IsDetachedAsync(osDiskResource.AzureResourceInfo, logger.NewChildLogger()))
             {
                 throw new InvalidOperationException($"OS disk is attached to a VM.");
             }
 
-            var computeResource = await ResourceContinuationOperations.QueueCreateComputeAsync(
+            var computeResource = await ResourceContinuationOperations.QueueCreateAsync(
                 Guid.NewGuid(),
                 ResourceType.ComputeVM,
+                extendedProperties,
                 resourceSku.Details,
                 reason,
-                osDiskResourceId,
                 logger.NewChildLogger());
 
-            osDiskResource = await ResourceRepository.GetAsync(osDiskResourceId, logger.NewChildLogger());
+            osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
 
             return (computeResource, osDiskResource);
         }
 
         private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryQueueComputeAndOSDisk(
             ResourcePool resourceSku,
+            AllocateExtendedProperties computeExtendedProperties,
             string reason,
             IDiagnosticsLogger logger)
         {
             var osDiskResource = await CreateOSDiskRecord(resourceSku, logger.NewChildLogger());
+            computeExtendedProperties.OSDiskResourceID = osDiskResource.Id;
 
-            var computeResource = await ResourceContinuationOperations.QueueCreateComputeAsync(
+            var computeResource = await ResourceContinuationOperations.QueueCreateAsync(
                 Guid.NewGuid(),
                 ResourceType.ComputeVM,
+                computeExtendedProperties,
                 resourceSku.Details,
                 reason,
-                osDiskResource.Id,
                 logger.NewChildLogger());
 
             return (computeResource, osDiskResource);

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\QueueProvider.Models\QueueProvider.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -15,7 +15,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 {
@@ -145,13 +144,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                     { "resourceTags", new Dictionary<string, object>() { { Key, resourceTags } } },
                 };
 
-                // Create virtual machine
-                var result = await azure.Deployments.Define(deploymentName)
-                    .WithExistingResourceGroup(input.AzureResourceGroup)
-                    .WithTemplate(KeyVaultTemplate)
-                    .WithParameters(JsonConvert.SerializeObject(parameters))
-                    .WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental)
-                    .BeginCreateAsync();
+                // Create key vault
+                var result = await DeploymentUtils.BeginCreateArmResource(input.AzureResourceGroup, azure, KeyVaultTemplate, parameters, deploymentName);
 
                 var azureResourceInfo = new AzureResourceInfo(input.AzureSubscriptionId, input.AzureResourceGroup, keyVaultName);
                 return (OperationState.InProgress, new NextStageInput(result.Name, azureResourceInfo));

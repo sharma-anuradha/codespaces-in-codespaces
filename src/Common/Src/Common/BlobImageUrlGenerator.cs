@@ -95,6 +95,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             var container = blobClientProvider.GetCloudBlobContainer(containerName);
             var blob = container.GetBlobReference(imageName);
+            if (!await blob.ExistsAsync())
+            {
+                throw new InvalidOperationException($"{blob.Uri} does not exist.");
+            }
+
             var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
             {
                 Permissions = SharedAccessBlobPermissions.Read,

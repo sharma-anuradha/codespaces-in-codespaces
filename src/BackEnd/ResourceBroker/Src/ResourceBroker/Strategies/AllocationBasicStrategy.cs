@@ -315,7 +315,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
             var resourceId = Guid.NewGuid();
             var resource = await ResourceContinuationOperations.QueueCreateAsync(
-            resourceId, input.Type, resourceSku.Details, "ResourceQueueAllocate", logger.NewChildLogger());
+            resourceId, input.Type, input.ExtendedProperties, resourceSku.Details, "ResourceQueueAllocate", logger.NewChildLogger());
 
             return (Resource: resource, ResourceSku: resourceSku);
         }

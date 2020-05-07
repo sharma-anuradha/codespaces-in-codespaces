@@ -1,0 +1,127 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPublicKeyPath": {
+      "type": "string"
+    },
+    "adminPublicKey": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string"
+    },
+    "vmSetupScript": {
+      "type": "securestring"
+    },
+    "resourceTags": {
+      "type": "object"
+    },
+    "osDiskName": {
+      "type": "string"
+    },
+    "networkInterfaceName": {
+      "type": "string"
+    },
+    "networkInterfaceSub": {
+      "type": "string"
+    },
+    "networkInterfaceRG": {
+      "type": "string"
+    }
+  },
+  "resources": [
+   {
+      "name": "[parameters('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
+      "dependsOn": [],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "name": "[parameters('osDiskName')]",
+            "createOption": "fromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "18.04-LTS",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[concat('/subscriptions/',parameters('networkInterfaceSub'),'/resourceGroups/',parameters('networkInterfaceRG'),'/providers/Microsoft.Network/networkInterfaces/',parameters('networkInterfaceName'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[parameters('adminPublicKeyPath')]",
+                  "keyData": "[parameters('adminPublicKey')]"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "resources": [
+        {
+          "name": "update-vm",
+          "type": "extensions",
+          "location": "[parameters('location')]",
+          "apiVersion": "2019-07-01",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+          ],
+          "tags": {
+            "displayName": "update-vm"
+          },
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "skipDos2Unix": false,
+              "timestamp": 123456789
+            },
+            "protectedSettings": {
+              "script": "[parameters('vmSetupScript')]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    }
+  }
+}

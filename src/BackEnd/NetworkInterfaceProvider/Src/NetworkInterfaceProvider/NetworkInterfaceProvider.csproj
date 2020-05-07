@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Templates\template_nic.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\template_nic.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NetworkInterfaceProvider.Abstractions\NetworkInterfaceProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\NetworkInterfaceProvider.Models\NetworkInterfaceProvider.Models.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+  </ItemGroup>
+
+</Project>
