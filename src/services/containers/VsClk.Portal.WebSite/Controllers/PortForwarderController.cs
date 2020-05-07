@@ -181,7 +181,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var isUserAllowedToAccessEnvironment = await CheckUserAccessAsync(cascadeToken, sessionId, workspaceInfo, logger);
             if (!isUserAllowedToAccessEnvironment)
             {
-                return StatusCode(StatusCodes.Status403Forbidden);
+                return StatusCode(StatusCodes.Status401Unauthorized);
             }
 
             Response.Headers.Add(PortForwardingHeaders.Token, cascadeToken);
