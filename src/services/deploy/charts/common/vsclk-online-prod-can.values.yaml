@@ -56,6 +56,7 @@ config:
   apiEndpoint: https://canary.online.visualstudio.com/api/v1
   liveShareEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com
   liveShareWebExtensionEndpoint: https://vslsprod.blob.core.windows.net/webextension
+  richNavWebExtensionEndpoint: https://intellinavstgprod.blob.core.windows.net/webextension
   githubClientId: 15a84bcaef36dd681c52
   githubNativeClientId: Iv1.ad5f73e593b03f40
   azDevClientId: 282DE6CF-8729-4112-A472-CFB80960C5CD
