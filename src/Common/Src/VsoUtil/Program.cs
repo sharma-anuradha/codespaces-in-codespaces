@@ -37,7 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     PrepareDevCLICommand,
                     SetSkuImageVersionCommand,
                     CleanDevStamp,
-                    ListDevStamps>(args)
+                    ListDevStamps,
+                    GetSkuImageVersionCommand>(args)
                     .MapResult(
                         (ShowDbAccountInfoCommand command) => command.Execute(Console.Out, Console.Error),
                         (CreatePortForwardingConnection command) => command.Execute(Console.Out, Console.Error),
@@ -54,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                         (SetSkuImageVersionCommand command) => command.Execute(Console.Out, Console.Error),
                         (CleanDevStamp command) => command.Execute(Console.Out, Console.Error),
                         (ListDevStamps command) => command.Execute(Console.Out, Console.Error),
+                        (GetSkuImageVersionCommand command) => command.Execute(Console.Out, Console.Error),
                         errs => 1);
             }
             catch (Exception ex)

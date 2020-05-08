@@ -90,6 +90,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                     currentOverride.Value = newOverride.Value;
                     _ = await systemConfigurationRepository.UpdateAsync(currentOverride, logger);
                 }
+                else
+                {
+                    stdout.Write($"No changes made. Current:{currentVersion} is newer than requested version:{newVersion} in region: {Location}...");
+                }
             }
             else
             {
