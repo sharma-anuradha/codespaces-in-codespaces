@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -353,33 +354,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceGroup">The Azure resource group.</param>
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceList">The resources known to Azure.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
-        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListAsync))]
-        [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}")]
-        public Task<IActionResult> PlanListAsync(
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListByResourceGroupAsync))]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/resourceReadBegin")]
+        public Task<IActionResult> PlanListByResourceGroupAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
-            string resourceType)
+            string resourceType,
+            [FromBody] PlanResourceList resourceList)
         {
             return HttpContext.HttpScopeAsync<IActionResult>(
-                $"{LoggingBaseName}_plan_list",
+                $"{LoggingBaseName}_plan_list_by_resourcegroup",
                 async (logger) =>
                 {
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
                     ValidationUtil.IsRequired(providerNamespace);
                     ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceList);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
                     var plans = await this.planManager.ListAsync(
                         userIdSet: null, subscriptionId, resourceGroup, name: null, logger);
 
+                    var knownPlanResourceIds = new HashSet<string>(plans.Select((plan) => plan.Plan.ResourceId));
+
+                    resourceList.Value = resourceList.Value?.Where((resource) => knownPlanResourceIds.Contains(resource.Id));
+
                     logger.LogInfo("plan_list_by_resourcegroup_success");
 
                     // Required response format.
-                    return CreateResponse(HttpStatusCode.OK, plans);
+                    return CreateResponse(HttpStatusCode.OK, resourceList);
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceListFailed")),
                 swallowException: true);
@@ -391,31 +399,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="subscriptionId">The Azure subscription identifier.</param>
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
+        /// <param name="resourceList">The resources known to Azure.</param>
         /// <returns>Returns an Http status code and a list of VSO SkuPlan objects filtering by subscriptionID.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListBySubscriptionAsync))]
-        [HttpGet("{subscriptionId}/providers/{providerNamespace}/{resourceType}")]
+        [HttpPost("{subscriptionId}/providers/{providerNamespace}/{resourceType}/resourceReadBegin")]
         public Task<IActionResult> PlanListBySubscriptionAsync(
             string subscriptionId,
             string providerNamespace,
-            string resourceType)
+            string resourceType,
+            [FromBody] PlanResourceList resourceList)
         {
             return HttpContext.HttpScopeAsync<IActionResult>(
-                $"{LoggingBaseName}_plan_list_bysubscription",
+                $"{LoggingBaseName}_plan_list_by_subscription",
                 async (logger) =>
                 {
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(providerNamespace);
                     ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceList);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
 
                     var plans = await planManager.ListAsync(
                         userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
 
+                    var knownPlanResourceIds = new HashSet<string>(plans.Select((plan) => plan.Plan.ResourceId));
+
+                    resourceList.Value = resourceList.Value?.Where((resource) => knownPlanResourceIds.Contains(resource.Id));
+
                     logger.LogInfo("plan_list_by_subscription_success");
 
                     // Required response format.
-                    return CreateResponse(HttpStatusCode.OK, plans);
+                    return CreateResponse(HttpStatusCode.OK, resourceList);
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceListFailed")),
                 swallowException: true);
@@ -429,24 +444,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="resource">The resource from Azure.</param>
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
-        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanGetValidateAsync))]
-        [HttpGet("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadValidate")]
-        public Task<IActionResult> PlanGetValidateAsync(
+        [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanGetAsync))]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadBegin")]
+        public Task<IActionResult> PlanGetAsync(
             string subscriptionId,
             string resourceGroup,
             string providerNamespace,
             string resourceType,
-            string resourceName)
+            string resourceName,
+            [FromBody] PlanResource resource)
         {
-            return HttpContext.HttpScopeAsync<IActionResult>(
-                $"{LoggingBaseName}_get_validate",
-                (logger) =>
+            return HttpContext.HttpScopeAsync(
+                $"{LoggingBaseName}_get",
+                async (logger) =>
                 {
-                    // Used for pre-read validation only. The Resource is returned from
-                    // RPSaaS(MetaRP) CosmosDB storage and not from here
-                    return Task.FromResult<IActionResult>(Ok());
-                });
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(resourceGroup);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(resourceName);
+                    ValidationUtil.IsRequired(resource);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    var planInfo = new VsoPlanInfo
+                    {
+                        Name = resourceName,
+                        ResourceGroup = resourceGroup,
+                        Subscription = subscriptionId,
+                    };
+
+                    var plan = await planManager.GetAsync(planInfo, logger);
+
+                    if (plan == null)
+                    {
+                        return CreateErrorResponse("GetResourceFailed", "Plan not found", HttpStatusCode.NotFound);
+                    }
+
+                    // Required response format.
+                    return CreateResponse(HttpStatusCode.OK, resource);
+                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceFailed", "Internal Server Error", HttpStatusCode.InternalServerError)),
+                swallowException: true);
         }
 
         /// <summary>

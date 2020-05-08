@@ -18,7 +18,8 @@
               "ResourceDeletionValidate",
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
-              "ResourcePostAction"
+              "ResourcePostAction",
+              "ResourceReadBegin"
             ]
         }]
 },
@@ -35,7 +36,8 @@
               "ResourceDeletionValidate",
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
-              "ResourcePostAction"
+              "ResourcePostAction",
+              "ResourceReadBegin"
             ]
         }]
 },
@@ -52,10 +54,11 @@
               "ResourceCreationValidate",
               "ResourceCreationBegin",
               "ResourceCreationCompleted",
-	            "ResourceDeletionValidate",
+              "ResourceDeletionValidate",
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
-              "ResourcePostAction"
+              "ResourcePostAction",
+              "ResourceReadBegin"
             ]
         }]
 },
@@ -72,7 +75,8 @@
               "ResourceDeletionValidate",
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
-              "ResourcePostAction"
+              "ResourcePostAction",
+              "ResourceReadBegin"
             ]
         }]
 }], 
