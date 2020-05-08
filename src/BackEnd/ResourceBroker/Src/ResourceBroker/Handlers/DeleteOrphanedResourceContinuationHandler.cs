@@ -25,6 +25,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 {
     /// <summary>
     /// Delete Orphaned Resource Handler.
+    /// Note: This handler does not follow the same model of other handles by inheriting from the base handler because,
+    /// the base handler will look up the records, update them on every continue. But in the orphaned resource cleanup,
+    /// the records don't exist for orphaned resources. Hence the simpler model.
     /// </summary>
     public class DeleteOrphanedResourceContinuationHandler : IDeleteOrphanedResourceContinuationHandler
     {
@@ -76,67 +79,97 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         public async Task<ContinuationResult> Continue(ContinuationInput continuationInput, IDiagnosticsLogger logger)
         {
-            var input = (DeleteOrphanedResourceContinuationInput)continuationInput;
-
-            if (input == default)
+            if (continuationInput is DeleteOrphanedResourceContinuationInput deleteOrphanedResourceInput)
             {
-                return new ContinuationResult()
-                {
-                    ErrorReason = $"Incorrect continuation input provided to {nameof(DeleteOrphanedResourceContinuationHandler)}",
-                    Status = OperationState.Failed,
-                };
+                return await CreateDeleteContinuationAsync(deleteOrphanedResourceInput, logger);
+            }
+            else
+            {
+                return await ContinueDeleteAsync(continuationInput, logger);
+            }
+        }
+
+        private async Task<ContinuationResult> ContinueDeleteAsync(ContinuationInput continuationInput, IDiagnosticsLogger logger)
+        {
+            var result = default(ContinuationResult);
+
+            if (continuationInput is VirtualMachineProviderDeleteInput computeInput)
+            {
+                result = await ComputeProvider.DeleteAsync(computeInput, logger.WithValues(new LogValueSet()));
+            }
+            else if (continuationInput is FileShareProviderDeleteInput storageInput)
+            {
+                result = await StorageProvider.DeleteAsync(storageInput, logger.WithValues(new LogValueSet()));
+            }
+            else if (continuationInput is DiskProviderDeleteInput diskInput)
+            {
+                result = await DiskProvider.DeleteDiskAsync(diskInput, logger.WithValues(new LogValueSet()));
+            }
+            else if (continuationInput is KeyVaultProviderDeleteInput keyVaultInput)
+            {
+                result = await KeyVaultProvider.DeleteAsync(keyVaultInput, logger.WithValues(new LogValueSet()));
+            }
+            else
+            {
+                throw new NotSupportedException($"Continuation type is not supported - {continuationInput.GetType().Name}");
             }
 
+            return result;
+        }
+
+        private async Task<ContinuationResult> CreateDeleteContinuationAsync(DeleteOrphanedResourceContinuationInput deleteOrphanedResourceInput, IDiagnosticsLogger logger)
+        {
             var result = default(ContinuationResult);
-            if (input.Type == ResourceType.ComputeVM)
+
+            if (deleteOrphanedResourceInput.Type == ResourceType.ComputeVM)
             {
                 // TODO:: Handle Network Interface deletion by keeping the compute record unless deletion complets successfully.
                 // or add resource record for Network Interface.
-                var osDiskResourceInfo = await GetBackingOSDiskResourceComponentAsync(input.ResourceTags, logger);
-                var computeOS = input.ResourceTags.GetComputeOS();
+                var osDiskResourceInfo = await GetBackingOSDiskResourceComponentAsync(deleteOrphanedResourceInput.ResourceTags, logger);
+                var computeOS = deleteOrphanedResourceInput.ResourceTags.GetComputeOS();
                 var customComponents = new List<ResourceComponent>() { osDiskResourceInfo };
 
                 var computeDeleteInput = new VirtualMachineProviderDeleteInput()
                 {
-                    AzureResourceInfo = input.AzureResourceInfo,
+                    AzureResourceInfo = deleteOrphanedResourceInput.AzureResourceInfo,
                     CustomComponents = customComponents,
-                    AzureVmLocation = input.AzureLocation,
+                    AzureVmLocation = deleteOrphanedResourceInput.AzureLocation,
                     ComputeOS = computeOS,
                 };
 
                 result = await ComputeProvider.DeleteAsync(computeDeleteInput, logger.NewChildLogger());
             }
-            else if (input.Type == ResourceType.KeyVault)
+            else if (deleteOrphanedResourceInput.Type == ResourceType.KeyVault)
             {
                 var keyvaultDeleteInput = new KeyVaultProviderDeleteInput()
                 {
-                    AzureResourceInfo = input.AzureResourceInfo,
-                    AzureLocation = input.AzureLocation,
+                    AzureResourceInfo = deleteOrphanedResourceInput.AzureResourceInfo,
+                    AzureLocation = deleteOrphanedResourceInput.AzureLocation,
                 };
 
                 result = await KeyVaultProvider.DeleteAsync(keyvaultDeleteInput, logger.NewChildLogger());
             }
-            else if (input.Type == ResourceType.OSDisk)
+            else if (deleteOrphanedResourceInput.Type == ResourceType.OSDisk)
             {
                 var osDiskDeleteInput = new DiskProviderDeleteInput()
                 {
-                    AzureResourceInfo = input.AzureResourceInfo,
+                    AzureResourceInfo = deleteOrphanedResourceInput.AzureResourceInfo,
                 };
 
                 result = await DiskProvider.DeleteDiskAsync(osDiskDeleteInput, logger.NewChildLogger());
             }
-            else if (input.Type == ResourceType.StorageArchive || input.Type == ResourceType.StorageFileShare)
+            else if (deleteOrphanedResourceInput.Type == ResourceType.StorageArchive || deleteOrphanedResourceInput.Type == ResourceType.StorageFileShare)
             {
                 var storageDeleteInput = new FileShareProviderDeleteInput()
                 {
-                    AzureResourceInfo = input.AzureResourceInfo,
+                    AzureResourceInfo = deleteOrphanedResourceInput.AzureResourceInfo,
                 };
 
                 result = await StorageProvider.DeleteAsync(storageDeleteInput, logger.NewChildLogger());
             }
             else
             {
-                throw new NotSupportedException($"Resource type is not supported - {input.Type}");
+                throw new NotSupportedException($"Resource type is not supported - {deleteOrphanedResourceInput.Type}");
             }
 
             return result;
