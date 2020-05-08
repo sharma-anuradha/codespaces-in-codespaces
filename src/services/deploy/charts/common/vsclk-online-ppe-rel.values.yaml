@@ -7,6 +7,7 @@ ingress:
   hosts:
     - online-ppe.core.vsengsaas.visualstudio.com
     - "*.workspaces-ppe.github.com"
+    - "*.codespaces-ppe.github.com"
     - vsclk-online-ppe-rel-tm.trafficmanager.net
   tls:
     - hosts:
@@ -15,19 +16,27 @@ ingress:
     - hosts:
         - "*.workspaces-ppe.github.com"
       secretName: ssl-cert-github-ws
+    - hosts:
+        - "*.codespaces-ppe.github.com"
+      secretName: ssl-cert-github-cs
 
 githubAuthEndpoint:
   hosts:
+    - "auth.apps.ppe.workspaces.githubusercontent.com"
     - "auth.apps.ppe.workspaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.apps.ppe.workspaces.githubusercontent.com"
       secretName: ssl-cert-github-pf
+    - hosts:
+        - "*.apps.ppe.codespaces.githubusercontent.com"
+      secretName: ssl-cert-github-cs-pf
       
 pfingress:
   hosts:
     - "*.app.online-ppe.core.vsengsaas.visualstudio.com"
     - "*.apps.ppe.workspaces.githubusercontent.com"
+    - "*.apps.ppe.codespaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.app.online-ppe.core.vsengsaas.visualstudio.com"
@@ -35,6 +44,9 @@ pfingress:
     - hosts:
         - "*.apps.ppe.workspaces.githubusercontent.com"
       secretName: ssl-cert-github-pf
+    - hosts:
+        - "*.apps.ppe.codespaces.githubusercontent.com"
+      secretName: ssl-cert-github-cs-pf
 
 portForwardingHosts:
   - hosts:
@@ -43,6 +55,9 @@ portForwardingHosts:
   - hosts:
       - "{0}.apps.ppe.workspaces.githubusercontent.com"
     certificateSecretName: ssl-cert-github-pf
+  - hosts:
+      - "{0}.apps.ppe.codespaces.githubusercontent.com"
+    certificateSecretName: ssl-cert-github-cs-pf
 
 authentication:
   audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"

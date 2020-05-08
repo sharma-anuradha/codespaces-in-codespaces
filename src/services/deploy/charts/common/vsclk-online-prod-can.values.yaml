@@ -7,6 +7,7 @@ ingress:
   hosts:
     - canary.online.visualstudio.com
     - "*.workspaces.github.com"
+    - "*.codespaces.github.com"
   tls:
     - hosts:
         - canary.online.visualstudio.com
@@ -14,19 +15,27 @@ ingress:
     - hosts:
         - "*.workspaces.github.com"
       secretName: ssl-cert-github-ws
+    - hosts:
+        - "*.codespaces.github.com"
+      secretName: ssl-cert-github-cs
 
 githubAuthEndpoint:
   hosts:
     - "auth.apps.workspaces.githubusercontent.com"
+    - "auth.apps.codespaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.apps.workspaces.githubusercontent.com"
       secretName: ssl-cert-github-pf
+    - hosts:
+        - "*.apps.workspaces.githubusercontent.com"
+      secretName: ssl-cert-github-cs-pf
 
 pfingress:
   hosts:
     - "*.app.canary.online.visualstudio.com"
     - "*.apps.workspaces.githubusercontent.com"
+    - "*.apps.codespaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.app.canary.online.visualstudio.com"
@@ -34,6 +43,9 @@ pfingress:
     - hosts:
         - "*.apps.workspaces.githubusercontent.com"
       secretName: ssl-cert-github-pf
+    - hosts:
+        - "*.apps.codespaces.githubusercontent.com"
+      secretName: ssl-cert-github-cs-pf
 
 portForwardingHosts:
   - hosts:
@@ -42,6 +54,9 @@ portForwardingHosts:
   - hosts:
       - "{0}.apps.canary.workspaces.githubusercontent.com"
     certificateSecretName: ssl-cert-github-pf
+  - hosts:
+      - "{0}.apps.canary.codespaces.githubusercontent.com"
+    certificateSecretName: ssl-cert-github-cs-pf
 
 authentication:
   audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"

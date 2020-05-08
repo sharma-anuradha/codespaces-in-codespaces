@@ -120,6 +120,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("https://*.workspaces.github.com");
                     currentOrigins.Add("https://*.workspaces-ppe.github.com");
                     currentOrigins.Add("https://*.workspaces-dev.github.com");
+                    currentOrigins.Add("https://*.codespaces.github.com");
+                    currentOrigins.Add("https://*.codespaces-ppe.github.com");
+                    currentOrigins.Add("https://*.codespaces-dev.github.com");
 
                     options.AddPolicy(
                         "ProdCORSPolicy",
