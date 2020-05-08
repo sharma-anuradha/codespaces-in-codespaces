@@ -588,7 +588,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 return Task.CompletedTask;
             }
 
-            public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
+            public Task UpdateMetricsAsync(ServiceInfo serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
             {
                 throw new NotImplementedException();
             }

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,8 +31,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             IEnumerable<IHubContextHost> hubContextHosts,
             ILogger<RelayService> logger,
             IRelayBackplaneManager backplaneManager = null,
+            IServiceCounters hubServiceCounters = null,
             IDataFormatProvider formatProvider = null)
-            : base(options, hubContextHosts, logger, formatProvider)
+            : base(options, hubContextHosts, logger, hubServiceCounters, formatProvider)
         {
             BackplaneManager = backplaneManager;
 
@@ -40,7 +42,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 backplaneManager.SendDataChangedAsync += OnSendDataChangedAsync;
                 backplaneManager.ParticipantChangedAsync += OnNotifyParticipantChangedAsync;
                 backplaneManager.RelayHubChangedAsync += OnRelayHubChangedAsync;
-                backplaneManager.MetricsFactory = () => ((ServiceId, options.Stamp, nameof(RelayService)), GetMetrics());
+                backplaneManager.MetricsFactory = () => (new ServiceInfo(ServiceId, options.Stamp, nameof(RelayService)), GetMetrics());
             }
         }
 
@@ -370,6 +372,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return;
             }
 
+            var sw = Stopwatch.StartNew();
             if (this.relayHubs.TryGetValue(dataChanged.HubId, out var relayHub))
             {
                 using (BeginHubScope(nameof(OnSendDataChangedAsync), dataChanged.HubId))
@@ -387,6 +390,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     dataChanged.MessageProperties,
                     cancellationToken);
             }
+
+            MethodPerf(nameof(OnSendDataChangedAsync), sw.Elapsed);
         }
 
         private async Task OnNotifyParticipantChangedAsync(
@@ -399,6 +404,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return;
             }
 
+            var sw = Stopwatch.StartNew();
             if (this.relayHubs.TryGetValue(dataChanged.HubId, out var relayHub))
             {
                 using (BeginHubScope(nameof(OnNotifyParticipantChangedAsync), dataChanged.HubId))
@@ -408,6 +414,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 await relayHub.NotifyParticipantChangedAsync(dataChanged, cancellationToken);
             }
+
+            MethodPerf(nameof(OnNotifyParticipantChangedAsync), sw.Elapsed);
         }
 
         private async Task OnRelayHubChangedAsync(

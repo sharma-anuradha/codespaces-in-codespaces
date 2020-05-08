@@ -53,7 +53,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                         argumentBuffers.Add(argumentBuffer);
                     }
 
-                    return new JsonRpcRequestMessagePack(id, method, argumentBuffers.ToArray());
+                    return new JsonRpcRequestMessagePack(id == -1 ? null : (object)id, method, argumentBuffers.ToArray());
                 case JsonRpcType.Result:
                     long resultId;
                     Assumes.True(sequenceReader.TryReadBigEndian(out resultId), "resultId");
@@ -79,7 +79,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 Span<byte> stackSpan = stackalloc byte[1 + sizeof(long) + sizeof(int)];
                 stackSpan[0] = (byte)JsonRpcType.Request;
-                BinaryPrimitives.WriteInt64BigEndian(stackSpan.Slice(1, sizeof(long)), jsonRpcRequest.Id != null ? Convert.ToInt64(jsonRpcRequest.Id) : 0);
+                BinaryPrimitives.WriteInt64BigEndian(stackSpan.Slice(1, sizeof(long)), jsonRpcRequest.Id != null ? Convert.ToInt64(jsonRpcRequest.Id) : -1);
                 BinaryPrimitives.WriteInt32BigEndian(stackSpan.Slice(1 + sizeof(long), sizeof(int)), jsonRpcRequest.ArgumentCount);
                 bufferWriter.Write(stackSpan);
 

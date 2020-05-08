@@ -10,15 +10,16 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// A presence service hub class that use the Jwt bear authentication scheme
+    /// Our universal service hub class that use the Jwt bear authentication scheme.
     /// </summary>
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class AuthorizedSignalRHub : SignalRHub
     {
         public AuthorizedSignalRHub(
             IServiceScopeFactory serviceScopeFactory,
-            IEnumerable<HubDispatcher> hubDispatchers)
-            : base(serviceScopeFactory, hubDispatchers)
+            IEnumerable<HubDispatcher> hubDispatchers,
+            IServiceCounters hubServiceCounters = null)
+            : base(serviceScopeFactory, hubDispatchers, hubServiceCounters)
         {
         }
     }

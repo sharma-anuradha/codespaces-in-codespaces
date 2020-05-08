@@ -83,7 +83,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
+        public Task UpdateMetricsAsync(ServiceInfo serviceInfo, RelayServiceMetrics metrics, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

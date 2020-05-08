@@ -36,7 +36,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
             await WaitAll(
                 GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactAsync(contactDataChanged, cancellationToken) as Task, p)),
                 nameof(IContactBackplaneProvider.UpdateContactAsync),
@@ -45,7 +44,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
         {
-            await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
             await WaitAll(
                 GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactDataInfoAsync(contactDataChanged, contactDataInfo, cancellationToken) as Task, p)),
                 nameof(IContactBackplaneProvider.UpdateContactDataInfoAsync),
@@ -56,7 +54,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             MessageData messageData,
             CancellationToken cancellationToken)
         {
-            await DisposeExpiredDataChangesAsync(100, cancellationToken);
             await WaitAll(
                 GetSupportedProviders(s => s.SendMessage).Select(p => (p.SendMessageAsync(messageData, cancellationToken), p)),
                 nameof(IContactBackplaneProvider.SendMessageAsync),

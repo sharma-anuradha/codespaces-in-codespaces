@@ -46,8 +46,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger = logger;
         }
 
-        private (string ServiceId, string Stamp, string ServiceType) ServiceInfo => (this.startup.ServiceId, this.startup.Stamp, this.startup.ServiceType);
-
         private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -79,7 +77,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     foreach (var factory in this.azureRedisProviderServiceFactories)
                     {
                         this.logger.LogInformation($"Creating Azure Redis provider with factory:'{factory.GetType().Name}'");
-                        await factory.CreateAsync(ServiceInfo, redisConnectionPool, stoppingToken);
+                        await factory.CreateAsync(this.startup.ServiceInfo, redisConnectionPool, stoppingToken);
                     }
                 }
                 catch (Exception error)

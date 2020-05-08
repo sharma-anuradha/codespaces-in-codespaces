@@ -45,7 +45,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private IDatabaseAsync DatabaseAsync => this.redisConnectionPool.DatabaseAsync;
 
         public static async Task<AzureRedisContactsProvider> CreateAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             RedisConnectionPool redisConnectionPool,
             ILogger<AzureRedisContactsProvider> logger,
             IFormatProvider formatProvider)
@@ -219,7 +219,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 .ToList();
         }
 
-        private async Task InitializeAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo)
+        private async Task InitializeAsync(ServiceInfo serviceInfo)
         {
             // define service Id
             await InitializeServiceIdAsync(serviceInfo);

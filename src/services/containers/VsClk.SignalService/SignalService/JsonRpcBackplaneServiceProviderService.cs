@@ -53,7 +53,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             var backplaneProviderService = Activator.CreateInstance(
                 typeof(TBackplaneServiceProviderType),
                 backplaneConnectorProvider,
-                this.startup.ServiceId,
+                this.startup.ServiceInfo.ServiceId,
                 this.logger,
                 stoppingToken) as BackplaneServiceProviderBase;
             await backplaneProviderService.AttemptConnectAsync(stoppingToken);

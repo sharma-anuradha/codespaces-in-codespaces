@@ -63,10 +63,15 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             services.AddSingleton<JsonRpcRelaySessionFactory>();
 
             // backplane manager support
-            services.AddSingleton<IContactBackplaneManager, ContactBackplaneManager>();
-            services.AddHostedService<BackplaneManagerHostedService<ContactBackplaneService, IContactBackplaneManager>>();
-            services.AddSingleton<IRelayBackplaneManager, RelayBackplaneManager>();
-            services.AddHostedService<BackplaneManagerHostedService<RelayBackplaneService, IRelayBackplaneManager>>();
+            services.AddSingleton<ContactBackplaneManager>();
+            services.AddSingleton<IContactBackplaneManager>(srvcProvider => srvcProvider.GetRequiredService<ContactBackplaneManager>());
+            services.AddSingleton<IBackplaneManagerBase>(srvcProvider => srvcProvider.GetRequiredService<ContactBackplaneManager>());
+
+            services.AddSingleton<RelayBackplaneManager>();
+            services.AddSingleton<IRelayBackplaneManager>(srvcProvider => srvcProvider.GetRequiredService<RelayBackplaneManager>());
+            services.AddSingleton<IBackplaneManagerBase>(srvcProvider => srvcProvider.GetRequiredService<RelayBackplaneManager>());
+
+            services.AddHostedService<BackplaneManagerHostedService>();
 
             // Mvc support
             services.AddControllers();

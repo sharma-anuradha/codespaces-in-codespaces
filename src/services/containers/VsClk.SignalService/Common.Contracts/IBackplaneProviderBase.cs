@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="metrics">Metrics instance </param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, TServiceMetrics metrics, CancellationToken cancellationToken);
+        Task UpdateMetricsAsync(ServiceInfo serviceInfo, TServiceMetrics metrics, CancellationToken cancellationToken);
 
         /// <summary>
         /// Dispose a set of data changes that may have been notified by this provider

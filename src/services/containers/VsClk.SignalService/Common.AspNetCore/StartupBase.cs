@@ -60,6 +60,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public abstract string ServiceType { get; }
 
+        public ServiceInfo ServiceInfo => new ServiceInfo(ServiceId, Stamp, ServiceType);
+
         protected abstract Type AppType { get; }
 
         protected ILogger Logger { get; private set; }
@@ -172,6 +174,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             // DI this instance
             services.AddSingleton<IStartupBase>(this);
             services.AddSingleton(AppType, this);
+
+            // allows tracking service perf counters.
+            services.AddSingleton<IServiceCounters, ServiceCounters>();
         }
 
         private static bool IsAggregateCriticalException(Exception exception)

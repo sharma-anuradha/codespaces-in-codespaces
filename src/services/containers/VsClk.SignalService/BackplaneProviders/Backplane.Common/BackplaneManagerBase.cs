@@ -22,7 +22,6 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         private const string MethodDisposeDataChanges = nameof(DisposeDataChangesAsync);
         private const string MethodUpdateBackplaneMetrics = nameof(UpdateBackplaneMetricsAsync);
         private const string MethodDisposeExpiredDataChangesAsync = nameof(DisposeExpiredDataChangesAsync);
-        private const string BackplaneChangesCountProperty = "BackplaneChangesCount";
 
         private readonly object backplaneProvidersLock = new object();
         private readonly Dictionary<TBackplaneProvider, TBackplaneProviderSupportLevel> backplaneProviders = new Dictionary<TBackplaneProvider, TBackplaneProviderSupportLevel>();
@@ -35,10 +34,10 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             FormatProvider = formatProvider;
         }
 
-        public Func<((string ServiceId, string Stamp, string ServiceType), TServiceMetrics)> MetricsFactory { get; set; }
+        public Func<(ServiceInfo, TServiceMetrics)> MetricsFactory { get; set; }
 
         /// <summary>
-        /// Gets the list of backplane providers, note this is a thread safe property
+        /// Gets the list of backplane providers, note this is a thread safe property.
         /// </summary>
         public IReadOnlyCollection<TBackplaneProvider> BackplaneProviders
         {
@@ -66,29 +65,15 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
 
         protected ILogger Logger { get; }
 
-        public async Task RunAsync(CancellationToken stoppingToken)
+        public async Task HandleNextAsync(bool updateBackplaneMetrics, CancellationToken stoppingToken)
         {
-            const int TimespanUpdateSecs = 5;
-
-            Logger.LogDebug($"RunAsync");
-
-            await UpdateBackplaneMetricsAsync(stoppingToken);
-
-            var updateMetricsCounter = new SecondsCounter(BackplaneManagerConst.UpdateMetricsSecs, TimespanUpdateSecs);
-            while (true)
+            if (updateBackplaneMetrics)
             {
-                // update metrics if factory is defined
-                if (updateMetricsCounter.Next())
-                {
-                    await UpdateBackplaneMetricsAsync(stoppingToken);
-                }
-
-                // purge data changes (every 5 secs)
-                await DisposeExpiredDataChangesAsync(null, stoppingToken);
-
-                // delay
-                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateSecs), stoppingToken);
+                await UpdateBackplaneMetricsAsync(stoppingToken);
             }
+
+            // purge data changes
+            await DisposeExpiredDataChangesAsync(stoppingToken);
         }
 
         public async Task DisposeAsync(CancellationToken cancellationToken)
@@ -123,7 +108,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         }
 
         public async Task UpdateBackplaneMetricsAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             TServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
@@ -133,7 +118,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
                 $"serviceId:{serviceInfo.ServiceId}");
         }
 
-        public async Task DisposeExpiredDataChangesAsync(int? maxCount, CancellationToken cancellationToken)
+        public async Task DisposeExpiredDataChangesAsync(CancellationToken cancellationToken)
         {
             const int SecondsExpired = 60;
             var expiredThreshold = DateTime.Now.Subtract(TimeSpan.FromSeconds(SecondsExpired));
@@ -143,10 +128,6 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             {
                 // Note: next block will remove the 'stale' changes
                 var possibleExpiredCacheItems = this.backplaneChanges.Where(kvp => !kvp.Value.Item3 && kvp.Value.Item1 < expiredThreshold);
-                if (maxCount.HasValue)
-                {
-                    possibleExpiredCacheItems = possibleExpiredCacheItems.Take(maxCount.Value);
-                }
 
                 if (possibleExpiredCacheItems.Any())
                 {
@@ -323,10 +304,10 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         }
 
         /// <summary>
-        /// Return true when this type of exception should be logged as an error to report in our telemetry
+        /// Return true when this type of exception should be logged as an error to report in our telemetry.
         /// </summary>
-        /// <param name="error">The error instance</param>
-        /// <returns></returns>
+        /// <param name="error">The error instance.</param>
+        /// <returns>True if we should log this exception.</returns>
         private static bool ShouldLogException(Exception error)
         {
             return !(
@@ -354,24 +335,18 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         }
 
         private async Task UpdateBackplaneMetricsWithLoggingAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             TServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
-            var memoryInfo = LoggerScopeHelpers.GetProcessMemoryInfo();
-            var cpuUsage = await LoggerScopeHelpers.GetCpuUsageForProcessAsync();
-
             var metricsScope = new List<(string, object)>();
             metricsScope.Add((LoggerScopeHelpers.MethodScope, MethodUpdateBackplaneMetrics));
-            metricsScope.Add((LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize));
-            metricsScope.Add((LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory));
-            metricsScope.Add((LoggerScopeHelpers.CpuUsageProperty, cpuUsage));
-            metricsScope.Add((BackplaneChangesCountProperty, BackplaneChangesCount));
+            metricsScope.Add((BackplaneManagerConst.BackplaneChangesCountProperty, BackplaneChangesCount));
             AddMetricsScope(metricsScope, metrics);
 
             using (LoggerScopeHelpers.BeginScope(Logger, metricsScope.ToArray()))
             {
-                Logger.LogInformation($"serviceInfo:{serviceInfo}");
+                Logger.LogInformation($"Metrics for serviceType:{serviceInfo.ServiceType}");
             }
 
             await UpdateBackplaneMetricsAsync(serviceInfo, metrics, cancellationToken);

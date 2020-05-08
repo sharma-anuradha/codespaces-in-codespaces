@@ -46,7 +46,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public async Task SendDataHubAsync(SendRelayDataHub dataChanged, CancellationToken cancellationToken)
         {
-            await DisposeExpiredDataChangesAsync(100, CancellationToken.None);
             await WaitAll(
                 GetSupportedProviders(s => BackplaneProviderSupportLevelConst.DefaultSupportThreshold).Select(p => (p.SendDataHubAsync(dataChanged, cancellationToken) as Task, p)),
                 nameof(IRelayBackplaneProvider.SendDataHubAsync),
@@ -56,7 +55,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public async Task NotifyParticipantChangedAsync(RelayParticipantChanged dataChanged, CancellationToken cancellationToken)
         {
-            await DisposeExpiredDataChangesAsync(100, cancellationToken);
             await WaitAll(
                 GetSupportedProviders(s => BackplaneProviderSupportLevelConst.DefaultSupportThreshold).Select(p => (p.NotifyParticipantChangedAsync(dataChanged, cancellationToken), p)),
                 nameof(IRelayBackplaneProvider.NotifyParticipantChangedAsync),
@@ -66,7 +64,6 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public async Task NotifyRelayHubChangedAsync(RelayHubChanged dataChanged, CancellationToken cancellationToken)
         {
-            await DisposeExpiredDataChangesAsync(100, cancellationToken);
             await WaitAll(
                 GetSupportedProviders(s => BackplaneProviderSupportLevelConst.DefaultSupportThreshold).Select(p => (p.NotifyRelayHubChangedAsync(dataChanged, cancellationToken), p)),
                 nameof(IRelayBackplaneProvider.NotifyRelayHubChangedAsync),

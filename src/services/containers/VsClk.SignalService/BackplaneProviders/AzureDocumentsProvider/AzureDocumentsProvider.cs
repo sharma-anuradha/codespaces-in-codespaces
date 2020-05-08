@@ -68,7 +68,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public CosmosClient Client { get; }
 
         public static async Task<AzureDocumentsProvider> CreateAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             DatabaseSettings databaseSettings,
             ILogger<AzureDocumentsProvider> logger,
             IFormatProvider formatProvider,
@@ -270,7 +270,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.changeFeedProcessors.Add(changeFeedProcessor);
         }
 
-        private async Task InitializeAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, bool isProduction, CancellationToken cancellationToken = default)
+        private async Task InitializeAsync(ServiceInfo serviceInfo, bool isProduction, CancellationToken cancellationToken = default)
         {
             Logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 

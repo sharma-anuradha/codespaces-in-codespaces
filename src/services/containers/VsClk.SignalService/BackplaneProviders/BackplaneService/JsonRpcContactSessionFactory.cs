@@ -41,7 +41,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return InvokeAllAsync(nameof(IContactBackplaneServiceNotification.FireOnSendMessageAsync), messageData);
         }
 
-        public Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>
+        public Task UpdateMetricsAsync(ServiceInfo serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>
             InvokeBackplaneService(b => b.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), nameof(UpdateMetricsAsync));
 
         public Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken) =>

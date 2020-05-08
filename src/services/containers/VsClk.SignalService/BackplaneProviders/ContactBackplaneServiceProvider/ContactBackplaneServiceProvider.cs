@@ -87,7 +87,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public async Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
+        public async Task UpdateMetricsAsync(ServiceInfo serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
             await BackplaneConnectorProvider.InvokeAsync<object>(nameof(UpdateMetricsAsync), new object[] { serviceInfo, metrics }, cancellationToken);

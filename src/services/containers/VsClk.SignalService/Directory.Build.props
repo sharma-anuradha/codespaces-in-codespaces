@@ -7,7 +7,7 @@
     <!-- NuGet Package Versions -->
     <SignalRVersion>1.2.3</SignalRVersion>
     <VisualStudioThreadingVersion>16.0.102</VisualStudioThreadingVersion>
-    <StreamJsonRpcVersion>2.1.74</StreamJsonRpcVersion>
+    <StreamJsonRpcVersion>2.2.53</StreamJsonRpcVersion>
     <MessagePackVersion>1.7.3.7</MessagePackVersion>
     <Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version>3.1.3</Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version>
     <Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>3.1.3</Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version>

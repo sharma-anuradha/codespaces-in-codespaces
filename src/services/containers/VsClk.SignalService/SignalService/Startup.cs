@@ -228,9 +228,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             services.AddHostedService<DisposableHostedService<RelayService>>();
 
             // backplane manager support
-            services.AddSingleton<IContactBackplaneManager, ContactBackplaneManager>();
-            services.AddHostedService<BackplaneManagerHostedService<ContactService, IContactBackplaneManager>>();
-            services.AddSingleton<IRelayBackplaneManager, RelayBackplaneManager>();
+            services.AddSingleton<ContactBackplaneManager>();
+            services.AddSingleton<IContactBackplaneManager>(srvcProvider => srvcProvider.GetRequiredService<ContactBackplaneManager>());
+            services.AddSingleton<IBackplaneManagerBase>(srvcProvider => srvcProvider.GetRequiredService<ContactBackplaneManager>());
+
+            services.AddSingleton<RelayBackplaneManager>();
+            services.AddSingleton<IRelayBackplaneManager>(srvcProvider => srvcProvider.GetRequiredService<RelayBackplaneManager>());
+            services.AddSingleton<IBackplaneManagerBase>(srvcProvider => srvcProvider.GetRequiredService<RelayBackplaneManager>());
+
+            services.AddHostedService<BackplaneManagerHostedService>();
 
             // define long running health echo provider
             services.AddHostedService<SignalRHealthStatusProvider>();

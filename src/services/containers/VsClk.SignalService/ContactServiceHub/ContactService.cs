@@ -26,7 +26,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private readonly ConcurrentDictionary<string, StubContact> stubContacts = new ConcurrentDictionary<string, StubContact>();
 
         /// <summary>
-        /// Map of self contact id <-> stub contact
+        /// Map of self contact id and stub contact.
         /// </summary>
         private readonly ConcurrentDictionary<string, ConcurrentHashSet<StubContact>> resolvedContacts = new ConcurrentDictionary<string, ConcurrentHashSet<StubContact>>();
 
@@ -35,16 +35,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             IEnumerable<IHubContextHost> hubContextHosts,
             ILogger<ContactService> logger,
             IContactBackplaneManager backplaneManager = null,
+            IServiceCounters hubServiceCounters = null,
             IDataFormatProvider formatProvider = null)
-            : base(options, hubContextHosts, logger, formatProvider)
+            : base(options, hubContextHosts, logger, hubServiceCounters, formatProvider)
         {
             BackplaneManager = backplaneManager;
-
             if (backplaneManager != null)
             {
                 backplaneManager.ContactChangedAsync += OnContactChangedAsync;
                 backplaneManager.MessageReceivedAsync += OnMessageReceivedAsync;
-                backplaneManager.MetricsFactory = () => ((ServiceId, options.Stamp, nameof(ContactService)), GetMetrics());
+                backplaneManager.MetricsFactory = () => (new ServiceInfo(ServiceId, options.Stamp, nameof(ContactService)), GetMetrics());
             }
         }
 
@@ -595,6 +595,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return;
             }
 
+            var sw = Stopwatch.StartNew();
             var contactDataProvider = ContactDataProvider.CreateContactDataProvider(contactDataChanged.Data);
 
             if (contactDataChanged.ChangeType == ContactUpdateType.Registration)
@@ -632,6 +633,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 await contact.OnContactChangedAsync(contactDataChanged.Clone(GetServiceConnectionProperties(contactDataChanged.Data)), affectedProperties, cancellationToken);
             }
+
+            MethodPerf(nameof(OnContactChangedAsync), sw.Elapsed);
         }
 
         private async Task OnMessageReceivedAsync(
@@ -644,6 +647,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return;
             }
 
+            var sw = Stopwatch.StartNew();
             if (Contacts.TryGetValue(messageData.TargetContact.Id, out var targetContact) &&
                 targetContact.CanSendMessage(messageData.TargetContact.ConnectionId))
             {
@@ -662,6 +666,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                     messageData.TargetContact.ConnectionId,
                     cancellationToken);
             }
+
+            MethodPerf(nameof(OnMessageReceivedAsync), sw.Elapsed);
         }
 
         /**

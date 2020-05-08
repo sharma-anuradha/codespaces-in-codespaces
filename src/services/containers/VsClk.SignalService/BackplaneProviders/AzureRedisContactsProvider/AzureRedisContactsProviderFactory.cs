@@ -27,7 +27,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.formatProvider = formatProvider;
         }
 
-        public async Task CreateAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, RedisConnectionPool redisConnectionPool, CancellationToken cancellationToken)
+        public async Task CreateAsync(ServiceInfo serviceInfo, RedisConnectionPool redisConnectionPool, CancellationToken cancellationToken)
         {
             var backplaneProvider = await AzureRedisContactsProvider.CreateAsync(
                 serviceInfo,

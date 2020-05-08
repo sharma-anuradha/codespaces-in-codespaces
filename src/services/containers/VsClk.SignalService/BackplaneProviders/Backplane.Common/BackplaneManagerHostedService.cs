@@ -2,37 +2,142 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VsCloudKernel.SignalService;
+using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
-namespace Microsoft.VsCloudKernel.Services.Backplane.Common
+namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Background long running service to wrap the IBackplaneManagerService instance
+    /// Background long running service to wrap the IBackplaneManagerService instance.
     /// </summary>
-    public class BackplaneManagerHostedService<T, TBackplaneManager> : BackgroundService
-        where TBackplaneManager : IBackplaneManagerBase
+    public class BackplaneManagerHostedService : BackgroundService
     {
-        public BackplaneManagerHostedService(TBackplaneManager backplaneManager, T service)
+        private const string MethodProcessHealth = "ProcessHealth";
+        private const string MethodServiceCounters = "ServiceCounters";
+
+        private const int TimespanUpdateSecs = 5;
+        private const int ProcessHealthUpdateSecs = 120;
+        private const int ServiceCountersUpdateSecs = 60;
+
+        public BackplaneManagerHostedService(
+            IEnumerable<IBackplaneManagerBase> backplaneManagers,
+            ILogger<BackplaneManagerHostedService> logger,
+            IServiceCounters serviceCounters = null)
         {
-            // Note: we define the T as a service to be injected when this hosted service
-            // is being constructed. The reason is that we want also the service to define
-            // the 'MetricsFactory' property, otherwise the service could be created on demand.
-            BackplaneManager = backplaneManager;
+            BackplaneManagers = backplaneManagers;
+            Logger = logger;
+            ServiceCounters = serviceCounters;
         }
 
-        private TBackplaneManager BackplaneManager { get; }
+        private IServiceCounters ServiceCounters { get; }
 
-        public override Task StopAsync(CancellationToken cancellationToken)
+        private IEnumerable<IBackplaneManagerBase> BackplaneManagers { get; }
+
+        private ILogger Logger { get; }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            return BackplaneManager.DisposeAsync(cancellationToken);
+            Logger.LogDebug($"StopAsync");
+
+            foreach (var backplaneManager in BackplaneManagers)
+            {
+                await backplaneManager.DisposeAsync(cancellationToken);
+            }
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            return BackplaneManager.RunAsync(stoppingToken);
+            Logger.LogDebug($"ExecuteAsync");
+
+            await RunBackplaneManagersAsync(true, stoppingToken);
+
+            var updateMetricsCounter = new SecondsCounter(BackplaneManagerConst.UpdateMetricsSecs, TimespanUpdateSecs);
+            var logProcessHealthCounter = new SecondsCounter(ProcessHealthUpdateSecs, TimespanUpdateSecs);
+            var serviceCountersUpdateCounter = new SecondsCounter(ServiceCountersUpdateSecs, TimespanUpdateSecs);
+
+            while (true)
+            {
+                // update metrics if factory is defined
+                await RunBackplaneManagersAsync(updateMetricsCounter.Next(), stoppingToken);
+
+                if (logProcessHealthCounter.Next())
+                {
+                    var memoryInfo = LoggerScopeHelpers.GetProcessMemoryInfo();
+                    var cpuUsage = await LoggerScopeHelpers.GetCpuUsageForProcessAsync();
+
+                    using (Logger.BeginScope(
+                        (LoggerScopeHelpers.MethodScope, MethodProcessHealth),
+                        (LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize),
+                        (LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory),
+                        (LoggerScopeHelpers.CpuUsageProperty, cpuUsage)))
+                    {
+                        Logger.LogInformation($"Health report");
+                    }
+                }
+
+                if (serviceCountersUpdateCounter.Next() && ServiceCounters != null)
+                {
+                    var methodPerfCounters = ServiceCounters.GetPerfCounters();
+                    var perfScopes = new List<(string, object)>();
+                    perfScopes.Add((LoggerScopeHelpers.MethodScope, MethodServiceCounters));
+                    foreach (var kvpSrvc in methodPerfCounters)
+                    {
+                        foreach (var kvpMethod in kvpSrvc.Value)
+                        {
+                            perfScopes.Add(($"{kvpSrvc.Key}_{kvpMethod.Key}_count", kvpMethod.Value.Item1));
+                            if (kvpMethod.Value.Item2 != TimeSpan.Zero)
+                            {
+                                perfScopes.Add(($"{kvpSrvc.Key}_{kvpMethod.Key}_avgTime", ToAvgTime(kvpMethod.Value)));
+                            }
+                        }
+                    }
+
+                    using (LoggerScopeHelpers.BeginScope(Logger, perfScopes.ToArray()))
+                    {
+                        Logger.LogInformation(methodPerfCounters.Count > 0 ? $"(Service:[method=events/min:ms]):{ToString(methodPerfCounters)}" : "n/a");
+                    }
+
+                    ServiceCounters.ResetCounters();
+                }
+
+                // delay
+                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateSecs), stoppingToken);
+            }
+        }
+
+        private static string ToString(Dictionary<string, (int, TimeSpan)> methodPerfCounter)
+        {
+            // Note: this will return something like:
+            // method1= NTimes:AvgTime, method2= NTimes:AvgTime, etc..
+            // in which NTimes is the number of times the method was invoked and AvgTime is the average time it takes to execute which is => Total Time accumulated/NTimes
+            return string.Join(',', methodPerfCounter.Select(kvp => $"{kvp.Key}={kvp.Value.Item1}:{ToAvgTime(kvp.Value)}"));
+        }
+
+        private static string ToString(Dictionary<string, Dictionary<string, (int, TimeSpan)>> hubMethodPerfCounters)
+        {
+            // Note this will return a pattern
+            // service1=> [method perfs], service2=> [method perfs]
+            // in which [method perfs] is describe previous method.
+            return string.Join(',', hubMethodPerfCounters.Select(kvp => $"{kvp.Key}:[{ToString(kvp.Value)}]"));
+        }
+
+        private static double ToAvgTime((int, TimeSpan) value)
+        {
+            return Math.Round(value.Item2.TotalMilliseconds / value.Item1, 2);
+        }
+
+        private async Task RunBackplaneManagersAsync(bool updateBackplaneMetrics, CancellationToken stoppingToken)
+        {
+            foreach (var backplaneManager in BackplaneManagers)
+            {
+                await backplaneManager.HandleNextAsync(updateBackplaneMetrics, stoppingToken);
+            }
         }
     }
 }

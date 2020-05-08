@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,23 +16,28 @@ using Newtonsoft.Json.Linq;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Define a universal hub that will dispatch method invocation into other hub types
+    /// Define a universal hub that will dispatch method invocation into other hub types.
     /// </summary>
     public class SignalRHub : Hub
     {
         private readonly Dictionary<string, HubDispatcher> hubDispatchers;
         private readonly IServiceScopeFactory serviceScopeFactory;
+        private readonly IServiceCounters hubServiceCounters;
 
         public SignalRHub(
             IServiceScopeFactory serviceScopeFactory,
-            IEnumerable<HubDispatcher> hubDispatchers)
+            IEnumerable<HubDispatcher> hubDispatchers,
+            IServiceCounters hubServiceCounters = null)
         {
             this.serviceScopeFactory = serviceScopeFactory;
             this.hubDispatchers = hubDispatchers.ToDictionary(d => d.HubName, d => d);
+            this.hubServiceCounters = hubServiceCounters;
         }
 
         public override async Task OnConnectedAsync()
         {
+            this.hubServiceCounters?.OnInvokeMethod(nameof(SignalRHub), nameof(OnConnectedAsync), TimeSpan.Zero);
+
             foreach (var hubDispatcher in hubDispatchers.Values)
             {
                 await HubCallbackAsync(hubDispatcher, async (hub) =>
@@ -45,6 +51,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
+            this.hubServiceCounters?.OnInvokeMethod(nameof(SignalRHub), nameof(OnDisconnectedAsync), TimeSpan.Zero);
+
             foreach (var hubDispatcher in hubDispatchers.Values)
             {
                 await HubCallbackAsync(hubDispatcher, async (hub) =>
@@ -88,6 +96,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                 object result = null;
 
+                var sw = Stopwatch.StartNew();
+
                 await HubCallbackAsync(hubDispatcher, async (hub) =>
                 {
                     result = methodInfo.Invoke(hub, arguments);
@@ -106,6 +116,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                 });
 
+                this.hubServiceCounters?.OnInvokeMethod(hubName, hubMethodName, sw.Elapsed);
                 return result;
             }
             else

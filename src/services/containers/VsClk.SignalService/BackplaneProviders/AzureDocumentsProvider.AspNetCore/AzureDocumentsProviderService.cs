@@ -41,8 +41,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.logger = logger;
         }
 
-        private (string ServiceId, string Stamp, string ServiceType) ServiceInfo => (this.startup.ServiceId, this.startup.Stamp, this.startup.ServiceType);
-
         private AppSettingsBase AppSettings => this.appSettingsProvider.Value;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -74,7 +72,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     foreach (var factory in this.azureDocumentsProviderServiceFactories)
                     {
                         this.logger.LogInformation($"Creating Azure Documents provider with factory:'{factory.GetType().Name}'");
-                        await factory.CreateAsync(ServiceInfo, databaseSettings, stoppingToken);
+                        await factory.CreateAsync(this.startup.ServiceInfo, databaseSettings, stoppingToken);
                     }
                 }
                 catch (Exception error)

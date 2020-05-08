@@ -30,7 +30,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private const string TotalSignalRConnectionsProperty = "NumberOfSignalRConnections";
 
         private const string TotalUpdateContactsProperty = "NumberOfUpdateContacts";
-        private const string BackplaneChangesCountProperty = "BackplaneChangesCount";
 
         /// <summary>
         /// Max number of contact items to buffer before we start blocking.
@@ -62,29 +61,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private int throttledContactsCount;
 
         /// <summary>
-        /// Count of the incoming update contacts from the signalR services.
-        /// </summary>
-        private int updateContactPerfCounter;
-
-        /// <summary>
         /// Count of the processed update contacts on our TPL action block.
         /// </summary>
         private int updateContactActionBlockPerfCounter;
-
-        /// <summary>
-        /// Count of the incoming request to get a contact data info.
-        /// </summary>
-        private int getContactPerfCounter;
-
-        /// <summary>
-        /// Count of the incoming request to get matching contacts on a criteria.
-        /// </summary>
-        private int getContactsPerfCounter;
-
-        /// <summary>
-        /// Count of the contact changed incoming notifications from the global backplane.
-        /// </summary>
-        private int onContactsChangedPerfCounter;
 
         /// <summary>
         /// the accumulated waiting time on an update job in ms.
@@ -98,12 +77,14 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             IContactBackplaneManager backplaneManager,
             IStartupBase startupBase,
             IOptions<AppSettings> appSettingsProvider,
+            IServiceCounters serviceCounters = null,
             IDataFormatProvider formatProvider = null)
             : base(backplaneManager, contactBackplaneServiceNotifications, logger)
         {
             ServiceDataProvider = Requires.NotNull(serviceDataProvider, nameof(serviceDataProvider));
             this.startupBase = Requires.NotNull(startupBase, nameof(startupBase));
             this.formatProvider = formatProvider;
+            ServiceCounters = serviceCounters;
 
             BackplaneManager.ContactChangedAsync += OnContactChangedAsync;
             BackplaneManager.MessageReceivedAsync += OnMessageReceivedAsync;
@@ -188,6 +169,8 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         private IBackplaneServiceDataProvider ServiceDataProvider { get; }
 
+        private IServiceCounters ServiceCounters { get; }
+
         /// <summary>
         /// Gets or sets a value indicating whether update global contacts are being throttled.
         /// </summary>
@@ -211,7 +194,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 if (updateMetricsCounter.Next())
                 {
                     await BackplaneManager.UpdateBackplaneMetricsAsync(
-                        (this.startupBase.ServiceId, this.startupBase.Stamp, this.startupBase.ServiceType),
+                        this.startupBase.ServiceInfo,
                         GetAggregatedMetrics(),
                         stoppingToken);
                 }
@@ -221,26 +204,16 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 {
                     var aggregatedMetrics = GetAggregatedMetrics();
 
-                    var memoryInfo = LoggerScopeHelpers.GetProcessMemoryInfo();
-                    var cpuUsage = await LoggerScopeHelpers.GetCpuUsageForProcessAsync();
                     using (Logger.BeginScope(
                         (LoggerScopeHelpers.MethodScope, "UpdateMetrics"),
-                        (LoggerScopeHelpers.MemorySizeProperty, memoryInfo.memorySize),
-                        (LoggerScopeHelpers.TotalMemoryProperty, memoryInfo.totalMemory),
-                        (LoggerScopeHelpers.CpuUsageProperty, cpuUsage),
                         (TotalUpdateContactsProperty, UpdateContactActionBlock.InputCount),
-                        (BackplaneChangesCountProperty, BackplaneManager.BackplaneChangesCount),
+                        (BackplaneManagerConst.BackplaneChangesCountProperty, BackplaneManager.BackplaneChangesCount),
                         (TotalContactsProperty, ServiceDataProvider.TotalContacts),
                         (TotalConnectionsProperty, ServiceDataProvider.TotalConnections),
                         (TotalSignalRConnectionsProperty, aggregatedMetrics.TotalSelfCount)))
                     {
                         var perfCountersPerMinute = new List<int>();
-                        perfCountersPerMinute.Add(this.updateContactPerfCounter / TimespanUpdateSecs);
                         perfCountersPerMinute.Add(this.updateContactActionBlockPerfCounter / TimespanUpdateSecs);
-                        perfCountersPerMinute.Add(this.getContactPerfCounter / TimespanUpdateSecs);
-                        perfCountersPerMinute.Add(this.getContactsPerfCounter / TimespanUpdateSecs);
-                        perfCountersPerMinute.Add(this.onContactsChangedPerfCounter / TimespanUpdateSecs);
-
                         var totalProcessedUpdates = this.updateContactActionBlockPerfCounter;
                         var averageWaitingTime = totalProcessedUpdates != 0 ? this.updateContactWaitingTimePerfCounter / totalProcessedUpdates : 0;
                         Logger.LogInformation($"Queue :{this.updateQueueCount}, Throttle:{IsGlobalUpdateContactThrottle}, Wait time(ms):{averageWaitingTime}, Perf (events x secs):[{string.Join(',', perfCountersPerMinute)}]");
@@ -258,7 +231,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         }
 
         public Task UpdateMetricsAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             ContactServiceMetrics metrics,
             CancellationToken cancellationToken)
         {
@@ -293,7 +266,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            Interlocked.Increment(ref this.updateContactPerfCounter);
+            var sw = Stopwatch.StartNew();
 
             using (Logger.BeginMethodScope(nameof(UpdateContactAsync)))
             {
@@ -331,11 +304,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             {
                 Interlocked.Increment(ref this.throttledContactsCount);
             }
+
+            MethodPerf(nameof(UpdateContactAsync), sw.Elapsed);
         }
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            Interlocked.Increment(ref this.getContactPerfCounter);
+            var sw = Stopwatch.StartNew();
             using (Logger.BeginMethodScope(nameof(GetContactDataAsync)))
             {
                 Logger.LogDebug($"contactId:{Format("{0:T}", contactId)}");
@@ -351,13 +326,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 }
             }
 
+            MethodPerf(nameof(GetContactDataAsync), sw.Elapsed);
             return contactDataInfo;
         }
 
         public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
-            Interlocked.Increment(ref this.getContactsPerfCounter);
-
+            var sw = Stopwatch.StartNew();
             using (Logger.BeginMethodScope(nameof(GetContactsDataAsync)))
             {
                 Logger.LogDebug($"emails:{string.Join(",", matchProperties.Select(i => Format("{0:E}", i.TryGetProperty<string>(ContactProperties.Email))))}");
@@ -385,6 +360,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 }
             }
 
+            MethodPerf(nameof(GetContactsDataAsync), sw.Elapsed);
             return results;
         }
 
@@ -412,10 +388,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private void ResetPerfCounters()
         {
             this.updateContactActionBlockPerfCounter = 0;
-            this.updateContactPerfCounter = 0;
-            this.getContactPerfCounter = 0;
-            this.getContactsPerfCounter = 0;
-            this.onContactsChangedPerfCounter = 0;
             this.updateContactWaitingTimePerfCounter = 0;
         }
 
@@ -448,8 +420,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             string[] affectedProperties,
             CancellationToken cancellationToken)
         {
-            Interlocked.Increment(ref this.onContactsChangedPerfCounter);
-
+            var sw = Stopwatch.StartNew();
             using (Logger.BeginMethodScope(nameof(OnContactChangedAsync)))
             {
                 Logger.LogDebug($"contactId:{Format("{0:T}", contactDataChanged.ContactId)} local:{IsLocalService(contactDataChanged.ServiceId)}");
@@ -462,6 +433,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             }
 
             await FireOnUpdateContactAsync(contactDataChanged, affectedProperties, cancellationToken);
+            MethodPerf(nameof(OnContactChangedAsync), sw.Elapsed);
         }
 
         private async Task OnMessageReceivedAsync(
@@ -498,6 +470,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             {
                 await notify.FireOnSendMessageAsync(messageData, cancellationToken);
             }
+        }
+
+        private void MethodPerf(string methodName, TimeSpan t)
+        {
+            ServiceCounters?.OnInvokeMethod(nameof(ContactBackplaneService), methodName, t);
         }
     }
 }

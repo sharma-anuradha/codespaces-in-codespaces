@@ -96,8 +96,9 @@ namespace SignalService.Client.CLI
                     });
                 }
 
+                var hubConnection = hubConnectionBuilder.Build();
                 TraceSource.Verbose(sb.ToString());
-                return hubConnectionBuilder.Build();
+                return hubConnection;
             };
 
             TraceSource = CreateTraceSource("SignalR.CLI");

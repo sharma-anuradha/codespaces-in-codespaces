@@ -13,7 +13,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     public interface IAzureDocumentsProviderServiceFactory
     {
         Task CreateAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             DatabaseSettings databaseSettings,
             CancellationToken cancellationToken);
     }

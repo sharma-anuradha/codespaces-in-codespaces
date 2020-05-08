@@ -20,6 +20,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             TOptions options,
             IEnumerable<IHubContextHost> hubContextHosts,
             ILogger logger,
+            IServiceCounters hubServiceCounters,
             IDataFormatProvider formatProvider)
         {
             Options = Requires.NotNull(options, nameof(options));
@@ -29,7 +30,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             HubContextHosts = hubContextHosts.Where(hCtxt => hCtxt.HubType == typeof(THub)).ToArray();
             Logger = Requires.NotNull(logger, nameof(logger));
             FormatProvider = formatProvider;
-
+            HubServiceCounters = hubServiceCounters;
             logger.LogInformation($"Service created with id:{ServiceId}");
         }
 
@@ -42,6 +43,8 @@ namespace Microsoft.VsCloudKernel.SignalService
         public IDataFormatProvider FormatProvider { get; }
 
         public IHubContextHost[] HubContextHosts { get; }
+
+        protected IServiceCounters HubServiceCounters { get; }
 
         public string Format(string format, params object[] args)
         {
@@ -73,6 +76,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             return HubContextHosts
                 .Select(hCtxt => hubClientsCallback(hCtxt.Clients))
                 .Where(clientProxy => clientProxy != null);
+        }
+
+        protected void MethodPerf(string methodName, TimeSpan t)
+        {
+            HubServiceCounters?.OnInvokeMethod(GetType().Name, methodName, t);
         }
     }
 }

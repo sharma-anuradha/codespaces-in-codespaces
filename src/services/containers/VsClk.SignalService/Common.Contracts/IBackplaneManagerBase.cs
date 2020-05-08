@@ -41,17 +41,18 @@ namespace Microsoft.VsCloudKernel.SignalService
         int BackplaneChangesCount { get; }
 
         /// <summary>
-        /// Run a long running task to update metrics and purge.
+        /// Handle the next job from a hosted service callback every 5 secs.
         /// </summary>
-        /// <param name="stoppingToken"></param>
-        /// <returns></returns>
-        Task RunAsync(CancellationToken stoppingToken);
+        /// <param name="updateBackplaneMetrics">If update the backplane metrics is required.</param>
+        /// <param name="stoppingToken">A stopping token.</param>
+        /// <returns>Completion task.</returns>
+        Task HandleNextAsync(bool updateBackplaneMetrics, CancellationToken stoppingToken);
 
         /// <summary>
         /// Dispose of the backplane manager.
         /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        /// <returns>Completion task.</returns>
         Task DisposeAsync(CancellationToken cancellationToken);
 
         /// <summary>
@@ -76,7 +77,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <summary>
         /// Gets or Sets the metrics factory callback.
         /// </summary>
-        Func<((string ServiceId, string Stamp, string ServiceType), TServiceMetrics)> MetricsFactory { get; set; }
+        Func<(ServiceInfo, TServiceMetrics)> MetricsFactory { get; set; }
 
         /// <summary>
         /// Register a new provider.
@@ -93,7 +94,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task UpdateBackplaneMetricsAsync(
-            (string ServiceId, string Stamp, string ServiceType) serviceInfo,
+            ServiceInfo serviceInfo,
             TServiceMetrics metrics,
             CancellationToken cancellationToken);
     }

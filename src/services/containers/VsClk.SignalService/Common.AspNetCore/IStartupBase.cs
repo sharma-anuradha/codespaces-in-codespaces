@@ -10,10 +10,6 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         bool IsDevelopmentEnv { get; }
 
-        string ServiceId { get; }
-
-        string Stamp { get; }
-
-        string ServiceType { get; }
+        ServiceInfo ServiceInfo { get; }
     }
 }

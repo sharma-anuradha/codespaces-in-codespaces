@@ -46,7 +46,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             await DisposeInternalAsync();
         }
 
-        public async Task UpdateMetricsAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
+        public async Task UpdateMetricsAsync(ServiceInfo serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
             var serviceDocument = new ServiceDocument()
             {
@@ -183,7 +183,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected abstract Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken);
 
-        protected async Task InitializeServiceIdAsync((string ServiceId, string Stamp, string ServiceType) serviceInfo)
+        protected async Task InitializeServiceIdAsync(ServiceInfo serviceInfo)
         {
             await UpdateMetricsAsync(serviceInfo, default, CancellationToken.None);
 
