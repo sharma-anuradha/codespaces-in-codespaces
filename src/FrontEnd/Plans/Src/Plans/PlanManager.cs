@@ -315,11 +315,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 };
             }
 
-            if (currentVsoPlan.Properties == null)
-            {
-                currentVsoPlan.Properties = new VsoPlanProperties();
-            }
-
             if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
             {
                 currentVsoPlan.Properties.DefaultEnvironmentSku = vsoPlan.Properties.DefaultEnvironmentSku;

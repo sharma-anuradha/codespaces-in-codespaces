@@ -433,17 +433,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public static async Task<VsoPlan> GeneratePlan(
             string planName = "Test",
             string userId = null,
-            AzureLocation location = AzureLocation.WestUs2,
-            string subscription = null,
-            string resourceGroup = null)
+            AzureLocation location = AzureLocation.WestUs2)
         {
             var model = new VsoPlan
             {
                 Plan = new VsoPlanInfo
                 {
                     Name = planName,
-                    ResourceGroup = resourceGroup ?? "myRG",
-                    Subscription = subscription ?? Guid.NewGuid().ToString(),
+                    ResourceGroup = "myRG",
+                    Subscription = Guid.NewGuid().ToString(),
                     Location = location,
                 },
                 UserId = userId ?? MockCurrentUserProvider().CurrentUserIdSet.PreferredUserId,

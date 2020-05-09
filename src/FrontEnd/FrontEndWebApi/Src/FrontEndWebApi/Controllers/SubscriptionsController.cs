@@ -200,7 +200,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                             ResourceGroup = resourceGroup,
                             Subscription = subscriptionId,
                         },
-                        Properties = new VsoPlanProperties() { DefaultEnvironmentSku = resource.Properties?.DefaultEnvironmentSku },
                         UserId = userId,
                         Partner = partner,
                     };

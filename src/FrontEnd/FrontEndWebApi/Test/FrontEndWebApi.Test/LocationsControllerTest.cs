@@ -27,10 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
     {
         private static readonly int[] DefaultAutoSuspendDelayMinutes = new int[] { 0, 5, 30, 120 };
 
-        private const string subscription = "8def34ce-053c-43ba-8501-37599fb7f010";
-        private const string resourceGroup = "cloudEnvironments";
-        private const string planName = "samanoha-dev-stamp-plan";
-
         [Fact]
         public async Task GetLocationInfoAsync()
         {
@@ -103,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 });
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
-            var claimPlanId = $"/subscriptions/{subscription}/resourceGroups/{resourceGroup}/providers/Microsoft.VSOnline/plans/{planName}";
+            var claimPlanId = "/subscriptions/8def34ce-053c-43ba-8501-37599fb7f010/resourceGroups/cloudEnvironments/providers/Microsoft.VSOnline/plans/samanoha-dev-stamp-plan";
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, null, null, new ClaimsIdentity());
 
             var currentUserProvider = MockCurrentUserProvider(
@@ -121,7 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 currentUserProvider: currentUserProvider,
                 skuUtils: skuUtils);
 
-            var actionResult = await controller.GetAsync(AzureLocation.WestUs2.ToString(), null, logger);
+            var actionResult = await controller.GetAsync(AzureLocation.WestUs2.ToString(), logger);
             Assert.NotNull(actionResult);
             Assert.IsType<OkObjectResult>(actionResult);
 
@@ -145,8 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 MockControlPlaneInfo(),
                 skuCatalog,
                 currentUserProvider ?? MockCurrentUserProvider(),
-                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan(planName: planName, subscription: subscription, resourceGroup: resourceGroup)),
-            new PlanManagerSettings
+                new PlanManagerSettings
                 {
                     DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
                 },
