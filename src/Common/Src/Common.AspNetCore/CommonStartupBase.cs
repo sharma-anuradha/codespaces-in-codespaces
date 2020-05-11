@@ -180,6 +180,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         }
 
         /// <summary>
+        /// Configures special settings intended for local development.
+        /// </summary>
+        protected void ConfigureDevSettings()
+        {
+            if (AppSettings.GenerateLocalHostNameFromNgrok)
+            {
+                ConfigureLocalHostname();
+            }
+        }
+
+        /// <summary>
+        /// Configures the hostname for local development via Ngrok.
+        /// </summary>
+        protected void ConfigureLocalHostname()
+        {
+            var ngrokHostname = NgrokHelperUtils.GetLocalNgrokHostname().Result;
+
+            if (string.IsNullOrEmpty(AppSettings.ControlPlaneSettings.DnsHostName))
+            {
+                AppSettings.ControlPlaneSettings.DnsHostName = ngrokHostname;
+            }
+
+            foreach (var stamp in AppSettings.ControlPlaneSettings.Stamps)
+            {
+                if (string.IsNullOrEmpty(stamp.Value.DnsHostName))
+                {
+                    stamp.Value.DnsHostName = ngrokHostname;
+                }
+            }
+        }
+
+        /// <summary>
         /// Add various DI services common to all VSO services.
         /// </summary>
         /// <param name="services">The service collection.</param>

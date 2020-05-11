@@ -84,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             {
                 // Enable PII data in logs for Dev
                 IdentityModelEventSource.ShowPII = true;
+                ConfigureDevSettings();
             }
 
             if (IsRunningInAzure() &&
@@ -268,7 +269,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
-            services.AddServiceUriBuilder(frontEndAppSettings.ForwardingHostForLocalDevelopment);
+            // Set the forwarding hostname for local development.
+            if (AppSettings.GenerateLocalHostNameFromNgrok)
+            {
+                services.AddServiceUriBuilder(NgrokHelperUtils.GetLocalNgrokHostname().Result);
+            }
+            else
+            {
+                services.AddServiceUriBuilder(frontEndAppSettings.ForwardingHostForLocalDevelopment);
+            }
 
             // Both DocumentDB and Cosmos DB client providers point to the same instance database.
             services
