@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
     /// <summary>
@@ -12,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the compute resource.
         /// </summary>
-        public ResourceAllocation Compute
+        public ResourceAllocationRecord Compute
         {
             get;
             set;
@@ -21,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the storage resource.
         /// </summary>
-        public ResourceAllocation Storage
+        public ResourceAllocationRecord Storage
         {
             get;
             set;
@@ -30,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the OS Disk resource.
         /// </summary>
-        public ResourceAllocation OSDisk
+        public ResourceAllocationRecord OSDisk
         {
             get;
             set;

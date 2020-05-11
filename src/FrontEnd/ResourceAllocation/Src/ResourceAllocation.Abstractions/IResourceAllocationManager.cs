@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation
 {
     /// <summary>
     /// Manages resource allocation.
@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="allocateRequests">resource list.</param>
         /// <param name="logger">logger.result.</param>
         /// <returns>result.</returns>
-        Task<IEnumerable<ResourceAllocation>> AllocateResourcesAsync(
+        Task<IEnumerable<ResourceAllocationRecord>> AllocateResourcesAsync(
             Guid environmentId,
             IEnumerable<AllocateRequestBody> allocateRequests,
             IDiagnosticsLogger logger);

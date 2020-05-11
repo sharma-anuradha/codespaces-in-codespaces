@@ -6,7 +6,7 @@ using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation
 {
     /// <summary>
     /// Represents a backend resources keepalive info in the context of the frontent.

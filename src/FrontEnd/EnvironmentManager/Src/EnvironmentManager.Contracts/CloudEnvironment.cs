@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -211,7 +212,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Returned by back-end resource broker AllocateResult.
         /// </remarks>
         [JsonProperty(Required = Required.Default, PropertyName = "storage")]
-        public ResourceAllocation Storage { get; set; }
+        public ResourceAllocationRecord Storage { get; set; }
 
         /// <summary>
         /// Gets or sets the environment compute info.
@@ -220,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Returned by back-end resource broker AllocateResult.
         /// </remarks>
         [JsonProperty(Required = Required.Default, PropertyName = "compute")]
-        public ResourceAllocation Compute { get; set; }
+        public ResourceAllocationRecord Compute { get; set; }
 
         /// <summary>
         /// Gets or sets the environment OS disk.
@@ -229,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Returned by back-end resource broker AllocateResult.
         /// </remarks>
         [JsonProperty(Required = Required.Default, PropertyName = "osDisk")]
-        public ResourceAllocation OSDisk { get; set; }
+        public ResourceAllocationRecord OSDisk { get; set; }
 
         /// <summary>
         /// Gets or sets the last time the record is updated based on heartbeat.

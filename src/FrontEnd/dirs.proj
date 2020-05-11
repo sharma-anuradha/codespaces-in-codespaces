@@ -11,6 +11,7 @@
     <ProjectReference Include="LiveShareAuthentication\dirs.proj" />
     <ProjectReference Include="Subscriptions\dirs.proj" />
     <ProjectReference Include="UserProfile\dirs.proj" />
+    <ProjectReference Include="ResourceAllocation\dirs.proj" />
   </ItemGroup>
 
 </Project>

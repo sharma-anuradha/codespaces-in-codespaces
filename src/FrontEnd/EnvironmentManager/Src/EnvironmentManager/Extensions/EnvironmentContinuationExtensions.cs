@@ -4,6 +4,7 @@
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions
 {
@@ -17,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// </summary>
         /// <param name="resource">Allocated resource.</param>
         /// <returns>Continuation input resource.</returns>
-        public static EnvironmentContinuationInputResource BuildQueueInputResource(this ResourceAllocation resource)
+        public static EnvironmentContinuationInputResource BuildQueueInputResource(this ResourceAllocationRecord resource)
         {
             if (resource == default)
             {
@@ -52,14 +53,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// </summary>
         /// <param name="resource">Resource continuation input.</param>
         /// <returns>Resource allocation.</returns>
-        public static ResourceAllocation BuildResourceRecord(this EnvironmentContinuationInputResource resource)
+        public static ResourceAllocationRecord BuildResourceRecord(this EnvironmentContinuationInputResource resource)
         {
             if (resource == default)
             {
                 return default;
             }
 
-            return new ResourceAllocation()
+            return new ResourceAllocationRecord()
             {
                 Location = resource.Location,
                 SkuName = resource.SkuName,

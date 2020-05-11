@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
+    <ProjectReference Include="..\ResourceAllocation.Contracts\ResourceAllocation.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

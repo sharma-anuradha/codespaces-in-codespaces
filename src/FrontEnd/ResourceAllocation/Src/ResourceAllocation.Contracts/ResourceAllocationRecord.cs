@@ -1,4 +1,4 @@
-// <copyright file="ResourceAllocation.cs" company="Microsoft">
+﻿// <copyright file="ResourceAllocationRecord.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation
 {
     /// <summary>
     /// Represents a backend resource associated with a cloud environment.
@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// See backend resource broker AllocateResult.
     /// </remarks>
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class ResourceAllocation
+    public class ResourceAllocationRecord
     {
         private ResourceAllocationKeepAlive keepAlive;
 

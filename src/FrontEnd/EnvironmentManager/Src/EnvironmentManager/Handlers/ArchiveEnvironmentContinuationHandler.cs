@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
 {
@@ -281,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     }
 
                     // Switch out old storage for archived storage
-                    environment.Storage = new ResourceAllocation
+                    environment.Storage = new ResourceAllocationRecord
                     {
                         Created = operationInput.ArchiveResource.Created,
                         Location = operationInput.ArchiveResource.Location,

@@ -19,9 +19,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkf
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -907,7 +907,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                         Guid.Parse(cloudEnvironment.Id), storageResourceId, retryLogger.NewChildLogger());
 
                                     // Switch out storage reference
-                                    cloudEnvironment.Storage = new ResourceAllocation
+                                    cloudEnvironment.Storage = new ResourceAllocationRecord
                                     {
                                         ResourceId = storageResourceId,
                                         Location = storageDetails.Location,
@@ -1353,7 +1353,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 });
         }
 
-        private Task<ResourceAllocation> AllocateComputeAsync(
+        private Task<ResourceAllocationRecord> AllocateComputeAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
@@ -1410,14 +1410,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 });
         }
 
-        private Task<ResourceAllocation> AllocateStorageAsync(
+        private Task<ResourceAllocationRecord> AllocateStorageAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
         {
             return AllocateResourceAsync(cloudEnvironment, ResourceType.StorageFileShare, logger);
         }
 
-        private async Task<ResourceAllocation> AllocateResourceAsync(
+        private async Task<ResourceAllocationRecord> AllocateResourceAsync(
             CloudEnvironment cloudEnvironment,
             ResourceType resourceType,
             IDiagnosticsLogger logger)

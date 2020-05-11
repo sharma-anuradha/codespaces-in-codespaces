@@ -19,6 +19,8 @@
     <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveShareAuthentication.Contracts\LiveShareAuthentication.Contracts.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
+    <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation.Abstractions\ResourceAllocation.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation\ResourceAllocation.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />

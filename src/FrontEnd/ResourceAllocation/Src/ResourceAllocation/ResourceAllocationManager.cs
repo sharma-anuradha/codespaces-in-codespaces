@@ -4,22 +4,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation
 {
     /// <summary>
     /// Implements resource allocation manager.
     /// </summary>
     public class ResourceAllocationManager : IResourceAllocationManager
     {
-        private static readonly string LogBaseName = nameof(ResourceAllocationManager);
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceAllocationManager"/> class.
         /// </summary>
@@ -32,20 +28,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ResourceAllocation>> AllocateResourcesAsync(
+        public async Task<IEnumerable<ResourceAllocationRecord>> AllocateResourcesAsync(
             Guid environmentId,
             IEnumerable<AllocateRequestBody> allocateRequests,
             IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
-                $"{LogBaseName}_allocate_resources",
+                $"{GetType().GetLogMessageBaseName()}_allocate_resources",
                 async (childLogger) =>
                 {
                     var resultResponse = await ResourceBrokerClient.AllocateAsync(
                         environmentId,
                         allocateRequests,
                         logger.NewChildLogger());
-                    var result = new List<ResourceAllocation>();
+                    var result = new List<ResourceAllocationRecord>();
                     foreach (var response in resultResponse)
                     {
                         if (response == null)
@@ -53,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             throw new InvalidOperationException("Allocate result is invalid.");
                         }
 
-                        result.Add(new ResourceAllocation
+                        result.Add(new ResourceAllocationRecord
                         {
                             ResourceId = response.ResourceId,
                             SkuName = response.SkuName,
