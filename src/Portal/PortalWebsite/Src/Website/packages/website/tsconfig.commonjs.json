@@ -1,0 +1,44 @@
+{
+    "extends": "../../config/tsconfig.commonjs.json",
+    "compilerOptions": {
+        "outDir": "commonjs",
+        "baseUrl": "../",
+        "skipLibCheck": true,
+        "paths": {
+            "vso-client-core": [
+                "vso-client-core/src/index.ts"
+            ],
+            "vso-service-worker-client": [
+                "vso-service-worker-client/src/index.ts"
+            ],
+            "vso-ts-agent": [
+                "vso-ts-agent/src/index.ts"
+            ],
+            "vso-workbench": [
+                "vso-workbench/src/index.ts"
+            ],
+        }
+    },
+    "include": [
+        "package.json",
+        "src/**/*"
+    ],
+    "exclude": [
+        "commonjs",
+        "lib"
+    ],
+    "references": [
+        {
+            "path": "../vso-client-core/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../vso-ts-agent/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../vso-service-worker-client/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../vso-workbench/tsconfig.commonjs.json"
+        }
+    ]
+}

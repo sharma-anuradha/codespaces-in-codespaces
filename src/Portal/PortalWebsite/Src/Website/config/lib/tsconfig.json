@@ -1,0 +1,25 @@
+{
+    "references": [
+        {
+            "path": "../../packages/vso-client-core"
+        },
+        {
+            "path": "../../packages/vso-platform-auth"
+        },
+        {
+            "path": "../../packages/vso-service-worker"
+        },
+        {
+            "path": "../../packages/vso-service-worker-client"
+        },
+        {
+            "path": "../../packages/vso-ts-agent"
+        },
+        {
+            "path": "../../packages/vso-workbench"
+        },
+        {
+            "path": "../../packages/website"
+        },
+    ]
+}

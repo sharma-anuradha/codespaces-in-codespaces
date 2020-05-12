@@ -1,0 +1,34 @@
+{
+  "name": "vso-ts-agent",
+  "version": "1.0.0-local",
+  "main": "commonjs/src/index.js",
+  "module": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "scripts": {
+    "compile": "tsc -b ./",
+    "watch": "tsc -b -watch ./",
+    "compile-service-worker": "webpack",
+    "watch-service-worker": "webpack -w",
+    "compile-service-worker-prod": "webpack --config ./webpack.prod.config.js",
+    "test": "echo Nothing to see here."
+  },
+  "devDependencies": {
+    "ts-loader": "^6.2.2",
+    "typescript": "^3.5.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-merge": "^4.2.2"
+  },
+  "dependencies": {
+    "@types/debug": "^4.1.5",
+    "@types/deep-equal": "^1.0.1",
+    "@vs/vs-ssh": "^2.0.10",
+    "debug": "^4.1.1",
+    "deep-equal": "^2.0.1",
+    "http-message-parser": "^0.0.34",
+    "vscode-jsonrpc": "^4.0.0",
+    "vso-client-core": "1.0.0-local",
+    "vso-service-worker-client": "1.0.0-local"
+  }
+}

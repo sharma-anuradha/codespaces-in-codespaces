@@ -1,0 +1,22 @@
+{
+  "name": "vso-platform-auth",
+  "version": "1.0.0-local",
+  "main": "commonjs/src/index.js",
+  "module": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "scripts": {
+    "compile": "webpack",
+    "watch": "webpack -w",
+    "test": "echo Nothing to see here."
+  },
+  "dependencies": {
+    "vso-client-core": "1.0.0-local"
+  },
+  "devDependencies": {
+    "ts-loader": "^6.1.0",
+    "typescript": "^3.5.3",
+    "webpack": "4.28.3",
+    "webpack-cli": "^3.3.8"
+  }
+}

@@ -20,8 +20,12 @@ build:
       name: "portal build"
       command: "build/portal/build.sh"
       artifacts:
-        - from: "bin/release"
-          to: "binaries"
+        - from: "bin/release/VsClk.Portal.WebSite/publish"
+          to: "portal"
+          include:
+            - "**/*"
+        - from: "src/Portal/PortalWebsite/Src/Website/build"
+          to: "portal/ClientApp/build"
           include:
             - "**/*"
 
@@ -36,11 +40,11 @@ test:
           type: "vstest"
           include:
             - "*.trx"
-        - from: 'src/services/containers/VsClk.Portal.WebSite/ClientApp'
+        - from: 'src/Portal/PortalWebsite/Src/Website/'
           title: 'Portal Test Results'
           type: 'JUnit'
           include:
-            - 'junit.xml'
+            - 'packages/*/junit.xml'
 
 static_analysis_options:
   moderncop_options:  
@@ -51,4 +55,4 @@ package_sources:
     config_files:
         - include:
           - 'src/services/containers/VsClk.Portal.WebSite/ClientApp/.npmrc'
-          - 'src/services/containers/VsClk.Portal.WebSite/ClientApp/*/.npmrc'
+          - 'src/Portal/PortalWebsite/Src/Website/.npmrc'

@@ -1,0 +1,25 @@
+{
+    "references": [
+        {
+            "path": "../../packages/vso-client-core/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../../packages/vso-platform-auth/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../../packages/vso-service-worker/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../../packages/vso-service-worker-client/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../../packages/vso-ts-agent/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../../packages/vso-workbench/tsconfig.commonjs.json"
+        },
+        {
+            "path": "../../packages/website/tsconfig.commonjs.json"
+        },
+    ]
+}

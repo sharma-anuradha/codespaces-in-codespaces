@@ -1,0 +1,75 @@
+{
+  "name": "vso-workbench",
+  "version": "1.0.0-local",
+  "main": "commonjs/src/index.js",
+  "module": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "yarn test --watch",
+    "test:update-snapshots": "yarn test --updateSnapshot",
+    "lint": "tslint -c ../tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
+  },
+  "vscodeCommit": {
+    "insider": "d487078dc7fc1c276657cadb61b4f63833a8df55",
+    "stable": "d69a79b73808559a91206d73d7717ff5f798f23c"
+  },
+  "husky": {
+    "hooks": {
+      "pre-push": "yarn lint && yarn test"
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "@types/jwt-decode": "^2.2.1",
+    "@types/node": "^13.0.0",
+    "@types/react": "^16.9.26",
+    "@types/react-dom": "^16.9.5",
+    "@types/react-test-renderer": "^16.9.2",
+    "@typescript-eslint/eslint-plugin": "^2.19.0",
+    "@typescript-eslint/parser": "^2.19.0",
+    "copy-dir": "^1.2.0",
+    "cpx": "^1.5.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.18.3",
+    "husky": "^4.2.1",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^25.2.4",
+    "lint-staged": "^10.0.7",
+    "per-env": "^1.0.2",
+    "prettier": "^1.19.1",
+    "react-test-renderer": "^16.13.1",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^25.3.0",
+    "tslint": "^5.1.0",
+    "tslint-microsoft-contrib": "^6.2.0",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "@vs/vso-splash-screen": "^1.0.2126",
+    "debug": "^4.1.1",
+    "jwt-decode": "^2.2.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "vso-client-core": "1.0.0-local",
+    "vso-service-worker": "1.0.0-local",
+    "vso-service-worker-client": "1.0.0-local",
+    "vso-ts-agent": "1.0.0-local"
+  },
+  "lint-staged": {
+    "*.{css,md,scss}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "eslintIgnore": [
+    "build/*"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+    "extends": "./config/tsconfig.base.json",
+    "compilerOptions": {
+        "baseUrl": "packages/",
+        "paths": {
+            "vso-client-core": [
+                "vso-client-core/src/index.ts"
+            ],
+            "vso-platform-auth": [
+                "vso-platform-auth/src/index.ts"
+            ],
+            "vso-service-worker": [
+                "vso-service-worker/src/index.ts"
+            ],
+            "vso-service-worker-client": [
+                "vso-service-worker-client/src/index.ts"
+            ],
+            "vso-ts-agent": [
+                "vso-ts-agent/src/index.ts"
+            ],
+            "vso-workbench": [
+                "vso-workbench/src/index.ts"
+            ]
+        }
+    },
+    "references": [
+        {
+            "path": "packages/vso-client-core"
+        },
+        {
+            "path": "packages/vso-platform-auth"
+        },
+        {
+            "path": "packages/vso-service-worker"
+        },
+        {
+            "path": "packages/vso-service-worker-client"
+        },
+        {
+            "path": "packages/vso-ts-agent"
+        },
+        {
+            "path": "packages/vso-workbench"
+        },
+        {
+            "path": "packages/website"
+        }
+    ],
+    "exclude": [
+        "packages/",
+        "scripts/",
+        "public/",
+        "build/",
+        "config/"
+    ]
+}

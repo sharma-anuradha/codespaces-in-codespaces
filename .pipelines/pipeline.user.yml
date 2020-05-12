@@ -52,4 +52,8 @@ static_analysis_options:
           - 'vso-workbench/webpack.config.js'
           - 'vso-workbench/webpack.prod.config.js'
           - 'vso-workbench/scripts/npm/copy-build-files.js'
-
+      - from: 'src\Portal\PortalWebsite\Src\Website'
+        exclude:
+          - 'config\**\*.js'
+          - 'scripts\**\*.js'
+          - 'packages\**\*.js'

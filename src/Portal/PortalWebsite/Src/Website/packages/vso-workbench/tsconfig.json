@@ -1,0 +1,44 @@
+{
+    "extends": "../../config/tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "lib",
+        "baseUrl": "../",
+        "skipLibCheck": true,
+        "paths": {
+            "vso-client-core": [
+                "vso-client-core/src/index.ts"
+            ],
+            "vso-service-worker": [
+                "vso-service-worker/src/index.ts"
+            ],
+            "vso-service-worker-client": [
+                "vso-service-worker-client/src/index.ts"
+            ],
+            "vso-ts-agent": [
+                "vso-ts-agent/src/index.ts"
+            ]
+        }
+    },
+    "exclude": [
+        "commonjs",
+        "lib"
+    ],
+    "include": [
+        "package.json",
+        "src/**/*"
+    ],
+    "references": [
+        {
+            "path": "../vso-client-core"
+        },
+        {
+            "path": "../vso-ts-agent"
+        },
+        {
+            "path": "../vso-service-worker"
+        },
+        {
+            "path": "../vso-service-worker-client"
+        }
+    ]
+}

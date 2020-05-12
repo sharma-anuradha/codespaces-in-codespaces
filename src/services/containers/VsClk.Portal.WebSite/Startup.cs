@@ -70,7 +70,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
             // In production, the React files will be served from this directory
             // In tests, the assets are not built, but the static index.html will do just fine.
-            var spaRootPath = AppSettings.IsTest ? "ClientApp/public" : "ClientApp/build";
+            var spaRootPath = "ClientApp/build";
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = spaRootPath; });
 
             PortForwardingHostUtils = new PortForwardingHostUtils(appSettings.PortForwardingHostsConfigs);
@@ -253,15 +253,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 {
                     FileProvider = new PhysicalFileProvider(
                         Path.Combine(HostEnvironment.ContentRootPath, "ClientApp", "build"))
-                });
-            }
-
-            if (AppSettings.IsTest || AppSettings.IsLocal)
-            {
-                app.UseStaticFiles(new StaticFileOptions
-                {
-                    FileProvider = new PhysicalFileProvider(
-                        Path.Combine(HostEnvironment.ContentRootPath, "ClientApp", "public"))
                 });
             }
 

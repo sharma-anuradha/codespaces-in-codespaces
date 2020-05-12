@@ -12,11 +12,6 @@ pushd "%~dp0"
 set DOTNET_VERSION=3.1.200
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
-:: Install node
-set NODE_VERSION=v10.17.0
-call ".pipelines\install-node.cmd" %NODE_VERSION%
-
-call node --version
 
 set DOTNET_ARGS=/m /v:m /p:RestorePackages=false /p:BuildFrontendBackend=false
 

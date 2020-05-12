@@ -11,13 +11,6 @@ pushd "%~dp0"
 set DOTNET_VERSION=3.1.200
 call ".pipelines\install-dotnet.cmd" %DOTNET_VERSION%
 
-:: Install node
-set NODE_VERSION=v10.17.0
-call ".pipelines\install-node.cmd" %NODE_VERSION%
-
-:: Install yarn
-call ".pipelines\install-yarn.cmd"
-
 set DOTNET_ARGS=/m /v:m /p:BuildFrontendBackend=false
 
 :: Dotnet Restore
@@ -30,65 +23,6 @@ if "%EX%" neq "0" (
     echo Failed to restore correctly.
 	exit /b %EX%
 )
-
-:: Yarn install and build
-:: We need to copy sources to a tmp directory, call install and build, and then copy the built binaries back to our ClientApp directory
-echo.
-call yarn --version
-echo yarn install and build
-pushd ".\src\services\containers\VsClk.Portal.WebSite\ClientApp"
-call robocopy . %tmp%\portalspabuild\ /s 
-pushd %tmp%\portalspabuild\
-echo.
-echo yarn-install-project
-call yarn install --network-timeout 1000000 --frozen-lockfile
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    echo Failed to yarn-install-project correctly.
-    echo .npmrc:
-    type ".npmrc"
-    echo %userprofile%\.npmrc:
-    type "%userprofile%\.npmrc"
-    popd
-	exit /b %EX%
-)
-
-echo.
-echo yarn-lint
-call yarn lint-only
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    popd
-    echo Failed to yarn-lint correctly.
-	exit /b %EX%
-)
-
-echo.
-echo yarn-test-project
-call yarn test:ci
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    popd
-    echo Failed to yarn-test-project correctly.
-	exit /b %EX%
-)
-
-echo.
-echo yarn-build-project
-call yarn build
-set EX=%ERRORLEVEL%
-if "%EX%" neq "0" (
-    popd
-    echo Failed to yarn-build-project correctly.
-	exit /b %EX%
-)
-popd
-
-echo.
-echo copy output files
-call robocopy %tmp%\portalspabuild\build\ .\build /s
-call robocopy %tmp%\portalspabuild\ .\ junit.xml
-popd
 
 :: Restore working directory of user so this works fine in dev box.
 popd

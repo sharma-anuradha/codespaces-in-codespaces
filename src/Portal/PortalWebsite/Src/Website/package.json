@@ -1,0 +1,72 @@
+{
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/vscode-jsonrpc/**",
+      "**/@types/node/**",
+      "**/@vs/vs-ssh/**"
+    ]
+  },
+  "scripts": {
+    "preinstall": "node scripts/npm/preinstall.js",
+    "postinstall": "yarn vscode:download",
+    "build": "cross-env NODE_ENV=production webpack --config config/webpack/webpack.config.js",
+    "build:ts": "yarn build:commonjs && yarn build:lib",
+    "build:commonjs": "tsc -b config/commonjs",
+    "build:lib": "tsc -b config/lib",
+    "circular-dependencies": "node ./scripts/npm/circular-dependencies.js",
+    "clean": "yarn clean:dist && yarn clean:lib && yarn clean:commonjs && yarn clean:test-results && yarn clean:vscode",
+    "clean:all": "yarn clean && yarn clean:node_modules",
+    "clean:dist": "rimraf build",
+    "clean:lib": "rimraf packages/*/lib/",
+    "clean:commonjs": "rimraf packages/*/commonjs/",
+    "clean:node_modules": "rimraf packages/*/node_modules/ node_modules/",
+    "clean:vscode": "rimraf public/workbench-page/web-standalone",
+    "clean:test-results": "rimraf packages/*/junit.xml",
+    "dep-graph:main": "npx madge --layout dot --warning --image main-graph.svg src/index.tsx",
+    "dep-graph:service-worker": "npx madge --layout dot --warning --image service-worker-graph.svg vso-ts-agent/src/service-worker/service-worker.ts",
+    "vscode:download": "node --unhandled-rejections=strict scripts/npm/download-vscode.js",
+    "vscode:update": "node --unhandled-rejections=strict scripts/npm/update-vscode.js",
+    "start": "run-p watch:portal watch:client",
+    "start:github": "run-p watch:portal:github watch:client",
+    "start:portal": "dotnet run --launch-profile Local --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj",
+    "start:webpack-dev-server": "webpack-dev-server --config config/webpack/webpack.config.js",
+    "setup": "yarn setup:get-dev-ssl-cert && yarn setup:get-service-principal && yarn setup:update-github-secret",
+    "setup:get-dev-ssl-cert": "node --unhandled-rejections=strict scripts/npm/get-dev-ssl-cert.js",
+    "setup:get-service-principal": "node --unhandled-rejections=strict scripts/npm/get-service-principal.js",
+    "setup:update-github-secret": "node --unhandled-rejections=strict scripts/npm/update-github-secret.js",
+    "test": "yarn workspaces run test",
+    "test:ci": "yarn workspaces run test --ci --reporters=\"jest-junit\"",
+    "watch:client": "webpack-dev-server --config config/webpack/webpack.config.js",
+    "watch:portal": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile Local",
+    "watch:portal:github": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalGitHub"
+  },
+  "devDependencies": {
+    "colors": "^1.4.0",
+    "copy-webpack-plugin": "^5.1.1",
+    "cross-env": "^7.0.2",
+    "css-loader": "^3.5.3",
+    "file-loader": "^6.0.0",
+    "fs-extra": "^9.0.0",
+    "html-webpack-plugin": "^4.3.0",
+    "jest-junit": "^10.0.0",
+    "madge": "^3.9.0",
+    "mini-css-extract-plugin": "^0.9.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.0.5",
+    "rimraf": "^3.0.2",
+    "style-loader": "^1.2.1",
+    "tar": "^6.0.2",
+    "ts-loader": "^7.0.1",
+    "tsconfig-paths-webpack-plugin": "^3.2.0",
+    "typescript": "^3.8.3",
+    "url-loader": "^4.1.0",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3",
+    "webpack-merge": "^4.2.2"
+  }
+}

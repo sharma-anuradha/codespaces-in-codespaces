@@ -1,0 +1,26 @@
+{
+  "name": "vso-client-core",
+  "version": "1.0.0-local",
+  "main": "commonjs/src/index.js",
+  "module": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "scripts": {
+    "compile": "tsc -b ./",
+    "watch": "tsc -b -watch ./",
+    "test": "echo Nothing to see here."
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.4",
+    "@types/node": "^13.0.0",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "@microsoft/applicationinsights-web": "^2.5.3",
+    "buffer": "^5.4.3",
+    "debug": "^4.1.1",
+    "detect-browser": "^5.0.0",
+    "moment": "^2.24.0",
+    "vscode-jsonrpc": "^4.0.0"
+  }
+}

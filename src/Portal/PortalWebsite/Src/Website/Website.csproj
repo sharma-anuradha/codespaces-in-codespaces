@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+		<TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+		<DefaultItemExcludes>$(DefaultItemExcludes);public\workbench-page\web-standalone\**</DefaultItemExcludes>
+		<DefaultItemExcludes>$(DefaultItemExcludes);build\**</DefaultItemExcludes>
+		<DefaultItemExcludes>$(DefaultItemExcludes);node_modules\**</DefaultItemExcludes>
+	</PropertyGroup>
+</Project>
