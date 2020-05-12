@@ -182,7 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                             new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
                         };
 
-                        resourceLocation = await SelectAzureResourceLocation(
+                        resourceLocation = await CapacityManager.SelectAzureResourceLocation(
                             criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
                     }
 
@@ -224,7 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     {
                         new AzureResourceCriterion { ServiceType = ServiceType.Storage, Quota = "StorageAccounts", Required = 1 },
                     };
-                    var resourceLocation = await SelectAzureResourceLocation(
+                    var resourceLocation = await CapacityManager.SelectAzureResourceLocation(
                         criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
 
                     var linuxCopyItem = new StorageCopyItem()
@@ -268,7 +268,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         new AzureResourceCriterion { ServiceType = ServiceType.KeyVault, Quota = ServiceType.KeyVault.ToString(), Required = 1 },
                     };
 
-                    var resourceLocation = await SelectAzureResourceLocation(
+                    var resourceLocation = await CapacityManager.SelectAzureResourceLocation(
                         criteria, keyVaultDetails.Location, logger.NewChildLogger());
 
                     result = new KeyVaultProviderCreateInput
@@ -442,23 +442,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             record = await ResourceRepository.CreateAsync(record, logger);
 
             return new ResourceRecordRef(record);
-        }
-
-        private async Task<IAzureResourceLocation> SelectAzureResourceLocation(
-            IEnumerable<AzureResourceCriterion> criteria, AzureLocation location, IDiagnosticsLogger logger)
-        {
-            try
-            {
-                // Check for capacity
-                return await CapacityManager.SelectAzureResourceLocation(
-                    criteria, location, logger.NewChildLogger());
-            }
-            catch (CapacityNotAvailableException ex)
-            {
-                // Translate to Temporarily Unavailable Exception
-                throw new ContinuationTaskTemporarilyUnavailableException(
-                    ex.Message, TimeSpan.FromMinutes(1), ex);
-            }
         }
     }
 }

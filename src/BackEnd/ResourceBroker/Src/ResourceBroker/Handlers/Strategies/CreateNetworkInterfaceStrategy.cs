@@ -3,22 +3,18 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeNetworkInterfaceProvider.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Strategies
 {
@@ -31,14 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
         /// Initializes a new instance of the <see cref="CreateNetworkInterfaceStrategy"/> class.
         /// </summary>
         /// <param name="networkInterfaceProvider">Network Interface provider.</param>
-        /// <param name="diskProvider">Disk provider.</param>
-        /// <param name="capacityManager">The capacity manager.</param>
-        /// <param name="resourceRepository">Resource repository to be used.</param>
-        /// <param name="tokenProvider">Token provider.</param>
-        /// <param name="serviceProvider">Service provider.</param>
-        /// <param name="creationStrategies">Resource creation strategies.</param>
-        public CreateNetworkInterfaceStrategy(
-            INetworkInterfaceProvider networkInterfaceProvider)
+        public CreateNetworkInterfaceStrategy(INetworkInterfaceProvider networkInterfaceProvider)
         {
             NetworkInterfaceProvider = networkInterfaceProvider;
         }

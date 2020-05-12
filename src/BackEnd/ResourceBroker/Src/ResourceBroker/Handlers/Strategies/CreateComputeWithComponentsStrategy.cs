@@ -6,11 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -99,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                             new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
                         };
 
-                resourceLocation = await SelectAzureResourceLocation(
+                resourceLocation = await CapacityManager.SelectAzureResourceLocation(
                     criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
             }
 
@@ -299,23 +297,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
 
             return resourceLocation;
-        }
-
-        private async Task<IAzureResourceLocation> SelectAzureResourceLocation(
-            IEnumerable<AzureResourceCriterion> criteria, AzureLocation location, IDiagnosticsLogger logger)
-        {
-            try
-            {
-                // Check for capacity
-                return await CapacityManager.SelectAzureResourceLocation(
-                    criteria, location, logger.NewChildLogger());
-            }
-            catch (CapacityNotAvailableException ex)
-            {
-                // Translate to Temporarily Unavailable Exception
-                throw new ContinuationTaskTemporarilyUnavailableException(
-                    ex.Message, TimeSpan.FromMinutes(1), ex);
-            }
         }
     }
 }

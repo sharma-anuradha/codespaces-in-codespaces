@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 Reason = reason,
                 IsAssigned = false,
             };
-            var target = CreateResourceContinuationHandler.DefaultQueueTarget;
+            var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
         }

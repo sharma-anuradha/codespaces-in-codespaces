@@ -98,7 +98,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteOrphanedResourceContinuationHandler>());
 
             // Create resource strategies
-            services.AddSingleton<ICreateResourceStrategy, CreateResourceBasicStrategy>();
+            services.AddSingleton<ICreateResourceStrategy, CreateStorageFileShareStrategy>();
+            services.AddSingleton<ICreateResourceStrategy, CreateKeyVaultStrategy>();
             services.AddSingleton<ICreateResourceStrategy, CreateComputeWithComponentsStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateComputeStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateNetworkInterfaceStrategy>();

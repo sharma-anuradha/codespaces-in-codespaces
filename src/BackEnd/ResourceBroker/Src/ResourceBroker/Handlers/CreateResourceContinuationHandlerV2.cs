@@ -10,7 +10,6 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -96,64 +95,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
             var result = await createStrategy.RunCreateOperationCoreAsync(input, resource, logger);
 
-            // Make sure we bring over the Resource info if we have it
-            if (result.AzureResourceInfo != default)
+            // Update the components provisioning status.
+            if (result.Status == OperationState.Succeeded && result.Components?.Items != default)
             {
-                // Update the components provisioning status.
-                if (result.Status == OperationState.Succeeded && result.Components.Items != default)
+                foreach (var component in result.Components.Items.Values)
                 {
-                    foreach (var component in result.Components.Items.Values)
+                    if (component.ResourceRecordId != default)
                     {
-                        if (component.ResourceRecordId != default)
+                        var componentResourceReference = await FetchReferenceAsync(Guid.Parse(component.ResourceRecordId), logger.NewChildLogger());
+
+                        if (component.AzureResourceInfo == default)
                         {
-                            var componentResourceReference = await FetchReferenceAsync(Guid.Parse(component.ResourceRecordId), logger.NewChildLogger());
+                            component.AzureResourceInfo = await AcquireComponentAzureResourceAsync(resource, result, component, componentResourceReference, logger);
 
-                            if (component.AzureResourceInfo == default)
+                            if (componentResourceReference.Value.ProvisioningStatus != result.Status ||
+                                !component.AzureResourceInfo.Equals(componentResourceReference.Value.AzureResourceInfo))
                             {
-                                component.AzureResourceInfo = await AcquireComponentAzureResourceAsync(resource, result, logger, component, componentResourceReference);
+                                await UpdateRecordAsync(
+                                    input,
+                                    componentResourceReference,
+                                    (componentRecord, childLogger) =>
+                                    {
+                                        componentRecord.ProvisioningStatus = result.Status;
+                                        componentRecord.ProvisioningStatusChanged = DateTime.UtcNow;
+                                        componentRecord.AzureResourceInfo = component.AzureResourceInfo;
 
-                                if (componentResourceReference.Value.ProvisioningStatus != result.Status ||
-                                    !component.AzureResourceInfo.Equals(componentResourceReference.Value.AzureResourceInfo))
-                                {
-                                    await UpdateRecordAsync(
-                                        input,
-                                        componentResourceReference,
-                                        (componentRecord, childLogger) =>
-                                        {
-                                            componentRecord.ProvisioningStatus = result.Status;
-                                            componentRecord.ProvisioningStatusChanged = DateTime.UtcNow;
-                                            componentRecord.AzureResourceInfo = component.AzureResourceInfo;
-
-                                            return true;
-                                        },
-                                        logger.NewChildLogger());
-                                }
+                                        return true;
+                                    },
+                                    logger.NewChildLogger());
                             }
                         }
                     }
                 }
+            }
 
-                if (resource.Value.AzureResourceInfo == default
-                    || !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo)
-                    || !resource.Value.Components.Equals(result.Components))
-                {
-                    // Retry till we succeed
-                    await logger.RetryOperationScopeAsync(
-                        $"{LogBaseName}_record_update",
-                        async (IDiagnosticsLogger innerLogger) =>
-                        {
-                            resource.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
+            // Make sure we bring over the Resource info if we have it
+            if (ResourceInfoChanged(resource, result))
+            {
+                // Retry till we succeed
+                await logger.RetryOperationScopeAsync(
+                    $"{LogBaseName}_record_update",
+                    async (IDiagnosticsLogger innerLogger) =>
+                    {
+                        resource.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
 
-                            resource.Value.AzureResourceInfo = result.AzureResourceInfo;
+                        resource.Value.AzureResourceInfo = result.AzureResourceInfo;
 
-                            resource.Value.Components = result.Components;
+                        resource.Value.Components = result.Components;
 
-                            resource.Value = await ResourceRepository.UpdateAsync(resource.Value, innerLogger.NewChildLogger());
-                        });
-                }
+                        resource.Value = await ResourceRepository.UpdateAsync(resource.Value, innerLogger.NewChildLogger());
+                    });
             }
 
             return result;
+        }
+
+        private static bool ResourceInfoChanged(ResourceRecordRef resource, ResourceCreateContinuationResult result)
+        {
+            return (result.AzureResourceInfo != default && resource.Value.AzureResourceInfo == default)
+                                || !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo)
+                                || (resource.Value.Components != default && !resource.Value.Components.Equals(result.Components))
+                                || (resource.Value.Components == default && result.Components != default);
         }
 
         private async Task<ResourceRecordRef> CreateReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)
@@ -192,9 +194,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private async Task<AzureResourceInfo> AcquireComponentAzureResourceAsync(
           ResourceRecordRef resource,
           ResourceCreateContinuationResult resourceCreateContinuationResult,
-          IDiagnosticsLogger logger,
           ResourceComponent component,
-          ResourceRecordRef componentResourceReference)
+          ResourceRecordRef componentResourceReference,
+          IDiagnosticsLogger logger)
         {
             if (component.ComponentType == ResourceType.OSDisk)
             {

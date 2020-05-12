@@ -2,10 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
