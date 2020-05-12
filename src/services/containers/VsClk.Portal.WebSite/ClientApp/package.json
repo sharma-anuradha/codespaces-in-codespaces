@@ -1,4 +1,8 @@
 {
+  "name": "portal-uitests",
+  "description": "Visual Studio Codespaces UI Test suite",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
     "test:ui": "node test/uitest/uitest.js",
     "test:ui-prep-json": "node test/uitest/prepTestJson.js"
