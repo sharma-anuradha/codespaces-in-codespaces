@@ -1,0 +1,34 @@
+workspaces-dev.github.com {
+    log
+    errors
+
+    file com.github.workspaces-dev
+}
+
+codespaces-dev.github.com {
+    log
+    errors
+
+    file com.github.codespaces-dev
+}
+
+apps.dev.codespaces.githubusercontent.com {
+    log
+    errors
+
+    file com.githubusercontent.codespaces.dev.apps
+}
+
+apps.dev.workspaces.githubusercontent.com {
+    log
+    errors
+
+    file com.githubusercontent.workspaces.dev.apps
+}
+
+online.dev.core.vsengsaas.visualstudio.com {
+    log
+    errors
+
+    file com.vsonline.dev
+}

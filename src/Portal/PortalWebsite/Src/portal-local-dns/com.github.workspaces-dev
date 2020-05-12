@@ -1,0 +1,12 @@
+$TTL 3600
+$ORIGIN workspaces-dev.github.com.
+
+@ 3600 SOA dns.workspaces-dev.github.com. vsonline. (
+        20200427
+        30m
+        5m
+        1h
+        5m
+    )
+dns IN A 127.0.0.1
+* IN A 127.0.0.1

@@ -1,0 +1,14 @@
+$TTL 3600
+$ORIGIN online.dev.core.vsengsaas.visualstudio.com.
+
+@ 3600 SOA dns.online.dev.core.vsengsaas.visualstudio.com. vsonline. (
+        20200427
+        30m
+        5m
+        1h
+        5m
+    )
+
+@ IN A 127.0.0.1
+dns IN A 127.0.0.1
+*.app IN A 127.0.0.1
