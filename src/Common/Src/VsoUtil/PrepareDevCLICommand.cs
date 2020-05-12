@@ -137,6 +137,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                     stdout.WriteLine($"uploaded: {file}");
                 }
             }
+
+            stdout.WriteLine($"Updating CEDev config file.");
+            UpdateDeveloperAppConfig(vmAgents);
         }
 
         private async Task UploadDevCLI(CloudBlobContainer devContainer, TextWriter stdout)
