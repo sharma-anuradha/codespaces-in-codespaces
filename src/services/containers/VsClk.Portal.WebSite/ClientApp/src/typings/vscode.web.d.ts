@@ -750,5 +750,8 @@ declare module 'vscode-web' {
         LogLevel: LogLevel;
         FileType: FileType;
         create: (el: HTMLElement, options: IWorkbenchConstructionOptions) => void;
+        commands: {
+            executeCommand(command: string, ...args: any[]): Promise<unknown>;
+        }
     }
 }

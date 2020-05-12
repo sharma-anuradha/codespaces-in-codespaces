@@ -23,3 +23,8 @@ export const getShortEnvironmentName = (env: string): 'dev' | 'dev-stg' | 'ppe' 
         }
     }
 };
+
+export const isDevEnvironment = (env: string): boolean => {
+    const currentEnv = getShortEnvironmentName(env);
+    return (currentEnv === 'dev') && !!window.localStorage.getItem('debugLocalExtension');
+};

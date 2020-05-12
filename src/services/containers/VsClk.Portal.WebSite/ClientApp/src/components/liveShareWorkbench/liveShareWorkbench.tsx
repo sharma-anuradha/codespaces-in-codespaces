@@ -2,16 +2,20 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
-import { URI, IApplicationLink } from 'vscode-web';
+import { URI, IApplicationLink, IHostCommand } from 'vscode-web';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
 import { defaultConfig } from '../../services/configurationService';
 
-import { getShortEnvironmentName } from '../../utils/getShortEnvironmentName';
+import { getShortEnvironmentName, isDevEnvironment } from '../../utils/getShortEnvironmentName';
 import { telemetry } from '../../utils/telemetry';
 import { vscode, PortForwardingExternalUriProvider } from 'vso-workbench';
 import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
+import { createTrace } from 'vso-client-core';
+
+declare var AMDLoader: any;
+let CallingService: any;
 
 export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
     liveShareWebExtensionEndpoint: string;
@@ -92,19 +96,16 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
     }
 
     render() {
-        let extensionUrl = this.props.liveShareWebExtensionEndpoint;
+        let { liveShareWebExtensionEndpoint: extensionUrl,
+              portalEndpoint: env } = this.props;
 
         // In the dev environment allow a localhost url to make it easy to test
         // LiveShare changes locally
-        if (
-            window.location.hostname === 'online.dev.core.vsengsaas.visualstudio.com' &&
-            window.localStorage.getItem('debugLocalExtension')
-        ) {
-            extensionUrl = `http://localhost:5500/web/deploy-web`;
+        if (isDevEnvironment(env)) {
+            extensionUrl = 'http://localhost:5500/web/deploy-web';
         }
 
         const extensionUrls = [extensionUrl];
-
         const { sessionId } = this.props;
         const params = this.getSessionLinkParamsWithEnvironment([
             ['sessionId', this.props.sessionId],
@@ -115,25 +116,13 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps, LiveShar
         // when LS extension understands the `sessionId={id}` parameter
         const folderUri = `vsls:///?${sessionId}&${params}`;
 
-        const commands = [
-            {
-                id: '_liveshareweb.gotoSessionPage',
-                handler: () =>
-                    (window.location.href = `https://prod.liveshare.vsengsaas.visualstudio.com/join?${this.props.sessionId}`),
-            },
-            {
-                id: '_liveshareweb.getMachineId',
-                handler: () => telemetry.getContext().browserId,
-            },
-        ];
-
         return (
             <ServerlessWorkbench
                 folderUri={folderUri}
                 extensionUrls={extensionUrls}
                 resolveExternalUri={this.resolveExternalUri}
                 applicationLinksProvider={this.applicationLinksProvider}
-                commands={commands}
+                resolveCommands={getResolveCommands(extensionUrl, this.props.sessionId)}
             />
         );
     }
@@ -155,6 +144,37 @@ const getProps = (state: ApplicationState, props: RouteComponentProps<{ id: stri
         portForwardingDomainTemplate,
         enableEnvironmentPortForwarding,
     };
+};
+
+const getCallingServiceApi = async (callingServiceUrl: string): Promise<any> => {
+    return new Promise((resolve) => {
+        AMDLoader.global.require(
+            [callingServiceUrl],
+            (calling: any) => {
+                resolve(calling);
+            }
+        );
+    });
+}
+
+const getResolveCommands = (extensionUrl: string, sessionId: string) => {
+    return async (): Promise<IHostCommand[]> => {
+        const trace = createTrace('CallingService');
+        const callingApi = await getCallingServiceApi(`${extensionUrl}/out/callingService.js`);
+        CallingService = new callingApi.CallingService(vscode, trace);
+        return [
+            {
+                id: '_liveshareweb.gotoSessionPage',
+                handler: () =>
+                    (window.location.href = `https://prod.liveshare.vsengsaas.visualstudio.com/join?${sessionId}`),
+            },
+            {
+                id: '_liveshareweb.getMachineId',
+                handler: () => telemetry.getContext().browserId,
+            },
+            ...CallingService.getCommands()
+        ];
+    }
 };
 
 export const LiveShareWorkbench = withRouter(connect(getProps)(LiveShareWorkbenchView));

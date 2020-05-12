@@ -40,7 +40,7 @@ export interface ServerlessWorkbenchProps {
     urlCallbackProvider?: IURLCallbackProvider;
     targetURLFactory?: (folderUri: URI) => URL | undefined;
     applicationLinksProvider?: () => IApplicationLink[]; // URI cannot be used before initializing vscode and so this needs to be lazy.
-    commands?: IHostCommand[];
+    resolveCommands?: () => Promise<IHostCommand[]>
 }
 
 const managementFavicon = 'favicon.ico';
@@ -180,12 +180,13 @@ export class ServerlessWorkbench extends Component<
 
         staticExtensions = staticExtensions.concat(this.getBuiltinStaticExtensions());
 
-        const { urlCallbackProvider = new UrlCallbackProvider() } = this.props;
+        const { urlCallbackProvider = new UrlCallbackProvider(), resolveCommands } = this.props;
         const applicationLinks = this.props.applicationLinksProvider
             ? this.props.applicationLinksProvider()
             : undefined;
-        const commands = this.props.commands;
-
+        const commands = resolveCommands
+            ? await resolveCommands()
+            : undefined;
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
             urlCallbackProvider,
