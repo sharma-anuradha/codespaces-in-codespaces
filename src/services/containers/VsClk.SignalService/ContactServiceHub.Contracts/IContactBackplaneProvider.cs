@@ -171,12 +171,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Update a consolidated contact.
         /// </summary>
         /// <param name="contactDataChanged">Contact data change entity.</param>
-        /// <param name="contactDataInfo">The updated contact info.</param>
+        /// <param name="contactDataInfoValues">The updated values of the contact info.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Completion task.</returns>
         Task UpdateContactDataInfoAsync(
             ContactDataChanged<ConnectionProperties> contactDataChanged,
-            ContactDataInfo contactDataInfo,
+            (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
             CancellationToken cancellationToken);
     }
 

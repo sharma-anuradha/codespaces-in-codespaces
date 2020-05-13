@@ -8,9 +8,9 @@ using System.Collections.Generic;
 namespace Microsoft.VsCloudKernel.SignalService.Common
 {
     /// <summary>
-    /// Helper class for a concurrent hashset
+    /// Helper class for a concurrent hashset.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Type of key being used.</typeparam>
     internal class ConcurrentHashSet<T>
     {
         private readonly ConcurrentDictionary<T, byte> dictionary;

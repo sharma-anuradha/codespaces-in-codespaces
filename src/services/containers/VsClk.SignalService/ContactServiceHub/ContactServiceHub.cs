@@ -12,7 +12,7 @@ using Microsoft.VsCloudKernel.SignalService.Common;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// The SignalR Hub class for the presence service
+    /// The SignalR Hub class for the presence service.
     /// </summary>
     public class ContactServiceHub : Hub<IContactServiceClientHub>, IContactServiceHub
     {
@@ -20,7 +20,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         /// <summary>
         /// Note: this is the delay we used to avoid glitches when a disconnection happen but
-        /// later another connection is established and so we should not notify prematurly
+        /// later another connection is established and so we should not notify prematurly.
         /// </summary>
         private const int DisconnectSubscriptionDelaySecs = 10;
 
@@ -36,7 +36,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Hub context name when used in a SignalRHubContextHost
+        /// Gets the Hub context name when used in a SignalRHubContextHost.
         /// </summary>
         public static string HubContextName => "presenceServiceHub";
 
@@ -137,10 +137,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Return the proper contact identity
+        /// Return the proper contact identity.
         /// </summary>
-        /// <param name="contactId">The client request contact id</param>
-        /// <returns></returns>
+        /// <param name="contactId">The client request contact id.</param>
+        /// <returns>The verified contactd id.</returns>
         protected virtual string GetContactIdentity(string contactId)
         {
             return contactId;

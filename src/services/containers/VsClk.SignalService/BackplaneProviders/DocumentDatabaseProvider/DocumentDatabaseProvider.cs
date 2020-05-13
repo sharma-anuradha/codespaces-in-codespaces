@@ -129,12 +129,12 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             contactDataInfo.UpdateConnectionProperties(contactDataChanged);
 
-            await UpdateContactDataInfoAsync(contactDataChanged, contactDataInfo, cancellationToken);
+            await UpdateContactDataInfoAsync(contactDataChanged, (contactDataInfo, null), cancellationToken);
         }
 
         public Task UpdateContactDataInfoAsync(
             ContactDataChanged<ConnectionProperties> contactDataChanged,
-            ContactDataInfo contactDataInfo,
+            (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
             CancellationToken cancellationToken)
         {
             var updateContactDataDocument = new ContactDocument()
@@ -145,8 +145,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                 ConnectionId = contactDataChanged.ConnectionId,
                 UpdateType = contactDataChanged.ChangeType,
                 Properties = contactDataChanged.Data.Keys.ToArray(),
-                Email = contactDataInfo.GetAggregatedProperties().TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant(),
-                ServiceConnections = JObject.FromObject(contactDataInfo),
+                Email = GetEmailValue(contactDataInfoValues.NewValue) ?? GetEmailValue(contactDataInfoValues.OldValue),
+                ServiceConnections = contactDataInfoValues.NewValue,
                 LastUpdate = DateTime.UtcNow,
             };
 
@@ -252,6 +252,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                 }
             }
+        }
+
+        private static string GetEmailValue(ContactDataInfo contactDataInfo)
+        {
+            return contactDataInfo?.GetAggregatedProperties().TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
         }
 
         private async Task LoadActiveServicesAsync(CancellationToken cancellationToken)

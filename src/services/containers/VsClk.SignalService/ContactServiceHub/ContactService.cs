@@ -23,7 +23,25 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public class ContactService : HubService<ContactServiceHub, HubServiceOptions>
     {
+        /// <summary>
+        /// Storage for temporary stub contacts by mapping a generated id with the stub contact instance.
+        /// </summary>
         private readonly ConcurrentDictionary<string, StubContact> stubContacts = new ConcurrentDictionary<string, StubContact>();
+
+        /// <summary>
+        /// Storage to map an email with a Stub contact (when the matching properties are just an email).
+        /// </summary>
+        private readonly ConcurrentDictionary<string, StubContact> stubContactsByEmail = new ConcurrentDictionary<string, StubContact>();
+
+        /// <summary>
+        /// Hold all our current stub contacts that are not yet resolved.
+        /// </summary>
+        private readonly ConcurrentHashSet<StubContact> unresolvedStubContacts = new ConcurrentHashSet<StubContact>(StubContactComparer.Instance);
+
+        /// <summary>
+        /// Dictionary to map email values with contact ids.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, string> emailsIndexed = new ConcurrentDictionary<string, string>();
 
         /// <summary>
         /// Map of self contact id and stub contact.
@@ -77,7 +95,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // resolve contacts
             if (initialProperties != null)
             {
-                await ResolveStubContacts(contactRef.ConnectionId, initialProperties, () => registeredSelfContact, cancellationToken);
+                await ResolveStubContactsAsync(contactRef.ConnectionId, initialProperties, () => registeredSelfContact, cancellationToken);
             }
 
             // Note: avoid telemetry for contact id's
@@ -150,7 +168,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
 
                 // look on our backplane providers
-                var backplaneMatchingContacts = BackplaneManager != null ?
+                var backplaneMatchingContacts = BackplaneManager != null && nonMatchingProps.Count > 0 ?
                     await BackplaneManager.GetContactsDataAsync(nonMatchingProps.Select(i => i.Item2).ToArray(), cancellationToken) :
                     new Dictionary<string, ContactDataInfo>[nonMatchingProps.Count];
 
@@ -186,12 +204,43 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         // Note: if we arrive here we will need to find/create a stub contact that will serve as
                         // a placeholder to later match the contact that will register
-                        var stubContact = this.stubContacts.Values.FirstOrDefault(item => item.MatchProperties.EqualsProperties(matchProperties));
-                        if (stubContact == null)
+
+                        // the stub contact factory callback
+                        Func<StubContact> stubContactFactory = () =>
                         {
-                            // no match but we want to return stub contact if later we match a new contact
-                            stubContact = new StubContact(this, Guid.NewGuid().ToString(), matchProperties);
+                            var stubContact = new StubContact(this, Guid.NewGuid().ToString(), matchProperties);
+
+                            // track this stub contact
                             this.stubContacts.TryAdd(stubContact.ContactId, stubContact);
+                            return stubContact;
+                        };
+
+                        StubContact stubContact;
+                        if (TryEmailPropertyValue(matchProperties, onlyPropertyFlag: true, out var email))
+                        {
+                            // in this case the email property is just the matching value needed
+                            if (!this.stubContactsByEmail.TryGetValue(email, out stubContact))
+                            {
+                                stubContact = stubContactFactory();
+
+                                // additional stub contact by email.
+                                this.stubContactsByEmail.TryAdd(email, stubContact);
+                            }
+                        }
+                        else
+                        {
+                            stubContact = this.stubContacts.Values.FirstOrDefault(item => item.MatchProperties.EqualsProperties(matchProperties));
+                            if (stubContact == null)
+                            {
+                                // no match but we want to return stub contact if later we match a new contact
+                                stubContact = stubContactFactory();
+
+                                // add to our list of unresolved contacts
+                                // Note: resolving stub contacts could be an expensive operation and se we don't expect
+                                // much of this code path when scaling up with adding a more sophisticated indexing on the
+                                // registered contacts.
+                                this.unresolvedStubContacts.Add(stubContact);
+                            }
                         }
 
                         // add target contact to current registered contact
@@ -202,9 +251,9 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                         // return the stub by providing the temporary stub contact id
                         requestResult[resultIndex] = new Dictionary<string, object>()
-                            {
-                                { ContactProperties.IdReserved, stubContact.ContactId },
-                            };
+                        {
+                            { ContactProperties.IdReserved, stubContact.ContactId },
+                        };
                     }
                 }
             }
@@ -361,29 +410,54 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingPropertes, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingProperties, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var results = new Dictionary<string, Dictionary<string, object>>[matchingPropertes.Length];
-            foreach (var contactKvp in Contacts)
-            {
-                var allProperties = contactKvp.Value.GetAggregatedProperties();
-                for (var index = 0; index < matchingPropertes.Length; ++index)
-                {
-                    if (MatchContactProperties(matchingPropertes[index], allProperties))
-                    {
-                        if (results[index] == null)
-                        {
-                            results[index] = new Dictionary<string, Dictionary<string, object>>();
-                        }
+            var results = new Dictionary<string, Dictionary<string, object>>[matchingProperties.Length];
+            var resolved = new bool[matchingProperties.Length];
 
-                        results[index].Add(contactKvp.Key, allProperties);
+            // Note: next block will resolve the matching properties for the optimized case
+            // that just the email is being passed as a matching value and so we will use our
+            // email indexing dictionary
+            for (var index = 0; index < matchingProperties.Length; ++index)
+            {
+                if (TryEmailPropertyValue(matchingProperties[index], onlyPropertyFlag: true, out var email))
+                {
+                    resolved[index] = true;
+                    if (this.emailsIndexed.TryGetValue(email, out var contactId)
+                        && Contacts.TryGetValue(contactId, out var contact))
+                    {
+                        results[index] = new Dictionary<string, Dictionary<string, object>>();
+                        results[index].Add(contactId, contact.GetAggregatedProperties());
+                    }
+                }
+            }
+
+            if (resolved.Any(resolved => !resolved))
+            {
+                foreach (var contactKvp in Contacts)
+                {
+                    var allProperties = contactKvp.Value.GetAggregatedProperties();
+                    for (var index = 0; index < matchingProperties.Length; ++index)
+                    {
+                        if (!resolved[index])
+                        {
+                            if (MatchContactProperties(matchingProperties[index], allProperties))
+                            {
+                                if (results[index] == null)
+                                {
+                                    results[index] = new Dictionary<string, Dictionary<string, object>>();
+                                }
+
+                                results[index].Add(contactKvp.Key, allProperties);
+                            }
+                        }
                     }
                 }
             }
 
             Logger.LogMethodScope(
                 LogLevel.Debug,
-                $"matchingPropertes:[{string.Join(",", matchingPropertes.Select(a => a.ConvertToString(FormatProvider)))}] match count:{results.Length}",
+                $"matchingPropertes:[{string.Join(",", matchingProperties.Select(a => a.ConvertToString(FormatProvider)))}] match count:{results.Length}",
                 ContactServiceScopes.MethodMatchContacts);
 
             return Task.FromResult(results);
@@ -456,6 +530,25 @@ namespace Microsoft.VsCloudKernel.SignalService
             return matchingPropertes.MatchProperties(contactProperties);
         }
 
+        /// <summary>
+        /// Check if some matching properties are only an email property value.
+        /// </summary>
+        /// <param name="matchingProperties">The macthing properties beign checked.</param>
+        /// <param name="onlyPropertyFlag">if we expect just one property to be present.</param>
+        /// <param name="email">The email value if found.</param>
+        /// <returns>true if just one property is being found and it has a valid value.</returns>
+        private static bool TryEmailPropertyValue(Dictionary<string, object> matchingProperties, bool onlyPropertyFlag, out string email)
+        {
+            if ((!onlyPropertyFlag || matchingProperties.Count == 1) && matchingProperties.TryGetValue(ContactProperties.Email, out var emailValue) && emailValue != null)
+            {
+                email = emailValue.ToString();
+                return !string.IsNullOrEmpty(email);
+            }
+
+            email = null;
+            return false;
+        }
+
         private Contact GetOrCreateContact(string contactId)
         {
             return GetOrCreateContact(contactId, out var created);
@@ -519,52 +612,91 @@ namespace Microsoft.VsCloudKernel.SignalService
             Logger.LogDebug($"StubContact removed -> contactId:{stubContact.ContactId}");
 
             this.stubContacts.TryRemove(stubContact.ContactId, out var removed__);
-            foreach (var stubContacts in this.resolvedContacts.Values)
+
+            if (TryEmailPropertyValue(stubContact.MatchProperties, onlyPropertyFlag: true, out var email))
             {
-                stubContacts.TryRemove(stubContact);
+                this.stubContactsByEmail.TryRemove(email, out var removed2__);
+            }
+
+            foreach (var resolvedContactKvp in this.resolvedContacts.ToArray())
+            {
+                resolvedContactKvp.Value.TryRemove(stubContact);
+                if (resolvedContactKvp.Value.Count == 0)
+                {
+                    this.resolvedContacts.TryRemove(resolvedContactKvp.Key, out var removed2__);
+                }
             }
         }
 
-        private async Task ResolveStubContacts(
+        private async Task ResolveStubContactsAsync(
             string connectionId,
             Dictionary<string, object> initialProperties,
             Func<Contact> selfContactFactory,
             CancellationToken cancellationToken)
         {
-            foreach (var stubContact in this.stubContacts.Values.Where(i => i.ResolvedContact == null))
+            // this is the expected and more efficient code that use the emails indexed stub contacts
+            if (TryEmailPropertyValue(initialProperties, onlyPropertyFlag: false, out var email)
+                && this.stubContactsByEmail.TryGetValue(email, out var stubContact)
+                && stubContact.ResolvedContact == null)
             {
-                if (MatchContactProperties(stubContact.MatchProperties, initialProperties))
-                {
-                    var selfContact = selfContactFactory();
-                    stubContact.ResolvedContact = selfContact;
-                    this.resolvedContacts.AddOrUpdate(
-                        selfContact.ContactId,
-                        (key) =>
-                        {
-                            var set = new ConcurrentHashSet<StubContact>(new StubContactComparer());
-                            set.Add(stubContact);
-                            return set;
-                        },
-                        (key, value) =>
-                        {
-                            value.Add(stubContact);
-                            return value;
-                        });
+                await ResolveStubContactAsync(stubContact, connectionId, initialProperties, selfContactFactory, cancellationToken);
+            }
 
-                    await stubContact.SendUpdatePropertiesAsync(
-                        connectionId,
-                        ContactDataProvider.CreateContactDataProvider(initialProperties),
-                        initialProperties.Keys,
-                        cancellationToken);
+            // next block was maintained for backward compatibility and will attempt to look in all the unresolved stub contacts.
+            foreach (var unresolvedStubContact in this.unresolvedStubContacts.Values.Where(i => i.ResolvedContact == null))
+            {
+                if (MatchContactProperties(unresolvedStubContact.MatchProperties, initialProperties))
+                {
+                    await ResolveStubContactAsync(unresolvedStubContact, connectionId, initialProperties, selfContactFactory, cancellationToken);
+                    this.unresolvedStubContacts.TryRemove(unresolvedStubContact);
                 }
             }
         }
 
+        private async Task ResolveStubContactAsync(
+            StubContact stubContact,
+            string connectionId,
+            Dictionary<string, object> initialProperties,
+            Func<Contact> selfContactFactory,
+            CancellationToken cancellationToken)
+        {
+            var selfContact = selfContactFactory();
+            stubContact.ResolvedContact = selfContact;
+            this.resolvedContacts.AddOrUpdate(
+                selfContact.ContactId,
+                (key) =>
+                {
+                    var set = new ConcurrentHashSet<StubContact>(StubContactComparer.Instance);
+                    set.Add(stubContact);
+                    return set;
+                },
+                (key, value) =>
+                {
+                    value.Add(stubContact);
+                    return value;
+                });
+
+            await stubContact.SendUpdatePropertiesAsync(
+                connectionId,
+                ContactDataProvider.CreateContactDataProvider(initialProperties),
+                initialProperties.Keys,
+                cancellationToken);
+        }
+
         private async Task OnContactChangedAsync(object sender, ContactChangedEventArgs e)
         {
+            var contact = (Contact)sender;
+
+            // next block will index the email property to later resolve request subscription by email
+            if (e.Properties.TryGetValue(ContactProperties.Email, out var pv)
+                && !string.IsNullOrEmpty(pv.Value?.ToString()))
+            {
+                var email = pv.Value.ToString();
+                this.emailsIndexed.TryAdd(email, contact.ContactId);
+            }
+
             if (BackplaneManager != null)
             {
-                var contact = (Contact)sender;
                 var contactDataChanged = new ContactDataChanged<ConnectionProperties>(
                                 Guid.NewGuid().ToString(),
                                 ServiceId,
@@ -611,7 +743,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     return selfContact;
                 });
 
-                await ResolveStubContacts(
+                await ResolveStubContactsAsync(
                     contactDataChanged.ConnectionId,
                     contactDataProvider.Properties,
                     () => lazySelfContactFactory.Value,
@@ -693,6 +825,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private class StubContactComparer : IEqualityComparer<StubContact>
         {
+            public static readonly StubContactComparer Instance = new StubContactComparer();
+
             public bool Equals(StubContact x, StubContact y)
             {
                 return x.ContactId.Equals(y.ContactId);

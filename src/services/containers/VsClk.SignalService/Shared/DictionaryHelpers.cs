@@ -9,7 +9,7 @@ using System.Linq;
 namespace Microsoft.VsCloudKernel.SignalService.Common
 {
     /// <summary>
-    /// IDictionary<string, object> helpers
+    /// IDictionary helpers.
     /// </summary>
     internal static class DictionaryHelpers
     {
@@ -66,6 +66,45 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             }
 
             return defaultValue;
+        }
+
+        public static void AddOrUpdate<TKey, TValue>(
+            this IDictionary<TKey, TValue> dictionary,
+            TKey key,
+            Action<TValue> valueCallback,
+            object lockHelper = null)
+            where TValue : class, new()
+        {
+            Assumes.NotNull(dictionary);
+
+            Action addOrUpdate = () =>
+            {
+                TValue value;
+                if (!dictionary.TryGetValue(key, out value))
+                {
+                    value = new TValue();
+                    dictionary.Add(key, value);
+                }
+
+                valueCallback(value);
+            };
+
+            if (lockHelper != null)
+            {
+                lock (lockHelper)
+                {
+                    addOrUpdate();
+                }
+            }
+            else
+            {
+                addOrUpdate();
+            }
+        }
+
+        public static Dictionary<TKey, TValue> Clone<TKey, TValue>(this IDictionary<TKey, TValue> dictionary)
+        {
+            return dictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         private static string FormatValue(IDataFormatProvider provider, string propertyName, object value)

@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 namespace Microsoft.VsCloudKernel.SignalService.Common
 {
     /// <summary>
-    /// Concurrent Helpers
+    /// Concurrent Helpers.
     /// </summary>
     internal static class ConcurrentHelpers
     {

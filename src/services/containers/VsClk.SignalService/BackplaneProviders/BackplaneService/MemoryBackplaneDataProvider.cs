@@ -33,7 +33,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public int TotalConnections => Contacts.Values.Sum(item => item.ConnectionsCount);
 
-        public string[] ActiveServices { get; set; } = Array.Empty<string>();
+        public string[] ActiveServices { get; set; }
 
         /// <summary>
         /// Gets the dictionary with contact data info in json format.
@@ -74,8 +74,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return Task.FromResult<ContactDataInfo>(null);
         }
 
-        public Task<ContactDataInfo> UpdateContactDataChangedAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        public Task<(ContactDataInfo NewValue, ContactDataInfo OldValue)> UpdateContactDataChangedAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
+            ContactDataInfo oldValue = null;
             var result = Contacts.AddOrUpdate(
                 contactDataChanged.ContactId,
                 (k) =>
@@ -85,6 +86,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                     return contactdDataInfoHolder;
                 }, (k, contactdDataInfoHolder) =>
                 {
+                    oldValue = contactdDataInfoHolder.Data;
                     contactdDataInfoHolder.Update(contactDataChanged, ActiveServices);
                     return contactdDataInfoHolder;
                 });
@@ -97,7 +99,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             }
 
             LogUpdateContact(contactDataChanged.ContactId, nameof(UpdateContactAsync));
-            return Task.FromResult(result.Data);
+            return Task.FromResult((result.Data, oldValue));
         }
 
         public Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)

@@ -3,8 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,14 +14,16 @@ using Microsoft.VsCloudKernel.SignalService.Common;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Contact base class
+    /// Contact base class.
     /// </summary>
     internal class ContactBase
     {
         /// <summary>
-        /// Map of connection Id <-> subscriptions
+        /// Map of connection Id with property name subscriptions.
         /// </summary>
-        private readonly ConcurrentDictionary<Tuple<string, string>, ConcurrentHashSet<string>> connectionSubscriptions = new ConcurrentDictionary<Tuple<string, string>, ConcurrentHashSet<string>>();
+        private readonly Dictionary<Tuple<string, string>, string[]> connectionSubscriptions = new Dictionary<Tuple<string, string>, string[]>();
+
+        private readonly object connectionSubscriptionsLock = new object();
 
         public ContactBase(ContactService service, string contactId)
         {
@@ -34,12 +34,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// The unique contact id for this instance
+        /// gets the unique contact id for this instance.
         /// </summary>
         public string ContactId { get; }
 
         /// <summary>
-        /// If this contact has any subscription
+        /// Gets a value indicating whether if this contact has any subscription.
         /// </summary>
         public bool HasSubscriptions => this.connectionSubscriptions.Count > 0;
 
@@ -50,44 +50,54 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <summary>
         /// Add a subscription properties to this instance.
         /// </summary>
-        /// <param name="connectionId">The connection id to track</param>
-        /// <param name="selfConnectionId">Optional self connection id</param>
-        /// <param name="propertyNames">Properties to track</param>
+        /// <param name="connectionId">The connection id to track.</param>
+        /// <param name="selfConnectionId">Optional self connection id.</param>
+        /// <param name="propertyNames">Properties to track.</param>
         public void AddSubcriptionProperties(string connectionId, string selfConnectionId, string[] propertyNames)
         {
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
             Requires.NotNull(propertyNames, nameof(propertyNames));
 
-            this.connectionSubscriptions[new Tuple<string, string>(connectionId, selfConnectionId)] = new ConcurrentHashSet<string>(propertyNames);
-        }
-
-        /// <summary>
-        /// Remove a subscription being mantained by this contact
-        /// </summary>
-        /// <param name="connectionId">The tracked connection id</param>
-        /// <param name="selfConnectionId">Optional self connection id</param>
-        public void RemoveSubscription(string connectionId, string selfConnectionId)
-        {
-            this.connectionSubscriptions.TryRemove(new Tuple<string, string>(connectionId, selfConnectionId), out var properties);
-        }
-
-        /// <summary>
-        /// Remove all subscriptions associated with a connection
-        /// </summary>
-        /// <param name="connectionId"></param>
-        public void RemoveAllSubscriptions(string connectionId)
-        {
-            foreach (var key in this.connectionSubscriptions.Keys.Where(k => k.Item1 == connectionId).ToArray())
+            lock (this.connectionSubscriptionsLock)
             {
-                this.connectionSubscriptions.TryRemove(key, out var properties);
+                this.connectionSubscriptions[ToKey(connectionId, selfConnectionId)] = new HashSet<string>(propertyNames).ToArray();
             }
         }
 
         /// <summary>
-        /// Return all client proxies from a connection id
+        /// Remove a subscription being mantained by this contact.
         /// </summary>
-        /// <param name="connectionId"></param>
-        /// <returns></returns>
+        /// <param name="connectionId">The tracked connection id.</param>
+        /// <param name="selfConnectionId">Optional self connection id.</param>
+        /// <returns>If the item was really removed.</returns>
+        public bool RemoveSubscription(string connectionId, string selfConnectionId)
+        {
+            lock (this.connectionSubscriptionsLock)
+            {
+                return this.connectionSubscriptions.Remove(ToKey(connectionId, selfConnectionId));
+            }
+        }
+
+        /// <summary>
+        /// Remove all subscriptions associated with a connection.
+        /// </summary>
+        /// <param name="connectionId">The connection id.</param>
+        public void RemoveAllSubscriptions(string connectionId)
+        {
+            lock (this.connectionSubscriptionsLock)
+            {
+                foreach (var key in this.connectionSubscriptions.Keys.Where(k => k.Item1 == connectionId).ToArray())
+                {
+                    this.connectionSubscriptions.Remove(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Return all client proxies from a connection id.
+        /// </summary>
+        /// <param name="connectionId">The connection id.</param>
+        /// <returns>Enumerable of IClientProxy.</returns>
         protected IEnumerable<IClientProxy> Clients(string connectionId)
         {
             return Service.Clients(connectionId);
@@ -162,7 +172,10 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected IEnumerable<string> GetConnectionSubscriptions()
         {
-            return new HashSet<string>(this.connectionSubscriptions.Keys.Select(k => k.Item1));
+            lock (this.connectionSubscriptionsLock)
+            {
+                return new HashSet<string>(this.connectionSubscriptions.Keys.Select(k => k.Item1));
+            }
         }
 
         protected IEnumerable<Task> GetSendConnectionChanged(
@@ -194,15 +207,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             Func<string, string, object> resolvePropertyValue,
             Func<string, string, bool> filterSubscription)
         {
+            KeyValuePair<Tuple<string, string>, string[]>[] subscriptionsArray;
+            lock (this.connectionSubscriptionsLock)
+            {
+                subscriptionsArray = this.connectionSubscriptions.ToArray();
+            }
+
             var result = new Dictionary<Tuple<string, string>, Dictionary<string, object>>();
-            foreach (var subscription in this.connectionSubscriptions)
+            foreach (var subscription in subscriptionsArray)
             {
                 if (filterSubscription?.Invoke(subscription.Key.Item1, subscription.Key.Item2) == false)
                 {
                     continue;
                 }
 
-                var subscriptionProperties = subscription.Value.Count > 0 && !subscription.Value.Contains("*") ? affectedProperties.Intersect(subscription.Value.Values) : affectedProperties;
+                var subscriptionProperties = subscription.Value.Length > 0 && !subscription.Value.Contains("*") ? affectedProperties.Intersect(subscription.Value) : affectedProperties;
                 if (subscriptionProperties.Any())
                 {
                     var notifyProperties = new Dictionary<string, object>();
@@ -251,6 +270,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                 },
                 (notifyConnectionId, selfConnectionId) => selfConnectionId == null || selfConnectionId == connectionId,
                 cancellationToken);
+        }
+
+        private static Tuple<string, string> ToKey(string connectionId, string selfConnectionId)
+        {
+            return new Tuple<string, string>(connectionId, selfConnectionId);
         }
     }
 }

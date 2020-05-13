@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,52 +15,31 @@ using ConnectionProperties = System.Collections.Generic.IDictionary<string, Micr
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Event to send when the contact has been changed.
-    /// </summary>
-#pragma warning disable SA1402 // File may only contain a single type
-#pragma warning disable SA1649 // File name should match first type name
-    internal class ContactChangedEventArgs : EventArgs
-#pragma warning restore SA1649 // File name should match first type name
-#pragma warning restore SA1402 // File may only contain a single type
-    {
-        internal ContactChangedEventArgs(
-            string connectionId,
-            ConnectionProperties properties,
-            ContactUpdateType changeType)
-        {
-            ConectionId = connectionId;
-            Properties = properties;
-            ChangeType = changeType;
-        }
-
-        public string ConectionId { get; }
-
-        public ConnectionProperties Properties { get; }
-
-        public ContactUpdateType ChangeType { get; }
-    }
-
-    /// <summary>
-    /// Represent a registered contact instance
+    /// Represent a registered contact instance.
     /// </summary>
     internal class Contact : ContactBase
     {
         /// <summary>
-        /// Map of connection Id <-> target Contact Ids
+        /// Shared entity when a contact does not define any other connection properties from another endpoint outside this service.
         /// </summary>
-        private readonly ConcurrentDictionary<string, ConcurrentHashSet<string>> targetContactsByConnection = new ConcurrentDictionary<string, ConcurrentHashSet<string>>();
+        private static readonly Dictionary<string, ConnectionProperties> EmptyConnectionProperties = new Dictionary<string, ConnectionProperties>();
 
         /// <summary>
-        /// Properties maintained by each of the live connections
-        /// Key: connection Id
-        /// Value: A dictionary property info structure with the value and the timestamp when it was updated
+        /// Lazy creation of ContactConnectionProperties used when a real self connections is made.
         /// </summary>
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, PropertyValue>> selfConnectionProperties = new ConcurrentDictionary<string, ConcurrentDictionary<string, PropertyValue>>();
+        private readonly Lazy<ContactConnectionProperties> lazyContactConnectionProperties = new Lazy<ContactConnectionProperties>(() => new ContactConnectionProperties());
 
         /// <summary>
-        /// Other connection properties maintained outside this contact
+        /// Lazy creation of a map of connection Id with target Contact Ids.
         /// </summary>
-        private Dictionary<string, ConnectionProperties> otherConnectionProperties = new Dictionary<string, ConnectionProperties>();
+        private readonly Lazy<Dictionary<string, HashSet<string>>> lazyTargetContactsByConnection = new Lazy<Dictionary<string, HashSet<string>>>(() => new Dictionary<string, HashSet<string>>());
+
+        private readonly object targetContactsByConnectionLock = new object();
+
+        /// <summary>
+        /// Other connection properties maintained outside this contact.
+        /// </summary>
+        private Dictionary<string, ConnectionProperties> otherConnectionProperties = EmptyConnectionProperties;
 
         public Contact(ContactService service, string contactId)
             : base(service, contactId)
@@ -75,27 +53,47 @@ namespace Microsoft.VsCloudKernel.SignalService
         public event AsyncEventHandler<ContactChangedEventArgs> Changed;
 
         /// <summary>
-        /// If this contact does not have any self connection
+        /// Gets a value indicating whether this contact does not have any self connection.
         /// </summary>
-        internal bool IsSelfEmpty => this.selfConnectionProperties.Count == 0;
+        internal bool IsSelfEmpty => SelfConnectionsCount == 0;
 
         /// <summary>
-        /// Number of connections maintained by this entity
+        /// Gets the number of connections maintained by this entity.
         /// </summary>
-        internal int SelfConnectionsCount => this.selfConnectionProperties.Count;
+        internal int SelfConnectionsCount => GetContactConnectionProperties(cp => cp.Count, 0);
 
         /// <summary>
-        /// Return the self connection ids maintained by this entity
+        /// Gets the self connection ids maintained by this entity.
         /// </summary>
-        private ICollection<string> SelfConnectionIds => this.selfConnectionProperties.Keys;
+        private ICollection<string> SelfConnectionIds => GetContactConnectionProperties(cp => cp.AllConnections, Array.Empty<string>());
 
         /// <summary>
-        /// Register a new self connection
+        /// Gets or create the contact connection properties.
         /// </summary>
-        /// <param name="connectionId">The connection id to start tracking</param>
-        /// <param name="initialProperties">Optional properties associated with this self connection</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        private ContactConnectionProperties ContactConnectionProperties => this.lazyContactConnectionProperties.Value;
+
+        /// <summary>
+        /// Gets or create the target contacts entity.
+        /// </summary>
+        private Dictionary<string, HashSet<string>> TargetContactsByConnection => this.lazyTargetContactsByConnection.Value;
+
+        /// <summary>
+        /// Gets a value indicating whether get the contact connection are created.
+        /// </summary>
+        private bool IsContactConnectionPropertiesCreated => this.lazyContactConnectionProperties.IsValueCreated;
+
+        /// <summary>
+        /// Gets a value indicating whether get the target contacts are created.
+        /// </summary>
+        private bool IsTargetContactsByConnectionCreated => this.lazyTargetContactsByConnection.IsValueCreated;
+
+        /// <summary>
+        /// Register a new self connection.
+        /// </summary>
+        /// <param name="connectionId">The connection id to start tracking.</param>
+        /// <param name="initialProperties">Optional properties associated with this self connection.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Completion task.</returns>
         public async Task RegisterSelfAsync(
             string connectionId,
             Dictionary<string, object> initialProperties,
@@ -104,8 +102,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             // notify connection added
             await NotifyConnectionChangedAsync(connectionId, ConnectionChangeType.Added, cancellationToken);
 
-            this.selfConnectionProperties[connectionId] = new ConcurrentDictionary<string, PropertyValue>();
-
+            ContactConnectionProperties.AddConnection(connectionId);
             if (initialProperties != null)
             {
                 await UpdatePropertiesAsync(connectionId, initialProperties, ContactUpdateType.Registration, mergeProperties: true, cancellationToken);
@@ -114,48 +111,62 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         /// <summary>
         /// Add target contacts to track.
-        /// Note: this will be used later when this contact unregister
+        /// Note: this will be used later when this contact unregister.
         /// </summary>
-        /// <param name="connectionId">The connection associated with this call</param>
-        /// <param name="targetContactIds">The contacts ids to track</param>
+        /// <param name="connectionId">The connection associated with this call.</param>
+        /// <param name="targetContactIds">The contacts ids to track.</param>
         public void AddTargetContacts(string connectionId, string[] targetContactIds)
         {
-            this.targetContactsByConnection.AddOrUpdate(connectionId, targetContactIds);
+            TargetContactsByConnection.AddOrUpdate(
+                connectionId,
+                hashSet => hashSet.UnionWith(targetContactIds),
+                this.targetContactsByConnectionLock);
         }
 
         /// <summary>
-        /// Remove tracked target contacts
+        /// Remove tracked target contacts.
         /// </summary>
-        /// <param name="connectionId"></param>
-        /// <param name="targetContactIds">The contacts ids to remove</param>
+        /// <param name="connectionId">The connection id to remove.</param>
+        /// <param name="targetContactIds">The contacts ids to remove.</param>
         public void RemovedTargetContacts(string connectionId, string[] targetContactIds)
         {
-            this.targetContactsByConnection.RemoveValues(connectionId, targetContactIds);
+            lock (this.targetContactsByConnectionLock)
+            {
+                if (TargetContactsByConnection.TryGetValue(connectionId, out var hashSet))
+                {
+                    foreach (var targetContactId in targetContactIds)
+                    {
+                        hashSet.Remove(targetContactId);
+                    }
+                }
+            }
         }
 
         /// <summary>
-        /// Return the list target contacts this connection is tracking
+        /// Return the target contacts this connection is tracking.
         /// </summary>
-        /// <param name="connectionId"></param>
-        /// <returns></returns>
+        /// <param name="connectionId">The connection id.</param>
+        /// <returns>Array of contacts ids.</returns>
         public string[] GetTargetContacts(string connectionId)
         {
-            ConcurrentHashSet<string> targetContactIds;
-            if (this.targetContactsByConnection.TryGetValue(connectionId, out targetContactIds))
+            lock (this.targetContactsByConnectionLock)
             {
-                return targetContactIds.Values.ToArray();
+                if (IsTargetContactsByConnectionCreated && TargetContactsByConnection.TryGetValue(connectionId, out var hashSet))
+                {
+                    return hashSet.ToArray();
+                }
             }
 
             return Array.Empty<string>();
         }
 
         /// <summary>
-        /// Create contact subscription that will be tracked to later report changes
+        /// Create contact subscription that will be tracked to later report changes.
         /// </summary>
-        /// <param name="connectionId">The associated connection id to report</param>
-        /// <param name="selfConnectionId">Optional self connection id</param>
-        /// <param name="propertyNames">List of properties that this connection is interested</param>
-        /// <returns>List of current property values for the properties being asked</returns>
+        /// <param name="connectionId">The associated connection id to report.</param>
+        /// <param name="selfConnectionId">Optional self connection id.</param>
+        /// <param name="propertyNames">List of properties that this connection is interested.</param>
+        /// <returns>List of current property values for the properties being asked.</returns>
         public Dictionary<string, object> CreateSubcription(string connectionId, string selfConnectionId, string[] propertyNames)
         {
             AddSubcriptionProperties(connectionId, selfConnectionId, propertyNames);
@@ -177,12 +188,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Update the property value of this contact
+        /// Update the property value of this contact.
         /// </summary>
-        /// <param name="connectionId">The connection id that is updating the values</param>
-        /// <param name="updateProperties">The updated properties</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="connectionId">The connection id that is updating the values.</param>
+        /// <param name="updateProperties">The updated properties.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Completion task.</returns>
         public Task UpdatePropertiesAsync(
             string connectionId,
             Dictionary<string, object> updateProperties,
@@ -192,14 +203,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Send receive message notifications
+        /// Send receive message notifications.
         /// </summary>
-        /// <param name="fromContact">The contact reference who is sending the message</param>
-        /// <param name="messageType">Message type</param>
-        /// <param name="body">Payload content of the message</param>
-        /// <param name="targetConnectionId">Optional connection id to target</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="fromContact">The contact reference who is sending the message.</param>
+        /// <param name="messageType">Message type.</param>
+        /// <param name="body">Payload content of the message.</param>
+        /// <param name="targetConnectionId">Optional connection id to target.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Completion task.</returns>
         public async Task SendReceiveMessageAsync(
             ContactReference fromContact,
             string messageType,
@@ -226,47 +237,50 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Return true if this contact would be able to deliver a message to its self connections end points
+        /// Return true if this contact would be able to deliver a message to its self connections end points.
         /// </summary>
-        /// <param name="targetConnectionId">The desired target connection or null if delivery will be for all self connections</param>
-        /// <returns></returns>
+        /// <param name="targetConnectionId">The desired target connection or null if delivery will be for all self connections.</param>
+        /// <returns>true if this contact can send a message.</returns>
         public bool CanSendMessage(string targetConnectionId)
         {
             return (string.IsNullOrEmpty(targetConnectionId) && !IsSelfEmpty) ||
-                (!string.IsNullOrEmpty(targetConnectionId) && this.selfConnectionProperties.ContainsKey(targetConnectionId));
+                (!string.IsNullOrEmpty(targetConnectionId) && GetContactConnectionProperties(cp => cp.HasConnection(targetConnectionId), false));
         }
 
         /// <summary>
-        /// Remove a self connection from this contact
+        /// Remove a self connection from this contact.
         /// </summary>
-        /// <param name="connectionId">The self connection id that is being removed</param>
-        /// <param name="affectedPropertiesTask">Optional task to invoke with the affected properties</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="connectionId">The self connection id that is being removed.</param>
+        /// <param name="affectedPropertiesTask">Optional task to invoke with the affected properties.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>Completion task.</returns>
         public async Task RemoveSelfConnectionAsync(
             string connectionId,
             Func<IEnumerable<string>, Task> affectedPropertiesTask,
             CancellationToken cancellationToken)
         {
             // If the connection was dropped before stop now
-            if (!this.selfConnectionProperties.ContainsKey(connectionId))
+            if (!GetContactConnectionProperties(cp => cp.HasConnection(connectionId), false))
             {
                 return;
             }
 
-            this.targetContactsByConnection.TryRemove(connectionId, out var removed);
+            lock (this.targetContactsByConnectionLock)
+            {
+                TargetContactsByConnection.Remove(connectionId);
+            }
 
             IEnumerable<Task> sendTasks = null;
             IEnumerable<string> affectedProperties;
             if (affectedPropertiesTask == null)
             {
-                affectedProperties = RemoveConnectionProperties(connectionId);
+                affectedProperties = ContactConnectionProperties.RemoveConnectionProperties(connectionId);
                 sendTasks = GetSubscriptionsNotityProperties(affectedProperties).Select(kvp => NotifyUpdateValuesAsync(kvp.Key, kvp.Value, connectionId, cancellationToken));
             }
             else
             {
                 // compute all properties that would be affected by this connection id
-                if (this.selfConnectionProperties.TryGetValue(connectionId, out var properties))
+                if (ContactConnectionProperties.TryGetProperties(connectionId, out var properties))
                 {
                     affectedProperties = properties.Keys;
                 }
@@ -279,7 +293,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 var beforeRemoveNotifyProperties = GetSubscriptionsNotityProperties(affectedProperties);
 
                 // now remove the connection properties for this connection id
-                affectedProperties = RemoveConnectionProperties(connectionId);
+                affectedProperties = ContactConnectionProperties.RemoveConnectionProperties(connectionId);
                 if (affectedProperties.Any())
                 {
                     await affectedPropertiesTask(affectedProperties);
@@ -312,21 +326,21 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Return the aggregated properties of all the self connections that has define property values
+        /// Return the aggregated properties of all the self connections that has define property values.
         /// </summary>
-        /// <returns>The aggregated properties</returns>
+        /// <returns>The aggregated properties.</returns>
         public Dictionary<string, object> GetAggregatedProperties()
         {
             return GetAggregatedProperties(null);
         }
 
         /// <summary>
-        /// Returns live connections for this contact entity
+        /// Returns live connections for this contact entity.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Aggregated dictionary of connection properties.</returns>
         internal Dictionary<string, ConnectionProperties> GetSelfConnections()
         {
-            return this.selfConnectionProperties.Select(kvp => new KeyValuePair<string, ConnectionProperties>(kvp.Key, (ConnectionProperties)kvp.Value))
+            return GetContactConnectionProperties(cp => cp.AllConnectionValues, Array.Empty<KeyValuePair<string, ConnectionProperties>>())
                 .Union(otherConnectionProperties).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
@@ -336,12 +350,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Process aggregated coming from a backplane provider
+        /// Process aggregated coming from a backplane provider.
         /// </summary>
-        /// <param name="contactDataChanged">The backplane data that changed</param>
-        /// <param name="affectedProperties">Affected properties</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="contactDataChanged">The backplane data that changed.</param>
+        /// <param name="affectedProperties">Affected properties.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Completion task.</returns>
         internal async Task OnContactChangedAsync(
             ContactDataChanged<Dictionary<string, ConnectionProperties>> contactDataChanged,
             IEnumerable<string> affectedProperties,
@@ -381,7 +395,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 connectionId,
                 affectedProperties,
                 (selfConnectionId, propertyName) => GetPropertyValue(selfConnectionId, propertyName),
-                (notifyConnectionId, selfConnectionId) => (!this.selfConnectionProperties.ContainsKey(notifyConnectionId) && selfConnectionId == null) || selfConnectionId == connectionId,
+                (notifyConnectionId, selfConnectionId) => (!GetContactConnectionProperties(cp => cp.HasConnection(notifyConnectionId), false) && selfConnectionId == null) || selfConnectionId == connectionId,
                 cancellationToken);
         }
 
@@ -393,11 +407,15 @@ namespace Microsoft.VsCloudKernel.SignalService
             return NotifyConnectionChangedAsync(SelfConnectionIds, connectionId, changeType, cancellationToken);
         }
 
+        private IEnumerable<ConnectionProperties> GetAllConnectionProperties()
+        {
+            return GetContactConnectionProperties(cp => cp.AllConnectionProperties, Array.Empty<ConnectionProperties>())
+                .Union(this.otherConnectionProperties.Values);
+        }
+
         private Dictionary<string, object> GetAggregatedProperties(IEnumerable<string> affectedProperties)
         {
-            var connectionProperties = this.selfConnectionProperties.Values.Cast<ConnectionProperties>()
-                .Union(this.otherConnectionProperties.Values);
-
+            var connectionProperties = GetAllConnectionProperties();
             if (affectedProperties != null)
             {
                 var nullProperties = affectedProperties.ToDictionary(p => p, p => new PropertyValue(null, DateTime.MinValue));
@@ -427,7 +445,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // merge properties
                 foreach (var item in updateProperties)
                 {
-                    MergeProperty(connectionId, item.Key, item.Value, lastUpdated);
+                    ContactConnectionProperties.MergeProperty(connectionId, item.Key, item.Value, lastUpdated);
                 }
             }
 
@@ -472,16 +490,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             await Changed?.InvokeAsync(this, new ContactChangedEventArgs(connectionId, properties, changeType));
         }
 
-        private void MergeProperty(string connectionId, string propertyName, object value, DateTime updated)
-        {
-            var propertyValue = new PropertyValue(value, updated);
-            this.selfConnectionProperties.AddOrUpdate(
-                connectionId,
-                (properties) => properties.AddOrUpdate(propertyName, propertyValue, (k, v) => propertyValue));
-        }
-
         /**
-         * Return a property value that would include both self maintained value and also exteranlly
+         * Return a property value that would include both self maintained value and also externally
          * maintained outside this entity
          */
         private object GetPropertyValue(string connectionId, string propertyName)
@@ -489,7 +499,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             if (!string.IsNullOrEmpty(connectionId))
             {
                 PropertyValue pv;
-                if ((this.selfConnectionProperties.TryGetValue(connectionId, out var properties) &&
+                if ((IsContactConnectionPropertiesCreated && ContactConnectionProperties.TryGetProperties(connectionId, out var properties) &&
                     properties.TryGetValue(propertyName, out pv)) ||
                     (this.otherConnectionProperties.TryGetValue(connectionId, out var connProperties) &&
                     connProperties.TryGetValue(propertyName, out pv)))
@@ -499,7 +509,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
             else
             {
-                return this.selfConnectionProperties.Values.Union(this.otherConnectionProperties.Values).Select(c =>
+                return GetAllConnectionProperties().Select(c =>
                 {
                     if (c.TryGetValue(propertyName, out var pv))
                     {
@@ -517,7 +527,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             if (!string.IsNullOrEmpty(connectionId))
             {
-                if (this.selfConnectionProperties.TryGetValue(connectionId, out var properties))
+                if (IsContactConnectionPropertiesCreated && ContactConnectionProperties.TryGetProperties(connectionId, out var properties))
                 {
                     return properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
                 }
@@ -532,18 +542,23 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
             else
             {
-                return ContactDataHelpers.GetAggregatedProperties(this.selfConnectionProperties.Values.Union(this.otherConnectionProperties.Values));
+                return ContactDataHelpers.GetAggregatedProperties(GetAllConnectionProperties());
             }
         }
 
-        private IEnumerable<string> RemoveConnectionProperties(string connectionId)
+        private T GetContactConnectionProperties<T>(Func<ContactConnectionProperties, T> callback, Func<T> defaultCallback)
         {
-            if (this.selfConnectionProperties.TryRemove(connectionId, out var properties))
+            if (this.lazyContactConnectionProperties.IsValueCreated)
             {
-                return properties.Keys;
+                return callback(this.lazyContactConnectionProperties.Value);
             }
 
-            return Array.Empty<string>();
+            return defaultCallback();
+        }
+
+        private T GetContactConnectionProperties<T>(Func<ContactConnectionProperties, T> callback, T defaultValue)
+        {
+            return GetContactConnectionProperties<T>(callback, () => defaultValue);
         }
     }
 }

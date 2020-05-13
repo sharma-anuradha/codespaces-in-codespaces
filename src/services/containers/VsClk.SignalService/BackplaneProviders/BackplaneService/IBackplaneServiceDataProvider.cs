@@ -22,6 +22,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         Task UpdateContactDataInfoAsync(string contactId, ContactDataInfo contactDataInfo, CancellationToken cancellationToken);
 
-        Task<ContactDataInfo> UpdateContactDataChangedAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
+        Task<(ContactDataInfo NewValue, ContactDataInfo OldValue)> UpdateContactDataChangedAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken);
     }
 }

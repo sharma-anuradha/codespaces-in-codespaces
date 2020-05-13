@@ -557,10 +557,13 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 }
 
                 contactDataInfo.UpdateConnectionProperties(contactDataChanged);
-                await UpdateContactDataInfoAsync(contactDataChanged, contactDataInfo, cancellationToken);
+                await UpdateContactDataInfoAsync(contactDataChanged, (contactDataInfo, null), cancellationToken);
             }
 
-            public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+            public async Task UpdateContactDataInfoAsync(
+                ContactDataChanged<ConnectionProperties> contactDataChanged,
+                (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
+                CancellationToken cancellationToken)
             {
                 var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
                     CreateChangeId(),
@@ -568,7 +571,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                     contactDataChanged.ConnectionId,
                     contactDataChanged.ContactId,
                     contactDataChanged.ChangeType,
-                    contactDataInfo);
+                    contactDataInfoValues.NewValue);
 
                 await Task.WhenAll(this.contactChangedAsyncs.Select(c => c.Invoke(contactDataInfoChanged, contactDataChanged.Data.Keys.ToArray(), cancellationToken)));
             }

@@ -73,10 +73,10 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+        public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues, CancellationToken cancellationToken)
         {
             await EnsureConnectedAsync(cancellationToken);
-            await BackplaneConnectorProvider.InvokeAsync<ContactDataInfo>(nameof(UpdateContactDataInfoAsync), new object[] { contactDataChanged, contactDataInfo }, cancellationToken);
+            await BackplaneConnectorProvider.InvokeAsync<ContactDataInfo>(nameof(UpdateContactDataInfoAsync), new object[] { contactDataChanged, contactDataInfoValues }, cancellationToken);
         }
 
         /// <inheritdoc/>

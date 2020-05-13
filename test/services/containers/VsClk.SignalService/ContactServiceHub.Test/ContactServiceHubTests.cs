@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService.ServiceHubTests;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 {
@@ -18,9 +19,11 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         private readonly Dictionary<string, IClientProxy> clientProxies;
         private readonly ContactService presenceService;
         private readonly ILogger<ContactService> presenceServiceLogger;
+        private readonly ITestOutputHelper output;
 
-        public ContactServiceHubTests()
+        public ContactServiceHubTests(ITestOutputHelper output)
         {
+            this.output = output;
             this.clientProxies = new Dictionary<string, IClientProxy>();
             this.presenceServiceLogger = new Mock<ILogger<ContactService>>().Object;
 
@@ -437,6 +440,43 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 new string[] { "status" }, useStubContact: true, CancellationToken.None);
             Assert.Single(results);
             Assert.Equal("contact2", results[0][ContactProperties.IdReserved]);
+
+            // now we ask for a more complex matching
+            results = await this.presenceService.RequestSubcriptionsAsync(AsContactRef("conn1", "contact1"), new Dictionary<string, object>[] {
+                new Dictionary<string, object>()
+                {
+                    { "email", "contact3@microsoft.com" },
+                    { "name", "contact3" },
+                }},
+            new string[] { "status" }, useStubContact: true, CancellationToken.None);
+            Assert.Single(results);
+            Assert.NotNull(results[0]);
+            Assert.Single(results[0]);
+            Assert.True(results[0].ContainsKey(ContactProperties.IdReserved));
+
+            conn1Proxy = default;
+            await this.presenceService.RegisterSelfContactAsync(AsContactRef("conn3", "contact4"), new Dictionary<string, object>()
+            {
+                { "email", "contact3@microsoft.com" },
+                { "status", "busy" },
+            }, CancellationToken.None);
+
+            // the last registration should NOT match
+            Assert.Null(conn1Proxy.Item1);
+
+            await this.presenceService.RegisterSelfContactAsync(AsContactRef("conn4", "contact3"), new Dictionary<string, object>()
+            {
+                { "email", "contact3@microsoft.com" },
+                { "name", "contact3" },
+                { "status", "busy" },
+            }, CancellationToken.None);
+
+            // this should match
+            Assert.NotNull(conn1Proxy.Item1);
+            Assert.Equal(conn1Proxy.Item1, ContactHubMethods.UpdateValues);
+            AssertContactRef("conn4", results[0][ContactProperties.IdReserved].ToString(), conn1Proxy.Item2[0]);
+
+            this.presenceService.RemoveSubscription(AsContactRef("conn1", "contact1"), new ContactReference[] { AsContactRef(null, results[0][ContactProperties.IdReserved].ToString()) });
         }
 
         [Fact]
@@ -678,6 +718,74 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             notifyProperties = conn1Proxy[ContactHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Single(notifyProperties);
             Assert.Equal(true, notifyProperties["property3"]);
+        }
+
+        [Fact]
+        public async Task MemoryAndPerfTest()
+        {
+            const int NumberOfRegisteredContacts = 100000;
+            const int NumberOfUnregisteredContacts = 100000;
+
+            Action gcCollect = () =>
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            };
+
+            var contact1Ref = AsContactRef("conn1", "contact1");
+            await this.presenceService.RegisterSelfContactAsync(contact1Ref, new Dictionary<string, object>()
+            {
+                { "email", "contact1@microsoft.com" },
+                { "status", "available" },
+            }, CancellationToken.None);
+
+            gcCollect();
+            var memory1 = Common.LoggerScopeHelpers.GetProcessMemoryInfo();
+            var registerSelfProperties = new Dictionary<string, object>()
+            {
+                { "property1", 100 },
+                { "property2", "Value2" },
+                { "status", "available" },
+            };
+
+            for (int index = 0; index < NumberOfRegisteredContacts; ++index)
+            {
+                var nextContactRef = AsContactRef($"conn1_registered_{index}", $"contact_registered_{index}");
+                await this.presenceService.RegisterSelfContactAsync(contact1Ref, registerSelfProperties, default);
+            }
+
+            gcCollect();
+            var memory2 = Common.LoggerScopeHelpers.GetProcessMemoryInfo();
+            var totalMemoryOnRegisteredContacts = memory2.memorySize - memory1.memorySize;
+
+            this.output.WriteLine($"Total memory in MB for registered contacts count:{NumberOfRegisteredContacts} total:{totalMemoryOnRegisteredContacts}");
+
+            for (int index = 0; index < NumberOfUnregisteredContacts; ++index)
+            {
+                var nextContactRef = AsContactRef($"conn1_unregistered_{index}", $"contact_unregistered_{index}");
+                await this.presenceService.AddSubcriptionsAsync(contact1Ref, new ContactReference[] { nextContactRef }, new string[] { "*" });
+            }
+
+            gcCollect();
+            memory1 = Common.LoggerScopeHelpers.GetProcessMemoryInfo();
+            var totalMemoryOnSubscriptionContacts = memory1.memorySize - memory2.memorySize;
+            this.output.WriteLine($"Total memory in MB for empty subscription contacts count:{NumberOfUnregisteredContacts} total:{totalMemoryOnSubscriptionContacts}");
+
+            var sw = Stopwatch.StartNew();
+            await this.presenceService.RequestSubcriptionsAsync(
+                contact1Ref,
+                new Dictionary<string, object>[] {
+                    new Dictionary<string, object>()
+                    {
+                        { "email", "contact2@microsoft.com" },
+                    },
+                },
+                new string[] { "status" },
+                useStubContact: false,
+               default);
+            var requestTimeElapsed = sw.ElapsedMilliseconds;
+            this.output.WriteLine($"Total tiem in ms to request a subscription:{requestTimeElapsed}");
         }
 
         private class CustomMatchService : ContactService

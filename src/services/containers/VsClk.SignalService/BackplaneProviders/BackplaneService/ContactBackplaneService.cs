@@ -91,7 +91,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             const int MaxDegreeOfParallelism = 32;
 
-            UpdateContactActionBlock = CreateActionBlock<(ContactDataChanged<ConnectionProperties>, ContactDataInfo)>(
+            UpdateContactActionBlock = CreateActionBlock<(ContactDataChanged<ConnectionProperties>, (ContactDataInfo NewValue, ContactDataInfo OldValue))>(
                 nameof(UpdateContactActionBlock),
                 async (elapsed, updateContactInfo) =>
                 {
@@ -163,7 +163,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             Logger.LogInformation($"BackplaneService created succeeded:{succeeded} workerThreads:{workerThreads}:{oldWorkerThreads} completionPortThreads:{completionPortThreads}:{oldCompletionPortThreads}");
         }
 
-        private ActionBlock<(Stopwatch, (ContactDataChanged<ConnectionProperties>, ContactDataInfo))> UpdateContactActionBlock { get; }
+        private ActionBlock<(Stopwatch, (ContactDataChanged<ConnectionProperties>, (ContactDataInfo NewValue, ContactDataInfo OldValue)))> UpdateContactActionBlock { get; }
 
         private ActionBlock<(Stopwatch, MessageData)> SendMessageActionBlock { get; }
 
@@ -275,30 +275,32 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             TrackDataChanged(contactDataChanged, TrackDataChangedOptions.Lock);
 
-            ContactDataInfo contactDataInfo;
+            (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues;
             if (await ServiceDataProvider.ContainsContactAsync(contactDataChanged.ContactId, cancellationToken))
             {
                 // we already know about this contact, simple update
-                contactDataInfo = await ServiceDataProvider.UpdateContactDataChangedAsync(contactDataChanged, cancellationToken);
+                contactDataInfoValues = await ServiceDataProvider.UpdateContactDataChangedAsync(contactDataChanged, cancellationToken);
             }
             else
             {
                 // first get the global data for this contact
-                contactDataInfo = (await BackplaneManager.GetContactDataAsync(contactDataChanged.ContactId, cancellationToken)) ??
+                var contactDataInfo = (await BackplaneManager.GetContactDataAsync(contactDataChanged.ContactId, cancellationToken)) ??
                     new Dictionary<string, IDictionary<string, ConnectionProperties>>();
 
                 // merge the data
                 contactDataInfo.UpdateConnectionProperties(contactDataChanged);
                 await ServiceDataProvider.UpdateContactDataInfoAsync(contactDataChanged.ContactId, contactDataInfo, cancellationToken);
+
+                contactDataInfoValues = (contactDataInfo, null);
             }
 
-            await FireOnUpdateContactAsync(contactDataChanged.Clone(contactDataInfo), contactDataChanged.Data.Keys.ToArray(), cancellationToken);
+            await FireOnUpdateContactAsync(contactDataChanged.Clone(contactDataInfoValues.NewValue), contactDataChanged.Data.Keys.ToArray(), cancellationToken);
 
             if (!IsGlobalUpdateContactThrottle)
             {
                 // increment update queue count
                 Interlocked.Increment(ref this.updateQueueCount);
-                await UpdateContactActionBlock.SendAsync((Stopwatch.StartNew(), (contactDataChanged, contactDataInfo)), cancellationToken);
+                await UpdateContactActionBlock.SendAsync((Stopwatch.StartNew(), (contactDataChanged, contactDataInfoValues)), cancellationToken);
             }
             else
             {

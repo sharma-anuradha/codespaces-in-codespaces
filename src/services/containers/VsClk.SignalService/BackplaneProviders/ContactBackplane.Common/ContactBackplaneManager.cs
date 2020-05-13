@@ -42,10 +42,13 @@ namespace Microsoft.VsCloudKernel.SignalService
                 $"contactId:{ToTraceText(contactDataChanged.ContactId)}");
         }
 
-        public async Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
+        public async Task UpdateContactDataInfoAsync(
+            ContactDataChanged<ConnectionProperties> contactDataChanged,
+            (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
+            CancellationToken cancellationToken)
         {
             await WaitAll(
-                GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactDataInfoAsync(contactDataChanged, contactDataInfo, cancellationToken) as Task, p)),
+                GetSupportedProviders(s => s.UpdateContact).Select(p => (p.UpdateContactDataInfoAsync(contactDataChanged, contactDataInfoValues, cancellationToken) as Task, p)),
                 nameof(IContactBackplaneProvider.UpdateContactDataInfoAsync),
                 $"contactId:{ToTraceText(contactDataChanged.ContactId)}");
         }
