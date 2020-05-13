@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -33,6 +34,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerUtility.UserAuthenticationSchemes)]
     public class LocationsController : ControllerBase
     {
+        private const string UnauthorizedPlanId = "unauthorized_plan_id";
+        private const string UnauthorizedPlanUser = "unauthorized_plan_user";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LocationsController"/> class.
         /// </summary>
@@ -40,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="controlPlaneInfo">Control plane information.</param>
         /// <param name="skuCatalog">SKU catalog for the current location.</param>
         /// <param name="currentUserProvider">The current user's profile.</param>
+        /// <param name="planManager">The plan manager.</param>
         /// <param name="planManagerSettings">The default plan settings.</param>
         /// <param name="skuUtils">skuUtils to find sku eligiblity.</param>
         public LocationsController(
@@ -47,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
             ICurrentUserProvider currentUserProvider,
+            IPlanManager planManager,
             PlanManagerSettings planManagerSettings,
             ISkuUtils skuUtils)
         {
@@ -54,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ControlPlaneInfo = controlPlaneInfo;
             SkuCatalog = skuCatalog;
             CurrentUserProvider = currentUserProvider;
+            PlanManager = planManager;
             PlanManagerSettings = planManagerSettings;
             SkuUtils = skuUtils;
         }
@@ -65,6 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private ISkuCatalog SkuCatalog { get; }
 
         private ICurrentUserProvider CurrentUserProvider { get; }
+
+        private IPlanManager PlanManager { get; }
 
         private PlanManagerSettings PlanManagerSettings { get; }
 
@@ -102,15 +111,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Gets info about a specific location including what SKUs are available at that location.
         /// </summary>
         /// <param name="location">The requested location.</param>
+        /// <param name="planId">The plan ID.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>An object result containing the <see cref="LocationInfoResult"/>.</returns>
         [HttpGet("{location}")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(LocationInfoResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("get")]
         public async Task<IActionResult> GetAsync(
             [FromRoute]string location,
+            [FromQuery] string planId,
             [FromServices]IDiagnosticsLogger logger)
         {
             if (!Enum.TryParse<AzureLocation>(location, ignoreCase: true, out var azureLocation))
@@ -135,11 +148,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             var plan = CurrentUserProvider.Identity.AuthorizedPlan;
+
+            // We are expecting either plan from auth or planId from query string to be provided from clients.
+            // If both plan and planId are provided then we want to make sure that both have the same value.
+            if (!string.IsNullOrWhiteSpace(plan) && !string.IsNullOrWhiteSpace(planId) && planId != plan)
+            {
+                var message = $"{HttpStatusCode.BadRequest}: The planId is not valid: {planId}";
+                logger.AddReason(message);
+                return BadRequest(message);
+            }
+
             var skus = new List<ICloudEnvironmentSku>();
             var skusFilteredByLocation = SkuCatalog.EnabledInternalHardware().Values
                                         .Where((skuObj) => skuObj.SkuLocations.Contains(azureLocation));
 
             var planInfo = VsoPlanInfo.TryParse(plan);
+            if (planInfo == null && !string.IsNullOrWhiteSpace(planId))
+            {
+                planInfo = VsoPlanInfo.TryParse(planId);
+            }
 
             foreach (var sku in skusFilteredByLocation)
             {
@@ -150,10 +177,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
             }
 
+            VsoPlan vsoPlan = null;
+            if (planInfo != null)
+            {
+                vsoPlan = await PlanManager.GetAsync(planInfo, logger);
+
+                if (vsoPlan == null)
+                {
+                    var message = $"{HttpStatusCode.NotFound}: The plan could not be found: {planInfo.ResourceId}";
+                    logger.AddReason(message);
+                    return NotFound(message);
+                }
+                else if (AuthorizePlanAccess(vsoPlan, logger) == false)
+                {
+                    return new ForbidResult();
+                }
+            }
+
             // Clients select default SKUs as the first item in this list.  We control the ordering
             // of the returned SKUs so that clients will show the correct default.  Don't change this
             // unless the clients can handle selecting the default correctly themselves.
-            var orderedSkus = skus.OrderBy((sku) => sku.Priority);
+            var orderedSkus = skus.OrderBy((sku) => sku.Priority).ToList();
+
+            // Applying the default plan SKU. The default SKU of the plan will be the first one in the
+            // list so that clients could show it as default.
+            var defaultPlanSku = vsoPlan?.Properties?.DefaultEnvironmentSku;
+            if (!string.IsNullOrEmpty(defaultPlanSku))
+            {
+                var defaultSku = orderedSkus.FirstOrDefault(sku => sku.SkuName == defaultPlanSku);
+                if (defaultSku != null)
+                {
+                    orderedSkus.Remove(defaultSku);
+                    orderedSkus.Insert(0, defaultSku);
+                }
+            }
+
             var outputSkus = orderedSkus
                 .Select((sku) => new SkuInfoResult
                 {
@@ -183,6 +241,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 Scheme = Uri.UriSchemeHttps,
             };
             return new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
+        }
+
+        /// <summary>
+        /// Checks if the current user is authorized to access a plan.
+        /// </summary>
+        /// <param name="plan">Plan that the user is attempting to access.</param>
+        /// <param name="logger">Diagnostic logger.</param>
+        /// <returns>True if the user is authorized, else false.</returns>
+        private bool AuthorizePlanAccess(
+            VsoPlan plan,
+            IDiagnosticsLogger logger)
+        {
+            var isPlanAuthorized = CurrentUserProvider.Identity.IsPlanAuthorized(plan.Plan.ResourceId);
+            if (isPlanAuthorized == false)
+            {
+                // Users with explicit access to a different plan do not have access to this plan.
+                logger.LogWarning(UnauthorizedPlanId);
+                return false;
+            }
+
+            if (plan.UserId != null)
+            {
+                // Users without a scoped access token must be the owner of the plan
+                // (if the plan has an owner).
+                var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
+                if (!currentUserIdSet.EqualsAny(plan.UserId))
+                {
+                    logger.LogWarning(UnauthorizedPlanUser);
+                    return false;
+                }
+            }
+            else if (isPlanAuthorized != true)
+            {
+                // Users must have explicit authorization for unowned plans.
+                logger.LogWarning(UnauthorizedPlanId);
+                return false;
+            }
+
+            return true;
         }
     }
 }
