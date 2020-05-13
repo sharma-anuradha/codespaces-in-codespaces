@@ -7,5 +7,20 @@ export const isInPopupWindow = (): boolean => {
         // but currently we cannot differentiate between a popup and tabs.
         return false;
     }
-    return !!(window.opener && window.opener !== window);
+
+    if (!window.opener) {
+        return false;
+    }
+
+    try {
+        // Getting origin of cross-site opener throws.
+        const openerOrigin = window.opener.origin;
+        if (openerOrigin && window.opener !== window) {
+            return true;
+        }
+
+        return false;
+    } catch (ex) {
+        return false;
+    }
 };
