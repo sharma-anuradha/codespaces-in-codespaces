@@ -570,7 +570,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 if (lastState is null)
                 {
                     // If we get this far, we could not find an appropriate billing event
-                    Logger.AddValue("cloudEnvironmentId", id);
+                    Logger.AddValue("CloudEnvironmentId", id);
                     Logger.LogError("billingworker_missing_events_for_environments");
                     return (true, CloudEnvironmentState.Deleted);
                 }
@@ -580,7 +580,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
 
             // If we get this far, our we did not get any billing events. We should no longer be billing the customer and should investigate
-            Logger.AddValue("cloudEnvironmentId", id);
+            Logger.AddValue("CloudEnvironmentId", id);
             Logger.LogError("billingworker_missing_events_for_environments");
             return (true, CloudEnvironmentState.Deleted);
         }

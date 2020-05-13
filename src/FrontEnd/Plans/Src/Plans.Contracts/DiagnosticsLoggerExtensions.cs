@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="subscriptionId">The subscription id.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddSubscriptionId(this IDiagnosticsLogger logger, string subscriptionId)
-            => logger.FluentAddValue(LogValueSubscriptionId, subscriptionId);
+            => logger.FluentAddBaseValue(LogValueSubscriptionId, subscriptionId);
 
         /// <summary>
         /// Add the environment owner id to the logger.
@@ -53,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="resourceGroupName">The resource group name.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddResourceGroupName(this IDiagnosticsLogger logger, string resourceGroupName)
-            => logger.FluentAddValue(LogValueResourceGroupName, resourceGroupName);
+            => logger.FluentAddBaseValue(LogValueResourceGroupName, resourceGroupName);
 
         /// <summary>
         /// Add the environment connection session id to the logger.
@@ -62,6 +62,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="planName">The plan name.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddPlanName(this IDiagnosticsLogger logger, string planName)
-            => logger.FluentAddValue(LogValuePlanName, planName);
+            => logger.FluentAddBaseValue(LogValuePlanName, planName);
     }
 }

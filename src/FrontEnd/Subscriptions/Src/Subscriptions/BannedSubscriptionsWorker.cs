@@ -74,65 +74,81 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             var logMessageBase = GetType().FormatLogMessage(nameof(ExecuteAsync));
             var logger = BaseLogger.NewChildLogger();
             cancellationToken.Register(() => logger.LogInfo($"{logMessageBase}_cancelled"));
-
-            // Get the list of subscriptions to act on
-            var recentBannedSubscriptions = await SubscriptionManager.GetRecentBannedSubscriptionsAsync(null, logger);
-
-            TaskHelper.RunBackgroundConcurrentEnumerable(
-                "banned_subscription_worker",
-                recentBannedSubscriptions,
-                async (sub, childLogger) =>
-                {
-                    if (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await logger.OperationScopeAsync(
+                    $"banned_subscription_worker_run",
+                    async (childLogger) =>
                     {
-                        await DeletePlansFromBannedSubscriptionAsync(sub, childLogger);
-                    }
-                },
-                logger);
+                        // Get the list of subscriptions to act on
+                        var recentBannedSubscriptions = await SubscriptionManager.GetRecentBannedSubscriptionsAsync(null, logger);
+
+                        TaskHelper.RunBackgroundConcurrentEnumerable(
+                            "banned_subscription_worker",
+                            recentBannedSubscriptions,
+                            async (sub, innerLogger) =>
+                            {
+                                if (!cancellationToken.IsCancellationRequested)
+                                {
+                                    await DeletePlansFromBannedSubscriptionAsync(sub, innerLogger.NewChildLogger());
+                                }
+                            },
+                            childLogger);
+                        await Task.Delay(60 * 60 * 1000);
+                    },
+                    (e, childLogger) => Task.Delay(60 * 1000), // delay for a minute before the next loop
+                    swallowException: true);
+            }
         }
 
         private async Task DeletePlansFromBannedSubscriptionAsync(BannedSubscription sub, IDiagnosticsLogger logger)
         {
-            var logMessageBase = GetType().FormatLogMessage(nameof(DeletePlansFromBannedSubscriptionAsync));
+            await logger.OperationScopeAsync(
+              $"banned_subscription_worker_subscription_run",
+              async (childLogger) =>
+              {
+                  var logMessageBase = GetType().FormatLogMessage(nameof(DeletePlansFromBannedSubscriptionAsync));
 
-            var plansForSubscription = await PlanManager.ListAsync(null, sub.Id, null, null, logger, includeDeleted: false);
-            if (!plansForSubscription.Any())
-            {
-                logger
-                    .FluentAddValue(nameof(sub.Id), sub.Id)
-                    .AddReason("No plans for this subscription.")
-                    .LogInfo($"{logMessageBase}_skipped");
-                return;
-            }
+                  var plansForSubscription = await PlanManager.ListAsync(null, sub.Id, null, null, childLogger, includeDeleted: false);
+                  if (!plansForSubscription.Any())
+                  {
+                      childLogger
+                          .FluentAddValue(nameof(sub.Id), sub.Id)
+                          .AddReason("No plans for this subscription.")
+                          .LogInfo($"{logMessageBase}_skipped");
+                      return;
+                  }
 
-            var plansToProcess = plansForSubscription.Where(item => LocationsToProcess.Contains(item.Plan.Location)).ToArray();
-            if (!plansToProcess.Any())
-            {
-                logger
-                    .FluentAddValue(nameof(sub.Id), sub.Id)
-                    .AddReason("No plans for this location.")
-                    .LogInfo($"{logMessageBase}_skipped");
-                return;
-            }
+                  var plansToProcess = plansForSubscription.Where(item => LocationsToProcess.Contains(item.Plan.Location)).ToArray();
+                  if (!plansToProcess.Any())
+                  {
+                      childLogger
+                          .FluentAddValue(nameof(sub.Id), sub.Id)
+                          .AddReason("No plans for this location.")
+                          .LogInfo($"{logMessageBase}_skipped");
+                      return;
+                  }
 
-            TaskHelper.RunBackgroundConcurrentEnumerable(
-                "process_plan_for_banned_subscription",
-                plansToProcess,
-                async (plan, childLogger) =>
-                {
-                    await PlanManager.DeleteAsync(plan, childLogger);
-                    childLogger
-                        .FluentAddValue(nameof(sub.Id), plan.Plan.Subscription)
-                        .FluentAddValue("PlanId", plan.Id)
-                        .FluentAddValue("PlanResourceId", plan.Plan.ResourceId)
-                        .AddReason(sub.BannedReason.ToString())
-                        .LogInfo($"{logMessageBase}_completed");
-                },
-                logger,
-                async (plan, childLogger) =>
-                {
-                    return await ClaimedDistributedLease.Obtain("banned_subscription_plans", plan.Id, ProcessBannedPlanLeaseTime, childLogger);
-                });
+                  TaskHelper.RunBackgroundConcurrentEnumerable(
+                      "process_plan_for_banned_subscription",
+                      plansToProcess,
+                      async (plan, innerLogger) =>
+                      {
+                          await PlanManager.DeleteAsync(plan, innerLogger);
+                          innerLogger
+                              .FluentAddValue(nameof(sub.Id), plan.Plan.Subscription)
+                              .FluentAddValue("PlanId", plan.Id)
+                              .FluentAddValue("PlanResourceId", plan.Plan.ResourceId)
+                              .AddReason(sub.BannedReason.ToString())
+                              .LogInfo($"{logMessageBase}_completed");
+                      },
+                      childLogger,
+                      async (plan, innerLogger) =>
+                      {
+                          return await ClaimedDistributedLease.Obtain("banned_subscription_plans", plan.Id, ProcessBannedPlanLeaseTime, innerLogger);
+                      });
+              },
+              swallowException: true);
         }
     }
 }

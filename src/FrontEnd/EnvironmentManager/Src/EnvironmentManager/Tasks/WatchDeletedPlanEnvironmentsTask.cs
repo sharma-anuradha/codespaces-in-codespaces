@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 $"{LogBaseName}_run",
                 async (childLogger) =>
                 {
-                    var locations = ControlPlaneInfo.GetAllDataPlaneLocations();
+                    var locations = ControlPlaneInfo.Stamp.DataPlaneLocations;
 
                     // Run through found plans in the background
                     await TaskHelper.RunConcurrentEnumerableAsync(

@@ -370,7 +370,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-
+                    childLogger.AddVsoPlan(plan);
                     var result = new CloudEnvironmentServiceResult()
                     {
                         MessageCode = MessageCodes.Unknown,
