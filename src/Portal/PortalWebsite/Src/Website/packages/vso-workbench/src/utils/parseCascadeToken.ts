@@ -20,7 +20,9 @@ export const parseCascadeToken = (token: unknown): ICascadeToken => {
         throw new Error(`Unknown partner "${cascadeToken.idp}".`);
     }
 
-    if (typeof cascadeToken.exp !== 'number') {
+    cascadeToken.exp = parseInt(`${cascadeToken.exp}`, 10);
+
+    if (typeof cascadeToken.exp !== 'number' || isNaN(cascadeToken.exp)) {
         throw new Error('No token `exp` set.');
     }
 
