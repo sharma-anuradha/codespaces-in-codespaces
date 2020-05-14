@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -219,6 +220,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// </summary>
         [JsonProperty(PropertyName = "heartBeatSummary")]
         public ResourceHeartBeatSummaryRecord HeartBeatSummary { get; set; }
+
+        /// <summary>
+        /// Gets or sets the metadata for user secrets stored in the KeyVault.
+        /// Applicable only for resource type <see cref="ResourceType.KeyVault"/>.
+        /// </summary>
+        [JsonProperty(PropertyName = "userSecrets")]
+        public IList<UserSecret> UserSecrets { get; set; }
 
         /// <summary>
         /// Gets or sets the Properties.

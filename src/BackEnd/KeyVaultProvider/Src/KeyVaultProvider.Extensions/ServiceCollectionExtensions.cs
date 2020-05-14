@@ -26,6 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 
             // Core services
             services.AddSingleton<IKeyVaultProvider, KeyVaultProvider>();
+            services.AddSingleton<ISecretManager, SecretManager>();
 
             return services;
         }

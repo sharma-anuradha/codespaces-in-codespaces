@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+    <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
     <ProjectReference Include="..\KeyVaultProvider.Abstrations\KeyVaultProvider.Abstrations.csproj" />
     <ProjectReference Include="..\KeyVaultProvider.Models\KeyVaultProvider.Models.csproj" />
   </ItemGroup>

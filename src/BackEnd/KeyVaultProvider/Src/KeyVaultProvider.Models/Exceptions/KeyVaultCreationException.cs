@@ -1,32 +1,32 @@
-﻿// <copyright file="KeyVaultException.cs" company="Microsoft">
+﻿// <copyright file="KeyVaultCreationException.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 {
     /// <summary>
-    /// KeyVault Exception.
+    /// KeyVault Creation Exception.
     /// </summary>
-    [Serializable]
-    internal class KeyVaultException : Exception
+    public class KeyVaultCreationException : KeyVaultProviderException
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="KeyVaultException"/> class.
+        /// Initializes a new instance of the <see cref="KeyVaultCreationException"/> class.
         /// </summary>
         /// <param name="message">Exception message.</param>
-        public KeyVaultException(string message)
+        public KeyVaultCreationException(string message)
             : base(message)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="KeyVaultException"/> class.
+        /// Initializes a new instance of the <see cref="KeyVaultCreationException"/> class.
         /// </summary>
         /// <param name="message">Exception message.</param>
         /// <param name="innerException">Inner exception.</param>
-        public KeyVaultException(string message, Exception innerException)
+        public KeyVaultCreationException(string message, Exception innerException)
             : base(message, innerException)
         {
         }

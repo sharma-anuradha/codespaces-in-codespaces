@@ -130,6 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             var config = new MapperConfiguration(cfg =>
                 {
                     cfg.AddResourceBroker();
+                    cfg.AddSecretManager();
                     cfg.CreateMap<JValue, Guid>().ConvertUsing(g => Guid.Parse(g.Value.ToString()));
                 });
             var mapper = config.CreateMapper();

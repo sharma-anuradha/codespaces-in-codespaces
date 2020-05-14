@@ -19,10 +19,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 {
     /// <inheritdoc/>
-    [LoggingBaseName("keyvault_provider")]
+    [LoggingBaseName(LoggingBaseName)]
     public class KeyVaultProvider : IKeyVaultProvider
     {
         private const string Key = "value";
+        private const string LoggingBaseName = "keyvault_provider";
         private readonly TimeSpan creationRetryInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
@@ -38,8 +39,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         private IAzureClientFactory AzureClientFactory { get; }
 
         private string KeyVaultTemplate { get; }
-
-        private string LoggingBaseName => GetType().GetLogMessageBaseName();
 
         /// <inheritdoc/>
         public async Task<KeyVaultProviderCreateResult> CreateAsync(KeyVaultProviderCreateInput input, IDiagnosticsLogger logger)
@@ -165,14 +164,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                     if (operationState == OperationState.Failed)
                     {
                         var errorDetails = await DeploymentUtils.ExtractDeploymentErrors(deployment);
-                        throw new KeyVaultException(errorDetails);
+                        throw new KeyVaultCreationException(errorDetails);
                     }
 
                     return (operationState, new NextStageInput(input.TrackingId, input.AzureResourceInfo));
                 },
                 (ex, childLogger) =>
                 {
-                    if (!(ex is KeyVaultException) && input.RetryAttempt < 5)
+                    if (!(ex is KeyVaultCreationException) && input.RetryAttempt < 5)
                     {
                         return Task.FromResult((OperationState.InProgress, new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1)));
                     }
