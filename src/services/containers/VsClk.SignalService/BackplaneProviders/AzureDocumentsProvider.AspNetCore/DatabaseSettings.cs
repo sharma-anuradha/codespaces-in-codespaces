@@ -11,5 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public string AuthorizationKey { get; set; }
 
         public bool IsProduction { get; set; }
+
+        public string[] PreferredRegions { get; set; }
     }
 }

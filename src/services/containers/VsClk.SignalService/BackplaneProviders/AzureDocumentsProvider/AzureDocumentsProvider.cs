@@ -60,9 +60,21 @@ namespace Microsoft.VsCloudKernel.SignalService
             Requires.NotNullOrEmpty(databaseSettings.AuthorizationKey, nameof(databaseSettings.AuthorizationKey));
 
             // initialize document client
+            CosmosClientOptions clientOptions = null;
+
+            // create client options if prefered regiosn are defined
+            if (databaseSettings.PreferredRegions != null)
+            {
+                clientOptions = new CosmosClientOptions()
+                {
+                    ApplicationPreferredRegions = databaseSettings.PreferredRegions,
+                };
+            }
+
             Client = new CosmosClient(
                 databaseSettings.EndpointUrl,
-                databaseSettings.AuthorizationKey);
+                databaseSettings.AuthorizationKey,
+                clientOptions);
         }
 
         public CosmosClient Client { get; }

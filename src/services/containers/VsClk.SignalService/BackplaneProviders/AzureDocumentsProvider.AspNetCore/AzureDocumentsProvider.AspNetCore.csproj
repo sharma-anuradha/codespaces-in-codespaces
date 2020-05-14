@@ -9,6 +9,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="$(Microsoft_Azure_Cosmos)" />
     <PackageReference Include="Microsoft.Azure.Management.CosmosDB.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

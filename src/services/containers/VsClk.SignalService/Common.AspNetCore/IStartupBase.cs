@@ -11,5 +11,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         bool IsDevelopmentEnv { get; }
 
         ServiceInfo ServiceInfo { get; }
+
+        string PreferredLocation { get; }
     }
 }

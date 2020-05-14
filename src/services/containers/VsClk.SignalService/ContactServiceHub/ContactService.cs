@@ -313,6 +313,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 else if (Contacts.TryGetValue(targetContact.Id, out var targetSelfContact))
                 {
                     targetSelfContact.RemoveSubscription(contactReference.ConnectionId, targetContact.ConnectionId);
+                    PurgeContactIf(targetSelfContact);
                 }
             }
         }
@@ -394,7 +395,14 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 else
                 {
-                    GetRegisteredContact(targetContactId, false)?.RemoveAllSubscriptions(contactReference.ConnectionId);
+                    var targetContact = GetRegisteredContact(targetContactId, false);
+                    if (targetContact != null)
+                    {
+                        targetContact.RemoveAllSubscriptions(contactReference.ConnectionId);
+
+                        // purge target contact
+                        PurgeContactIf(targetContact);
+                    }
                 }
             }
 
@@ -408,6 +416,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 Logger.LogDebug($"Unregister self contact...");
             }
+
+            // purge self contact
+            PurgeContactIf(registeredSelfContact);
         }
 
         public virtual Task<Dictionary<string, Dictionary<string, object>>[]> MatchContactsAsync(Dictionary<string, object>[] matchingProperties, CancellationToken cancellationToken = default(CancellationToken))
@@ -681,6 +692,23 @@ namespace Microsoft.VsCloudKernel.SignalService
                 ContactDataProvider.CreateContactDataProvider(initialProperties),
                 initialProperties.Keys,
                 cancellationToken);
+        }
+
+        /// <summary>
+        /// Method to purge a contact when the contact does not have any self connection endpoint & has no subscription.
+        /// </summary>
+        /// <param name="contact">The contact entity.</param>
+        private void PurgeContactIf(Contact contact)
+        {
+            if (contact.IsSelfEmpty && !contact.HasSubscriptions)
+            {
+                Logger.LogMethodScope(
+                    LogLevel.Debug,
+                    $"Purge contact id:{FormatContactId(contact.ContactId)}",
+                    ContactServiceScopes.MethodPurgeContact);
+                MethodPerf(ContactServiceScopes.MethodPurgeContact, TimeSpan.Zero);
+                Contacts.TryRemove(contact.ContactId, out var removed__);
+            }
         }
 
         private async Task OnContactChangedAsync(object sender, ContactChangedEventArgs e)

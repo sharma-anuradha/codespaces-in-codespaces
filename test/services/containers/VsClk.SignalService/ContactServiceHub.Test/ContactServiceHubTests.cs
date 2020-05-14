@@ -721,6 +721,63 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
         }
 
         [Fact]
+        public async Task PurgeTest()
+        {
+            var contact1Ref = AsContactRef("conn1", "contact1");
+            var contact2Ref = AsContactRef("conn2", "contact2");
+
+            var contact1Props = new Dictionary<string, object>()
+            {
+                { "email", "contact1@microsoft.com" },
+                { "status", "available" },
+            };
+            var contact2Props = new Dictionary<string, object>()
+            {
+                { "email", "contact2@microsoft.com" },
+                { "status", "available" },
+            };
+
+            await this.presenceService.RegisterSelfContactAsync(contact1Ref, contact1Props, CancellationToken.None);
+            
+            var metrics = this.presenceService.GetMetrics();
+            Assert.Equal(1, metrics.Count);
+            await this.presenceService.UnregisterSelfContactAsync(contact1Ref, null, CancellationToken.None);
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(0, metrics.Count);
+
+            await this.presenceService.RegisterSelfContactAsync(contact1Ref, contact1Props, CancellationToken.None);
+            await this.presenceService.AddSubcriptionsAsync(
+                contact1Ref,
+                new ContactReference[] { contact2Ref },
+                new string[] { "*" });
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(2, metrics.Count);
+            this.presenceService.RemoveSubscription(
+                contact1Ref,
+                new ContactReference[] { contact2Ref });
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(1, metrics.Count);
+            await this.presenceService.AddSubcriptionsAsync(
+                contact1Ref,
+                new ContactReference[] { contact2Ref },
+                new string[] { "*" });
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(2, metrics.Count);
+            await this.presenceService.RegisterSelfContactAsync(contact2Ref, contact2Props, CancellationToken.None);
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(2, metrics.Count);
+            this.presenceService.RemoveSubscription(
+                contact1Ref,
+                new ContactReference[] { contact2Ref });
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(2, metrics.Count);
+            await this.presenceService.UnregisterSelfContactAsync(contact1Ref, null, CancellationToken.None);
+            await this.presenceService.UnregisterSelfContactAsync(contact2Ref, null, CancellationToken.None);
+            metrics = this.presenceService.GetMetrics();
+            Assert.Equal(0, metrics.Count);
+        }
+
+        [Fact]
         public async Task MemoryAndPerfTest()
         {
             const int NumberOfRegisteredContacts = 100000;

@@ -24,6 +24,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string MethodUnregisterSelfContact = "UnregisterSelfContact";
         public const string MethodMatchContacts = "MatchContacts";
         public const string MethodContactOnContactChanged = "Contact.OnContactChanged";
+        public const string MethodPurgeContact = "PurgeContact";
 
         public const string ContactScope = "Contact";
         public const string ConnectionScope = "Connection";

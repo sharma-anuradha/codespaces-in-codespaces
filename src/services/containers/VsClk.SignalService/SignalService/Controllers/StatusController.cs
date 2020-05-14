@@ -80,6 +80,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                     this.appSettings.CorsOrigin,
                     this.appSettings.IsJsonRpcMessagePackEnabled,
                 },
+                this.startup.PreferredLocation,
                 this.startup.EnableAuthentication,
                 this.startup.UseAzureSignalR,
                 AzureSignalRConnections = GetAllAzureSignalRConnections(),

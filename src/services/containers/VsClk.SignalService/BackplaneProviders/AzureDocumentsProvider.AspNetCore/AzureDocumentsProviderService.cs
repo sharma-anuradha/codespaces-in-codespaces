@@ -8,12 +8,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Async warm bootstrap for the Azure Cosmos provider
+    /// Async warm bootstrap for the Azure Cosmos provider.
     /// </summary>
     public class AzureDocumentsProviderService : WarmupServiceBase
     {
@@ -60,14 +61,20 @@ namespace Microsoft.VsCloudKernel.SignalService
                             AppSettings,
                             stoppingToken) : (NormalizeSetting(AppSettings.AzureCosmosDbEndpointUrl), NormalizeSetting(AppSettings.AzureCosmosDbAuthKey));
 
-                    this.logger.LogInformation($"Creating Azure Cosmos provider with Url:'{cosmosConfiguration.Item1}'");
-
                     var databaseSettings = new DatabaseSettings()
                     {
                         EndpointUrl = cosmosConfiguration.Item1,
                         AuthorizationKey = cosmosConfiguration.Item2,
                         IsProduction = !this.startup.IsDevelopmentEnv,
                     };
+
+                    if (!string.IsNullOrEmpty(this.startup.PreferredLocation) &&
+                        DocumentDbLocationPreferenceMap.DefaultPreferences.TryGetValue(this.startup.PreferredLocation, out var locations))
+                    {
+                        databaseSettings.PreferredRegions = locations.ToArray();
+                    }
+
+                    this.logger.LogInformation($"Creating Azure Cosmos provider with Url:'{cosmosConfiguration.Item1}' preferredRegions:{string.Join(',', databaseSettings.PreferredRegions ?? Array.Empty<string>())}");
 
                     foreach (var factory in this.azureDocumentsProviderServiceFactories)
                     {

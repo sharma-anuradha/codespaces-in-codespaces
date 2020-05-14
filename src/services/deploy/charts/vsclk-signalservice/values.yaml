@@ -33,6 +33,7 @@ ingress:
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
+- RUNNING_IN_AZURE
 - AppSettings__Stamp
 - AppSettings__BaseUri
 - AppSettings__ImageTag

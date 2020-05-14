@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Microsoft.VsSaaS.AspNetCore.TelemetryProvider;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -20,6 +21,8 @@ namespace Microsoft.VsCloudKernel.SignalService
     public abstract class StartupBase<TAppSettings> : IStartupBase
         where TAppSettings : AppSettingsBase
     {
+        private const string RunningInAzureEnvironmentVariable = "RUNNING_IN_AZURE";
+
         private const string ServiceValue = "signlr";
 
         private const string UseTelemetryProviderOption = "useTelemetryProvider";
@@ -46,6 +49,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             this.hostEnvironment = hostEnvironment;
             Configuration = configuration;
+            CurrentAzureLocation = GetCurrentAzureLocation();
         }
 
         public IConfiguration Configuration { get; }
@@ -62,6 +66,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public ServiceInfo ServiceInfo => new ServiceInfo(ServiceId, Stamp, ServiceType);
 
+        public string PreferredLocation => CurrentAzureLocation.ToString();
+
         protected abstract Type AppType { get; }
 
         protected ILogger Logger { get; private set; }
@@ -69,6 +75,20 @@ namespace Microsoft.VsCloudKernel.SignalService
         protected IConfigurationSection AppSettingsConfiguration { get; private set; }
 
         protected ApplicationServicePrincipal ServicePrincipal { get; private set; }
+
+        /// <summary>
+        /// Gets the current azure location.
+        /// </summary>
+        protected AzureLocation CurrentAzureLocation { get; }
+
+        /// <summary>
+        /// Checks whether the RUNNING_IN_AZURE variable is set.
+        /// </summary>
+        /// <returns>True if the variable is set to 'true'.</returns>
+        protected static bool IsRunningInAzure()
+        {
+            return System.Environment.GetEnvironmentVariable(RunningInAzureEnvironmentVariable) == "true";
+        }
 
         protected bool GetBoolConfiguration(string optionName)
         {
@@ -190,6 +210,41 @@ namespace Microsoft.VsCloudKernel.SignalService
                 || exception is OutOfMemoryException
                 || exception is InsufficientExecutionStackException
                 || exception is InsufficientMemoryException;
+        }
+
+        private AzureLocation GetCurrentAzureLocation()
+        {
+            if (IsRunningInAzure())
+            {
+                try
+                {
+                    var currentAzureLocation = Retry
+                        .DoAsync(async (attemptNumber) => await AzureInstanceMetadata.GetCurrentLocationAsync())
+                        .GetAwaiter()
+                        .GetResult();
+
+                    return Enum.Parse<AzureLocation>(currentAzureLocation, ignoreCase: true);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e, "Failed to get current location");
+
+                    // If running in Azure, we must know our location in order to properly load configuraiton data.
+                    throw;
+                }
+            }
+            else
+            {
+                var locationEnvVar = System.Environment.GetEnvironmentVariable("AZURE_LOCATION");
+                if (!string.IsNullOrEmpty(locationEnvVar))
+                {
+                    var azureLocation = Enum.Parse<AzureLocation>(locationEnvVar, ignoreCase: true);
+                    return azureLocation;
+                }
+
+                // Default location for localhost development.
+                return AzureLocation.WestUs2;
+            }
         }
     }
 }
