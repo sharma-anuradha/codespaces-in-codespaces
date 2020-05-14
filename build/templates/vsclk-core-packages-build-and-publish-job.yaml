@@ -3,7 +3,7 @@ parameters:
   configuration: 'Release'
   outputDirectory:
   nugetConfigPath: 'nuget.config'
-  nugetVersionSpec: 4.7
+  nugetVersionSpec: 5.5.0
   platform: 'any cpu'
   poolName: 'VSEng-MicroBuildVS2019'
   publishEnabled: false
@@ -29,6 +29,11 @@ jobs:
     displayName: 'Install NuGet ${{ parameters.nugetVersionSpec }}'
     inputs:
       versionSpec: ${{ parameters.nugetVersionSpec }}
+
+  - task: UseDotNet@2
+    displayName: Install .NET Core SDK 3.1.200
+    inputs:
+      version: 3.1.200
 
   - task: NodeTool@0
     displayName: Use Node 10.17.0
@@ -63,9 +68,9 @@ jobs:
       arguments: 'build:pack'
 
   - task: Yarn@3
-    displayName: signalR jsonrpc build & pack
+    displayName: signalR client-proxy build & pack
     inputs:
-      projectDirectory: 'src/client/VsClk.SignalService/ts/jsonrpc'
+      projectDirectory: 'src/client/VsClk.SignalService/ts/signalr-client-proxy'
       arguments: 'build:pack'
 
   - task: Yarn@3
@@ -76,10 +81,10 @@ jobs:
       arguments: 'build:pack-publish'
 
   - task: Yarn@3
-    displayName: signalR jsonrpc publish (optional when condition)
+    displayName: signalR client-proxy publish (optional when condition)
     condition: eq(True, ${{ parameters.publishNpmEnabled }})
     inputs:
-      projectDirectory: 'src/client/VsClk.SignalService/ts/jsonrpc'
+      projectDirectory: 'src/client/VsClk.SignalService/ts/signalr-client-proxy'
       arguments: 'build:pack-publish'
 
   - task: PublishBuildArtifacts@1
