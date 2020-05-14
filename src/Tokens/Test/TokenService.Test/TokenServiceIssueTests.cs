@@ -39,6 +39,39 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         }
 
         [Fact]
+        public async Task IssueTokenDatesAreNumeric()
+        {
+            var tokenClient = new TokenServiceClient(
+                new HttpClient { BaseAddress = TokenService.ServiceUri },
+                () => GetSPAuthHeaderAsync(TestAppId1));
+
+            var payload = new JwtPayload(
+                TestIssuer1,
+                TestAudience1,
+                Array.Empty<Claim>(),
+                notBefore: null,
+                DateTime.UtcNow.AddDays(1));
+
+            var token = await tokenClient.IssueAsync(payload, CancellationToken.None);
+            Assert.NotNull(token);
+
+            var result = DecodeToken(token);
+
+            foreach (string dateClaim in new[]
+            {
+                JwtRegisteredClaimNames.Iat,
+                JwtRegisteredClaimNames.Nbf,
+                JwtRegisteredClaimNames.Exp,
+            })
+            {
+                Assert.True(result.TryGetValue(dateClaim, out object value));
+                Assert.NotNull(value);
+                Assert.IsType<long>(value);
+            }
+        }
+
+
+        [Fact]
         public async Task IssueTokenWithNoEncryption()
         {
             var token = await IssueTokenAsync(TestAudience1);

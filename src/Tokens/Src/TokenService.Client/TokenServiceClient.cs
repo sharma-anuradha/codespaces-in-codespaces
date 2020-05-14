@@ -209,9 +209,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
             var requestParameters = new IssueParameters
             {
-                Claims = claims.ToDictionary(
-                    (pair) => pair.Key,
-                    (pair) => pair.Value?.ToString() ?? string.Empty),
+                Claims = claims,
             };
 
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();

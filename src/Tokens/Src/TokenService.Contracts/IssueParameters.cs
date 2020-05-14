@@ -4,8 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -20,7 +18,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Contracts
         /// <summary>
         /// Gets or sets the token claims.
         /// </summary>
+        /// <remarks>
+        /// Only string and integer claim values are supported.
+        /// </remarks>
         [JsonProperty(Required = Required.Always)]
-        public IDictionary<string, string> Claims { get; set; } = null!;
+        public IDictionary<string, object> Claims { get; set; } = null!;
     }
 }

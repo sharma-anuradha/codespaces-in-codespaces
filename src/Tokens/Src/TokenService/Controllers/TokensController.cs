@@ -91,7 +91,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             ValidationUtil.IsRequired(parameters, nameof(parameters));
             ValidationUtil.IsRequired(parameters.Claims, "claims");
 
-            var claims = parameters.Claims.Select((c) => new Claim(c.Key, c.Value));
+            var claims = parameters.Claims.Where((c) => c.Value != null).Select((c) => new Claim(
+                c.Key,
+                c.Value.ToString(),
+                c.Value is int || c.Value is long ? ClaimValueTypes.Integer : ClaimValueTypes.String));
             var payload = new JwtPayload(claims);
 
             var issuerSettings = ValidateIssueIssuer(payload.Iss);
