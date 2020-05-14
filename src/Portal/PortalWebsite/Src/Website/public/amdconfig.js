@@ -20,7 +20,7 @@ if (vsoFeatureSet === stableFlag) {
 }
 
 const commits = {
-    insider: 'e88b8d32aa7233f6cb3665f6dae9fa78b1e8aafb',
+    insider: 'e1d8f5155c0db5ffdc130c9aa0f14efac02dfdfb',
     stable: 'd69a79b73808559a91206d73d7717ff5f798f23c',
 };
 
