@@ -47,7 +47,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// <inheritdoc/>
         public async Task<IEnumerable<AllocateResponseBody>> AllocateAsync(Guid environmentId, IEnumerable<AllocateRequestBody> resources, IDiagnosticsLogger logger)
         {
-            Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNullOrEmpty(resources, nameof(resources));
 
             var requestUri = ResourceBrokerHttpContract.GetAllocateResourceUri(environmentId);

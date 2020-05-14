@@ -8,8 +8,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Fakes;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
 {
@@ -41,7 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
                 .AddSingleton<IHttpClientProvider<BackEndHttpClientProviderOptions>, BackEndHttpClientProvider>()
                 .AddResourceBrokerClient(useMocks, useFakes, dockerImageName, publishedCLIPath)
                 .AddImagesClient(useMocks, useFakes)
-                .AddHeartBeatClient();
+                .AddHeartBeatClient()
+                .AddSecretManagerClient();
 
             return services;
         }
@@ -85,6 +88,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         private static IServiceCollection AddHeartBeatClient(this IServiceCollection services)
         {
             return services.AddSingleton<IResourceHeartBeatHttpContract, HttpResourceHeartBeatClient>();
+        }
+
+        private static IServiceCollection AddSecretManagerClient(this IServiceCollection services)
+        {
+            return services.AddSingleton<ISecretManagerHttpContract, SecretManagerHttpClient>();
         }
     }
 }

@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         AzureSkuName = keyVaultDetails.SkuName,
                         AzureSubscriptionId = resourceLocation.Subscription.SubscriptionId,
                         AzureTenantId = resourceLocation.Subscription.ServicePrincipal.TenantId,
-                        AzureObjectId = resourceLocation.Subscription.ServicePrincipal.ClientId,
+                        AzureObjectId = resourceLocation.Subscription.ServicePrincipal.ObjectId,
                         AzureResourceGroup = resourceLocation.ResourceGroup,
                         ResourceTags = resourceTags,
                     };

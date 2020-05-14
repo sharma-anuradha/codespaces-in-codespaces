@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
             var resourceIdsParam = new StringBuilder();
             foreach (var resourceId in resourceIds)
             {
-                resourceIdsParam.Append($"resourceId={resourceId}");
+                resourceIdsParam.Append($"&resourceId={resourceId}");
             }
 
             return $"{ResourceSecretManagerV1Route}?{resourceIdsParam}";

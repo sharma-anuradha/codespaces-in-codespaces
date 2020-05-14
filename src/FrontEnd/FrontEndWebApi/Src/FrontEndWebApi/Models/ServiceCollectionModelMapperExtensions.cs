@@ -6,11 +6,14 @@ using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
@@ -46,6 +49,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                     cfg.CreateMap<PlanResourceUpdateBody, VsoPlan>();
                     cfg.CreateMap<UpdateCloudEnvironmentBody, CloudEnvironmentUpdate>();
                     cfg.CreateMap<PlanAccessToken, PlanAccessTokenResult>();
+                    cfg.CreateMap<ScopedCreateSecretBody, ScopedCreateSecretInput>();
+                    cfg.CreateMap<ScopedCreateSecretInput, CreateSecretInput>();
+                    cfg.CreateMap<SecretResult, ScopedSecretResult>();
+                    cfg.CreateMap<ScopedSecretResult, ScopedSecretResultBody>();
                 });
                 return config.CreateMapper();
             });

@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
 {
@@ -17,25 +18,78 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
     /// TODO: This should be consolidated with the VSSAAS-SDK's UnhandledExceptionReporter
     ///       but this will do for the time being.
     /// </remarks>
-    public class FriendlyExceptionFilterAttribute : ExceptionFilterAttribute
+    [AttributeUsage(AttributeTargets.Class)]
+    public sealed class FriendlyExceptionFilterAttribute : ExceptionFilterAttribute
     {
         /// <inheritdoc/>
         public override void OnException(ExceptionContext context)
         {
-            if (context.Exception is ValidationException)
+            switch (context.Exception)
             {
-                if (string.IsNullOrEmpty(context.Exception.Message))
-                {
-                    context.Result = new BadRequestResult();
-                }
-                else
-                {
-                    context.Result = new BadRequestObjectResult(context.Exception.Message);
-                }
+                case CodedException codedException:
+                    switch (codedException)
+                    {
+                        case ConflictException _:
+                            context.Result = new ConflictObjectResult(codedException.MessageCode);
+                            break;
+
+                        case EntityNotFoundException _:
+                            context.Result = new NotFoundObjectResult(codedException.MessageCode);
+                            break;
+
+                        case ForbiddenException _:
+                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status403Forbidden };
+                            break;
+
+                        case ProcessingFailedException _:
+                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status500InternalServerError };
+                            break;
+
+                        case UnavailableException _:
+                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status503ServiceUnavailable };
+                            break;
+
+                        default:
+                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status503ServiceUnavailable };
+                            break;
+                    }
+
+                    break;
+
+                case RedirectToLocationException redirectToLocationException:
+                    var builder = new UriBuilder()
+                    {
+                        Host = redirectToLocationException.OwningStamp,
+                        Path = context.HttpContext.Request.Path,
+                        Query = context.HttpContext.Request.QueryString.Value,
+                        Scheme = Uri.UriSchemeHttps,
+                    };
+                    context.Result = new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
+                    break;
+
+                case ArgumentException _:
+                    context.Result = CreateBadRequestResult(context);
+                    break;
+
+                case ValidationException _:
+                    context.Result = CreateBadRequestResult(context);
+                    break;
+
+                case UnauthorizedAccessException _:
+                    context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                    break;
             }
-            else if (context.Exception is UnauthorizedAccessException)
+        }
+
+        private static IActionResult CreateBadRequestResult(ExceptionContext context)
+        {
+            if (string.IsNullOrEmpty(context.Exception.Message))
             {
-                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                return new BadRequestResult();
+            }
+            else
+            {
+                return new BadRequestObjectResult(context.Exception.Message);
             }
         }
     }

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.Build.Traversal">
+
+  <ItemGroup>
+    <ProjectReference Include="SecretStoreManager\SecretStoreManager.csproj" />
+    <ProjectReference Include="SecretStoreManager.Abstractions\SecretStoreManager.Abstractions.csproj" />
+    <ProjectReference Include="SecretStoreManager.Models\SecretStoreManager.Models.csproj" />
+    <ProjectReference Include="SecretStoreManager.Repositories\SecretStoreManager.Repositories.csproj" />
+  </ItemGroup>
+
+</Project>
