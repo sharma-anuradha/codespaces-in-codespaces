@@ -18,6 +18,9 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// </summary>
     public class AzureDocumentsProviderService : WarmupServiceBase
     {
+        private const int MaxFactoryRetries = 10;
+        private static readonly TimeSpan FactoryRetryTimeout = TimeSpan.FromSeconds(10);
+
         private readonly IStartupBase startup;
         private readonly IEnumerable<IAzureDocumentsProviderServiceFactory> azureDocumentsProviderServiceFactories;
         private readonly IOptions<AppSettingsBase> appSettingsProvider;
@@ -69,7 +72,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     };
 
                     if (!string.IsNullOrEmpty(this.startup.PreferredLocation) &&
-                        DocumentDbLocationPreferenceMap.DefaultPreferences.TryGetValue(this.startup.PreferredLocation, out var locations))
+                       DocumentDbLocationPreferenceMap.DefaultPreferences.TryGetValue(this.startup.PreferredLocation, out var locations))
                     {
                         databaseSettings.PreferredRegions = locations.ToArray();
                     }
@@ -78,14 +81,13 @@ namespace Microsoft.VsCloudKernel.SignalService
 
                     foreach (var factory in this.azureDocumentsProviderServiceFactories)
                     {
-                        this.logger.LogInformation($"Creating Azure Documents provider with factory:'{factory.GetType().Name}'");
-                        await factory.CreateAsync(this.startup.ServiceInfo, databaseSettings, stoppingToken);
+                        await CreateAzureDocumentsProviderService(factory, databaseSettings, MaxFactoryRetries, FactoryRetryTimeout, stoppingToken);
                     }
                 }
                 catch (Exception error)
                 {
                     CompleteWarmup(false);
-                    this.logger.LogError(error, $"Failed to create Azure Cosmos provider");
+                    this.logger.LogError(error, $"Failed to initialize");
                     throw;
                 }
             }
@@ -100,6 +102,40 @@ namespace Microsoft.VsCloudKernel.SignalService
         private static string NormalizeSetting(string s)
         {
             return System.Text.RegularExpressions.Regex.Replace(s, @"\r\n?|\n", string.Empty);
+        }
+
+        private async Task CreateAzureDocumentsProviderService(
+            IAzureDocumentsProviderServiceFactory azureDocumentsProviderServiceFactory,
+            DatabaseSettings databaseSettings,
+            int maxRetries,
+            TimeSpan retryTime,
+            CancellationToken cancellationToken)
+        {
+            int nextTry = 0;
+            var factoryName = azureDocumentsProviderServiceFactory.GetType().Name;
+
+            while (true)
+            {
+                try
+                {
+                    await azureDocumentsProviderServiceFactory.CreateAsync(this.startup.ServiceInfo, databaseSettings, cancellationToken);
+                    this.logger.LogInformation($"Successfully created Azure Documents provider with factory:'{factoryName}'");
+                    break;
+                }
+                catch (Exception error)
+                {
+                    this.logger.LogWarning(error, $"Failed to create Azure Cosmos provider with factory:'{factoryName}' retry:{++nextTry}");
+                    --maxRetries;
+                    if (maxRetries == 0)
+                    {
+                        throw error;
+                    }
+                    else
+                    {
+                        await Task.Delay(retryTime, cancellationToken);
+                    }
+                }
+            }
         }
     }
 }

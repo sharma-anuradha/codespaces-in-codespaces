@@ -77,7 +77,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                 clientOptions);
         }
 
-        public CosmosClient Client { get; }
+        private Database Database { get; set; }
+
+        private CosmosClient Client { get; }
 
         public static async Task<AzureDocumentsProvider> CreateAsync(
             ServiceInfo serviceInfo,
@@ -282,16 +284,38 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.changeFeedProcessors.Add(changeFeedProcessor);
         }
 
+        private async Task PurgeStaleLeasesAsync(CancellationToken cancellationToken)
+        {
+            // cleanup all 'stale' leases collections
+            var servicesIds = (await GetServiceDocuments(CancellationToken.None)).Select(d => d.Id);
+            var allContainers = await ToListAsync(Database.GetContainerQueryIterator<ContainerProperties>(), cancellationToken);
+            var staleLeaseContainers = allContainers
+                .Where(props => props.Id.StartsWith(LeaseCollectionBaseId) && !servicesIds.Contains(props.Id.Substring(LeaseCollectionBaseId.Length)));
+
+            foreach (var staleLeaseContainer in staleLeaseContainers)
+            {
+                try
+                {
+                    Logger.LogInformation($"Delete stale lease collection:{staleLeaseContainer.Id}");
+                    await Database.GetContainer(staleLeaseContainer.Id).DeleteContainerAsync();
+                }
+                catch (Exception error)
+                {
+                    Logger.LogError(error, $"Failed to delete stale lease collection:{staleLeaseContainer.Id}");
+                }
+            }
+        }
+
         private async Task InitializeAsync(ServiceInfo serviceInfo, bool isProduction, CancellationToken cancellationToken = default)
         {
             Logger.LogInformation($"Creating database:{DatabaseId} if not exists");
 
             // Create the database
-            Database database = await Client.CreateDatabaseIfNotExistsAsync(DatabaseId);
+            Database = await Client.CreateDatabaseIfNotExistsAsync(DatabaseId);
 
             // Create 'services'
             Logger.LogInformation($"Creating Collection:{ServiceCollectionId}");
-            this.servicesContainer = await database.CreateContainerIfNotExistsAsync(
+            this.servicesContainer = await Database.CreateContainerIfNotExistsAsync(
                 ServiceCollectionId,
                 DefaultPartitionKeyPath,
                 isProduction ? ServicesRUThroughput : ServicesRUThroughputDev);
@@ -301,42 +325,26 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             // Create 'contacts'
             Logger.LogInformation($"Creating Collection:{ContactCollectionId}");
-            this.contactsContainer = await database.CreateContainerIfNotExistsAsync(
+            this.contactsContainer = await Database.CreateContainerIfNotExistsAsync(
                 ContactCollectionId,
                 DefaultPartitionKeyPath,
                 isProduction ? ContactsRUThroughput : ContactsRUThroughputDev);
 
             // Create 'message'
             Logger.LogInformation($"Creating Collection:{MessageCollectionId}");
-            this.messagesContainer = await database.CreateContainerIfNotExistsAsync(
+            this.messagesContainer = await Database.CreateContainerIfNotExistsAsync(
                 MessageCollectionId,
                 DefaultPartitionKeyPath,
                 isProduction ? MessageRUThroughput : MessageRUThroughputDev);
 
-            // cleanup all 'stale' leases collections
-            var servicesIds = (await GetServiceDocuments(CancellationToken.None)).Select(d => d.Id);
-            var allContainers = await ToListAsync(database.GetContainerQueryIterator<ContainerProperties>(), cancellationToken);
-            var staleLeaseContainers = allContainers
-                .Where(props => props.Id.StartsWith(LeaseCollectionBaseId) && !servicesIds.Contains(props.Id.Substring(LeaseCollectionBaseId.Length)));
-
-            foreach (var staleLeaseContainer in staleLeaseContainers)
-            {
-                try
-                {
-                    Logger.LogInformation($"Delete stale lease collection:{staleLeaseContainer.Id}");
-                    await database.GetContainer(staleLeaseContainer.Id).DeleteContainerAsync();
-                }
-                catch (Exception error)
-                {
-                    Logger.LogError(error, $"Failed to delete stale lease collection:{staleLeaseContainer.Id}");
-                }
-            }
+            // purge stale lease containers
+            await PurgeStaleLeasesAsync(cancellationToken);
 
             var leaseContainerId = $"{LeaseCollectionBaseId}{serviceInfo.ServiceId}";
 
             // Create 'leases'
             Logger.LogInformation($"Creating Collection:{leaseContainerId}");
-            this.providerLeaseContainer = await database.CreateContainerIfNotExistsAsync(
+            this.providerLeaseContainer = await Database.CreateContainerIfNotExistsAsync(
                 leaseContainerId,
                 "/id",
                 isProduction ? LeasesRUThroughput : LeasesRUThroughputDev);

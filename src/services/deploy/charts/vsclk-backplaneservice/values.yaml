@@ -4,6 +4,7 @@
 
 appSettings:
 - ASPNETCORE_ENVIRONMENT
+- RUNNING_IN_AZURE
 - AppSettings__Stamp
 - AppSettings__ImageTag
 - AppSettings__SubscriptionId
