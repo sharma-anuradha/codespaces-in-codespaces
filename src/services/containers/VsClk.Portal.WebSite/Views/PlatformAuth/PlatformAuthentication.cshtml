@@ -1,0 +1,23 @@
+@{
+    Layout = "~/Views/Shared/_WorkbenchPageLayout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <title>Codespaces</title>
+    </head>
+
+    <body>
+        <span id="js-partner-info" style="display: none;">
+            @ViewData["partner-info"]
+        </span>
+
+        @if ((bool)@ViewData["is-local"] == true) 
+        {
+            <script src="/static/js/platform-authentication.js"></script>
+        }
+    </body>
+</html>

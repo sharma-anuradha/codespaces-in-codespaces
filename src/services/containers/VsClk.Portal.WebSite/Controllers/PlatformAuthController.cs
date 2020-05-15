@@ -6,10 +6,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -76,6 +78,80 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 "ClientApp", "build", path);
 
             return PhysicalFile(asset, mediaType);
+        }
+
+         
+        public class GitCredential
+        {
+            [JsonProperty("expiration")]
+            public double Expiration { get; set; }
+
+            [JsonProperty("path")]
+            public string Path { get; set; }
+
+            [JsonProperty("host")]
+            public string Host { get; set; }
+
+            [JsonProperty("token")]
+            public string Token { get; set; }
+        }
+
+        public class PartnerInfo
+        {
+            [JsonProperty("partnerName")]
+            public string PartnerName { get; set; }
+
+            [JsonProperty("managementPortalUrl")]
+            public string ManagementPortalUrl { get; set; }
+
+            [JsonProperty("codespaceId")]
+            public string CodespaceId { get; set; }
+            
+            [JsonProperty("cascadeToken")]
+            public string CascadeToken { get; set; }
+
+            [JsonProperty("credentials")]
+            public List<GitCredential> Credentials { get; set; }
+        }
+
+        [HttpPost("~/platform-authentication")]
+        [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.VsoBodyAuthenticationScheme)]
+        [Consumes("application/x-www-form-urlencoded")]
+        public IActionResult PlatformAuthentication(
+            [FromForm] string partnerInfo,
+            [FromForm] string cascadeToken
+        )
+        {
+            if (string.IsNullOrWhiteSpace(partnerInfo))
+            {
+                return BadRequest("No `partnerInfo` set in the body.");
+            }
+
+            var partnerInfoData = JsonConvert.DeserializeObject<PartnerInfo>(partnerInfo);
+            partnerInfoData.CascadeToken = cascadeToken;
+
+            if (string.IsNullOrWhiteSpace(partnerInfoData.ManagementPortalUrl))
+            {
+                return BadRequest("No `managementPortalUrl` set.");
+            }
+
+            if (string.IsNullOrWhiteSpace(partnerInfoData.PartnerName))
+            {
+                return BadRequest("No `partnerName` set.");
+            }
+
+            if (string.IsNullOrWhiteSpace(partnerInfoData.CodespaceId))
+            {
+                return BadRequest("No `codespaceId` set.");
+            }
+
+            var json = JsonConvert.SerializeObject(partnerInfoData);
+            byte[] data = System.Text.ASCIIEncoding.ASCII.GetBytes(json);
+
+            ViewData["partner-info"] = System.Convert.ToBase64String(data);
+            ViewData["is-local"] = AppSettings.IsLocal;
+
+            return View();
         }
     }
 }

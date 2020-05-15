@@ -1,0 +1,21 @@
+{
+  "extends": "../../config/tsconfig.base.json",
+  "compilerOptions": {
+      "outDir": "lib",
+      "baseUrl": "../",
+      "paths": {
+          "vso-client-core": [
+              "vso-client-core/src/index.ts"
+          ]
+      }
+  },
+  "exclude": [
+      "commonjs",
+      "lib"
+  ],
+  "references": [
+      {
+          "path": "../vso-client-core"
+      }
+  ]
+}

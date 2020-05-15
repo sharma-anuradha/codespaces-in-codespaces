@@ -1,5 +1,6 @@
 // @ts-check
 
+const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 
@@ -24,10 +25,12 @@ const paths = {
     workbench: path.join(rootFolder, 'packages', 'vso-workbench', 'src', 'app.ts'),
     web: path.join(rootFolder, 'packages', 'website', 'src', 'index.tsx'),
     platformAuth: path.join(rootFolder, 'packages', 'vso-platform-auth', 'src', 'index.ts'),
+    platformAuthentication: path.join(rootFolder, 'packages', 'vso-platform-authentication', 'src', 'index.ts'),
     staticContent: path.join(rootFolder, 'public'),
     indexHtml: path.join(rootFolder, 'public', 'index.html'),
     workbenchHtml: path.join(rootFolder, 'public', 'workbench.html'),
     platformAuthHtml: path.join(rootFolder, 'public', 'platform-auth.html'),
+    platformAuthenticationHtml: path.join(rootFolder, '../../../../services/containers/VsClk.Portal.WebSite/Views/PlatformAuth/PlatformAuthentication.cshtml'),
     mocks: {
         net: path.join(rootFolder, 'packages', 'vso-ts-agent/mocks/net'),
         nodeRsa: path.join(rootFolder, 'packages', 'vso-ts-agent/mocks/net'),
@@ -45,6 +48,7 @@ module.exports = [
         entry: {
             'amdconfig': paths.amdconfig,
             'platform-auth': paths.platformAuth,
+            'platform-authentication': paths.platformAuthentication,
             'web': paths.web,
             'workbench': paths.workbench,
         },
@@ -116,11 +120,12 @@ module.exports = [
                 },
             ],
         },
-        plugins: [
+        plugins: ([
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
                 'process.env.PUBLIC_URL': `"${publicPath}"`,
-                '__PORTAL_VERSION__': `"${Date.now()}"`,
+                'process.env.PORTAL_VERSION': `"${Date.now()}"`,
+                'process.env.VSCS_WORKBENCH_VERSION': `"${Date.now()}"`,
             }),
             new HtmlWebpackPlugin({
                 inject: true,
@@ -149,6 +154,15 @@ module.exports = [
                 },
                 chunks: ['platform-auth'],
             }),
+            production && new HtmlWebpackPlugin({
+                inject: true,
+                minify: false,
+                filename: paths.platformAuthenticationHtml,
+                templateContent: () => {
+                    return fs.readFileSync(paths.platformAuthenticationHtml, 'utf8');
+                },
+                chunks: ['platform-authentication'],
+            }),
             new MiniCssExtractPlugin({
                 filename: 'static/css/[name].[contenthash:8].css',
                 chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
@@ -167,7 +181,7 @@ module.exports = [
             // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
             // You can remove this if you don't use Moment.js:
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-        ],
+        ]).filter(Boolean),
         devServer: {
             host: '0.0.0.0',
             port: 3030,
@@ -261,7 +275,7 @@ module.exports = [
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
                 'process.env.PUBLIC_URL': `"${publicPath}"`,
-                '__PORTAL_VERSION__': `"${Date.now()}"`,
+                'process.env.PORTAL_VERSION': `"${Date.now()}"`,
             }),
             new HtmlWebpackPlugin({
                 inject: false,
@@ -286,5 +300,5 @@ module.exports = [
                 return !filename.includes('workbench-page/workbench-page/web-standalone');
             },
         },
-    },
+    }
 ];

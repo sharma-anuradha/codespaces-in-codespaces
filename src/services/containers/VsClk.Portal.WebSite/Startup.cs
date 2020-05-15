@@ -68,10 +68,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
 
-            // In production, the React files will be served from this directory
-            // In tests, the assets are not built, but the static index.html will do just fine.
-            var spaRootPath = "ClientApp/build";
-            services.AddSpaStaticFiles(configuration => { configuration.RootPath = spaRootPath; });
+            services.AddSpaStaticFiles(configuration => { configuration.RootPath =  "ClientApp/build"; });
 
             PortForwardingHostUtils = new PortForwardingHostUtils(appSettings.PortForwardingHostsConfigs);
             services.AddSingleton(PortForwardingHostUtils);
@@ -135,7 +132,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             {
                 // Locally the webpack dev server serves assets under constant names and /static/js|css|.../* paths. We don't want the cashing locally.
                 if (AppSettings.IsLocal ||
-                    !context.Request.Path.StartsWithSegments("/static", StringComparison.OrdinalIgnoreCase) ||
+                    !context.Request.Path.StartsWithSegments("/static", StringComparison.OrdinalIgnoreCase) &&
                     !context.Request.Path.StartsWithSegments("/workbench-page", StringComparison.OrdinalIgnoreCase))
                 {
                     context.Response.GetTypedHeaders().CacheControl =
@@ -236,6 +233,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
+                // don't use the dev server proxy is running in the "platform" mode locally
                 if (AppSettings.IsLocal)
                 {
                     // For development purposes, uncomment out if you want dotnet to load your react dev server, otherwise run 'yarn start' inside ClientApp
@@ -249,10 +247,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         {
             if (!AppSettings.IsTest && !AppSettings.IsLocal)
             {
+                var spaPath = Path.Combine(HostEnvironment.ContentRootPath, "ClientApp", "build");
+
                 app.UseStaticFiles(new StaticFileOptions
                 {
-                    FileProvider = new PhysicalFileProvider(
-                        Path.Combine(HostEnvironment.ContentRootPath, "ClientApp", "build"))
+                    FileProvider = new PhysicalFileProvider(spaPath)
                 });
             }
 

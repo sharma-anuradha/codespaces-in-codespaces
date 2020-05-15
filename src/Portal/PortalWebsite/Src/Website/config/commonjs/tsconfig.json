@@ -7,6 +7,9 @@
             "path": "../../packages/vso-platform-auth/tsconfig.commonjs.json"
         },
         {
+            "path": "../../packages/vso-platform-authentication/tsconfig.commonjs.json"
+        },
+        {
             "path": "../../packages/vso-service-worker/tsconfig.commonjs.json"
         },
         {

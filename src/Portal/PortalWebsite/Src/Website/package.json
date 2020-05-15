@@ -30,8 +30,9 @@
     "dep-graph:service-worker": "npx madge --layout dot --warning --image service-worker-graph.svg vso-ts-agent/src/service-worker/service-worker.ts",
     "vscode:download": "node --unhandled-rejections=strict scripts/npm/download-vscode.js",
     "vscode:update": "node --unhandled-rejections=strict scripts/npm/update-vscode.js",
-    "start": "run-p watch:portal watch:client",
-    "start:github": "run-p watch:portal:github watch:client",
+    "start": "yarn start:dns && run-p watch:portal watch:client",
+    "start:github": "yarn start:dns && run-p watch:portal:github watch:client",
+    "start:platform": "yarn start:dns && run-p watch:portal:platform watch:client",
     "start:portal": "dotnet run --launch-profile Local --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj",
     "start:webpack-dev-server": "webpack-dev-server --config config/webpack/webpack.config.js",
     "setup": "yarn setup:get-dev-ssl-cert && yarn setup:get-service-principal && yarn setup:update-github-secret",
@@ -42,7 +43,12 @@
     "test:ci": "yarn workspaces run test --ci --reporters=\"jest-junit\"",
     "watch:client": "webpack-dev-server --config config/webpack/webpack.config.js",
     "watch:portal": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile Local",
-    "watch:portal:github": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalGitHub"
+    "watch:portal:github": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalGitHub",
+    "start:dns": "run-script-os",
+    "start:dns:win32": "./scripts/shell/start-dns-server-win32.bat",
+    "start:dns:linux": "sh ./scripts/shell/start-dns-server-linux.sh",
+    "start:dns:darwin": "sh ./scripts/shell/start-dns-server-darwin.sh",
+    "watch:portal:platform": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalPlatform"
   },
   "devDependencies": {
     "colors": "^1.4.0",
@@ -58,6 +64,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.0.5",
     "rimraf": "^3.0.2",
+    "run-script-os": "^1.1.1",
     "style-loader": "^1.2.1",
     "tar": "^6.0.2",
     "ts-loader": "^7.0.1",

@@ -12,7 +12,7 @@ export { sendTelemetry } from './sendTelemetry';
 const vscodeConfig = getVSCodeVersion();
 
 export const telemetry = new TelemetryService({
-    portalVersion: __PORTAL_VERSION__,
+    portalVersion: process.env.PORTAL_VERSION,
     vscodeCommit: vscodeConfig.commit,
     vscodeQuality: vscodeConfig.quality,
 });

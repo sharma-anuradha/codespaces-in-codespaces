@@ -1,13 +1,38 @@
-import { IPartnerInfo } from '../interfaces/IPartnerInfo';
 import { createKeys } from '../keychain/createKeys';
 import { fetchKeychainKeys } from '../keychain/fetchKeychainKeys';
 import { setKeychainKeys } from '../keychain/localstorageKeychainKeys';
 import { localStorageKeychain } from '../keychain/localstorageKeychain';
-import { validatePartnerInfo } from '../postMessageChannel/validatePartnerInfo';
 import { createTrace } from '../utils/createTrace';
 import { IKeychainKey } from '../interfaces/IKeychainKey';
+import { IPartnerInfo, ICrossDomainPartnerInfo } from '../interfaces/IPartnerInfo';
+import { validatePartnerInfo as validatePartnerInfoPostmessage, KNOWN_PARTNERS } from '../postMessageChannel/validatePartnerInfo';
+import { PARTNER_INFO_KEYCHAIN_KEY } from '../constants';
 
 const trace = createTrace('vso-client-core:authService');
+
+const validatePartnerInfo = (partnerInfo: IPartnerInfo | ICrossDomainPartnerInfo) => {
+    if (!(partnerInfo as ICrossDomainPartnerInfo).cascadeToken) {
+        return validatePartnerInfoPostmessage(partnerInfo as IPartnerInfo);
+    } else {
+        const info = partnerInfo as ICrossDomainPartnerInfo;
+
+        if (!info.cascadeToken) {
+            throw new Error('No `cascadeToken` set.');
+        }
+    
+        if (!info.managementPortalUrl) {
+            throw new Error('No `managementPortalUrl` set.');
+        }
+    
+        if (!info.codespaceId) {
+            throw new Error('No `codespaceId` set.');
+        }
+    
+        if (!KNOWN_PARTNERS.includes(info.partnerName)) {
+            throw new Error(`Unknown partner "${info.partnerName}".`);
+        }
+    }
+}
 
 export class AuthService {
     private keys: IKeychainKey[] = [];
@@ -18,8 +43,16 @@ export class AuthService {
         return key;
     };
 
-    public storePartnerInfo = async (info: IPartnerInfo) => {
-        const { token } = info;
+    public getPartnerInfoToken = (info: IPartnerInfo | ICrossDomainPartnerInfo) => {
+        const token = 'cascadeToken' in info
+            ? info.cascadeToken
+            : info.token;
+        
+        return token;
+    };
+
+    public storePartnerInfo = async (info: IPartnerInfo | ICrossDomainPartnerInfo) => {
+        const token = this.getPartnerInfoToken(info);
 
         const keys = await createKeys(token);
         if (!keys || !keys.length) {
@@ -31,7 +64,11 @@ export class AuthService {
 
         setKeychainKeys(keys);
 
-        const key = this.getKeychainPartnerInfoKey(info.environmentId);
+        const codespaceId = 'cascadeToken' in info
+            ? info.codespaceId
+            : info.environmentId;
+
+        const key = this.getKeychainPartnerInfoKey(codespaceId);
         await localStorageKeychain.set(key, JSON.stringify(info));
 
         return info;
@@ -40,6 +77,7 @@ export class AuthService {
     public removePartnerInfo = async (environmentId: string) => {
         const key = this.getKeychainPartnerInfoKey(environmentId);
         await localStorageKeychain.delete(key);
+        await localStorageKeychain.delete(PARTNER_INFO_KEYCHAIN_KEY);
     };
 
     public getKeychainKeys = async (): Promise<IKeychainKey[] | null> => {
@@ -54,7 +92,7 @@ export class AuthService {
         return keys;
     };
 
-    public getCachedPartnerInfo = async (environmentId: string): Promise<IPartnerInfo | null> => {
+    public getCachedPartnerInfo = async (environmentId: string): Promise<IPartnerInfo | ICrossDomainPartnerInfo | null> => {
         if (!this.keys.length) {
             const keys = await this.getKeychainKeys();
             if (!keys) {
@@ -65,9 +103,25 @@ export class AuthService {
             this.keys = keys;
         }
 
-        const key = this.getKeychainPartnerInfoKey(environmentId);
+        const partnerInfo = await this.getInfoForKey(environmentId);
+        if (partnerInfo) {
+            return partnerInfo;
+        }
 
-        const infoString: string | undefined = await localStorageKeychain.get(key);
+        const crossDomainPartnerInfo = await this.getInfoForKey(PARTNER_INFO_KEYCHAIN_KEY);
+
+        return crossDomainPartnerInfo;
+    };
+
+    private async getInfoForKey(key: typeof PARTNER_INFO_KEYCHAIN_KEY): Promise<ICrossDomainPartnerInfo | null>;
+    private async getInfoForKey(key: string): Promise<IPartnerInfo | null>;
+    private async getInfoForKey(key: any) {
+        const keychainKey = (key === PARTNER_INFO_KEYCHAIN_KEY)
+            ? PARTNER_INFO_KEYCHAIN_KEY
+            : this.getKeychainPartnerInfoKey(key);
+
+        const infoString: string | undefined = await localStorageKeychain.get(keychainKey);
+
         if (!infoString) {
             return null;
         }
@@ -76,11 +130,11 @@ export class AuthService {
             const info = JSON.parse(infoString);
             validatePartnerInfo(info);
 
-            return info as IPartnerInfo;
+            return info as IPartnerInfo | ICrossDomainPartnerInfo;
         } catch (e) {
             trace.error(e.message, e.stack);
         }
-
+        
         return null;
     };
 };

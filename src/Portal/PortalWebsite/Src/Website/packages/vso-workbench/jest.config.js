@@ -13,7 +13,7 @@ module.exports = {
         'ts-jest': {
             tsConfig: compilerOptions,
         },
-        __PORTAL_VERSION__: 'test',
+        'process.env.PORTAL_VERSION': 'test',
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     modulePathIgnorePatterns: ['<rootDir>/commonjs/', '<rootDir>/lib/'],

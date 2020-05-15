@@ -11,3 +11,5 @@ export const KNOWN_VSO_HOSTNAMES = [
     'online-ppe.core.vsengsaas.visualstudio.com',
     'online.visualstudio.com'
 ];
+
+export const PARTNER_INFO_KEYCHAIN_KEY = 'vsc-partner-info';

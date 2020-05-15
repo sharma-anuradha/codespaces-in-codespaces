@@ -1,6 +1,6 @@
 import { Signal } from '../utils/Signal';
 import { randomString } from '../utils/randomString';
-import { isKnownPartnerTLD } from "../utils/isKnownPartnerTLD";
+import { isKnownPartnerTLD } from '../utils/isKnownPartnerTLD';
 import { IPartnerInfo } from '../interfaces/IPartnerInfo';
 import { validatePartnerInfo } from './validatePartnerInfo';
 import { TPostMessageChannelMessages } from '../interfaces/TPostMessageChannelMessages';
@@ -13,22 +13,25 @@ type TPostMessageAuthResult = 'error' | 'success';
 export class PostMessageChannel {
     private signals = new Map<string, Signal<IPartnerInfo>>();
 
-    constructor() {
+    constructor(private readonly referrer = document.referrer) {
         self.addEventListener('message', this.receiveMessage, false);
     }
 
-    public getRepoInfo = async (id = randomString()): Promise<IPartnerInfo> => {
+    public getRepoInfo = async (
+        id = randomString(),
+        messageType: string = TPostMessageChannelMessages.GetPartnerInfo
+    ): Promise<IPartnerInfo> => {
         const signal = new Signal<IPartnerInfo>();
         this.signals.set(id, signal);
 
         self.parent.postMessage(
             {
-                type: TPostMessageChannelMessages.GetPartnerInfo,
+                type: messageType,
                 id,
             },
-            document.referrer
+            this.referrer
         );
-        
+
         const timeout = 5 * 1000;
         const timer = setTimeout(() => {
             this.signals.delete(id);
@@ -41,7 +44,6 @@ export class PostMessageChannel {
         });
 
         const data = await signal.promise;
-
         return data;
     };
 
@@ -53,7 +55,7 @@ export class PostMessageChannel {
                 result,
                 message,
             },
-            document.referrer
+            this.referrer
         );
 
         trace.info(`Reporting result "${result}" to the partner.`);
@@ -71,7 +73,10 @@ export class PostMessageChannel {
         }
 
         const { responseId, type } = e.data as IPartnerInfo;
-        if (type !== TPostMessageChannelMessages.GetPartnerInfoResponse) {
+        if (
+            type !== TPostMessageChannelMessages.GetPartnerInfoResponse && // old SF postMessage handshake name
+            type !== 'vso-retrieve-repository-info-response' // old GH postMessage handshake name
+        ) {
             this.reportResult('error', `Unexpected embedder response message type ${type}.`);
             return;
         }
@@ -92,5 +97,5 @@ export class PostMessageChannel {
 
         this.signals.delete(responseId);
         signal.complete(data);
-    }
-};
+    };
+}

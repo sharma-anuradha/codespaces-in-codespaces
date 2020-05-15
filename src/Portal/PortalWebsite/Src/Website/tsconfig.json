@@ -9,6 +9,9 @@
             "vso-platform-auth": [
                 "vso-platform-auth/src/index.ts"
             ],
+            "vso-platform-authentication": [
+                "vso-platform-authentication/src/index.ts"
+            ],
             "vso-service-worker": [
                 "vso-service-worker/src/index.ts"
             ],
@@ -20,7 +23,7 @@
             ],
             "vso-workbench": [
                 "vso-workbench/src/index.ts"
-            ]
+            ],
         }
     },
     "references": [
@@ -29,6 +32,9 @@
         },
         {
             "path": "packages/vso-platform-auth"
+        },
+        {
+            "path": "packages/vso-platform-authentication"
         },
         {
             "path": "packages/vso-service-worker"

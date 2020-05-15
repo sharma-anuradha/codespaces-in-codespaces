@@ -1,21 +1,26 @@
-import { IPartnerInfo } from '../interfaces/IPartnerInfo';
+import { IPartnerInfo, ICrossDomainPartnerInfo } from '../interfaces/IPartnerInfo';
 
-const KNOWN_PARTNERS = ['github', 'salesforce'];
+export const KNOWN_PARTNERS = ['github', 'salesforce'];
 
-export const validatePartnerInfo = (info: IPartnerInfo) => {
-    if (!info.token) {
+export const validatePartnerInfo = (info: IPartnerInfo | ICrossDomainPartnerInfo) => {
+    const token =
+        'cascadeToken' in info
+            ? info.cascadeToken // new partner info format
+            : info.token; // old postMessage partner info format
+
+    if (!token) {
         throw new Error('No Cascade token set.');
     }
 
-    if (!info.managementPortalUrl) {
-        throw new Error('No managementPortalUrl set.');
-    }
+    const codespaceId =
+        'cascadeToken' in info
+            ? info.codespaceId // new partner info format
+            : info.environmentId; // old postMessage handshake format
 
-    if (!info.environmentId) {
+    if (
+        !codespaceId &&
+        !(info as any).workspaceId // return by GH postMessage handshake
+    ) {
         throw new Error('No environmentId set.');
-    }
-
-    if (!KNOWN_PARTNERS.includes(info.partnerName)) {
-        throw new Error(`Unknown partner "${info.partnerName}".`);
     }
 };

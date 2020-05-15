@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VSCS GitHub DEV Dashboard </title>
+</head>
+<body>
+    <style>
+        html {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-width: 15rem;
+            margin: .5rem 1rem;
+        }
+
+        section {
+            margin: 1rem 0;
+        }
+
+        .option {
+            position: relative;
+        }
+
+        .option::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            background-color: rgba(255, 255, 255, .85);
+        }
+
+        .is-enabled .option::after {
+            display: none;
+        }
+
+        .status {
+            margin-top: 1rem;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+
+    <section class="enable-option">
+        <label for="enable-extension">Enable extension:</label>
+        <input id="js-enable-extension" type="checkbox" checked name="enable-extension" />
+    </section>
+
+    <section class="option">
+        <label for="vscode-channel">VSCode Channel:</label>
+        <select id="js-vscode-channel" name="vscode-channel">
+            <option value="insider" selected>Insiders</option>
+            <option value="stable">Stable</option>
+        </select>
+    </section>
+
+    <button id="js-save">Save</button>
+    <div id="js-status" class="status"></div>
+
+    <script src="options.js"></script>
+</body>
+</html>

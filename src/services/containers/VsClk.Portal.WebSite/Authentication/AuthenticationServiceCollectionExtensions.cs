@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -23,7 +24,9 @@ using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Tokens;
+using Newtonsoft.Json;
 using StackExchange.Redis;
+using static Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers.PlatformAuthController;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 {
@@ -199,7 +202,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 
         private static async Task OnVSOBodyAuthenticationMessage(MessageReceivedContext context)
         {
-
             string authorization = context.Request.Headers["Authorization"];
 
             // If no authorization header found, nothing to process further
@@ -209,20 +211,37 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 return;
             }
 
-            var reader = new StreamReader(context.Request.Body);
-            var rawMessage = await reader.ReadToEndAsync();
+            HttpRequestRewindExtensions.EnableBuffering(context.Request);
 
-            try {
-                var bodyParams = HttpUtility.ParseQueryString(rawMessage);
-                var cascadeToken = bodyParams.Get("cascadeToken");
+            using (StreamReader reader = new StreamReader(
+                context.Request.Body,
+                Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: false,
+                leaveOpen: true))
+            {
+                var rawMessage = await reader.ReadToEndAsync();
+                context.Request.Body.Position = 0;
 
-                if (string.IsNullOrWhiteSpace(cascadeToken)) {
-                    context.NoResult();
-                    return;
-                }
+                try {
+                    var bodyParams = HttpUtility.ParseQueryString(rawMessage);
+                    var cascadeToken = bodyParams.Get("cascadeToken");
 
-                context.Token = cascadeToken;
-            } catch (Exception) {
+                    if (!string.IsNullOrWhiteSpace(cascadeToken)) {
+                        context.Token = cascadeToken;
+                        return;
+                    }
+                } catch (Exception) {}
+
+                try {
+                    var info = JsonConvert.DeserializeObject<PartnerInfo>(rawMessage);
+                    var cascadeToken = info.CascadeToken;
+
+                    if (!string.IsNullOrWhiteSpace(cascadeToken)) {
+                        context.Token = cascadeToken;
+                        return;
+                    }
+                } catch (Exception) {}
+
                 context.NoResult();
             }
         }

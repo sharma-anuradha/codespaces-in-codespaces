@@ -1,5 +1,3 @@
-/// <reference path="./typings/global.d.ts" />
-
 import * as rpc from 'vscode-jsonrpc';
 import * as ssh from '@vs/vs-ssh';
 
@@ -177,7 +175,7 @@ export class WorkspaceClient implements rpc.Disposable {
                 {
                     // TODO: Report VS Code applicationName / applicationVersion
                     extensionName: packageJson.name,
-                    extensionVersion: __PORTAL_VERSION__,
+                    extensionVersion: process.env.PORTAL_VERSION,
                 }
             );
             trace.info('Host version: ' + JSON.stringify(hostVersionInfo));

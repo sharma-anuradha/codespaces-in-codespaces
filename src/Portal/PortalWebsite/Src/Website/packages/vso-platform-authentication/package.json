@@ -1,0 +1,15 @@
+{
+  "name": "vso-platform-authentication",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "scripts": {
+    "test": "echo Add tests."
+  },
+  "dependencies": {
+    "vso-client-core": "1.0.0-local"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}

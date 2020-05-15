@@ -44,7 +44,7 @@ export class AuthService {
             throw new AuthenticationError('Cannot get the partner info.');
         }
 
-        const { token } = partnerInfo;
+        const token = partnerAuthInfo.getPartnerInfoToken(partnerInfo);
         if (!token) {
             return null;
         }

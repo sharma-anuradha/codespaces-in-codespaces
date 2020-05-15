@@ -17,7 +17,7 @@ module.exports = {
         'ts-jest': {
             tsConfig: compilerOptions,
         },
-        __PORTAL_VERSION__: 'test',
+        'process.env.PORTAL_VERSION': 'test',
     },
     testEnvironment: 'jsdom',
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],

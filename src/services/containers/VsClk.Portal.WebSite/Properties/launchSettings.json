@@ -23,6 +23,15 @@
           },
             "applicationUrl": "https://*.workspaces-dev.github.com",
             "launchUrl": "https://*.workspaces-dev.github.com/environment/*"
+        },
+        "LocalPlatform": {
+            "commandName": "Project",
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Local",
+                "PORTAL_AppSettings__IsLocal": "true",
+                "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-github-cert.pfx"
+            },
+            "applicationUrl": "https://*:443"
         }
     }
 }

@@ -1,5 +1,9 @@
 import * as React from 'react';
-import { EnvironmentStateInfo, createTrace, timeConstants } from 'vso-client-core';
+import {
+    EnvironmentStateInfo,
+    createTrace,
+    timeConstants
+} from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
@@ -11,6 +15,7 @@ import { WorkbenchPageRender } from './WorkbenchPageRender';
 import { errorToState } from './errorToState';
 import { authService } from '../../../auth/authService';
 import { sendTelemetry } from '../../../telemetry/sendTelemetry';
+import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
 
 const { SECOND_MS } = timeConstants;
 
@@ -91,6 +96,10 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
         }
     };
 
+    private logWelcomeMessage = () => {
+        console.log(getWelcomeMessage(config.environment, `${process.env.VSCS_WORKBENCH_VERSION}`));
+    };
+
     public async componentDidMount() {
         try {
             this.setState({ value: EnvironmentWorkspaceState.Initializing });
@@ -98,6 +107,8 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
             trace.info(`Getting config..`);
 
             await config.fetch();
+
+            this.logWelcomeMessage();
 
             trace.info(`Getting environment info..`);
 
@@ -118,7 +129,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
              */
             const params = new URLSearchParams(location.search);
             const isShutdown = environmentInfo.state === EnvironmentStateInfo.Shutdown;
-            if (params.get('autoStart') === 'true' && isShutdown) {
+            if (params.get('autoStart') !== 'false' && isShutdown) {
                 return await this.startEnvironment();
             }
 

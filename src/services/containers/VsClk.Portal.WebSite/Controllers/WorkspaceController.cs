@@ -17,6 +17,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             HostEnvironment = hostEnvironment;
         }
 
+        [HttpGet("~/codespace")]
         [HttpGet("~/workspace/{id}")]
         public Task<ActionResult> Index() => FetchStaticAsset("workbench.html", "text/html");
 
