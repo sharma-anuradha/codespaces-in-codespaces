@@ -41,5 +41,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             string userId,
             string planId,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delete a secret store by it's Id and Plan Id (partition key).
+        /// </summary>
+        /// <param name="id">The secret store Id.</param>
+        /// <param name="planId">The Plan Id of the secret store (which is the partition key).</param>
+        /// <param name="logger">The Logger.</param>
+        /// <returns>True if the document was deleted.</returns>
+        Task<bool> DeleteAsync(string id, string planId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get a secret store by it's Id and Plan Id (partition key).
+        /// </summary>
+        /// <param name="id">The secret store Id.</param>
+        /// <param name="planId">The Plan Id of the secret store (which is the partition key).</param>
+        /// <param name="logger">The Logger.</param>
+        /// <returns>The secret store document.</returns>
+        Task<SecretStore> GetAsync(string id, string planId, IDiagnosticsLogger logger);
     }
 }

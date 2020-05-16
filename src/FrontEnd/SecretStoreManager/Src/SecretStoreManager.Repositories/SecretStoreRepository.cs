@@ -91,5 +91,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Reposit
                    (secretsStore.Scope == SecretScope.User && secretsStore.OwnerId == userId)),
                logger);
         }
+
+        /// <inheritdoc/>
+        public async Task<bool> DeleteAsync(string id, string planId, IDiagnosticsLogger logger)
+        {
+            Requires.NotNullOrEmpty(id, nameof(id));
+            Requires.NotNullOrEmpty(planId, nameof(planId));
+
+            var documentDbKey = ConstructDocumentDbKey(id, planId);
+            return await DeleteAsync(documentDbKey, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task<SecretStore> GetAsync(string id, string planId, IDiagnosticsLogger logger)
+        {
+            Requires.NotNullOrEmpty(id, nameof(id));
+            Requires.NotNullOrEmpty(planId, nameof(planId));
+
+            var documentDbKey = ConstructDocumentDbKey(id, planId);
+            return await GetAsync(documentDbKey, logger);
+        }
+
+        private DocumentDbKey ConstructDocumentDbKey(string id, string planId)
+        {
+            var partitionKey = new PartitionKey(planId);
+            return new DocumentDbKey(id, partitionKey);
+        }
     }
 }

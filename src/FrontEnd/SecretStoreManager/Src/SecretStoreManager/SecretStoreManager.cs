@@ -252,7 +252,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                 catch (Exception ex)
                 {
                     // Deleting the secret store document if the key vault provisioning failed.
-                    await SecretStoreRepository.DeleteAsync(secretsStore.Id, logger.NewChildLogger());
+                    await SecretStoreRepository.DeleteAsync(secretsStore.Id, secretsStore.PlanId, logger.NewChildLogger());
                     throw new UnavailableException(
                         (int)MessageCodes.FailedToCreateSecretStore,
                         "Secret Resource allocation failed.",
