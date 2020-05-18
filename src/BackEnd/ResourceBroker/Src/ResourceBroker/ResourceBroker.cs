@@ -110,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     {
                         case StartAction.StartCompute:
 
-                            if (resources.Count() == 2 || resources.Count() == 3)
+                            if (backingResources.Count == 2 || backingResources.Count == 3)
                             {
                                 // Select target resorces
                                 var computeResource = backingResources.Single(x => x.Record.Type == ResourceType.ComputeVM);
@@ -141,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                             break;
                         case StartAction.StartArchive:
-                            if (resources.Count() == 2)
+                            if (backingResources.Count == 2)
                             {
                                 // Select target resorces
                                 var blobResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageArchive);
