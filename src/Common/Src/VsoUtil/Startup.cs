@@ -5,8 +5,13 @@
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.Rest;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -20,6 +25,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine;
+using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.AzureClient;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
@@ -95,6 +101,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             services.AddSingleton<IHealthProvider, NullHealthProvider>();
             services.AddSingleton<IDiagnosticsLoggerFactory, NullDiagnosticsLoggerFactory>();
             services.AddSingleton(new LogValueSet());
+
+            var userToken = GetUserAccessToken();
+            if (!string.IsNullOrEmpty(userToken))
+            {
+                services.Configure<UserTokenAzureClientFactoryOptions>(options =>
+                {
+                    options.AccessToken = userToken;
+                });
+
+                // Overrides the IAzureClientFactory which uses the SP credentials which is set up in ConfigureCommonServices
+                services.AddSingleton<IAzureClientFactory, UserTokenAzureClientFactory>();
+            }
         }
 
         /// <summary>
@@ -119,11 +137,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             // KeyVaultSecretProvider uses logged in identity to get the secrets, with that one could access JIT'ed subscriptions without having to
             // copy secrets out of the keyvalut manually. However, it doesn't work for all - by setting "UseSecretFromAppConfig = 1" the default secret
             // from the appconfig will be used - enough for devstamp.
-            var appConfigSecret = Environment.GetEnvironmentVariable("UseSecretFromAppConfig");
+            var appConfigSecret = Environment.GetEnvironmentVariable(CommandBase.UseSecretFromAppConfigEnvVarName);
             if (appConfigSecret != "1")
             {
                 services.AddSingleton<ISecretProvider, KeyVaultSecretProvider>();
             }
+        }
+
+        private string GetUserAccessToken()
+        {
+            return Environment.GetEnvironmentVariable(CommandBase.UserAccessTokenEnvVarName);
         }
 
         private class NullHealthProvider : IHealthProvider

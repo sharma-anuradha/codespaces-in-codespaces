@@ -20,49 +20,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// <returns>The exit code.</returns>
         public static int Main(string[] args)
         {
+            var exitCode = 0;
+
             try
             {
-                return Parser.Default.ParseArguments<
-                    ShowDbAccountInfoCommand,
-                    CreatePortForwardingConnection,
-                    PortForwardingConnectionEstablished,
-                    ShowSkusCommand,
-                    ShowSubscriptionCommand,
-                    ShowControlPlaneCommand,
-                    ListPoolsCommand,
-                    ListPoolSettingsCommand,
-                    ShowPoolSettingsCommand,
-                    SetPoolSettingsCommand,
-                    DeletePoolSettingsCommand,
-                    PrepareDevCLICommand,
-                    SetSkuImageVersionCommand,
-                    CleanDevStamp,
-                    ListDevStamps,
-                    GetSkuImageVersionCommand>(args)
-                    .MapResult(
-                        (ShowDbAccountInfoCommand command) => command.Execute(Console.Out, Console.Error),
-                        (CreatePortForwardingConnection command) => command.Execute(Console.Out, Console.Error),
-                        (PortForwardingConnectionEstablished command) => command.Execute(Console.Out, Console.Error),
-                        (ShowSkusCommand command) => command.Execute(Console.Out, Console.Error),
-                        (ShowSubscriptionCommand command) => command.Execute(Console.Out, Console.Error),
-                        (ShowControlPlaneCommand command) => command.Execute(Console.Out, Console.Error),
-                        (ListPoolsCommand command) => command.Execute(Console.Out, Console.Error),
-                        (ListPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
-                        (ShowPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
-                        (SetPoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
-                        (DeletePoolSettingsCommand command) => command.Execute(Console.Out, Console.Error),
-                        (PrepareDevCLICommand command) => command.Execute(Console.Out, Console.Error),
-                        (SetSkuImageVersionCommand command) => command.Execute(Console.Out, Console.Error),
-                        (CleanDevStamp command) => command.Execute(Console.Out, Console.Error),
-                        (ListDevStamps command) => command.Execute(Console.Out, Console.Error),
-                        (GetSkuImageVersionCommand command) => command.Execute(Console.Out, Console.Error),
-                        errs => 1);
+                Parser.Default.ParseArguments(
+                    args,
+                    typeof(ShowDbAccountInfoCommand),
+                    typeof(CreatePortForwardingConnection),
+                    typeof(PortForwardingConnectionEstablished),
+                    typeof(ShowSkusCommand),
+                    typeof(ShowSubscriptionCommand),
+                    typeof(ShowControlPlaneCommand),
+                    typeof(ListPoolsCommand),
+                    typeof(ListPoolSettingsCommand),
+                    typeof(ShowPoolSettingsCommand),
+                    typeof(SetPoolSettingsCommand),
+                    typeof(DeletePoolSettingsCommand),
+                    typeof(PrepareDevCLICommand),
+                    typeof(SetSkuImageVersionCommand),
+                    typeof(CleanDevStamp),
+                    typeof(ListDevStamps),
+                    typeof(GetSkuImageVersionCommand),
+                    typeof(CleanResourceGroups))
+                .WithParsed<ShowDbAccountInfoCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<CreatePortForwardingConnection>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<PortForwardingConnectionEstablished>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ShowSkusCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ShowSubscriptionCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ShowControlPlaneCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ListPoolsCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ListPoolSettingsCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ShowPoolSettingsCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<SetPoolSettingsCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<DeletePoolSettingsCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<PrepareDevCLICommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<SetSkuImageVersionCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<CleanDevStamp>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ListDevStamps>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<GetSkuImageVersionCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<CleanResourceGroups>(command => command.Execute(Console.Out, Console.Error))
+                .WithNotParsed(errs => { exitCode = 1; });
             }
             catch (Exception ex)
             {
                 PrintException(ex);
-                return 1;
+                exitCode = 1;
             }
+
+            return exitCode;
         }
 
         private static void PrintException(Exception ex)
@@ -79,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Error.WriteLine($"error: {ex.Message}");
+                    Console.Error.WriteLine($"error: {ex.ToString()}");
                     Console.ResetColor();
                     PrintException(ex.InnerException);
                 }

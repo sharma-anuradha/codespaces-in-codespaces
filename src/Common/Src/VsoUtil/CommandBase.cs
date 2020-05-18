@@ -3,7 +3,9 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -20,6 +22,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
     /// </summary>
     public abstract class CommandBase
     {
+        /// <summary>
+        /// The ASPNETCORE_ENVIRONMENT env var.
+        /// </summary>
+        public const string EnvironmentNameEnvVarName = "ASPNETCORE_ENVIRONMENT";
+
+        /// <summary>
+        /// The AZURE_LOCATION env var.
+        /// </summary>
+        public const string AzureLocationEnvVarName = "AZURE_LOCATION";
+
+        /// <summary>
+        /// The OVERRIDE_APPSETTINGS_JSON env var.
+        /// </summary>
+        public const string AppSettingsOverrideEnvVarName = "OVERRIDE_APPSETTINGS_JSON";
+
+        /// <summary>
+        /// The UseSecretFromAppConfig env var.
+        /// </summary>
+        public const string UseSecretFromAppConfigEnvVarName = "UseSecretFromAppConfig";
+
+        /// <summary>
+        /// The UserAccessToken env var.
+        /// </summary>
+        public const string UserAccessTokenEnvVarName = "UserAccessToken";
+
         private IServiceProvider serviceProvider;
 
         /// <summary>
@@ -39,6 +66,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// </summary>
         [Option('o', "override", Required = false, HelpText = "The OVERRIDE_APPSETTINGS_JSON name.")]
         public string Override { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not to use the SP client secret from user's appsettings.json.
+        /// </summary>
+        [Option("secret-from-app-config", Required = false, HelpText = "Use SP credentials from personal appsettings.json.")]
+        public bool UseSecretFromAppConfig { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's Azure access token.
+        /// </summary>
+        [Option("token", Required = false, HelpText = "Provides user's token to access Azure resources instead of the SP.")]
+        public string UserAccessToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to perform a dry run only.
+        /// </summary>
+        [Option("dry-run", Default = false, HelpText = "Run as a dry run only (not all commands respect this setting)")]
+        public bool DryRun { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to use verbose logging.
+        /// </summary>
+        [Option('v', "verbose", Default = false, HelpText = "Enable verbose logging")]
+        public bool Verbose { get; set; }
 
         /// <summary>
         /// Execute the command.
@@ -104,18 +155,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             return JsonConvert.SerializeObject(obj, Formatting.Indented, new StringEnumConverter());
         }
 
+        /// <summary>
+        /// Performs the action if <see cref="DryRun"/> is not enable.
+        /// </summary>
+        /// <param name="action">The action to perform.</param>
+        /// <returns>The task of the given action.</returns>
+        protected async Task DoWithDryRun(Func<Task> action)
+        {
+            if (DryRun)
+            {
+                return;
+            }
+
+            await action.Invoke();
+        }
+
+        /// <summary>
+        /// Output the given message if verbose logging is enabled.
+        /// </summary>
+        /// <param name="writer">The output writer.</param>
+        /// <param name="msg">The message to write.</param>
+        /// <returns>The task of the given action.</returns>
+        protected async Task WriteVerboseLineAsync(TextWriter writer, string msg)
+        {
+            if (!Verbose)
+            {
+                return;
+            }
+
+            await writer.WriteLineAsync(msg);
+        }
+
         private IWebHost BuildWebHost()
         {
-            System.Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", Environment, EnvironmentVariableTarget.Process);
+            System.Environment.SetEnvironmentVariable(EnvironmentNameEnvVarName, Environment, EnvironmentVariableTarget.Process);
 
             if (!string.IsNullOrEmpty(Override))
             {
-                System.Environment.SetEnvironmentVariable("OVERRIDE_APPSETTINGS_JSON", Override, EnvironmentVariableTarget.Process);
+                System.Environment.SetEnvironmentVariable(AppSettingsOverrideEnvVarName, Override, EnvironmentVariableTarget.Process);
             }
 
             if (!string.IsNullOrEmpty(Location))
             {
-                System.Environment.SetEnvironmentVariable("AZURE_LOCATION", Location, EnvironmentVariableTarget.Process);
+                System.Environment.SetEnvironmentVariable(AzureLocationEnvVarName, Location, EnvironmentVariableTarget.Process);
+            }
+
+            if (UseSecretFromAppConfig)
+            {
+                System.Environment.SetEnvironmentVariable(UseSecretFromAppConfigEnvVarName, "1", EnvironmentVariableTarget.Process);
+            }
+
+            if (!string.IsNullOrEmpty(UserAccessToken))
+            {
+                System.Environment.SetEnvironmentVariable(UserAccessTokenEnvVarName, UserAccessToken, EnvironmentVariableTarget.Process);
             }
 
             var webHostArgs = new string[0];
