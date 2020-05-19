@@ -11,6 +11,7 @@ using CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -40,6 +41,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         public string CustomCLIVersion { get; set; }
 
         /// <summary>
+        /// Gets or sets the data plane location.
+        /// </summary>
+        [Option('d', "dataplane", Default = "WestUs2", HelpText = "Data Plane Location. Defaults to WestUs2.")]
+        public string DataPlaneLocation { get; set; }
+
+        /// <summary>
         /// Gets or sets the forwarding host name.
         /// </summary>
         [Option('f', "forwardingHostName", Default = null, HelpText = "forwarding host name. ngrok hostname goes here.")]
@@ -58,7 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 
             var controlPlane = GetControlPlaneInfo();
             var controlPlaneResourceAccessor = services.GetRequiredService<IControlPlaneAzureResourceAccessor>();
-            var location = controlPlane.GetAllDataPlaneLocations().Single();
+            var azureLocation = Enum.Parse<AzureLocation>(DataPlaneLocation, ignoreCase: true);
+            var location = controlPlane.GetAllDataPlaneLocations().FirstOrDefault(n => n == azureLocation);
             var (accountName, accountKey) = await controlPlaneResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(location);
             stdout.WriteLine($"AccountName: {accountName}");
 
