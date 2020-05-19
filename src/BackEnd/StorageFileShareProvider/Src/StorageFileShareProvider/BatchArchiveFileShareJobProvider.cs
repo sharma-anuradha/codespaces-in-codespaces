@@ -123,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             // Clear out any old images just incase something got missed in cleanup
             taskCopyCommand.Add("echo ----- DELETE OLD FILES -----");
-            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +60 -delete");
+            taskCopyCommand.Add($"find {localSrc} -maxdepth 1 -type f -mmin +60 -delete || true");
 
             // Copy target share to local disk
             taskCopyCommand.Add("echo ----- COPY DOWN BLOB -----");

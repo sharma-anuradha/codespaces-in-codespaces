@@ -882,7 +882,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var isEnvironmentIsArchived = cloudEnvironment.Storage.Type == ResourceType.StorageArchive;
                     var computeResourceId = cloudEnvironment.Compute.ResourceId;
 
-                    logger.FluentAddValue("CloudEnvironmentIsArchived", isEnvironmentIsArchived)
+                    childLogger.FluentAddValue("CloudEnvironmentIsArchived", isEnvironmentIsArchived)
                         .FluentAddBaseValue("ComputeResourceId", computeResourceId)
                         .FluentAddBaseValue("StorageResourceId", storageResourceId)
                         .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
@@ -894,7 +894,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         if (archiveStorageResourceId != null)
                         {
                             // Conduct update to swapout archived storage for file storage
-                            await logger.RetryOperationScopeAsync(
+                            await childLogger.RetryOperationScopeAsync(
                                 $"{LogBaseName}_resume_callback_update",
                                 async (retryLogger) =>
                                 {
