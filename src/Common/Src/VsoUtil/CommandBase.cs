@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         /// <summary>
         /// Gets or sets a value indicating whether to use verbose logging.
         /// </summary>
-        [Option('v', "verbose", Default = false, HelpText = "Enable verbose logging")]
+        [Option("verbose", Default = false, HelpText = "Enable verbose logging")]
         public bool Verbose { get; set; }
 
         /// <summary>
