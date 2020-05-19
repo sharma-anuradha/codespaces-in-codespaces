@@ -8,11 +8,13 @@ frontend-web-api:
       - online.dev.core.vsengsaas.visualstudio.com
       - ci-online.dev.core.vsengsaas.visualstudio.com
       - westus2-ci-online.dev.core.vsengsaas.visualstudio.com
+      - westeurope-ci-online.dev.core.vsengsaas.visualstudio.com
     tls:
       - hosts:
         - online.dev.core.vsengsaas.visualstudio.com
         - ci-online.dev.core.vsengsaas.visualstudio.com
         - westus2-ci-online.dev.core.vsengsaas.visualstudio.com
+        - westeurope-ci-online.dev.core.vsengsaas.visualstudio.com
         secretName: ssl-cert
 
 # Config for backend
@@ -33,11 +35,13 @@ port-forwarding-web-api:
       - '*.app.online.dev.core.vsengsaas.visualstudio.com'
       - '*.app.ci-online.dev.core.vsengsaas.visualstudio.com'
       - '*.app.westus2-ci-online.dev.core.vsengsaas.visualstudio.com'
+      - '*.app.westeurope-ci-online.dev.core.vsengsaas.visualstudio.com'
     tls:
       - hosts:
         - '*.app.online.dev.core.vsengsaas.visualstudio.com'
         - '*.app.ci-online.dev.core.vsengsaas.visualstudio.com'
         - '*.app.westus2-ci-online.dev.core.vsengsaas.visualstudio.com'
+        - '*.app.westeurope-ci-online.dev.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
 
 # Config for tokens
@@ -50,9 +54,11 @@ tokens-web-api:
       - sts.dev.core.vsengsaas.visualstudio.com
       - ci-sts.dev.core.vsengsaas.visualstudio.com
       - westus2-ci-sts.dev.core.vsengsaas.visualstudio.com
+      - westeurope-ci-sts.dev.core.vsengsaas.visualstudio.com
     tls:
       - hosts:
         - sts.dev.core.vsengsaas.visualstudio.com
         - ci-sts.dev.core.vsengsaas.visualstudio.com
         - westus2-ci-sts.dev.core.vsengsaas.visualstudio.com
+        - westeurope-ci-sts.dev.core.vsengsaas.visualstudio.com
         secretName: ssl-cert

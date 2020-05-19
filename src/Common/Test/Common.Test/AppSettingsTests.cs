@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Common;
@@ -189,8 +190,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.Throws<NotSupportedException>(() => s.GetStampBatchAccountName(AzureLocation.EastUs));
             }
 
-            Assert.Collection(controlPlaneInfo.AllStamps.Values.OrderBy(s => s.Location.ToString()),
-                westUs2Stamp);
             Assert.Equal("online.dev.core.vsengsaas.visualstudio.com", controlPlaneInfo.DnsHostName);
             Assert.Equal("vsclk-online-dev", controlPlaneInfo.EnvironmentResourceGroupName);
             Assert.Equal("vsclk-online-dev-kv", controlPlaneInfo.EnvironmentKeyVaultName);
