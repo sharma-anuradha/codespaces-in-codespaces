@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -78,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
             if (input.Options is CreateComputeContinuationInputOptions computeOption)
             {
-                resourceLocation = await HandleComputeOptions(input, components, componentInputs, computeOption, logger);
+                resourceLocation = await HandleComputeOptions(input, resource, components, componentInputs, computeOption, logger);
             }
 
             if (resourceLocation == default)
@@ -183,13 +184,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 if (taskResult.Status == OperationState.Succeeded)
                 {
                     operationInput.CustomComponents.Add(
-                            new ResourceComponent()
-                            {
-                                AzureResourceInfo = taskResult.AzureResourceInfo,
-                                ComponentType = originalInput.Input.Type,
-                                Preserve = originalInput.Input.Preserve,
-                                ResourceRecordId = originalInput.Input.ResourceId.ToString(),
-                            });
+                        new ResourceComponent()
+                        {
+                            ComponentId = id,
+                            AzureResourceInfo = taskResult.AzureResourceInfo,
+                            ComponentType = originalInput.Input.Type,
+                            Preserve = originalInput.Input.Preserve,
+                            ResourceRecordId = (originalInput.Input.ResourceId != Guid.Empty) ? originalInput.Input.ResourceId.ToString() : default,
+                        });
                 }
                 else if (taskResult.Status == OperationState.InProgress)
                 {
@@ -206,9 +208,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
             result = new ResourceCreateContinuationResult()
             {
-                NextInput = input,
+                NextInput = input.OperationInput,
                 RetryAfter = TimeSpan.FromSeconds(1),
                 Status = OperationState.InProgress,
+                Components = new ResourceComponentDetail()
+                {
+                    Items = operationInput.CustomComponents.ToComponentDictionary(),
+                },
             };
 
             return result;
@@ -246,6 +252,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private async Task<IAzureResourceLocation> HandleComputeOptions(
             CreateResourceContinuationInput input,
+            ResourceRecordRef resource,
             List<ResourceComponent> components,
             Dictionary<string, ComponentInput> componentInputs,
             CreateComputeContinuationInputOptions computeOption,
@@ -275,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     azureLocation);
             }
 
-            if (computeOption.SubnetResourceInfo != default)
+            if (!string.IsNullOrEmpty(computeOption.SubnetResourceId))
             {
                 var nicInput = new CreateResourceContinuationInput()
                 {
@@ -286,7 +293,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     IsAssigned = true,
                 };
                 var nicStrategy = CreationStrategies.Where(s => s.CanHandle(nicInput)).Single();
-                nicInput.OperationInput = await nicStrategy.BuildCreateOperationInputAsync(nicInput, default, logger.NewChildLogger());
+                nicInput.OperationInput = await nicStrategy.BuildCreateOperationInputAsync(nicInput, resource, logger.NewChildLogger());
                 var componentInput = new ComponentInput()
                 {
                     ComponentId = Guid.NewGuid().ToString(),

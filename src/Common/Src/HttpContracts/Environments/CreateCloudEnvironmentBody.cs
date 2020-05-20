@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
@@ -45,6 +46,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the environment personalization info.
         /// </summary>
         public PersonalizationInfoBody Personalization { get; set; }
+
+        /// <summary>
+        /// Gets or sets the environment Subnet azure resource id.
+        /// </summary>
+        public string SubnetResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the environment container image.

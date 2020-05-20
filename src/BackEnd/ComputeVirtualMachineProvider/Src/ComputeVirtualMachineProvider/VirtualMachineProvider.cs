@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -61,25 +60,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                                 childLogger,
                                 manager.BeginCreateComputeAsync,
                                 manager.CheckCreateComputeStatusAsync);
-
                     var vmComponents = new ResourceComponentDetail()
                     {
-                        Items = input.CustomComponents?.ToDictionary(c =>
-                        {
-                            if (c is null)
-                            {
-                                throw new ArgumentNullException($"ResourceComponent is null in {input.CustomComponents}.");
-                            }
-
-                            if (string.IsNullOrEmpty(c.ComponentId))
-                            {
-                                throw new ArgumentNullException($"ResourceComponent id is null or empty for {c.ComponentType}.");
-                            }
-
-                            return c.ComponentId;
-                        }),
+                        Items = input.CustomComponents.ToComponentDictionary(),
                     };
-
                     var result = new VirtualMachineProviderCreateResult()
                     {
                         AzureResourceInfo = azureResourceInfo,

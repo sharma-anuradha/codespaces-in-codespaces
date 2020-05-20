@@ -19,6 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// <summary>
         /// Gets or sets the Azure subnet info.
         /// </summary>
-        public AzureSubnetResourceInfo SubnetResourceInfo { get; set; }
+        public string SubnetResourceId { get; set; }
     }
 }

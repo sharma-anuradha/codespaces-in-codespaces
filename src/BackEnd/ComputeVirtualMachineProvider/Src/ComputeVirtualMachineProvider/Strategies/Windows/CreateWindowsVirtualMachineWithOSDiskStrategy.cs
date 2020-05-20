@@ -56,15 +56,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             string userName,
             IDictionary<string, object> initScriptParametersBlob)
         {
-            var createWithOSDisk = input.CustomComponents.Any(x =>
-                                           x.ComponentType == ResourceType.OSDisk &&
-                                           !string.IsNullOrEmpty(x.AzureResourceInfo?.Name));
-
-            if (!createWithOSDisk)
-            {
-                initScriptParametersBlob["firstBoot"] = "true";
-            }
-
             var b64ParametersBlob = EncodeScriptParameters(initScriptParametersBlob);
             var osDiskInfo = input.CustomComponents.Single(x => x.ComponentType == ResourceType.OSDisk).AzureResourceInfo;
 
@@ -99,19 +90,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                     { "vmInitScriptBase64ParametersBlob", new Dictionary<string, object>() { { VirtualMachineConstants.Key, b64ParametersBlob } } },
                     { "storageProfileDetails", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageProfile } } },
                 };
-        }
-
-        private async Task<IDisk> ValidateOSDisk(VirtualMachineProviderCreateInput input, AzureResourceInfo osDiskInfo)
-        {
-            var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
-            var disk = await azure.Disks.GetByResourceGroupAsync(osDiskInfo.ResourceGroup, osDiskInfo.Name);
-
-            if (disk.IsAttachedToVirtualMachine)
-            {
-                throw new InvalidOperationException("Should not try to use a disk which is already attached.");
-            }
-
-            return disk;
         }
     }
 }

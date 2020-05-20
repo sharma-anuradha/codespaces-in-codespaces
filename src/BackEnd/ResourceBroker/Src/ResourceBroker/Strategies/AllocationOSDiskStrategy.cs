@@ -133,10 +133,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     {
                         if (computeRequest.QueueCreateResource == true)
                         {
+                            computeRequest.ExtendedProperties.OSDiskResourceID = osDiskRequest.ExtendedProperties.OSDiskResourceID;
                             allocationResults = await TryQueueComputeWithExistingOSDisk(
                                 resourceSku,
                                 trigger,
-                                osDiskRequest.ExtendedProperties,
+                                computeRequest.ExtendedProperties,
                                 logger.NewChildLogger());
                         }
                         else

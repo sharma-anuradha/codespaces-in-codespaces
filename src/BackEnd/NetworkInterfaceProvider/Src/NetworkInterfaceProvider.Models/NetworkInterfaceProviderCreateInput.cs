@@ -15,29 +15,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.M
     public class NetworkInterfaceProviderCreateInput : ContinuationInput
     {
         /// <summary>
+        /// Gets or sets the Subnet azure resource id.
+        /// </summary>
+        public string SubnetAzureResourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets vnet azure subscription.
+        /// </summary>
+        public Guid SubnetSubscription { get; set; }
+
+        /// <summary>
         /// Gets or sets location.
         /// </summary>
         public AzureLocation Location { get; set; }
 
         /// <summary>
-        /// Gets or sets subnet name.
-        /// </summary>
-        public string SubnetName { get; set; }
-
-        /// <summary>
         /// Gets or sets resource group.
         /// </summary>
         public string ResourceGroup { get; set; }
-
-        /// <summary>
-        /// Gets or sets subscription.
-        /// </summary>
-        public Guid Subscription { get; set; }
-
-        /// <summary>
-        /// Gets or sets vnet name.
-        /// </summary>
-        public string VnetName { get; set; }
 
         /// <summary>
         /// Gets or sets resource tags.

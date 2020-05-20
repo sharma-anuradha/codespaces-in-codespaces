@@ -263,6 +263,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return await base.FailOperationCleanupCoreAsync(operationInput, record, trigger, logger);
         }
 
+        private async Task<ContinuationResult> RunGetResourceAsync(
+         StartEnvironmentContinuationInput operationInput,
+         EnvironmentRecordRef record,
+         IDiagnosticsLogger logger)
+        {
+            if (operationInput.CreateNew)
+            {
+                // Nothing to get.
+                operationInput.CurrentState = StartEnvironmentContinuationInputState.AllocateResource;
+                return new ContinuationResult
+                {
+                    NextInput = operationInput,
+                    Status = OperationState.InProgress,
+                };
+            }
+
+            // On resume there could be Storage file share and/or OS disk.
+            // Just do a get operation on the items, and make sure the state is good.
+            var resourceList = new List<Guid>();
+            if (record.Value.OSDisk != default)
+            {
+                resourceList.Add(record.Value.OSDisk.ResourceId);
+            }
+
+            if (record.Value.Storage != default)
+            {
+                resourceList.Add(record.Value.Storage.ResourceId);
+            }
+
+            var statusResponse = await ResourceBrokerHttpClient.StatusAsync(
+                operationInput.EnvironmentId,
+                resourceList,
+                logger.NewChildLogger());
+            var storageStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
+            var osDiskStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk);
+
+            // Check if we got all the resources
+            if (record.Value.OSDisk != default && osDiskStatus == default)
+            {
+                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToGetOSDiskResource" };
+            }
+            else if (record.Value.Storage != default && storageStatus == default)
+            {
+                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToGetStorageResource" };
+            }
+
+            operationInput.CurrentState = StartEnvironmentContinuationInputState.AllocateResource;
+            return new ContinuationResult
+            {
+                NextInput = operationInput,
+                Status = OperationState.InProgress,
+            };
+        }
+
         private async Task<ContinuationResult> RunAllocateResourceAsync(
              StartEnvironmentContinuationInput operationInput,
              EnvironmentRecordRef record,
@@ -355,8 +409,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         // Update state to be failed
                         record.Value.Compute = computeResource;
-                        record.Value.OSDisk = osDiskResource;
-                        record.Value.Storage = storageResource;
+                        if (hasOSDiskResource)
+                        {
+                            record.Value.OSDisk = osDiskResource;
+                        }
+
+                        // For archived environments, dont switch storage resource.
+                        if (hasStorageResource && record.Value.Storage?.Type != ResourceType.StorageArchive)
+                        {
+                            record.Value.Storage = storageResource;
+                        }
+
                         return Task.FromResult(true);
                     },
                     logger);
@@ -431,14 +494,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
             }
 
+            // Get archive storage id and storage resource id to start environment.
+            var archiveStorageResourceId = (record.Value.Storage?.Type == ResourceType.StorageArchive) ? record.Value.Storage?.ResourceId : default;
+            var storageResourceId = (record.Value.Storage?.Type == ResourceType.StorageFileShare) ? record.Value.Storage.ResourceId : operationInput.StorageResource?.ResourceId;
+
             // Kick off start-compute before returning.
             var environmentManager = ServiceProvider.GetService<IEnvironmentManager>();
             var isSuccess = await environmentManager.StartComputeAsync(
                  record.Value,
                  record.Value.Compute.ResourceId,
                  record.Value.OSDisk?.ResourceId,
-                 record.Value.Storage?.ResourceId,
-                 null,
+                 storageResourceId,
+                 archiveStorageResourceId,
                  operationInput.CloudEnvironmentOptions,
                  operationInput.StartCloudEnvironmentParameters,
                  logger.NewChildLogger());
@@ -493,60 +560,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             await environmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
 
             return new ContinuationResult { Status = OperationState.Succeeded };
-        }
-
-        private async Task<ContinuationResult> RunGetResourceAsync(
-            StartEnvironmentContinuationInput operationInput,
-            EnvironmentRecordRef record,
-            IDiagnosticsLogger logger)
-        {
-            if (operationInput.CreateNew)
-            {
-                // Nothing to get.
-                operationInput.CurrentState = StartEnvironmentContinuationInputState.AllocateResource;
-                return new ContinuationResult
-                {
-                    NextInput = operationInput,
-                    Status = OperationState.InProgress,
-                };
-            }
-
-            // On resume there could be Storage file share and/or OS disk.
-            // Just do a get operation on the items, and make sure the state is good.
-            var resourceList = new List<Guid>();
-            if (record.Value.OSDisk != default)
-            {
-                resourceList.Add(record.Value.OSDisk.ResourceId);
-            }
-
-            if (record.Value.Storage != default)
-            {
-                resourceList.Add(record.Value.Storage.ResourceId);
-            }
-
-            var statusResponse = await ResourceBrokerHttpClient.StatusAsync(
-                operationInput.EnvironmentId,
-                resourceList,
-                logger.NewChildLogger());
-            var storageStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
-            var osDiskStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk);
-
-            // Check if we got all the resources
-            if (record.Value.OSDisk != default && osDiskStatus == default)
-            {
-                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToGetOSDiskResource" };
-            }
-            else if (record.Value.Storage != default && storageStatus == default)
-            {
-                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToGetStorageResource" };
-            }
-
-            operationInput.CurrentState = StartEnvironmentContinuationInputState.AllocateResource;
-            return new ContinuationResult
-            {
-                NextInput = operationInput,
-                Status = OperationState.InProgress,
-            };
         }
     }
 }

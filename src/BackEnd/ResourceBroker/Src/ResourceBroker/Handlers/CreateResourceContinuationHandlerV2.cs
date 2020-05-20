@@ -152,10 +152,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private static bool ResourceInfoChanged(ResourceRecordRef resource, ResourceCreateContinuationResult result)
         {
-            return (result.AzureResourceInfo != default && resource.Value.AzureResourceInfo == default)
-                                || !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo)
-                                || (resource.Value.Components != default && !resource.Value.Components.Equals(result.Components))
-                                || (resource.Value.Components == default && result.Components != default);
+            return (resource.Value.AzureResourceInfo != default && !resource.Value.AzureResourceInfo.Equals(result.AzureResourceInfo))
+                    || (resource.Value.AzureResourceInfo == default && result.AzureResourceInfo != default)
+                    || (resource.Value.Components != default && !resource.Value.Components.Equals(result.Components))
+                    || (resource.Value.Components == default && result.Components != default);
         }
 
         private async Task<ResourceRecordRef> CreateReferenceAsync(CreateResourceContinuationInput input, IDiagnosticsLogger logger)

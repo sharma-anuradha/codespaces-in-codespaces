@@ -66,6 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                             managedDisk: new ManagedDiskParametersInner(storageAccountType: StorageAccountTypes.PremiumLRS)),
             };
 
+            initScriptParametersBlob["firstBoot"] = "true";
             var b64ParametersBlob = EncodeScriptParameters(initScriptParametersBlob);
 
             return Task.FromResult(new Dictionary<string, Dictionary<string, object>>()

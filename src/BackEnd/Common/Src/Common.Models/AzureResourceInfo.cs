@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
@@ -26,13 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <param name="subscriptionId">The azure subscription id.</param>
         /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="name">The resource name.</param>
-        /// <param name="components">Resource components.</param>
         public AzureResourceInfo(
             string subscriptionId,
             string resourceGroup,
-            string name,
-            IList<ResourceComponent> components = null)
-            : this(Guid.Parse(subscriptionId), resourceGroup, name, components)
+            string name)
+            : this(Guid.Parse(subscriptionId), resourceGroup, name)
         {
         }
 
@@ -42,12 +39,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <param name="subscriptionId">The azure subscription id.</param>
         /// <param name="resourceGroup">The azure resource group.</param>
         /// <param name="name">The resource name.</param>
-        /// <param name="components">Resource components.</param>
         public AzureResourceInfo(
             Guid subscriptionId,
             string resourceGroup,
-            string name,
-            IList<ResourceComponent> components = null)
+            string name)
         {
             Requires.NotEmpty(subscriptionId, nameof(subscriptionId));
             Requires.NotNullOrEmpty(resourceGroup, nameof(resourceGroup));

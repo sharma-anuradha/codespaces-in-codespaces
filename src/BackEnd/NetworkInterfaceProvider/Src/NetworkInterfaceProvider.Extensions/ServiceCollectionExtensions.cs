@@ -32,7 +32,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.E
             }
 
             // Core services
-            services.AddSingleton<INetworkInterfaceProvider, VirtualMachineNetworkInterfaceProvider>();
+            services.AddSingleton<INetworkInterfaceDeploymentManager, NetworkInterfaceDeploymentManager>();
+            services.AddSingleton<INetworkInterfaceProvider, NetworkInterfaceProvider>();
             return services;
         }
     }

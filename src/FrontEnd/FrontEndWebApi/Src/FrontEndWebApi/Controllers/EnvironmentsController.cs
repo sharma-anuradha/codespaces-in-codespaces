@@ -135,8 +135,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("get")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> GetAsync(
-            [FromRoute]string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
             if (environment is null)
@@ -169,9 +169,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("list")]
         [Audit(AuditEventCategory.ResourceManagement, targetResourceName: "User")]
         public async Task<IActionResult> ListAsync(
-            [FromQuery]string name,
-            [FromQuery]string planId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromQuery] string name,
+            [FromQuery] string planId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             // In the case of a authentication using a plan access token, infer the plan from the token if not set
             planId ??= CurrentUserProvider.Identity.AuthorizedPlan;
@@ -234,8 +234,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("shutdown")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> SuspendAsync(
-            [FromRoute]string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
             if (environment is null)
@@ -284,8 +284,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("start")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> ResumeAsync(
-            [FromRoute]string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
             if (environment is null)
@@ -337,8 +337,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("create")]
         [Audit(AuditEventCategory.ResourceManagement)]
         public async Task<IActionResult> CreateAsync(
-            [FromBody]CreateCloudEnvironmentBody createEnvironmentInput,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromBody] CreateCloudEnvironmentBody createEnvironmentInput,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var envName = createEnvironmentInput.FriendlyName.Trim();
             createEnvironmentInput.FriendlyName = envName;
@@ -518,8 +518,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("delete")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> DeleteAsync(
-            [FromRoute]string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
             if (environment is null)
@@ -567,9 +567,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("update")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> UpdateAsync(
-            [FromRoute]string environmentId,
-            [FromBody]EnvironmentRegistrationCallbackBody callbackBody,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromBody] EnvironmentRegistrationCallbackBody callbackBody,
+            [FromServices] IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(callbackBody, nameof(callbackBody));
             ValidationUtil.IsRequired(callbackBody?.Payload, nameof(callbackBody.Payload));
@@ -630,9 +630,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("update_settings")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> UpdateSettingsAsync(
-            [FromRoute]string environmentId,
-            [FromBody]UpdateCloudEnvironmentBody updateEnvironmentInput,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromBody] UpdateCloudEnvironmentBody updateEnvironmentInput,
+            [FromServices] IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(updateEnvironmentInput, nameof(updateEnvironmentInput));
             ValidationUtil.IsRequired(logger, nameof(logger));
@@ -683,8 +683,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("available_updates")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> GetAvailableSettingsUpdatesAsync(
-            [FromRoute]string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
             if (environment is null)
@@ -764,9 +764,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("update_MRU_folders")]
         public async Task<IActionResult> UpdateRecentFoldersListAsync(
-            [FromRoute]string environmentId,
-            [FromBody]CloudEnvironmentFolderBody folderPathInput,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromBody] CloudEnvironmentFolderBody folderPathInput,
+            [FromServices] IDiagnosticsLogger logger)
         {
             ValidationUtil.IsRequired(folderPathInput, nameof(folderPathInput));
             ValidationUtil.IsRequired(logger, nameof(logger));
@@ -814,8 +814,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("heartbeat_tokens")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         public async Task<IActionResult> GenerateHeartBeatTokenAsync(
-            [FromRoute]string environmentId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
             if (environment is null)

@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets or sets the Azure subnet.
         /// </summary>
-        public AzureSubnetResourceInfo SubnetResourceInfo { get; set; }
+        public string SubnetResourceId { get; set; }
 
         /// <summary>
         /// Gets or sets the allocation request id.

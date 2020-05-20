@@ -1,0 +1,108 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "virtualMachineRG": {
+      "type": "string"
+    },
+    "virtualMachineName": {
+      "type": "string"
+    },
+    "virtualMachineSize": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "string"
+    },
+    "resourceTags": {
+      "type": "object"
+    },
+    "vmInitScriptFileUri": {
+      "type": "string"
+    },
+    "vmInitScriptStorageAccountName": {
+      "type": "string"
+    },
+    "vmInitScriptStorageAccountKey": {
+      "type": "securestring"
+    },
+    "vmAgentBlobUrl": {
+      "type": "string"
+    },
+    "vmInitScriptBase64ParametersBlob": {
+      "type": "string"
+    },
+    "networkInterfaceName": {
+      "type": "string"
+    },
+    "networkInterfaceSub": {
+      "type": "string"
+    },
+    "networkInterfaceRG": {
+      "type": "string"
+    },
+    "storageProfileDetails": {
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2019-03-01",
+      "dependsOn": [],
+      "location": "[parameters('location')]",
+      "name": "[parameters('virtualMachineName')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": "[parameters('storageProfileDetails')]",
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[concat('/subscriptions/',parameters('networkInterfaceSub'),'/resourceGroups/',parameters('networkInterfaceRG'),'/providers/Microsoft.Network/networkInterfaces/',parameters('networkInterfaceName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2018-10-01",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "update-vm",
+          "properties": {
+            "autoUpgradeMinorVersion": true,
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', 'WindowsInitShim.ps1 ', ' -vmAgentBlobUrl \"', parameters('vmAgentBlobUrl'), '\" -base64ParametersBlob \"', parameters('vmInitScriptBase64ParametersBlob'), '\"')]",
+              "storageAccountName": "[parameters('vmInitScriptStorageAccountName')]",
+              "storageAccountKey": "[parameters('vmInitScriptStorageAccountKey')]"
+            },
+            "publisher": "Microsoft.Compute",
+            "settings": {
+              "fileUris": [
+                "[parameters('vmInitScriptFileUri')]"
+              ],
+              "timestamp": 123456789
+            },
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.9"
+          },
+          "tags": {
+            "displayName": "update-vm"
+          },
+          "type": "extensions"
+        }
+      ],
+      "tags": "[parameters('resourceTags')]",
+      "type": "Microsoft.Compute/virtualMachines"
+    }
+  ]
+}

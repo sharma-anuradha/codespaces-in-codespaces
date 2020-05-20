@@ -2,9 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -17,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
     /// </summary>
     public class CreateWindowsVirtualMachineWithNicAndOSDiskStrategy : WindowsVirtualMachineStrategyBase
     {
-        private const string TemplateName = "template_vm.json";
+        private const string TemplateName = "template_vm_with_custom_nic_and_disk.json";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CreateWindowsVirtualMachineWithNicAndOSDiskStrategy"/> class.
@@ -43,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         }
 
         /// <inheritdoc/>
-        protected override Task<Dictionary<string, Dictionary<string, object>>> GetVMParametersAsync(
+        protected override async Task<Dictionary<string, Dictionary<string, object>>> GetVMParametersAsync(
              VirtualMachineProviderCreateInput input,
              string virtualMachineName,
              IDictionary<string, string> resourceTags,
@@ -53,7 +55,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
              string userName,
              IDictionary<string, object> initScriptParametersBlob)
         {
-            throw new System.NotImplementedException();
+            var networkInterface = input.CustomComponents.Where(c => c.ComponentType == ResourceType.NetworkInterface).Single();
+            var b64ParametersBlob = EncodeScriptParameters(initScriptParametersBlob);
+            var osDiskInfo = input.CustomComponents.Single(x => x.ComponentType == ResourceType.OSDisk).AzureResourceInfo;
+
+            // TODO:: May move to disk provider.
+            var disk = await ValidateOSDisk(input, osDiskInfo);
+            var storageProfile = new StorageProfile()
+            {
+                OsDisk = new OSDisk(
+                     DiskCreateOptionTypes.Attach,
+                     OperatingSystemTypes.Windows,
+                     managedDisk: new ManagedDiskParametersInner(
+                         storageAccountType: StorageAccountTypes.PremiumLRS,
+                         id: disk.Id)),
+            };
+
+            return new Dictionary<string, Dictionary<string, object>>()
+                {
+                    { "location", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureVmLocation.ToString() } } },
+                    { "virtualMachineRG", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureResourceGroup } } },
+                    { "virtualMachineName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, virtualMachineName } } },
+                    { "virtualMachineSize", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureSkuName } } },
+                    { "adminUserName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, userName } } },
+                    { "adminPassword", new Dictionary<string, object>() { { VirtualMachineConstants.Key, Guid.NewGuid() } } },
+                    { "resourceTags", new Dictionary<string, object>() { { VirtualMachineConstants.Key, resourceTags } } },
+                    { "vmInitScriptFileUri", new Dictionary<string, object>() { { VirtualMachineConstants.Key, vmInitScriptFileUri } } },
+                    { "vmAgentBlobUrl", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.VmAgentBlobUrl } } },
+                    { "vmInitScriptStorageAccountName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageAccountName } } },
+                    { "vmInitScriptStorageAccountKey", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageAccountAccessKey } } },
+                    { "vmInitScriptBase64ParametersBlob", new Dictionary<string, object>() { { VirtualMachineConstants.Key, b64ParametersBlob } } },
+                    { "networkInterfaceName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.Name } } },
+                    { "networkInterfaceSub", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.SubscriptionId } } },
+                    { "networkInterfaceRG", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.ResourceGroup } } },
+                    { "storageProfileDetails", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageProfile } } },
+                };
         }
     }
 }

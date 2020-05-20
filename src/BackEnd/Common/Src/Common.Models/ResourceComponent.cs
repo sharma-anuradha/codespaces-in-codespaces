@@ -72,6 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <summary>
         /// Gets or sets component Id.
         /// </summary>
+        [JsonProperty(PropertyName = "componentId")]
         public string ComponentId { get; set; }
 
         /// <inheritdoc/>

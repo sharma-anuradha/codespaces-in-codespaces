@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Templates\Windows\template_vm_with_custom_nic_and_disk.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(AzureMgmtFluentPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.Management.Network" Version="5.0.0" />
     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="$(AzureStoragePackageVersion)" />
@@ -33,6 +37,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Templates\Linux\vm_init.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Templates\Windows\template_vm_with_custom_nic_and_disk.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Templates\Windows\template_vm_with_custom_nic.json">

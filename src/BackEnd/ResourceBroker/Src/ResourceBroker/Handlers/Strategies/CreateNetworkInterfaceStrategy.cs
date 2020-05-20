@@ -4,9 +4,9 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -49,20 +49,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
                 throw new NotSupportedException($"Pool compute options is not provided - {input.Options?.GetType()}");
             }
 
-            var subnetResourceInfo = Requires.NotNull(computeOption.SubnetResourceInfo, nameof(computeOption.SubnetResourceInfo));
+            var subnetResourceId = Requires.NotNull(computeOption.SubnetResourceId, nameof(computeOption.SubnetResourceId));
+            var subnetSubscription = ResourceId.FromString(subnetResourceId)?.SubscriptionId;
+            var subnetResourceGroup = ResourceId.FromString(subnetResourceId)?.ResourceGroupName;
+            if (string.IsNullOrEmpty(subnetSubscription))
+            {
+                throw new NotSupportedException($"Subnet resource id is not valid - {subnetResourceId}");
+            }
 
-            var operationInput = (CreateResourceWithComponentInput)input.OperationInput;
-
-            // Add additional tags
-            resourceTags.Add(ResourceTagName.ComputeOS, computeDetails.OS.ToString());
-
+            // TODO:: Check for network interface capacity in subnetSubscription
             var result = new NetworkInterfaceProviderCreateInput
             {
-                VnetName = subnetResourceInfo.VnetName,
-                SubnetName = subnetResourceInfo.SubnetName,
-                ResourceGroup = operationInput.AzureResourceGroup,
+                SubnetAzureResourceId = subnetResourceId,
+                SubnetSubscription = Guid.Parse(subnetSubscription),
+                ResourceGroup = subnetResourceGroup,
                 Location = computeDetails.Location,
-                Subscription = subnetResourceInfo.SubscriptionId,
                 ResourceTags = resourceTags,
             };
 
@@ -79,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
         public async Task<ResourceCreateContinuationResult> RunCreateOperationCoreAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             // Run create operation
-            if (resource.Value.Type == ResourceType.NetworkInterface)
+            if (input.Type == ResourceType.NetworkInterface)
             {
                 return await NetworkInterfaceProvider.CreateAsync((NetworkInterfaceProviderCreateInput)input.OperationInput, logger.NewChildLogger());
             }

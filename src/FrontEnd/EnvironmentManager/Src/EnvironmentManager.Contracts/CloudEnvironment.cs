@@ -283,6 +283,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public MetricsInfo CreationMetrics { get; set; }
 
         /// <summary>
+        /// Gets or sets the subnet for codespace.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "subnetResourceId")]
+        public string SubnetResourceId { get; set; }
+
+        /// <summary>
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>

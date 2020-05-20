@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 options = new CreateComputeContinuationInputOptions
                 {
                     OSDiskResourceId = extendedProperties.OSDiskResourceID,
-                    SubnetResourceInfo = extendedProperties.SubnetResourceInfo,
+                    SubnetResourceId = extendedProperties.SubnetResourceId,
                 };
             }
 

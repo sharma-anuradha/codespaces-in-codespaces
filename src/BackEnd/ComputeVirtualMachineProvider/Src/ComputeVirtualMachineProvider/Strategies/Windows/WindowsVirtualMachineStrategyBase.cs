@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
@@ -181,6 +182,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             var encodedBytes = Encoding.UTF8.GetBytes(parametersBlob);
             var b64ParametersBlob = Convert.ToBase64String(encodedBytes);
             return b64ParametersBlob;
+        }
+
+        /// <summary>
+        /// Validate OS Disk.
+        /// </summary>
+        /// <param name="input">input.</param>
+        /// <param name="osDiskInfo">os disk info.</param>
+        /// <returns>result.</returns>
+        protected async Task<IDisk> ValidateOSDisk(VirtualMachineProviderCreateInput input, AzureResourceInfo osDiskInfo)
+        {
+            var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
+            var disk = await azure.Disks.GetByResourceGroupAsync(osDiskInfo.ResourceGroup, osDiskInfo.Name);
+
+            if (disk.IsAttachedToVirtualMachine)
+            {
+                throw new InvalidOperationException("Should not try to use a disk which is already attached.");
+            }
+
+            return disk;
         }
 
         /// <summary>

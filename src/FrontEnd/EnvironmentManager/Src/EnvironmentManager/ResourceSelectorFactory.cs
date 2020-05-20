@@ -43,10 +43,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var properties = new AllocateExtendedProperties()
             {
                 AllocationRequestID = cloudEnvironment.Id,
+                SubnetResourceId = cloudEnvironment.SubnetResourceId,
             };
 
-            bool isWindowsEnvPersistingOSDisk = await IsWindowsEnvironmentPersistingOSDiskAsync(logger);
-            if (isWindowsEnvPersistingOSDisk && sku.ComputeOS == ComputeOS.Windows)
+            var isWindowsEnvPersistingOSDisk = await IsWindowsEnvironmentPersistingOSDiskAsync(logger);
+            var isOsDiskAllocationRequired = isWindowsEnvPersistingOSDisk && sku.ComputeOS == ComputeOS.Windows;
+            var isStorageAllocated = cloudEnvironment.Storage?.Type == ResourceType.StorageFileShare;
+
+            if (isOsDiskAllocationRequired)
             {
                 properties.OSDiskResourceID = cloudEnvironment.OSDisk?.ResourceId.ToString();
             }
@@ -62,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             requests.Add(computeRequest);
 
-            if (isWindowsEnvPersistingOSDisk && sku.ComputeOS == ComputeOS.Windows)
+            if (isOsDiskAllocationRequired)
             {
                 var osDiskRequest = new AllocateRequestBody
                 {
@@ -76,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 requests.Add(osDiskRequest);
             }
 
-            if (sku.ComputeOS != ComputeOS.Windows || !isWindowsEnvPersistingOSDisk)
+            if (!(isOsDiskAllocationRequired || isStorageAllocated))
             {
                 var storageRequest = new AllocateRequestBody
                 {
