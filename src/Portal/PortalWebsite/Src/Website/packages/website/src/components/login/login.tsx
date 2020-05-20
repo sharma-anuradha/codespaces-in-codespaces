@@ -16,6 +16,7 @@ import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
+import { INTERACTION_REQUIRED_AUTH_FLAG } from './loginCallback';
 
 import './login.css';
 
@@ -51,6 +52,7 @@ function addCookieConsentCookie() {
 const LoginPageSignInForm = (props: LoginProps) => {
     const loginClick = useCallback(() => {
         addCookieConsentCookie(); // Workaround to add MSCC cookie for SPA
+        localStorage.removeItem(INTERACTION_REQUIRED_AUTH_FLAG);
         props.login().catch((error) => {
             trace.error('Login failed', { error });
         });

@@ -29,6 +29,7 @@ interface AppProps {
 const isSupported = isSupportedBrowser();
 const isPartiallySupported = isPartiallySupportedBrowser();
 const partiallySupportedLocalStorageKey = 'vso.suppress.partial.browsersupport.warning';
+const notSupportedLocalStorageKey = 'vso.suppress.browsersupport.warning';
 
 class AppRoot extends Component<AppProps, AppState> {
     constructor(props: AppProps) {
@@ -42,7 +43,9 @@ class AppRoot extends Component<AppProps, AppState> {
                 isMessageBarVisible = true;
             }
         } else if (!isSupported) {
-            isMessageBarVisible = true;
+            if (window && window.localStorage.getItem(notSupportedLocalStorageKey) !== 'true') {
+                isMessageBarVisible = true;
+            }
         }
 
         this.state = {
@@ -104,7 +107,15 @@ class AppRoot extends Component<AppProps, AppState> {
             <div style={{ margin: '0 -.8rem' }}>
                 <MessageBar messageBarType={MessageBarType.warning}>
                     Your browser isn’t currently supported in the preview, but we’ll be adding
-                    support soon.
+                    support soon.{' '}
+                    <Link
+                        onClick={() => {
+                            window.localStorage.setItem(notSupportedLocalStorageKey, 'true');
+                            this.setState({ isMessageBarVisible: false });
+                        }}
+                    >
+                        Don't show again
+                    </Link>
                 </MessageBar>
             </div>
         );

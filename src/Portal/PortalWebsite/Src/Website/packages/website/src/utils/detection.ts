@@ -21,13 +21,9 @@ export function isSupportedBrowser() {
 }
 
 export function isPartiallySupportedBrowser() {
-    if (!info) {
+    if (!info || info.name === 'edge-ios') {
         return false;
     }
 
-    if (info.name === 'edge-ios') {
-        return false;
-    }
-
-    return isHostedOnGithub() && (info.name === 'safari' || info.os === 'iOS');
+    return (info.name === 'firefox' || info.name === 'safari' || (isHostedOnGithub() && info.os === 'iOS'));
 }

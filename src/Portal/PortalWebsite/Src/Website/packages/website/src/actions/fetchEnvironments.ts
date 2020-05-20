@@ -5,7 +5,6 @@ import * as envRegService from '../services/envRegService';
 import { action } from './middleware/useActionCreator';
 import { useDispatch } from './middleware/useDispatch';
 import { ServiceAuthenticationError } from './middleware/useWebClient';
-import { logout } from './logout';
 
 export const fetchEnvironmentsActionType = 'async.environments.fetch';
 export const fetchEnvironmentsSuccessActionType = 'async.environments.fetch.success';
@@ -33,7 +32,6 @@ export async function fetchEnvironments() {
         dispatch(fetchEnvironmentsSuccessAction(environments));
     } catch (err) {
         if (err instanceof ServiceAuthenticationError) {
-            dispatch(logout({ isExplicit: false }));
             dispatch(fetchEnvironmentsFailureAction(err));
 
             throw err;

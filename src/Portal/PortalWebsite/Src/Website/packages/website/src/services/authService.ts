@@ -247,8 +247,14 @@ export class AuthService {
     }
 
     private makeTokenRequest = async () => {
-        // tslint:disable-next-line
-        const [_, keys] = await Promise.all([this.getCachedToken(), fetchKeychainKeys()]);
+        const token = await this.getCachedToken();
+
+        if (!token) {
+            // try to refresh the token by doing redirect (in case token expired)
+            return this.acquireTokenRedirect();
+        }
+
+        const keys = await createKeys(token.accessToken);
 
         if (!keys) {
             this.logout();

@@ -198,9 +198,7 @@ describe('actions - init', () => {
                 'async.plans.getPlans',
                 'async.plans.getPlans.success',
                 'async.environments.fetch',
-                'async.authentication.clearData',
                 'async.environments.fetch.failure',
-                'async.authentication.clearData.failure',
                 'async.app.init.failure'
             );
         }
