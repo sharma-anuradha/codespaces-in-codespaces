@@ -51,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
                 // Variables for repository seed
                 new EnvVarGitRepoUrl(cloudEnvironment),
+                new EnvVarGitSubmoduleClone(cloudEnvironment),
                 new EnvVarGitRepoCommit(cloudEnvironment),
                 new EnvVarGitConfigUserName(cloudEnvironment),
                 new EnvVarGitConfigUserEmail(cloudEnvironment),
@@ -215,6 +216,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 var moniker = CloudEnvironment.Seed.SeedMoniker;
 
                 return new Tuple<string, string>(EnvironmentVariableConstants.GitRepoUrl, moniker);
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Generate the git submodule clone variable.
+    /// </summary>
+    public class EnvVarGitSubmoduleClone : EnvironmentVariableStrategy
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EnvVarGitSubmoduleClone"/> class.
+        /// </summary>
+        /// <param name="cloudEnvironment">The cloud environment.</param>
+        public EnvVarGitSubmoduleClone(CloudEnvironment cloudEnvironment)
+            : base(cloudEnvironment)
+        {
+        }
+
+        /// <inheritdoc/>
+        public override Tuple<string, string> GetEnvironmentVariable()
+        {
+            if (CloudEnvironment.Seed != null)
+            {
+                bool recurseClone = CloudEnvironment.Seed.RecurseClone;
+                return new Tuple<string, string>(EnvironmentVariableConstants.GitEnableSubmoduleClone, recurseClone.ToString());
             }
 
             return null;

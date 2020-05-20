@@ -28,5 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]
         public GitConfigOptionsBody GitConfig { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the submodules of the repository should be cloned.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "recurseClone")]
+        public bool RecurseClone { get; set; }
     }
 }

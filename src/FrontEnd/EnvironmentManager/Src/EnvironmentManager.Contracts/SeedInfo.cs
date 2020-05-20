@@ -39,5 +39,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         [GDPR(Action = GDPRAction.Export)]
         [JsonProperty(Required = Required.Default, PropertyName = "gitConfig")]
         public GitConfigOptions GitConfig { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the submodules of the repository should be cloned.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "recurseClone")]
+        public bool RecurseClone { get; set; }
     }
 }

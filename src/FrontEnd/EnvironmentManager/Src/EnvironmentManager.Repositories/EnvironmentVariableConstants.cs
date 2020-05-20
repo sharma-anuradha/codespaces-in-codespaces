@@ -15,6 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public const string GitRepoUrl = "GIT_REPO_URL";
         public const string GitRepoCommit = "GIT_REPO_COMMIT";
         public const string GitPRNumber = "GIT_PR_NUM";
+        public const string GitEnableSubmoduleClone = "GIT_ENABLE_SUBMODULE_CLONE";
         public const string GitConfigUsername = "GIT_CONFIG_USER_NAME";
         public const string GitConfigUserEmail = "GIT_CONFIG_USER_EMAIL";
         public const string SessionCallback = "SESSION_CALLBACK";
