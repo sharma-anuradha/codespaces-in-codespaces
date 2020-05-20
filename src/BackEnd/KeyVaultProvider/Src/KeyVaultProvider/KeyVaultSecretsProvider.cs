@@ -85,6 +85,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             });
         }
 
+        /// <summary>
+        /// Delete a secret by secret name.
+        /// </summary>
+        /// <param name="secretName">The secret name.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The secret value.</returns>
+        public async Task DeleteSecretAsync(string secretName, IDiagnosticsLogger logger)
+        {
+            await logger.OperationScopeAsync($"{LoggingBaseName}_delete_secret", async childLogger =>
+            {
+                childLogger
+                    .FluentAddValue("KeyVaultName", KeyVaultName)
+                    .FluentAddValue("SecretName", secretName);
+
+                Requires.NotNullOrEmpty(secretName, nameof(secretName));
+
+                var keyVaultClient = GetKeyVaultClient();
+                await keyVaultClient.DeleteSecretAsync(KeyvaultBaseUrl, secretName);
+            });
+        }
+
         private IKeyVaultClient GetKeyVaultClient()
         {
             if (cachedKeyVaultClient == null)

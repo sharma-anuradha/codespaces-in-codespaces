@@ -26,16 +26,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Secret
         }
 
         /// <inheritdoc/>
-        public Task AddOrUpdateSecreFiltersAsync(
-            Guid resourceId,
-            Guid secretId,
-            IDictionary<SecretFilterType, string> secretFilters,
-            IDiagnosticsLogger logger)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
         public async Task<SecretResult> CreateSecretAsync(
             Guid resourceId,
             CreateSecretBody createSecretBody,
@@ -47,22 +37,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Secret
         }
 
         /// <inheritdoc/>
-        public Task DeleteSecretAsync(
+        public async Task DeleteSecretAsync(
             Guid resourceId,
             Guid secretId,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            Requires.NotEmpty(secretId, nameof(secretId));
+            var uri = SecretManagerHttpContract.GetDeleteSecretUri(resourceId, secretId);
+            await SendRawAsync<object>(SecretManagerHttpContract.DeleteSecretMethod, uri, null, logger);
         }
 
         /// <inheritdoc/>
-        public Task DeleteSecretFilterAsync(
+        public async Task<SecretResult> DeleteSecretFilterAsync(
             Guid resourceId,
             Guid secretId,
             SecretFilterType secretFilterType,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            Requires.NotEmpty(secretId, nameof(secretId));
+            var uri = SecretManagerHttpContract.GetDeleteSecretFilterUri(resourceId, secretId, secretFilterType);
+            return await SendAsync<object, SecretResult>(SecretManagerHttpContract.DeleteSecretFilterMethod, uri, null, logger);
         }
 
         /// <inheritdoc/>
@@ -72,17 +68,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Secret
         {
             Requires.NotNullOrEmpty(resourceIds, nameof(resourceIds));
             var uri = SecretManagerHttpContract.GetGetSecretsUri(resourceIds);
-            return await SendAsync<IEnumerable<Guid>, IEnumerable<ResourceSecretsResult>>(SecretManagerHttpContract.GetSecretsMethod, uri, resourceIds, logger);
+            return await SendAsync<object, IEnumerable<ResourceSecretsResult>>(SecretManagerHttpContract.GetSecretsMethod, uri, null, logger);
         }
 
         /// <inheritdoc/>
-        public Task<SecretResult> UpdateSecretAsync(
+        public async Task<SecretResult> UpdateSecretAsync(
             Guid resourceId,
             Guid secretId,
             UpdateSecretBody updateSecretBody,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            Requires.NotEmpty(resourceId, nameof(resourceId));
+            Requires.NotEmpty(secretId, nameof(secretId));
+            var uri = SecretManagerHttpContract.GetUpdateSecretUri(resourceId, secretId);
+            return await SendAsync<UpdateSecretBody, SecretResult>(SecretManagerHttpContract.UpdateSecretMethod, uri, updateSecretBody, logger);
         }
     }
 }

@@ -54,23 +54,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         /// <returns>The IActionResult.</returns>
         [HttpPost("{resourceId}/" + SecretManagerHttpContract.SecretManagementOperation)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("create")]
         public async Task<IActionResult> CreateSecretAsync(
             [FromRoute] Guid resourceId,
             [FromBody] CreateSecretBody createSecretBody,
             [FromServices] IDiagnosticsLogger logger)
         {
-            Requires.NotEmpty(resourceId, nameof(resourceId));
-            Requires.NotNull(createSecretBody, nameof(createSecretBody));
-            Requires.NotNullOrEmpty(createSecretBody.SecretName, nameof(createSecretBody.SecretName));
-            Requires.NotNullOrEmpty(createSecretBody.Value, nameof(createSecretBody.Value));
-
-            SecretResult secretResult;
             try
             {
-                secretResult = await SecretManagerHttp.CreateSecretAsync(resourceId, createSecretBody, logger.NewChildLogger());
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotNull(createSecretBody, nameof(createSecretBody));
+                Requires.NotNullOrEmpty(createSecretBody.SecretName, nameof(createSecretBody.SecretName));
+                Requires.NotNullOrEmpty(createSecretBody.Value, nameof(createSecretBody.Value));
+
+                var secretResult = await SecretManagerHttp.CreateSecretAsync(resourceId, createSecretBody, logger.NewChildLogger());
+                return Ok(secretResult);
             }
-            catch (KeyVaultResourceNotFoundException)
+            catch (NotFoundException)
             {
                 return NotFound();
             }
@@ -78,8 +80,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
             {
                 return BadRequest();
             }
-
-            return Ok(secretResult);
         }
 
         /// <summary>
@@ -91,18 +91,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpOperationalScope("create")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("get")]
         public async Task<IActionResult> GetResourceSecrets(
             [FromQuery(Name = "resourceId")] IEnumerable<Guid> resourceIds,
             [FromServices] IDiagnosticsLogger logger)
         {
-            IEnumerable<ResourceSecretsResult> resourceSecrets;
             try
             {
                 Requires.NotNullOrEmpty(resourceIds, nameof(resourceIds));
-                resourceSecrets = await SecretManagerHttp.GetSecretsAsync(resourceIds, logger.NewChildLogger());
+                var resourceSecrets = await SecretManagerHttp.GetSecretsAsync(resourceIds, logger.NewChildLogger());
+                return Ok(resourceSecrets);
             }
-            catch (KeyVaultResourceNotFoundException)
+            catch (NotFoundException)
             {
                 return NotFound();
             }
@@ -110,18 +111,120 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
             {
                 return BadRequest();
             }
-
-            return Ok(resourceSecrets);
         }
 
-        /// <inheritdoc/>
-        Task ISecretManagerHttpContract.AddOrUpdateSecreFiltersAsync(
-            Guid resourceId,
-            Guid secretId,
-            IDictionary<SecretFilterType, string> secretFilters,
-            IDiagnosticsLogger logger)
+        /// <summary>
+        /// Update an existing secret under specified resource.
+        /// </summary>
+        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="secretId">Secret Id.</param>
+        /// <param name="updateSecretBody">Update secret body.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The IActionResult.</returns>
+        [HttpPut("{resourceId}/" + SecretManagerHttpContract.SecretManagementOperation + "/{secretId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("update")]
+        public async Task<IActionResult> UpdateSecretAsync(
+            [FromRoute] Guid resourceId,
+            [FromRoute] Guid secretId,
+            [FromBody] UpdateSecretBody updateSecretBody,
+            [FromServices] IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            try
+            {
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+                Requires.NotNull(updateSecretBody, nameof(updateSecretBody));
+
+                var secretResult = await SecretManagerHttp.UpdateSecretAsync(resourceId, secretId, updateSecretBody, logger.NewChildLogger());
+                return Ok(secretResult);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest();
+            }
+        }
+
+        /// <summary>
+        /// Delete a secret under a specified resource.
+        /// </summary>
+        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="secretId">Secret Id.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The IActionResult.</returns>
+        [HttpDelete("{resourceId}/" + SecretManagerHttpContract.SecretManagementOperation + "/{secretId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("delete")]
+        public async Task<IActionResult> DeleteSecretAsync(
+            [FromRoute] Guid resourceId,
+            [FromRoute] Guid secretId,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            try
+            {
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+
+                await SecretManagerHttp.DeleteSecretAsync(resourceId, secretId, logger.NewChildLogger());
+                return NoContent();
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest();
+            }
+        }
+
+        /// <summary>
+        /// Delete a filter from a secret under a specified resource.
+        /// </summary>
+        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="secretId">Secret Id.</param>
+        /// <param name="secretFilterType">Secret filter type.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The IActionResult.</returns>
+        [HttpDelete("{resourceId}/"
+                    + SecretManagerHttpContract.SecretManagementOperation
+                    + "/{secretId}/"
+                    + SecretManagerHttpContract.FilterManagementOperation
+                    + "/{secretFilterType}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("delete_filter")]
+        public async Task<IActionResult> DeleteSecretFilterAsync(
+            [FromRoute] Guid resourceId,
+            [FromRoute] Guid secretId,
+            [FromRoute] SecretFilterType secretFilterType,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            try
+            {
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+
+                var secretResult = await SecretManagerHttp.DeleteSecretFilterAsync(resourceId, secretId, secretFilterType, logger.NewChildLogger());
+                return Ok(secretResult);
+            }
+            catch (NotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest();
+            }
         }
 
         /// <inheritdoc/>
@@ -137,22 +240,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        Task ISecretManagerHttpContract.DeleteSecretAsync(
+        async Task ISecretManagerHttpContract.DeleteSecretAsync(
             Guid resourceId,
             Guid secretId,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            logger.AddBaseResourceId(resourceId);
+            await SecretManager.DeleteSecretAsync(resourceId, secretId, logger);
         }
 
         /// <inheritdoc/>
-        Task ISecretManagerHttpContract.DeleteSecretFilterAsync(
+        async Task<SecretResult> ISecretManagerHttpContract.DeleteSecretFilterAsync(
             Guid resourceId,
             Guid secretId,
-            SecretFilterType secretFilterType,
+            SecretFilterType secretFilterTypeContract,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            logger.AddBaseResourceId(resourceId);
+            var secretFilterType = Mapper.Map<KeyVaultProvider.Models.SecretFilterType>(secretFilterTypeContract);
+            var secretResult = await SecretManager.DeleteSecretFilterAsync(resourceId, secretId, secretFilterType, logger);
+            return Mapper.Map<SecretResult>(secretResult);
         }
 
         /// <inheritdoc/>
@@ -165,13 +272,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         }
 
         /// <inheritdoc/>
-        Task<SecretResult> ISecretManagerHttpContract.UpdateSecretAsync(
+        async Task<SecretResult> ISecretManagerHttpContract.UpdateSecretAsync(
             Guid resourceId,
             Guid secretId,
             UpdateSecretBody updateSecretBody,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            logger.AddBaseResourceId(resourceId);
+            var updateSecretInput = Mapper.Map<UpdateSecretInput>(updateSecretBody);
+            var secretResult = await SecretManager.UpdateSecretAsync(resourceId, secretId, updateSecretInput, logger);
+            return Mapper.Map<SecretResult>(secretResult);
         }
     }
 }

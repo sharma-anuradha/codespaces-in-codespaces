@@ -55,11 +55,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         public static readonly HttpMethod DeleteSecretMethod = HttpMethod.Delete;
 
         /// <summary>
-        /// The add/update secret filters http method.
-        /// </summary>
-        public static readonly HttpMethod AddOrUpdateSecretFiltersMethod = HttpMethod.Post;
-
-        /// <summary>
         /// The delete secret filter http method.
         /// </summary>
         public static readonly HttpMethod DeleteSecretFilterMethod = HttpMethod.Delete;
@@ -105,15 +100,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// <returns>Uri.</returns>
         public static string GetDeleteSecretUri(Guid resourceId, Guid secretId) =>
             $"{ResourceSecretManagerV1Route}/{resourceId}/{SecretManagementOperation}/{secretId}";
-
-        /// <summary>
-        /// Get the add/update secret filters uri.
-        /// </summary>
-        /// <param name="resourceId">The resource id.</param>
-        /// <param name="secretId">The secret id.</param>
-        /// <returns>Uri.</returns>
-        public static string GetAddOrUpdateSecretFiltersUri(Guid resourceId, Guid secretId) =>
-            $"{ResourceSecretManagerV1Route}/{resourceId}/{SecretManagementOperation}/{secretId}/{FilterManagementOperation}";
 
         /// <summary>
         /// Get the delete secret filter uri.

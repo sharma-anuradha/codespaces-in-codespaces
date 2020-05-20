@@ -47,22 +47,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
 
         /// <inheritdoc/>
-        public Task AddOrUpdateSecreFiltersAsync(
-            Guid resourceId,
-            Guid secretId,
-            IDictionary<SecretFilterType, string> secretFilters,
-            IDiagnosticsLogger logger)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
         public async Task<UserSecretResult> CreateSecretAsync(
             Guid resourceId,
             CreateSecretInput createSecretInput,
             IDiagnosticsLogger logger)
         {
-            return await logger.OperationScopeAsync($"{LoggingBaseName}_create_secret", async childLogger =>
+            return await logger.RetryOperationScopeAsync($"{LoggingBaseName}_create_secret", async childLogger =>
             {
                 Requires.NotEmpty(resourceId, nameof(resourceId));
                 Requires.NotNull(logger, nameof(logger));
@@ -91,22 +81,69 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         }
 
         /// <inheritdoc/>
-        public Task DeleteSecretAsync(
+        public async Task DeleteSecretAsync(
             Guid resourceId,
             Guid secretId,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            await logger.RetryOperationScopeAsync($"{LoggingBaseName}_delete_secret", async childLogger =>
+            {
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+
+                var keyVaultResource = await GetKeyVaultResourceAsync(resourceId, childLogger.NewChildLogger());
+
+                try
+                {
+                    var secret = GetSecretFromKeyVaultResource(secretId, keyVaultResource);
+                    keyVaultResource.UserSecrets.Remove(secret);
+                    await DeleteSecretFromAzureKeyVaultAsync(keyVaultResource, secret.Id.ToString(), childLogger);
+                    secret.LastModified = DateTime.UtcNow;
+                    await ResourceRepository.UpdateAsync(keyVaultResource, childLogger.NewChildLogger());
+                }
+                catch (NotFoundException)
+                {
+                    // Success if the secret is already deleted (not exists)
+                    return;
+                }
+            });
         }
 
         /// <inheritdoc/>
-        public Task DeleteSecretFilterAsync(
+        public async Task<UserSecretResult> DeleteSecretFilterAsync(
             Guid resourceId,
             Guid secretId,
             SecretFilterType secretFilterType,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            return await logger.RetryOperationScopeAsync($"{LoggingBaseName}_delete_secret_filter", async childLogger =>
+            {
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+
+                var isSecretChanged = false;
+                var keyVaultResource = await GetKeyVaultResourceAsync(resourceId, childLogger.NewChildLogger());
+                var secret = GetSecretFromKeyVaultResource(secretId, keyVaultResource);
+
+                // Delete the specified secret filters if it exists
+                if (secret.Filters != null)
+                {
+                    if (secret.Filters.ContainsKey(secretFilterType))
+                    {
+                        secret.Filters.Remove(secretFilterType);
+                        isSecretChanged = true;
+                    }
+                }
+
+                // Update resource record in cosmos db if it is modified
+                if (isSecretChanged)
+                {
+                    secret.LastModified = DateTime.UtcNow;
+                    await ResourceRepository.UpdateAsync(keyVaultResource, childLogger.NewChildLogger());
+                }
+
+                return Mapper.Map<UserSecretResult>(secret);
+            });
         }
 
         /// <inheritdoc/>
@@ -114,9 +151,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             IEnumerable<Guid> resourceIds,
             IDiagnosticsLogger logger)
         {
-            var resourceSecretsList = new List<ResourceSecrets>(resourceIds.Count());
             return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secrets", async childLogger =>
             {
+                var resourceSecretsList = new List<ResourceSecrets>(resourceIds.Count());
                 ValidateGuids(resourceIds, nameof(resourceIds));
                 foreach (var resourceId in resourceIds)
                 {
@@ -134,13 +171,74 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         }
 
         /// <inheritdoc/>
-        public Task<UserSecretResult> UpdateSecretAsync(
+        public async Task<UserSecretResult> UpdateSecretAsync(
             Guid resourceId,
             Guid secretId,
-            UpdateSecretInput secret,
+            UpdateSecretInput updateSecretInput,
             IDiagnosticsLogger logger)
         {
-            throw new NotImplementedException();
+            return await logger.RetryOperationScopeAsync($"{LoggingBaseName}_update_secret", async childLogger =>
+            {
+                Requires.NotEmpty(resourceId, nameof(resourceId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+                Requires.NotNull(updateSecretInput, nameof(updateSecretInput));
+
+                var isSecretChanged = false;
+                var keyVaultResource = await GetKeyVaultResourceAsync(resourceId, childLogger.NewChildLogger());
+                var secret = GetSecretFromKeyVaultResource(secretId, keyVaultResource);
+
+                // Update secret name if needed
+                if (!string.IsNullOrEmpty(updateSecretInput.SecretName))
+                {
+                    secret.SecretName = updateSecretInput.SecretName;
+                    isSecretChanged = true;
+                }
+
+                // Update secret filters if needed
+                if (updateSecretInput.Filters != null & updateSecretInput.Filters.Count() > 0)
+                {
+                    if (secret.Filters == null)
+                    {
+                        secret.Filters = new Dictionary<SecretFilterType, string>();
+                    }
+
+                    foreach (var filter in updateSecretInput.Filters)
+                    {
+                        secret.Filters[filter.Key] = filter.Value;
+                    }
+
+                    isSecretChanged = true;
+                }
+
+                // Update secret value in azure key vault if needed
+                if (!string.IsNullOrEmpty(updateSecretInput.Value))
+                {
+                    var keyVaultSecretsProvider = GetKeyVaultSecretsProvider(keyVaultResource);
+                    await keyVaultSecretsProvider.CreateOrUpdateSecretAsync(secret.Id.ToString(), updateSecretInput.Value, childLogger.NewChildLogger());
+                    isSecretChanged = true;
+                }
+
+                // Update resource record in cosmos db if any of it's properties are modified
+                if (isSecretChanged)
+                {
+                    secret.LastModified = DateTime.UtcNow;
+                    await ResourceRepository.UpdateAsync(keyVaultResource, childLogger.NewChildLogger());
+                }
+
+                return Mapper.Map<UserSecretResult>(secret);
+            });
+        }
+
+        private static UserSecret GetSecretFromKeyVaultResource(Guid secretId, ResourceRecord keyVaultResource)
+        {
+            var secret = keyVaultResource.UserSecrets?.SingleOrDefault(x => x.Id == secretId);
+
+            if (secret == null)
+            {
+                throw new NotFoundException("No secrets found with id '{}' not found.");
+            }
+
+            return secret;
         }
 
         private KeyVaultSecretsProvider GetKeyVaultSecretsProvider(ResourceRecord keyVaultResource)
@@ -166,10 +264,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             var keyVaultResource = await ResourceRepository.GetAsync(resourceId.ToString("D"), logger);
             if (keyVaultResource?.Type != ResourceType.KeyVault)
             {
-                throw new KeyVaultResourceNotFoundException(resourceId);
+                throw new NotFoundException($"No key vaults found with resource id '{resourceId}'");
             }
 
             return keyVaultResource;
+        }
+
+        private async Task DeleteSecretFromAzureKeyVaultAsync(ResourceRecord keyVaultResource, string secretName, IDiagnosticsLogger logger)
+        {
+            var keyVaultSecretsProvider = GetKeyVaultSecretsProvider(keyVaultResource);
+            await logger.RetryOperationScopeAsync(
+                $"{LoggingBaseName}_delete secret_from_azure_keyvault",
+                async (childLogger) =>
+                {
+                    await keyVaultSecretsProvider.DeleteSecretAsync(secretName, childLogger);
+                },
+                swallowException: true);
         }
 
         private void ValidateGuids(IEnumerable<Guid> guids, string parameterName)

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -23,12 +24,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// <summary>
         /// Gets or sets secret name.
         /// </summary>
+        [StringLength(100)]
         [JsonProperty(Required = Required.Always, PropertyName = "secretName")]
         public string SecretName { get; set; }
 
         /// <summary>
         /// Gets or sets secret value.
         /// </summary>
+        [StringLength(1024)]
         [JsonProperty(Required = Required.Always, PropertyName = "value")]
         public string Value { get; set; }
 

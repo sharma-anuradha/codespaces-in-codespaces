@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.VsSaaS.Common;
@@ -18,6 +19,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretFilterType;
+using SecretFilterTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
 using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
@@ -80,11 +83,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         {
             return await logger.OperationScopeAsync($"{LoggingBaseName}_create_secret", async (childLogger) =>
             {
+                Requires.NotNull(planId, nameof(planId));
                 Requires.NotNull(scopedCreateSecretInput, nameof(scopedCreateSecretInput));
                 AuthorizeSecretScope(scopedCreateSecretInput.Scope);
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
 
-                var secretStore = await CreateOrGetSecretStoreAsync(vsoPlan, scopedCreateSecretInput.Scope, childLogger);
+                var secretStore = await GetSecretStoreAsync(
+                    vsoPlan,
+                    scopedCreateSecretInput.Scope,
+                    createIfNotExists: true,
+                    childLogger);
+
                 var createSecretBody = Mapper.Map<CreateSecretBody>(scopedCreateSecretInput);
                 try
                 {
@@ -108,6 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         {
             return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secret_stores_by_plan", async (childLogger) =>
             {
+                Requires.NotNull(planId, nameof(planId));
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
                 var userId = CurrentUserProvider.CurrentUserIdSet.PreferredUserId;
                 var scopedSecrets = new List<ScopedSecretResult>();
@@ -131,6 +141,118 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
 
                 // Return scoped secrets.
                 return scopedSecrets;
+            });
+        }
+
+        /// <inheritdoc/>
+        public async Task<ScopedSecretResult> UpdateSecretAsync(
+            string planId,
+            Guid secretId,
+            ScopedUpdateSecretInput scopedUpdateSecretInput,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_update_secret", async (childLogger) =>
+            {
+                Requires.NotNull(planId, nameof(planId));
+                Requires.NotNull(scopedUpdateSecretInput, nameof(scopedUpdateSecretInput));
+                AuthorizeSecretScope(scopedUpdateSecretInput.Scope);
+                var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
+
+                var secretStore = await GetSecretStoreAsync(
+                    vsoPlan,
+                    scopedUpdateSecretInput.Scope,
+                    createIfNotExists: false,
+                    childLogger);
+
+                var updateSecretBody = Mapper.Map<UpdateSecretBody>(scopedUpdateSecretInput);
+                try
+                {
+                    var secret = await SecretManagerHttpClient.UpdateSecretAsync(
+                        secretStore.SecretResource.ResourceId,
+                        secretId,
+                        updateSecretBody,
+                        childLogger);
+                    return ScopeSecret(secretStore.Scope, secret);
+                }
+                catch (HttpResponseStatusException e) when (e.StatusCode == HttpStatusCode.NotFound)
+                {
+                    throw new EntityNotFoundException((int)MessageCodes.SecretNotFound, innerException: e);
+                }
+                catch (Exception e)
+                {
+                    throw new ProcessingFailedException((int)MessageCodes.FailedToUpdateSecret, innerException: e);
+                }
+            });
+        }
+
+        /// <inheritdoc/>
+        public async Task DeleteSecretAsync(
+            string planId,
+            Guid secretId,
+            SecretScope secretScope,
+            IDiagnosticsLogger logger)
+        {
+            await logger.OperationScopeAsync($"{LoggingBaseName}_delete_secret", async (childLogger) =>
+            {
+                Requires.NotNull(planId, nameof(planId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+                AuthorizeSecretScope(secretScope);
+                var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
+
+                var secretStore = await GetSecretStoreAsync(
+                    vsoPlan,
+                    secretScope,
+                    createIfNotExists: false,
+                    childLogger);
+
+                try
+                {
+                    await SecretManagerHttpClient.DeleteSecretAsync(
+                        secretStore.SecretResource.ResourceId,
+                        secretId,
+                        childLogger);
+                }
+                catch (Exception e)
+                {
+                    throw new ProcessingFailedException((int)MessageCodes.FailedToDeleteSecret, innerException: e);
+                }
+            });
+        }
+
+        /// <inheritdoc/>
+        public async Task<ScopedSecretResult> DeleteSecretFilterAsync(
+            string planId,
+            Guid secretId,
+            SecretFilterType secretFilterType,
+            SecretScope secretScope,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_delete_secret_filter", async (childLogger) =>
+            {
+                Requires.NotNull(planId, nameof(planId));
+                Requires.NotEmpty(secretId, nameof(secretId));
+                AuthorizeSecretScope(secretScope);
+                var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
+
+                var secretStore = await GetSecretStoreAsync(
+                    vsoPlan,
+                    secretScope,
+                    createIfNotExists: false,
+                    childLogger);
+
+                try
+                {
+                    var secret = await SecretManagerHttpClient.DeleteSecretFilterAsync(
+                        secretStore.SecretResource.ResourceId,
+                        secretId,
+                        Mapper.Map<SecretFilterTypeHttpContract>(secretFilterType),
+                        childLogger);
+                    return ScopeSecret(secretStore.Scope, secret);
+                }
+                catch (Exception e)
+                {
+                    throw new ProcessingFailedException((int)MessageCodes.FailedToUpdateSecret, innerException: e);
+                }
             });
         }
 
@@ -178,9 +300,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             return scopedSecret;
         }
 
-        private async Task<SecretStore> CreateOrGetSecretStoreAsync(
+        private async Task<SecretStore> GetSecretStoreAsync(
             VsoPlan vsoPlan,
             SecretScope secretScope,
+            bool createIfNotExists,
             IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync($"{LoggingBaseName}_create_or_get_secret_store", async (childLogger) =>
@@ -199,12 +322,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                 }
                 else
                 {
-                    throw new ForbiddenException($"Unsupported secret store type {secretScope.ToString()}");
+                    throw new ForbiddenException($"Unsupported secret scope {secretScope.ToString()}");
                 }
 
                 var keyParameters = (secretScope, ownerId, planId);
                 var secretStore = await GetSecretStoreByOwnerAndPlanAsync(keyParameters, logger)
-                                  ?? await CreateSecretsStoreAsync(keyParameters, vsoPlan, logger);
+                                  ?? (createIfNotExists ? await CreateSecretsStoreAsync(keyParameters, vsoPlan, logger) : null);
+
+                if (secretStore == null)
+                {
+                    throw new EntityNotFoundException($"No secret stores exist for the scope {secretScope}");
+                }
 
                 logger.AddBaseValue(SecretStoreManagerLoggingConstants.LogValueSecretStoreId, secretStore.Id);
 

@@ -50,7 +50,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                     cfg.CreateMap<UpdateCloudEnvironmentBody, CloudEnvironmentUpdate>();
                     cfg.CreateMap<PlanAccessToken, PlanAccessTokenResult>();
                     cfg.CreateMap<ScopedCreateSecretBody, ScopedCreateSecretInput>();
-                    cfg.CreateMap<ScopedCreateSecretInput, CreateSecretInput>();
+                    cfg.CreateMap<ScopedCreateSecretInput, CreateSecretBody>();
+                    cfg.CreateMap<ScopedUpdateSecretBody, ScopedUpdateSecretInput>();
+                    cfg.CreateMap<ScopedUpdateSecretInput, UpdateSecretBody>();
                     cfg.CreateMap<SecretResult, ScopedSecretResult>();
                     cfg.CreateMap<ScopedSecretResult, ScopedSecretResultBody>();
                 });

@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -19,6 +20,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretFilterType;
+using SecretFilterTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
+using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
+using SecretScopeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretScope;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -120,6 +125,108 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 logger.NewChildLogger());
 
             return Ok(Mapper.Map<IEnumerable<ScopedSecretResultBody>>(allScopedSecrets));
+        }
+
+        /// <summary>
+        /// Update a secret.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="secretId">The secret id.</param>
+        /// <param name="scopedUpdateSecretBody">Scoped update secret body.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The IActionResult.</returns>
+        [HttpPut("{secretId}")]
+        [ThrottlePerUserLow(nameof(SecretsController), nameof(CreateSecretAsync))]
+        [ProducesResponseType(typeof(ScopedSecretResultBody), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpOperationalScope("update")]
+        public async Task<IActionResult> UpdateSecretAsync(
+            [FromQuery] string planId,
+            [FromRoute] Guid secretId,
+            [FromBody] ScopedUpdateSecretBody scopedUpdateSecretBody,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            Requires.NotNullOrEmpty(planId, nameof(planId));
+            Requires.NotEmpty(secretId, nameof(secretId));
+            Requires.NotNull(scopedUpdateSecretBody, nameof(scopedUpdateSecretBody));
+
+            var scopedUpdateSecretInput = Mapper.Map<ScopedUpdateSecretInput>(scopedUpdateSecretBody);
+
+            var scopedSecretResult = await SecretStoreManager.UpdateSecretAsync(
+                planId,
+                secretId,
+                scopedUpdateSecretInput,
+                logger.NewChildLogger());
+
+            return Ok(Mapper.Map<ScopedSecretResultBody>(scopedSecretResult));
+        }
+
+        /// <summary>
+        /// Delete a secret.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="scope">The secret scope.</param>
+        /// <param name="secretId">The secret id.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The IActionResult.</returns>
+        [HttpDelete("{secretId}")]
+        [ThrottlePerUserLow(nameof(SecretsController), nameof(CreateSecretAsync))]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpOperationalScope("delete")]
+        public async Task<IActionResult> UpdateSecretAsync(
+            [FromQuery] string planId,
+            [FromQuery] SecretScopeHttpContract scope,
+            [FromRoute] Guid secretId,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            Requires.NotNullOrEmpty(planId, nameof(planId));
+            Requires.NotEmpty(secretId, nameof(secretId));
+
+            await SecretStoreManager.DeleteSecretAsync(
+                planId,
+                secretId,
+                Mapper.Map<SecretScope>(scope),
+                logger.NewChildLogger());
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete a filter from a secret.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="scope">The secret scope.</param>
+        /// <param name="secretId">The secret id.</param>
+        /// <param name="filterType">The Secret filter type.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The IActionResult.</returns>
+        [HttpDelete("{secretId}/filters/{filterType}")]
+        [ThrottlePerUserLow(nameof(SecretsController), nameof(CreateSecretAsync))]
+        [ProducesResponseType(typeof(ScopedSecretResultBody), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpOperationalScope("delete_filter")]
+        public async Task<IActionResult> UpdateSecretAsync(
+            [FromQuery] string planId,
+            [FromQuery] SecretScopeHttpContract scope,
+            [FromRoute] Guid secretId,
+            [FromRoute] SecretFilterTypeHttpContract filterType,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            Requires.NotNullOrEmpty(planId, nameof(planId));
+            Requires.NotEmpty(secretId, nameof(secretId));
+
+            var scopedSecretResult = await SecretStoreManager.DeleteSecretFilterAsync(
+                planId,
+                secretId,
+                Mapper.Map<SecretFilterType>(filterType),
+                Mapper.Map<SecretScope>(scope),
+                logger.NewChildLogger());
+
+            return Ok(Mapper.Map<ScopedSecretResultBody>(scopedSecretResult));
         }
     }
 }

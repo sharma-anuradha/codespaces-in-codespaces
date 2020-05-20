@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -35,6 +36,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         Task<ScopedSecretResult> CreateSecretAsync(
             string planId,
             ScopedCreateSecretInput scopedCreateSecretInput,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Update an existing secret.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="secretId">The secret id.</param>
+        /// <param name="scopedUpdateSecretInput">Scoped update secret input.</param>
+        /// <param name="logger">IDiagnostics Logger.</param>
+        /// <returns>Updated secret.</returns>
+        Task<ScopedSecretResult> UpdateSecretAsync(
+            string planId,
+            Guid secretId,
+            ScopedUpdateSecretInput scopedUpdateSecretInput,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delete an existing secret.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="secretId">The secret id.</param>
+        /// <param name="secretScope">The secret scope.</param>
+        /// <param name="logger">IDiagnostics Logger.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        Task DeleteSecretAsync(
+            string planId,
+            Guid secretId,
+            SecretScope secretScope,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Delete a filter on an existing secret.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="secretId">The secret id.</param>
+        /// <param name="secretFilterType">The secret filter type.</param>
+        /// <param name="secretScope">The secret scope.</param>
+        /// <param name="logger">IDiagnostics Logger.</param>
+        /// <returns>Updated secret.</returns>
+        Task<ScopedSecretResult> DeleteSecretFilterAsync(
+            string planId,
+            Guid secretId,
+            SecretFilterType secretFilterType,
+            SecretScope secretScope,
             IDiagnosticsLogger logger);
     }
 }

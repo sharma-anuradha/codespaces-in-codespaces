@@ -63,28 +63,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Add or update secret filters.
-        /// </summary>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="secretId">Secret Id.</param>
-        /// <param name="secretFilters">Secret filters to add/update.</param>
-        /// <param name="logger">IDiagnostics Logger.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task AddOrUpdateSecreFiltersAsync(
-            Guid resourceId,
-            Guid secretId,
-            IDictionary<SecretFilterType, string> secretFilters,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
         /// Delete a secret filter.
         /// </summary>
         /// <param name="resourceId">Resource Id.</param>
         /// <param name="secretId">Secret Id.</param>
         /// <param name="secretFilterType">Secret filter type.</param>
         /// <param name="logger">IDiagnostics Logger.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task DeleteSecretFilterAsync(
+        /// <returns>Updated secret.</returns>
+        Task<SecretResult> DeleteSecretFilterAsync(
             Guid resourceId,
             Guid secretId,
             SecretFilterType secretFilterType,

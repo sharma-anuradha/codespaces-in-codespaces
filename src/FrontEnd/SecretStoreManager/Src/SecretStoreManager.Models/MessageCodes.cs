@@ -17,21 +17,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models
         /// <summary>
         /// Secret store is not ready.
         /// </summary>
-        NotReady = 1,
+        NotReady = 10,
 
         /// <summary>
         /// Failed to create the secret store.
         /// </summary>
-        FailedToCreateSecretStore = 2,
+        FailedToCreateSecretStore = 20,
 
         /// <summary>
         /// Failed to create the secret.
         /// </summary>
-        FailedToCreateSecret = 3,
+        FailedToCreateSecret = 30,
 
         /// <summary>
         /// User is not authorized to operate on the given secret scope.
         /// </summary>
-        UnauthorizedScope = 4,
+        UnauthorizedScope = 40,
+
+        /// <summary>
+        /// Failed to update the secret.
+        /// </summary>
+        FailedToUpdateSecret = 50,
+
+        /// <summary>
+        /// Failed to delete the secret.
+        /// </summary>
+        FailedToDeleteSecret = 60,
+
+        /// <summary>
+        /// Failed to delete the secret filter.
+        /// </summary>
+        FailedToDeleteSecretFilter = 70,
+
+        /// <summary>
+        /// Secret not found
+        /// </summary>
+        SecretNotFound = 80,
     }
 }
