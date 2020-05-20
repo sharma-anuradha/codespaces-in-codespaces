@@ -41,10 +41,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         public string CustomCLIVersion { get; set; }
 
         /// <summary>
-        /// Gets or sets the data plane location.
+        /// Gets or sets a value indicating whether to force reuploading the dev CLI tools.
         /// </summary>
-        [Option('d', "dataplane", Default = "WestUs2", HelpText = "Data Plane Location. Defaults to WestUs2.")]
-        public string DataPlaneLocation { get; set; }
+        [Option('u', "forceCLIReupload", Default = false, HelpText = "Force reuploading the dev CLI tools if they are already in the dev container.")]
+        public bool ForceDevCLIReupload { get; set; }
 
         /// <summary>
         /// Gets or sets the forwarding host name.
@@ -63,11 +63,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             var defaultContainerName = GetDefaultContainerName(services);
             stdout.WriteLine($"Default container name: {defaultContainerName}");
 
-            var controlPlane = GetControlPlaneInfo();
             var controlPlaneResourceAccessor = services.GetRequiredService<IControlPlaneAzureResourceAccessor>();
-            var azureLocation = Enum.Parse<AzureLocation>(DataPlaneLocation, ignoreCase: true);
-            var location = controlPlane.GetAllDataPlaneLocations().FirstOrDefault(n => n == azureLocation);
-            var (accountName, accountKey) = await controlPlaneResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(location);
+            var locationEnvVar = System.Environment.GetEnvironmentVariable(AzureLocationEnvVarName);
+
+            var azureLocation = AzureLocation.WestUs2;
+            if (!string.IsNullOrEmpty(locationEnvVar))
+            {
+                stdout.WriteLine($"Location set via Environment Variable: {locationEnvVar}");
+                azureLocation = Enum.Parse<AzureLocation>(locationEnvVar, ignoreCase: true);
+            }
+
+            var (accountName, accountKey) = await controlPlaneResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(azureLocation);
             stdout.WriteLine($"AccountName: {accountName}");
 
             var blobStorageClientOptions = new BlobStorageClientOptions
@@ -137,6 +143,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 var cloudBlockBlob = defaultContainer.GetBlockBlobReference(file);
                 var devcloudBlockBlob = devContainer.GetBlockBlobReference(file);
 
+                if (!ForceDevCLIReupload && await devcloudBlockBlob.ExistsAsync())
+                {
+                    stdout.WriteLine($"{file} already uploaded, continue.");
+                    continue;
+                }
+
                 using (var ms = new MemoryStream())
                 {
                     await cloudBlockBlob.DownloadToStreamAsync(ms);
@@ -182,6 +194,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 }
 
                 var devcloudBlockBlob = devContainer.GetBlockBlobReference(fileName);
+                if (!ForceDevCLIReupload && await devcloudBlockBlob.ExistsAsync())
+                {
+                    stdout.WriteLine($"{file} already uploaded, continue.");
+                    continue;
+                }
+
                 await devcloudBlockBlob.UploadFromFileAsync(file);
                 stdout.WriteLine($"Uploaded file {file}");
             }
