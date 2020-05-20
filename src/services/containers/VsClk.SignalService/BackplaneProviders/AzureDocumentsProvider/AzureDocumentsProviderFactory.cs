@@ -15,15 +15,18 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private readonly IContactBackplaneManager backplaneManager;
         private readonly ILogger<AzureDocumentsProvider> logger;
+        private readonly IServiceCounters serviceCounters;
         private readonly IDataFormatProvider formatProvider;
 
         public AzureDocumentsProviderFactory(
             IContactBackplaneManager backplaneManager,
             ILogger<AzureDocumentsProvider> logger,
+            IServiceCounters serviceCounters = null,
             IDataFormatProvider formatProvider = null)
         {
             this.backplaneManager = backplaneManager;
             this.logger = logger;
+            this.serviceCounters = serviceCounters;
             this.formatProvider = formatProvider;
         }
 
@@ -34,6 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 serviceInfo,
                 databaseSettings,
                 this.logger,
+                this.serviceCounters,
                 this.formatProvider);
             this.backplaneManager.RegisterProvider(backplaneProvider);
         }

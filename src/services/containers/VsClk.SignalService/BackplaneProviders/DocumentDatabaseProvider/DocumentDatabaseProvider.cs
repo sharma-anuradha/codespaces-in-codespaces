@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,12 +25,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         private const string MethodLoadActiveServices = "DocumentDatabaseProvider.LoadActiveServices";
         private const string MethodOnServiceDocumentsChanged = "DocumentDatabaseProvider.OnServiceDocumentsChanged";
 
+        private readonly IServiceCounters serviceCounters;
         private readonly IFormatProvider formatProvider;
         private HashSet<string> activeServices;
 
-        protected DocumentDatabaseProvider(ILogger logger, IFormatProvider formatProvider)
+        protected DocumentDatabaseProvider(ILogger logger, IServiceCounters serviceCounters, IFormatProvider formatProvider)
         {
             Logger = Requires.NotNull(logger, nameof(logger));
+            this.serviceCounters = serviceCounters;
             this.formatProvider = formatProvider;
         }
 
@@ -62,74 +65,86 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken)
         {
-            var emailResults = new List<(int, string)>();
-            int next = 0;
-
-            Dictionary<string, ContactDataInfo>[] results = matchProperties.Select(item =>
+            using (var methodPerTracker = CreateMethodPerfTracker(nameof(GetContactsDataAsync)))
             {
-                var emailPropertyValue = item.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
-                if (string.IsNullOrEmpty(emailPropertyValue))
+                var emailResults = new List<(int, string)>();
+                int next = 0;
+
+                Dictionary<string, ContactDataInfo>[] results = matchProperties.Select(item =>
                 {
-                    return new Dictionary<string, ContactDataInfo>();
+                    var emailPropertyValue = item.TryGetProperty<string>(ContactProperties.Email)?.ToLowerInvariant();
+                    if (string.IsNullOrEmpty(emailPropertyValue))
+                    {
+                        return new Dictionary<string, ContactDataInfo>();
+                    }
+
+                    emailResults.Add((next++, emailPropertyValue));
+
+                    // result will come later
+                    return null;
+                }).ToArray();
+
+                var matchContacts = await GetContactsDataByEmailAsync(emailResults.Select(i => i.Item2).ToArray(), cancellationToken);
+                if (matchContacts?.Length == emailResults.Count)
+                {
+                    for (next = 0; next < matchContacts.Length; ++next)
+                    {
+                        results[emailResults[next].Item1] = matchContacts[next].ToDictionary(d => d.Id, d => ToContactData(d));
+                    }
                 }
 
-                emailResults.Add((next++, emailPropertyValue));
-
-                // result will come later
-                return null;
-            }).ToArray();
-
-            var matchContacts = await GetContactsDataByEmailAsync(emailResults.Select(i => i.Item2).ToArray(), cancellationToken);
-            if (matchContacts?.Length == emailResults.Count)
-            {
-                for (next = 0; next < matchContacts.Length; ++next)
-                {
-                    results[emailResults[next].Item1] = matchContacts[next].ToDictionary(d => d.Id, d => ToContactData(d));
-                }
+                return results;
             }
-
-            return results;
         }
 
         public async Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
-            var contactDataCoument = await GetContactDataDocumentAsync(contactId, cancellationToken);
-            return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
+            using (var methodPerTracker = CreateMethodPerfTracker(nameof(GetContactDataAsync)))
+            {
+                var contactDataCoument = await GetContactDataDocumentAsync(contactId, cancellationToken);
+                return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
+            }
         }
 
         public async Task SendMessageAsync(MessageData messageData, CancellationToken cancellationToken)
         {
-            var messageDocument = new MessageDocument()
+            using (var methodPerTracker = CreateMethodPerfTracker(nameof(SendMessageAsync)))
             {
-                Id = messageData.ChangeId,
-                ContactId = messageData.FromContact.Id,
-                TargetContactId = messageData.TargetContact.Id,
-                TargetConnectionId = messageData.TargetContact.ConnectionId,
-                Type = messageData.Type,
-                Body = messageData.Body,
-                SourceId = messageData.ServiceId,
-                LastUpdate = DateTime.UtcNow,
-            };
+                var messageDocument = new MessageDocument()
+                {
+                    Id = messageData.ChangeId,
+                    ContactId = messageData.FromContact.Id,
+                    TargetContactId = messageData.TargetContact.Id,
+                    TargetConnectionId = messageData.TargetContact.ConnectionId,
+                    Type = messageData.Type,
+                    Body = messageData.Body,
+                    SourceId = messageData.ServiceId,
+                    LastUpdate = DateTime.UtcNow,
+                };
 
-            await InsertMessageDocumentAsync(messageDocument, cancellationToken);
+                await InsertMessageDocumentAsync(messageDocument, cancellationToken);
+            }
         }
 
         public async Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            ContactDataInfo contactDataInfo;
-            var contactDataDocument = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
-            if (contactDataDocument == null)
+            using (var methodPerTracker = CreateMethodPerfTracker(nameof(UpdateContactAsync)))
             {
-                contactDataInfo = new Dictionary<string, IDictionary<string, ConnectionProperties>>();
-            }
-            else
-            {
-                contactDataInfo = ToContactData(contactDataDocument);
-            }
+                ContactDataInfo contactDataInfo;
+                var contactDataDocument = await GetContactDataDocumentAsync(contactDataChanged.ContactId, cancellationToken);
+                if (contactDataDocument == null)
+                {
+                    contactDataInfo = new Dictionary<string, IDictionary<string, ConnectionProperties>>();
+                }
+                else
+                {
+                    contactDataInfo = ToContactData(contactDataDocument);
+                }
 
-            contactDataInfo.UpdateConnectionProperties(contactDataChanged);
+                contactDataInfo.UpdateConnectionProperties(contactDataChanged);
 
-            await UpdateContactDataInfoAsync(contactDataChanged, (contactDataInfo, null), cancellationToken);
+                await UpdateContactDataInfoAsync(contactDataChanged, (contactDataInfo, null), cancellationToken);
+            }
         }
 
         public Task UpdateContactDataInfoAsync(
@@ -137,20 +152,23 @@ namespace Microsoft.VsCloudKernel.SignalService
             (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
             CancellationToken cancellationToken)
         {
-            var updateContactDataDocument = new ContactDocument()
+            using (var methodPerTracker = CreateMethodPerfTracker(nameof(UpdateContactDataInfoAsync)))
             {
-                Id = contactDataChanged.ContactId,
-                ChangeId = contactDataChanged.ChangeId,
-                ServiceId = contactDataChanged.ServiceId,
-                ConnectionId = contactDataChanged.ConnectionId,
-                UpdateType = contactDataChanged.ChangeType,
-                Properties = contactDataChanged.Data.Keys.ToArray(),
-                Email = GetEmailValue(contactDataInfoValues.NewValue) ?? GetEmailValue(contactDataInfoValues.OldValue),
-                ServiceConnections = contactDataInfoValues.NewValue,
-                LastUpdate = DateTime.UtcNow,
-            };
+                var updateContactDataDocument = new ContactDocument()
+                {
+                    Id = contactDataChanged.ContactId,
+                    ChangeId = contactDataChanged.ChangeId,
+                    ServiceId = contactDataChanged.ServiceId,
+                    ConnectionId = contactDataChanged.ConnectionId,
+                    UpdateType = contactDataChanged.ChangeType,
+                    Properties = contactDataChanged.Data.Keys.ToArray(),
+                    Email = GetEmailValue(contactDataInfoValues.NewValue) ?? GetEmailValue(contactDataInfoValues.OldValue),
+                    ServiceConnections = contactDataInfoValues.NewValue,
+                    LastUpdate = DateTime.UtcNow,
+                };
 
-            return UpsertContactDocumentAsync(updateContactDataDocument, cancellationToken);
+                return UpsertContactDocumentAsync(updateContactDataDocument, cancellationToken);
+            }
         }
 
         public async Task DisposeDataChangesAsync(DataChanged[] dataChanges, CancellationToken cancellationToken)
@@ -252,6 +270,16 @@ namespace Microsoft.VsCloudKernel.SignalService
                     }
                 }
             }
+        }
+
+        protected void MethodPerf(string methodName, TimeSpan t)
+        {
+            this.serviceCounters?.OnInvokeMethod(GetType().Name, methodName, t);
+        }
+
+        protected IDisposable CreateMethodPerfTracker(string methodName)
+        {
+            return new MethodPerfTracker(t => MethodPerf(methodName, t));
         }
 
         private static string GetEmailValue(ContactDataInfo contactDataInfo)

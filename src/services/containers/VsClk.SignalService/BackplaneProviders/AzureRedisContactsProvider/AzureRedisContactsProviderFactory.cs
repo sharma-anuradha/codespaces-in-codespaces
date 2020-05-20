@@ -9,21 +9,24 @@ using Microsoft.Extensions.Logging;
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Implements a IAzureRedisProviderServiceFactory for our contacts redis provider
+    /// Implements a IAzureRedisProviderServiceFactory for our contacts redis provider.
     /// </summary>
     public class AzureRedisContactsProviderFactory : IAzureRedisProviderServiceFactory
     {
         private readonly ILogger<AzureRedisContactsProvider> logger;
         private readonly IContactBackplaneManager backplaneManager;
+        private readonly IServiceCounters serviceCounters;
         private readonly IDataFormatProvider formatProvider;
 
         public AzureRedisContactsProviderFactory(
             ILogger<AzureRedisContactsProvider> logger,
             IContactBackplaneManager backplaneManager,
+            IServiceCounters serviceCounters = null,
             IDataFormatProvider formatProvider = null)
         {
             this.logger = logger;
             this.backplaneManager = backplaneManager;
+            this.serviceCounters = serviceCounters;
             this.formatProvider = formatProvider;
         }
 
@@ -33,6 +36,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 serviceInfo,
                 redisConnectionPool,
                 this.logger,
+                this.serviceCounters,
                 this.formatProvider);
 
             // Note: the redis provider does not support an optimized 'GetContacts' capability

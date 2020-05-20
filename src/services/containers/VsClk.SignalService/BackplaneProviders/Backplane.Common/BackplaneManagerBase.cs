@@ -153,6 +153,14 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
             }
         }
 
+        public bool HasTrackDataChanged(DataChanged dataChanged)
+        {
+            lock (this.backplaneChangesLock)
+            {
+                return this.backplaneChanges.ContainsKey(dataChanged.ChangeId);
+            }
+        }
+
         public bool TrackDataChanged(DataChanged dataChanged, TrackDataChangedOptions options = TrackDataChangedOptions.None)
         {
             lock (this.backplaneChangesLock)

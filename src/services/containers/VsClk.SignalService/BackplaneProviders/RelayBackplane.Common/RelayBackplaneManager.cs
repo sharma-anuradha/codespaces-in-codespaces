@@ -97,7 +97,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             RelayParticipantChanged relayParticipantChanged,
             CancellationToken cancellationToken)
         {
-            if (TrackDataChanged(relayParticipantChanged))
+            if (HasTrackDataChanged(relayParticipantChanged))
             {
                 return;
             }
@@ -120,7 +120,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             SendRelayDataHub sendRelayDataHub,
             CancellationToken cancellationToken)
         {
-            if (TrackDataChanged(sendRelayDataHub))
+            if (HasTrackDataChanged(sendRelayDataHub))
             {
                 return;
             }
@@ -143,7 +143,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             RelayHubChanged relayHubChanged,
             CancellationToken cancellationToken)
         {
-            if (TrackDataChanged(relayHubChanged))
+            if (HasTrackDataChanged(relayHubChanged))
             {
                 return;
             }

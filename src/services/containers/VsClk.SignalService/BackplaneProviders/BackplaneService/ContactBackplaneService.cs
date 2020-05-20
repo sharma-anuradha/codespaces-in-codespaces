@@ -102,23 +102,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                     Interlocked.Add(ref this.updateContactWaitingTimePerfCounter, elapsed.Milliseconds);
 
                     // next block will start/stop throttling
-                    if (!IsGlobalUpdateContactThrottle)
-                    {
-                        if (elapsed > MaxUpdateContactQueueWaiTime && this.updateQueueCount > MaxContactsBuffer * 1.2)
-                        {
-                            IsGlobalUpdateContactThrottle = true;
-                            Logger.LogMethodScope(LogLevel.Warning, "Throttled started", nameof(IsGlobalUpdateContactThrottle));
-                        }
-                    }
-                    else
-                    {
-                        if (this.updateQueueCount < MaxContactsBuffer)
-                        {
-                            IsGlobalUpdateContactThrottle = false;
-                            Logger.LogMethodScope(LogLevel.Warning, $"Throttled stopped. count:{this.throttledContactsCount}", nameof(IsGlobalUpdateContactThrottle));
-                            this.throttledContactsCount = 0;
-                        }
-                    }
+                    // the threshold to start throttling is considering that the total queue is 20%
+                    // more than the max contact buffer capacity and queue wait time exceed our max defined.
+                    CheckGlobalUpdateContactThrottle(
+                        () => elapsed > MaxUpdateContactQueueWaiTime && this.updateQueueCount > MaxContactsBuffer * 1.2,
+                        () => this.updateQueueCount < MaxContactsBuffer);
 
                     try
                     {
@@ -213,10 +201,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                         (TotalSignalRConnectionsProperty, aggregatedMetrics.TotalSelfCount)))
                     {
                         var perfCountersPerMinute = new List<int>();
-                        perfCountersPerMinute.Add(this.updateContactActionBlockPerfCounter / TimespanUpdateSecs);
+                        perfCountersPerMinute.Add(this.updateContactActionBlockPerfCounter);
                         var totalProcessedUpdates = this.updateContactActionBlockPerfCounter;
                         var averageWaitingTime = totalProcessedUpdates != 0 ? this.updateContactWaitingTimePerfCounter / totalProcessedUpdates : 0;
-                        Logger.LogInformation($"Queue :{this.updateQueueCount}, Throttle:{IsGlobalUpdateContactThrottle}, Wait time(ms):{averageWaitingTime}, Perf (events x secs):[{string.Join(',', perfCountersPerMinute)}]");
+                        Logger.LogInformation($"Queue :{this.updateQueueCount}, Throttle:{IsGlobalUpdateContactThrottle}, Wait time(ms):{averageWaitingTime}, Perf (events x min):[{string.Join(',', perfCountersPerMinute)}]");
                     }
 
                     ResetPerfCounters();
@@ -273,8 +261,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 Logger.LogDebug($"contactId:{ToString(contactDataChanged)}");
             }
 
-            TrackDataChanged(contactDataChanged, TrackDataChangedOptions.Lock);
-
             (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues;
             if (await ServiceDataProvider.ContainsContactAsync(contactDataChanged.ContactId, cancellationToken))
             {
@@ -296,8 +282,18 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             await FireOnUpdateContactAsync(contactDataChanged.Clone(contactDataInfoValues.NewValue), contactDataChanged.Data.Keys.ToArray(), cancellationToken);
 
+            // Note: throttle before send the job to our action block
+            // We found scenarios that the block processing just stop working for minutes and so we should avoid continuing
+            // attempting to post more jobs to our already big queue buffer of 15k items.
+            CheckGlobalUpdateContactThrottle(
+                () => this.updateQueueCount > MaxContactsBuffer * 1.5,
+                () => this.updateQueueCount < MaxContactsBuffer);
+
             if (!IsGlobalUpdateContactThrottle)
             {
+                // lock this data change to allow start the expire only when the queue process it.
+                TrackDataChanged(contactDataChanged, TrackDataChangedOptions.Lock);
+
                 // increment update queue count
                 Interlocked.Increment(ref this.updateQueueCount);
                 await UpdateContactActionBlock.SendAsync((Stopwatch.StartNew(), (contactDataChanged, contactDataInfoValues)), cancellationToken);
@@ -386,6 +382,27 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         }
 
         private bool IsLocalService(string serviceId) => this.activeServices.ContainsKey(serviceId);
+
+        private void CheckGlobalUpdateContactThrottle(Func<bool> thresholdStartConditionFunc, Func<bool> thresholdStopConditionFunc)
+        {
+            if (!IsGlobalUpdateContactThrottle)
+            {
+                if (thresholdStartConditionFunc())
+                {
+                    IsGlobalUpdateContactThrottle = true;
+                    Logger.LogMethodScope(LogLevel.Warning, "Throttled started", nameof(IsGlobalUpdateContactThrottle));
+                }
+            }
+            else
+            {
+                if (thresholdStopConditionFunc())
+                {
+                    IsGlobalUpdateContactThrottle = false;
+                    Logger.LogMethodScope(LogLevel.Warning, $"Throttled stopped. count:{this.throttledContactsCount}", nameof(IsGlobalUpdateContactThrottle));
+                    this.throttledContactsCount = 0;
+                }
+            }
+        }
 
         private void ResetPerfCounters()
         {

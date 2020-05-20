@@ -22,6 +22,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         public static readonly string DatabaseId = "presenceService";
 
+        private const int DefaultMaxRetries = 3;
         private const string DefaultPartitionKeyPath = "/_partitionKey";
 
         // RU values for production
@@ -52,23 +53,21 @@ namespace Microsoft.VsCloudKernel.SignalService
         private AzureDocumentsProvider(
             DatabaseSettings databaseSettings,
             ILogger<AzureDocumentsProvider> logger,
+            IServiceCounters serviceCounters,
             IFormatProvider formatProvider)
-            : base(logger, formatProvider)
+            : base(logger, serviceCounters, formatProvider)
         {
             this.databaseSettings = Requires.NotNull(databaseSettings, nameof(databaseSettings));
             Requires.NotNullOrEmpty(databaseSettings.EndpointUrl, nameof(databaseSettings.EndpointUrl));
             Requires.NotNullOrEmpty(databaseSettings.AuthorizationKey, nameof(databaseSettings.AuthorizationKey));
 
             // initialize document client
-            CosmosClientOptions clientOptions = null;
+            var clientOptions = new CosmosClientOptions();
 
-            // create client options if prefered regiosn are defined
-            if (databaseSettings.PreferredRegions != null)
+            // configure application region
+            if (databaseSettings.PreferredRegions?.Length > 0)
             {
-                clientOptions = new CosmosClientOptions()
-                {
-                    ApplicationPreferredRegions = databaseSettings.PreferredRegions,
-                };
+                clientOptions.ApplicationPreferredRegions = databaseSettings.PreferredRegions;
             }
 
             Client = new CosmosClient(
@@ -85,10 +84,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             ServiceInfo serviceInfo,
             DatabaseSettings databaseSettings,
             ILogger<AzureDocumentsProvider> logger,
+            IServiceCounters serviceCounters,
             IFormatProvider formatProvider,
             bool deleteDabatase = false)
         {
-            var databaseBackplaneProvider = new AzureDocumentsProvider(databaseSettings, logger, formatProvider);
+            var databaseBackplaneProvider = new AzureDocumentsProvider(databaseSettings, logger, serviceCounters, formatProvider);
 
             if (deleteDabatase)
             {
@@ -143,11 +143,16 @@ namespace Microsoft.VsCloudKernel.SignalService
             var queryDefinition = new QueryDefinition($"SELECT * FROM c where {whereCondition.ToString()}");
             queryParameters.ForEach(i => queryDefinition.WithParameter(i.Item1, i.Item2));
 
-            var allMatchingContacts = await ExecuteWithRetries(() =>
-            {
-                var feedIterator = this.contactsContainer.GetItemQueryIterator<ContactDocument>(queryDefinition);
-                return ToListAsync(feedIterator, cancellationToken);
-            });
+            List<ContactDocument> allMatchingContacts = null;
+            await ExecuteWithPerf(
+                async () =>
+                {
+                    var feedIterator = this.contactsContainer.GetItemQueryIterator<ContactDocument>(queryDefinition);
+                    var allResources = await ReadAllAsync(feedIterator, cancellationToken);
+                    allMatchingContacts = allResources.Item1;
+                    return allResources.Item2;
+                },
+                nameof(GetContactsDataByEmailAsync));
 
             foreach (var item in allMatchingContacts)
             {
@@ -160,25 +165,24 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task UpsertServiceDocumentAsync(ServiceDocument serviceDocument, CancellationToken cancellationToken)
         {
-            var response = await ExecuteWithRetries(() => this.servicesContainer.UpsertItemAsync(serviceDocument, cancellationToken: cancellationToken));
+            var response = await ExecuteItemResponse(() => this.servicesContainer.UpsertItemAsync(serviceDocument, cancellationToken: cancellationToken), nameof(UpsertServiceDocumentAsync));
         }
 
         protected override async Task InsertMessageDocumentAsync(MessageDocument messageDocument, CancellationToken cancellationToken)
         {
-            var response = await ExecuteWithRetries(() => this.messagesContainer.CreateItemAsync(messageDocument, cancellationToken: cancellationToken));
+            var response = await ExecuteItemResponse(() => this.messagesContainer.CreateItemAsync(messageDocument, cancellationToken: cancellationToken), nameof(InsertMessageDocumentAsync));
         }
 
         protected override async Task UpsertContactDocumentAsync(ContactDocument contactDocument, CancellationToken cancellationToken)
         {
-            var response = await ExecuteWithRetries(() => this.contactsContainer.UpsertItemAsync(contactDocument, cancellationToken: cancellationToken));
+            await ExecuteItemResponse(() => this.contactsContainer.UpsertItemAsync(contactDocument, cancellationToken: cancellationToken), nameof(UpsertContactDocumentAsync));
         }
 
         protected override async Task<ContactDocument> GetContactDataDocumentAsync(string contactId, CancellationToken cancellationToken)
         {
             try
             {
-                var response = await ExecuteWithRetries(() => this.contactsContainer.ReadItemAsync<ContactDocument>(id: contactId, PartitionKey.None, cancellationToken: cancellationToken));
-                return response.Resource;
+                return await ExecuteItemResponse(() => this.contactsContainer.ReadItemAsync<ContactDocument>(id: contactId, PartitionKey.None, cancellationToken: cancellationToken), nameof(GetContactDataDocumentAsync));
             }
             catch (CosmosException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
@@ -193,7 +197,7 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task DeleteServiceDocumentById(string serviceId, CancellationToken cancellationToken)
         {
-            var response = await this.servicesContainer.DeleteItemAsync<ServiceDocument>(id: serviceId, PartitionKey.None, cancellationToken: cancellationToken);
+            await this.servicesContainer.DeleteItemAsync<ServiceDocument>(id: serviceId, PartitionKey.None, cancellationToken: cancellationToken);
         }
 
         protected override async Task DeleteMessageDocumentByIds(string[] changeIds, CancellationToken cancellationToken)
@@ -202,7 +206,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 try
                 {
-                    var response = await ExecuteWithRetries(() => this.messagesContainer.DeleteItemAsync<MessageDocument>(changeId, PartitionKey.None, cancellationToken: cancellationToken));
+                    await ExecuteItemResponse(() => this.messagesContainer.DeleteItemAsync<MessageDocument>(changeId, PartitionKey.None, cancellationToken: cancellationToken), nameof(DeleteMessageDocumentByIds));
                 }
                 catch (CosmosException e) when (e.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -211,57 +215,71 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private static async Task<List<T>> ToListAsync<T>(FeedIterator<T> feedIterator, CancellationToken token)
+        private static async Task<(List<T>, TimeSpan)> ReadAllAsync<T>(FeedIterator<T> feedIterator, CancellationToken token)
         {
+            var elapsed = TimeSpan.Zero;
+
             var list = new List<T>();
             while (feedIterator.HasMoreResults)
             {
                 // Note that ReadNextAsync can return many records in each call
                 var response = await feedIterator.ReadNextAsync(token);
+                elapsed = elapsed.Add(response.Diagnostics.GetClientElapsedTime());
                 list.AddRange(response);
             }
 
-            return list;
+            return (list, elapsed);
         }
 
-#pragma warning disable SA1314 // Type parameter names should begin with T
-        private static async Task<V> ExecuteWithRetries<V>(Func<Task<V>> function)
-#pragma warning restore SA1314 // Type parameter names should begin with T
+        private static async Task<List<T>> ToListAsync<T>(FeedIterator<T> feedIterator, CancellationToken token)
         {
-            while (true)
+            return (await ReadAllAsync<T>(feedIterator, token)).Item1;
+        }
+
+        private void ReportTooManyRequests()
+        {
+            MethodPerf("Status429TooManyRequests", TimeSpan.Zero);
+        }
+
+        private async Task<T> ExecuteItemResponse<T>(Func<Task<ItemResponse<T>>> callback, string methodName)
+        {
+            T resource = default;
+            await ExecuteWithPerf(
+                async () =>
+                {
+                    var response = await callback();
+                    resource = response;
+                    return response.Diagnostics.GetClientElapsedTime();
+                },
+                methodName);
+            return resource;
+        }
+
+        private async Task ExecuteWithPerf(Func<Task<TimeSpan>> callback, string methodName)
+        {
+            try
             {
-                TimeSpan sleepTime;
-                try
+                var time = await callback();
+                MethodPerf(methodName, time);
+            }
+            catch (CosmosException de)
+            {
+                if ((int)de.StatusCode == StatusCodes.Status429TooManyRequests)
                 {
-                    return await function();
-                }
-                catch (CosmosException de)
-                {
-                    if ((int)de.StatusCode != StatusCodes.Status429TooManyRequests)
-                    {
-                        throw;
-                    }
-
-                    sleepTime = de.RetryAfter.HasValue ? de.RetryAfter.Value : TimeSpan.FromMilliseconds(100);
-                }
-                catch (AggregateException ae)
-                {
-                    if (!(ae.InnerException is CosmosException ||
-                        ae.InnerExceptions.Any(e => e is CosmosException)))
-                    {
-                        throw;
-                    }
-
-                    CosmosException de = (CosmosException)ae.InnerException;
-                    if ((int)de.StatusCode != StatusCodes.Status429TooManyRequests)
-                    {
-                        throw;
-                    }
-
-                    sleepTime = de.RetryAfter.HasValue ? de.RetryAfter.Value : TimeSpan.FromMilliseconds(100);
+                    ReportTooManyRequests();
                 }
 
-                await Task.Delay(sleepTime);
+                throw;
+            }
+            catch (AggregateException ae)
+            {
+                CosmosException de = (CosmosException)ae.InnerException;
+                if ((int)de?.StatusCode == StatusCodes.Status429TooManyRequests)
+                {
+                    ReportTooManyRequests();
+                }
+
+                throw;
             }
         }
 

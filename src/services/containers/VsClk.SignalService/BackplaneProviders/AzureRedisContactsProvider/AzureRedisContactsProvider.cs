@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using StackExchange.Redis;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -36,8 +35,9 @@ namespace Microsoft.VsCloudKernel.SignalService
         private AzureRedisContactsProvider(
             RedisConnectionPool redisConnectionPool,
             ILogger<AzureRedisContactsProvider> logger,
+            IServiceCounters serviceCounters,
             IFormatProvider formatProvider)
-            : base(logger, formatProvider)
+            : base(logger, serviceCounters, formatProvider)
         {
             this.redisConnectionPool = redisConnectionPool;
         }
@@ -48,9 +48,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             ServiceInfo serviceInfo,
             RedisConnectionPool redisConnectionPool,
             ILogger<AzureRedisContactsProvider> logger,
+            IServiceCounters serviceCounters,
             IFormatProvider formatProvider)
         {
-            var redisBackplaneProvider = new AzureRedisContactsProvider(redisConnectionPool, logger, formatProvider);
+            var redisBackplaneProvider = new AzureRedisContactsProvider(redisConnectionPool, logger, serviceCounters, formatProvider);
             await redisBackplaneProvider.InitializeAsync(serviceInfo);
             return redisBackplaneProvider;
         }
