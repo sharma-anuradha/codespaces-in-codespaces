@@ -14,6 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     {
         private const string LogValueSubscriptionId = "SubscriptionId";
         private const string LogValueResourceGroupName = "ResourceGroup";
+        private const string LogValueResourceId = "ResourceId";
         private const string LogValuePlanName = "Plan";
 
         /// <summary>
@@ -31,7 +32,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 logger
                     .AddSubscriptionId(plan.Subscription)
                     .AddResourceGroupName(plan.ResourceGroup)
+                    .AddResourceId(plan.ResourceId)
                     .AddPlanName(plan.Name);
+            }
+
+            return logger;
+        }
+
+        /// <summary>
+        /// Add logging fields for a <see cref="VsoPlanInfo"/> instance.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="planId">The plan id, or null.</param>
+        /// <returns>The <paramref name="logger"/> instance.</returns>
+        public static IDiagnosticsLogger AddVsoPlan(this IDiagnosticsLogger logger, string planId)
+        {
+            Requires.NotNull(logger, nameof(logger));
+
+            if (planId != null && VsoPlanInfo.TryParse(planId, out var plan))
+            {
+                logger.AddVsoPlan(plan);
             }
 
             return logger;
@@ -47,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             => logger.FluentAddBaseValue(LogValueSubscriptionId, subscriptionId);
 
         /// <summary>
-        /// Add the environment owner id to the logger.
+        /// Add the plan resource group name to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="resourceGroupName">The resource group name.</param>
@@ -56,7 +76,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             => logger.FluentAddBaseValue(LogValueResourceGroupName, resourceGroupName);
 
         /// <summary>
-        /// Add the environment connection session id to the logger.
+        /// Add the plan resource id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="resourceId">The resource id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddResourceId(this IDiagnosticsLogger logger, string resourceId)
+            => logger.FluentAddBaseValue(LogValueResourceId, resourceId);
+
+        /// <summary>
+        /// Add the plan name to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="planName">The plan name.</param>

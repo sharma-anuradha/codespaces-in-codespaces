@@ -8,7 +8,7 @@ using Newtonsoft.Json.Converters;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
 {
     /// <summary>
-    /// Indicates a public Azure Geography.
+    /// Indicates a Codespaces client.
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
     public enum VsoClientType

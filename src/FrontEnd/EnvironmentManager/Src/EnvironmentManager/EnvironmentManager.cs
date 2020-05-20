@@ -146,7 +146,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var originalState = cloudEnvironment.State;
                     var newState = originalState;
 
-                    logger.FluentAddBaseValue("CloudEnvironmentOldState", originalState)
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+
+                    childLogger.FluentAddBaseValue("CloudEnvironmentOldState", originalState)
                         .FluentAddValue("CloudEnvironmentOldStateUpdated", cloudEnvironment.LastStateUpdated)
                         .FluentAddValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
                         .FluentAddValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason);
@@ -161,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             // Timeout if environment has stayed in provisioning state for more than an hour
                             var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
 
-                            logger.FluentAddBaseValue("CloudEnvironmentTimeInProvisioningStateInMin", timeInProvisioningStateInMin);
+                            childLogger.FluentAddBaseValue("CloudEnvironmentTimeInProvisioningStateInMin", timeInProvisioningStateInMin);
 
                             if (timeInProvisioningStateInMin > 60)
                             {
@@ -179,7 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
                             var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
 
-                            logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
+                            childLogger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
                                 .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
                                 .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
 
@@ -196,7 +199,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             break;
                     }
 
-                    logger.FluentAddBaseValue("CloudEnvironmentNewState", newState);
+                    childLogger.FluentAddBaseValue("CloudEnvironmentNewState", newState);
 
                     // Update the new state before returning.
                     if (originalState != newState)
@@ -303,6 +306,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     cloudEnvironment.Updated = DateTime.UtcNow;
                     if (newState != default && newState != cloudEnvironment.State)
@@ -331,6 +335,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
 
@@ -371,6 +376,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
                     childLogger.AddVsoPlan(plan);
+
                     var result = new CloudEnvironmentServiceResult()
                     {
                         MessageCode = MessageCodes.Unknown,
@@ -389,7 +395,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
-                    if (await SubscriptionManager.IsBannedAsync(plan.Subscription, childLogger))
+                    if (await SubscriptionManager.IsBannedAsync(plan.Subscription, childLogger.NewChildLogger()))
                     {
                         childLogger.LogError($"{LogBaseName}_create_subscriptionbanned_error");
                         result.MessageCode = MessageCodes.SubscriptionIsBanned;
@@ -409,9 +415,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Setup
-                    cloudEnvironment.Id = Guid.NewGuid().ToString();
+                    var environmentId = Guid.NewGuid();
+                    cloudEnvironment.Id = environmentId.ToString();
                     cloudEnvironment.Created = cloudEnvironment.Updated = cloudEnvironment.LastUsed = DateTime.UtcNow;
                     cloudEnvironment.HasUnpushedGitChanges = false;
+
+                    // Update CloudEnvironment telemetry property values now that Id, Created, Updated and LastUsed have been set.
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -440,6 +450,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                         cloudEnvironment.SkuName = StaticEnvironmentSku.Name;
 
+                        // Update CloudEnvironment telemetry properties now that SessionId and SkuName have been updated.
+                        childLogger.AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId);
+                        childLogger.AddSkuName(cloudEnvironment.SkuName);
+
                         // Environments must be initialized in Created state. But (at least for now) new environments immediately transition to Provisioning state.
                         await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Created, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
                         await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, childLogger.NewChildLogger());
@@ -454,7 +468,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             var staticEnvironmentMonitoringEnabled = await EnvironmentManagerSettings.StaticEnvironmentMonitoringEnabled(childLogger);
                             if (staticEnvironmentMonitoringEnabled)
                             {
-                                await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, default(Guid), logger.NewChildLogger());
+                                await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, default(Guid), childLogger.NewChildLogger());
                             }
                         }
                         catch (Exception ex)
@@ -467,22 +481,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                         return result;
                     }
-                    else
+
+                    if (!IsValidSuspendTimeout(cloudEnvironment))
                     {
-                        if (!IsValidSuspendTimeout(cloudEnvironment))
-                        {
-                            childLogger.LogError($"{LogBaseName}_create_invalidsuspendtimeout_error");
+                        childLogger.LogError($"{LogBaseName}_create_invalidsuspendtimeout_error");
 
-                            result.MessageCode = MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid;
-                            result.HttpStatusCode = StatusCodes.Status400BadRequest;
+                        result.MessageCode = MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid;
+                        result.HttpStatusCode = StatusCodes.Status400BadRequest;
 
-                            return result;
-                        }
+                        return result;
                     }
 
                     if (cloudEnvironmentOptions.QueueResourceAllocation)
                     {
-                        return await QueueCreateAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, logger);
+                        return await QueueCreateAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, childLogger);
                     }
 
                     // Allocate Storage, Disk and Compute depending on the sku type.
@@ -503,10 +515,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
+                    // Update CloudEnvironment telemetry property values now that Storage, Compute, and OSDisk have been set.
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+
                     // Start Environment Monitoring
                     try
                     {
-                        await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                        await EnvironmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                     }
                     catch (Exception ex)
                     {
@@ -517,17 +532,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Delete the allocated resources.
                         if (cloudEnvironment.Compute != null)
                         {
-                            await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                            await ResourceBrokerClient.DeleteAsync(environmentId, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                         }
 
                         if (cloudEnvironment.OSDisk != null)
                         {
-                            await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.OSDisk.ResourceId, childLogger.NewChildLogger());
+                            await ResourceBrokerClient.DeleteAsync(environmentId, cloudEnvironment.OSDisk.ResourceId, childLogger.NewChildLogger());
                         }
 
                         if (cloudEnvironment.Storage != null)
                         {
-                            await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), cloudEnvironment.Storage.ResourceId, childLogger.NewChildLogger());
+                            await ResourceBrokerClient.DeleteAsync(environmentId, cloudEnvironment.Storage.ResourceId, childLogger.NewChildLogger());
                         }
 
                         return result;
@@ -594,6 +609,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_delete",
                 async (childLogger) =>
                 {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+
                     await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, childLogger.NewChildLogger());
 
                     if (cloudEnvironment.Type == EnvironmentType.CloudEnvironment)
@@ -688,6 +706,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -737,7 +756,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     if (sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(cloudEnvironment.SubnetResourceId))
                     {
                         // Windows can only be queued resume because the VM has to be constructed from the given OS disk.
-                        return await QueueResumeAsync(cloudEnvironment, startCloudEnvironmentParameters, logger);
+                        return await QueueResumeAsync(cloudEnvironment, startCloudEnvironmentParameters, childLogger.NewChildLogger());
                     }
 
                     // Allocate Compute
@@ -796,7 +815,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         ? storageResource : null;
                     var isArchivedEnvironment = archiveStorageResource != null;
 
-                    logger.FluentAddBaseValue("CloudEnvironmentIsArchived", isArchivedEnvironment);
+                    childLogger.AddCloudEnvironmentIsArchived(isArchivedEnvironment);
 
                     // At this point, if archive record is going to be switched in it will have been
                     var startingStateReson = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
@@ -811,8 +830,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         storageResource = await AllocateStorageAsync(cloudEnvironment, childLogger.NewChildLogger());
                     }
 
-                    logger.FluentAddBaseValue("StorageResourceId", storageResource?.ResourceId)
-                        .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource?.ResourceId);
+                    childLogger.AddStorageResourceId(storageResource?.ResourceId)
+                        .AddArchiveStorageResourceId(archiveStorageResource?.ResourceId);
 
                     // Kick off start-compute before returning.
                     await StartComputeAsync(
@@ -877,15 +896,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     // Detect if environment is archived
                     var isEnvironmentIsArchived = cloudEnvironment.Storage.Type == ResourceType.StorageArchive;
                     var computeResourceId = cloudEnvironment.Compute.ResourceId;
 
-                    childLogger.FluentAddValue("CloudEnvironmentIsArchived", isEnvironmentIsArchived)
-                        .FluentAddBaseValue("ComputeResourceId", computeResourceId)
-                        .FluentAddBaseValue("StorageResourceId", storageResourceId)
-                        .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
+                    childLogger.AddCloudEnvironmentIsArchived(isEnvironmentIsArchived)
+                        .AddComputeResourceId(computeResourceId)
+                        .AddStorageResourceId(storageResourceId)
+                        .AddArchiveStorageResourceId(archiveStorageResourceId);
 
                     // Only need to trigger resume callback if environment was archived
                     if (isEnvironmentIsArchived && cloudEnvironment.Storage.Type == ResourceType.StorageArchive)
@@ -947,6 +967,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -1009,6 +1030,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -1071,6 +1093,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_update_settings",
                 async (childLogger) =>
                 {
+                    childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
                     childLogger.AddCloudEnvironmentUpdate(update);
 
                     var allowedUpdates = await GetAvailableSettingsUpdatesAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -1197,6 +1221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     var result = new CloudEnvironmentAvailableSettingsUpdates();
 
@@ -1309,6 +1334,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     // Initialize connection, if it is null, client will fail to get environment list.
                     cloudEnvironment.Connection = new ConnectionInfo();
@@ -1370,6 +1396,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
+                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
 
                     // Initialize connection, if it is null, client will fail to get environment list.
                     cloudEnvironment.Connection = new ConnectionInfo();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -526,7 +527,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             //TODO: We should restructure these tests so that time can be an actual measurement that we calculate.
             var shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             VerifySummary(expectedSummary, actualSummary);
         }
@@ -545,7 +546,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             VerifySummary(expectedSummary, actualSummary);
         }
@@ -564,7 +565,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             //TODO: We should restructure these tests so that time can be an actual measurement that we calculate.
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             VerifySummary(expectedSummary, actualSummary);
         }
@@ -585,7 +586,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             //TODO: We should restructure these tests so that time can be an actual measurement that we calculate.
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             VerifySummary(expectedSummary, actualSummary);
         }
@@ -604,7 +605,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             //TODO: We should restructure these tests so that time can be an actual measurement that we calculate.
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             VerifySummary(expectedSummary, actualSummary);
         }
@@ -656,7 +657,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             var shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -686,7 +687,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -716,7 +717,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -746,7 +747,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -775,7 +776,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await this.overrideRepository.CreateAsync(billingOverride, logger);
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -804,7 +805,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await this.overrideRepository.CreateAsync(billingOverride, logger);
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -833,7 +834,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await overrideRepository.CreateAsync(billingOverride, logger);
             var shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             // Compare total billable units
             // Should be overriden with 0
@@ -861,7 +862,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             await this.overrideRepository.CreateAsync(billingOverride, logger);
             Dictionary<string, double> shardUsageTimes = new Dictionary<string, double>();
             // Billing Service
-            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes);
+            var actualSummary = await billingService.CalculateBillingUnits(testPlan, inputEvents, inputSummary, TestTimeNow, AzureLocation.WestUs2, shardUsageTimes, logger);
 
             Assert.Equal(508, actualSummary.Usage.First().Value, 2);
         }
@@ -1026,7 +1027,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                                                                                         latestBillingEvent,
                                                                                         TestTimeNow,
                                                                                         AzureLocation.WestUs2,
-                                                                                        shardUsageTimes);
+                                                                                        shardUsageTimes,
+                                                                                        logger);
 
             // Compare total billable units
             Assert.Equal(expectedSummary.Usage.First().Value, actualSummary.Usage.First().Value, 2);

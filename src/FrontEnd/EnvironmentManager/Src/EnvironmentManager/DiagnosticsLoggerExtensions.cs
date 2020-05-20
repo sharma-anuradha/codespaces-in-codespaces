@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -21,9 +22,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueSessionId = "SessionId";
         private const string LogValueComputeResourceId = "ComputeResourceId";
         private const string LogValueStorageResourceId = "StorageResourceId";
+        private const string LogValueArchiveStorageResourceId = "ArchiveStorageResourceId";
         private const string LogValueOSDiskResourceId = "OSDiskResourceId";
         private const string LogValueCloudEnvironmentType = "CloudEnvironmentType";
         private const string LogValueCloudEnvironmentState = "CloudEnvironmentState";
+        private const string LogValueCloudEnvironmentIsArchived = "CloudEnvironmentIsArchived";
         private const string LogValueAutoShutdownDelay = "AutoShutdownDelay";
         private const string LogValueSkuName = "SkuName";
         private const string LogValueLastStateUpdateReason = "LastStateUpdateReason";
@@ -32,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueTargetAutoShutdownDelay = "TargetAutoShutdownDelay";
         private const string LogValuePartner = "Partner";
         private const string LogValueCountryCode = "CountryCode";
-        private const string LogValueAzureGeoraphy = "AzureGeogrpahy";
+        private const string LogValueAzureGeography = "AzureGeography";
         private const string LogValueVsoClientType = "VsoClientType";
 
         /// <summary>
@@ -105,13 +108,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             => logger.FluentAddBaseValue(LogValueOSDiskResourceId, osDiskId?.ToString());
 
         /// <summary>
-        /// Add the environment connection compute id to the logger.
+        /// Add the environment storage id to the logger.
         /// </summary>
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="storageId">The environment connection storage id.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddStorageResourceId(this IDiagnosticsLogger logger, Guid? storageId)
             => logger.FluentAddBaseValue(LogValueStorageResourceId, storageId?.ToString());
+
+        /// <summary>
+        /// Add the environment archive storage id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="archiveStorageId">The environment connection archive storage id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddArchiveStorageResourceId(this IDiagnosticsLogger logger, Guid? archiveStorageId)
+            => logger.FluentAddBaseValue(LogValueArchiveStorageResourceId, archiveStorageId?.ToString());
 
         /// <summary>
         /// Add the environment type to the logger.
@@ -130,6 +142,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddCloudEnvironmentState(this IDiagnosticsLogger logger, CloudEnvironmentState state)
             => logger.FluentAddBaseValue(LogValueCloudEnvironmentState, state.ToString());
+
+        /// <summary>
+        /// Add the environment archive state to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="isArchived"><c>true</c> if the cloud environment is archived; otherwise, <c>false</c>.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddCloudEnvironmentIsArchived(this IDiagnosticsLogger logger, bool isArchived)
+            => logger.FluentAddValue(LogValueCloudEnvironmentIsArchived, isArchived);
 
         /// <summary>
         /// Add the environment state to the logger.
@@ -192,7 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="value">The azure geo value.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddAzureGeography(this IDiagnosticsLogger logger, AzureGeography? value)
-            => logger.FluentAddValue(LogValueAzureGeoraphy, value);
+            => logger.FluentAddValue(LogValueAzureGeography, value);
 
         /// <summary>
         /// Add the environment vso client type to the logger.

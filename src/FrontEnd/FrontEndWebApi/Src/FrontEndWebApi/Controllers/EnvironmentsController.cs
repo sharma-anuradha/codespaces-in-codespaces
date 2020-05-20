@@ -410,7 +410,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // Validate the Sku is visible
             if (!isSkuVisible)
             {
-                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not defined: {cloudEnvironment.SkuName}";
+                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not visible: {cloudEnvironment.SkuName}";
                 logger.AddReason(message);
                 return BadRequest(message);
             }
