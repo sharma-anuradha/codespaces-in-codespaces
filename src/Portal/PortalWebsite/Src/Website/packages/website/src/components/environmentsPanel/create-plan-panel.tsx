@@ -21,6 +21,8 @@ import { armAPIVersion } from '../../constants';
 import { getPlans } from '../../actions/plans-actions';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ConfigurationState } from '../../reducers/configuration';
+import { IToken } from '../../typings/IToken';
+import { wait } from '../../dependencies';
 
 import { IAzureSubscription } from '../../interfaces/IAzureSubscription';
 import { Collapsible } from '../collapsible/collapsible';
@@ -31,6 +33,9 @@ import { createPlan } from '../../actions/createPlan';
 import { createResourceGroup } from '../../actions/createResourceGroup';
 import { locationToDisplayName } from '../../utils/locations';
 import { ILocations } from '../../interfaces/ILocation';
+
+const RESOURCE_REGISTRATION_POLLING_INTERVAL_MS = 300;
+const RESOURCE_REGISTRATION_MAX_POLLS = 100;
 
 export interface CreatePlanPanelProps {
     hidePanel: (canContinueToEnvironment?: boolean) => void;
@@ -330,54 +335,65 @@ export class CreatePlanPanelComponent extends Component<
         this.props.hidePanel();
     };
 
-    private async checkResourceProvider(subscription: string) {
+    private async registerResourceProvider(subscription: string) {
+        const registerUrl = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline/register?api-version=2019-08-01`;
+        let resp = await fetch(registerUrl, {
+            method: 'POST',
+            headers: {
+                authorization: `Bearer ${(await this.getAuthToken()).accessToken}`,
+            },
+        });
+        if (resp.status != 200) {
+            throw new PlanCreationError(PlanCreationFailureReason.FailedToRegisterResourceProvider);
+        }
+
+        let retries = RESOURCE_REGISTRATION_MAX_POLLS;
+        while (--retries && !await this.isResourceProviderRegistered(subscription)) {
+            await wait(RESOURCE_REGISTRATION_POLLING_INTERVAL_MS);
+        }
+        if (!retries) {
+            throw new PlanCreationError(PlanCreationFailureReason.TimeoutWaitingForRegisterResourceProvider);
+        }
+    }
+
+    private async isResourceProviderRegistered(subscription: string) {
         const url = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline?api-version=2019-08-01`;
         let response = await this.getFromAzure(url);
-        const myAuthToken = await authService.getARMToken(60);
-        if (myAuthToken) {
-            const token = `Bearer ${myAuthToken.accessToken}`;
+        return response && response.registrationState == 'Registered';
+    }
 
-            if (!response || response.registrationState != 'Registered') {
-                const registerUrl = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.VSOnline/register?api-version=2019-08-01`;
-                let resp = await fetch(registerUrl, {
-                    method: 'POST',
-                    headers: {
-                        authorization: token,
-                    },
-                });
-                if (resp.status != 200) {
-                    throw new PlanCreationError(
-                        PlanCreationFailureReason.FailedToRegisterResourceProvider
-                    );
-                }
-            }
-        } else {
+    private async getAuthToken(): Promise<IToken> {
+        const myAuthToken = await authService.getARMToken(60);
+        if (!myAuthToken) {
             throw new PlanCreationError(PlanCreationFailureReason.NotAuthenticated);
+        }
+        return myAuthToken
+    }
+
+    private async checkResourceProvider(subscription: string) {
+        if (!await this.isResourceProviderRegistered(subscription)) {
+            await this.registerResourceProvider(subscription);
         }
     }
 
     private async getFromAzure(url: string) {
-        const myAuthToken = await authService.getARMToken(60);
+        const myAuthToken = await this.getAuthToken();
 
-        if (myAuthToken) {
-            const authToken = 'Bearer ' + myAuthToken.accessToken;
-            let response = await fetch(url, {
-                headers: {
-                    authorization: authToken,
-                },
-            });
-            if (!response) {
-                throw new Error(`Azure GET request failed`);
-            }
-            if (response.status === 200) {
-                return response.json();
-            } else {
-                // tslint:disable-next-line:no-console
-                console.error(`Request to ${response.url} failed with status ${response.status}`);
-                return null;
-            }
+        const authToken = 'Bearer ' + myAuthToken.accessToken;
+        let response = await fetch(url, {
+            headers: {
+                authorization: authToken,
+            },
+        });
+        if (!response) {
+            throw new Error(`Azure GET request failed`);
+        }
+        if (response.status === 200) {
+            return response.json();
         } else {
-            throw new PlanCreationError(PlanCreationFailureReason.NotAuthenticated);
+            // tslint:disable-next-line:no-console
+            console.error(`Request to ${response.url} failed with status ${response.status}`);
+            return null;
         }
     }
 
