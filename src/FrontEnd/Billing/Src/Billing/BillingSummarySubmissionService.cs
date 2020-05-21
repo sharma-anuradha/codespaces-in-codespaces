@@ -84,11 +84,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <inheritdoc/>
-        protected override async Task ExecuteInner(IDiagnosticsLogger childlogger, DateTime startTime, DateTime endTime, string planShard, AzureLocation region)
+        protected override async Task ExecuteInner(IDiagnosticsLogger logger, DateTime startTime, DateTime endTime, string planShard, AzureLocation region)
         {
-            Logger.AddValue("region", region.ToString());
-            Logger.AddValue("planShard", planShard);
-            await Logger.OperationScopeAsync(
+            logger.AddValue("region", region.ToString());
+            logger.AddValue("planShard", planShard);
+            await logger.OperationScopeAsync(
                 $"{ServiceName}_begin_submission",
                 async (childLogger) =>
                 {
@@ -97,20 +97,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var plans = await planManager.GetPlansByShardAsync(
                      new List<AzureLocation> { region },
                      planShard,
-                     childlogger);
+                     childLogger);
 
                     foreach (var plan in plans)
                     {
-                        await Logger.OperationScopeAsync(
+                        await childLogger.OperationScopeAsync(
                             $"{ServiceName}_submission_plan",
-                            async (_) =>
+                            async (innerLogger) =>
                             {
                                 Expression<Func<BillingEvent, bool>> filter = x => x.Plan.Subscription == plan.Plan.Subscription && x.Plan.ResourceGroup == plan.Plan.ResourceGroup && x.Plan.Name == plan.Plan.Name && x.Plan.Location == plan.Plan.Location &&
                                                                     startTime <= x.Time &&
                                                                     x.Time < endTime &&
                                                                     x.Type == BillingEventTypes.BillingSummary
                                                                     && ((BillingSummary)x.Args).SubmissionState == BillingSubmissionState.None;
-                                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, Logger);
+                                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, innerLogger);
                                 foreach (var summary in billingSummaries)
                                 {
                                     numberOfSubmissions += await ProcessSummary(summary, batchID);
@@ -121,9 +121,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // If we've pushed anything, now we should create a queue entry to record the whole batch.
                     if (numberOfSubmissions > 0)
                     {
-                        await Logger.OperationScopeAsync(
+                        await childLogger.OperationScopeAsync(
                         $"{ServiceName}_begin_queue_submission",
-                        async (childLogger2) =>
+                        async (innerLogger) =>
                         {
                             // Get the storage mechanism for billing submission
                             var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
@@ -135,7 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                             // Send off the queue submission
                             await storageClient.PushBillingQueueSubmission(billingSummaryQueueSubmission);
-                            Logger.FluentAddValue("BillSubmissionEndTime", endTime.ToString())
+                            innerLogger.FluentAddValue("BillSubmissionEndTime", endTime.ToString())
                                   .FluentAddValue("Location", region.ToString())
                                   .FluentAddValue("Shard", planShard)
                                   .FluentAddValue("SubmissionCount", numberOfSubmissions.ToString())
