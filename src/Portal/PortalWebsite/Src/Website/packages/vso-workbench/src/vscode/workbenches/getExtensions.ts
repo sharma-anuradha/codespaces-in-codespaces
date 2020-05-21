@@ -1,3 +1,7 @@
+/**
+ * Deprecated for the workbench page but still used by the old workbench page in the VSCS portal.
+ */
+
 import { isHostedOnGithub } from 'vso-client-core';
 import {
     DEFAULT_EXTENSIONS,

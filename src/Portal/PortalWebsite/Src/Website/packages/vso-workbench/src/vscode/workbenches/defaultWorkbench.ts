@@ -1,6 +1,5 @@
 import { isHostedOnGithub, getCurrentEnvironmentId } from 'vso-client-core';
 import { registerServiceWorker } from 'vso-service-worker-client';
-import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 import { getVSCodeVersion } from '../../utils/getVSCodeVersion';
 import { AuthenticationError } from '../../errors/AuthenticationError';
 import { vsoAPI } from '../../api/vsoAPI';
@@ -14,19 +13,13 @@ import {
     PortForwardingExternalUriProvider,
 } from '../providers/externalUriProvider/externalUriProvider';
 import { credentialsProvider } from '../providers/credentialsProvider/credentialsProvider';
-import { URI } from 'vscode-web';
+import { URI, IWorkbenchConstructionOptions } from 'vscode-web';
 import { telemetry } from '../../telemetry/telemetry';
 import { applicationLinksProviderFactory } from '../providers/applicationLinksProvider/applicationLinksProviderFactory';
-import { getExtensions } from './getExtensions';
-
-const getUserDataProvider = async () => {
-    const defaultSettings = isHostedOnGithub() ? '{"workbench.colorTheme": "GitHub Light"}' : '';
-
-    const userDataProvider = new UserDataProvider(defaultSettings);
-    await userDataProvider.initializeDBProvider();
-
-    return userDataProvider;
-};
+import { getHomeIndicator } from './getHomeIndicator';
+import { getUserDataProvider } from './getUserDataProvider';
+import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
+import { getExtensions } from './getDefaultExtensions';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -67,11 +60,13 @@ export class Workbench {
             );
 
             const userDataProvider = await getUserDataProvider();
+            const extensions = await getExtensions(userDataProvider.isFirstRun);
+
             this.workbench = new VSCodeWorkbench({
                 domElementId,
                 vscodeConfig,
                 environmentInfo,
-                extensions: getExtensions(userDataProvider.isFirstRun),
+                extensions,
                 onConnection,
                 getProviders: async (connector: EnvConnector) => {
                     const workspaceProvider = new WorkspaceProvider(
@@ -118,7 +113,7 @@ export class Workbench {
 
                     const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
 
-                    return {
+                    const providers: IWorkbenchConstructionOptions = {
                         credentialsProvider,
                         userDataProvider,
                         workspaceProvider,
@@ -127,7 +122,12 @@ export class Workbench {
                         resolveExternalUri,
                         resolveCommonTelemetryProperties,
                         applicationLinks,
+                        homeIndicator: await getHomeIndicator(),
+                        enableSyncByDefault: true,
+                        authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
                     };
+
+                    return providers;
                 },
                 getToken,
                 liveShareEndpoint: liveShareEndpoint,

@@ -1,6 +1,10 @@
-export const DEFAULT_EXTENSIONS = [
+export const PLATFORM_REQUIRED_EXTENSIONS = [
     'vscode.theme-defaults',
     'ms-vsonline.vsonline',
+];
+
+export const DEFAULT_EXTENSIONS = [
+    ...PLATFORM_REQUIRED_EXTENSIONS,
     'GitHub.vscode-pull-request-github',
 ];
 

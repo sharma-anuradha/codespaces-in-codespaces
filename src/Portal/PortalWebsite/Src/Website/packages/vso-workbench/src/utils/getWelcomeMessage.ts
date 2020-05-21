@@ -1,6 +1,6 @@
 import { TEnvironment } from '../config/config';
 
-const CAPTION = ' * VS Codespaces *  ';
+const CAPTION = ' * VS Codespaces * ';
 const SEPARATOR_MIDDLE = new Array(CAPTION.length)
     .fill('-')
     .join('');

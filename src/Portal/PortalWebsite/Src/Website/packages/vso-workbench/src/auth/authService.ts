@@ -38,6 +38,36 @@ export class AuthService {
         return partnerInfo;
     };
 
+    public getCachedGithubToken = async (): Promise<string | null> => {
+        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
+
+        if (!partnerInfo) {
+            return null;
+        }
+
+        const githubToken = partnerInfo.credentials.find((token) => {
+            return token.host === 'github.com';
+        });
+
+        if (!githubToken) {
+            return null;
+        }
+
+        return githubToken.token;
+    };
+
+    public getCachedCascadeToken = async (): Promise<string | null> => {
+        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
+
+        if (!partnerInfo) {
+            return null;
+        }
+
+        return 'cascadeToken' in partnerInfo
+            ? partnerInfo.cascadeToken
+            : partnerInfo.token;
+    };
+
     public getCachedToken = async (): Promise<string | null> => {
         const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
         if (!partnerInfo) {

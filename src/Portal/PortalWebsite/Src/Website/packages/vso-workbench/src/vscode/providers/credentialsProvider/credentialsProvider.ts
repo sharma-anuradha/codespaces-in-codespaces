@@ -7,6 +7,8 @@ import { AADv2BrowserSyncStrategy } from './strategies/AADv2BrowserSyncStrategy'
 import { LiveShareWebStrategy } from './strategies/LiveShareWebStrategy';
 import { GitCredentialHelperStrategy } from './strategies/GitServiceCredentialsStrategy';
 import { LiveShareGithubAuthStrategy } from './strategies/CascadeAuthStrategy';
+import { GitHubStrategy } from './strategies/GitHubStrategy';
+import { NativeVSCodeProvidersStrategy } from './strategies/NativeVSCodeProvidersStrategy';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -107,8 +109,17 @@ export const credentialsProvider = new CredentialsProvider([
      *  - Keytar[account | *] -> GCH[path]
      */
     new GitCredentialHelperStrategy(),
-    // TODO: implement these
-    // new AzureAccountStrategy(),
-    // new GistPadStrategy(),
-    // new GitHubStrategy(),
+    /**
+     * Used to authente:
+     *  - VSCS extension
+     *  - GHPR extension (old one thru the keytar request directly)
+     *  - The native GitHub auth provider (GHPR extension uses it to auth)
+     */
+    new GitHubStrategy(),
+    /**
+     * Used to add the default authentication sessions used by the Native VSCode
+     * authentication providers, these data is coming from
+     * the ICrossDomainPartnerInfo.vscodeSettings.defaultAuthSessions payload (optional).
+     */
+    new NativeVSCodeProvidersStrategy(),
 ]);

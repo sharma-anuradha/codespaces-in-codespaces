@@ -328,7 +328,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             ? '{"workbench.colorTheme": "GitHub Light", "workbench.startupEditor": "none"}'
             : '';
 
-        const userDataProvider = new UserDataProvider(defaultSettings);
+        const userDataProvider = new UserDataProvider(async () => defaultSettings);
         await userDataProvider.initializeDBProvider();
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.

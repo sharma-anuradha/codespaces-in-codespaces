@@ -79,7 +79,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             return PhysicalFile(asset, mediaType);
         }
-
          
         public class GitCredential
         {
@@ -94,6 +93,66 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             [JsonProperty("token")]
             public string Token { get; set; }
+        }
+
+        public class NativeAuthProviderAccount
+        {
+            [JsonProperty("Id")]
+            public string Id { get; set; }
+
+            [JsonProperty("displayName")]
+            public string DisplayName { get; set; }
+        }
+
+        public class NativeAuthProviderSession
+        {
+            [JsonProperty("type")]
+            public string Type { get; set; }
+
+            [JsonProperty("id")]
+            public string Id { get; set; }
+
+            [JsonProperty("scopes")]
+            public List<string> Scopes { get; set; }
+
+            [JsonProperty("accessToken")]
+            public string AccessToken { get; set; }
+
+            [JsonProperty("account")]
+            public NativeAuthProviderAccount Account { get; set; }
+        }
+
+        public class HomeIndicator
+        {
+            [JsonProperty("href")]
+            public string Href { get; set; }
+
+            [JsonProperty("title")]
+            public string Title { get; set; }
+
+            [JsonProperty("icon")]
+            public string Icon { get; set; }
+        }
+
+        public class VSCodeSettings
+        {
+            [JsonProperty("homeIndicator")]
+            public HomeIndicator HomeIndicator { get; set; }
+
+            [JsonProperty("defaultSettings")]
+            public string DefaultSettings { get; set; }
+
+            [JsonProperty("defaultExtensions")]
+            public List<string> DefaultExtensions { get; set; }
+
+            [JsonProperty("enableSyncByDefault")]
+            public bool EnableSyncByDefault { get; set; }
+
+            [JsonProperty("authenticationSessionId")]
+            public string AuthenticationSessionId { get; set; }
+
+            [JsonProperty("defaultAuthSessions")]
+            public List<NativeAuthProviderSession> DefaultAuthSessions { get; set; }
         }
 
         public class PartnerInfo
@@ -112,6 +171,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             [JsonProperty("credentials")]
             public List<GitCredential> Credentials { get; set; }
+
+            [JsonProperty("vscodeSettings")]
+            public VSCodeSettings VSCodeSettings { get; set; }
         }
 
         [HttpPost("~/platform-authentication")]

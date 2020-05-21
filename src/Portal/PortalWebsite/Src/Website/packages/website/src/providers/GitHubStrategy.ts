@@ -1,9 +1,15 @@
-import { SessionData } from 'vscode-web';
+import {
+    GitHubStrategy as GitHubStrategyWorkbench, DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+} from 'vso-workbench';
+import {
+    localStorageKeychain,
+    getCurrentEnvironmentId,
+    getVSCodeScheme,
+} from 'vso-client-core';
 
-import { IAuthStrategy, DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from 'vso-workbench';
-import { localStorageKeychain, getCurrentEnvironmentId, getVSCodeScheme } from 'vso-client-core';
 import { createCascadeTokenKey } from '../split/github/createCascadeTokenKey';
 import { getGithubToken } from '../split/github/getGithubToken';
+import { SessionData } from 'vscode-web';
 
 const GH_PR_EXTENSION_STABLE_SERVICE = 'vscode-pull-request-github';
 const GH_PR_EXTENSION_STABLE_ACCOUNT = 'github.com';
@@ -26,22 +32,28 @@ const isGithubRequest = (service: string, account: string) => {
     return isGithubRequest;
 };
 
-export class GitHubStrategy implements IAuthStrategy {
-    async canHandleService(service: string, account: string) {
-        const isVSOGitHubRequest = (service === 'vso-github' &&
-            (account.startsWith('github-token_') || account.startsWith('cascade-token_')));
-
-        const result = isVSOGitHubRequest || isGithubRequest(service, account);
-
-        return result;
+export class GitHubStrategy extends GitHubStrategyWorkbench {
+    protected getGithubToken = async () => {
+        return await getGithubToken();
     }
 
-    async getToken(service: string, account: string): Promise<string | null> {
+    protected getCascadeToken = async () => {
+        const key = createCascadeTokenKey(getCurrentEnvironmentId());
+        const token = await localStorageKeychain.get(key);
+
+        return token || null;
+    }
+
+    public async canHandleService(service: string, account: string) {
+        return (await super.canHandleService(service, account)) || isGithubRequest(service, account);
+    }
+
+    public async getToken(service: string, account: string) {
         /**
          * Is either `GitHub PR extension` or `Native VSCode Auth GitHub provider`
          */
         if (isGithubRequest(service, account)) {
-            const token = await getGithubToken();
+            const token = await this.getGithubToken();
             if (!token) {
                 return null;
             }
@@ -74,21 +86,6 @@ export class GitHubStrategy implements IAuthStrategy {
             return githubSessions;
         }
 
-        /**
-         * GitHub token for VSO extension.
-         */
-        if (account.startsWith('github-token_')) {
-            const token = await getGithubToken();
-
-            return token;
-        }
-
-        /**
-         * Cascade token for VSO extension.
-         */
-        const cascadeKey = createCascadeTokenKey(getCurrentEnvironmentId());
-        const token = (await localStorageKeychain.get(cascadeKey)) || null;
-
-        return token;
+        return await super.getToken(service, name);
     }
 }

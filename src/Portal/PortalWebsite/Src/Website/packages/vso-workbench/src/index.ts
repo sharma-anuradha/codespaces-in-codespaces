@@ -21,6 +21,7 @@ export { MsalAuthStrategy } from './vscode/providers/credentialsProvider/strateg
 export { AADv2BrowserSyncStrategy } from './vscode/providers/credentialsProvider/strategies/AADv2BrowserSyncStrategy';
 export { LiveShareWebStrategy } from './vscode/providers/credentialsProvider/strategies/LiveShareWebStrategy';
 export { LiveShareGithubAuthStrategy } from './vscode/providers/credentialsProvider/strategies/CascadeAuthStrategy';
+export { GitHubStrategy } from './vscode/providers/credentialsProvider/strategies/GitHubStrategy';
 
 export { CrossDomainPFAuthenticator } from './auth/portForwarding/CrossDomainPFAuthenticator';
 

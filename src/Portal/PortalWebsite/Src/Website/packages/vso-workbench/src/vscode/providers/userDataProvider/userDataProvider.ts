@@ -40,7 +40,7 @@ export class UserDataProvider implements IFileSystemProvider {
 
     public isFirstRun: boolean = false;
 
-    constructor(private defaultSettings: string) {}
+    constructor(private getDefaultSettings: () => Promise<string>) {}
 
     public async initializeDBProvider() {
         try {
@@ -62,7 +62,7 @@ export class UserDataProvider implements IFileSystemProvider {
 
             const userSettingsValue = await this.storageProvider.getValue(this.userSettingsPath);
             if (!userSettingsValue) {
-                await this.storageProvider.setValue(this.userSettingsPath, this.defaultSettings);
+                await this.storageProvider.setValue(this.userSettingsPath, await this.getDefaultSettings());
 
                 this.isFirstRun = true;
             }

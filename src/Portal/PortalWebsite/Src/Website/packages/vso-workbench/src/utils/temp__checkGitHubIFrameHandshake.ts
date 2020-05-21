@@ -7,6 +7,7 @@ import {
     isGithubTLD,
     PARTNER_INFO_KEYCHAIN_KEY
 } from 'vso-client-core';
+import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../constants';
 
 const trace = createTrace(`vso-platform-authentication:auth-page`);
 
@@ -35,6 +36,7 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
     self.addEventListener('load', async () => {
         try {
             const info = await postMessageChannel.getRepoInfo(randomString(), 'vso-retrieve-repository-info') as any;
+            
             const formEl = document.createElement('form');
             formEl.setAttribute('action', `${location.origin}/platform-authentication`);
             formEl.setAttribute('method', 'POST');
@@ -47,7 +49,8 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
 
             const data: ICrossDomainPartnerInfo = {
                 partnerName: 'github',
-                managementPortalUrl: "https://github.com/codespaces",
+                // where to redirect to in case the credentials expire
+                managementPortalUrl: 'https://github.com/codespaces',
                 cascadeToken: info.cascadeToken,
                 credentials: [
                     {
@@ -55,9 +58,48 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                         expiration: 10000000000000,
                         token: info.githubToken,
                         host: 'github.com',
-                        path: '/' }
+                        path: '/'
+                    }
                 ],
                 codespaceId: info.workspaceId,
+                vscodeSettings: {
+                    // set the GitHub theme as default, note that this will work only
+                    //  - on fresh codespace
+                    //  - and if the settings sync service is not turned on (or user using the default theme)
+                    defaultSettings: '{"workbench.colorTheme": "GitHub Light"}',
+                    // go home button
+                    homeIndicator: {
+                        icon: 'github-inverted',
+                        href: 'https://github.com/codespaces',
+                        title: 'Go Home',
+                    },
+                    // list of the VSCode extension ids that should be installed on the first codespace run
+                    // hence user has the option to remove the extensions explicitelly
+                    defaultExtensions: [
+                        'GitHub.vscode-pull-request-github',
+                        'github.github-vscode-theme',
+                        'ms-vsliveshare.vsliveshare'
+                    ],
+                    // settings sync / native auth providers
+                    enableSyncByDefault: true,
+                    authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+                    defaultAuthSessions: [
+                        // the default auth session used for Settings Sync Service auth
+                        {
+                            type: 'github',
+                            id: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+                            accessToken: info.githubToken,
+                            scopes: ['email'],
+                        },
+                        // used by GH PR extension
+                        {
+                            type: 'github',
+                            id: 'github-session-github-pr',
+                            accessToken: info.githubToken,
+                            scopes: ['read:user', 'user:email', 'repo'].sort(),
+                        }
+                    ]
+                },
             };
 
             partnerInfoInput.name = 'partnerInfo';

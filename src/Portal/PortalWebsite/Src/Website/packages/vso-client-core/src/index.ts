@@ -29,6 +29,7 @@ export { bufferToArrayBuffer } from './utils/bufferToArrayBuffer';
 export { createCancellationToken } from './utils/timer';
 export { debounceInterval } from './utils/debounceInterval';
 export { RequestStore } from './utils/RequestStore';
+export { arrayUnique } from './utils/arrayUnique';
 
 // interfaces
 export { IKeychain } from './interfaces/IKeychain';

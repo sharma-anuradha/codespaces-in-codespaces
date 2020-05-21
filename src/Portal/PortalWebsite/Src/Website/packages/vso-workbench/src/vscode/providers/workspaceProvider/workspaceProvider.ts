@@ -6,6 +6,10 @@ import { parseWorkspacePayload } from '../../../utils/parseWorkspacePayload';
 import { DOGFOOD_CHANNEL_QUERY_PARAM_NAME } from '../../../constants';
 import { getUriAuthority } from '../../../utils/getUriAuthority';
 
+const isUntitledWorkspace = (path: string) => {
+    return !!path.match(/Untitled\-\d+\.code\-workspace/gim);
+};
+
 export class WorkspaceProvider implements IWorkspaceProvider {
     public readonly workspace: IWorkspace;
     public readonly payload?: [string, any][];
@@ -25,11 +29,26 @@ export class WorkspaceProvider implements IWorkspaceProvider {
         if (isEmpty === 'true') {
             this.workspace = undefined;
         } else if (workspace !== null) {
-            const workspaceUri = vscode.URI.from({
-                path: workspace,
-                scheme: 'vscode-remote',
-                authority: getUriAuthority(environmentInfo),
-            });
+            let workspaceUri = vscode.URI.parse(workspace);
+            /**
+             * If no schema present, use the remote authority one
+             */
+            if (workspaceUri.scheme === 'file') {
+                const scheme = (isUntitledWorkspace(workspace))
+                    ? 'vscode-userdata'
+                    : 'vscode-remote';
+
+                const authority = (isUntitledWorkspace(workspace))
+                    ? workspaceUri.authority
+                    : `vsonline+${environmentInfo.id}`;
+
+                workspaceUri = vscode.URI.from({
+                    ...workspaceUri,
+                    scheme,
+                    authority,
+                });
+            }
+
             this.workspace = { workspaceUri };
         } else {
             const folderUri = vscode.URI.from({

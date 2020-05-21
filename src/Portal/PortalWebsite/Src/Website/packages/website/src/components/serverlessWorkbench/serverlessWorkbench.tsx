@@ -136,7 +136,10 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
 
         this.workbenchMounted = true;
 
-        const userDataProvider = new UserDataProvider('');
+        const userDataProvider = new UserDataProvider(async () => {
+            return '';
+        });
+        
         await userDataProvider.initializeDBProvider();
 
         const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(telemetry);

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
@@ -46,6 +47,46 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 "ClientApp", "build", path);
 
             return PhysicalFile(asset, mediaType);
+        }
+
+
+        [HttpGet("~/settings-sync")]
+        public async Task<IActionResult> Authorize(
+            [FromQuery(Name = "resourceId")] string resourceId
+        )
+        {
+            if (string.IsNullOrWhiteSpace(resourceId))
+            {
+                return BadRequest("No 'resourceId' query param set.");
+            }
+
+            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, $"https://vscode-sync.trafficmanager.net/v1/resource/{resourceId}/latest");
+            requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+
+            HttpClient client = new HttpClient();
+
+            Request.Headers.TryGetValue("authorization", out var authHeader);
+            if (string.IsNullOrWhiteSpace(authHeader)) {
+                return BadRequest("No 'authorization' header set.");
+            }
+
+            client.DefaultRequestHeaders.Add("authorization", authHeader.ToString());
+
+            Request.Headers.TryGetValue("x-account-type", out var accountType);
+            if (string.IsNullOrWhiteSpace(accountType)) {
+                return BadRequest("No 'x-account-type' header set.");
+            }
+
+            client.DefaultRequestHeaders.Add("x-account-type", accountType.ToString());
+
+            HttpResponseMessage response = await client.SendAsync(requestMessage);
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            Response.StatusCode = (int)response.StatusCode;
+
+            return Content(content, "application/json");
         }
     }
 }

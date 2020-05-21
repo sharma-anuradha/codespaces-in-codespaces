@@ -551,6 +551,11 @@ declare module 'vscode-web' {
 
     interface IHomeIndicator {
         /**
+         * The URL of the home indicator link.
+         */
+        href?: string;
+
+        /**
          * The identifier of the command to run when clicking the home indicator.
          */
         command: string;
