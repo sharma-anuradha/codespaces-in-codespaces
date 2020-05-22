@@ -19,9 +19,11 @@ export interface GitHubWorkbenchProps extends RouteComponentProps<Params> {
     richNavWebExtensionEndpoint: string;
 }
 
+const CODETOUR_ENDPOINT = 'https://vscsextensionsdev.blob.core.windows.net/codetour';
+
 class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenchProps> {
     render() {
-        const extensionUrls = [this.props.richNavWebExtensionEndpoint];
+        const extensionUrls = [this.props.richNavWebExtensionEndpoint, CODETOUR_ENDPOINT];
 
         // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
         const uriQueryObj = {
