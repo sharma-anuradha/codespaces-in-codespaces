@@ -18,12 +18,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         /// <param name="serviceCollection">The service collection.</param>
         /// <param name="dataPlaneSettings">The data plane settings.</param>
         /// <param name="skuCatalogSettings">The sku catalog settings.</param>
+        /// <param name="planSkuCatalogSettings">The plan sku catalog settings.</param>
         /// <param name="applicationServicePrincipalSettings">The default application service principal. Can be null.</param>
         /// <returns>The service collection instance.</returns>
         public static IServiceCollection AddSystemCatalog(
             this IServiceCollection serviceCollection,
             DataPlaneSettings dataPlaneSettings,
             SkuCatalogSettings skuCatalogSettings,
+            PlanSkuCatalogSettings planSkuCatalogSettings,
             ServicePrincipalSettings applicationServicePrincipalSettings)
         {
             Requires.NotNull(serviceCollection, nameof(serviceCollection));
@@ -42,6 +44,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
             // The SKU Catalog
             serviceCollection.Configure<SkuCatalogOptions>(x => x.Settings = skuCatalogSettings);
             serviceCollection.AddSingleton<ISkuCatalog, SkuCatalog>();
+
+            // The Plan SKU Catalog
+            serviceCollection.Configure<PlanSkuCatalogOptions>(x => x.Settings = planSkuCatalogSettings);
+            serviceCollection.AddSingleton<IPlanSkuCatalog, PlanSkuCatalog>();
 
             // The composite System Catlog
             serviceCollection.AddSingleton<ISystemCatalog, SystemCatalogProvider>();

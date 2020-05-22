@@ -45,6 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public SkuCatalogSettings SkuCatalogSettings { get; set; }
 
         /// <summary>
+        /// Gets or sets the Plan SKU catalog settings.
+        /// </summary>
+        public PlanSkuCatalogSettings PlanSkuCatalogSettings { get; set; }
+
+        /// <summary>
         /// Gets or sets the data-plane settings.
         /// </summary>
         [JsonProperty(Required = Required.Always)]

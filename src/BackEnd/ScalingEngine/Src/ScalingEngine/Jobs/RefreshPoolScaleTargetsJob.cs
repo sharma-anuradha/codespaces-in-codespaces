@@ -23,8 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
     /// If the configuration changes while the service is running (either target size or count),
     /// then this job will pick it up and set the pool scale levels accordingly.
     /// </summary>
+    [LoggingBaseName(LoggingBaseName)]
     public class RefreshPoolScaleTargetsJob : IAsyncWarmup
     {
+        private const string LoggingBaseName = nameof(RefreshPoolScaleTargetsJob);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="RefreshPoolScaleTargetsJob"/> class.
         /// </summary>
@@ -64,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         {
             // Kick off background job that re-evaluates the catalog every minute
             return TaskHelper.RunBackgroundLoopAsync(
-                $"{nameof(RefreshPoolScaleTargetsJob)}_run",
+                $"{LoggingBaseName}_run",
                 (childLogger) => UpdateScaleLevelsAsync(childLogger),
                 TimeSpan.FromMinutes(1));
         }
@@ -76,45 +79,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
             var environmentSkus = await FlattenEnvironmentSkusAsync(SystemCatalog.SkuCatalog.CloudEnvironmentSkus.Values, logger);
             pools.AddRange(environmentSkus);
 
-            var keyVaultPools = GetKeyVaultPools(logger);
+            var keyVaultPools = await GetKeyVaultPoolsAsync(SystemCatalog.PlanSkuCatalog.PlanSkus.Values, logger);
             pools.AddRange(keyVaultPools);
 
             await ResourceScalingBroker.UpdateResourceScaleLevels(new ScalingInput() { Pools = pools });
             return true;
         }
 
-        private IList<ResourcePool> GetKeyVaultPools(IDiagnosticsLogger logger)
+        private async Task<IList<ResourcePool>> GetKeyVaultPoolsAsync(IEnumerable<IPlanSku> planSkus, IDiagnosticsLogger logger)
         {
-            logger.LogInfo($"{GetType().FormatLogMessage(nameof(GetKeyVaultPools))}");
-
-            var keyVaultPools = new List<ResourcePool>();
-            foreach (var location in ControlPlaneInfo.Stamp.DataPlaneLocations)
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_getkeyvaultpools", (childLogger) =>
             {
-                var standardKeyVaultPoolSku = ConstructKeyVaultPool(location);
-                keyVaultPools.Add(standardKeyVaultPoolSku);
-            }
+                var keyVaultPools = new List<ResourcePool>();
+                foreach (var planSku in planSkus)
+                {
+                    foreach (var location in planSku.SkuLocations)
+                    {
+                        var keyVaultPoolSku = ConstructKeyVaultPoolForLocation(planSku, location);
+                        keyVaultPools.Add(keyVaultPoolSku);
+                    }
+                }
 
-            return keyVaultPools;
+                return Task.FromResult(keyVaultPools);
+            });
         }
 
-        private ResourcePool ConstructKeyVaultPool(AzureLocation location)
+        private ResourcePool ConstructKeyVaultPoolForLocation(IPlanSku planSku, AzureLocation location)
         {
-            const string KeyVaultAzureSkuName = "Standard";
-            const string logicalPlanSkuName = "standardPlan";
-            const int KeyVaultTargetPoolSize = 10;
-
             var resourcePoolKeyVaultDetails = new ResourcePoolKeyVaultDetails
             {
-                SkuName = KeyVaultAzureSkuName,
+                SkuName = planSku.KeyVaultSkuName,
                 Location = location,
             };
             var keyVaultSku = new ResourcePool
             {
                 Details = resourcePoolKeyVaultDetails,
-                LogicalSkus = new string[] { logicalPlanSkuName },
+                LogicalSkus = new string[] { planSku.SkuName },
                 Id = resourcePoolKeyVaultDetails.GetPoolDefinition(),
                 IsEnabled = true,
-                TargetCount = KeyVaultTargetPoolSize,
+                TargetCount = planSku.KeyVaultPoolLevel,
                 Type = ResourceType.KeyVault,
             };
 
@@ -301,7 +304,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         private Task OverridePoolSettingsAsync(List<ResourcePool> pools, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{nameof(RefreshPoolScaleTargetsJob)}_override_settings",
+                $"{LoggingBaseName}_override_settings",
                 async (childLogger) =>
                 {
                     // Pull out core settings records
@@ -318,7 +321,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                     foreach (var pool in pools)
                     {
                         await childLogger.OperationScopeAsync(
-                            $"{nameof(RefreshPoolScaleTargetsJob)}_override_settings_unit_check",
+                            $"{LoggingBaseName}_override_settings_unit_check",
                             (itemLogger) =>
                             {
                                 var poolDefinition = pool.Details.GetPoolDefinition();

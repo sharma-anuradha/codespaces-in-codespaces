@@ -40,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         /// <param name="secretStoreRepository">The secret store repository.</param>
         /// <param name="resourceAllocationManager">The resource allocation manager.</param>
         /// <param name="planManager">The plan manager.</param>
+        /// <param name="planSkuCatalog">The plan sku catalog.</param>
         /// <param name="currentUserProvider">The current user provider.</param>
         /// <param name="controlPlaneInfo">The control plane info.</param>
         /// <param name="mapper">The Automapper.</param>
@@ -48,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             ISecretStoreRepository secretStoreRepository,
             IResourceAllocationManager resourceAllocationManager,
             IPlanManager planManager,
+            IPlanSkuCatalog planSkuCatalog,
             ICurrentUserProvider currentUserProvider,
             IControlPlaneInfo controlPlaneInfo,
             IMapper mapper)
@@ -56,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             SecretStoreRepository = secretStoreRepository;
             ResourceAllocationManager = resourceAllocationManager;
             PlanManager = planManager;
+            PlanSkuCatalog = planSkuCatalog;
             CurrentUserProvider = currentUserProvider;
             ControlPlaneInfo = controlPlaneInfo;
             Mapper = mapper;
@@ -68,6 +71,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         private IResourceAllocationManager ResourceAllocationManager { get; }
 
         private IPlanManager PlanManager { get; }
+
+        private IPlanSkuCatalog PlanSkuCatalog { get; }
 
         private ICurrentUserProvider CurrentUserProvider { get; }
 
@@ -373,7 +378,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
 
                 try
                 {
-                    secretsStore.SecretResource = await AllocateSecretResourceAsync(vsoPlan.Plan.Location, logger);
+                    secretsStore.SecretResource = await AllocateSecretResourceAsync(vsoPlan, logger);
                     secretsStore.SecretResource.IsReady = true; // Only allocating from the pool as of now.
                     secretsStore = await SecretStoreRepository.UpdateAsync(secretsStore, logger.NewChildLogger());
                 }
@@ -410,16 +415,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         }
 
         private async Task<ResourceAllocationRecord> AllocateSecretResourceAsync(
-            AzureLocation location,
+            VsoPlan vsoPlan,
             IDiagnosticsLogger logger)
         {
             var resourceType = ResourceType.KeyVault;
-            var skuName = "standardPlan"; // TODO: Remove hardcoding in future when we have a plan sku catalog.
+            var skuName = GetPlanSkuName(vsoPlan);
             var inputRequest = new AllocateRequestBody
             {
                 Type = resourceType,
                 SkuName = skuName,
-                Location = location,
+                Location = vsoPlan.Plan.Location,
             };
 
             var allocationResults = await ResourceAllocationManager.AllocateResourcesAsync(
@@ -427,6 +432,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                 new List<AllocateRequestBody>() { inputRequest },
                 logger.NewChildLogger());
             return allocationResults.Single();
+        }
+
+        private string GetPlanSkuName(VsoPlan vsoPlan)
+        {
+            var skuName = vsoPlan.SkuPlan?.Name ?? PlanSkuCatalog.DefaultSkuName;
+            if (PlanSkuCatalog.PlanSkus.ContainsKey(skuName))
+            {
+                return PlanSkuCatalog.PlanSkus[skuName].SkuName;
+            }
+
+            throw new ProcessingFailedException($"The SKU '{skuName}' does not exist in the plan sku catalog.");
         }
 
         private void AuthorizeSecretScope(SecretScope scope)

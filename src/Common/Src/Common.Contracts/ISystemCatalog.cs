@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the SKU catalog for the Cloud Environment SKUs known to the BackEnd.
         /// </summary>
         ISkuCatalog SkuCatalog { get; }
+
+        /// <summary>
+        /// Gets the SKU catalog for the plan SKUs known to the BackEnd.
+        /// </summary>
+        IPlanSkuCatalog PlanSkuCatalog { get; }
     }
 }

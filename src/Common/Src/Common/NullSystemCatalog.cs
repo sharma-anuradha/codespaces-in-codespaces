@@ -15,5 +15,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public ISkuCatalog SkuCatalog => throw new NotSupportedException();
+
+        /// <inheritdoc/>
+        public IPlanSkuCatalog PlanSkuCatalog => throw new NotImplementedException();
     }
 }

@@ -20,10 +20,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var skuCatalog = new Mock<ISkuCatalog>().Object;
             var azureSubscriptonCatalog = new Mock<IAzureSubscriptionCatalog>().Object;
+            var planSkuCatalog = new Mock<IPlanSkuCatalog>().Object;
 
-            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(null, null));
-            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(null, skuCatalog));
-            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(azureSubscriptonCatalog, null));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(azureSubscriptonCatalog, null, null));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(azureSubscriptonCatalog, skuCatalog, null));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(azureSubscriptonCatalog, null, planSkuCatalog));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(null, skuCatalog, null));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(null, skuCatalog, planSkuCatalog));
+            Assert.Throws<ArgumentNullException>(() => new SystemCatalogProvider(null, null, planSkuCatalog));
         }
 
         [Fact]
@@ -31,7 +36,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         {
             var skuCatalog = new Mock<ISkuCatalog>().Object;
             var azureSubscriptonCatalog = new Mock<IAzureSubscriptionCatalog>().Object;
-            var provider = new SystemCatalogProvider(azureSubscriptonCatalog, skuCatalog);
+            var planSkuCatalog = new Mock<IPlanSkuCatalog>().Object;
+
+            var provider = new SystemCatalogProvider(azureSubscriptonCatalog, skuCatalog, planSkuCatalog);
             Assert.NotNull(provider);
         }
 
@@ -53,7 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
 
             // This provider implementation returns a sorSted order
             Assert.Collection(provider.AzureSubscriptionCatalog.AzureSubscriptions,
-                s => {
+                s =>
+                {
                     Assert.Equal("test-subscription-display-name-1", s.DisplayName);
                     Assert.True(s.Enabled);
                     Assert.Equal("test-client-id-1", s.ServicePrincipal.ClientId);
@@ -205,10 +213,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         private static SystemCatalogProvider CreateTestSystemCatalogProvider(
             DataPlaneSettings dataPlaneSettings = default,
             SkuCatalogSettings skuCatalogSettings = default,
+            PlanSkuCatalogSettings planSkuCatalogSettings = default,
             ServicePrincipalSettings servicePrincipalSettings = default)
         {
             dataPlaneSettings = dataPlaneSettings ?? CreateDataPlaneSettings();
             skuCatalogSettings = skuCatalogSettings ?? CreateSkuCatalogSettings();
+            planSkuCatalogSettings = planSkuCatalogSettings ?? CreatePlanSkuCatalogSettings();
             servicePrincipalSettings = servicePrincipalSettings ?? CreateServicePrincipalSettings();
             var secretProvider = new Mock<ISecretProvider>();
             secretProvider
@@ -253,9 +263,85 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 controlPlaneInfo.Object,
                 controlPlaneResourceAccessor.Object,
                 currentImageInfoProvider.Object);
-                
-            var provider = new SystemCatalogProvider(azureSubscriptionCatalog, skuCatalog);
+
+            var planSkuCatalog = new PlanSkuCatalog(planSkuCatalogSettings, controlPlaneInfo.Object);
+
+            var provider = new SystemCatalogProvider(azureSubscriptionCatalog, skuCatalog, planSkuCatalog);
             return provider;
+        }
+
+        private static PlanSkuCatalogSettings CreatePlanSkuCatalogSettings()
+        {
+            return new PlanSkuCatalogSettings
+            {
+                DefaultSkuName = "test-sku-standard",
+                DefaultPlanSkuConfiguration = new Dictionary<string, PlanSkuConfigurationSettings>
+                {
+                    {
+                        "test-sku-standard",
+                        new PlanSkuConfigurationSettings
+                        {
+                            Enabled = true,
+                            KeyVaultPoolSize = 1,
+                            Locations =
+                            {
+                                AzureLocation.EastUs,
+                                AzureLocation.WestUs2,
+                                AzureLocation.UaeNorth, // should get filtered out by controlPlaneInfo.Stamp.DataPlaneLocations
+                            },
+                        }
+                    },
+                    {
+                        "test-sku-premium",
+                        new PlanSkuConfigurationSettings
+                        {
+                            Enabled = true,
+                            KeyVaultPoolSize = 1,
+                            Locations =
+                            {
+                                AzureLocation.EastUs,
+                                AzureLocation.WestUs2,
+                                AzureLocation.UaeNorth, // should get filtered out by controlPlaneInfo.Stamp.DataPlaneLocations
+                            },
+                        }
+                    }
+                },
+                PlanSkuSettings = new Dictionary<string, PlanSkuSettings>
+                {
+                    {
+                        "test-sku-standard",
+                        new PlanSkuSettings
+                        {
+                            Enabled = true,
+                            KeyVaultSkuName = "Standard",
+                            PlanSkuConfiguration = new PlanSkuConfigurationSettings
+                            {
+                                Locations =
+                                {
+                                    AzureLocation.WestEurope
+                                },
+                                KeyVaultPoolSize = 1,
+                            }
+                        }
+                    },
+                    {
+                        "test-sku-premium",
+                        new PlanSkuSettings
+                        {
+                            Enabled = true,
+                            KeyVaultSkuName = "Premium",
+                            PlanSkuConfiguration = new PlanSkuConfigurationSettings
+                            {
+                                Locations =
+                                {
+                                    AzureLocation.WestEurope
+                                },
+                                KeyVaultPoolSize = 1,
+                            }
+                        }
+                    }
+                },
+            };
         }
 
         private static SkuCatalogSettings CreateSkuCatalogSettings()
@@ -272,7 +358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             {
                                 AzureLocation.EastUs,
                                 AzureLocation.WestUs2,
-                                AzureLocation.UaeNorth, // should get filtered out by IDataPlaneManager.GetAllDataPlaneLocations
+                                AzureLocation.UaeNorth, // should get filtered out by IControlPlaneInfo.Stamp.DataPlaneLocations
                             },
                             ComputePoolSize = 1,
                             StoragePoolSize = 1,

@@ -240,6 +240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddSystemCatalog(
                 AppSettings.DataPlaneSettings,
                 AppSettings.SkuCatalogSettings,
+                AppSettings.PlanSkuCatalogSettings,
                 AppSettings.ApplicationServicePrincipal);
 
             loggingBaseValues = new LoggingBaseValues
