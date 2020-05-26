@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
     [LoggingBaseName("pcf_data_agent")]
     public class DataAgent : IPrivacyDataAgent
     {
-        private const string ExportFileName = "ProductAndServiceUsage_VisualStudioOnline.json";
+        private const string ExportFileName = "ProductAndServiceUsage_VisualStudioCodespaces.json";
         private const int MaximumLeaseExtensions = 4;
         private readonly TimeSpan? commandLeaseDuration = TimeSpan.FromMinutes(15);
 
