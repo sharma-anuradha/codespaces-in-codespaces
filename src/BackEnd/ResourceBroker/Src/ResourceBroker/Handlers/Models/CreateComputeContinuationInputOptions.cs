@@ -20,5 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets the Azure subnet info.
         /// </summary>
         public string SubnetResourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the compute go through a hardboot, slower but reliable.
+        /// </summary>
+        public bool HardBoot { get; set; }
     }
 }

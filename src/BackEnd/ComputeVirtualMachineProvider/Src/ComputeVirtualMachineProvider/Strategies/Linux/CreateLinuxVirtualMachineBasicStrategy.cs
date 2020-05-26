@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
@@ -31,8 +32,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <inheritdoc/>
         public override bool Accepts(VirtualMachineProviderCreateInput input)
         {
-            return input.ComputeOS == ComputeOS.Linux
-                && (input.CustomComponents == default || input.CustomComponents.Count == 0);
+            return input.ComputeOS == ComputeOS.Linux &&
+                (input.CustomComponents == default ||
+                input.CustomComponents.Count == 0 ||
+                input.CustomComponents.All(x => x.ComponentType == ResourceType.InputQueue));
         }
 
         /// <inheritdoc/>

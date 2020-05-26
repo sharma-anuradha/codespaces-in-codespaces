@@ -22,7 +22,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
@@ -140,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public Task<(OperationState OperationState, NextStageInput NextInput)> BeginDeleteComputeAsync(
+        public async Task<(OperationState OperationState, NextStageInput NextInput)> BeginDeleteComputeAsync(
              VirtualMachineProviderDeleteInput input,
              IDiagnosticsLogger logger)
         {
@@ -156,9 +158,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var phase2Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
                 var resourceDeletionPlan = new Dictionary<int, (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)> Resources, OperationState PhaseState)>();
                 phase0Resources.Add(VirtualMachineConstants.VmNameKey, (input.AzureResourceInfo, OperationState.NotStarted));
-                phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetInputQueueName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
 
-                // Add NIC and Disk
+                // Add Queue
+                var queueResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.InputQueue).SingleOrDefault();
+                if (queueResourceInfo != default && !queueResourceInfo.Preserve)
+                {
+                    phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (queueResourceInfo.AzureResourceInfo, OperationState.NotStarted));
+                }
+                else if (queueResourceInfo == default)
+                {
+                    var queueDetailsInput = new QueueProviderGetDetailsInput()
+                    {
+                        AzureLocation = input.AzureVmLocation,
+                        Name = VirtualMachineResourceNames.GetInputQueueName(vmName),
+                    };
+
+                    var queueDetailsResult = await QueueProvider.GetDetailsAsync(queueDetailsInput, logger.NewChildLogger());
+                    phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (queueDetailsResult.AzureResourceInfo, OperationState.NotStarted));
+                }
+
+                // Add NIC
                 var nicResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.NetworkInterface).SingleOrDefault()?.AzureResourceInfo;
                 if (nicResourceInfo != null)
                 {
@@ -171,8 +190,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     phase2Resources.Add(VirtualMachineConstants.VnetNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetVirtualNetworkName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
                 }
 
+                // Add Disk
                 var diskResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.OSDisk).SingleOrDefault();
-
                 if (diskResourceInfo != default && !diskResourceInfo.Preserve)
                 {
                     phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (diskResourceInfo.AzureResourceInfo, OperationState.NotStarted));
@@ -187,12 +206,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resourceDeletionPlan.Add(2, (phase2Resources, (phase0Resources.Count == 0) ? OperationState.Succeeded : OperationState.NotStarted));
 
                 var trackingId = JsonConvert.SerializeObject((input.AzureVmLocation, resourceDeletionPlan));
-                return Task.FromResult((OperationState.InProgress, new NextStageInput()
+                return (OperationState.InProgress, new NextStageInput()
                 {
                     TrackingId = trackingId,
                     AzureResourceInfo = input.AzureResourceInfo,
                     Version = 1,
-                }));
+                });
             }
             catch (Exception ex)
             {
@@ -282,28 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             try
             {
                 // create queue message
-                var jobParameters = new Dictionary<string, string>();
-                foreach (var kvp in input.VmInputParams)
-                {
-                    jobParameters.Add(kvp.Key, kvp.Value);
-                }
-
-                if (input.FileShareConnection != null)
-                {
-                    jobParameters.Add("storageAccountName", input.FileShareConnection.StorageAccountName);
-                    jobParameters.Add("storageAccountKey", input.FileShareConnection.StorageAccountKey);
-                    jobParameters.Add("storageShareName", input.FileShareConnection.StorageShareName);
-                    jobParameters.Add("storageFileName", input.FileShareConnection.StorageFileName);
-                }
-
-                // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.
-                jobParameters.Add("skuName", input.SkuName);
-
-                var queueMessage = new QueueMessage
-                {
-                    Command = "StartEnvironment",
-                    Parameters = jobParameters,
-                };
+                var queueMessage = input.GenerateStartEnvironmentPayload();
 
                 await QueueProvider.PushMessageAsync(
                     input.Location,
@@ -419,7 +417,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resourceDeletionStatus[resource.Key] = (resource.Value.ResourceInfo.Name, resourceToBeDeleted[resource.Key].ResourceState);
                 var resourceGroup = resource.Value.ResourceInfo.ResourceGroup;
                 var subscriptionId = resource.Value.ResourceInfo.SubscriptionId;
-                var azureClient = await ClientFactory.GetAzureClientAsync(subscriptionId);
+                var azureClient = resource.Key == VirtualMachineConstants.InputQueueNameKey ? default : await ClientFactory.GetAzureClientAsync(subscriptionId);
                 switch (resource.Key)
                 {
                     case VirtualMachineConstants.VmNameKey:
@@ -432,10 +430,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                              resource.Key));
                         break;
                     case VirtualMachineConstants.InputQueueNameKey:
+                        var queueDeleteInput = new QueueProviderDeleteInput()
+                        {
+                            AzureResourceInfo = resource.Value.ResourceInfo,
+                        };
+
                         taskList.Add(
                             CheckResourceStatus(
-                               (resourceName) => QueueProvider.DeleteQueueAsync(computeVmLocation, resourceName, logger),
-                               (resourceName) => QueueProvider.QueueExistsAync(computeVmLocation, resourceName, logger),
+                               (resourceName) => QueueProvider.DeleteAsync(queueDeleteInput, logger),
+                               (resourceName) => QueueProvider.ExistsAync(resource.Value.ResourceInfo, logger),
                                resourceDeletionStatus,
                                resource.Key));
                         break;
@@ -500,7 +503,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         private async Task<(OperationState OperationState, NextStageInput NextInput)> CheckDeleteComputeStatusVer0Async(NextStageInput input, IDiagnosticsLogger logger)
         {
             var (computeVmLocation, resourcesToBeDeleted) = JsonConvert
-            .DeserializeObject<(AzureLocation, Dictionary<string, VmResourceState>)>(input.TrackingId);
+                .DeserializeObject<(AzureLocation, Dictionary<string, VmResourceState>)>(input.TrackingId);
             var resourceGroup = input.AzureResourceInfo.ResourceGroup;
             var azure = await ClientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
             var networkClient = await ClientFactory.GetNetworkManagementClient(input.AzureResourceInfo.SubscriptionId);
@@ -525,8 +528,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             var taskList = new List<Task>
             {
                 CheckResourceStatus(
-                (resourceName) => QueueProvider.DeleteQueueAsync(computeVmLocation, resourceName, logger),
-                (resourceName) => QueueProvider.QueueExistsAync(computeVmLocation, resourceName, logger),
+                (resourceName) => QueueProvider.DeleteAsync(computeVmLocation, resourceName, logger),
+                (resourceName) => QueueProvider.ExistsAync(computeVmLocation, resourceName, logger),
                 resourcesToBeDeleted,
                 VirtualMachineConstants.InputQueueNameKey),
 

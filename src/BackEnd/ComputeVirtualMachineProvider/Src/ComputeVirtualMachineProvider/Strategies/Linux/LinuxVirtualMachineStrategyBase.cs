@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
@@ -90,13 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
             await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
-            // Create input queue
-            var inputQueueName = VirtualMachineResourceNames.GetInputQueueName(virtualMachineName);
-            var inputQueueConnectionInfo = await QueueProvider.CreateQueue(new QueueProviderCreateInput() { AzureLocation = input.AzureVmLocation, QueueName = inputQueueName, },  logger);
-
             string vmInitScript = GetVmInitScriptAsync(
-                    input,
-                    inputQueueConnectionInfo);
+                    input);
 
             var parameters = GetVMParameters(input, virtualMachineName, resourceTags, vmInitScript);
 
@@ -144,15 +140,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         }
 
         private string GetVmInitScriptAsync(
-            VirtualMachineProviderCreateInput input,
-            QueueConnectionInfo inputQueueConnectionInfo)
+            VirtualMachineProviderCreateInput input)
         {
             var fullyQualifiedResourceName = GetFullyQualifiedResourceName("vm_init.sh");
             var initScript = CommonUtils.GetEmbeddedResourceContent(fullyQualifiedResourceName);
             initScript = ReplaceParams(
                 input.VMToken,
                 input.VmAgentBlobUrl,
-                inputQueueConnectionInfo,
+                input.QueueConnectionInfo,
                 input.ResourceId,
                 input.FrontDnsHostName,
                 initScript);

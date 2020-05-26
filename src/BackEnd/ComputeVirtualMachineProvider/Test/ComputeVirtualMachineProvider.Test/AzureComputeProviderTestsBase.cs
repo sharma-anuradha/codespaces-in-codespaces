@@ -109,7 +109,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 .Returns(async () => {
                     var sa = await azure.StorageAccounts.GetByResourceGroupAsync(ComputeQueueResourceGroup, ComputeQueueStorageAccount);
                     var saKey = sa.GetKeys().First();
-                    return (sa.Name, saKey.Value);
+                    var result = new ComputeQueueStorageInfo()
+                    {
+                        ResourceGroup = ComputeQueueResourceGroup,
+                        StorageAccountKey = saKey.Value,
+                        StorageAccountName = sa.Name,
+                        SubscriptionId = azureSubscriptionId,
+                    };
+                    return result;
                 });
             return resourceAccessor;
         }

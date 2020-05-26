@@ -115,11 +115,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
         }
 
         /// <summary>
-        ///
+        /// Check ARM resource deployment state.
         /// </summary>
-        /// <param name="azure"></param>
-        /// <param name="deploymentName"></param>
-        /// <param name="resourceGroup"></param>
+        /// <param name="azure">Azure client.</param>
+        /// <param name="deploymentName">Deployment name.</param>
+        /// <param name="resourceGroup">Resource group.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         public static async Task<OperationState> CheckArmResourceDeploymentState(
             IAzure azure,

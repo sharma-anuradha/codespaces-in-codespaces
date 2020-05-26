@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
@@ -75,5 +76,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the dependent resources.
         /// </summary>
         public IList<ResourceComponent> CustomComponents { get; set; } = new List<ResourceComponent>();
+
+        /// <summary>
+        /// Gets or sets the queue connection info.
+        /// </summary>
+        public QueueConnectionInfo QueueConnectionInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the options when an environment is resumed.
+        /// </summary>
+        public VirtualMachineProviderCreateOptions Options { get; set; }
     }
 }

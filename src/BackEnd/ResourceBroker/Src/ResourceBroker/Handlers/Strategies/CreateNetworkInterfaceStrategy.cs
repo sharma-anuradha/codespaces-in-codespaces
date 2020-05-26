@@ -19,7 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Strategies
 {
     /// <summary>
-    /// Create compute.
+    /// Create network interface strategy.
     /// </summary>
     public class CreateNetworkInterfaceStrategy : ICreateComponentStrategy
     {

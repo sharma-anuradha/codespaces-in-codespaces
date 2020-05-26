@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets or sets the allocation request id.
         /// </summary>
         public string AllocationRequestID { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the environment should be hard booted.
+        /// </summary>
+        public bool HardBoot { get; set; }
     }
 }

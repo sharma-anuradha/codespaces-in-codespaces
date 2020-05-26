@@ -53,6 +53,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (isOsDiskAllocationRequired)
             {
                 properties.OSDiskResourceID = cloudEnvironment.OSDisk?.ResourceId.ToString();
+                if (cloudEnvironment?.Transitions?.Resuming?.Status != default)
+                {
+                    if (cloudEnvironment.Transitions.Resuming.Status.Value == Common.Continuation.OperationState.Failed)
+                    {
+                        properties.HardBoot = true;
+                    }
+                }
             }
 
             var computeRequest = new AllocateRequestBody

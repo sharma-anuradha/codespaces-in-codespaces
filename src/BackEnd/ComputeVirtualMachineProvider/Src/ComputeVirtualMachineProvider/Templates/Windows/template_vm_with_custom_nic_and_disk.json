@@ -49,7 +49,14 @@
     },
     "storageProfileDetails": {
       "type": "object"
-    }
+    },
+    "runCustomScriptExtension": {
+      "type": "string",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ]
+    }   
   },
   "resources": [
     {
@@ -72,6 +79,7 @@
       },
       "resources": [
         {
+          "condition": "[equals(parameters('runCustomScriptExtension'), 'Yes')]",
           "apiVersion": "2018-10-01",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"

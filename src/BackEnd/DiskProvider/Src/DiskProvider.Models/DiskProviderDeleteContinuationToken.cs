@@ -15,14 +15,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models
         /// Initializes a new instance of the <see cref="DiskProviderDeleteContinuationToken"/> class.
         /// </summary>
         /// <param name="azureResourceInfo">Azure resource info.</param>
+        /// <param name="queueAzureResourceInfo">Queue azure resource info.</param>
         /// <param name="nextState">Next state.</param>
         /// <param name="retryAttempt">Retry attempt.</param>
         public DiskProviderDeleteContinuationToken(
             AzureResourceInfo azureResourceInfo,
+            AzureResourceInfo queueAzureResourceInfo,
             DiskProviderDeleteState nextState,
             int retryAttempt = 0)
         {
             AzureResourceInfo = azureResourceInfo;
+            QueueAzureResourceInfo = queueAzureResourceInfo;
             NextState = nextState;
             RetryAttempt = retryAttempt;
         }
@@ -31,6 +34,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models
         /// Gets or sets azure resource info.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the queue azure resource info.
+        /// </summary>
+        public AzureResourceInfo QueueAzureResourceInfo { get; set; }
 
         /// <summary>
         /// Gets the next state of the operation.

@@ -48,6 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             CreationStrategies = creationStrategies;
         }
 
+        private string LogBaseName => "create_compute_with_component_strategy";
+
         private IAzureSubscriptionCatalog AzureSubscriptionCatalog { get; }
 
         private ICapacityManager CapacityManager { get; }
@@ -79,8 +81,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
             if (input.Options is CreateComputeContinuationInputOptions computeOption)
             {
-                resourceLocation = await HandleComputeOptions(input, resource, components, componentInputs, computeOption, logger);
+                resourceLocation = await HandleComputeOptionsAsync(input, resource, components, componentInputs, computeOption, logger);
             }
+
+            await CreateQueueComponentIfNeededAsync(input, componentInputs, components, logger);
 
             if (resourceLocation == default)
             {
@@ -102,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
             }
 
-            ContinuationInput result = new CreateResourceWithComponentInput
+            var result = new CreateResourceWithComponentInput
             {
                 ResourceId = resource.Value.Id,
                 AzureSkuName = input.ResourcePoolDetails.SkuName,
@@ -247,10 +251,91 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var resourceStrategy = CreationStrategies.Where(s => s.CanHandle(input)).Single();
             var resourceResult = await resourceStrategy.RunCreateOperationCoreAsync(input, resource, logger.NewChildLogger());
 
+            if (resourceResult.Status == OperationState.Succeeded)
+            {
+                // Copy over queue component to OS disk.
+                if (input.Options is CreateComputeContinuationInputOptions computeOption)
+                {
+                    if (computeOption.OSDiskResourceId != default)
+                    {
+                        await logger.RetryOperationScopeAsync(
+                           $"{LogBaseName}_record_update",
+                           async (IDiagnosticsLogger innerLogger) =>
+                           {
+                               var existingOSDisk = await ResourceRepository.GetAsync(computeOption.OSDiskResourceId, logger.NewChildLogger());
+
+                               if (existingOSDisk.Components == default)
+                               {
+                                   existingOSDisk.Components = new ResourceComponentDetail();
+                               }
+
+                               if (existingOSDisk.Components.Items == default)
+                               {
+                                   existingOSDisk.Components.Items = new Dictionary<string, ResourceComponent>();
+                               }
+
+                               var queueComponentInOSDisk = existingOSDisk.Components.Items.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+                               var queueComponentInCompute = resource.Value.Components.Items.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+
+                               if (queueComponentInOSDisk != default)
+                               {
+                                   existingOSDisk.Components.Items.Remove(queueComponentInOSDisk.ComponentId);
+                               }
+
+                               if (queueComponentInCompute != default)
+                               {
+                                   existingOSDisk.Components.Items.Add(queueComponentInCompute.ComponentId, queueComponentInCompute);
+                               }
+
+                               await ResourceRepository.UpdateAsync(existingOSDisk, logger.NewChildLogger());
+                           });
+                    }
+                }
+            }
+
             return resourceResult;
         }
 
-        private async Task<IAzureResourceLocation> HandleComputeOptions(
+        private async Task CreateQueueComponentIfNeededAsync(
+            CreateResourceContinuationInput input,
+            Dictionary<string, ComponentInput> componentInputs,
+            List<ResourceComponent> components,
+            IDiagnosticsLogger logger)
+        {
+            var queueComponent = components?.SingleOrDefault(x => x.ComponentType == ResourceType.InputQueue);
+            if (queueComponent != default)
+            {
+                return;
+            }
+
+            var osDiskComponent = components?.SingleOrDefault(x => x.ComponentType == ResourceType.OSDisk);
+
+            var preserve = osDiskComponent != default;
+
+            // Create an input queue.
+            var queueInput = new CreateResourceContinuationInput()
+            {
+                Type = ResourceType.InputQueue,
+                ResourcePoolDetails = input.ResourcePoolDetails,
+                Reason = input.Reason,
+                Options = input.Options,
+                IsAssigned = true,
+                Preserve = preserve,
+            };
+
+            var queueStrategy = CreationStrategies.Where(s => s.CanHandle(queueInput)).Single();
+            queueInput.OperationInput = await queueStrategy.BuildCreateOperationInputAsync(queueInput, default, logger.NewChildLogger());
+            var componentInput = new ComponentInput()
+            {
+                ComponentId = Guid.NewGuid().ToString(),
+                Input = queueInput,
+                Status = OperationState.NotStarted,
+            };
+
+            componentInputs[componentInput.ComponentId] = componentInput;
+        }
+
+        private async Task<IAzureResourceLocation> HandleComputeOptionsAsync(
             CreateResourceContinuationInput input,
             ResourceRecordRef resource,
             List<ResourceComponent> components,
@@ -261,12 +346,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var osDiskId = computeOption.OSDiskResourceId;
             var existingOSDisk = default(ResourceRecord);
             var resourceLocation = default(IAzureResourceLocation);
+            var preserveDisk = osDiskId != default;
 
-            if (osDiskId != default)
+            if (preserveDisk)
             {
                 existingOSDisk = await ResourceRepository.GetAsync(osDiskId, logger.NewChildLogger());
-                components.Add(new ResourceComponent(ResourceType.OSDisk, existingOSDisk.AzureResourceInfo, osDiskId, preserve: true));
+                components.Add(new ResourceComponent(ResourceType.OSDisk, existingOSDisk.AzureResourceInfo, osDiskId, preserve: preserveDisk));
             }
+
+            var queueComponent = default(ResourceComponent);
 
             if (existingOSDisk?.AzureResourceInfo?.Name != default)
             {
@@ -280,6 +368,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     azureSubscription,
                     existingOSDisk.AzureResourceInfo.ResourceGroup,
                     azureLocation);
+
+                queueComponent = existingOSDisk.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+            }
+
+            if (queueComponent != default)
+            {
+                // Input queue exists.
+                components.Add(queueComponent);
             }
 
             if (!string.IsNullOrEmpty(computeOption.SubnetResourceId))

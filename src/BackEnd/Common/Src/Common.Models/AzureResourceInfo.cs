@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models.Extensions;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
@@ -71,6 +73,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
+        /// <summary>
+        /// Gets or sets properties which are not common across all resources.
+        /// </summary>
+        [JsonProperty(PropertyName = "properties")]
+        public IDictionary<string, string> Properties { get; set; }
+
         /// <inheritdoc/>
         public bool Equals(AzureResourceInfo other)
         {
@@ -90,6 +98,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             }
 
             if (!Name.Equals(other.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!Properties.DictionaryEquals(other.Properties))
             {
                 return false;
             }

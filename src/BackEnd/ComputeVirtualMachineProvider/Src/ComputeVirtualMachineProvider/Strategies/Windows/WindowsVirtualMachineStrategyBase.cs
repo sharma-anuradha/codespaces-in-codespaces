@@ -12,14 +12,13 @@ using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies
@@ -65,7 +64,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// </summary>
         protected IAzureClientFactory ClientFactory { get; }
 
-        private IQueueProvider QueueProvider { get; }
+        /// <summary>
+        /// Gets queue provider.
+        /// </summary>
+        protected IQueueProvider QueueProvider { get; }
 
         private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
 
@@ -79,6 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             Requires.NotNull(input.AzureSkuName, nameof(input.AzureSkuName));
             Requires.NotNull(input.AzureVirtualMachineImage, nameof(input.AzureVirtualMachineImage));
             Requires.NotNull(input.VMToken, nameof(input.VMToken));
+            Requires.NotNull(input.QueueConnectionInfo, nameof(input.QueueConnectionInfo));
 
             // create new VM resource name
             var virtualMachineName = GetVirtualMachineName();
@@ -92,10 +95,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                 var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
-                // Create input queue
-                string inputQueueName = VirtualMachineResourceNames.GetInputQueueName(virtualMachineName);
-                var inputQueueConnectionInfo = await QueueProvider.CreateQueue(new QueueProviderCreateInput() { AzureLocation = input.AzureVmLocation, QueueName = inputQueueName, }, logger);
-
                 // Get information about the storage account to pass into the custom script.
                 var storageInfo = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(input.AzureVmLocation);
                 var storageAccountName = storageInfo.Item1;
@@ -105,17 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
 
                 // Required parameters forwarded to the VM agent init script.
                 // Be very careful removing parameters from this list because it can break the VM agent init script.
-                var initScriptParametersBlob = new Dictionary<string, object>()
-                {
-                    { "inputQueueName", inputQueueConnectionInfo.Name },
-                    { "inputQueueUrl", inputQueueConnectionInfo.Url },
-                    { "inputQueueSasToken", inputQueueConnectionInfo.SasToken },
-                    { "vmToken", input.VMToken },
-                    { "resourceId", input.ResourceId },
-                    { "serviceHostName", input.FrontDnsHostName },
-                    { "visualStudioInstallationDir", @"C:\VisualStudio" },
-                    { "userName", userName },
-                };
+                var initScriptParametersBlob = input.GenerateInitScriptParametersBlob(@"C:\VisualStudio", userName);
 
                 var parameters = await GetVMParametersAsync(
                      input,
@@ -126,6 +115,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                      vmInitScriptFileUri,
                      userName,
                      initScriptParametersBlob);
+
+                await PreCreateTaskAsync(input, logger);
 
                 // Create virtual machine
                 var result = await DeploymentUtils.BeginCreateArmResource(
@@ -204,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         }
 
         /// <summary>
-        /// Get tamplate parameters.
+        /// Get template parameters.
         /// </summary>
         /// <param name="input">vm input.</param>
         /// <param name="virtualMachineName">vm name.</param>
@@ -224,6 +215,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
           string vmInitScriptFileUri,
           string userName,
           IDictionary<string, object> initScriptParametersBlob);
+
+        /// <summary>
+        /// Executes pre create task.
+        /// </summary>
+        /// <param name="input">Vm input.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>Task.</returns>
+        protected abstract Task PreCreateTaskAsync(
+            VirtualMachineProviderCreateInput input,
+            IDiagnosticsLogger logger);
 
         private string GetVmTemplate(string templateName)
         {

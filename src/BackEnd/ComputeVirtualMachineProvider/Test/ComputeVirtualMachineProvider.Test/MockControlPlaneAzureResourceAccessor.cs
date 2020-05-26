@@ -48,11 +48,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
-        public async Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger = null)
+        public async Task<ComputeQueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger = null)
         {
             const string QueueStorageAccount = "teststoragedevusw2";
             const string QueueResourceGroup = "testvmqueueresourcegroup";
-            var azure = await clientFactory.GetAzureClientAsync(new Guid("86642df6-843e-4610-a956-fdd497102261"));
+            var subscriptionId = new Guid("86642df6-843e-4610-a956-fdd497102261");
+            var azure = await clientFactory.GetAzureClientAsync(subscriptionId);
             await azure.CreateResourceGroupIfNotExistsAsync(QueueResourceGroup, computeVmLocation.ToString());
             var storageAccount = await azure.CreateStorageAccountIfNotExistsAsync(
                 QueueResourceGroup,
@@ -71,8 +72,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 throw new Exception($"Could not find storage account key for storage account : {QueueStorageAccount}");
             }
 
-            return (storageAccount.Name, storageAccountKey);
-
+            return new ComputeQueueStorageInfo()
+            {
+                ResourceGroup = QueueResourceGroup,
+                StorageAccountKey = storageAccountKey,
+                StorageAccountName = storageAccount.Name,
+                SubscriptionId = subscriptionId.ToString(),
+            };
         }
 
         public Task<(string, string)> GetStampStorageAccountForComputeVmAgentImagesAsync(AzureLocation computeVmLocation)

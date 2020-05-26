@@ -103,6 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             services.AddSingleton<ICreateResourceStrategy, CreateComputeWithComponentsStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateComputeStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateNetworkInterfaceStrategy>();
+            services.AddSingleton<ICreateComponentStrategy, CreateQueueStrategy>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);

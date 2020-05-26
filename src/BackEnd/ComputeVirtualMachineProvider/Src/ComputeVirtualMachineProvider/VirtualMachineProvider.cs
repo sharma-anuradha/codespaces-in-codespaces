@@ -19,8 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public class VirtualMachineProvider : IComputeProvider
     {
-        private const int VmCreationRetryAfterSeconds = 60;
-        private const int VmDeletionRetryAfterSeconds = 60;
+        private const int VmCreationRetryAfterSeconds = 10;
+        private const int VmDeletionRetryAfterSeconds = 10;
         private readonly IDeploymentManager manager = null;
 
         /// <summary>
@@ -34,7 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         /// <inheritdoc/>
         public Task<VirtualMachineProviderCreateResult> CreateAsync(
-            VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
+            VirtualMachineProviderCreateInput input,
+            IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));

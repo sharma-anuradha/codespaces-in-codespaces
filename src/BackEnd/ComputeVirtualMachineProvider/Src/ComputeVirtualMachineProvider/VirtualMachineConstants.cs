@@ -4,6 +4,9 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
+    /// <summary>
+    /// Virtual machine constants.
+    /// </summary>
     public class VirtualMachineConstants
     {
         /// <summary>

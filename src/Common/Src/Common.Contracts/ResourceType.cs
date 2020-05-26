@@ -38,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Network interface for VNet Injection.
         /// </summary>
         NetworkInterface = 6,
+
+        /// <summary>
+        /// Input queue for the VM.
+        /// </summary>
+        InputQueue = 7,
     }
 }

@@ -35,8 +35,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         {
             return input.ComputeOS == ComputeOS.Linux
                 && input.CustomComponents != default
-                && input.CustomComponents.Count == 1
-                && input.CustomComponents.First().ComponentType == ResourceType.NetworkInterface;
+                && input.CustomComponents.Count == 2
+                && input.CustomComponents.Count(x => x.ComponentType == ResourceType.NetworkInterface) == 1
+                && input.CustomComponents.Count(x => x.ComponentType == ResourceType.InputQueue) == 1;
         }
 
         /// <inheritdoc/>

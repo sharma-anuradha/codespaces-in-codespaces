@@ -133,6 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         protected override async Task<ContinuationInput> BuildOperationInputAsync(CreateResourceContinuationInput input, ResourceRecordRef resource, IDiagnosticsLogger logger)
         {
             var result = default(ContinuationInput);
+            var options = default(VirtualMachineProviderCreateOptions);
 
             // Base resource tags that will be attached
             var resourceTags = resource.Value.GetResourceTags(input.Reason);
@@ -169,6 +170,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                                 azureSubscription,
                                 existingOSDisk.AzureResourceInfo.ResourceGroup,
                                 azureLocation);
+
+                            options = new VirtualMachineResumeOptions()
+                            {
+                                HardBoot = computeOption.HardBoot,
+                            };
                         }
                     }
 
@@ -207,6 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         ComputeOS = computeDetails.OS,
                         FrontDnsHostName = ControlPlaneInfo.Stamp.DnsHostName,
                         CustomComponents = components,
+                        Options = options,
                     };
                 }
                 else

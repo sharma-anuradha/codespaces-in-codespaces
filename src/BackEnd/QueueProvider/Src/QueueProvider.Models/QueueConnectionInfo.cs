@@ -5,46 +5,23 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models
 {
     /// <summary>
-    /// Provides azure queue sas token and url.
+    /// Queue connection info. Url and the sas token for access.
     /// </summary>
     public class QueueConnectionInfo
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="QueueConnectionInfo"/> class.
+        /// Gets or sets name of the queue.
         /// </summary>
-        public QueueConnectionInfo()
-        {
-        }
+        public string Name { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="QueueConnectionInfo"/> class.
+        /// Gets or sets Aure queue url.
         /// </summary>
-        /// <param name="name">Azure queue name.</param>
-        /// <param name="url">Azure queue url.</param>
-        /// <param name="sasToken">Azure queue sas token.</param>
-        public QueueConnectionInfo(string name, string url, string sasToken)
-        {
-            Requires.NotNullOrEmpty(url, nameof(url));
-            Requires.NotNullOrEmpty(sasToken, nameof(sasToken));
-            Requires.NotNullOrEmpty(name, nameof(name));
-            Url = url;
-            SasToken = sasToken;
-            Name = name;
-        }
+        public string Url { get; set; }
 
         /// <summary>
-        /// Gets Aure queue url.
+        /// Gets or sets azure queue sasToken.
         /// </summary>
-        public string Url { get; }
-
-        /// <summary>
-        /// Gets aure queue sasToken.
-        /// </summary>
-        public string SasToken { get; }
-
-        /// <summary>
-        /// Gets the queue name.
-        /// </summary>
-        public string Name { get; }
+        public string SasToken { get; set; }
     }
 }

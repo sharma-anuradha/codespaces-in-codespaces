@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Extensions
         /// <summary>
         /// <see cref="IServiceCollection"/> extensions for the Queue provider.
         /// </summary>
-        /// <param name="services">The service collection</param>
+        /// <param name="services">The service collection.</param>
         /// <param name="mocksSettings">The mocks settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddQueueProvider(

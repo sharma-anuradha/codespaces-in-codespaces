@@ -14,6 +14,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
@@ -33,12 +35,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
         /// Initializes a new instance of the <see cref="DiskProvider"/> class.
         /// </summary>
         /// <param name="clientFactory">Azure client factory.</param>
-        public DiskProvider(IAzureClientFactory clientFactory)
+        /// <param name="queueProvider">Queue provider.</param>
+        public DiskProvider(
+            IAzureClientFactory clientFactory,
+            IQueueProvider queueProvider)
         {
             ClientFactory = Requires.NotNull(clientFactory, nameof(clientFactory));
+            QueueProvider = Requires.NotNull(queueProvider, nameof(queueProvider));
         }
 
         private IAzureClientFactory ClientFactory { get; }
+
+        private IQueueProvider QueueProvider { get; }
 
         /// <inheritdoc/>
         public Task<DiskProviderDeleteResult> DeleteDiskAsync(
@@ -70,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
                             return await CheckAttachedDiskStateAsync(input, continuation);
 
                         case DiskProviderDeleteState.BeginDeleteDisk:
-                            return await BeginDeleteDiskAsync(input, continuation);
+                            return await BeginDeleteDiskAsync(input, continuation, childLogger);
 
                         case DiskProviderDeleteState.CheckDeletedDiskState:
                             return await CheckDeletedDiskStateAsync(input, continuation);
@@ -139,6 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
             {
                 return new DiskProviderDeleteContinuationToken(
                     input.AzureResourceInfo,
+                    input.QueueResourceInfo,
                     DiskProviderDeleteState.CheckAttachedDisk);
             }
             else
@@ -151,12 +160,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
         {
             var nextContinuation = new DiskProviderDeleteContinuationToken(
                 continuation.AzureResourceInfo,
+                continuation.QueueAzureResourceInfo,
                 nextState,
                 retryAttempt);
 
             return new DiskProviderDeleteInput()
             {
                 AzureResourceInfo = continuation.AzureResourceInfo,
+                QueueResourceInfo = continuation.QueueAzureResourceInfo,
                 ContinuationToken = JsonConvert.SerializeObject(nextContinuation),
             };
         }
@@ -245,8 +256,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
             return await azure.Disks.GetByResourceGroupAsync(resourceGroup, diskName);
         }
 
-        private async Task<DiskProviderDeleteResult> BeginDeleteDiskAsync(DiskProviderDeleteInput input, DiskProviderDeleteContinuationToken continuation)
+        private async Task<DiskProviderDeleteResult> BeginDeleteDiskAsync(DiskProviderDeleteInput input, DiskProviderDeleteContinuationToken continuation, IDiagnosticsLogger logger)
         {
+            await DeleteQueueComponent(input, logger);
+
             var resourceGroup = input.AzureResourceInfo.ResourceGroup;
             var diskName = input.AzureResourceInfo.Name;
             var computeClient = await ClientFactory.GetComputeManagementClient(input.AzureResourceInfo.SubscriptionId);
@@ -258,6 +271,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
                 Status = OperationState.InProgress,
                 NextInput = GetNextInputs(continuation, DiskProviderDeleteState.CheckDeletedDiskState, continuation.RetryAttempt),
             };
+        }
+
+        private async Task DeleteQueueComponent(DiskProviderDeleteInput input, IDiagnosticsLogger logger)
+        {
+            if (input.QueueResourceInfo != default)
+            {
+                var queueDeleteInfo = new QueueProviderDeleteInput()
+                {
+                    AzureResourceInfo = input.QueueResourceInfo,
+                };
+
+                await QueueProvider.DeleteAsync(queueDeleteInfo, logger.NewChildLogger());
+            }
         }
     }
 }

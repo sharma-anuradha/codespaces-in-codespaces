@@ -3,15 +3,19 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -36,13 +40,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
+        /// <param name="queueProvider">Queue provider.</param>
         public CleanupResourceContinuationHandler(
             IComputeProvider computeProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IQueueProvider queueProvider)
             : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
+            QueueProvider = queueProvider;
         }
 
         /// <inheritdoc/>
@@ -56,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         private IComputeProvider ComputeProvider { get; set; }
 
-        private IDiskProvider DiskProvider { get; set; }
+        private IQueueProvider QueueProvider { get; set; }
 
         /// <inheritdoc/>
         protected override Task<ContinuationInput> BuildOperationInputAsync(
@@ -95,7 +102,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // Handle compute case only, don't need to do anything with storage here as its already circuited.
             if (resource.Value.Type == ResourceType.ComputeVM)
             {
-                return await ComputeProvider.ShutdownAsync((VirtualMachineProviderShutdownInput)input.OperationInput, logger.NewChildLogger());
+                var shutdownInput = (VirtualMachineProviderShutdownInput)input.OperationInput;
+                var queueComponent = resource.Value.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+                if (queueComponent == default)
+                {
+                    return await ComputeProvider.ShutdownAsync(shutdownInput, logger.NewChildLogger());
+                }
+                else
+                {
+                    var queueMessage = shutdownInput.GenerateShutdownEnvironmentPayload();
+                    var result = await QueueProvider.PushMessageAsync(
+                        queueComponent.AzureResourceInfo,
+                        queueMessage,
+                        logger);
+
+                    return new VirtualMachineProviderShutdownResult()
+                    {
+                        Status = result.Status,
+                        ErrorReason = result.ErrorReason,
+                    };
+                }
             }
 
             throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");

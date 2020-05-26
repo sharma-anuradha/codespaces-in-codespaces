@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
     <ProjectReference Include="..\DiskProvider.Abstractions\DiskProvider.Abstractions.csproj" />
     <ProjectReference Include="..\DiskProvider.Models\DiskProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />

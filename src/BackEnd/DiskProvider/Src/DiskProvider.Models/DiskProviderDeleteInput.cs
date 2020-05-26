@@ -13,8 +13,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models
     public class DiskProviderDeleteInput : ContinuationInput
     {
         /// <summary>
-        /// Gets or sets he azure resource to be deleted.
+        /// Gets or sets the azure resource to be deleted.
         /// </summary>
         public AzureResourceInfo AzureResourceInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the queue resource info which needs to be deleted.
+        /// </summary>
+        public AzureResourceInfo QueueResourceInfo { get; set; }
     }
 }

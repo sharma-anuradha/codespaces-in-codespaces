@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Blob;
 using Microsoft.Azure.Storage.File;
@@ -11,8 +13,11 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -41,17 +46,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
+        /// <param name="queueProvider">Queue provider.</param>
         public StartEnvironmentContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
-            IStorageFileShareProviderHelper storageFileShareProviderHelper)
+            IStorageFileShareProviderHelper storageFileShareProviderHelper,
+            IQueueProvider queueProvider)
             : base(serviceProvider, resourceRepository)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
             StorageFileShareProviderHelper = storageFileShareProviderHelper;
+            QueueProvider = queueProvider;
         }
 
         /// <inheritdoc/>
@@ -68,6 +76,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private IStorageProvider StorageProvider { get; }
 
         private IStorageFileShareProviderHelper StorageFileShareProviderHelper { get; }
+
+        private IQueueProvider QueueProvider { get; }
 
         /// <inheritdoc/>
         protected override async Task<ContinuationInput> BuildOperationInputAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
@@ -129,7 +139,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationCoreAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
-            return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)input.OperationInput, logger.NewChildLogger());
+            var queueComponent = compute.Value.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
+            if (queueComponent == default)
+            {
+                return await ComputeProvider.StartComputeAsync((VirtualMachineProviderStartComputeInput)input.OperationInput, logger.NewChildLogger());
+            }
+            else
+            {
+                return await logger.OperationScopeAsync(
+                    $"{LogBaseName}_start_compute_post_queue_message",
+                    async (childLogger) =>
+                    {
+                        var startComputeInput = (VirtualMachineProviderStartComputeInput)input.OperationInput;
+                        var queueMessage = startComputeInput.GenerateStartEnvironmentPayload();
+
+                        await QueueProvider.PushMessageAsync(
+                            queueComponent.AzureResourceInfo,
+                            queueMessage,
+                            childLogger.NewChildLogger());
+
+                        return new VirtualMachineProviderStartComputeResult()
+                        {
+                            Status = OperationState.Succeeded,
+                        };
+                    });
+            }
         }
 
         private async Task<FileShareProviderAssignResult> StartStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, ComputeOS computeOS, IDiagnosticsLogger logger)

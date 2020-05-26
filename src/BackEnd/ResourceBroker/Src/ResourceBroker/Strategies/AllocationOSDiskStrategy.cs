@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -17,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -59,34 +61,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             DiskProvider = Requires.NotNull(diskProvider, nameof(diskProvider));
         }
 
-        /// <summary>
-        /// Gets resource repository.
-        /// </summary>
         private IResourceRepository ResourceRepository { get; }
 
-        /// <summary>
-        /// Gets resource pool.
-        /// </summary>
         private IResourcePoolManager ResourcePool { get; }
 
-        /// <summary>
-        /// Gets resource scaling store.
-        /// </summary>
         private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
-        /// <summary>
-        /// Gets resource continuation operations.
-        /// </summary>
         private IResourceContinuationOperations ResourceContinuationOperations { get; }
 
-        /// <summary>
-        /// Gets task helper.
-        /// </summary>
         private ITaskHelper TaskHelper { get; }
 
-        /// <summary>
-        /// Gets mapper.
-        /// </summary>
         private IMapper Mapper { get; }
 
         private IDiskProvider DiskProvider { get; }
@@ -207,16 +191,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                 },
                 logger.NewChildLogger());
 
-            // Update disk azure resource info.
-            osDiskResource.AzureResourceInfo = diskResourceResult.AzureResourceInfo;
+            await logger.RetryOperationScopeAsync(
+                    $"{LogBaseName}_osdisk_record_update",
+                    async (IDiagnosticsLogger innerLogger) =>
+                    {
+                        // Update disk azure resource info.
+                        osDiskResource.AzureResourceInfo = diskResourceResult.AzureResourceInfo;
 
-            // Copy provisioning and ready status.
-            osDiskResource.ProvisioningReason = computeResource.ProvisioningReason;
-            osDiskResource.ProvisioningStatus = computeResource.ProvisioningStatus;
-            osDiskResource.IsReady = computeResource.IsReady;
-            osDiskResource.Ready = computeResource.Ready;
+                        // Copy queue info.
+                        osDiskResource = PreserveQueueAndCopyComponent(computeResource, osDiskResource);
 
-            osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
+                        // Copy provisioning and ready status.
+                        osDiskResource.ProvisioningReason = computeResource.ProvisioningReason;
+                        osDiskResource.ProvisioningStatus = computeResource.ProvisioningStatus;
+                        osDiskResource.IsReady = computeResource.IsReady;
+                        osDiskResource.Ready = computeResource.Ready;
+
+                        osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
+                    });
 
             // Update compute record with disk components
             await logger.RetryOperationScopeAsync(
@@ -230,6 +222,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                                                                                     osDiskResource.AzureResourceInfo,
                                                                                     osDiskResource.Id,
                                                                                     preserve: true);
+
+                        var queueComponent = computeResource.Components.Items.Single(x => x.Value.ComponentType == ResourceType.InputQueue);
+                        queueComponent.Value.Preserve = true;
 
                         computeResource = await ResourceRepository.UpdateAsync(computeResource, innerLogger.NewChildLogger());
                     });
@@ -309,6 +304,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             // Create the actual record
             resource = await ResourceRepository.CreateAsync(resource, logger.NewChildLogger());
             return resource;
+        }
+
+        private ResourceRecord PreserveQueueAndCopyComponent(ResourceRecord sourceRecord, ResourceRecord targetRecord)
+        {
+            var queueComponent = sourceRecord.Components?.Items.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue);
+
+            if (!queueComponent.Value.Value.Preserve)
+            {
+                queueComponent.Value.Value.Preserve = true;
+            }
+
+            if (targetRecord.Components == default)
+            {
+                targetRecord.Components = new ResourceComponentDetail();
+            }
+
+            if (targetRecord.Components.Items == default)
+            {
+                targetRecord.Components.Items = new Dictionary<string, ResourceComponent>();
+            }
+
+            if (queueComponent.HasValue)
+            {
+                targetRecord.Components.Items[queueComponent.Value.Key] = queueComponent.Value.Value;
+            }
+
+            return targetRecord;
         }
     }
 }

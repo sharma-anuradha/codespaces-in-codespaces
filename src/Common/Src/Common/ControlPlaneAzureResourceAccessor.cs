@@ -190,13 +190,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<(string, string)> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger)
+        public async Task<ComputeQueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger)
         {
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForComputeQueues(computeVmLocation);
-            return await GetStorageAccountAsync(
+            var (accountName, key) = await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
                 storageAccountName,
                 logger);
+            var subscriptionId = await GetCurrentSubscriptionIdAsync();
+
+            return new ComputeQueueStorageInfo()
+            {
+                ResourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName,
+                StorageAccountKey = key,
+                StorageAccountName = accountName,
+                SubscriptionId = subscriptionId,
+            };
         }
 
         /// <inheritdoc/>

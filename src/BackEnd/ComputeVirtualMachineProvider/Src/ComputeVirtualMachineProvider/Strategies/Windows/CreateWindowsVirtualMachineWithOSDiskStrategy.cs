@@ -6,11 +6,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
+using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies
@@ -56,6 +58,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             string userName,
             IDictionary<string, object> initScriptParametersBlob)
         {
+            var createWithOSDisk = input.CustomComponents.Any(x =>
+                                           x.ComponentType == ResourceType.OSDisk &&
+                                           !string.IsNullOrEmpty(x.AzureResourceInfo?.Name));
+
+            if (createWithOSDisk)
+            {
+                if (input.Options == default)
+                {
+                    input.Options = new VirtualMachineResumeOptions()
+                    {
+                        HardBoot = false,
+                    };
+                }
+            }
+
+            var runCustomScriptExtension = "Yes";
+            if (input.Options is VirtualMachineResumeOptions resumeOptions)
+            {
+                runCustomScriptExtension = resumeOptions.HardBoot ? "Yes" : "No";
+            }
+
             var b64ParametersBlob = EncodeScriptParameters(initScriptParametersBlob);
             var osDiskInfo = input.CustomComponents.Single(x => x.ComponentType == ResourceType.OSDisk).AzureResourceInfo;
 
@@ -73,6 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
 
             return new Dictionary<string, Dictionary<string, object>>()
                 {
+                    { "runCustomScriptExtension", new Dictionary<string, object>() { { VirtualMachineConstants.Key, runCustomScriptExtension } } },
                     { "location", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureVmLocation.ToString() } } },
                     { "virtualMachineRG", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureResourceGroup } } },
                     { "virtualMachineName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, virtualMachineName } } },
@@ -90,6 +114,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                     { "vmInitScriptBase64ParametersBlob", new Dictionary<string, object>() { { VirtualMachineConstants.Key, b64ParametersBlob } } },
                     { "storageProfileDetails", new Dictionary<string, object>() { { VirtualMachineConstants.Key, storageProfile } } },
                 };
+        }
+
+        /// <inheritdoc/>
+        protected override async Task PreCreateTaskAsync(VirtualMachineProviderCreateInput input, IDiagnosticsLogger logger)
+        {
+            if (input.Options is VirtualMachineResumeOptions resumeOptions)
+            {
+                if (!resumeOptions.HardBoot)
+                {
+                    // For pre-existing OS disk, just need to refresh the vmtoken so that vm can start talking to frontend.
+                    var queueComponent = input.CustomComponents.Single(x => x.ComponentType == ResourceType.InputQueue);
+                    await QueueProvider.ClearQueueAsync(queueComponent.AzureResourceInfo, logger);
+
+                    // Post the new vm token.
+                    var queueMessage = input.GenerateRefreshVMPayload();
+                    await QueueProvider.PushMessageAsync(queueComponent.AzureResourceInfo, queueMessage, logger.NewChildLogger());
+                }
+            }
         }
     }
 }

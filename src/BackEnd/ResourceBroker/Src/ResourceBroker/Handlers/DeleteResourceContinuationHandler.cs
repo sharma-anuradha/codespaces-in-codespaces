@@ -129,9 +129,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
             else if (resource.Value.Type == ResourceType.OSDisk)
             {
+                var queueComponent = resource.Value.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
                 operationInput = new DiskProviderDeleteInput
                 {
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
+                    QueueResourceInfo = queueComponent?.AzureResourceInfo,
                 };
             }
             else if (resource.Value.Type == ResourceType.KeyVault)
