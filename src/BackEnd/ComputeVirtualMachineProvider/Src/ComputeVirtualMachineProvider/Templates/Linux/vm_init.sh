@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Set script to fail if command in script returns non zero return code"
-set -eu pipefall
+set -exu pipefall
 
 SCRIPT_PARAM_VMAGENT_BLOB_URL='__REPLACE_VMAGENT_BLOB_URl__'
 SCRIPT_PARAM_VMTOKEN='__REPLACE_VMTOKEN__'
@@ -15,10 +15,6 @@ SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL='__REPLACE_OUTPUT_QUEUE_URL__'
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN='__REPLACE_OUTPUT_QUEUE_SASTOKEN__'
 SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 
-echo "Add packages.microsoft.com repository"
-curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-apt-add-repository https://packages.microsoft.com/ubuntu/18.04/prod
-
 echo "Updating packages ..."
 apt-get -yq update
 
@@ -30,7 +26,17 @@ echo "Create docker group with ID 800"
 groupadd -g 800 docker
 
 echo "Install docker ..."
-apt-get -yq install moby-engine=3.0.11+azure-2
+# Install moby-engine=3.0.11+azure-2 (as well as dependencies: moby-cli, pigz)
+# URL below was taken from https://packages.microsoft.com/ubuntu/18.04/prod/dists/bionic/main/binary-amd64/Packages
+tmp_moby_engine_debfile=$(mktemp)
+tmp_moby_cli_debfile=$(mktemp)
+tmp_pigz_debfile=$(mktemp)
+wget -qO- -O $tmp_moby_engine_debfile https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-engine/moby-engine_3.0.11+azure-2_amd64.deb
+wget -qO- -O $tmp_moby_cli_debfile https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-cli/moby-cli_3.0.11+azure-2_amd64.deb
+wget -qO- -O $tmp_pigz_debfile http://azure.archive.ubuntu.com/ubuntu/pool/universe/p/pigz/pigz_2.4-1_amd64.deb
+dpkg --install $tmp_moby_engine_debfile $tmp_moby_cli_debfile $tmp_pigz_debfile
+rm $tmp_moby_engine_debfile $tmp_moby_cli_debfile $tmp_pigz_debfile
+apt-get install -fy
 docker --version
 
 echo "Install docker-compose"
