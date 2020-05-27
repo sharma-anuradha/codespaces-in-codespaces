@@ -20,8 +20,8 @@ if (vsoFeatureSet === stableFlag) {
 }
 
 const commits = {
-    insider: 'e1d8f5155c0db5ffdc130c9aa0f14efac02dfdfb',
-    stable: 'd69a79b73808559a91206d73d7717ff5f798f23c',
+    insider: '876f2e70f9a2e1988887f8ca82294418afac15a2',
+    stable: '5763d909d5f12fe19f215cbfdd29a91c0fa9208a',
 };
 
 const commitId = commits[vscodeQuality].substr(0, 7);
