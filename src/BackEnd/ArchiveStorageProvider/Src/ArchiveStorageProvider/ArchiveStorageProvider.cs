@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
 
         // Number of archive storage accounts to create per region.
         private const int ArchiveStorageAccountsPerRegionPerSubscription = 10;
-        private const double StorageAccountMaxCapacityInGb = 1000; // 1TB
+        private const double StorageAccountMaxCapacityInGb = 5000000; // 5PB
         private const string StorageAccountNameKey = "storageAccountName";
         private const string ResourceGroupKey = "resourceGroup";
         private const string SubscriptionIdKey = "subscriptionId";
