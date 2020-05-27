@@ -14,6 +14,7 @@ packages/*/junit.xml
 build/
 
 public/workbench-page/web-standalone
+vscode-downloads/workbench-page/web-standalone
 
 # Misc
 

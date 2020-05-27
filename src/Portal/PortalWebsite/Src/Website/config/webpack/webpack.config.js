@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const webpack = require('webpack');
 
+// const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -25,12 +26,22 @@ const paths = {
     workbench: path.join(rootFolder, 'packages', 'vso-workbench', 'src', 'app.ts'),
     web: path.join(rootFolder, 'packages', 'website', 'src', 'index.tsx'),
     platformAuth: path.join(rootFolder, 'packages', 'vso-platform-auth', 'src', 'index.ts'),
-    platformAuthentication: path.join(rootFolder, 'packages', 'vso-platform-authentication', 'src', 'index.ts'),
+    platformAuthentication: path.join(
+        rootFolder,
+        'packages',
+        'vso-platform-authentication',
+        'src',
+        'index.ts'
+    ),
     staticContent: path.join(rootFolder, 'public'),
+    vscodeDownloads: path.join(rootFolder, 'vscode-downloads'),
     indexHtml: path.join(rootFolder, 'public', 'index.html'),
     workbenchHtml: path.join(rootFolder, 'public', 'workbench.html'),
     platformAuthHtml: path.join(rootFolder, 'public', 'platform-auth.html'),
-    platformAuthenticationHtml: path.join(rootFolder, '../../../../services/containers/VsClk.Portal.WebSite/Views/PlatformAuth/PlatformAuthentication.cshtml'),
+    platformAuthenticationHtml: path.join(
+        rootFolder,
+        '../../../../services/containers/VsClk.Portal.WebSite/Views/PlatformAuth/PlatformAuthentication.cshtml'
+    ),
     mocks: {
         net: path.join(rootFolder, 'packages', 'vso-ts-agent/mocks/net'),
         nodeRsa: path.join(rootFolder, 'packages', 'vso-ts-agent/mocks/net'),
@@ -60,14 +71,22 @@ module.exports = [
                 ? 'static/js/[name].[contenthash:8].chunk.js'
                 : 'static/js/[name].chunk.js',
         },
+        optimization: {
+            runtimeChunk: {
+                name: 'runtime',
+            },
+            splitChunks: {
+                chunks: 'all',
+            },
+        },
         watchOptions: {
-            ignored: [/packages\/[^\/](lib|commonjs)/, /node_modules\//]
+            ignored: [/packages\/[^\/](lib|commonjs)/, /node_modules\//, /vscode-downloads/],
         },
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
             plugins: [new TsconfigPathsPlugin({ configFile: paths.tsConfig })],
-            modules: ['node_modules', 'public/workbench-page/web-standalone'],
+            modules: ['node_modules', 'vscode-downloads/workbench-page/web-standalone'],
             alias: {
                 'net': paths.mocks.net,
                 'node-rsa': paths.mocks.nodeRsa,
@@ -95,7 +114,7 @@ module.exports = [
                         },
                         {
                             test: /\.(jsx?|tsx?)$/,
-                            exclude: /node_modules|public/,
+                            exclude: /node_modules|public|web-standalone/,
                             use: {
                                 loader: 'ts-loader',
                                 options: {
@@ -120,7 +139,7 @@ module.exports = [
                 },
             ],
         },
-        plugins: ([
+        plugins: [
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
                 'process.env.PUBLIC_URL': `"${publicPath}"`,
@@ -129,7 +148,7 @@ module.exports = [
             }),
             new HtmlWebpackPlugin({
                 inject: true,
-                filename: "index.html",
+                filename: 'index.html',
                 template: paths.indexHtml,
                 templateParameters: {
                     PUBLIC_URL: publicPath,
@@ -138,7 +157,7 @@ module.exports = [
             }),
             new HtmlWebpackPlugin({
                 inject: true,
-                filename: "workbench.html",
+                filename: 'workbench.html',
                 template: paths.workbenchHtml,
                 templateParameters: {
                     PUBLIC_URL: publicPath,
@@ -147,22 +166,23 @@ module.exports = [
             }),
             new HtmlWebpackPlugin({
                 inject: true,
-                filename: "platform-auth.html",
+                filename: 'platform-auth.html',
                 template: paths.platformAuthHtml,
                 templateParameters: {
                     PUBLIC_URL: publicPath,
                 },
                 chunks: ['platform-auth'],
             }),
-            production && new HtmlWebpackPlugin({
-                inject: true,
-                minify: false,
-                filename: paths.platformAuthenticationHtml,
-                templateContent: () => {
-                    return fs.readFileSync(paths.platformAuthenticationHtml, 'utf8');
-                },
-                chunks: ['platform-authentication'],
-            }),
+            production &&
+                new HtmlWebpackPlugin({
+                    inject: true,
+                    minify: false,
+                    filename: paths.platformAuthenticationHtml,
+                    templateContent: () => {
+                        return fs.readFileSync(paths.platformAuthenticationHtml, 'utf8');
+                    },
+                    chunks: ['platform-authentication'],
+                }),
             new MiniCssExtractPlugin({
                 filename: 'static/css/[name].[contenthash:8].css',
                 chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
@@ -173,15 +193,22 @@ module.exports = [
                 path.join(paths.staticContent, 'site.css'),
                 path.join(paths.staticContent, 'manifest.json'),
                 path.join(paths.staticContent, 'spinner-dark.svg'),
-                { from: path.join(paths.staticContent, 'workbench-page'), to: 'workbench-page' },
             ]),
+            production &&
+                new CopyWebpackPlugin([
+                    {
+                        from: path.join(paths.vscodeDownloads, 'workbench-page'),
+                        to: 'workbench-page',
+                    },
+                ]),
             // Moment.js is an extremely popular library that bundles large locale files
             // by default due to how Webpack interprets its code. This is a practical
             // solution that requires the user to opt into importing specific locales.
             // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
             // You can remove this if you don't use Moment.js:
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-        ]).filter(Boolean),
+            // new BundleAnalyzerPlugin(),
+        ].filter(Boolean),
         devServer: {
             host: '0.0.0.0',
             port: 3030,
@@ -189,7 +216,7 @@ module.exports = [
             compress: true,
             liveReload: false,
             inline: false,
-            contentBase: paths.staticContent,
+            contentBase: [paths.staticContent, paths.vscodeDownloads],
             disableHostCheck: true,
             overlay: false,
             historyApiFallback: {
@@ -212,7 +239,7 @@ module.exports = [
              * @param {string} filename
              */
             assetFilter(filename) {
-                return !filename.includes('workbench-page/workbench-page/web-standalone');
+                return !filename.includes('workbench-page/web-standalone');
             },
         },
     },
@@ -234,7 +261,7 @@ module.exports = [
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
             plugins: [new TsconfigPathsPlugin({ configFile: paths.tsConfig })],
-            modules: ['node_modules', 'public/workbench-page/web-standalone'],
+            modules: ['node_modules', 'vscode-downloads/workbench-page/web-standalone'],
             alias: {
                 'net': paths.mocks.net,
                 'node-rsa': paths.mocks.nodeRsa,
@@ -246,7 +273,7 @@ module.exports = [
                     oneOf: [
                         {
                             test: /\.(jsx?|tsx?)$/,
-                            exclude: /node_modules|public/,
+                            exclude: /node_modules|public|web-standalone/,
                             use: {
                                 loader: 'ts-loader',
                                 options: {
@@ -297,8 +324,8 @@ module.exports = [
              * @param {string} filename
              */
             assetFilter(filename) {
-                return !filename.includes('workbench-page/workbench-page/web-standalone');
+                return !filename.includes('workbench-page/web-standalone');
             },
         },
-    }
+    },
 ];

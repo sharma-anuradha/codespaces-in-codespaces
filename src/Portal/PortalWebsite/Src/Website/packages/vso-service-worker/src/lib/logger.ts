@@ -1,9 +1,9 @@
 import debug from 'debug';
 
-const defaultLogger = debug.default('service-worker');
+const defaultLogger = debug.default('vscs');
 
 if (process.env.NODE_ENV === 'development') {
-    debug.enable('service-worker:*');
+    debug.enable('vscs:*');
 }
 
 export function createLogger(namespace?: string) {

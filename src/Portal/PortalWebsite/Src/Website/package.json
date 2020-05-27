@@ -24,7 +24,7 @@
     "clean:lib": "rimraf packages/*/lib/",
     "clean:commonjs": "rimraf packages/*/commonjs/",
     "clean:node_modules": "rimraf packages/*/node_modules/ node_modules/",
-    "clean:vscode": "rimraf public/workbench-page/web-standalone",
+    "clean:vscode": "rimraf public/workbench-page/web-standalone vscode-downloads/",
     "clean:test-results": "rimraf packages/*/junit.xml",
     "dep-graph:main": "npx madge --layout dot --warning --image main-graph.svg src/index.tsx",
     "dep-graph:service-worker": "npx madge --layout dot --warning --image service-worker-graph.svg vso-ts-agent/src/service-worker/service-worker.ts",
@@ -72,6 +72,7 @@
     "typescript": "^3.8.3",
     "url-loader": "^4.1.0",
     "webpack": "^4.43.0",
+    "webpack-bundle-analyzer": "^3.8.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3",
     "webpack-merge": "^4.2.2"
