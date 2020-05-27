@@ -53,5 +53,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models
         /// Secret not found
         /// </summary>
         SecretNotFound = 80,
+
+        /// <summary>
+        /// Exceeded secrets quota.
+        /// </summary>
+        ExceededSecretsQuota = 90,
     }
 }

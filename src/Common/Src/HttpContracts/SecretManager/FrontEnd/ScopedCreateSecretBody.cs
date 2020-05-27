@@ -24,14 +24,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// <summary>
         /// Gets or sets secret name.
         /// </summary>
-        [StringLength(100)]
+        [StringLength(200, MinimumLength = 1)]
         [JsonProperty(Required = Required.Always, PropertyName = "secretName")]
         public string SecretName { get; set; }
 
         /// <summary>
         /// Gets or sets secret value.
         /// </summary>
-        [StringLength(1024)]
+        [StringLength(1024, MinimumLength = 1)]
         [JsonProperty(Required = Required.Always, PropertyName = "value")]
         public string Value { get; set; }
 
@@ -45,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// <summary>
         /// Gets or sets secret filters.
         /// </summary>
+        [DictionaryValueStringLength(200, MinimumLength = 1)]
         [JsonProperty(Required = Required.Default, PropertyName = "filters")]
         public IDictionary<SecretFilterType, string> Filters { get; set; }
     }

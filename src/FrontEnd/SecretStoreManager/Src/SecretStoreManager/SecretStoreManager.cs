@@ -22,6 +22,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretFilterType;
 using SecretFilterTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
 using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
+using SecretType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretType;
+using SecretTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretType;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
 {
@@ -32,6 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
     public class SecretStoreManager : ISecretStoreManager
     {
         private const string LoggingBaseName = "secret_store_manager";
+        private const int MaxEnvironmentVariablesPerSecretStore = 10; // Todo: elpadann - Make it configurable via system configuration, at plan level.
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SecretStoreManager"/> class.
@@ -99,16 +102,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                     createIfNotExists: true,
                     childLogger);
 
-                var createSecretBody = Mapper.Map<CreateSecretBody>(scopedCreateSecretInput);
                 try
                 {
+                    bool isSecretQuotaReached = await IsSecretQuotaReached(secretStore, scopedCreateSecretInput.Type, childLogger.NewChildLogger());
+                    if (isSecretQuotaReached)
+                    {
+                        throw new ForbiddenException(
+                            (int)MessageCodes.ExceededSecretsQuota,
+                            message: $"Quota reached for the secrets type '{scopedCreateSecretInput.Type}'");
+                    }
+
+                    var createSecretBody = Mapper.Map<CreateSecretBody>(scopedCreateSecretInput);
                     var secret = await SecretManagerHttpClient.CreateSecretAsync(
                                             secretStore.SecretResource.ResourceId,
                                             createSecretBody,
                                             childLogger);
                     return ScopeSecret(secretStore.Scope, secret);
                 }
-                catch (Exception e)
+                catch (Exception e) when (!(e is ForbiddenException))
                 {
                     throw new ProcessingFailedException((int)MessageCodes.FailedToCreateSecret, innerException: e);
                 }
@@ -259,6 +270,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                     throw new ProcessingFailedException((int)MessageCodes.FailedToUpdateSecret, innerException: e);
                 }
             });
+        }
+
+        private async Task<bool> IsSecretQuotaReached(SecretStore secretStore, SecretType secretType, IDiagnosticsLogger logger)
+        {
+            var secretContractType = Mapper.Map<SecretTypeHttpContract>(secretType);
+            var resourceSecretsResult = await FetchResourceSecretsFromBackend(logger, new List<SecretStore>() { secretStore });
+            var count = resourceSecretsResult.Single().UserSecrets?.Count(x => x.Type == secretContractType) ?? 0;
+
+            if (secretType == SecretType.EnvironmentVariable)
+            {
+                return count >= MaxEnvironmentVariablesPerSecretStore;
+            }
+            else
+            {
+                // Validate quota for other types of secrets.
+                return false;
+            }
         }
 
         private async Task<IEnumerable<ResourceSecretsResult>> FetchResourceSecretsFromBackend(

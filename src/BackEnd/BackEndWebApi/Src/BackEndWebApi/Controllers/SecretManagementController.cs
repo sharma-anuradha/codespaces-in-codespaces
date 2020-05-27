@@ -93,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("get")]
-        public async Task<IActionResult> GetResourceSecrets(
+        public async Task<IActionResult> GetResourceSecretsAsync(
             [FromQuery(Name = "resourceId")] IEnumerable<Guid> resourceIds,
             [FromServices] IDiagnosticsLogger logger)
         {

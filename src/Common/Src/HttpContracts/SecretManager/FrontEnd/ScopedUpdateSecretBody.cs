@@ -25,20 +25,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// <summary>
         /// Gets or sets secret name to update.
         /// </summary>
-        [StringLength(100)]
+        [StringLength(200, MinimumLength = 1)]
         [JsonProperty(Required = Required.Default, PropertyName = "secretName")]
         public string SecretName { get; set; }
 
         /// <summary>
         /// Gets or sets secret value to update.
         /// </summary>
-        [StringLength(1024)]
+        [StringLength(1024, MinimumLength = 1)]
         [JsonProperty(Required = Required.Default, PropertyName = "value")]
         public string Value { get; set; }
 
         /// <summary>
         /// Gets or sets secret filters to update.
         /// </summary>
+        [DictionaryValueStringLength(200, MinimumLength = 1)]
         [JsonProperty(Required = Required.Default, PropertyName = "filters")]
         public IDictionary<SecretFilterType, string> Filters { get; set; }
     }
