@@ -209,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     };
                     var result = await planManager.CreateAsync(plan, logger);
 
-                    logger.AddVsoPlan(plan.Plan);
+                    logger.AddVsoPlan(plan);
 
                     if (result.VsoPlan == null)
                     {
@@ -221,7 +221,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // It will only be saved internally by the plan manager.
                     resource.Properties.UserId = null;
 
-                    logger.AddVsoPlan(plan.Plan);
                     return CreateResponse(HttpStatusCode.OK, resource);
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("CreateResourceFailed")),
@@ -294,12 +293,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Subscription = subscriptionId,
                     };
 
+                    logger.AddVsoPlanInfo(planInfo);
+
                     var plan = await planManager.GetAsync(planInfo, logger, includeDeleted: true);
 
                     if (plan == null)
                     {
                         return CreateErrorResponse("ResourceDeleteFailed", "Plan not found");
                     }
+
+                    logger.AddVsoPlan(plan);
 
                     var environments = await environmentManager.ListAsync(
                         logger, planId: planInfo.ResourceId);
@@ -308,8 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     {
                         foreach (var environment in nonDeletedEnvironments)
                         {
-                            var childLogger = logger.NewChildLogger()
-                                .AddVsoPlan(planInfo);
+                            var childLogger = logger.NewChildLogger();
 
                             _ = Task.Run(async () =>
                                 {
@@ -329,19 +331,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                 });
                         }
 
-                        logger.AddVsoPlan(planInfo)
-                            .FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
+                        logger.FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
                             .LogInfo("plan_delete_environment_delete_success");
                     }
 
                     if (!plan.IsDeleted)
                     {
                         plan = await planManager.DeleteAsync(plan, logger);
-                        logger.AddVsoPlan(planInfo).LogInfo($"plan_delete_success");
+                        logger.LogInfo($"plan_delete_success");
                     }
                     else
                     {
-                        logger.AddVsoPlan(planInfo).LogWarning("plan_delete_alreadydeleted");
+                        logger.LogWarning("plan_delete_alreadydeleted");
                     }
 
                     // Required response format in case validation pass with empty body.
@@ -603,15 +604,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var vsoPlan = mapper.Map<VsoPlan>(resource);
                     vsoPlan.Plan = planInfo;
 
+                    logger.AddVsoPlan(vsoPlan);
+
                     if (!await planManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger))
                     {
-                        logger.AddVsoPlan(planInfo).LogError($"plan_update_settings_error_{nameof(IPlanManager.ApplyPlanPropertiesChangesAsync)}");
+                        logger.LogError($"plan_update_settings_error_{nameof(IPlanManager.ApplyPlanPropertiesChangesAsync)}");
                     }
 
                     var response = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
                     if (response.VsoPlan == null)
                     {
-                        logger.AddVsoPlan(planInfo).LogError($"plan_update_settings_error_{response.ErrorCode}");
+                        logger.LogError($"plan_update_settings_error_{response.ErrorCode}");
                         return Ok();
                     }
 

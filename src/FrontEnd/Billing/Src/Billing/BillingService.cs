@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="region">The region this bill applies to.</param>
         /// <param name="shardUsageTimes">used to store calculation on the usage for a particular shard.</param>
         /// <returns>Task indicating when the bill has been generated.</returns>
-        public async Task BeginAccountCalculations(VsoPlanInfo plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
+        public async Task BeginAccountCalculations(VsoPlan plan, DateTime start, DateTime desiredBillEndTime, IDiagnosticsLogger logger, AzureLocation region, Dictionary<string, double> shardUsageTimes)
         {
             logger.AddVsoPlan(plan)
                 .FluentAddBaseValue("startCalculationTime", start)
@@ -108,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var currentTime = DateTime.UtcNow;
 
                     // Get all events so we have only one call to underlying collections.
-                    var allEvents = await billingEventManager.GetPlanEventsAsync(plan, start, currentTime, null, childLogger.NewChildLogger());
+                    var allEvents = await billingEventManager.GetPlanEventsAsync(plan.Plan, start, currentTime, null, childLogger.NewChildLogger());
 
                     // Get all the billing summaries
                     var summaryEvents = allEvents.Where(x => x.Args is BillingSummary).OrderByDescending(x => ((BillingSummary)x.Args).PeriodEnd);
@@ -145,13 +145,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var billingEvents = allEvents.Where(x => x.Time >= latestBillingSummary.PeriodEnd && x.Time < desiredBillEndTime && x.Args is BillingStateChange);
 
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = await CalculateBillingUnits(plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes, childLogger);
+                    var billingSummary = await CalculateBillingUnits(plan.Plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes, childLogger);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, childLogger);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan.Plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, childLogger);
 
                     // Write out the summary as the last action. This should always be the last action.
-                    await billingEventManager.CreateEventAsync(plan, null, billingSummaryType, totalBillingSummary, childLogger.NewChildLogger());
+                    await billingEventManager.CreateEventAsync(plan.Plan, null, billingSummaryType, totalBillingSummary, childLogger.NewChildLogger());
                 },
                 swallowException: true);
 
@@ -472,7 +472,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                    var shardUsageStateTimes = new Dictionary<string, double>();
                    foreach (var plan in plans)
                    {
-                       await BeginAccountCalculations(plan.Plan, start, end, childLogger, region, shardUsageStateTimes);
+                       await BeginAccountCalculations(plan, start, end, childLogger.NewChildLogger(), region, shardUsageStateTimes);
                    }
 
                    if (shardUsageStateTimes.ContainsKey(BillingWindowBillingState.Active.ToString()))

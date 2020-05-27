@@ -147,7 +147,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var newState = originalState;
 
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     childLogger.FluentAddBaseValue("CloudEnvironmentOldState", originalState)
                         .FluentAddValue("CloudEnvironmentOldStateUpdated", cloudEnvironment.LastStateUpdated)
@@ -306,7 +306,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     cloudEnvironment.Updated = DateTime.UtcNow;
                     if (newState != default && newState != cloudEnvironment.State)
@@ -335,7 +335,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     cloudEnvironment.Connection.ConnectionSessionPath = options.Payload.SessionPath;
 
@@ -375,7 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(plan);
+                    childLogger.AddVsoPlanInfo(plan);
 
                     var result = new CloudEnvironmentServiceResult()
                     {
@@ -610,7 +610,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, childLogger.NewChildLogger());
 
@@ -706,7 +706,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -896,7 +896,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     // Detect if environment is archived
                     var isEnvironmentIsArchived = cloudEnvironment.Storage.Type == ResourceType.StorageArchive;
@@ -967,7 +967,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -1030,7 +1030,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -1094,7 +1094,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
                     childLogger.AddCloudEnvironmentUpdate(update);
 
                     var allowedUpdates = await GetAvailableSettingsUpdatesAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -1221,7 +1221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     var result = new CloudEnvironmentAvailableSettingsUpdates();
 
@@ -1334,7 +1334,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     // Initialize connection, if it is null, client will fail to get environment list.
                     cloudEnvironment.Connection = new ConnectionInfo();
@@ -1396,7 +1396,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlan(cloudEnvironment.PlanId);
+                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
 
                     // Initialize connection, if it is null, client will fail to get environment list.
                     cloudEnvironment.Connection = new ConnectionInfo();

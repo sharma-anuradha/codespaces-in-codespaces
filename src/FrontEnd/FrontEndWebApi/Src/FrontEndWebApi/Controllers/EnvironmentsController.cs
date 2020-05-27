@@ -365,6 +365,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var planDetails = await PlanManager.GetAsync(plan, logger);
             ValidationUtil.IsTrue(planDetails != null, $"Plan {cloudEnvironment.PlanId} not found.");
 
+            logger.AddVsoPlan(planDetails);
+
             if (!AuthorizePlanAccess(planDetails, PlanAccessTokenScopes.WriteEnvironments, logger))
             {
                 return new ForbidResult();

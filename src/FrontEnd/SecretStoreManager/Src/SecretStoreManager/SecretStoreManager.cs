@@ -462,7 +462,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                 VsoPlanInfo.TryParse(planId, out var plan),
                 $"Invalid plan ID: {planId}");
 
-            logger.AddVsoPlan(plan);
+            logger.AddVsoPlanInfo(plan);
 
             // Validate the plan exists (and lookup the plan details).
             var vsoPlan = await PlanManager.GetAsync(plan, logger);

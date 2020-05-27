@@ -4,6 +4,7 @@
 
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
@@ -15,7 +16,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         private const string LogValueSubscriptionId = "SubscriptionId";
         private const string LogValueResourceGroupName = "ResourceGroup";
         private const string LogValueResourceId = "ResourceId";
+        private const string LogValuePartner = "Partner";
         private const string LogValuePlanName = "Plan";
+
+        /// <summary>
+        /// Add logging fields for a <see cref="VsoPlan"/> instance.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="plan">The plan, or null.</param>
+        /// <returns>The <paramref name="logger"/> instance.</returns>
+        public static IDiagnosticsLogger AddVsoPlan(this IDiagnosticsLogger logger, VsoPlan plan)
+        {
+            Requires.NotNull(logger, nameof(logger));
+
+            if (plan != null)
+            {
+                logger.AddPartner(plan.Partner)
+                    .AddVsoPlanInfo(plan.Plan);
+            }
+
+            return logger;
+        }
 
         /// <summary>
         /// Add logging fields for a <see cref="VsoPlanInfo"/> instance.
@@ -23,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="plan">The plan, or null.</param>
         /// <returns>The <paramref name="logger"/> instance.</returns>
-        public static IDiagnosticsLogger AddVsoPlan(this IDiagnosticsLogger logger, VsoPlanInfo plan)
+        public static IDiagnosticsLogger AddVsoPlanInfo(this IDiagnosticsLogger logger, VsoPlanInfo plan)
         {
             Requires.NotNull(logger, nameof(logger));
 
@@ -45,17 +66,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="logger">The diagnostics logger.</param>
         /// <param name="planId">The plan id, or null.</param>
         /// <returns>The <paramref name="logger"/> instance.</returns>
-        public static IDiagnosticsLogger AddVsoPlan(this IDiagnosticsLogger logger, string planId)
+        public static IDiagnosticsLogger AddVsoPlanInfo(this IDiagnosticsLogger logger, string planId)
         {
             Requires.NotNull(logger, nameof(logger));
 
             if (planId != null && VsoPlanInfo.TryParse(planId, out var plan))
             {
-                logger.AddVsoPlan(plan);
+                logger.AddVsoPlanInfo(plan);
             }
 
             return logger;
         }
+
+        /// <summary>
+        /// Add the partner to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="partner">The partner.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddPartner(this IDiagnosticsLogger logger, Partner? partner)
+            => logger.FluentAddBaseValue(LogValuePartner, partner?.ToString());
 
         /// <summary>
         /// Add the subscription id to the logger.

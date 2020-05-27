@@ -50,6 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.NotNull(plan, nameof(plan));
             Requires.NotNullOrEmpty(eventType, nameof(eventType));
 
+            logger.AddVsoPlanInfo(plan);
+
             var duration = logger.StartDuration();
             try
             {
@@ -65,14 +67,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 billingEvent = await billingEventRepository.CreateAsync(billingEvent, logger);
 
                 logger.AddDuration(duration)
-                    .AddVsoPlan(plan)
                     .LogInfo(GetType().FormatLogMessage(nameof(CreateEventAsync)));
                 return billingEvent;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .AddVsoPlan(plan)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateEventAsync)), ex.Message);
                 throw;
             }
@@ -117,6 +117,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             Requires.Argument(start.Kind == DateTimeKind.Utc, nameof(start), "DateTime values must be UTC.");
             Requires.Argument(
                 end == null || end.Value.Kind == DateTimeKind.Utc, nameof(end), "DateTime values must be UTC.");
+
+            logger.AddVsoPlanInfo(plan);
 
             var duration = logger.StartDuration();
             try
@@ -172,14 +174,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     q => q.Where(where), logger)).OrderBy(x => x.Time);
 
                 logger.AddDuration(duration)
-                    .AddVsoPlan(plan)
                     .LogInfo(GetType().FormatLogMessage(nameof(GetPlanEventsAsync)));
                 return billingEvents;
             }
             catch (Exception ex)
             {
                 logger.AddDuration(duration)
-                    .AddVsoPlan(plan)
                     .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(GetPlanEventsAsync)), ex.Message);
                 throw;
             }

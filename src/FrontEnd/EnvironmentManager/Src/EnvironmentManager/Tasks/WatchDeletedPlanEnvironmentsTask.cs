@@ -103,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 async (childLogger)
                 =>
                 {
-                    childLogger.AddVsoPlan(plan.Plan);
+                    childLogger.AddVsoPlan(plan);
 
                     var environments = await EnvManager.ListAsync(
                         childLogger.NewChildLogger(), planId: plan.Plan.ResourceId);

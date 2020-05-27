@@ -1106,7 +1106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan.Plan, start, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, start, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
 
             BillingSummary resultSummary = argsInput as BillingSummary;
 
@@ -1210,7 +1210,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan.Plan, start, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, start, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
 
             BillingSummary resultSummary = argsInput as BillingSummary;
 
@@ -1488,7 +1488,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan.Plan, startTime, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, startTime, endTime, logger.Object, AzureLocation.WestUs2, shardTimes);
 
             BillingSummary resultSummary = argsInput as BillingSummary;
 
@@ -1522,7 +1522,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             object argsInput = null;
             billingEventManager.Setup(x => x.CreateEventAsync(plan.Plan, null, BillingEventTypes.BillingSummary, It.IsAny<object>(), logger.Object)).Callback<VsoPlanInfo, EnvironmentBillingInfo, string, object, IDiagnosticsLogger>((p, env, type, args, l) => argsInput = args);
-            await sut.BeginAccountCalculations(plan.Plan, start, endBillingTime, logger.Object, AzureLocation.WestUs2, shardTimes);
+            await sut.BeginAccountCalculations(plan, start, endBillingTime, logger.Object, AzureLocation.WestUs2, shardTimes);
 
             var resultSummary = argsInput as BillingSummary;
 
