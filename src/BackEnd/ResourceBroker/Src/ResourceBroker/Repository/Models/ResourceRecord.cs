@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -21,6 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     /// </summary>
     public class ResourceRecord : TaggedEntity
     {
+        private const int MaxStateChangeListItems = 5;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRecord"/> class.
         /// </summary>
@@ -290,20 +293,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 return false;
             }
 
-            if (ProvisioningStatusChanges == null)
-            {
-                ProvisioningStatusChanges = new List<OperationStateChanges>();
-            }
-
-            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
-            ProvisioningStatus = newState;
-            ProvisioningStatusChanged = time;
-            ProvisioningStatusChanges.Add(new OperationStateChanges
-            {
-                Status = newState,
-                Time = time,
-                Trigger = trigger,
-            });
+            (ProvisioningStatus, ProvisioningStatusChanged, ProvisioningStatusChanges) = AddStateChange(ProvisioningStatusChanges, newState, trigger, newTime);
 
             if (newState == OperationState.Succeeded)
             {
@@ -311,7 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 {
                     // Storage and Keyvault resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
                     IsReady = true;
-                    Ready = time;
+                    Ready = ProvisioningStatusChanged;
                 }
             }
 
@@ -332,20 +322,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 return false;
             }
 
-            if (StartingStatusChanges == null)
-            {
-                StartingStatusChanges = new List<OperationStateChanges>();
-            }
-
-            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
-            StartingStatus = newState;
-            StartingStatusChanged = time;
-            StartingStatusChanges.Add(new OperationStateChanges
-            {
-                Status = newState,
-                Time = time,
-                Trigger = trigger,
-            });
+            (StartingStatus, StartingStatusChanged, StartingStatusChanges) = AddStateChange(StartingStatusChanges, newState, trigger, newTime);
 
             return true;
         }
@@ -364,20 +341,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 return false;
             }
 
-            if (DeletingStatusChanges == null)
-            {
-                DeletingStatusChanges = new List<OperationStateChanges>();
-            }
-
-            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
-            DeletingStatus = newState;
-            DeletingStatusChanged = time;
-            DeletingStatusChanges.Add(new OperationStateChanges
-            {
-                Status = newState,
-                Time = time,
-                Trigger = trigger,
-            });
+            (DeletingStatus, DeletingStatusChanged, DeletingStatusChanges) = AddStateChange(DeletingStatusChanges, newState, trigger, newTime);
 
             if (newState == OperationState.Initialized)
             {
@@ -402,22 +366,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 return false;
             }
 
-            if (CleanupStatusChanges == null)
+            (CleanupStatus, CleanupStatusChanged, CleanupStatusChanges) = AddStateChange(CleanupStatusChanges, newState, trigger, newTime);
+
+            return true;
+        }
+
+        private static (OperationState, DateTime, IList<OperationStateChanges>) AddStateChange(
+            IList<OperationStateChanges> changes,
+            OperationState newState,
+            string trigger,
+            DateTime? newTime)
+        {
+            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
+
+            if (changes == null)
             {
-                CleanupStatusChanges = new List<OperationStateChanges>();
+                changes = new List<OperationStateChanges>();
+            }
+            else if (changes.Count >= MaxStateChangeListItems)
+            {
+                changes = changes.TakeLast(MaxStateChangeListItems - 1).ToList();
             }
 
-            var time = newTime.GetValueOrDefault(DateTime.UtcNow);
-            CleanupStatus = newState;
-            CleanupStatusChanged = time;
-            CleanupStatusChanges.Add(new OperationStateChanges
+            changes.Add(new OperationStateChanges
             {
                 Status = newState,
                 Time = time,
                 Trigger = trigger,
             });
 
-            return true;
+            return (newState, time, changes);
         }
     }
 }
