@@ -14,7 +14,7 @@ const MaybeNavigation = (props: { hideNavigation?: boolean }) => {
     }
 
     return (
-        <div className='ms-Grid-col ms-bgColor-gray20 portal-layout__app-navigation-container'>
+        <div className='ms-bgColor-gray20 portal-layout__app-navigation-container'>
             <Navigation />
         </div>
     );

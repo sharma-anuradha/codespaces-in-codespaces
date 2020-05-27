@@ -1,0 +1,55 @@
+.settings-menu {
+    margin: 0 auto;
+    position: relative;
+    background: white;
+    height: inherit;
+    padding-left: 5rem;
+    padding-right: 5rem;
+}
+
+.settings-menu__overlay {
+    background: inherit;
+    opacity: .85;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    background: white;
+}
+
+.vsonline-settings-menu__separator {
+    background-color: #CCC;
+    height: 1px;
+    margin-top: 1.5rem;
+}
+
+.vsonline-settings-menu__section {
+    margin-bottom: 3rem;
+}
+
+.vsonline-settings-menu__plan-selector {
+    width: 21rem;
+}
+
+.vsonline-settings-menu__delete-button {
+    margin-left: 22.5rem;
+    margin-top: -3.2rem;
+    margin-right: 0.3rem;
+}
+
+.vsonline-settings-menu__delete-text {
+    height: 5rem;
+}
+
+#target {
+    position: absolute;
+    height: 30rem;
+    top: 25%;
+    left: 45%;
+}
+
+.ms-dialogMainOverride {
+    margin-bottom: 4rem;
+}
