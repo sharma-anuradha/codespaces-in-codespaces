@@ -57,6 +57,23 @@ iptables -I OUTPUT -d $INSTANCE_METADATA_IP -j DROP
 iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP
 # iptables-save > /etc/iptables/rules.v4
 
+echo "Update Time Sync Configuration ..."
+# disable NTP-based time sync
+timedatectl set-ntp off
+# configure VMICTimeSync (host-only) time sync
+apt-get -yq install chrony
+cp /etc/chrony/chrony.conf /etc/chrony/chrony.conf.backup
+cat > /etc/chrony/chrony.conf <<EOF
+keyfile /etc/chrony/chrony.keys
+driftfile /var/lib/chrony/chrony.drift
+logdir /var/log/chrony
+maxupdateskew 100.0
+rtcsync
+refclock PHC /dev/ptp0 poll 3 dpoll -2 offset 0
+makestep 1.0 -1
+EOF
+systemctl restart chrony.service
+
 echo "Install unzip ..."
 apt-get -yq update && apt-get install -y --no-install-recommends unzip
 

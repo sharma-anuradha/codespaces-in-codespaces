@@ -99,7 +99,49 @@
       "location": "[parameters('location')]",
       "tags": "[parameters('resourceTags')]",
       "properties": {
-        "securityRules": []
+        "securityRules": [
+          {
+            "name": "Restrict-Outbound-Udp-Rule",
+            "properties": {
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Allow-Outbound-Udp-Skype-Rule",
+            "properties": {
+                "protocol": "Udp",
+                "sourcePortRange": "*",
+                "sourceAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 199,
+                "direction": "Outbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [
+                    "3478",
+                    "3479",
+                    "3480",
+                    "3481"
+                ],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": [
+                    "13.107.64.0/18",
+                    "52.112.0.0/14",
+                    "52.120.0.0/14"
+                ]
+            }
+          }
+        ]
       }
     },
     {
