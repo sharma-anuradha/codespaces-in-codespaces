@@ -45,7 +45,7 @@
     "watch:portal": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile Local",
     "watch:portal:github": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalGitHub",
     "start:dns": "run-script-os",
-    "start:dns:win32": "./scripts/shell/start-dns-server-win32.bat",
+    "start:dns:win32": ".\\scripts\\shell\\start-dns-server-win32.bat",
     "start:dns:linux": "sh ./scripts/shell/start-dns-server-linux.sh",
     "start:dns:darwin": "sh ./scripts/shell/start-dns-server-darwin.sh",
     "watch:portal:platform": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalPlatform"
