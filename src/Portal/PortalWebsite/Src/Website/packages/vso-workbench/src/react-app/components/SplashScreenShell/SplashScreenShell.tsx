@@ -1,24 +1,36 @@
 import * as React from 'react';
+import { VSOSplashScreen } from '@vs/vso-splash-screen'
+
+import {
+    ILocalEnvironment, randomString,
+} from 'vso-client-core';
+
+import { ConnectionAdapter } from './ConnectionAdapter';
+import { RenderSplashScreen } from './RenderSplashScreen';
 
 import './SplashScreenShell.css';
-import { ISplashScreenProps } from '../../../interfaces/ISplashScreenProps';
 
-export const SplashScreenShell: React.FunctionComponent<ISplashScreenProps> = (props: ISplashScreenProps) => {
+export interface IWorkbenchSplashScreenProps {
+    environment?: ILocalEnvironment;
+    connectError?: string;
+    onRetry?: () => void;
+    onConnect?: () => void;
+    isGithubSplashScreen: boolean;
+}
+
+export const SplashScreenShell: React.FC<IWorkbenchSplashScreenProps> = (props: IWorkbenchSplashScreenProps) => {
+    const connection = React.useMemo(() => { return new ConnectionAdapter() }, []);
+
     const {
-        children,
-        className
+        isGithubSplashScreen,
     } = props;
 
-    return (<div className={`vsonline-splash-screen-main ${className || ''}`}>
-        <div className="vsonline-splash-screen-extensions-pane"></div>
-        <div className='vsonline-splash-screen-tree-pane'></div>
-        <div className="vsonline-splash-screen-editor">
-            <div className='vsonline-splash-screen-titlebar'>
-                <div className='vsonline-splash-screen-titlebar-tab'></div>
-            </div>
-            <div className="vsonline-splash-screen-body">
-                {children}
-            </div>
-        </div>
-    </div>);
-};
+    return (
+        <RenderSplashScreen isOnVSCodespaces={!isGithubSplashScreen}>
+            <VSOSplashScreen
+                connection={connection}
+                github={isGithubSplashScreen}
+            />
+        </RenderSplashScreen>
+    );
+}

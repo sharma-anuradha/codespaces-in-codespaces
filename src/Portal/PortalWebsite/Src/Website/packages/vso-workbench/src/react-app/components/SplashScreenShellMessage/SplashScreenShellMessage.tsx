@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { Fragment } from 'react';
-import { SplashScreenShell } from '../SplashScreenShell/SplashScreenShell';
 import { ISplashScreenProps } from '../../../interfaces/ISplashScreenProps';
 
-import './SplashScreenShellMessage.css'
 import { Spinner } from '../Spinner/Spinner';
 import { IButtonLinkProps, ButtonLink } from '../ButtonLink/ButtonLink';
+import { RenderSplashScreen } from '../SplashScreenShell/RenderSplashScreen';
+
+import './SplashScreenShellMessage.css'
+import { ConnectionAdapter } from '../SplashScreenShell/ConnectionAdapter';
 
 interface ISplashScreenMessageProps extends ISplashScreenProps {
     message: string;
@@ -40,13 +41,13 @@ export const MaybeButton: React.FunctionComponent<ISplashScreenMessageProps> = (
 
 export const SplashScreenMessage: React.FunctionComponent<ISplashScreenMessageProps> = (props: ISplashScreenMessageProps) => {
     return (
-        <SplashScreenShell>
+        <RenderSplashScreen isOnVSCodespaces={true}>
             <div className="vso-splash-screen__block">
                 <div className="vso-splash-screen__message">
                     <MaybeSpinner {...props} /> { props.message }
                 </div>
                 <MaybeButton {...props} />
             </div>
-        </SplashScreenShell>
+        </RenderSplashScreen>
     );
 };

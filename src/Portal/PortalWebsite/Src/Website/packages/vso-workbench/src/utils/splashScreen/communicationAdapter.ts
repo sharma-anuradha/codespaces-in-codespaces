@@ -4,15 +4,13 @@ import {
 } from 'vso-client-core';
 import {
     WorkspaceClient,
-    openSshChannel
+    openSshChannel,
+    BrowserSyncService,
+    GitCredentialService,
 } from 'vso-ts-agent';
-import { EnvConnector } from 'vso-workbench'
-
-import { SplashCommunicationProvider } from '../providers/splashCommunicationProvider';
-import { useActionContext } from '../actions/middleware/useActionContext';
-import { TerminalId } from '../constants';
-import { BrowserSyncService } from '../rpcServices/BrowserSyncService';
-import { GitCredentialService } from '../rpcServices/GitCredentialService';
+import { EnvConnector } from '../../clients/envConnector';
+import { SplashCommunicationProvider } from './SplashScreenCommunicationProvider';
+import { TerminalId } from '../../interfaces/TerminalId';
 
 export class CommunicationAdapter {
     private envConnector: EnvConnector;
@@ -28,7 +26,13 @@ export class CommunicationAdapter {
         error: debug.Debugger,
     };
 
-    constructor(communication: SplashCommunicationProvider, liveShareEndpoint: string, correlationId: string) {
+    constructor(
+        communication: SplashCommunicationProvider,
+        liveShareEndpoint: string,
+        correlationId: string,
+        BrowserSyncServiceClass: typeof BrowserSyncService,
+        GitCredentialServiceClass: typeof GitCredentialService,
+    ) {
         this.envConnector = new EnvConnector(async (e) => {
             const {
                 workspaceClient,
@@ -37,7 +41,7 @@ export class CommunicationAdapter {
             } = e;
 
             // Expose credential service
-            const gitCredentialService = new GitCredentialService(workspaceService, rpcConnection);
+            const gitCredentialService = new GitCredentialServiceClass(workspaceService, rpcConnection);
             await gitCredentialService.shareService();
 
             // Expose browser sync service
@@ -45,7 +49,7 @@ export class CommunicationAdapter {
                 vsls.SourceEventService
             );
 
-            new BrowserSyncService(sourceEventService);
+            new BrowserSyncServiceClass(sourceEventService);
         });
         this.communicationProvider = communication;
         this.utf8Decoder = new TextDecoder('utf-8');
@@ -54,15 +58,7 @@ export class CommunicationAdapter {
         this.logger = createTrace('Communication Adapter');
     }
 
-    public async connect(sessionId: string) {
-        const { state } = useActionContext();
-        const { authentication } = state;
-        const { token } = authentication;
-
-        if (!token) {
-            throw new Error('Not authorized.');
-        }
-
+    public async connect(sessionId: string, token: string) {
         const workspaceClient = await this.envConnector.connectWithRetry(
             sessionId,
             token,

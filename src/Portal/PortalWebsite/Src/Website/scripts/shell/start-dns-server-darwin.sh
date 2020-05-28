@@ -23,7 +23,7 @@ if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     exit 1
 fi
 
-echo "* Adding the DNS server the Wi-Fi servers list.."
+echo "* Adding the DNS server to the Wi-Fi interface DNS servers list.."
 
 networksetup -setdnsservers Wi-Fi 127.0.0.1 $(networksetup -getdnsservers Wi-Fi | grep -v "127\.0\.0\.1")
 

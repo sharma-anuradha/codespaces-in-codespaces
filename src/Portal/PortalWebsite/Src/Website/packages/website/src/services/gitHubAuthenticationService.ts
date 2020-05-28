@@ -5,9 +5,11 @@ import {
     localStorageKeychain,
     isHostedOnGithub
 } from 'vso-client-core';
+import { SupportedGitService } from 'vso-ts-agent';
+
 import { IAuthenticationAttempt } from './authenticationServiceBase';
-import { SupportedGitService } from '../utils/gitUrlNormalization';
 import { IRepoInfo, PostMessageRepoInfoRetriever } from '../split/github/postMessageRepoInfoRetriever';
+
 
 export const trace = createTrace('GitHubCredentialService');
 

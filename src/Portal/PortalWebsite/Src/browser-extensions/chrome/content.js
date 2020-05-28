@@ -43,7 +43,7 @@
     }
 
     try {
-      const iframe = document.querySelector('.js-workspace-iframe-container iframe');
+      const iframe = document.querySelector('.js-codespace-iframe-container iframe');
       if (!iframe) {
         console.warn(`No iframe found. [attempt ${intervalsCount}]`);
         intervalsCount++;

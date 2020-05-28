@@ -1,16 +1,20 @@
 import * as React from 'react';
-import { Fragment } from 'react';
+
+import { createTrace } from 'vso-client-core';
 
 import { authService } from '../../../auth/authService';
 import { config } from '../../../config/config';
 import { Workbench } from '../../../vscode/workbenches/defaultWorkbench';
 
 import './Workbench.css';
-import { SplashScreenMessage } from '../SplashScreenShellMessage/SplashScreenShellMessage';
 
 export interface IWorkbechPropsComponent {
-    onError: (e: Error) => any | Promise<any>
+    onError: (e: Error) => any;
+    onConnection?: () => any;
+    onMount?: () => any;
 }
+
+const trace = createTrace('workbench');
 
 class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
     private readonly domElementId = 'js-vscode-workbench-placeholder';
@@ -22,14 +26,26 @@ class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
     }
 
     private onConnection = async () => {
+        const {
+            onConnection = () => {},
+            onMount = () => {},
+        } = this.props;
+
+        onConnection();
+
         if (!this.workbench) {
             throw new Error('No VSCode Workbench initialized.');
         }
 
         await this.workbench.mount();
+
+        onMount();
     };
 
     async componentDidMount() {
+        trace.info(`Getting config..`);
+        await config.fetch();
+
         this.workbench = new Workbench({
             domElementId: this.domElementId,
             getToken: authService.getCachedToken,
@@ -45,11 +61,10 @@ class WorkbenchComponent extends React.Component<IWorkbechPropsComponent> {
 
     render() {
         return (
-            <Fragment>
-                <SplashScreenMessage message='Connecting...' isSpinner={true} />
-
-                <div className='vso-workbench-root' id={this.domElementId} />
-            </Fragment>
+            <div
+                id={this.domElementId}
+                className='vso-workbench-root'
+            />
         );
     }
 }

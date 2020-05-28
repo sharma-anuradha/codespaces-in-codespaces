@@ -46,9 +46,14 @@ const CONFIG: IConfig = {
 } as const;
 
 class Config {
+    private isFetched = false;
     public props = CONFIG;
 
     public fetch = async () => {
+        if (this.isFetched) {
+            return;
+        }
+
         const result = await fetch('/configuration');
         if (!result || !result.ok) {
             throw new ConfigurationError('Cannot get portal configuration.');
@@ -60,6 +65,8 @@ class Config {
             ...CONFIG.portalConfig,
             ...config,
         };
+
+        this.isFetched = true;
     };
 
     get environment() {

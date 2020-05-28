@@ -14,13 +14,15 @@ describe('WorkbenchPageRender', () => {
 
             const component = renderer.create(
                 <WorkbenchPageRender
-                  state={state as EnvironmentStateInfo}
-                  message={message}
-                  startEnvironment={() => {}}
-                  handleAPIError={() => {}}
-                  onSignIn={() => {}}
-                />);
-          
+                    environmentInfo={null}
+                    environmentState={state as EnvironmentStateInfo}
+                    message={message}
+                    startEnvironment={() => {}}
+                    handleAPIError={() => {}}
+                    onSignIn={() => {}}
+                />
+            );
+
             let tree = component.toJSON();
             expect(tree).toMatchSnapshot();
         }
@@ -33,13 +35,15 @@ describe('WorkbenchPageRender', () => {
 
             const component = renderer.create(
                 <WorkbenchPageRender
-                  state={state as EnvironmentWorkspaceState}
-                  message={message}
-                  startEnvironment={() => {}}
-                  handleAPIError={() => {}}
-                  onSignIn={() => {}}
-                />);
-          
+                    environmentInfo={null}
+                    environmentState={state as EnvironmentWorkspaceState}
+                    message={message}
+                    startEnvironment={() => {}}
+                    handleAPIError={() => {}}
+                    onSignIn={() => {}}
+                />
+            );
+
             let tree = component.toJSON();
             expect(tree).toMatchSnapshot();
         }

@@ -33,3 +33,11 @@ export { EnvConnector } from './clients/envConnector';
 export { VSLSWebSocket } from './clients/VSLSWebSocket';
 
 export { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from './constants';
+
+export { RenderSplashScreen } from './react-app/components/SplashScreenShell/RenderSplashScreen';
+export { ConnectionAdapter } from './react-app/components/SplashScreenShell/ConnectionAdapter';
+
+export { SplashCommunicationProvider } from './utils/splashScreen/SplashScreenCommunicationProvider';
+export { TerminalId } from './interfaces/TerminalId';
+
+export { CommunicationAdapter } from './utils/splashScreen/communicationAdapter';

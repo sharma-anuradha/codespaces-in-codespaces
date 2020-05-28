@@ -1,6 +1,6 @@
 import * as debug from 'debug';
 
-import { IVSCodeConfig, IEnvironment, randomString, getCurrentEnvironmentId } from 'vso-client-core';
+import { IVSCodeConfig, IEnvironment, randomString } from 'vso-client-core';
 import { IWebSocketFactory, IWorkbenchConstructionOptions } from 'vscode-web';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 
@@ -42,10 +42,6 @@ export class VSCodeWorkbench {
     public connect = async () => {
         const {
             getToken,
-            environmentInfo,
-            liveShareEndpoint,
-            vscodeConfig,
-            extensions,
             onConnection,
         } = this.options;
 
@@ -59,19 +55,25 @@ export class VSCodeWorkbench {
             this.envConnector = new EnvConnector(() => { });
         }
 
-        // We start setting up the LiveShare connection here,
-        // so loading workbench assets and creating connection can go in parallel.
-        await Promise.all([
-            vscode.getVSCode(),
-            this.envConnector.ensureConnection(
-                environmentInfo,
-                token,
-                liveShareEndpoint,
-                vscodeConfig,
-                extensions,
-                `${config.api}/environments`
-            ),
-        ]);
+        await vscode.getVSCode();
+
+        /**
+         * Temporary comment out since doing this will cause the "Failed to start VSCode server"
+         * errors. We need to do more work on the connector side to enable the concurrent connection.
+         */
+        // // We start setting up the LiveShare connection here,
+        // // so loading workbench assets and creating connection can go in parallel.
+        // await Promise.all([
+        //     vscode.getVSCode(),
+        //     this.envConnector.ensureConnection(
+        //         environmentInfo,
+        //         token,
+        //         liveShareEndpoint,
+        //         vscodeConfig,
+        //         extensions,
+        //         `${config.api}/environments`
+        //     ),
+        // ]);
 
         await onConnection();
     };

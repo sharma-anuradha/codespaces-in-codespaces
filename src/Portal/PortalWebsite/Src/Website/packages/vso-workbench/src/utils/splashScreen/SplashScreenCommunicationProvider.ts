@@ -1,5 +1,5 @@
-import { ICommunicationChannel } from '../interfaces/ICommunicationChannel';
-import { TerminalId } from '../constants';
+import { ICommunicationChannel } from '../../interfaces/ICommunicationChannel';
+import { TerminalId } from '../../interfaces/TerminalId';
 
 export class SplashCommunicationProvider implements ICommunicationChannel {
     constructor(commandCallback: (message: any) => void) {

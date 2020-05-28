@@ -12,7 +12,12 @@ import {
     vsls,
 } from 'vso-client-core';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
-import { EnvConnector, VSLSWebSocket } from 'vso-workbench';
+import {
+    EnvConnector,
+    VSLSWebSocket,
+    SplashCommunicationProvider,
+    CommunicationAdapter
+} from 'vso-workbench';
 import {
     UserDataProvider,
     UrlCallbackProvider,
@@ -67,8 +72,6 @@ import { createUniqueId } from '../../dependencies';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
-import { CommunicationAdapter } from '../../services/communicationAdapter';
-import { SplashCommunicationProvider } from '../../providers/splashCommunicationProvider';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
 
@@ -124,7 +127,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     // Seconds for timeout when starting
     private notifySeconds?: number;
     // Communication provider for creation splash screen
-    private communicationProvider?: SplashCommunicationProvider;
+    private connectionAdapter?: SplashCommunicationProvider;
     // We need to stablish a liveshare connection until the environment
     // info is available.
     private hasConnectionStarted: boolean = false;
@@ -181,8 +184,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
 
         if (isEnvironmentAvailable(environmentInfo)) {
-            if (this.communicationProvider && environmentInfo.id) {
-                this.communicationProvider.postEnvironmentId(environmentInfo.id);
+            if (this.connectionAdapter && environmentInfo.id) {
+                this.connectionAdapter.postEnvironmentId(environmentInfo.id);
             }
 
             this.cancelPolling();
@@ -197,23 +200,25 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
         if (this.notifySeconds && Date.now() >= this.notifySeconds) {
             this.notifySeconds = undefined;
-            this.communicationProvider?.sendNotification(
+            this.connectionAdapter?.sendNotification(
                 'Looks like this is taking a little longer than usual but your Codespace will be ready soon'
             );
         }
 
-        if (!this.hasConnectionStarted && this.communicationProvider) {
+        if (!this.hasConnectionStarted && this.connectionAdapter) {
             this.hasConnectionStarted = true;
             const communicationAdapter = new CommunicationAdapter(
-                this.communicationProvider,
+                this.connectionAdapter,
                 this.props.liveShareEndpoint,
-                this.correlationId || createUniqueId()
+                this.correlationId || createUniqueId(),
+                BrowserSyncService,
+                GitCredentialService,
             );
 
             if (environmentInfo.connection) {
                 try {
                     if (isStarting(environmentInfo)) {
-                        this.communicationProvider?.appendSteps([
+                        this.connectionAdapter?.appendSteps([
                             {
                                 name: 'Resume Codespace',
                                 data: {
@@ -225,7 +230,12 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                         //Notify after 30 seconds
                         this.notifySeconds = Date.now() + 30 * 1000;
                     } else {
-                        communicationAdapter.connect(environmentInfo.connection.sessionId);
+                        const { token } = this.props;
+                        if (!token) {
+                            throw new Error('No authentication token set.');
+                        }
+
+                        communicationAdapter.connect(environmentInfo.connection.sessionId, token);
                     }
                 } catch (e) {
                     logger.info(`Connection failed ${e}`);
@@ -291,7 +301,12 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
     // tslint:disable-next-line: max-func-body-length
     async mountWorkbench(environmentInfo: IEnvironment) {
-        const { token, liveShareEndpoint, apiEndpoint, getEnvironment } = this.props;
+        const {
+            token,
+            liveShareEndpoint,
+            apiEndpoint,
+            getEnvironment
+        } = this.props;
 
         if (this.workbenchMounted) {
             return;
@@ -496,8 +511,8 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 </div>
             );
         } else {
-            this.communicationProvider =
-                this.communicationProvider ||
+            this.connectionAdapter =
+                this.connectionAdapter ||
                 new SplashCommunicationProvider(this.onCommandReceived);
             return (
                 <SplashScreenComponent

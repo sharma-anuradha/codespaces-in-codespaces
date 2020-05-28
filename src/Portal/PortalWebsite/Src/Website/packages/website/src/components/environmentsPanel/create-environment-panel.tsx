@@ -8,7 +8,8 @@ import { TextField, ITextFieldProps } from 'office-ui-fabric-react/lib/TextField
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { KeyCodes, IRenderFunction } from '@uifabric/utilities';
 
-import { isDefined } from 'vso-client-core';
+import { isDefined, Signal } from 'vso-client-core';
+import { SupportedGitService, getSupportedGitService } from 'vso-ts-agent';
 
 import { Link } from 'office-ui-fabric-react/lib/components/Link';
 import {
@@ -36,17 +37,15 @@ import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader
 
 import {
     normalizeGitUrl,
-    getSupportedGitService,
     getQueryableUrl,
-    SupportedGitService,
 } from '../../utils/gitUrlNormalization';
 
 import './create-environment-panel.css';
 import { Loader } from '../loader/loader';
-import { Signal } from 'vso-client-core';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 import { getSkuSpecLabel } from '../../utils/environmentUtils';
 import { IAuthenticationAttempt } from '../../services/authenticationServiceBase';
+
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 

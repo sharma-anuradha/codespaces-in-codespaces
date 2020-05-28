@@ -1,15 +1,14 @@
 import * as path from 'path';
 import { IEnvironment } from 'vso-client-core';
 
-import { SupportedGitService, getSupportedGitService } from '../../utils/gitUrlNormalization';
 import { IDefaultEditor } from 'vscode-web';
 import { vscode, getUriAuthority } from 'vso-workbench';
+import { SupportedGitService, getSupportedGitService } from 'vso-ts-agent';
 
 const isGitHubPRUrl = (url: string | undefined) => {
     if ((typeof url !== 'string') || !url) {
         return false;
     }
-
     if (getSupportedGitService(url) !== SupportedGitService.GitHub) {
         return false;
     }

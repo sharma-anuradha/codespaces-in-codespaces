@@ -2,7 +2,8 @@ import * as React from 'react';
 import {
     EnvironmentStateInfo,
     createTrace,
-    timeConstants
+    timeConstants,
+    IEnvironment
 } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
@@ -20,6 +21,11 @@ import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
 const { SECOND_MS } = timeConstants;
 
 const trace = createTrace('workbench');
+
+export const isAutoStart = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('autoStart') !== 'false';
+}
 
 export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
     private interval: ReturnType<typeof setInterval> | undefined;
@@ -55,25 +61,27 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
         this.startPollingEnvironment();
     };
 
+    private environmentInfo: IEnvironment | null = null;
+
     private pollEnvironment = async () => {
         try {
             trace.info(`[polling]: getting environment info.`);
 
-            let environmentInfo = await getEnvironmentInfo(
+            this.environmentInfo = await getEnvironmentInfo(
                 this.setState.bind(this),
                 this.handleAPIError
             );
 
-            if (!environmentInfo) {
+            if (!this.environmentInfo) {
                 this.stopPollEnvironment();
                 return;
             }
 
-            trace.info(`[polling]: environment state -> ${environmentInfo.state}`);
+            trace.info(`[polling]: environment state -> ${this.environmentInfo.state}`);
 
             this.setState({
-                environmentInfo,
-                value: environmentInfo.state,
+                environmentInfo: this.environmentInfo,
+                value: this.environmentInfo.state,
             });
         } catch (e) {
             this.handleAPIError(e);
@@ -127,9 +135,8 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
             /**
              * Check if we need to autostart the environment.
              */
-            const params = new URLSearchParams(location.search);
             const isShutdown = environmentInfo.state === EnvironmentStateInfo.Shutdown;
-            if (params.get('autoStart') !== 'false' && isShutdown) {
+            if (isAutoStart() && isShutdown) {
                 return await this.startEnvironment();
             }
 
@@ -154,14 +161,18 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
         if (
             value !== EnvironmentStateInfo.Starting &&
-            value !== EnvironmentStateInfo.ShuttingDown
+            value !== EnvironmentStateInfo.Provisioning &&
+            value !== EnvironmentStateInfo.ShuttingDown &&
+            value !== EnvironmentWorkspaceState.Initializing &&
+            value !== EnvironmentWorkspaceState.Unknown
         ) {
             this.stopPollEnvironment();
         }
 
         return (
             <WorkbenchPageRender
-                state={value}
+                environmentInfo={this.environmentInfo}
+                environmentState={value}
                 message={message}
                 startEnvironment={this.startEnvironment}
                 handleAPIError={this.handleAPIError}
