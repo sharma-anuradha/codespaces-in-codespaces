@@ -13,8 +13,8 @@
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "security": [{
-    "azure_auth": ["user_impersonation"]
-  }],
+      "azure_auth": ["user_impersonation"]
+    }],
   "securityDefinitions": {
     "azure_auth": {
       "type": "oauth2",
@@ -34,8 +34,8 @@
         "description": "Retrieves a list of available API operations",
         "summary": "Retrieves a list of available API operations under this Resource Provider.",
         "parameters": [{
-          "$ref": "#/parameters/ApiVersionParameter"
-        }],
+            "$ref": "#/parameters/ApiVersionParameter"
+          }],
         "responses": {
           "200": {
             "description": "The request was successful; response contains the list of operations under Microsoft.VSOnline resource provider.",
@@ -68,7 +68,8 @@
         "summary": "Retrieves information about a VS Online Account resource.",
         "description": "Retrieves the properties of a VS Online Account.",
         "operationId": "Account_Get",
-        "parameters": [{
+        "parameters": [
+          {
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -108,7 +109,8 @@
         "summary": "Deletes a VS Online Account resource.",
         "description": "Deletes an existing VS Online Account.",
         "operationId": "Account_Delete",
-        "parameters": [{
+        "parameters": [
+          {
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -139,8 +141,7 @@
           "VSOAccountDelete": {
             "$ref": "./examples/VSOAccountDelete_example.json"
           }
-        },
-        "x-ms-long-running-operation": true
+        }
       },
       "put": {
         "tags": [
@@ -149,7 +150,8 @@
         "summary": "Creates a VS Online Account.",
         "description": "Creates a VS Online Account with the specified create parameters.",
         "operationId": "Account_Create",
-        "parameters": [{
+        "parameters": [
+          {
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -199,7 +201,8 @@
         "summary": "Updates a VS Online Account.",
         "description": "Updates the properties of an existing VS Online Account with the specified update parameters.",
         "operationId": "Account_Update",
-        "parameters": [{
+        "parameters": [
+          {
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -251,7 +254,8 @@
         "summary": "Retrieves information about all VS Online Account resources under the given subscription and resource group",
         "description": "Retrieves the properties of all VS Online Accounts.",
         "operationId": "Account_ListByResourceGroup",
-        "parameters": [{
+        "parameters": [
+          {
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -293,7 +297,8 @@
         "summary": "Retrieves information about all VS Online Account resources under the given subscription",
         "description": "Retrieves the properties of all VS Online Accounts.",
         "operationId": "Account_ListBySubscription",
-        "parameters": [{
+        "parameters": [
+          {
             "$ref": "#/parameters/ApiVersionParameter"
           },
           {
@@ -403,8 +408,7 @@
           "VSOPlanDelete": {
             "$ref": "./examples/VSOPlanDelete_example.json"
           }
-        },
-        "x-ms-long-running-operation": true
+        }
       },
       "put": {
         "tags": [
@@ -1043,6 +1047,15 @@
         }
       }
     },
+    "VSOPlanErrorResponse": {
+      "description": "Error response indicates that the service is not able to process the incoming request.",
+      "properties": {
+        "error": {
+          "$ref": "#/definitions/ErrorDefinition",
+          "description": "The error details."
+        }
+      }
+    },
     "VSOnlinePlan": {
       "type": "object",
       "description": "VS Online Plan. Represents the high level Plan needed to provision VS Online resources.",
@@ -1128,7 +1141,7 @@
         "expiration": {
           "type": "integer",
           "description": "The requested expiration timestamp for the VS Online Plan access token."
-        },
+          },
         "identity": {
           "$ref": "#/definitions/VSOnlineDelegateIdentity",
           "description": "The identity of the user of the VS Online Plan access token."

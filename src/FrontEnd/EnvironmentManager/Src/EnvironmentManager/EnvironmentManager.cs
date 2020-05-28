@@ -414,6 +414,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
+                    // Validate subnet is part of the plan.
+                    if (!string.IsNullOrEmpty(cloudEnvironment.SubnetResourceId) && cloudEnvironment.SubnetResourceId.IsValidSubnetResourceId(logger.NewChildLogger()))
+                    {
+                        // TODO:: check if plan contains this subnet.
+                    }
+
                     // Setup
                     var environmentId = Guid.NewGuid();
                     cloudEnvironment.Id = environmentId.ToString();
@@ -492,7 +498,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
-                    if (cloudEnvironmentOptions.QueueResourceAllocation)
+                    if (cloudEnvironmentOptions.QueueResourceAllocation || !string.IsNullOrEmpty(cloudEnvironment.SubnetResourceId))
                     {
                         return await QueueCreateAsync(cloudEnvironment, cloudEnvironmentOptions, startCloudEnvironmentParameters, childLogger);
                     }

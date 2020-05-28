@@ -32,7 +32,10 @@
       "..\\FrontEnd\\Subscriptions\\Src\\Subscriptions.Contracts\\Subscriptions.Contracts.csproj",
       "..\\FrontEnd\\Subscriptions\\Src\\Subscriptions\\Subscriptions.csproj",
       "..\\FrontEnd\\UserProfile\\Src\\UserProfile.Contracts\\UserProfile.Contracts.csproj",
-      "..\\FrontEnd\\UserProfile\\Src\\UserProfile\\UserProfile.csproj"
+      "..\\FrontEnd\\UserProfile\\Src\\UserProfile\\UserProfile.csproj",
+      "..\\FrontEnd\\ResourceAllocation\\Src\\ResourceAllocation\\ResourceAllocation.csproj",
+      "..\\FrontEnd\\ResourceAllocation\\Src\\ResourceAllocation.Abstractions\\ResourceAllocation.Abstractions.csproj",
+      "..\\FrontEnd\\ResourceAllocation\\Src\\ResourceAllocation.Contracts\\ResourceAllocation.Contracts.csproj"
     ]
   }
 }

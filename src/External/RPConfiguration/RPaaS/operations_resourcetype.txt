@@ -46,7 +46,47 @@
         ],
         "extensions": [],
         "timeout": "PT2M"
-      }      
+      },
+      {
+        "apiVersions": [
+          "2020-05-26-preview"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2020-05-26-alpha"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2020-05-26-beta"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2020-05-26-privatepreview"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      }           
     ],
     "swaggerSpecifications": [
       {
@@ -54,7 +94,11 @@
           "2019-07-01-preview",
           "2019-07-01-alpha",
           "2019-07-01-beta",
-          "2019-07-01-privatepreview"
+          "2019-07-01-privatepreview",
+          "2020-05-26-preview",
+          "2020-05-26-alpha",
+          "2020-05-26-beta",
+          "2020-05-26-privatepreview"
         ],
         "swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/"
       }

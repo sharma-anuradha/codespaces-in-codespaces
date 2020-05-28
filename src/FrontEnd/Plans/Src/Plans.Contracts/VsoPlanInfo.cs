@@ -70,8 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         {
             get
             {
-                Requires.Argument(IsValidSubscriptionId(Subscription), nameof(Subscription), "Invalid subscription ID.");
-                Requires.Argument(IsValidResourceGroupName(ResourceGroup), nameof(ResourceGroup), "Invalid resource group name.");
+                Requires.Argument(Subscription.IsValidSubscriptionId(), nameof(Subscription), "Invalid subscription ID.");
+                Requires.Argument(ResourceGroup.IsValidResourceGroupName(), nameof(ResourceGroup), "Invalid resource group name.");
                 Requires.Argument(IsValidPlanName(Name), nameof(Name), "Invalid plan name.");
 
                 return $"/{Subscriptions}/{Subscription}/{ResourceGroups}/{ResourceGroup}" +
@@ -115,8 +115,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var resourceGroup = parts[4];
             var name = parts[8];
 
-            if (!IsValidSubscriptionId(subscription) ||
-                !IsValidResourceGroupName(resourceGroup) ||
+            if (!subscription.IsValidSubscriptionId() ||
+                !resourceGroup.IsValidResourceGroupName() ||
                 !IsValidPlanName(name))
             {
                 plan = null;
@@ -165,8 +165,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var resourceGroup = parts[4];
             var name = parts[8];
 
-            if (!IsValidSubscriptionId(subscription) ||
-                !IsValidResourceGroupName(resourceGroup) ||
+            if (!subscription.IsValidSubscriptionId() ||
+                !resourceGroup.IsValidResourceGroupName() ||
                 !IsValidPlanName(name))
             {
                 plan = null;
@@ -198,17 +198,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <summary>Gets a hashcode for the plan.</summary>
         /// <returns>Hash code derived from the plan subscription.</returns>
         public override int GetHashCode() => Subscription?.GetHashCode() ?? 0;
-
-        private static bool IsValidSubscriptionId(string subscriptionId)
-        {
-            return Guid.TryParseExact(subscriptionId, "D", out _);
-        }
-
-        private static bool IsValidResourceGroupName(string resourceGroupName)
-        {
-            // https://docs.microsoft.com/en-us/azure/architecture/best-practices/naming-conventions#naming-rules-and-restrictions
-            return !string.IsNullOrWhiteSpace(resourceGroupName) && resourceGroupName.Length <= 90;
-        }
 
         private static bool IsValidPlanName(string planName)
         {

@@ -79,9 +79,87 @@
               "ResourceReadBegin"
             ]
         }]
+},
+{
+"apiVersions": [ "2019-07-01-preview"],
+"locations": ["West Europe",
+          "East US",
+          "West Us 2",
+          "Southeast Asia"],
+"timeout": "PT2M",
+"extensions": [{
+            "endpointUri": "https://online.visualstudio.com/api/v1/",
+            "extensionCategories": [
+              "ResourceCreationValidate",
+              "ResourceCreationBegin",
+              "ResourceCreationCompleted",
+              "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction",
+              "ResourceReadBegin"
+            ]
+        }]
+},
+{
+"apiVersions": [ "2020-05-26-alpha"],
+"locations": ["West Europe","East US","West Us 2","Southeast Asia"],
+"timeout": "PT2M",
+"extensions": [{
+            "endpointUri": "https://online.dev.core.vsengsaas.visualstudio.com/api/v1/",
+            "extensionCategories": [
+              "ResourceCreationValidate",
+              "ResourceCreationBegin",
+              "ResourceCreationCompleted",
+              "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction",
+              "ResourceReadBegin"
+            ]
+        }]
+},
+{
+"apiVersions": [ "2020-05-26-beta" ],
+"locations": ["West Europe",
+          "East US",
+          "West Us 2",
+          "Southeast Asia"],
+"timeout": "PT2M",
+"extensions": [{
+            "endpointUri": "https://online-ppe.core.vsengsaas.visualstudio.com/api/v1/",
+            "extensionCategories": [
+              "ResourceCreationValidate",
+              "ResourceCreationBegin",
+              "ResourceCreationCompleted",
+              "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction",
+              "ResourceReadBegin"
+            ]
+        }]
+},
+{
+"apiVersions": [ "2020-05-26-privatepreview"],
+"locations": ["East US 2 EUAP"],
+"timeout": "PT2M",
+"extensions": [{
+            "endpointUri": "https://canary.online.visualstudio.com/api/v1/",
+            "extensionCategories": [
+              "ResourceCreationValidate",
+              "ResourceCreationBegin",
+              "ResourceCreationCompleted",
+              "ResourceDeletionValidate",
+              "ResourcePatchValidate",
+              "ResourcePatchCompleted",
+              "ResourcePostAction",
+              "ResourceReadBegin"
+            ]
+        }]
 }], 
 "swaggerSpecifications": [
-{ "apiVersions": [ "2019-07-01-preview","2019-07-01-alpha","2019-07-01-beta","2019-07-01-privatepreview" ], 
+{ "apiVersions": [ "2019-07-01-preview","2019-07-01-alpha","2019-07-01-beta","2019-07-01-privatepreview","2020-05-26-preview","2020-05-26-alpha","2020-05-26-beta","2020-05-26-privatepreview" ], 
 "swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/" 
 }] 
 }, 

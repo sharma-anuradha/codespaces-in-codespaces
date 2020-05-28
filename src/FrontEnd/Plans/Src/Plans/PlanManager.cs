@@ -285,6 +285,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&
                 vsoPlan.Properties.DefaultAutoSuspendDelayMinutes < 0)
             {
+                logger.LogErrorWithDetail("plan_property_validate_error", $"{nameof(vsoPlan.Properties.DefaultAutoSuspendDelayMinutes)} value {vsoPlan.Properties.DefaultAutoSuspendDelayMinutes} not supported.");
+                return false;
+            }
+
+            // return false if default subnet is not part of Subnets.
+            if (vsoPlan.Properties.VnetProperties != default &&
+            !vsoPlan.Properties.VnetProperties.SubnetId.IsValidSubnetResourceId(logger.NewChildLogger()))
+            {
+                logger.LogErrorWithDetail("plan_property_validate_error", $"{nameof(vsoPlan.Properties.VnetProperties.SubnetId)} value {vsoPlan.Properties.VnetProperties.SubnetId} is not valid.");
                 return false;
             }
 
@@ -315,20 +324,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 };
             }
 
-            if (currentVsoPlan.Properties == null)
+            if (vsoPlan.Properties != default)
             {
-                currentVsoPlan.Properties = new VsoPlanProperties();
-            }
+                if (currentVsoPlan.Properties == null)
+                {
+                    currentVsoPlan.Properties = new VsoPlanProperties();
+                }
 
-            if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
-            {
-                currentVsoPlan.Properties.DefaultEnvironmentSku = vsoPlan.Properties.DefaultEnvironmentSku;
-            }
+                if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
+                {
+                    currentVsoPlan.Properties.DefaultEnvironmentSku = vsoPlan.Properties.DefaultEnvironmentSku;
+                }
 
-            if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&
-                vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.Value > 0)
-            {
-                currentVsoPlan.Properties.DefaultAutoSuspendDelayMinutes = vsoPlan.Properties.DefaultAutoSuspendDelayMinutes;
+                if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&
+                    vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.Value > 0)
+                {
+                    currentVsoPlan.Properties.DefaultAutoSuspendDelayMinutes = vsoPlan.Properties.DefaultAutoSuspendDelayMinutes;
+                }
+
+                if (vsoPlan.Properties.VnetProperties != default)
+                {
+                    if (vsoPlan.Properties.VnetProperties.SubnetId != default)
+                    {
+                        currentVsoPlan.Properties.VnetProperties.SubnetId = vsoPlan.Properties.VnetProperties.SubnetId;
+                    }
+                }
             }
 
             var updatedPlan = await planRepository.UpdateAsync(currentVsoPlan, logger);

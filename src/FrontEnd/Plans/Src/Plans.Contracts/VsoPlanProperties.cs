@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -23,6 +24,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         public string DefaultEnvironmentSku { get; set; }
 
+        /// <summary>
+        /// Gets or sets the vnet properties to create environments in this plan.
+        /// </summary>
+        public VsoVnetProperties VnetProperties { get; set; }
+
         public static bool operator ==(VsoPlanProperties a, VsoPlanProperties b) =>
            a is null ? b is null : a.Equals(b);
 
@@ -35,7 +41,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         {
             return other != null &&
                 other.DefaultAutoSuspendDelayMinutes == DefaultAutoSuspendDelayMinutes &&
-                other.DefaultEnvironmentSku == DefaultEnvironmentSku;
+                other.DefaultEnvironmentSku == DefaultEnvironmentSku &&
+                other.VnetProperties == VnetProperties;
         }
 
         /// <summary> Tests if this plan settings equals another plan settings.</summary>
@@ -46,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <summary>Gets a hashcode for the plan settings.</summary>
         /// <returns>Hash code derived from each of the plan settings properties.</returns>
         public override int GetHashCode() => DefaultAutoSuspendDelayMinutes.GetHashCode() ^
-                                                (DefaultEnvironmentSku?.GetHashCode() ?? 0);
+                                                (DefaultEnvironmentSku?.GetHashCode() ?? 0) ^
+                                                (VnetProperties?.GetHashCode() ?? 0);
     }
 }

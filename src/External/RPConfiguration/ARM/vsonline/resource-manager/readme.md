@@ -86,6 +86,68 @@ input-file:
 
 ---
 
+```yaml
+openapi-type: arm
+tag: package-2020-05-26
+```
+
+### Tag: package-2020-05-26
+
+These settings apply only when `--tag=package-2020-05-26` is specified on the command line.
+
+```yaml $(tag) == 'package-2020-05-26'
+input-file:
+  - Microsoft.VSOnline/preview/2020-05-26-preview/vsonline.json
+```
+
+---
+```yaml
+openapi-type: arm
+tag: package-2020-05-26-alpha
+```
+
+### Tag: package-2020-05-26-alpha
+
+These settings apply only when `--tag=package-2020-05-26-alpha` is specified on the command line.
+
+```yaml $(tag) == 'package-2020-05-26-alpha'
+input-file:
+  - Microsoft.VSOnline/preview/2020-05-26-alpha/vsonline.json
+```
+
+---
+```yaml
+openapi-type: arm
+tag: package-2020-05-26-beta
+```
+
+### Tag: package-2020-05-26-beta
+
+These settings apply only when `--tag=package-2020-05-26-beta` is specified on the command line.
+
+```yaml $(tag) == 'package-2020-05-26-beta'
+input-file:
+  - Microsoft.VSOnline/preview/2020-05-26-beta/vsonline.json
+```
+
+
+---
+```yaml
+openapi-type: arm
+tag: package-2020-05-26-privatepreview
+```
+
+### Tag: package-2020-05-26-privatepreview
+
+These settings apply only when `--tag=package-2020-05-26-privatepreview` is specified on the command line.
+
+```yaml $(tag) == 'package-2020-05-26-privatepreview'
+input-file:
+  - Microsoft.VSOnline/preview/2020-05-26-privatepreview/vsonline.json
+```
+
+---
+
 # Code Generation
 
 ## Swagger to SDK

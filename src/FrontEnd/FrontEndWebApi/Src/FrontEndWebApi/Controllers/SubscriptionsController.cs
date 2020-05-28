@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -190,7 +189,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(userId);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
-
                     var plan = new VsoPlan
                     {
                         Plan = new VsoPlanInfo
@@ -203,6 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Properties = new VsoPlanProperties
                         {
                             DefaultEnvironmentSku = resource.Properties?.DefaultEnvironmentSku,
+                            VnetProperties = resource.Properties.VnetProperties.BuildVsoVnetProperty(),
                         },
                         UserId = userId,
                         Partner = partner,
@@ -648,7 +647,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromQuery]DateTime? expiration)
+            [FromQuery] DateTime? expiration)
         {
             return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_read_all_environments",
@@ -707,7 +706,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromQuery]DateTime? expiration)
+            [FromQuery] DateTime? expiration)
         {
             return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_write_environments",
@@ -766,7 +765,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromQuery]DateTime? expiration)
+            [FromQuery] DateTime? expiration)
         {
             return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_delete_environments",
@@ -851,7 +850,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
-            [FromBody]IssueDelegatePlanAccessTokenBody requestBody)
+            [FromBody] IssueDelegatePlanAccessTokenBody requestBody)
         {
             return await HttpContext.HttpScopeAsync<IActionResult>(
                 $"{LoggingBaseName}_write_delegates",

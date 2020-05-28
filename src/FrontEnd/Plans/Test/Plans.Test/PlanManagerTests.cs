@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
 
@@ -383,6 +383,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var deletedUpdateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
             Assert.Null(deletedUpdateResult.VsoPlan);
             Assert.Equal(ErrorCodes.PlanDoesNotExist, deletedUpdateResult.ErrorCode);
+        }
+
+        [Fact]
+        public async Task PlanProperties_PatchVnetPropertyTest()
+        {
+            var createResult = await planManager.CreateAsync(new VsoPlan
+            {
+                Plan = new VsoPlanInfo
+                {
+                    Location = AzureLocation.WestUs2,
+                    Name = nameof(PlanProperties_PatchTest),
+                    ResourceGroup = "resourceGroup",
+                    Subscription = "subscription",
+                }
+            }, logger);
+
+            Assert.NotNull(createResult.VsoPlan);
+
+            var vsoPlan = createResult.VsoPlan;
+
+            var planProperties = new VsoPlanProperties
+            {
+                DefaultAutoSuspendDelayMinutes = 15,
+                DefaultEnvironmentSku = premiumLinuxSkuName,
+            };
+
+            // Null properties are valid.
+            vsoPlan.Properties = planProperties;
+            Assert.True(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            // Invalid Resource Id added to subnet
+            vsoPlan.Properties.VnetProperties = new VsoVnetProperties();
+            vsoPlan.Properties.VnetProperties.SubnetId = "invalid";
+            Assert.False(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            // Valid Vnet Properties
+            var subnetResourceId = $"/subscriptions/{Guid.Empty}/resourceGroups/VSEng/providers/Microsoft.Network/virtualNetworks/VSEng-vnet/subnets/default";
+            vsoPlan.Properties.VnetProperties.SubnetId = subnetResourceId;
+            Assert.True(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            Assert.True(await planManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger));
+
+            // Update succeeds.
+            var updateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+            Assert.NotNull(updateResult.VsoPlan);
+            Assert.Equal(planProperties, updateResult.VsoPlan.Properties);
         }
     }
 }

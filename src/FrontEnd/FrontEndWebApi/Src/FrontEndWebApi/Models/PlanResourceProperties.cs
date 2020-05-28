@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -27,5 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the environment sku name under the plan.
         /// </summary>
         public string DefaultEnvironmentSku { get; set; }
+
+        /// <summary>
+        /// Gets or sets the vnet properties to create environments in this plan.
+        /// </summary>
+        public VnetProperties VnetProperties { get; set; }
     }
 }

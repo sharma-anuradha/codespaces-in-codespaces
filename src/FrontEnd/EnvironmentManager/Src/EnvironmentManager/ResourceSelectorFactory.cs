@@ -62,12 +62,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
             }
 
+            var queueComputeRequest = cloudEnvironmentOptions.QueueResourceAllocation || !string.IsNullOrWhiteSpace(properties.SubnetResourceId);
             var computeRequest = new AllocateRequestBody
             {
                 Type = ResourceType.ComputeVM,
                 SkuName = cloudEnvironment.SkuName,
                 Location = cloudEnvironment.Location,
-                QueueCreateResource = cloudEnvironmentOptions.QueueResourceAllocation,
+                QueueCreateResource = queueComputeRequest,
                 ExtendedProperties = properties,
             };
 
