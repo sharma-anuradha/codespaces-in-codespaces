@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Newtonsoft.Json;
@@ -55,6 +56,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "isDeleted")]
         public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the date and time when the plan was deleted.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "deletedDate")]
+        public DateTime? DeletedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether a final bill has been submitted for the plan.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "isFinalBillSubmitted")]
+        public bool IsFinalBillSubmitted { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating the date and time when the final bill was submitted for the plan.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "finalBillSubmittedDate")]
+        public DateTime? FinalBillSubmittedDate { get; set; }
 
         /// <summary>
         /// Gets or sets the default properties for this plan.

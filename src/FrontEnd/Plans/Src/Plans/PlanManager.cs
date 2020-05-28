@@ -5,7 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.Azure.Documents;
+using Microsoft.Azure.Documents.Linq;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -88,6 +93,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 // Give the model a new ID and save it.
                 model.Id = Guid.NewGuid().ToString();
             }
+
+            // Make sure to unset isDeleted/isFinalBillSubmitted values
+            model.FinalBillSubmittedDate = null;
+            model.IsFinalBillSubmitted = false;
+            model.DeletedDate = null;
+            model.IsDeleted = false;
 
             result.VsoPlan = await planRepository.CreateOrUpdateAsync(model, logger);
             return result;
@@ -229,7 +240,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <inheritdoc/>
         public async Task<VsoPlan> DeleteAsync(VsoPlan plan, IDiagnosticsLogger logger)
         {
+            Requires.NotNull(plan, nameof(plan));
+            Requires.NotNull(logger, nameof(logger));
+
             plan.IsDeleted = true;
+            plan.DeletedDate = DateTime.UtcNow;
+            return await planRepository.UpdateAsync(plan, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task<VsoPlan> UpdateFinalBillSubmittedAsync(VsoPlan plan, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(plan, nameof(plan));
+            Requires.NotNull(logger, nameof(logger));
+
+            plan.IsFinalBillSubmitted = true;
+            plan.FinalBillSubmittedDate = DateTime.UtcNow;
             return await planRepository.UpdateAsync(plan, logger);
         }
 
@@ -251,6 +277,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 })).Where(t => locations.Contains(t.Plan.Location));
 
             return allPlans;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<VsoPlan>> GetBillablePlansByShardAsync(IEnumerable<AzureLocation> locations, string planShard, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(locations, nameof(locations));
+            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
+            Requires.NotNullOrEmpty(planShard, nameof(planShard));
+            Requires.NotNull(logger, nameof(logger));
+
+            // TODO: Change this to be streaming so that we consume less memory.
+            //
+            // Assuming my understanding is correct, we'd need to take advantage of C# 8's IAsyncEnumerable
+            // construct combined with CosmosDB's FeedIterator API (see also: ToFeedIterator(),
+            // ToStreamIterator(), or GetItemQueryStreamIterator()) so that we can asynchronously yield return
+            // these plans without loading them into a potentially massive list. Then, BillingService and
+            // BillingSummarySubmissionService would need to be updated to use the `async foreach (...)` syntax.
+            //
+            // Question: Might this cause problems by having nested SQL queries going at the same time? I recall
+            // having issues with this sort of thing when using SQLite. My *guess* is that Cosmos can probably
+            // handle it fine.
+            var plans = (await planRepository.GetBillablePlansByShardAsync(planShard, pagingDelay, logger)).Where(plan => locations.Contains(plan.Plan.Location));
+
+            return plans;
         }
 
         /// <inheritdoc/>

@@ -1,6 +1,8 @@
 ﻿// <copyright file="PlanRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -9,7 +11,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
@@ -88,6 +89,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var count = items.FirstOrDefault();
 
             return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<VsoPlan>> GetBillablePlansByShardAsync(string planShard, TimeSpan pagingDelay, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT * FROM c
+                    WHERE (c.isFinalBillSubmitted != true OR NOT IS_DEFINED(c.isFinalBillSubmitted))
+                    AND STARTSWITH(c.plan.subscription, @planShard)",
+                new SqlParameterCollection
+                {
+                        new SqlParameter { Name = "@planShard", Value = planShard },
+                });
+
+            var plans = await QueryAsync(
+                (client, uri, feedOptions) => client.CreateDocumentQuery<VsoPlan>(uri, query, feedOptions).AsDocumentQuery(),
+                logger,
+                (_, childlogger) =>
+                {
+                    return Task.Delay(pagingDelay);
+                });
+
+            return plans;
         }
     }
 }

@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     BillingEvent latestBillingEventSummary;
                     if (!summaryEvents.Any())
                     {
-                        // No summary events exist for this plan eg. first run of the BillingWorker
+                        // No summary events exist for this plan eg. first run of the BillingWorker.
                         // Create a generic BillingSummary to use as a starting point for the following
                         // billing calculations, and seed it with this billing period's start time.
                         latestBillingEventSummary = new BillingEvent
@@ -149,6 +149,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
                     var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan.Plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, childLogger);
+
+                    if (plan.IsDeleted)
+                    {
+                        // If the Plan has been deleted, track this state so that during the next billing iterating, we can mark it as the final bill.
+                        totalBillingSummary.PlanIsDeleted = true;
+
+                        // If the last (most recently submitted) billing summary also noted that the plan had been deleted, then this is the final bill.
+                        totalBillingSummary.IsFinalBill = latestBillingSummary.PlanIsDeleted;
+                    }
 
                     // Write out the summary as the last action. This should always be the last action.
                     await billingEventManager.CreateEventAsync(plan.Plan, null, billingSummaryType, totalBillingSummary, childLogger.NewChildLogger());
@@ -384,18 +393,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 childLogger.AddBaseValue("CloudEnvironmentId", environment.Key);
 
                 var envUsageDetail = environment.Value;
-                var endState = new BillingWindowSlice.NextState
-                {
-                    EnvironmentState = ParseEnvironmentState(envUsageDetail.EndState),
-                    Sku = envUsageDetail.Sku,
-                    TransitionTime = lastSummary.PeriodEnd,
-                };
 
                 if (envUsageDetail.EndState == deletedEnvState)
                 {
                     // Environment state is Deleted so nothing new to bill.
                     continue;
                 }
+
+                var endState = new BillingWindowSlice.NextState
+                {
+                    EnvironmentState = ParseEnvironmentState(envUsageDetail.EndState),
+                    Sku = envUsageDetail.Sku,
+                    TransitionTime = lastSummary.PeriodEnd,
+                };
 
                 // Get the remainder or the entire window if there were no events.
                 var (allSlices, nextState) = await GenerateWindowSlices(end, endState, null, plan, childLogger);
@@ -464,7 +474,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                $"{ServiceName}_begin_shard_calculations",
                async (childLogger) =>
                {
-                   var plans = await planManager.GetPlansByShardAsync(
+                   // Get the list of billable plans - this includes all active plans + deleted plans that have not yet had a final bill submitted.
+                   var plans = await planManager.GetBillablePlansByShardAsync(
                        new List<AzureLocation> { region },
                        planShard,
                        childLogger);

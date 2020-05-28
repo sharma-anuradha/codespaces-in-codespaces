@@ -41,6 +41,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public string Plan { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the plan was deleted at the time that this billing summary was generated.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "planIsDeleted")]
+        public bool PlanIsDeleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is the final bill for the plan.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "isFinalBill")]
+        public bool IsFinalBill { get; set; }
+
+        /// <summary>
         /// State of the subscription during this billing period.
         /// </summary>
         /// <seealso cref="SubscriptionStates" />

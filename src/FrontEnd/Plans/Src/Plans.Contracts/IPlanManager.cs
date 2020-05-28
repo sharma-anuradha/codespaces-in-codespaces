@@ -72,6 +72,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         Task<VsoPlan> DeleteAsync(VsoPlan plan, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Records the fact that a final bill has been submitted for the plan to the database.
+        /// </summary>
+        /// <remarks>
+        /// Sets the state of <see cref="VsoPlan.IsFinalBillSubmitted"/> to true and updates the record in the database.
+        /// </remarks>
+        /// <param name="plan">The plan.</param>
+        /// <param name="logger">The IDiagnosticsLogger.</param>
+        /// <returns>The updated plan record with <see cref="VsoPlan.IsFinalBillSubmitted"/> set to true.</returns>
+        Task<VsoPlan> UpdateFinalBillSubmittedAsync(VsoPlan plan, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Lists the available plans for the specified parameters.
         /// </summary>
         /// <param name="userIdSet">The user id.</param>
@@ -92,6 +103,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="childlogger">The IDiagnosticsLogger.</param>
         /// <returns>List of plans.</returns>
         Task<IEnumerable<VsoPlan>> GetPlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, IDiagnosticsLogger childlogger);
+
+        /// <summary>
+        /// Gets only the billable plans by shard.
+        /// </summary>
+        /// <param name="list">The location list.</param>
+        /// <param name="planShard">The plan shard.</param>
+        /// <param name="logger">The IDiagnosticsLogger.</param>
+        /// <returns>List of plans.</returns>
+        Task<IEnumerable<VsoPlan>> GetBillablePlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Returns the SkuPlan sharding mechanism. We have currently sharing by SubscriptionId so the returned list

@@ -74,7 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             // TODO: consider on the hour billing summary creation. For example summarys would have a time range of
             // 12:00:00 -> 1:00:00
-            var absoluteDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0, DateTimeKind.Utc);
+            var now = DateTime.UtcNow;
+            var absoluteDate = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
             var start = absoluteDate.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
             var end = absoluteDate;
             var controlPlaneRegions = controlPlaneInfo.Stamp.DataPlaneLocations.Shuffle();

@@ -92,9 +92,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{ServiceName}_begin_submission",
                 async (childLogger) =>
                 {
+                    var finalBillPlans = new List<VsoPlan>();
                     var batchID = Guid.NewGuid().ToString();
                     var numberOfSubmissions = 0;
-                    var plans = await planManager.GetPlansByShardAsync(
+
+                    var plans = await planManager.GetBillablePlansByShardAsync(
                      new List<AzureLocation> { region },
                      planShard,
                      childLogger);
@@ -111,9 +113,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                                     x.Type == BillingEventTypes.BillingSummary
                                                                     && ((BillingSummary)x.Args).SubmissionState == BillingSubmissionState.None;
                                 var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, innerLogger);
+                                bool submittingFinalBill = false;
                                 foreach (var summary in billingSummaries)
                                 {
                                     numberOfSubmissions += await ProcessSummary(summary, batchID);
+                                    submittingFinalBill = submittingFinalBill || ((BillingSummary)summary.Args).IsFinalBill;
+                                }
+
+                                if (submittingFinalBill)
+                                {
+                                    finalBillPlans.Add(plan);
                                 }
                             }, swallowException: true);
                     }
@@ -141,6 +150,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                   .FluentAddValue("SubmissionCount", numberOfSubmissions.ToString())
                                   .LogInfo("billing_aggregate_shard_submission");
                         }, swallowException: true);
+                    }
+
+                    foreach (var plan in finalBillPlans)
+                    {
+                        await childLogger.OperationScopeAsync(
+                            $"{ServiceName}_update_plan_submitted_final_bill",
+                            async (innerLogger) =>
+                            {
+                                await planManager.UpdateFinalBillSubmittedAsync(plan, innerLogger);
+                                innerLogger.AddVsoPlan(plan).LogInfo("final_bill_submitted");
+                            }, swallowException: true);
                     }
                 }, swallowException: true);
         }
