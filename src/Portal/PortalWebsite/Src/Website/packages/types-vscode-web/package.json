@@ -1,0 +1,9 @@
+{
+    "name": "@types/vscode-web",
+    "version": "1.0.0-local",
+    "license": "SEE LICENSE IN LICENSE.txt",
+    "types": "vscode.web.d.ts",
+    "scripts": {
+        "test": "echo Nothing to see here."
+    }
+}

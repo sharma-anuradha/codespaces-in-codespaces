@@ -13,6 +13,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.4",
     "@types/node": "^13.0.0",
+    "@types/vscode-web": "1.0.0-local",
     "typescript": "^3.5.3"
   },
   "dependencies": {
