@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ContinuationToken = string.Empty,
                 CurrentState = CloudEnvironmentState.Starting,
                 TargetState = CloudEnvironmentState.Available,
-                TransitionTimeout = TimeSpan.FromSeconds(EnvironmentMonitorConstants.ResumeEnvironmentTimeoutInSeconds),
+                TransitionTimeout = await EnvironmentMonitorSettings.ResumeEnvironmentTimeout(logger.NewChildLogger()),
             };
 
             await MonitorStateTransitionAsync(input, logger);
@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ContinuationToken = string.Empty,
                 CurrentState = CloudEnvironmentState.ShuttingDown,
                 TargetState = CloudEnvironmentState.Shutdown,
-                TransitionTimeout = TimeSpan.FromSeconds(EnvironmentMonitorConstants.ShutdownEnvironmentTimeoutInSeconds),
+                TransitionTimeout = await EnvironmentMonitorSettings.ShutdownEnvironmentTimeout(logger.NewChildLogger()),
             };
 
             await MonitorStateTransitionAsync(input, logger);
@@ -111,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 ContinuationToken = string.Empty,
                 CurrentState = CloudEnvironmentState.Unavailable,
                 TargetState = CloudEnvironmentState.Available,
-                TransitionTimeout = TimeSpan.FromSeconds(EnvironmentMonitorConstants.UnavailableEnvironmentTimeoutInSeconds),
+                TransitionTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger.NewChildLogger()),
             };
 
             await MonitorStateTransitionAsync(input, logger);

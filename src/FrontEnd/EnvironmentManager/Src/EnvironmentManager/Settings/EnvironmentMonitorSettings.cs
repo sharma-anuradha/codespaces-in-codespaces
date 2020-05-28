@@ -24,6 +24,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         public bool EnableStateTransitionMonitor { get; set; }
 
+        /// <summary>
+        /// Gets or sets Resume Environment Timeout In Seconds.
+        /// </summary>
+        public int DefaultResumeEnvironmentTimeoutInSeconds { get; set; }
+
+        /// <summary>
+        /// Gets or sets Shutdown Environment Timeout In Seconds.
+        /// </summary>
+        public int DefaultShutdownEnvironmentTimeoutInSeconds { get; set; }
+
+        /// <summary>
+        /// Gets or sets Unavailable Environment Timeout In Seconds.
+        /// </summary>
+        public int DefaultUnavailableEnvironmentTimeoutInSeconds { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -33,6 +48,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public void Init(ISystemConfiguration systemConfiguration)
         {
             SystemConfiguration = systemConfiguration;
+        }
+
+        /// <summary>
+        /// Gets the resume environment timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> ResumeEnvironmentTimeout(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:resume-environment-timeout-in-seconds", logger, DefaultResumeEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
+        }
+
+        /// <summary>
+        /// Gets the shutdown environment timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> ShutdownEnvironmentTimeout(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:shutdown-environment-timeout-in-seconds", logger, DefaultShutdownEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
+        }
+
+        /// <summary>
+        /// Gets the unavailable environment timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> UnavailableEnvironmentTimeout(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:unavailable-environment-timeout-in-seconds", logger, DefaultUnavailableEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
         }
 
         /// <summary>
