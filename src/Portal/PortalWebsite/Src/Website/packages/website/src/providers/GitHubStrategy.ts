@@ -86,6 +86,6 @@ export class GitHubStrategy extends GitHubStrategyWorkbench {
             return githubSessions;
         }
 
-        return await super.getToken(service, name);
+        return await super.getToken(service, account);
     }
 }
