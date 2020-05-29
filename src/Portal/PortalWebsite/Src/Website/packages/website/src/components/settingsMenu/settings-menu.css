@@ -48,6 +48,7 @@
     height: 30rem;
     top: 25%;
     left: 45%;
+    z-index: 1;
 }
 
 .ms-dialogMainOverride {

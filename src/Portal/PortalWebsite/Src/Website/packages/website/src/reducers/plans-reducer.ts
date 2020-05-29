@@ -1,20 +1,29 @@
 import {
-    GetPlansSuccessAction,
     getPlansSuccessActionType,
+    GetPlansSuccessAction,
     selectPlanActionType,
     SelectPlanAction,
     selectPlanSuccessActionType,
     SelectPlanSuccessAction,
     selectPlanFailureActionType,
     SelectPlanFailureAction,
+    getPlansActionType,
     GetPlansAction,
-    GetPlansFailureAction,
     getPlansFailureActionType,
-    BlurPlanSelectorAction,
+    GetPlansFailureAction,
     blurPlanSelectorActionType,
-    FocusPlanSelectorAction,
+    BlurPlanSelectorAction,
     focusPlanSelectorActionType,
+    FocusPlanSelectorAction,
 } from '../actions/plans-actions';
+import {
+    deletePlanActionType,
+    DeletePlanAction,
+    deletePlanSuccessActionType,
+    DeletePlanSuccessAction,
+    deletePlanFailureActionType,
+    DeletePlanFailureAction,
+} from '../actions/deletePlan';
 
 import { IPlan } from '../interfaces/IPlan';
 import { ISku } from '../interfaces/ISku';
@@ -27,7 +36,10 @@ type AcceptedActions =
     | GetPlansSuccessAction
     | GetPlansFailureAction
     | BlurPlanSelectorAction
-    | FocusPlanSelectorAction;
+    | FocusPlanSelectorAction
+    | DeletePlanAction
+    | DeletePlanSuccessAction
+    | DeletePlanFailureAction;
 
 export type ActivePlanInfo = {
     availableSkus: ISku[];
@@ -101,6 +113,7 @@ export function plansReducer(
     return newState;
 }
 
+// tslint:disable-next-line: max-func-body-length
 function plansReducerInternal(
     state: PlansReducerState,
     action: AcceptedActions
@@ -127,6 +140,7 @@ function plansReducerInternal(
                 selectedPlan,
                 isMadeInitialPlansRequest: true,
                 plans: [...plansList],
+                isLoadingPlan: false,
             };
         }
 
@@ -135,6 +149,14 @@ function plansReducerInternal(
                 ...state,
                 plans: [],
                 isMadeInitialPlansRequest: true,
+                isLoadingPlan: false,
+            };
+        }
+
+        case getPlansActionType: {
+            return {
+                ...state,
+                isLoadingPlan: true,
             };
         }
 
@@ -160,6 +182,28 @@ function plansReducerInternal(
             return {
                 ...state,
                 selectedPlan: null,
+                isLoadingPlan: false,
+            };
+        }
+
+        case deletePlanActionType: {
+            return {
+                ...state,
+                selectedPlan: null,
+                isLoadingPlan: true,
+            };
+        }
+
+        case deletePlanSuccessActionType: {
+            return {
+                ...state,
+                isLoadingPlan: false,
+            };
+        }
+
+        case deletePlanFailureActionType: {
+            return {
+                ...state,
                 isLoadingPlan: false,
             };
         }

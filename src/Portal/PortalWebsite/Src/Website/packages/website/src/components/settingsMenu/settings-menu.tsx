@@ -17,8 +17,7 @@ import { ILocalEnvironment, isHostedOnGithub } from 'vso-client-core';
 import { getVSCodeVersion } from 'vso-workbench';
 import { telemetry } from 'vso-workbench/src/telemetry/telemetry';
 
-import { deletePlan } from '../../actions/createPlan';
-import { getPlans, selectPlan } from '../../actions/plans-actions';
+import { deletePlan } from '../../actions/deletePlan';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
@@ -36,7 +35,9 @@ const setTelemetryVSCodeConfig = () => {
 };
 
 interface IPlanSelectorWrapperProps extends RouteComponentProps {
-    canDeletePlan: boolean;
+    selectedPlan: ActivePlanInfo | null;
+    isDeletingPlan: boolean;
+    isLoadingPlan: boolean;
 }
 
 interface IDeletePlanWarningMessageProps {
@@ -67,7 +68,7 @@ function DeletePlanWarningMessage(props: IDeletePlanWarningMessageProps) {
 }
 
 function PlanSelectorWrapper(props: IPlanSelectorWrapperProps) {
-    return props.canDeletePlan ? (
+    return props.selectedPlan || props.isDeletingPlan || props.isLoadingPlan ? (
         <PlanSelector
             className='vsonline-settings-menu__plan-selector'
             hasNoCreate={true}
@@ -86,14 +87,16 @@ function PlanSelectorWrapper(props: IPlanSelectorWrapperProps) {
 
 // tslint:disable-next-line: max-func-body-length
 export function SettingsMenu(props: RouteComponentProps) {
-    const { selectedPlan, environments } = useSelector((state: ApplicationState) => ({
-        selectedPlan: state.plans.selectedPlan,
-        environments: state.environments.environments,
-    }));
+    const { selectedPlan, isLoadingPlan, environments } = useSelector(
+        (state: ApplicationState) => ({
+            selectedPlan: state.plans.selectedPlan,
+            isLoadingPlan: state.plans.isLoadingPlan,
+            environments: state.environments.environments,
+        })
+    );
 
     const [showWarning, setShowWarning] = useState<boolean>(false);
     const [isDeletingPlan, setIsDeletingPlan] = useState<boolean>(false);
-    const [canDeletePlan, setCanDeletePlan] = useState<boolean>(!!selectedPlan);
     const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
@@ -103,21 +106,12 @@ export function SettingsMenu(props: RouteComponentProps) {
 
             if (selectedPlan) {
                 setIsDeletingPlan(true);
-
                 const errorMessage = await deletePlan(selectedPlan.id);
 
                 if (errorMessage) {
                     setErrorMessage(errorMessage);
                     setIsDeletingPlan(false);
                     return;
-                }
-
-                let newPlansList = await getPlans();
-
-                if (newPlansList.length > 0) {
-                    selectPlan(newPlansList[0]);
-                } else {
-                    setCanDeletePlan(false);
                 }
 
                 setSuccessMessage('Your plan was successfully deleted.');
@@ -181,12 +175,17 @@ export function SettingsMenu(props: RouteComponentProps) {
                 <div className='vsonline-settings-menu__delete-text'>
                     When a plan is deleted, the associated Codespaces will be deleted as well.
                 </div>
-                <PlanSelectorWrapper {...props} canDeletePlan={canDeletePlan} />
+                <PlanSelectorWrapper
+                    {...props}
+                    selectedPlan={selectedPlan}
+                    isDeletingPlan={isDeletingPlan}
+                    isLoadingPlan={isLoadingPlan}
+                />
                 <DefaultButton
                     className='vsonline-settings-menu__delete-button'
                     onClick={() => setShowWarning(true)}
                     allowDisabledFocus
-                    disabled={!canDeletePlan}
+                    disabled={!selectedPlan}
                     text='Delete'
                 />
                 <div className='vsonline-settings-menu__section vsonline-settings-menu__separator' />
