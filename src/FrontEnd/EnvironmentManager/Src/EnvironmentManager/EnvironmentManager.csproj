@@ -21,6 +21,8 @@
     <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
     <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation.Abstractions\ResourceAllocation.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation\ResourceAllocation.csproj" />
+    <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Abstractions\SecretStoreManager.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Models\SecretStoreManager.Models.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />

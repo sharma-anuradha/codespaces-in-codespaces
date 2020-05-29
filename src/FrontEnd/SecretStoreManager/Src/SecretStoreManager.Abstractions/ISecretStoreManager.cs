@@ -27,6 +27,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Fetch all the secret stores that the user has access to, for the given plan.
+        /// This will include user's personal secret store and the plan level shared secret store if any.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="logger">IDiagnostics Logger.</param>
+        /// <returns>Scoped secrets.</returns>
+        Task<IEnumerable<SecretStore>> GetAllSecretStoresByPlanAsync(
+            string planId,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Create a new secret.
         /// </summary>
         /// <param name="planId">The plan id.</param>

@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -43,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly ITokenProvider tokenProvider;
         public readonly EnvironmentManager environmentManager;
         public readonly ISubscriptionManager subscriptionManager;
+        private readonly ISecretStoreManager secretStoreManager;
         private readonly ResourceSelectorFactory resourceSelector;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
@@ -118,6 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
             this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
             this.subscriptionManager = new MockSubscriptionManager();
+            this.secretStoreManager = new Mock<ISecretStoreManager>().Object;
             this.resourceSelector = new ResourceSelectorFactory(this.skuCatalog, new Mock<ISystemConfiguration>().Object);
 
             this.environmentManager = new EnvironmentManager(
@@ -134,6 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.resourceAllocationManager,
                 this.workspaceManager,
                 this.subscriptionManager,
+                this.secretStoreManager,
                 this.resourceSelector);
         }
 

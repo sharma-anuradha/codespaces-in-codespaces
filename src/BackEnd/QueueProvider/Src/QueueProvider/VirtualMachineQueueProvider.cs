@@ -18,7 +18,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models;
 using Newtonsoft.Json;
-using QueueMessage = Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models.QueueMessage;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider
 {

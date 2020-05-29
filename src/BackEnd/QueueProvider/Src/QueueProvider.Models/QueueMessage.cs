@@ -4,8 +4,9 @@
 
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models
 {
     /// <summary>
     /// Sends a queue message to vmagent.
@@ -30,5 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// </summary>
         [DataMember(IsRequired = false, EmitDefaultValue = false)]
         public Dictionary<string, string> Parameters { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user secrets.
+        /// </summary>
+        [DataMember(IsRequired = false, EmitDefaultValue = false)]
+        public IEnumerable<UserSecretData> UserSecrets { get; set; }
     }
 }

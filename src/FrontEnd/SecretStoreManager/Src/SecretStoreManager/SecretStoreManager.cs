@@ -131,14 +131,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             string planId,
             IDiagnosticsLogger logger)
         {
-            return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secret_stores_by_plan", async (childLogger) =>
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secrets_by_plan", async (childLogger) =>
             {
                 Requires.NotNull(planId, nameof(planId));
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
-                var userId = CurrentUserProvider.CurrentUserIdSet.PreferredUserId;
                 var scopedSecrets = new List<ScopedSecretResult>();
 
-                var secretStores = await SecretStoreRepository.GetAllPlanSecretStoresByUserAsync(userId, planId, childLogger);
+                var secretStores = await GetAllSecretStoresByPlanAsync(planId, childLogger);
 
                 // If there are any secret stores in the DB;
                 if (secretStores.Any())
@@ -272,6 +271,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             });
         }
 
+        /// <inheritdoc/>
+        public async Task<IEnumerable<SecretStore>> GetAllSecretStoresByPlanAsync(
+            string planId,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secret_stores_by_plan", async (childLogger) =>
+            {
+                var userId = CurrentUserProvider.CurrentUserIdSet.PreferredUserId;
+                return await SecretStoreRepository.GetAllPlanSecretStoresByUserAsync(userId, planId, childLogger);
+            });
+        }
+
         private async Task<bool> IsSecretQuotaReached(SecretStore secretStore, SecretType secretType, IDiagnosticsLogger logger)
         {
             var secretContractType = Mapper.Map<SecretTypeHttpContract>(secretType);
@@ -290,8 +301,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         }
 
         private async Task<IEnumerable<ResourceSecretsResult>> FetchResourceSecretsFromBackend(
-            IDiagnosticsLogger logger,
-            IEnumerable<SecretStore> secretStores)
+        IDiagnosticsLogger logger,
+        IEnumerable<SecretStore> secretStores)
         {
             try
             {

@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Moq;
 using Xunit;
@@ -230,7 +231,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             return new VirtualMachineProviderStartComputeInput(
                 ResourceInfo,
                 new ShareConnectionInfo("val1", "val2", "val3", "val4"),
-                new System.Collections.Generic.Dictionary<string, string>(),
+                new Dictionary<string, string>(),
+                new HashSet<UserSecretData>(),
                 ComputeOS.Linux,
                 AzureLocation.WestUs2,
                 "Standard_D4s_v3",

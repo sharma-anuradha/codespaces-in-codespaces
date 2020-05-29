@@ -7,6 +7,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
@@ -29,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <param name="azureResourceInfo">The compute azure resource info.</param>
         /// <param name="shareConnectionInfo">The file share connection info. This is optional.</param>
         /// <param name="inputParams">The VM params.</param>
+        /// <param name="userSecrets">User secrets applicable to the environment.</param>
         /// <param name="computeOS">The ComputeOS.</param>
         /// <param name="location">Azure VM location.</param>
         /// <param name="skuName">The Azure SKU name (vm size) of the compute resource.</param>
@@ -37,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureResourceInfo azureResourceInfo,
             ShareConnectionInfo shareConnectionInfo,
             IDictionary<string, string> inputParams,
+            IEnumerable<UserSecretData> userSecrets,
             ComputeOS computeOS,
             AzureLocation location,
             string skuName,
@@ -46,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureResourceInfo = Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             FileShareConnection = shareConnectionInfo;
             VmInputParams = Requires.NotNull(inputParams, nameof(inputParams));
+            UserSecrets = Requires.NotNull(userSecrets, nameof(userSecrets));
             ComputeOS = computeOS;
             Location = location;
             SkuName = Requires.NotNull(skuName, nameof(skuName));
@@ -65,6 +69,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the input parameters to start the environment.
         /// </summary>
         public IDictionary<string, string> VmInputParams { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user secrets.
+        /// </summary>
+        public IEnumerable<UserSecretData> UserSecrets { get; set; }
 
         /// <summary>
         /// Gets or sets the ComputeOS.

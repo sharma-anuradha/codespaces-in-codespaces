@@ -77,5 +77,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             Guid secretId,
             SecretFilterType secretFilterType,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get applicable secrets' data after applying the secret filters.
+        /// </summary>
+        /// <param name="filterSecretsInput">Input to calculate applicable secrets.</param>
+        /// <param name="logger">IDiagnostics Logger.</param>
+        /// <returns>Unique collection of <see cref="UserSecretData"/>.</returns>
+        Task<IEnumerable<UserSecretData>> GetApplicableSecretsAndValuesAsync(
+            FilterSecretsInput filterSecretsInput,
+            IDiagnosticsLogger logger);
     }
 }

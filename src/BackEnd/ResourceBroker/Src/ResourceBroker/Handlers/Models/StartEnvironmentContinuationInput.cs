@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {
@@ -31,6 +32,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets the compute environment variables.
         /// </summary>
         public IDictionary<string, string> EnvironmentVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user secrets.
+        /// </summary>
+        public IEnumerable<UserSecretData> UserSecrets { get; set; }
 
         /// <summary>
         /// Gets or sets the os disk source id.

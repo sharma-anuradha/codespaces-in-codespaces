@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
 {
@@ -21,5 +22,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models
         /// Gets or sets the environment variable dictionary for the environment compute.
         /// </summary>
         public Dictionary<string, string> Variables { get; set; }
+
+        /// <summary>
+        /// Gets or sets data required for computing applicable secrets for the environment.
+        /// </summary>
+        public FilterSecretsInput FilterSecrets { get; set; }
     }
 }

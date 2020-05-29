@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
 using Xunit;
@@ -126,6 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                         { "GIT_CONFIG_USER_NAME", GetConfigOrDefault("USER_NAME", "GIT_CONFIG_USER_NAME") },
                         { "GIT_CONFIG_USER_EMAIL",  GetConfigOrDefault("USER_EMAIL","GIT_CONFIG_USER_EMAIL")},
                    },
+                new HashSet<UserSecretData>(),
                 ComputeOS.Linux,
                 testContext.Location,
                 "Standard_D4s_v3",

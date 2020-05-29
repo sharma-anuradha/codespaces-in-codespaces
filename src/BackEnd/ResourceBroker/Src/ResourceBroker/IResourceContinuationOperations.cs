@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
@@ -45,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="storageResourceId">Target storage resource id.</param>
         /// <param name="archiveStorageResourceId">Target blob storage resource id.</param>
         /// <param name="environmentVariables">Input environment variables for the compute.</param>
+        /// <param name="userSecrets">User secrets applicable to the environment.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resuling continuation result.</returns>
@@ -55,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
+            IEnumerable<UserSecretData> userSecrets,
             string reason,
             IDiagnosticsLogger logger);
 

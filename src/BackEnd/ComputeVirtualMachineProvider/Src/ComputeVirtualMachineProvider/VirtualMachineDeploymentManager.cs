@@ -8,7 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
-using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.VsSaaS.Common;
@@ -296,7 +295,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
-        public async Task<(OperationState OperationState, int RetryAttempt)> StartComputeAsync(VirtualMachineProviderStartComputeInput input, int retryAttemptCount, IDiagnosticsLogger logger)
+        public async Task<(OperationState OperationState, int RetryAttempt)> StartComputeAsync(
+            VirtualMachineProviderStartComputeInput input,
+            int retryAttemptCount,
+            IDiagnosticsLogger logger)
         {
             try
             {

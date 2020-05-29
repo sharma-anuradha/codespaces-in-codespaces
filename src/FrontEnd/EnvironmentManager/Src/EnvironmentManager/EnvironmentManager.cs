@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
@@ -22,7 +23,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using SecretScopeModel = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -47,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="resourceAllocationManager">The environment resource allocation manager.</param>
         /// <param name="workspaceManager">The workspace manager.</param>
         /// <param name="subscriptionManager">The subscription manager.</param>
+        /// <param name="secretStoreManager">The secret store manager.</param>
         /// <param name="resourceSelector">Resource selector.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -62,6 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IResourceAllocationManager resourceAllocationManager,
             IWorkspaceManager workspaceManager,
             ISubscriptionManager subscriptionManager,
+            ISecretStoreManager secretStoreManager,
             IResourceSelectorFactory resourceSelector)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
@@ -69,6 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
             SkuCatalog = skuCatalog;
             EnvironmentMonitor = environmentMonitor;
+            SecretStoreManager = Requires.NotNull(secretStoreManager, nameof(secretStoreManager));
             EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             EnvironmentContinuation = Requires.NotNull(environmentContinuation, nameof(environmentContinuation));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
@@ -89,6 +95,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ISkuCatalog SkuCatalog { get; }
 
         private IEnvironmentMonitor EnvironmentMonitor { get; }
+
+        private ISecretStoreManager SecretStoreManager { get; }
 
         private IEnvironmentStateManager EnvironmentStateManager { get; }
 
@@ -1281,6 +1289,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 connectionToken,
                 cloudEnvironmentOptions);
 
+            // Construct the data for secret filtering
+            var filterSecrets = await ConstructFilterSecretsDataAsync(cloudEnvironment, logger.NewChildLogger());
+
             // Setup input requests
             var resources = new List<StartRequestBody>
                 {
@@ -1288,6 +1299,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     {
                         ResourceId = computeResourceId,
                         Variables = environmentVariables,
+                        FilterSecrets = filterSecrets,
                     },
                 };
 
@@ -1321,6 +1333,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  StartRequestAction.StartCompute,
                  resources,
                  logger.NewChildLogger());
+        }
+
+        private async Task<FilterSecretsBody> ConstructFilterSecretsDataAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        {
+            var planId = Requires.NotNull(cloudEnvironment.PlanId, nameof(cloudEnvironment.PlanId));
+            var filterSecretsBody = default(FilterSecretsBody);
+
+            var secretStores = await SecretStoreManager.GetAllSecretStoresByPlanAsync(planId, logger);
+            if (secretStores.Any())
+            {
+                var prioritizedSecretStoreResources = new List<PrioritizedSecretStoreResource>();
+                var planScopeSecretStore = secretStores.SingleOrDefault(secretStore => secretStore.Scope == SecretScopeModel.Plan &&
+                                                                                       secretStore.SecretResource?.ResourceId != default &&
+                                                                                       secretStore.SecretResource?.IsReady == true);
+                var userScopeSecretStore = secretStores.SingleOrDefault(secretStore => secretStore.Scope == SecretScopeModel.User &&
+                                                                                       secretStore.SecretResource?.ResourceId != default &&
+                                                                                       secretStore.SecretResource?.IsReady == true);
+
+                if (planScopeSecretStore != default)
+                {
+                    prioritizedSecretStoreResources.Add(new PrioritizedSecretStoreResource
+                    {
+                        Priority = 2,
+                        ResourceId = planScopeSecretStore.SecretResource.ResourceId,
+                    });
+                }
+
+                if (userScopeSecretStore != default)
+                {
+                    prioritizedSecretStoreResources.Add(new PrioritizedSecretStoreResource
+                    {
+                        Priority = 1,
+                        ResourceId = userScopeSecretStore.SecretResource.ResourceId,
+                    });
+                }
+
+                if (prioritizedSecretStoreResources.Any())
+                {
+                    var secretFilterDataCollection = new List<SecretFilterData>();
+
+                    // Add git repo filter data
+                    if (!string.IsNullOrEmpty(cloudEnvironment.Seed?.SeedMoniker))
+                    {
+                        secretFilterDataCollection.Add(new SecretFilterData
+                        {
+                            Type = SecretFilterType.GitRepo,
+                            Data = cloudEnvironment.Seed?.SeedMoniker,
+                        });
+                    }
+
+                    filterSecretsBody = new FilterSecretsBody
+                    {
+                        FilterData = secretFilterDataCollection,
+                        PrioritizedSecretStoreResources = prioritizedSecretStoreResources,
+                    };
+                }
+            }
+
+            return filterSecretsBody;
         }
 
         private Task<CloudEnvironmentServiceResult> QueueCreateAsync(

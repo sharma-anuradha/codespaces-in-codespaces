@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models.Extensions
 {
@@ -111,6 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             {
                 Command = StartEnvironmentCommand,
                 Parameters = jobParameters,
+                UserSecrets = startComputeInput.UserSecrets,
             };
 
             return queueMessage;

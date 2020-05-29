@@ -9,6 +9,7 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
     <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Models\QueueProvider.Models.csproj" />
+    <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider.Models\KeyVaultProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
   </ItemGroup>
 

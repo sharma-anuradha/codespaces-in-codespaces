@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
@@ -30,14 +32,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="resourceRepository">Resource repository that should be used.</param>
         /// <param name="resourceContinuationOperations">Target continuation task sctivator.</param>
         /// <param name="allocationStrategies">Allocation strategies.</param>
+        /// <param name="secretManager">Secret manager.</param>
         public ResourceBroker(
             IResourceRepository resourceRepository,
             IResourceContinuationOperations resourceContinuationOperations,
-            IEnumerable<IAllocationStrategy> allocationStrategies)
+            IEnumerable<IAllocationStrategy> allocationStrategies,
+            ISecretManager secretManager)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
             AllocationStrategies = Requires.NotNull(allocationStrategies, nameof(allocationStrategies));
+            SecretManager = Requires.NotNull(secretManager, nameof(secretManager));
         }
 
         private IResourceRepository ResourceRepository { get; }
@@ -50,6 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// In future, when multiple allocators can handle the given set, make sure to pick the allocator predictably.
         /// </summary>
         private IEnumerable<IAllocationStrategy> AllocationStrategies { get; }
+
+        private ISecretManager SecretManager { get; }
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
@@ -123,6 +130,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     .FluentAddBaseValue("OSDiskResourceId", osDiskResource.Resource?.ResourceId)
                                     .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource.Resource?.ResourceId);
 
+                                var userSecrets = default(IEnumerable<UserSecretData>);
+                                if (computeResource.Resource.FilterSecrets?.PrioritizedSecretStoreResources != null &&
+                                    computeResource.Resource.FilterSecrets.PrioritizedSecretStoreResources.Any())
+                                {
+                                    userSecrets = await SecretManager.GetApplicableSecretsAndValuesAsync(computeResource.Resource.FilterSecrets, childLogger);
+                                }
+
                                 // Trigger environment start
                                 await ResourceContinuationOperations.StartEnvironmentAsync(
                                     environmentId,
@@ -131,6 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     storageResource.Resource?.ResourceId,
                                     archiveStorageResource.Resource?.ResourceId,
                                     computeResource.Resource.Variables,
+                                    userSecrets,
                                     trigger,
                                     childLogger.NewChildLogger());
                             }

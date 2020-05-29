@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider.Models\KeyVaultProvider.Models.csproj" />
   </ItemGroup>
 
 </Project>

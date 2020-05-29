@@ -4,7 +4,9 @@
 
 using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
@@ -28,6 +30,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             cfg.CreateMap<FileShareProviderAssignResult, ShareConnectionInfo>();
             cfg.CreateMap<HeartBeatBody, HeartBeatInput>();
             cfg.CreateMap<HeartBeatInput, ResourceHeartBeatRecord>();
+            cfg.CreateMap<StartRequestBody, StartInput>();
+            cfg.CreateMap<FilterSecretsBody, FilterSecretsInput>();
         }
     }
 }

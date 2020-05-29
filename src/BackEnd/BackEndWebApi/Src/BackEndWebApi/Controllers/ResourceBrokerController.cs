@@ -279,15 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             Guid environmentId, StartRequestAction resourceAction, IEnumerable<StartRequestBody> resourceRequests, IDiagnosticsLogger logger)
         {
             var actionInput = (StartAction)((int)resourceAction);
-            var resourceInput = new List<StartInput>();
-            foreach (var resourceRequest in resourceRequests)
-            {
-                resourceInput.Add(new StartInput
-                {
-                    ResourceId = resourceRequest.ResourceId,
-                    Variables = resourceRequest.Variables,
-                });
-            }
+            var resourceInput = Mapper.Map<IEnumerable<StartInput>>(resourceRequests);
 
             return await ResourceBroker.StartAsync(
                 environmentId, actionInput, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger());

@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Moq;
 using Xunit;
@@ -254,6 +255,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceAllocationManager = new ResourceAllocationManager(resourceBroker);
             var workspaceManager = new WorkspaceManager(workspaceRepository);
             var subscriptionManager = new MockSubscriptionManager();
+            var secretStoreManager = new Mock<ISecretStoreManager>().Object;
             var systemConfiguration = new Mock<ISystemConfiguration>().Object;
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
@@ -276,6 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceAllocationManager,
                 workspaceManager,
                 subscriptionManager,
+                secretStoreManager,
                 resourceSelector);
         }
 

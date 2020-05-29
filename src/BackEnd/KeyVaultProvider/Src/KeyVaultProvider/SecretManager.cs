@@ -229,6 +229,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             });
         }
 
+        /// <inheritdoc/>
+        public async Task<IEnumerable<UserSecretData>> GetApplicableSecretsAndValuesAsync(
+            FilterSecretsInput filterSecretsInput,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_get_applicable_secrets", async (childLogger) =>
+            {
+                Requires.NotNull(filterSecretsInput, nameof(filterSecretsInput));
+                Requires.NotNullOrEmpty(
+                    filterSecretsInput.PrioritizedSecretStoreResources,
+                    nameof(filterSecretsInput.PrioritizedSecretStoreResources));
+
+                // Sort resources by priority, such that the secrets from a higher priority keyvault wins when there is a conflict/tie.
+                var sortedResourceIds = filterSecretsInput.PrioritizedSecretStoreResources
+                                                                   .OrderBy(resource => resource.Priority)
+                                                                   .Select(resource => resource.ResourceId);
+
+                var allApplicableSecrets = new List<(ResourceRecord keyVaultResource, IEnumerable<UserSecret> filteredSecrets)>();
+                if (sortedResourceIds.Any())
+                {
+                    foreach (var resourceId in sortedResourceIds)
+                    {
+                        var keyVaultResource = await GetKeyVaultResourceAsync(resourceId, logger);
+                        var secrets = keyVaultResource.UserSecrets;
+                        if (secrets != null && secrets.Any())
+                        {
+                            var applicableSecrets = SecretFilterUtil.ComputeApplicableSecrets(
+                                secrets,
+                                filterSecretsInput.FilterData);
+                            allApplicableSecrets.Add((keyVaultResource, applicableSecrets));
+                        }
+                    }
+                }
+
+                // Fetch secret value from keyvault and consolidate applicable secrets.
+                var userSecretDataCollection = new HashSet<UserSecretData>();
+                foreach (var applicableKeyVaultSecrets in allApplicableSecrets)
+                {
+                    // Secrets from higher priotity keyvault wins, if there is a name conflict (as it gets into the hashset first)
+                    var data = await GetUserSecretDataWithValuesAsync(
+                        applicableKeyVaultSecrets.keyVaultResource,
+                        applicableKeyVaultSecrets.filteredSecrets,
+                        logger);
+                    userSecretDataCollection.UnionWith(data);
+                }
+
+                return userSecretDataCollection;
+            });
+        }
+
         private static UserSecret GetSecretFromKeyVaultResource(Guid secretId, ResourceRecord keyVaultResource)
         {
             var secret = keyVaultResource.UserSecrets?.SingleOrDefault(x => x.Id == secretId);
@@ -239,6 +289,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             }
 
             return secret;
+        }
+
+        /// <summary>
+        /// For the given secrets, get a corresponding collection of UserSecretData objects that has secret type, name and value.
+        /// </summary>
+        private async Task<IEnumerable<UserSecretData>> GetUserSecretDataWithValuesAsync(
+            ResourceRecord keyVaultResource,
+            IEnumerable<UserSecret> applicableSecrets,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync($"{LoggingBaseName}", async (childLogger) =>
+            {
+                childLogger.AddBaseValue("ResourceId", keyVaultResource.Id);
+                var secretDataCollection = new HashSet<UserSecretData>();
+
+                var keyVaultSecretsProvider = GetKeyVaultSecretsProvider(keyVaultResource);
+                foreach (var secret in applicableSecrets)
+                {
+                    var maxRetries = 2;
+                    await Retry.DoWithCountAsync(maxRetries, async (int attemptNumber) =>
+                    {
+                        try
+                        {
+                            var secretValue = await keyVaultSecretsProvider.GetSecretAsync(secret.Id.ToString(), childLogger.NewChildLogger());
+                            var userSecretData = new UserSecretData
+                            {
+                                Type = secret.Type,
+                                Name = secret.SecretName,
+                                Value = secretValue,
+                            };
+                            secretDataCollection.Add(userSecretData);
+                            return (true, null);
+                        }
+                        catch (Exception e)
+                        {
+                            // Azure exceptions while reading secret are not terminal, hence silently given up after max retries.
+                            // Exception is already logged inside KeyVaultSecretsProvider.GetSecretAsync method
+                            return (false, e);
+                        }
+                    });
+                }
+
+                return secretDataCollection;
+            });
         }
 
         private KeyVaultSecretsProvider GetKeyVaultSecretsProvider(ResourceRecord keyVaultResource)
@@ -261,6 +355,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 
         private async Task<ResourceRecord> GetKeyVaultResourceAsync(Guid resourceId, IDiagnosticsLogger logger)
         {
+            logger.FluentAddBaseValue("ResourceId", resourceId);
+
             var keyVaultResource = await ResourceRepository.GetAsync(resourceId.ToString("D"), logger);
             if (keyVaultResource?.Type != ResourceType.KeyVault)
             {
