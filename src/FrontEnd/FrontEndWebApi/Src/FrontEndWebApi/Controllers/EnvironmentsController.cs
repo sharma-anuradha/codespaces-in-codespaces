@@ -393,6 +393,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             cloudEnvironment.Partner = planDetails.Partner;
             cloudEnvironment.ControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
 
+            // Add VNet information to environment.
+            var subnetId = planDetails.Properties?.VnetProperties?.SubnetId;
+            cloudEnvironment.SubnetResourceId = subnetId;
+
             var planId = CurrentUserProvider.Identity.AuthorizedPlan;
             var planInfo = VsoPlanInfo.TryParse(planId);
             var currentUserProfile = CurrentUserProvider?.Profile;

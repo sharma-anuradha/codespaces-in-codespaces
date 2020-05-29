@@ -48,11 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         public PersonalizationInfoBody Personalization { get; set; }
 
         /// <summary>
-        /// Gets or sets the environment Subnet azure resource id.
-        /// </summary>
-        public string SubnetResourceId { get; set; }
-
-        /// <summary>
         /// Gets or sets the environment container image.
         /// </summary>
         public string ContainerImage { get; set; }
