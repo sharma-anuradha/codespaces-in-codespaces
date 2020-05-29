@@ -90,7 +90,7 @@ az storage account delete -n $TempStorageName -g $TargetGroupName --subscription
 $ImageDefinitionName = 'windows'
 $ImageGalleryName = "gallery_$RegionCode"
 Write-Host "Create Image Version $ImageVersion for $ImageName"
-$ImageDefinitionVersion = az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions $TargetLocation --subscription $TargetSubscription
+$ImageDefinitionVersion = az sig image-version create --resource-group $TargetGroupName --gallery-name $ImageGalleryName --gallery-image-definition $ImageDefinitionName --gallery-image-version $ImageVersion --managed-image $ImageName --location $TargetLocation --target-regions "$TargetLocation=Premium_LRS" --subscription $TargetSubscription
 if (-not $ImageDefinitionVersion) {
     Write-Error "Create Image Version $ImageVersion for $ImageName Failed"
 }
