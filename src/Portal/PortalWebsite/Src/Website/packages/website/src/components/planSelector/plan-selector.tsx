@@ -33,16 +33,19 @@ interface PlanSelectorProps extends RouteComponentProps {
 export class PlanSelectorComponent extends Component<PlanSelectorProps> {
     public constructor(props: PlanSelectorProps) {
         super(props);
-        const query = new URLSearchParams(props.location.search);
-        const selectedPlanName = query.get('plan');
+    }
 
-        if (selectedPlanName) {
-            const selectedPlanObj = this.props.plansList.find(
-                (item) => item.name.toLowerCase() === selectedPlanName.toLowerCase()
+    componentDidMount() {
+        const query = new URLSearchParams(this.props.location.search);
+        const planName = query.get('plan');
+
+        if (planName) {
+            const planObject = this.props.plansList.find(
+                (item) => item.name.toLowerCase() === planName.toLowerCase()
             );
 
-            if (selectedPlanObj) {
-                selectPlan(selectedPlanObj);
+            if (planObject && planObject.id !== this.props.selectedPlanId) {
+                selectPlan(planObject);
             }
         }
     }
