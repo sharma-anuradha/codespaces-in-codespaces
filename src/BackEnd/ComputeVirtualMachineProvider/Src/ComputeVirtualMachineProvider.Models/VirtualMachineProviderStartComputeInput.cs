@@ -49,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             AzureResourceInfo = Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
             FileShareConnection = shareConnectionInfo;
             VmInputParams = Requires.NotNull(inputParams, nameof(inputParams));
-            UserSecrets = Requires.NotNull(userSecrets, nameof(userSecrets));
+            UserSecrets = userSecrets;
             ComputeOS = computeOS;
             Location = location;
             SkuName = Requires.NotNull(skuName, nameof(skuName));
