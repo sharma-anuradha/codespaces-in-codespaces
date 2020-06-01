@@ -50,6 +50,19 @@ const paths = {
 
 const production = process.env.NODE_ENV === 'production';
 
+const prodOptimization = {
+    runtimeChunk: {
+        name: 'runtime',
+    },
+    splitChunks: {
+        chunks: 'all',
+    },
+};
+
+const optimization = production
+    ? prodOptimization
+    : {};
+
 const publicPath = '/';
 
 module.exports = [
@@ -71,14 +84,7 @@ module.exports = [
                 ? 'static/js/[name].[contenthash:8].chunk.js'
                 : 'static/js/[name].chunk.js',
         },
-        optimization: {
-            runtimeChunk: {
-                name: 'runtime',
-            },
-            splitChunks: {
-                chunks: 'all',
-            },
-        },
+        optimization,
         watchOptions: {
             ignored: [/packages\/[^\/](lib|commonjs)/, /node_modules\//, /vscode-downloads/],
         },

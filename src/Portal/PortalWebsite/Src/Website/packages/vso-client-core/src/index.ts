@@ -61,7 +61,7 @@ export { IVSCodeConfig } from './interfaces/IVSCodeConfig';
 export { ICredentialsProvider } from './interfaces/ICredentialsProvider';
 export { IGitCredential } from './interfaces/IGitCredential';
 export { TPostMessageChannelMessages } from './interfaces/TPostMessageChannelMessages';
-export { IPartnerInfo, ICrossDomainPartnerInfo } from './interfaces/IPartnerInfo';
+export { IPartnerInfo, ICrossDomainPartnerInfo, INativeAuthProviderSession } from './interfaces/IPartnerInfo';
 export { EnvironmentType, EnvironmentErrorCodes } from './interfaces/IEnvironment';
 export { FeatureSet } from './interfaces/FeatureSet';
 

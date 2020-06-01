@@ -16,9 +16,7 @@ import {
     EnvConnector,
     VSLSWebSocket,
     SplashCommunicationProvider,
-    CommunicationAdapter
-} from 'vso-workbench';
-import {
+    CommunicationAdapter,
     UserDataProvider,
     UrlCallbackProvider,
     WorkspaceProvider,
@@ -28,9 +26,8 @@ import {
     getVSCodeVersion,
     getExtensions,
     DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+    getWorkbenchDefaultLayout,
 } from 'vso-workbench';
-
-import { getWorkbenchDefaultLayout } from './getWorkbenchDefaultLayout';
 
 import * as envRegService from '../../services/envRegService';
 

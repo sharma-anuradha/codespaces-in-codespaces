@@ -13,7 +13,7 @@ import {
 import {
     PLATFORM_REQUIRED_EXTENSIONS
 } from '../../constants';
-import { SettingsSyncService } from '../../api/SettingsSyncService';
+import { getSettingsSyncExtensions } from '../../api/SettingsSyncService';
 
 export const getDefaultSettingsExtensions = async (): Promise<string[]> => {
     const info = await authService.getCachedPartnerInfo(getCurrentEnvironmentId());
@@ -29,7 +29,6 @@ export const getDefaultSettingsExtensions = async (): Promise<string[]> => {
     return defaultExtensions || [];
 };
 
-
 export const getExtensions = async (isFirstRun: boolean): Promise<string[]> => {
     const settingsDefaultExtensions = await getDefaultSettingsExtensions();
 
@@ -37,8 +36,7 @@ export const getExtensions = async (isFirstRun: boolean): Promise<string[]> => {
         return [ ...PLATFORM_REQUIRED_EXTENSIONS ];
     }
 
-    await SettingsSyncService.init();
-    const settingsSyncExtensions = await SettingsSyncService.Singleton.getExtensions(PLATFORM_REQUIRED_EXTENSIONS);
+    const settingsSyncExtensions = await getSettingsSyncExtensions(PLATFORM_REQUIRED_EXTENSIONS);
 
     return arrayUnique([
         ...PLATFORM_REQUIRED_EXTENSIONS,

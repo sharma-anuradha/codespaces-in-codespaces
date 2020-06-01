@@ -41,3 +41,4 @@ export { SplashCommunicationProvider } from './utils/splashScreen/SplashScreenCo
 export { TerminalId } from './interfaces/TerminalId';
 
 export { CommunicationAdapter } from './utils/splashScreen/communicationAdapter';
+export { getWorkbenchDefaultLayout } from './utils/getWorkbenchDefaultLayout';

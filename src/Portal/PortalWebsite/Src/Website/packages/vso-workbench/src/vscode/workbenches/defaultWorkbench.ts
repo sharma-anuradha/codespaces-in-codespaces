@@ -20,6 +20,7 @@ import { getHomeIndicator } from './getHomeIndicator';
 import { getUserDataProvider } from './getUserDataProvider';
 import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
 import { getExtensions } from './getDefaultExtensions';
+import { getWorkbenchDefaultLayout } from '../../utils/getWorkbenchDefaultLayout';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -113,6 +114,11 @@ export class Workbench {
 
                     const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
 
+                    const defaultLayout = getWorkbenchDefaultLayout(
+                        environmentInfo,
+                        userDataProvider.isFirstRun
+                    );
+
                     const providers: IWorkbenchConstructionOptions = {
                         credentialsProvider,
                         userDataProvider,
@@ -125,6 +131,7 @@ export class Workbench {
                         homeIndicator: await getHomeIndicator(),
                         enableSyncByDefault: true,
                         authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+                        defaultLayout,
                     };
 
                     return providers;

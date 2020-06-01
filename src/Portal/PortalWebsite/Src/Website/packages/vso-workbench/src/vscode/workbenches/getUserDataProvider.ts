@@ -1,12 +1,6 @@
 import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 import { getDefaultSettings } from './getDefaultSettings';
-import { SettingsSyncService } from '../../api/SettingsSyncService';
-
-const getDefaultSettingsSyncSettings = async () => {
-    await SettingsSyncService.init();
-
-    return await SettingsSyncService.Singleton.getSettings();
-};
+import { SettingsSyncService, getSettingsSyncSettings } from '../../api/SettingsSyncService';
 
 export const getUserDataProvider = async () => {
     const userDataProvider = new UserDataProvider(async () => {
@@ -15,7 +9,7 @@ export const getUserDataProvider = async () => {
          */
         const [defaultSettings, syncedSettings] = await Promise.all([
             getDefaultSettings(),
-            getDefaultSettingsSyncSettings(),
+            getSettingsSyncSettings(),
         ]);
 
         if (syncedSettings && Object.keys(syncedSettings).length) {

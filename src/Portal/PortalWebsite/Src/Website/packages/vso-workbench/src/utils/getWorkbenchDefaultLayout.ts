@@ -2,8 +2,10 @@ import * as path from 'path';
 import { IEnvironment } from 'vso-client-core';
 
 import { IDefaultEditor } from 'vscode-web';
-import { vscode, getUriAuthority } from 'vso-workbench';
 import { SupportedGitService, getSupportedGitService } from 'vso-ts-agent';
+
+import { vscode } from '../vscode/vscodeAssets/vscode';
+import { getUriAuthority } from './getUriAuthority';
 
 const isGitHubPRUrl = (url: string | undefined) => {
     if ((typeof url !== 'string') || !url) {

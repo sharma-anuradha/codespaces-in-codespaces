@@ -7,6 +7,7 @@ import {
     debounceInterval,
     timeConstants,
     getCurrentEnvironmentId,
+    INativeAuthProviderSession,
 } from 'vso-client-core';
 
 import { FatalPlatformRedirectionError } from '../errors/FatalPlatformRedirectionError';
@@ -135,6 +136,37 @@ export class AuthService {
         this.makeTokenRequest,
         5 * timeConstants.MINUTE_MS
     );
+
+    public getSettingsSyncSession = async ():  Promise<INativeAuthProviderSession | null> => {
+        const info = await this.getPartnerInfo();
+        if (!info) {
+            return null;
+        }
+    
+        if (!('cascadeToken' in info)) {
+            return null;
+        }
+    
+        const { vscodeSettings } = info;
+        if (!vscodeSettings) {
+            return null;
+        }
+    
+        const { authenticationSessionId, defaultAuthSessions } = vscodeSettings;
+        if (!authenticationSessionId || !defaultAuthSessions?.length) {
+            return null;
+        }
+    
+        const session = defaultAuthSessions.find((s) => {
+            return s.id === authenticationSessionId;
+        });
+    
+        if (!session) {
+            return null;
+        }
+    
+        return session;
+    }
 }
 
 export const authService = new AuthService();
