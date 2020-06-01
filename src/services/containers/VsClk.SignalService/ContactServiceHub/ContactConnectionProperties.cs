@@ -6,18 +6,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VsCloudKernel.SignalService.Common;
+using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ConnectionsProperties = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
     internal class ContactConnectionProperties
     {
         private readonly object selfConnectionPropertiesLock = new object();
+        private readonly MessagePackDataBuffer<Dictionary<string, Dictionary<string, PropertyValue>>> selfConnectionPropertiesBuffer = new MessagePackDataBuffer<Dictionary<string, Dictionary<string, PropertyValue>>>(new Dictionary<string, Dictionary<string, PropertyValue>>());
 
-#if DEBUG
         public ContactConnectionProperties()
         {
         }
-#endif
 
         public string[] AllConnections
         {
@@ -30,18 +31,34 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        public KeyValuePair<string, IDictionary<string, PropertyValue>>[] AllConnectionValues
+        /// <summary>
+        /// Gets all the connection properties for each of the registered end points.
+        /// </summary>
+        public ConnectionsProperties ConnectionsProperties
         {
             get
             {
                 lock (this.selfConnectionPropertiesLock)
                 {
-                    return SelfConnectionProperties.Select(kvp => new KeyValuePair<string, IDictionary<string, PropertyValue>>(kvp.Key, kvp.Value.Clone())).ToArray();
+                    return SelfConnectionProperties.ToDictionary(
+                        connectionKvp => connectionKvp.Key,
+                        connectionKvp => (ConnectionProperties)connectionKvp.Value.ToDictionary(propertyKvp => propertyKvp.Key, propertyKvp => propertyKvp.Value));
                 }
             }
         }
 
-        public IDictionary<string, PropertyValue>[] AllConnectionProperties
+        public KeyValuePair<string, ConnectionProperties>[] AllConnectionValues
+        {
+            get
+            {
+                lock (this.selfConnectionPropertiesLock)
+                {
+                    return SelfConnectionProperties.Select(kvp => new KeyValuePair<string, ConnectionProperties>(kvp.Key, kvp.Value.Clone())).ToArray();
+                }
+            }
+        }
+
+        public ConnectionProperties[] AllConnectionProperties
         {
             get
             {
@@ -64,11 +81,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Gets properties maintained by each of the live connections
+        /// Gets properties mantained by each of the live connections
         /// Key: connection Id
         /// Value: A dictionary property info structure with the value and the timestamp when it was updated.
         /// </summary>
-        private Dictionary<string, Dictionary<string, PropertyValue>> SelfConnectionProperties { get; } = new Dictionary<string, Dictionary<string, PropertyValue>>();
+        private Dictionary<string, Dictionary<string, PropertyValue>> SelfConnectionProperties => this.selfConnectionPropertiesBuffer.Data;
 
         public bool HasConnection(string connectionId)
         {
@@ -80,11 +97,16 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public void MergeProperty(string connectionId, string propertyName, object value, DateTime updated)
         {
-            var propertyValue = new PropertyValue(value, updated);
-            SelfConnectionProperties.AddOrUpdate(
-                connectionId,
-                (properties) => properties[propertyName] = propertyValue,
-                this.selfConnectionPropertiesLock);
+            lock (this.selfConnectionPropertiesLock)
+            {
+                var propertyValue = new PropertyValue(value, updated);
+                this.selfConnectionPropertiesBuffer.GetAndSet(data =>
+                {
+                    data.AddOrUpdate(
+                        connectionId,
+                        (properties) => properties[propertyName] = propertyValue);
+                });
+            }
         }
 
         public bool TryGetProperties(string connectionId, out Dictionary<string, PropertyValue> properties)
@@ -106,7 +128,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             lock (this.selfConnectionPropertiesLock)
             {
-                SelfConnectionProperties[connectionId] = new Dictionary<string, PropertyValue>();
+                this.selfConnectionPropertiesBuffer.GetAndSet(data => data[connectionId] = new Dictionary<string, PropertyValue>());
             }
         }
 
@@ -114,12 +136,17 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             lock (this.selfConnectionPropertiesLock)
             {
-                if (SelfConnectionProperties.Remove(connectionId, out var properties))
-                {
-                    return properties.Keys.ToArray();
-                }
+                string[] propertyKeys = null;
 
-                return Array.Empty<string>();
+                this.selfConnectionPropertiesBuffer.GetAndSet(data =>
+                {
+                    if (data.Remove(connectionId, out var properties))
+                    {
+                        propertyKeys = properties.Keys.ToArray();
+                    }
+                });
+
+                return propertyKeys ?? Array.Empty<string>();
             }
         }
     }

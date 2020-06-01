@@ -16,6 +16,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 {
     public class Startup : SignalService.StartupBase<AppSettings>
     {
+        /// <summary>
+        /// Option to disable backplane providers.
+        /// </summary>
+        private const string NoBackplaneProvidersOption = "noBackplaneProviders";
+
         public Startup(
             IConfiguration configuration,
             IWebHostEnvironment hostEnvironment,
@@ -33,14 +38,17 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             ConfigureCommonServices(services);
             services.AddSingleton<IBackplaneServiceDataProvider, MemoryBackplaneDataProvider>();
 
-            // Create the Azure Cosmos backplane provider service
-            services.AddSingleton<IAzureDocumentsProviderServiceFactory, AzureDocumentsProviderFactory>();
-            services.AddHostedService<AzureDocumentsProviderService>();
+            if (!GetBoolConfiguration(NoBackplaneProvidersOption))
+            {
+                // Create the Azure Cosmos backplane provider service
+                services.AddSingleton<IAzureDocumentsProviderServiceFactory, AzureDocumentsProviderFactory>();
+                services.AddHostedService<AzureDocumentsProviderService>();
 
-            // Create the Azure Redis backplane provider service
-            services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisContactsProviderFactory>();
-            services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisRelayProviderFactory>();
-            services.AddHostedService<AzureRedisProviderService>();
+                // Create the Azure Redis backplane provider service
+                services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisContactsProviderFactory>();
+                services.AddSingleton<IAzureRedisProviderServiceFactory, AzureRedisRelayProviderFactory>();
+                services.AddHostedService<AzureRedisProviderService>();
+            }
 
             // backplane services
             services.AddSingleton<ContactBackplaneService>();

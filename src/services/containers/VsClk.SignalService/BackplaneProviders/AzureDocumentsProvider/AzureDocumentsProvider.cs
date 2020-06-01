@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -22,12 +23,15 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         public static readonly string DatabaseId = "presenceService";
 
+        private const string LatencyThresholdExceededMethod = "LatencyThresholdExceeded";
+        private const double LatencyThresholdExceededSeconds = 2;
+
         private const int DefaultMaxRetries = 3;
         private const string DefaultPartitionKeyPath = "/_partitionKey";
 
         // RU values for production
         private const int ServicesRUThroughput = 400;
-        private const int ContactsRUThroughput = 5000;
+        private const int ContactsRUThroughput = 7500;
         private const int MessageRUThroughput = 2000;
         private const int LeasesRUThroughput = 1000;
 
@@ -249,7 +253,16 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     var response = await callback();
                     resource = response;
-                    return response.Diagnostics.GetClientElapsedTime();
+                    var clientElapsedTime = response.Diagnostics.GetClientElapsedTime();
+                    if (clientElapsedTime.TotalSeconds > LatencyThresholdExceededSeconds)
+                    {
+                        using (Logger.BeginMethodScope(LatencyThresholdExceededMethod))
+                        {
+                            Logger.LogWarning($"method:{methodName} elapsed:{clientElapsedTime} diagnostic:{response.Diagnostics}");
+                        }
+                    }
+
+                    return clientElapsedTime;
                 },
                 methodName);
             return resource;

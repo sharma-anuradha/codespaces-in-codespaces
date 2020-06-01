@@ -115,7 +115,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             string[] affectedProperties,
             CancellationToken cancellationToken)
         {
-            if (HasTrackDataChanged(contactDataChanged))
+            if (TrackDataChanged(contactDataChanged))
             {
                 return;
             }

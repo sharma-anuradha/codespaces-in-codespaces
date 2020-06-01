@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -36,7 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             {
                 return this.participants.Select(kvp => kvp)
                     .Union(this.otherParticipants)
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value != null ? kvp.Value.Clone() : null);
             }
         }
 
@@ -52,15 +53,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             this.otherParticipants = new ConcurrentDictionary<string, Dictionary<string, object>>(otherParticipants);
         }
 
-        public async Task<Dictionary<string, Dictionary<string, object>>> JoinAsync(string participantId, Dictionary<string, object> properties, CancellationToken cancellationToken)
+        public async Task<(Dictionary<string, Dictionary<string, object>> participants, bool isNewParticipant)> JoinAsync(string participantId, Dictionary<string, object> properties, CancellationToken cancellationToken)
         {
-            this.participants.AddOrUpdate(
-                participantId,
-                properties,
-                (k, v) => properties);
+            bool isNewParticipant;
+            properties = AddOrUpdateParticipant(this.participants, participantId, properties, out isNewParticipant);
 
-            await NotifyParticipantChangedAsync(participantId, properties, ParticipantChangeType.Added, cancellationToken);
-            return Participants;
+            await NotifyParticipantChangedAsync(participantId, properties, isNewParticipant ? ParticipantChangeType.Added : ParticipantChangeType.Updated, cancellationToken);
+            return (Participants, isNewParticipant);
         }
 
         public Task LeaveAsync(string participantId, CancellationToken cancellationToken)
@@ -80,10 +79,8 @@ namespace Microsoft.VsCloudKernel.SignalService
                 throw new ArgumentException($"participantId:{participantId} not joined");
             }
 
-            this.participants.AddOrUpdate(
-                participantId,
-                properties,
-                (k, v) => properties);
+            bool isNewParticipant;
+            properties = AddOrUpdateParticipant(this.participants, participantId, properties, out isNewParticipant);
             return NotifyParticipantChangedAsync(participantId, properties, ParticipantChangeType.Updated, cancellationToken);
         }
 
@@ -203,24 +200,61 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             if (!this.participants.ContainsKey(dataChanged.ParticipantId))
             {
+                Dictionary<string, object> properties;
                 if (dataChanged.ChangeType == ParticipantChangeType.Removed)
                 {
-                    this.otherParticipants.TryRemove(dataChanged.ParticipantId, out var properties);
+                    this.otherParticipants.TryRemove(dataChanged.ParticipantId, out properties);
                 }
                 else
                 {
-                    this.otherParticipants.AddOrUpdate(
+                    properties = AddOrUpdateParticipant(
+                        this.otherParticipants,
                         dataChanged.ParticipantId,
                         dataChanged.Properties,
-                        (k, v) => dataChanged.Properties);
+                        out var isNewParticipant);
                 }
-            }
 
-            await NotifyParticipantChangedAsync(
-                    dataChanged.ParticipantId,
-                    dataChanged.Properties,
-                    dataChanged.ChangeType,
-                    cancellationToken);
+                await NotifyParticipantChangedAsync(
+                        dataChanged.ParticipantId,
+                        properties,
+                        dataChanged.ChangeType,
+                        cancellationToken);
+            }
+        }
+
+        private static Dictionary<string, object> AddOrUpdateParticipant(
+            ConcurrentDictionary<string, Dictionary<string, object>> participants,
+            string participantId,
+            Dictionary<string, object> properties,
+            out bool isNewParticipant)
+        {
+            Assumes.NotNull(participants);
+
+            bool added = true;
+            properties = participants.AddOrUpdate(
+                participantId,
+                properties,
+                (k, participantProperties) =>
+                {
+                    added = false;
+
+                    if (participantProperties != null)
+                    {
+                        // merge the properties
+                        foreach (var kvp in properties)
+                        {
+                            participantProperties[kvp.Key] = kvp.Value;
+                        }
+                    }
+                    else
+                    {
+                        participantProperties = properties;
+                    }
+
+                    return participantProperties;
+                })?.Clone();
+            isNewParticipant = added;
+            return properties;
         }
 
         private IEnumerable<IClientProxy> All()

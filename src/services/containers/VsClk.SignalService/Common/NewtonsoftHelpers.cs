@@ -65,6 +65,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             {
                 return ToDictionary(jObject);
             }
+            else if (o is JArray jArray)
+            {
+                var array = Array.CreateInstance(typeof(object), jArray.Count);
+                int index = 0;
+                foreach (var item in jArray)
+                {
+                    array.SetValue(ToRawObject(item), index++);
+                }
+
+                return array;
+            }
             else if (o is JToken jToken)
             {
                 return jToken.ToObject<object>();

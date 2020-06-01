@@ -10,29 +10,19 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
 {
     public class RelayServiceHubTests : RelayServiceHubTestsBase
     {
-        private readonly Dictionary<string, IClientProxy> clientProxies;
-        private readonly RelayService relayService;
+        protected override Dictionary<string, IClientProxy> ClientProxies1 { get; }
+        protected override Dictionary<string, IClientProxy> ClientProxies2 { get; }
+        protected override RelayService RelayService1 { get; }
+        protected override RelayService RelayService2 { get; }
 
         public RelayServiceHubTests()
         {
-            this.clientProxies = new Dictionary<string, IClientProxy>();
+            ClientProxies1 = ClientProxies2 = new Dictionary<string, IClientProxy>();
             var serviceLogger = new Mock<ILogger<RelayService>>();
-            this.relayService = new RelayService(
+            RelayService1 = RelayService2 = new RelayService(
                 new HubServiceOptions() { Id = "mock" },
-                MockUtils.CreateSingleHubContextHostMock<RelayServiceHub>(this.clientProxies),
+                MockUtils.CreateSingleHubContextHostMock<RelayServiceHub>(ClientProxies1),
                 serviceLogger.Object);
-        }
-
-        [Fact]
-        public async Task Test()
-        {
-            await TestInternal(this.clientProxies, this.clientProxies, this.relayService, this.relayService);
-        }
-
-        [Fact]
-        public async Task TestCreate()
-        {
-            await TestCreateInternal(this.clientProxies, this.clientProxies, this.relayService, this.relayService);
         }
     }
 }

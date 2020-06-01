@@ -20,6 +20,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             return GetAggregatedProperties(contactDataInfo.Values.SelectMany(i => i.Values));
         }
 
+        public static int GetConnectionsCount(this ContactDataInfo contactDataInfo)
+        {
+            return contactDataInfo.Values.Sum(item => item.Count);
+        }
+
         public static Dictionary<string, ConnectionProperties> GetConnections(this ContactDataInfo contactDataInfo)
         {
             return contactDataInfo.Values.SelectMany(i => i).ToDictionary(p => p.Key, p => p.Value);
@@ -47,6 +52,17 @@ namespace Microsoft.VsCloudKernel.SignalService
             return propertyValues.OrderByDescending(pv => pv.Updated).FirstOrDefault().Value;
         }
 
+        public static ConnectionProperties GetConnectionProperties(this ContactDataChanged<ContactDataInfo> contactDataChanged)
+        {
+            if (contactDataChanged.Data.TryGetValue(contactDataChanged.ServiceId, out var serviceConnections) &&
+                serviceConnections.TryGetValue(contactDataChanged.ConnectionId, out var connectionProperties))
+            {
+                return connectionProperties;
+            }
+
+            return new Dictionary<string, PropertyValue>();
+        }
+
         public static void UpdateConnectionProperties(this ContactDataInfo contactDataInfo, ContactDataChanged<ConnectionProperties> contactDataChanged)
         {
             ConnectionsProperties connectionsProperties;
@@ -71,11 +87,16 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 else
                 {
-                    connectionsProperties[contactDataChanged.ConnectionId] = contactDataChanged.Data;
+                    connectionsProperties[contactDataChanged.ConnectionId] = contactDataChanged.Data.Clone();
                 }
             }
 
-            // Note: next block will eliminate the empty buckets for a service that no connections
+            contactDataInfo.CleanupServiceConnections();
+        }
+
+        public static void CleanupServiceConnections(this ContactDataInfo contactDataInfo)
+        {
+            // Note: next block will eliminate the empty buckets for a service that has no connections
             foreach (var kvp in contactDataInfo.Where(kvp => kvp.Value.Count == 0).ToArray())
             {
                 contactDataInfo.Remove(kvp.Key);
@@ -88,7 +109,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                     kvp => kvp.Key,
                     kvp => (ConnectionsProperties)kvp.Value.ToDictionary(
                         kvp2 => kvp2.Key,
-                        kvp2 => (ConnectionProperties)kvp2.Value.ToDictionary(kvp3 => kvp3.Key, kvp3 => kvp3.Value)));
+                        kvp2 => kvp2.Value.Clone()));
+        }
+
+        private static ConnectionProperties Clone(this ConnectionProperties connectionProperties)
+        {
+            return connectionProperties.ToDictionary(connectionValueKvp => connectionValueKvp.Key, connectionValueKvp => connectionValueKvp.Value);
         }
     }
 }

@@ -44,11 +44,14 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         public Task UpdateMetricsAsync(ServiceInfo serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken) =>
             InvokeBackplaneService(b => b.UpdateMetricsAsync(serviceInfo, metrics, cancellationToken), nameof(UpdateMetricsAsync));
 
+        public Task UpdateContactDataInfoAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues, CancellationToken cancellationToken) =>
+            InvokeBackplaneService(b => b.UpdateContactDataInfoAsync(contactDataChanged.Clone(contactDataInfoValues.NewValue), cancellationToken), nameof(UpdateContactDataInfoAsync));
+
         public Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken) =>
             InvokeBackplaneService(b => b.UpdateContactAsync(contactDataChanged, cancellationToken), nameof(UpdateContactAsync));
 
         public Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken) =>
-            InvokeBackplaneService(b => b.GetContactDataAsync(contactId, cancellationToken), nameof(UpdateMetricsAsync));
+            InvokeBackplaneService(b => b.GetContactDataAsync(contactId, cancellationToken), nameof(GetContactDataAsync));
 
         public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] matchProperties, CancellationToken cancellationToken) =>
             InvokeBackplaneService(b => b.GetContactsDataAsync(matchProperties, cancellationToken), nameof(GetContactsDataAsync));

@@ -44,6 +44,32 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private ILogger Logger { get; }
 
+        public static JsonRpc CreateJsonRpcWithMessagePack(Stream tcpStream)
+        {
+            var handler = new LengthHeaderMessageHandler(tcpStream, tcpStream, new MessagePackFormatter());
+            return new JsonRpc(handler);
+        }
+
+        public void Attach(JsonRpc jsonRpc)
+        {
+            foreach (var kvp in this.targetHandlers)
+            {
+                jsonRpc.AddLocalRpcMethod(kvp.Key, kvp.Value);
+            }
+
+            EventHandler<JsonRpcDisconnectedEventArgs> disconnectHandler = null;
+            disconnectHandler = (s, e) =>
+            {
+                jsonRpc.Disconnected -= disconnectHandler;
+                Logger.LogError(e.Exception, $"Disconnected reason:{e.Reason}");
+                this.jsonRpc = null;
+                Disconnected?.Invoke(this, EventArgs.Empty);
+            };
+            jsonRpc.Disconnected += disconnectHandler;
+            jsonRpc.StartListening();
+            this.jsonRpc = jsonRpc;
+        }
+
         /// <inheritdoc/>
         public async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
@@ -176,12 +202,6 @@ namespace Microsoft.VsCloudKernel.SignalService
             return client.GetStream();
         }
 
-        private static JsonRpc CreateJsonRpcWithMessagePack(Stream tcpStream)
-        {
-            var handler = new LengthHeaderMessageHandler(tcpStream, tcpStream, new MessagePackFormatter());
-            return new JsonRpc(handler);
-        }
-
         private void ForceDisconnect(Exception error)
         {
             Logger.LogError(error, $"ForceDisconnect");
@@ -199,22 +219,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private void Attach(Stream tcpStream)
         {
             var jsonRpc = this.useMessagePack ? CreateJsonRpcWithMessagePack(tcpStream) : new JsonRpc(tcpStream);
-            foreach (var kvp in this.targetHandlers)
-            {
-                jsonRpc.AddLocalRpcMethod(kvp.Key, kvp.Value);
-            }
-
-            EventHandler<JsonRpcDisconnectedEventArgs> disconnectHandler = null;
-            disconnectHandler = (s, e) =>
-            {
-                jsonRpc.Disconnected -= disconnectHandler;
-                Logger.LogError(e.Exception, $"Disconnected reason:{e.Reason}");
-                this.jsonRpc = null;
-                Disconnected?.Invoke(this, EventArgs.Empty);
-            };
-            jsonRpc.Disconnected += disconnectHandler;
-            jsonRpc.StartListening();
-            this.jsonRpc = jsonRpc;
+            Attach(jsonRpc);
         }
     }
 }

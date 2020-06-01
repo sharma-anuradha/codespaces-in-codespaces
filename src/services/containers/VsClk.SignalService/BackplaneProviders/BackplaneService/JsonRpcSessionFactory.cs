@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -74,7 +75,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             try
             {
+                var sw = Stopwatch.StartNew();
                 await backplaneServiceFunc(BackplaneService);
+                BackplaneService.TrackMethodPerf(methodName, sw.Elapsed);
             }
             catch (Exception err)
             {
@@ -87,7 +90,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             try
             {
-                return await backplaneServiceFunc(BackplaneService);
+                var sw = Stopwatch.StartNew();
+                var result = await backplaneServiceFunc(BackplaneService);
+                BackplaneService.TrackMethodPerf(methodName, sw.Elapsed);
+                return result;
             }
             catch (Exception err)
             {

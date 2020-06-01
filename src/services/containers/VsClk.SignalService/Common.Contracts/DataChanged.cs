@@ -5,7 +5,7 @@
 namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
-    /// Base class for our data changed structures
+    /// Base class for our data changed structures.
     /// </summary>
     public class DataChanged
     {
@@ -16,7 +16,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <summary>
-        /// Unique change id
+        /// Gets unique change id.
         /// </summary>
         public string ChangeId { get; }
     }

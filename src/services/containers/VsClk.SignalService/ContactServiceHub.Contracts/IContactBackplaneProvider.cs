@@ -18,7 +18,7 @@ namespace Microsoft.VsCloudKernel.SignalService
     /// <summary>
     /// Class to describe a contact change.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Type of data contained on this data change type.</typeparam>
     public sealed class ContactDataChanged<T> : DataChanged
         where T : class
     {
@@ -36,12 +36,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             Data = Requires.NotNull(data, nameof(data));
         }
 
-#pragma warning disable SA1314 // Type parameter names should begin with T
-        public ContactDataChanged<U> Clone<U>(U data)
-#pragma warning restore SA1314 // Type parameter names should begin with T
-            where U : class
+        public ContactDataChanged<TData> Clone<TData>(TData data)
+            where TData : class
         {
-            return new ContactDataChanged<U>(ChangeId, ServiceId, ConnectionId, ContactId, ChangeType, data);
+            return new ContactDataChanged<TData>(ChangeId, ServiceId, ConnectionId, ContactId, ChangeType, data);
         }
 
         public string ServiceId { get; }
@@ -53,6 +51,35 @@ namespace Microsoft.VsCloudKernel.SignalService
         public ContactUpdateType ChangeType { get; }
 
         public T Data { get; }
+    }
+
+    /// <summary>
+    /// Instance to refer to a contact data changed.
+    /// </summary>
+    /// <typeparam name="T">The supported type of the data. It could be ContactDataInfo or ConnectionProperties types.</typeparam>
+    public sealed class ContactDataChangedRef<T>
+        where T : class
+    {
+        private readonly Lazy<ContactDataChanged<ContactDataInfo>> lazyAsContactDataInfo;
+        private readonly Lazy<ContactDataChanged<ConnectionProperties>> lazyAsConnectionProperties;
+
+        public ContactDataChangedRef(ContactDataChanged<T> contactDataChanged)
+        {
+            DataChanged = contactDataChanged;
+            IsConnectionProperties = typeof(T) == typeof(ConnectionProperties);
+
+            this.lazyAsContactDataInfo = new Lazy<ContactDataChanged<ContactDataInfo>>(() => (ContactDataChanged<ContactDataInfo>)(contactDataChanged as object));
+            this.lazyAsConnectionProperties = new Lazy<ContactDataChanged<ConnectionProperties>>(
+                () => IsConnectionProperties ? (ContactDataChanged<ConnectionProperties>)(contactDataChanged as object) : contactDataChanged.Clone(ContactDataInfo.GetConnectionProperties()));
+        }
+
+        public bool IsConnectionProperties { get; }
+
+        public ContactDataChanged<ContactDataInfo> ContactDataInfo => this.lazyAsContactDataInfo.Value;
+
+        public ContactDataChanged<ConnectionProperties> ConnectionProperties => this.lazyAsConnectionProperties.Value;
+
+        public ContactDataChanged<T> DataChanged { get; set; }
     }
 
     /// <summary>

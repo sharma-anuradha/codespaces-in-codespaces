@@ -42,6 +42,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         private ILogger Logger { get; }
 
+        public static JsonRpc CreateJsonRpcWithMessagePack(Stream tcpStream)
+        {
+            var handler = new LengthHeaderMessageHandler(tcpStream, tcpStream, new MessagePackFormatter());
+            return new JsonRpc(handler);
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var listener = CreateListener(AppSettings.JsonRpcPort);
@@ -103,12 +109,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 var listener = new TcpListener(IPAddress.Any, port);
                 return listener;
             }
-        }
-
-        private static JsonRpc CreateJsonRpcWithMessagePack(Stream tcpStream)
-        {
-            var handler = new LengthHeaderMessageHandler(tcpStream, tcpStream, new MessagePackFormatter());
-            return new JsonRpc(handler);
         }
     }
 }

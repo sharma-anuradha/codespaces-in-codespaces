@@ -335,7 +335,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.Equal(contact1_1_Ref, conn2Callback[ContactHubMethods.UpdateValues][0]);
             notifyProperties = (Dictionary<string, object>)conn2Callback[ContactHubMethods.UpdateValues][1];
             Assert.True(notifyProperties.ContainsKey("other"));
-            Assert.Equal(100, notifyProperties["other"]);
+            Assert.Equal(100, Convert.ToInt32(notifyProperties["other"]));
 
             conn2Callback.Clear();
             await this.presenceService1.SendMessageAsync(contact1_1_Ref, contact1_2_Ref, "type1", "hi", CancellationToken.None);
@@ -437,7 +437,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 new ContactReference[] { contact2Ref }, new string[] { "*" });
 
             var resultProperties = result[contact2Ref.Id];
-            Assert.Equal(10, resultProperties["property0"]);
+            Assert.Equal(10, Convert.ToInt32(resultProperties["property0"]));
 
             conn1Proxy.Clear();
             await this.presenceService2.UpdatePropertiesAsync(contact2Ref, new Dictionary<string, object>()
@@ -449,7 +449,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.True(conn1Proxy.ContainsKey(ContactHubMethods.UpdateValues));
             var notifyProperties = conn1Proxy[ContactHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Equal(2, notifyProperties.Count);
-            Assert.Equal(100, notifyProperties["property1"]);
+            Assert.Equal(100, Convert.ToInt32(notifyProperties["property1"]));
             Assert.Equal("hello", notifyProperties["property2"]);
 
             conn1Proxy.Clear();
@@ -565,6 +565,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
                 CancellationToken cancellationToken)
             {
+                this.contactDataMap[contactDataChanged.ContactId] = contactDataInfoValues.NewValue;
                 var contactDataInfoChanged = new ContactDataChanged<ContactDataInfo>(
                     CreateChangeId(),
                     contactDataChanged.ServiceId,

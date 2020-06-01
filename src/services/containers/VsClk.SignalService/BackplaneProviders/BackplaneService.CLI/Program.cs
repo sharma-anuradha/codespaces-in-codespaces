@@ -17,7 +17,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService.CLI
     {
         private const int BackplanePort = 3150;
 
-        public CommandOption MessagePackOption { get; private set; }
+        public CommandOption NoMessagePackOption { get; private set; }
+
+        public CommandOption HostServiceIdOption { get; private set; }
 
         public static int Main(string[] args)
         {
@@ -32,20 +34,32 @@ namespace Microsoft.VsCloudKernel.BackplaneService.CLI
             var logger = new Logger<Program>(loggerFactory);
 
             var cli = new Program();
-            cli.MessagePackOption = cli.Option(
-                "--messagePack",
+            cli.NoMessagePackOption = cli.Option(
+                "--noMessagePack",
                 "If message pack is enabled",
                 CommandOptionType.NoValue);
+            cli.HostServiceIdOption = cli.Option(
+                "--hostServiceId",
+                "Define a host service id",
+                CommandOptionType.SingleValue);
+
+            var hostServiceIdValue = new Lazy<string>(() =>
+            {
+                if (cli.HostServiceIdOption.HasValue())
+                {
+                    return cli.HostServiceIdOption.Value();
+                }
+
+                return Guid.NewGuid().ToString();
+            });
 
             Func<CancellationToken, Task<ContactBackplaneServiceProvider>> contactBackplaneServiceProviderFactory = async (ct) =>
             {
-                var hostServiceId = Guid.NewGuid().ToString();
-
-                var jsonRpcConnectorProvider = new JsonRpcConnectorProvider("localhost", BackplanePort, cli.MessagePackOption.HasValue(), logger);
-                var contactBackplaneServiceProvider = new ContactBackplaneServiceProvider(jsonRpcConnectorProvider, hostServiceId, logger, ct);
+                var jsonRpcConnectorProvider = new JsonRpcConnectorProvider("localhost", BackplanePort, !cli.NoMessagePackOption.HasValue(), logger);
+                var contactBackplaneServiceProvider = new ContactBackplaneServiceProvider(jsonRpcConnectorProvider, hostServiceIdValue.Value, logger, ct);
 
                 await jsonRpcConnectorProvider.AttemptConnectAsync(ct);
-                await jsonRpcConnectorProvider.InvokeAsync<object>("RegisterService", new object[] { "contacts", hostServiceId }, ct);
+                await jsonRpcConnectorProvider.InvokeAsync<object>("RegisterService", new object[] { "contacts", hostServiceIdValue.Value }, ct);
                 return contactBackplaneServiceProvider;
             };
 
@@ -58,6 +72,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService.CLI
                 app.Description = "Upload contacts to the backplane service";
                 app.OnExecute(async () => await UploadContactsAsync(
                     await contactBackplaneServiceProviderFactory(default),
+                    hostServiceIdValue.Value,
                     int.Parse(numberOfContacts.Value()),
                     default));
             });
@@ -84,17 +99,32 @@ namespace Microsoft.VsCloudKernel.BackplaneService.CLI
             }
         }
 
-        private static async Task<int> UploadContactsAsync(ContactBackplaneServiceProvider contactBackplaneServiceProvider, int numberOfContacts, CancellationToken cancellationToken)
+        private static async Task<int> UploadContactsAsync(
+            ContactBackplaneServiceProvider contactBackplaneServiceProvider,
+            string hostServiceId,
+            int numberOfContacts,
+            CancellationToken cancellationToken)
         {
             for (int i = 0; i < numberOfContacts; ++i)
             {
                 var changeId = Guid.NewGuid().ToString();
                 var contactId = Guid.NewGuid().ToString();
                 var connProperties = new Dictionary<string, PropertyValue>();
-                connProperties["status"] = new PropertyValue("available", DateTime.Now);
-                var contactDataChanged = new ContactDataChanged<ConnectionProperties>(changeId, "service-1", "conn-1", contactId, ContactUpdateType.Registration, connProperties);
+                var now = DateTime.Now;
+
+                connProperties["status"] = new PropertyValue("available", now);
+                connProperties["name"] = new PropertyValue("John Doe", now);
+                connProperties["avatar"] = new PropertyValue("http://github.com/avatar", now);
+                connProperties["email"] = new PropertyValue($"{contactId}@gmail.com", now);
+
+                var contactDataChanged = new ContactDataChanged<ConnectionProperties>(changeId, hostServiceId, "conn-1", contactId, ContactUpdateType.Registration, connProperties);
                 await contactBackplaneServiceProvider.UpdateContactAsync(contactDataChanged, cancellationToken);
                 Console.WriteLine($"Upload n:{i} contact:{contactId}");
+
+                if ((i % 100) == 0)
+                {
+                    await Task.Delay(100, cancellationToken);
+                }
             }
 
             return 0;

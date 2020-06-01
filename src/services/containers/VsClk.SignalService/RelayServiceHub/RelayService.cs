@@ -124,9 +124,9 @@ namespace Microsoft.VsCloudKernel.SignalService
             var result = await relayHub.JoinAsync(connectionId, properties, cancellationToken);
 
             // backplane support
-            await NotifyParticipantChangedAsync(hubId, connectionId, properties, ParticipantChangeType.Added, cancellationToken);
+            await NotifyParticipantChangedAsync(hubId, connectionId, result.participants[connectionId], result.isNewParticipant ? ParticipantChangeType.Added : ParticipantChangeType.Updated, cancellationToken);
 
-            return result;
+            return result.participants;
         }
 
         public async Task LeaveHubAsync(string connectionId, string hubId, CancellationToken cancellationToken)

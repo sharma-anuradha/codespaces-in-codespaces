@@ -28,13 +28,29 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
         private readonly Dictionary<string, (DateTime, DataChanged, bool)> backplaneChanges = new Dictionary<string, (DateTime, DataChanged, bool)>();
         private readonly object backplaneChangesLock = new object();
 
+        private Func<(ServiceInfo, TServiceMetrics)> metricsFactory;
+
         protected BackplaneManagerBase(ILogger logger, IDataFormatProvider formatProvider = null)
         {
             Logger = Requires.NotNull(logger, nameof(logger));
             FormatProvider = formatProvider;
         }
 
-        public Func<(ServiceInfo, TServiceMetrics)> MetricsFactory { get; set; }
+        public Func<(ServiceInfo, TServiceMetrics)> MetricsFactory
+        {
+            get
+            {
+                return this.metricsFactory;
+            }
+
+            set
+            {
+                this.metricsFactory = value;
+
+                // this will trigger an update to the backplane metrics.
+                Task.Run(async () => await UpdateBackplaneMetricsAsync(default));
+            }
+        }
 
         /// <summary>
         /// Gets the list of backplane providers, note this is a thread safe property.
@@ -144,7 +160,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
                 try
                 {
                     // have the backplane providers to dispose this items
-                    await DisposeDataChangesAsync(expiredCacheItems.Select(i => i.Value.Item2).ToArray(), cancellationToken);
+                    await DisposeDataChangesAsync(expiredCacheItems.Where(i => i.Value.Item2 != null).Select(i => i.Value.Item2).ToArray(), cancellationToken);
                 }
                 catch (Exception error)
                 {
@@ -155,10 +171,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
 
         public bool HasTrackDataChanged(DataChanged dataChanged)
         {
-            lock (this.backplaneChangesLock)
-            {
-                return this.backplaneChanges.ContainsKey(dataChanged.ChangeId);
-            }
+            return TrackDataChanged(dataChanged, TrackDataChangedOptions.NoDispose);
         }
 
         public bool TrackDataChanged(DataChanged dataChanged, TrackDataChangedOptions options = TrackDataChangedOptions.None)
@@ -189,7 +202,7 @@ namespace Microsoft.VsCloudKernel.Services.Backplane.Common
                 }
                 else
                 {
-                    item = (DateTime.Now, dataChanged, isLocked);
+                    item = (DateTime.Now, options.HasFlag(TrackDataChangedOptions.NoDispose) ? null : dataChanged, isLocked);
                     this.backplaneChanges.Add(dataChanged.ChangeId, item);
                 }
 

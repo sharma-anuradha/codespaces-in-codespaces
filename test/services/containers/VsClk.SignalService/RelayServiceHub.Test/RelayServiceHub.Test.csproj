@@ -13,8 +13,14 @@
  </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Nerdbank.Streams" Version="2.4.60" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\AzureRedisRelayProvider\AzureRedisRelayProvider.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\BackplaneService\BackplaneService.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\RelayBackplane.Common\RelayBackplane.Common.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\BackplaneProviders\RelayBackplaneServiceProvider\RelayBackplaneServiceProvider.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\services\containers\VsClk.SignalService\RelayServiceHub\RelayServiceHub.csproj" />
   </ItemGroup>
 

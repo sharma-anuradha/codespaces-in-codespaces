@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <AssemblyName>Microsoft.VsCloudKernel.BackplaneService</AssemblyName>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <Timestamp>$([System.DateTime]::Now.ToString("yyyyMMdd.HHmmss"))</Timestamp>
     <IsPublishable>true</IsPublishable>
   </PropertyGroup>
@@ -23,7 +23,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="StreamJsonRpc" Version="$(StreamJsonRpcVersion)" />
-    <PackageReference Include="MessagePack" Version="$(MessagePackVersion)" />
   </ItemGroup>
 
   <ItemGroup>

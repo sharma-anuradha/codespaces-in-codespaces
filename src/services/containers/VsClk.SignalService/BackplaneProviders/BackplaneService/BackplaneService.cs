@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -24,13 +25,20 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     {
         private readonly CancellationTokenSource disposeTokenSource = new CancellationTokenSource();
         private readonly List<TNotify> backplaneServiceNotifications = new List<TNotify>();
+        private readonly HashSet<string> registeredServices = new HashSet<string>();
+        private readonly object registeredServicesLock = new object();
         private int numOfConnections;
 
-        protected BackplaneService(TBackplaneManagerType backplaneManager, IEnumerable<TNotify> notifications, ILogger logger)
+        protected BackplaneService(
+            TBackplaneManagerType backplaneManager,
+            IEnumerable<TNotify> notifications,
+            IServiceCounters serviceCounters,
+            ILogger logger)
         {
             BackplaneManager = Requires.NotNull(backplaneManager, nameof(backplaneManager));
             this.backplaneServiceNotifications.AddRange(notifications);
 
+            ServiceCounters = serviceCounters;
             Logger = Requires.NotNull(logger, nameof(logger));
         }
 
@@ -38,7 +46,11 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         protected TBackplaneManagerType BackplaneManager { get; }
 
+        protected IServiceCounters ServiceCounters { get; }
+
         protected ILogger Logger { get; }
+
+        protected string[] RegisteredServices { get; private set; } = Array.Empty<string>();
 
         protected IEnumerable<TNotify> BackplaneServiceNotifications => this.backplaneServiceNotifications;
 
@@ -49,19 +61,41 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public void RegisterService(string serviceId)
         {
+            lock (this.registeredServicesLock)
+            {
+                this.registeredServices.Add(serviceId);
+                RegisteredServices = this.registeredServices.ToArray();
+            }
+
             Interlocked.Increment(ref this.numOfConnections);
             Logger.LogMethodScope(LogLevel.Information, $"serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(RegisterService));
         }
 
         public void OnDisconnected(string serviceId, Exception exception)
         {
+            lock (this.registeredServicesLock)
+            {
+                this.registeredServices.Remove(serviceId);
+                RegisteredServices = this.registeredServices.ToArray();
+            }
+
             Interlocked.Decrement(ref this.numOfConnections);
             Logger.LogMethodScope(LogLevel.Error, exception, $"OnDisconnectedAsync -> serviceId:{serviceId} numOfConnections:{this.numOfConnections}", nameof(OnDisconnected));
+        }
+
+        public void TrackMethodPerf(string methodName, TimeSpan t)
+        {
+            ServiceCounters?.OnInvokeMethod(GetType().Name, methodName, t);
         }
 
         protected bool TrackDataChanged(DataChanged dataChanged, TrackDataChangedOptions options = TrackDataChangedOptions.None)
         {
             return BackplaneManager.TrackDataChanged(dataChanged, options);
+        }
+
+        protected IDisposable CreateMethodPerfTracker(string methodName)
+        {
+            return new MethodPerfTracker(elapsed => TrackMethodPerf(methodName, elapsed));
         }
 
         protected ActionBlock<(Stopwatch, T)> CreateActionBlock<T>(

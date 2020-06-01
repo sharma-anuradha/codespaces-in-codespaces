@@ -159,7 +159,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
         private static Dictionary<string, object> UnboxProperties(Dictionary<string, object> properties)
         {
-            return properties.ToDictionary(kvp => kvp.Key, kvp => NewtonsoftHelpers.ToObject(kvp.Value));
+            return properties.ToDictionary(kvp => kvp.Key, kvp => NewtonsoftHelpers.ToRawObject(kvp.Value));
         }
 
         private string ToString(ContactReference contactReference)

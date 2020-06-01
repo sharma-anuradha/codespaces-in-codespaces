@@ -33,12 +33,10 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
         public int TotalConnections => Contacts.Values.Sum(item => item.ConnectionsCount);
 
-        public string[] ActiveServices { get; set; }
-
         /// <summary>
         /// Gets the dictionary with contact data info in json format.
         /// </summary>
-        private ConcurrentDictionary<string, ContactDataInfoHolder> Contacts { get; } = new ConcurrentDictionary<string, ContactDataInfoHolder>();
+        private ConcurrentDictionary<string, ContactDataInfoHolderBase> Contacts { get; } = new ConcurrentDictionary<string, ContactDataInfoHolderBase>();
 
         private ILogger Logger { get; }
 
@@ -52,59 +50,64 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             return Task.FromResult(Contacts.ContainsKey(contactId));
         }
 
-        public Task UpdateContactDataInfoAsync(string contactId, ContactDataInfo contactDataInfo, CancellationToken cancellationToken)
-        {
-            var contactdDataInfoHolder = new ContactDataInfoHolder(contactDataInfo);
-            Contacts.AddOrUpdate(
-                contactId,
-                (k) => contactdDataInfoHolder,
-                (k, v) => contactdDataInfoHolder);
-
-            LogUpdateContact(contactId, nameof(UpdateContactDataInfoAsync));
-            return Task.CompletedTask;
-        }
-
         public Task<ContactDataInfo> GetContactDataAsync(string contactId, CancellationToken cancellationToken)
         {
             if (Contacts.TryGetValue(contactId, out var contactdDataInfoHolder))
             {
-                return Task.FromResult(contactdDataInfoHolder.Data);
+                return Task.FromResult(contactdDataInfoHolder.GetAggregatedDataInfo());
             }
 
             return Task.FromResult<ContactDataInfo>(null);
         }
 
-        public Task<(ContactDataInfo NewValue, ContactDataInfo OldValue)> UpdateContactDataChangedAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
+        public Task<ContactDataInfo> UpdateRemoteDataInfoAsync(
+            string contactId,
+            ContactDataInfo remoteDataInfo,
+            CancellationToken cancellationToken)
         {
+            var result = ContactsAddOrUpdate(
+                contactId,
+                (contactDataInfoHolder, isCreate) => contactDataInfoHolder.UpdateRemote(remoteDataInfo));
+
+            return Task.FromResult(result.GetAggregatedDataInfo());
+        }
+
+        public Task<(ContactDataInfo NewValue, ContactDataInfo OldValue)> UpdateLocalDataChangedAsync<T>(
+                ContactDataChangedRef<T> localDataChangedRef,
+                string[] localServices,
+                CancellationToken cancellationToken)
+            where T : class
+        {
+            bool isConnectionProperties = typeof(T) == typeof(ConnectionProperties);
+
             ContactDataInfo oldValue = null;
-            var result = Contacts.AddOrUpdate(
-                contactDataChanged.ContactId,
-                (k) =>
+            var result = ContactsAddOrUpdate(
+                localDataChangedRef.DataChanged.ContactId,
+                (contactDataInfoHolder, isCreate) =>
                 {
-                    var contactdDataInfoHolder = new ContactDataInfoHolder();
-                    contactdDataInfoHolder.Update(contactDataChanged, null);
-                    return contactdDataInfoHolder;
-                }, (k, contactdDataInfoHolder) =>
-                {
-                    oldValue = contactdDataInfoHolder.Data;
-                    contactdDataInfoHolder.Update(contactDataChanged, ActiveServices);
-                    return contactdDataInfoHolder;
+                    if (!isCreate)
+                    {
+                        oldValue = contactDataInfoHolder.GetAggregatedDataInfo();
+                    }
+
+                    if (localDataChangedRef.IsConnectionProperties)
+                    {
+                        contactDataInfoHolder.UpdateLocal(localDataChangedRef.ConnectionProperties, localServices);
+                    }
+                    else
+                    {
+                        contactDataInfoHolder.UpdateLocal(localDataChangedRef.ContactDataInfo.Data, localServices);
+                    }
                 });
 
-            if (contactDataChanged.Data.TryGetValue(ContactProperties.Email, out var pv) && !string.IsNullOrEmpty(pv.Value?.ToString()))
-            {
-                var email = pv.Value.ToString();
-                Logger.LogDebug($"email:{string.Format(this.formatProvider, "{0:E}", email)} contact id:{string.Format(this.formatProvider, "{0:T}", contactDataChanged.ContactId)}");
-                Emails.TryAdd(email, contactDataChanged.ContactId);
-            }
-
-            LogUpdateContact(contactDataChanged.ContactId, nameof(UpdateContactAsync));
-            return Task.FromResult((result.Data, oldValue));
+            HandleEmailIndexing(localDataChangedRef.DataChanged.ContactId, localDataChangedRef.ConnectionProperties.Data);
+            LogUpdateContact(localDataChangedRef.DataChanged.ContactId, nameof(UpdateLocalDataChangedAsync));
+            return Task.FromResult((result.GetAggregatedDataInfo(), oldValue));
         }
 
         public Task UpdateContactAsync(ContactDataChanged<ConnectionProperties> contactDataChanged, CancellationToken cancellationToken)
         {
-            return UpdateContactDataChangedAsync(contactDataChanged, cancellationToken);
+            throw new NotImplementedException();
         }
 
         public Task<Dictionary<string, ContactDataInfo>[]> GetContactsDataAsync(Dictionary<string, object>[] allMatchProperties, CancellationToken cancellationToken)
@@ -120,12 +123,38 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                     Contacts.TryGetValue(contactId, out var contactdDataInfoHolder))
                 {
                     var matchingResult = new Dictionary<string, ContactDataInfo>();
-                    matchingResult[contactId] = contactdDataInfoHolder.Data;
+                    matchingResult[contactId] = contactdDataInfoHolder.GetAggregatedDataInfo();
                     results[index] = matchingResult;
                 }
             }
 
             return Task.FromResult(results);
+        }
+
+        private void HandleEmailIndexing(string contactId, ConnectionProperties connectionProperties)
+        {
+            if (connectionProperties.TryGetValue(ContactProperties.Email, out var pv) && !string.IsNullOrEmpty(pv.Value?.ToString()))
+            {
+                var email = pv.Value.ToString();
+                Logger.LogDebug($"email:{string.Format(this.formatProvider, "{0:E}", email)} contact id:{string.Format(this.formatProvider, "{0:T}", contactId)}");
+                Emails.TryAdd(email, contactId);
+            }
+        }
+
+        private ContactDataInfoHolderBase ContactsAddOrUpdate(string contactId, Action<ContactDataInfoHolderBase, bool> callback)
+        {
+            return Contacts.AddOrUpdate(
+                contactId,
+                (k) =>
+                {
+                    var contactDataInfoHolder = new MessagePackDataInfoHolder();
+                    callback(contactDataInfoHolder, true);
+                    return contactDataInfoHolder;
+                }, (k, contactDataInfoHolder) =>
+                {
+                    callback(contactDataInfoHolder, false);
+                    return contactDataInfoHolder;
+                });
         }
 
         private string Format(string format, params object[] args)
@@ -136,64 +165,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private void LogUpdateContact(string contactId, string method)
         {
             Logger.LogMethodScope(LogLevel.Debug, $"contactId:{Format("{0:T}", contactId)} total:{Contacts.Count}", method);
-        }
-
-        /// <summary>
-        /// Thread safe to hold a ContactDataInfo structure.
-        /// </summary>
-        private class ContactDataInfoHolder
-        {
-            private readonly object lockDataInfo = new object();
-            private readonly ContactDataInfo contactDataInfo;
-
-            public ContactDataInfoHolder()
-            {
-                this.contactDataInfo = new Dictionary<string, IDictionary<string, IDictionary<string, PropertyValue>>>();
-            }
-
-            public ContactDataInfoHolder(ContactDataInfo contactDataInfo)
-            {
-                // ensure we clone the structure we hold
-                this.contactDataInfo = contactDataInfo.Clone();
-            }
-
-            public int ConnectionsCount
-            {
-                get
-                {
-                    lock (this.lockDataInfo)
-                    {
-                        return this.contactDataInfo.Count;
-                    }
-                }
-            }
-
-            public ContactDataInfo Data
-            {
-                get
-                {
-                    lock (this.lockDataInfo)
-                    {
-                        return this.contactDataInfo.Clone();
-                    }
-                }
-            }
-
-            public void Update(ContactDataChanged<ConnectionProperties> contactDataChanged, string[] activeServices)
-            {
-                lock (this.lockDataInfo)
-                {
-                    this.contactDataInfo.UpdateConnectionProperties(contactDataChanged);
-                    if (activeServices != null)
-                    {
-                        // Note: next block will remove 'stale' service entries
-                        foreach (var serviceId in this.contactDataInfo.Keys.Where(serviceId => !activeServices.Contains(serviceId)).ToArray())
-                        {
-                            contactDataInfo.Remove(serviceId);
-                        }
-                    }
-                }
-            }
         }
     }
 }

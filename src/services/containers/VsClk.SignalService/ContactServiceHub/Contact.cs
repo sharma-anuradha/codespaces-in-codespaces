@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using ConnectionProperties = System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>;
+using ConnectionsProperties = System.Collections.Generic.IDictionary<string, System.Collections.Generic.IDictionary<string, Microsoft.VsCloudKernel.SignalService.PropertyValue>>;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -39,7 +40,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <summary>
         /// Other connection properties maintained outside this contact.
         /// </summary>
-        private Dictionary<string, ConnectionProperties> otherConnectionProperties = EmptyConnectionProperties;
+        private MessagePackDataBuffer<Dictionary<string, ConnectionProperties>> otherConnectionPropertiesBuffer = new MessagePackDataBuffer<Dictionary<string, ConnectionProperties>>(EmptyConnectionProperties);
 
         public Contact(ContactService service, string contactId)
             : base(service, contactId)
@@ -51,6 +52,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Report changes
         /// </summary>
         public event AsyncEventHandler<ContactChangedEventArgs> Changed;
+
+        /// <summary>
+        /// Gets all the self connections properties from this contact.
+        /// </summary>
+        public ConnectionsProperties SelfConnectionsProperties => ContactConnectionProperties.ConnectionsProperties;
 
         /// <summary>
         /// Gets a value indicating whether this contact does not have any self connection.
@@ -86,6 +92,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// Gets a value indicating whether get the target contacts are created.
         /// </summary>
         private bool IsTargetContactsByConnectionCreated => this.lazyTargetContactsByConnection.IsValueCreated;
+
+        /// <summary>
+        /// Gets the other/remote connection properties.
+        /// </summary>
+        private Dictionary<string, ConnectionProperties> OtherConnectionProperties => this.otherConnectionPropertiesBuffer.Data;
 
         /// <summary>
         /// Register a new self connection.
@@ -341,12 +352,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         internal Dictionary<string, ConnectionProperties> GetSelfConnections()
         {
             return GetContactConnectionProperties(cp => cp.AllConnectionValues, Array.Empty<KeyValuePair<string, ConnectionProperties>>())
-                .Union(otherConnectionProperties).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                .Union(OtherConnectionProperties).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         internal void SetOtherConnectionProperties(Dictionary<string, ConnectionProperties> otherConnectionProperties)
         {
-            this.otherConnectionProperties = otherConnectionProperties;
+            this.otherConnectionPropertiesBuffer.Data = otherConnectionProperties;
         }
 
         /// <summary>
@@ -410,7 +421,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         private IEnumerable<ConnectionProperties> GetAllConnectionProperties()
         {
             return GetContactConnectionProperties(cp => cp.AllConnectionProperties, Array.Empty<ConnectionProperties>())
-                .Union(this.otherConnectionProperties.Values);
+                .Union(OtherConnectionProperties.Values);
         }
 
         private Dictionary<string, object> GetAggregatedProperties(IEnumerable<string> affectedProperties)
@@ -501,7 +512,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 PropertyValue pv;
                 if ((IsContactConnectionPropertiesCreated && ContactConnectionProperties.TryGetProperties(connectionId, out var properties) &&
                     properties.TryGetValue(propertyName, out pv)) ||
-                    (this.otherConnectionProperties.TryGetValue(connectionId, out var connProperties) &&
+                    (OtherConnectionProperties.TryGetValue(connectionId, out var connProperties) &&
                     connProperties.TryGetValue(propertyName, out pv)))
                 {
                     return pv.Value;
@@ -531,7 +542,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     return properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
                 }
-                else if (this.otherConnectionProperties.TryGetValue(connectionId, out var connProperties))
+                else if (OtherConnectionProperties.TryGetValue(connectionId, out var connProperties))
                 {
                     return connProperties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
                 }

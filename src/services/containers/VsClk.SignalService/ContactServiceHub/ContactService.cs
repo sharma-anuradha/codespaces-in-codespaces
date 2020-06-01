@@ -382,7 +382,13 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             var start = Stopwatch.StartNew();
 
-            var registeredSelfContact = GetRegisteredContact(contactReference.Id);
+            var registeredSelfContact = GetRegisteredContact(contactReference.Id, throwIfNotFound: false);
+            if (registeredSelfContact == null)
+            {
+                // contact was probably purged
+                return;
+            }
+
             foreach (var targetContactId in registeredSelfContact.GetTargetContacts(contactReference.ConnectionId))
             {
                 if (this.stubContacts.TryGetValue(targetContactId, out var stubContact))
@@ -733,7 +739,21 @@ namespace Microsoft.VsCloudKernel.SignalService
                                 e.ChangeType,
                                 e.Properties);
 
-                await BackplaneManager.UpdateContactAsync(contactDataChanged, CancellationToken.None);
+                // Note: for Registration/Unregister we will upload all the properties of each endpoints.
+                if (e.ChangeType == ContactUpdateType.Registration || e.ChangeType == ContactUpdateType.Unregister)
+                {
+                    // this service contact data info
+                    var contactDataInfo = new Dictionary<string, IDictionary<string, ConnectionProperties>>()
+                    {
+                        { ServiceId, contact.SelfConnectionsProperties },
+                    };
+                    await BackplaneManager.UpdateContactDataInfoAsync(contactDataChanged, (contactDataInfo, null), CancellationToken.None);
+                }
+                else
+                {
+                    // upload only the modified connection properties.
+                    await BackplaneManager.UpdateContactAsync(contactDataChanged, CancellationToken.None);
+                }
             }
         }
 

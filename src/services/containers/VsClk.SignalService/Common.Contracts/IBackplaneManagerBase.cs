@@ -28,9 +28,14 @@ namespace Microsoft.VsCloudKernel.SignalService
         Refresh = 2,
 
         /// <summary>
+        /// Indicate if dispose is needed
+        /// </summary>
+        NoDispose = 4,
+
+        /// <summary>
         /// Cause to remove the tracked change
         /// </summary>
-        ForceRemove,
+        ForceRemove = 8,
     }
 
     public interface IBackplaneManagerBase

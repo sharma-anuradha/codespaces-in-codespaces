@@ -26,8 +26,9 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         public RelayBackplaneService(
             IEnumerable<IRelayBackplaneServiceNotification> relayBackplaneServiceNotifications,
             ILogger<RelayBackplaneService> logger,
-            IRelayBackplaneManager backplaneManager)
-            : base(backplaneManager, relayBackplaneServiceNotifications, logger)
+            IRelayBackplaneManager backplaneManager,
+            IServiceCounters serviceCounters = null)
+            : base(backplaneManager, relayBackplaneServiceNotifications, serviceCounters, logger)
         {
             SendDataHubActionBlock = CreateActionBlock<SendRelayDataHub>(
                 nameof(SendDataHubActionBlock),
@@ -178,9 +179,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 Log(dataChanged, $"serviceId:{dataChanged.ServiceId}->");
             }
 
-            if (RelayHubManager.ContainsHub(dataChanged.HubId))
+            using (var methodPerfTracker = CreateMethodPerfTracker(nameof(OnSendDataChangedAsync)))
             {
-                await FireSendDataHubAsync(dataChanged, cancellationToken);
+                if (RelayHubManager.ContainsHub(dataChanged.HubId))
+                {
+                    await FireSendDataHubAsync(dataChanged, cancellationToken);
+                }
             }
         }
 
@@ -193,10 +197,13 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 Log(dataChanged, $"serviceId:{dataChanged.ServiceId}->");
             }
 
-            if (RelayHubManager.ContainsHub(dataChanged.HubId))
+            using (var methodPerfTracker = CreateMethodPerfTracker(nameof(OnRelayHubChangedAsync)))
             {
-                RelayHubManager.NotifyRelayHubChanged(dataChanged);
-                await FireNotifyRelayHubChangedAsync(dataChanged, cancellationToken);
+                if (RelayHubManager.ContainsHub(dataChanged.HubId))
+                {
+                    RelayHubManager.NotifyRelayHubChanged(dataChanged);
+                    await FireNotifyRelayHubChangedAsync(dataChanged, cancellationToken);
+                }
             }
         }
 
@@ -209,9 +216,12 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 Log(dataChanged, $"serviceId:{dataChanged.ServiceId}->");
             }
 
-            if (RelayHubManager.NotifyParticipantChanged(dataChanged, out var relayHubInfo))
+            using (var methodPerfTracker = CreateMethodPerfTracker(nameof(OnParticipantChangedAsync)))
             {
-                await FireNotifyParticipantChangedAsync(dataChanged, cancellationToken);
+                if (RelayHubManager.NotifyParticipantChanged(dataChanged, out var relayHubInfo))
+                {
+                    await FireNotifyParticipantChangedAsync(dataChanged, cancellationToken);
+                }
             }
         }
     }

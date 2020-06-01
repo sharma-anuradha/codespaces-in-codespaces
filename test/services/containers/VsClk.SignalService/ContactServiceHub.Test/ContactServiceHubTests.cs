@@ -166,12 +166,12 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
 
             await this.presenceService.RegisterSelfContactAsync(AsContactRef("conn3", "contact2"), null, CancellationToken.None);
             var subscriptionsResults = await this.presenceService.AddSubcriptionsAsync(AsContactRef("conn3", "contact2"), new ContactReference[] { AsContactRef(null, "contact1") }, new string[] { "value" });
-            Assert.Equal(200, subscriptionsResults["contact1"]["value"]);
+            Assert.Equal(200, Convert.ToInt32(subscriptionsResults["contact1"]["value"]));
 
             this.presenceService.RemoveSubscription(AsContactRef("conn3", "contact2"), new ContactReference[] { AsContactRef(null, "contact1") });
             await this.presenceService.UnregisterSelfContactAsync(AsContactRef("conn2", "contact1"), null, CancellationToken.None);
             subscriptionsResults = await this.presenceService.AddSubcriptionsAsync(AsContactRef("conn3", "contact2"), new ContactReference[] { AsContactRef(null, "contact1") }, new string[] { "value" });
-            Assert.Equal(100, subscriptionsResults["contact1"]["value"]);
+            Assert.Equal(100, Convert.ToInt32(subscriptionsResults["contact1"]["value"]));
         }
 
         [Fact]
@@ -695,7 +695,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
                 new ContactReference[] { contact2Ref }, new string[] { "*" });
 
             var resultProperties = result[contact2Ref.Id];
-            Assert.Equal(10, resultProperties["property0"]);
+            Assert.Equal(10, Convert.ToInt32(resultProperties["property0"]));
 
             conn1Proxy.Clear();
             await this.presenceService.UpdatePropertiesAsync(contact2Ref, new Dictionary<string, object>()
@@ -707,7 +707,7 @@ namespace Microsoft.VsCloudKernel.SignalService.PresenceServiceHubTests
             Assert.True(conn1Proxy.ContainsKey(ContactHubMethods.UpdateValues));
             var notifyProperties = conn1Proxy[ContactHubMethods.UpdateValues][1] as Dictionary<string, object>;
             Assert.Equal(2, notifyProperties.Count);
-            Assert.Equal(100, notifyProperties["property1"]);
+            Assert.Equal(100, Convert.ToInt32(notifyProperties["property1"]));
             Assert.Equal("hello", notifyProperties["property2"]);
 
             conn1Proxy.Clear();

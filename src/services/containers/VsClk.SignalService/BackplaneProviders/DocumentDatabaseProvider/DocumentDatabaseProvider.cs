@@ -2,9 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+// Note: uncomment this line to report unusual number of connection endpoints
+#define _LOG_UNUSUAL_DOCUMENT_CONNECTIONS
+
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +29,8 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         private readonly IServiceCounters serviceCounters;
         private readonly IFormatProvider formatProvider;
-        private HashSet<string> activeServices;
+        private readonly HashSet<string> activeServices = new HashSet<string>();
+        private readonly object activeServicesLock = new object();
 
         protected DocumentDatabaseProvider(ILogger logger, IServiceCounters serviceCounters, IFormatProvider formatProvider)
         {
@@ -51,6 +54,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task UpdateMetricsAsync(ServiceInfo serviceInfo, ContactServiceMetrics metrics, CancellationToken cancellationToken)
         {
+            lock (this.activeServicesLock)
+            {
+                this.activeServices.Add(serviceInfo.ServiceId);
+            }
+
             var serviceDocument = new ServiceDocument()
             {
                 Id = serviceInfo.ServiceId,
@@ -89,7 +97,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 {
                     for (next = 0; next < matchContacts.Length; ++next)
                     {
-                        results[emailResults[next].Item1] = matchContacts[next].ToDictionary(d => d.Id, d => ToContactData(d));
+                        results[emailResults[next].Item1] = matchContacts[next].ToDictionary(d => d.Id, d => ToContactData(d, nameof(GetContactsDataAsync)));
                     }
                 }
 
@@ -102,7 +110,7 @@ namespace Microsoft.VsCloudKernel.SignalService
             using (var methodPerTracker = CreateMethodPerfTracker(nameof(GetContactDataAsync)))
             {
                 var contactDataCoument = await GetContactDataDocumentAsync(contactId, cancellationToken);
-                return contactDataCoument != null ? ToContactData(contactDataCoument) : null;
+                return contactDataCoument != null ? ToContactData(contactDataCoument, nameof(GetContactDataAsync)) : null;
             }
         }
 
@@ -138,7 +146,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
                 else
                 {
-                    contactDataInfo = ToContactData(contactDataDocument);
+                    contactDataInfo = ToContactData(contactDataDocument, nameof(UpdateContactAsync));
                 }
 
                 contactDataInfo.UpdateConnectionProperties(contactDataChanged);
@@ -152,8 +160,11 @@ namespace Microsoft.VsCloudKernel.SignalService
             (ContactDataInfo NewValue, ContactDataInfo OldValue) contactDataInfoValues,
             CancellationToken cancellationToken)
         {
+            Requires.NotNull(contactDataInfoValues.NewValue, nameof(contactDataInfoValues.NewValue));
+
             using (var methodPerTracker = CreateMethodPerfTracker(nameof(UpdateContactDataInfoAsync)))
             {
+                ValidateRegisteredServices(contactDataInfoValues.NewValue, contactDataChanged.ServiceId);
                 var updateContactDataDocument = new ContactDocument()
                 {
                     Id = contactDataChanged.ContactId,
@@ -234,7 +245,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                             contact.ConnectionId,
                             contact.Id,
                             contact.UpdateType,
-                            ToContactData(contact));
+                            ToContactData(contact, nameof(OnContactDocumentsChangedAsync)));
 
                         await ContactChangedAsync(contactDataInfoChanged, contact.Properties ?? Array.Empty<string>(), cancellationToken);
                     }
@@ -316,21 +327,50 @@ namespace Microsoft.VsCloudKernel.SignalService
                 }
             }
 
-            // update
-            this.activeServices = nonStaleServices;
+            // update our active services
+            lock (this.activeServicesLock)
+            {
+                this.activeServices.Clear();
+                this.activeServices.UnionWith(nonStaleServices);
+            }
         }
 
-        private ContactDataInfo ToContactData(ContactDocument contactDataDocument)
+        private ContactDataInfo ToContactData(ContactDocument contactDataDocument, string methodName)
         {
             var contactDataInfo = ((JObject)contactDataDocument.ServiceConnections).ToObject<ContactDataInfo>();
-
-            // Note: next block will remove 'stale' service entries
-            foreach (var serviceId in contactDataInfo.Keys.Where(serviceId => !this.activeServices.Contains(serviceId)).ToArray())
+#if _LOG_UNUSUAL_DOCUMENT_CONNECTIONS
+            var serviceCount = contactDataInfo.Count;
+            var documentConnectionsCount = contactDataInfo.GetConnectionsCount();
+#endif
+            ValidateRegisteredServices(contactDataInfo);
+#if _LOG_UNUSUAL_DOCUMENT_CONNECTIONS
+            if (documentConnectionsCount > 15)
             {
-                contactDataInfo.Remove(serviceId);
+                var contactDataInfoStr = string.Join(',', contactDataInfo.Select(kvp => $"{kvp.Key}:{kvp.Value.Count}"));
+                Logger.LogWarning($"Unusual number of connections document count:{serviceCount}/{documentConnectionsCount} count:{contactDataInfo.Count}/{contactDataInfo.GetConnectionsCount()} summary:[{contactDataInfoStr}] serviceId:{contactDataDocument.ServiceId} contactId:{contactDataDocument.Id} method:{methodName}");
             }
-
+#endif
             return contactDataInfo;
+        }
+
+        private void ValidateRegisteredServices(ContactDataInfo contactDataInfo, string fromServiceId = null)
+        {
+            // Note: next block will remove 'stale' service entries
+            foreach (var serviceId in GetStaleServiceIds(contactDataInfo.Keys))
+            {
+                if (serviceId != fromServiceId)
+                {
+                    contactDataInfo.Remove(serviceId);
+                }
+            }
+        }
+
+        private string[] GetStaleServiceIds(IEnumerable<string> serviceIds)
+        {
+            lock (this.activeServicesLock)
+            {
+                return serviceIds.Where(serviceId => !this.activeServices.Contains(serviceId)).ToArray();
+            }
         }
 
         private string ToTraceText(string s)

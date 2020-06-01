@@ -132,7 +132,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 return asyncDisposable.DisposeAsync();
             }
 
-            disposable.Dispose();
+            disposable?.Dispose();
             return default;
         }
 
