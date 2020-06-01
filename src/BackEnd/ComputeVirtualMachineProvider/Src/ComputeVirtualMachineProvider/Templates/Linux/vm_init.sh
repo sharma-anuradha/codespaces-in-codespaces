@@ -44,6 +44,12 @@ curl -L "https://github.com/docker/compose/releases/download/1.25.4/docker-compo
 chmod +x /usr/local/bin/docker-compose
 docker-compose --version
 
+echo "Create container temp folder"
+containerTmp=/mnt/containerTmp
+mkdir -p $containerTmp
+chmod o+rw $containerTmp
+setfacl -dR -m o::rw $containerTmp
+
 # Block Azure Instance Metadata Service IP on host (OUTPUT) and also in containers (DOCKER-USER)
 # This needs to happen after the docker install for DOCKER-USER to exist in iptables.
 
