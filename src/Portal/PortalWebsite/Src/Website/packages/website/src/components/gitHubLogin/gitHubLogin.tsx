@@ -54,7 +54,7 @@ export function GitHubLogin() {
 
     let content = (
         <div className='oauth-login__message'>
-            You are signed in into GitHub now and can close this page.
+            You are signed in into GitHub, closing page.
         </div>
     );
 
@@ -67,7 +67,9 @@ export function GitHubLogin() {
     if (state && getRedirectionUrl(state)) {
         content = <div className='github-login__message'></div>;
     }
-
+    
+    setTimeout(window.close, 1000, undefined);
+    
     return (
         <PortalLayout hideNavigation>
             <div className='oauth-login'>{content}</div>
