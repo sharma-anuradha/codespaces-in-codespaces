@@ -13,3 +13,5 @@ export const KNOWN_VSO_HOSTNAMES = [
 ];
 
 export const PARTNER_INFO_KEYCHAIN_KEY = 'vsc-partner-info';
+
+export const VSCS_FEATURESET_LOCALSTORAGE_KEY = 'vso-featureset';

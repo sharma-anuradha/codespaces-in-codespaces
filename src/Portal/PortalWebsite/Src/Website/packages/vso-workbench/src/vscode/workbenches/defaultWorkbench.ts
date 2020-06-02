@@ -21,6 +21,7 @@ import { getUserDataProvider } from './getUserDataProvider';
 import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
 import { getExtensions } from './getDefaultExtensions';
 import { getWorkbenchDefaultLayout } from '../../utils/getWorkbenchDefaultLayout';
+import { ensureVSCodeChannelFlag } from '../../utils/ensureVSCodeChannelFlag';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -163,6 +164,8 @@ export class Workbench {
             if (!this.workbench) {
                 throw new Error('Connection not initialized, please call "connect" first.');
             }
+
+            await ensureVSCodeChannelFlag();
 
             await this.workbench.mount();
         } catch (e) {

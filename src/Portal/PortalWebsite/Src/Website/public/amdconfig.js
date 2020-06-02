@@ -9,14 +9,10 @@ const vsoFeatureSet = window.localStorage.getItem('vso-featureset');
 let vscodeQuality = stableFlag;
 if (paramsFeatureSet === insiderFlag) {
     vscodeQuality = insiderFlag;
-}
-
-if (vsoFeatureSet === insiderFlag) {
-    vscodeQuality = insiderFlag;
-}
-
-if (vsoFeatureSet === stableFlag) {
+} else if (paramsFeatureSet === stableFlag) {
     vscodeQuality = stableFlag;
+} else if (vsoFeatureSet === insiderFlag) {
+    vscodeQuality = insiderFlag;
 }
 
 const commits = {

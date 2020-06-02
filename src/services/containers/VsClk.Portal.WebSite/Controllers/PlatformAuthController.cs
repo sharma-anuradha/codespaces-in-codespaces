@@ -140,7 +140,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public HomeIndicator HomeIndicator { get; set; }
 
             [JsonProperty("defaultSettings")]
-            public string DefaultSettings { get; set; }
+            public Dictionary<string, object> DefaultSettings { get; set; }
 
             [JsonProperty("defaultExtensions")]
             public List<string> DefaultExtensions { get; set; }
@@ -153,6 +153,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             [JsonProperty("defaultAuthSessions")]
             public List<NativeAuthProviderSession> DefaultAuthSessions { get; set; }
+
+            [JsonProperty("vscodeChannel")]
+            public string VSCodeChannel { get; set; }
         }
 
         public class PartnerInfo

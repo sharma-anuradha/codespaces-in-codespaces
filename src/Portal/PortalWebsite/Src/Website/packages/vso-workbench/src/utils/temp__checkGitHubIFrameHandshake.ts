@@ -66,7 +66,7 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                     // set the GitHub theme as default, note that this will work only
                     //  - on fresh codespace
                     //  - and if the settings sync service is not turned on (or user using the default theme)
-                    defaultSettings: '{"workbench.colorTheme": "GitHub Light"}',
+                    defaultSettings: {'workbench.colorTheme': 'GitHub Light', 'workbench.startupEditor': 'welcomePageInEmptyWorkbench'},
                     // go home button
                     homeIndicator: {
                         icon: 'github-inverted',

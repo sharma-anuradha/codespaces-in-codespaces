@@ -11,6 +11,19 @@ const postMessageChannel = new PostMessageChannel();
 self.addEventListener('load', async () => {
     try {
         const info = await postMessageChannel.getRepoInfo();
+
+        if (!('vscodeSettings' in info)) {
+            (info as any).vscodeSettings = {
+                // Salesforce defaults
+                defaultSettings: {
+                    'workbench.startupEditor': 'welcomePageInEmptyWorkbench',
+                    'workbench.colorTheme': 'Codey Midnight',
+                    'defaultExtensions': ['salesforce.codey-midnight'],
+                },
+                vscodeChannel: 'insider',
+            };
+        }
+
         const result = await authService.storePartnerInfo(info);
 
         await (result)

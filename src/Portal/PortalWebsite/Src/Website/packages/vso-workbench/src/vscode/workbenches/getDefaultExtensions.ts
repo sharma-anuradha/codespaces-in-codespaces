@@ -22,7 +22,7 @@ export const getDefaultSettingsExtensions = async (): Promise<string[]> => {
     }
 
     // old payload does not have the settings property
-    const defaultExtensions = ('cascadeToken' in info && info.vscodeSettings)
+    const defaultExtensions = ('vscodeSettings' in info)
         ? info.vscodeSettings.defaultExtensions
         : undefined;
 
