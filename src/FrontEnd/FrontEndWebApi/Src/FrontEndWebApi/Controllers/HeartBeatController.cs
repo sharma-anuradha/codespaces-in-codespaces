@@ -76,9 +76,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             logger.AddComputeResourceId(heartBeat.ResourceId)
                   .FluentAddBaseValue(nameof(heartBeat.AgentVersion), heartBeat.AgentVersion);
 
+            CloudEnvironment environment = null;
+            var environmentId = GetEnvironmentId(heartBeat);
+            var shouldSendBackendTask = true;
+
             try
             {
-                ValidateHeartbeat(heartBeat, logger);
+                ValidateHeartbeat(heartBeat);
+                if (!string.IsNullOrEmpty(environmentId))
+                {
+                    environment = await environmentManager.GetAsync(environmentId, logger);
+                    shouldSendBackendTask = !(environment == null || environment.Type == EnvironmentType.StaticEnvironment);
+                }
             }
             catch (Exception e)
             {
@@ -86,84 +95,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return UnprocessableEntity();
             }
 
-            var shouldSendBackendTask = true;
-            if (!string.IsNullOrWhiteSpace(heartBeat.EnvironmentId))
-            {
-                var environment = await environmentManager.GetAsync(heartBeat.EnvironmentId, logger);
-                if (environment == null)
-                {
-                    return UnprocessableEntity();
-                }
-
-                if (environment.Type == EnvironmentType.StaticEnvironment)
-                {
-                    shouldSendBackendTask = false;
-                }
-            }
-
             var backendTask = shouldSendBackendTask ?
                 BackendHeartBeatClient.UpdateHeartBeatAsync(heartBeat.ResourceId, heartBeat, logger.NewChildLogger()) :
                 Task.CompletedTask;
 
-            var collectedData = heartBeat?.CollectedDataList?.Where(data => data != null);
-            if (collectedData != null && collectedData.Count() > 0)
+            var shouldSendFrontend = ShouldSendFrontEnd(heartBeat, environment);
+
+            if (shouldSendFrontend)
             {
-                var processingExceptions = new List<Exception>();
+                var collectedData = heartBeat?.CollectedDataList?.Where(data => data != null);
 
-                await logger.OperationScopeAsync(
-                   "process_heartbeat_collected_data",
-                   async (childLogger) =>
-                   {
-                       CloudEnvironment environment = null;
-
-                       var environmentId = collectedData.FirstOrDefault(c => !string.IsNullOrEmpty(c.EnvironmentId))?.EnvironmentId;
-                       if (!string.IsNullOrWhiteSpace(environmentId))
-                       {
-                           environment = await environmentManager.GetAsync(environmentId, childLogger);
-                       }
-
-                       var handlerContext = new CollectedDataHandlerContext(environment);
-
-                       foreach (var data in collectedData)
-                       {
-                           var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
-
-                           if (handler != null)
-                           {
-                               try
-                               {
-                                   handlerContext = await handler.ProcessAsync(data, handlerContext, heartBeat.ResourceId, logger.NewChildLogger());
-                               }
-                               catch (Exception e)
-                               {
-                                   LogHeartBeatException(e, $"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", logger, duration, heartBeat);
-
-                                   // Collect exceptions inorder to give a chance to every CollectedData object to go through processing before throwing
-                                   processingExceptions.Add(e);
-                               }
-                           }
-                           else
-                           {
-                               logger.AddDuration(duration)
-                                   .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
-                                   .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
-                           }
-                       }
-
-                       await UpdateCloudEnvironment(handlerContext, logger);
-                   });
-
-                if (processingExceptions.Any())
+                if (collectedData != null && collectedData.Count() > 0)
                 {
-                    // If all the exceptions are ValidationException, then return 422, to prevent agent from retrying.
-                    if (processingExceptions.All(e => e is ValidationException))
-                    {
-                        return UnprocessableEntity();
-                    }
+                    var processingExceptions = new List<Exception>();
 
-                    // If any of the handlers returned an exception other than ValidationException, then return 500 to make the agent retry.
-                    LogHeartBeatException(new AggregateException(processingExceptions), $"One or more handlers failed due to unexpected exceptions.", logger, duration, heartBeat);
-                    return InternalServerError();
+                    await logger.OperationScopeAsync(
+                       "process_heartbeat_collected_data",
+                       async (childLogger) =>
+                       {
+                           var handlerContext = new CollectedDataHandlerContext(environment);
+
+                           foreach (var data in collectedData)
+                           {
+                               var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
+
+                               if (handler != null)
+                               {
+                                   try
+                                   {
+                                       handlerContext = await handler.ProcessAsync(data, handlerContext, heartBeat.ResourceId, logger.NewChildLogger());
+                                   }
+                                   catch (Exception e)
+                                   {
+                                       LogHeartBeatException(e, $"Processing failed for the data {data.Name} received from Virtual Machine {heartBeat.ResourceId}", logger, duration, heartBeat);
+
+                                       // Collect exceptions inorder to give a chance to every CollectedData object to go through processing before throwing
+                                       processingExceptions.Add(e);
+                                   }
+                               }
+                               else
+                               {
+                                   logger.AddDuration(duration)
+                                       .FluentAddValue("HeartbeatMessage", JsonConvert.SerializeObject(heartBeat))
+                                       .LogWarning($"No handlers found for processing the data {data?.Name} received from Virtual Machine {heartBeat.ResourceId}");
+                               }
+                           }
+
+                           await UpdateCloudEnvironment(handlerContext, logger);
+                       });
+
+                    if (processingExceptions.Any())
+                    {
+                        // If all the exceptions are ValidationException, then return 422, to prevent agent from retrying.
+                        if (processingExceptions.All(e => e is ValidationException))
+                        {
+                            return UnprocessableEntity();
+                        }
+
+                        // If any of the handlers returned an exception other than ValidationException, then return 500 to make the agent retry.
+                        LogHeartBeatException(new AggregateException(processingExceptions), $"One or more handlers failed due to unexpected exceptions.", logger, duration, heartBeat);
+                        return InternalServerError();
+                    }
                 }
             }
 
@@ -215,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 .LogException("frontend_heartbeat_processing_error", e);
         }
 
-        private void ValidateHeartbeat(HeartBeatBody heartbeat, IDiagnosticsLogger logger)
+        private void ValidateHeartbeat(HeartBeatBody heartbeat)
         {
             ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "Heartbeat token has no resourceId");
             ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var tokenResourceId), $"Heartbeat token has invalid resourceId");
@@ -226,6 +218,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var collectedDataEnvIds = heartbeat.CollectedDataList.Where(d => d != default).Select(d => d.EnvironmentId).Where(id => id != default);
                 ValidationUtil.IsTrue(collectedDataEnvIds.All(id => id == heartbeat.EnvironmentId), $"Heartbeat received with conflicting environmentId in body and in collected data");
             }
+        }
+
+        private bool ShouldSendFrontEnd(HeartBeatBody heartbeat, CloudEnvironment environment)
+        {
+            // No environment record.
+            if (environment == null)
+            {
+                return false;
+            }
+
+            // Static environments don't have compute but do get sent to front end.
+            if (environment.Type == EnvironmentType.StaticEnvironment)
+            {
+                return true;
+            }
+
+            // Ignore heartbeats in the front end when the environment doesn't have compute assigned
+            // or the resourceId doesn't match with the currently assigned compute.
+            if (environment.Compute == null || environment.Compute.ResourceId == null || heartbeat.ResourceId != environment.Compute.ResourceId)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private string GetEnvironmentId(HeartBeatBody heartBeat)
+        {
+            var heartbeatID = heartBeat?.EnvironmentId;
+            var collectedData = heartBeat?.CollectedDataList?.Where(data => data != null);
+            var environmentIdCollectedData = collectedData?.FirstOrDefault(c => !string.IsNullOrEmpty(c.EnvironmentId))?.EnvironmentId;
+
+            return !string.IsNullOrEmpty(heartbeatID) ? heartbeatID : environmentIdCollectedData;
         }
     }
 }
