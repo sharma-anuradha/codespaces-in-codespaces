@@ -1,8 +1,9 @@
-﻿// <copyright file="ForceSuspendEnvironmentWorkflow.cs" company="Microsoft">
+﻿// <copyright file="FailEnvironmentWorkflow.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -13,34 +14,34 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows
 {
     /// <summary>
-    /// Force suspend environment.
+    /// Fails an environment.
     /// </summary>
-    public class ForceSuspendEnvironmentWorkflow : IForceSuspendEnvironmentWorkflow
+    public class FailEnvironmentWorkflow : IFailEnvironmentWorkflow
     {
-        private const string LogBaseName = "force_suspend_environment_repair";
+        private const string LogBaseName = "fail_environment_repair";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ForceSuspendEnvironmentWorkflow"/> class.
+        /// Initializes a new instance of the <see cref="FailEnvironmentWorkflow"/> class.
         /// </summary>
         /// <param name="environmentStateManager">target environment state manager.</param>
         /// <param name="resourceBrokerHttpClient">target resource Broker Http Client.</param>
         /// <param name="environmentRepository">target repository.</param>
-        public ForceSuspendEnvironmentWorkflow(
+        public FailEnvironmentWorkflow(
             IEnvironmentStateManager environmentStateManager,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             ICloudEnvironmentRepository environmentRepository)
         {
             EnvironmentStateManager = environmentStateManager;
-            ResourceBrokerHttpClient = resourceBrokerHttpClient;
+            ResourceBrokerClient = resourceBrokerHttpClient;
             EnvironmentRepository = environmentRepository;
         }
 
         /// <inheritdoc/>
-        public EnvironmentRepairActions WorkflowType => EnvironmentRepairActions.ForceSuspend;
+        public EnvironmentRepairActions WorkflowType => EnvironmentRepairActions.Fail;
 
         private IEnvironmentStateManager EnvironmentStateManager { get; }
 
-        private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerHttpClient { get; }
+        private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         private ICloudEnvironmentRepository EnvironmentRepository { get; }
 
@@ -54,30 +55,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
                 $"{LogBaseName}_execute",
                 async (childLogger) =>
                 {
-                    // Deal with getting the state to the correct place
-                    var shutdownState = CloudEnvironmentState.Shutdown;
-                    if (cloudEnvironment?.Storage?.Type == ResourceType.StorageArchive)
-                    {
-                        shutdownState = CloudEnvironmentState.Archived;
-                    }
+                    // Update state to be failed
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(
+                        cloudEnvironment,
+                        CloudEnvironmentState.Failed,
+                        nameof(FailEnvironmentWorkflow),
+                        string.Empty,
+                        childLogger);
 
-                    // Set the state of the environment
-                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown, null, logger);
-
-                    var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                    cloudEnvironment.Compute = null;
-
-                    // Update the database state.
-                    cloudEnvironment = await EnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    var cloudEnvironmentId = Guid.Parse(cloudEnvironment.Id);
 
                     // Delete the allocated resources.
-                    if (computeIdToken != null)
+                    if (cloudEnvironment.Compute != null)
                     {
-                        await ResourceBrokerHttpClient.DeleteAsync(
-                            Guid.Parse(cloudEnvironment.Id),
-                            computeIdToken.Value,
-                            childLogger.NewChildLogger());
+                        await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
                     }
+
+                    if (cloudEnvironment.OSDisk != null)
+                    {
+                        await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.OSDisk.ResourceId, childLogger.NewChildLogger());
+                    }
+
+                    if (cloudEnvironment.Storage != null)
+                    {
+                        await ResourceBrokerClient.DeleteAsync(cloudEnvironmentId, cloudEnvironment.Storage.ResourceId, childLogger.NewChildLogger());
+                    }
+
+                    // Update the database state
+                    await EnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger);
                 },
                 swallowException: true);
         }

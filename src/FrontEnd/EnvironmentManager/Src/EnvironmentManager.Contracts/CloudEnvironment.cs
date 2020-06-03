@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         public CloudEnvironment()
         {
-            Transitions = new CloudEnvironmentTansitions();
+            Transitions = new CloudEnvironmentTransitions();
         }
 
         /// <summary>
@@ -109,6 +109,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         [JsonProperty(Required = Required.Always, PropertyName = "state")]
         [JsonConverter(typeof(StringEnumConverter))]
         public CloudEnvironmentState State { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional timeout assigned to transitional states.
+        /// </summary>
+        /// <remarks>
+        /// Used in conjuction with <see cref="State"/> and <see cref="LastStateUpdated"/> to assign a timeout after
+        /// which the current transitional state is considered to be invalid and environment needs to be repaired.
+        /// </remarks>
+        [JsonProperty(Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Ignore, PropertyName = "stateTimeout")]
+        public DateTime? StateTimeout { get; set; }
 
         /// <summary>
         /// Gets or sets the updated date and time for state change.
@@ -268,7 +278,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets or sets the transitions.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "transitions")]
-        public CloudEnvironmentTansitions Transitions { get; set; }
+        public CloudEnvironmentTransitions Transitions { get; set; }
 
         /// <summary>
         /// Gets or sets the partner. See <see cref="VsoPlan.Partner"/>.

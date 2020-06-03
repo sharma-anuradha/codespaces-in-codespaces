@@ -1,4 +1,4 @@
-﻿// <copyright file="IInactiveEnvironmentWorkflow.cs" company="Microsoft">
+﻿// <copyright file="IFailEnvironmentWorkflow.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,9 +9,9 @@ using System.Text;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows
 {
     /// <summary>
-    /// An interface to support componsition for the InactiveEnvironmentWorkflow.
+    /// An interface to support componsition for the IFailEnvironmentWorkflow.
     /// </summary>
-    public interface IInactiveEnvironmentWorkflow : IEnvironmentRepairWorkflow
+    public interface IFailEnvironmentWorkflow : IEnvironmentRepairWorkflow
     {
     }
 }

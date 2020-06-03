@@ -589,6 +589,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     result.CloudEnvironment = cloudEnvironment;
                     result.HttpStatusCode = StatusCodes.Status200OK;
 
+                    // Kick off state transition monitoring.
+                    try
+                    {
+                        await EnvironmentMonitor.MonitorProvisioningStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, childLogger.NewChildLogger());
+                    }
+                    catch (Exception ex)
+                    {
+                        childLogger.LogException($"{LogBaseName}_create_state_transition_monitor_error", ex);
+                        throw;
+                    }
+
                     return result;
                 },
                 async (ex, childLogger) =>

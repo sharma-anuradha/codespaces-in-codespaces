@@ -25,6 +25,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public bool EnableStateTransitionMonitor { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether environment state transition monitor for provisioning is enabled.
+        /// </summary>
+        public bool EnableProvisioningStateTransitionMonitor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default timeout for provisoning acknowledgement.
+        /// </summary>
+        public int DefaultProvisionEnvironmentAcknowledgementTimeoutInSeconds { get; set; }
+
+        /// <summary>
         /// Gets or sets Resume Environment Timeout In Seconds.
         /// </summary>
         public int DefaultResumeEnvironmentTimeoutInSeconds { get; set; }
@@ -60,6 +70,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             var timeout = await SystemConfiguration.GetValueAsync("setting:resume-environment-timeout-in-seconds", logger, DefaultResumeEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
+        }
+
+        /// <summary>
+        /// Gets the provisioning acknowledgement timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> ProvisionEnvironmentAcknowledgementTimeoutInSeconds(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:provision-environment-acknowledgement-timeout-in-seconds", logger, DefaultProvisionEnvironmentAcknowledgementTimeoutInSeconds);
             return TimeSpan.FromSeconds(timeout);
         }
 
@@ -111,6 +134,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-environment-state-transition-monitoring", logger, EnableStateTransitionMonitor);
+        }
+
+        /// <summary>
+        /// Get current flight switch for provisioning environment state transition monitoring.
+        /// </summary>
+        /// <param name="logger">target logger.</param>
+        /// <returns>target value.</returns>
+        public Task<bool> EnableProvisioningStateTransitionMonitoring(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-environment-state-transition-monitoring-provisioning", logger, EnableProvisioningStateTransitionMonitor);
         }
     }
 }

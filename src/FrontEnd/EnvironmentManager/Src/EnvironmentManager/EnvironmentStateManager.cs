@@ -101,6 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     cloudEnvironment.State = newState;
                     cloudEnvironment.LastStateUpdateTrigger = trigger;
                     cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
+                    cloudEnvironment.StateTimeout = null; // reset the state timeout as the transition has now occurred
 
                     if (reason != null)
                     {

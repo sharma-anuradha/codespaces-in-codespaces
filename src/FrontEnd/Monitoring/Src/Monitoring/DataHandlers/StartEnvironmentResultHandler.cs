@@ -28,7 +28,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         /// Initializes a new instance of the <see cref="StartEnvironmentResultHandler"/> class.
         /// </summary>
         /// <param name="environmentManager">Environment Manager.</param>
-        public StartEnvironmentResultHandler(IEnvironmentManager environmentManager)
+        public StartEnvironmentResultHandler(
+            IEnvironmentManager environmentManager)
         {
             this.environmentManager = environmentManager;
         }
@@ -100,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                                 childLogger.NewChildLogger());
                         }
                     }
-                    else
+                    else if (jobResultData.JobState == JobState.Failed)
                     {
                         // Mark environment provision to failed status
                         if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
@@ -118,6 +119,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             // Shutdown the environment if the environment has failed to start.
                             var environmentServiceResult = await environmentManager.ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
                             return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                        }
+                    }
+                    else if (jobResultData.JobState == JobState.Started)
+                    {
+                        if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
+                        {
+                            // begin transition monitoring if a timeout was specified.
+                            if (jobResultData.Timeout.HasValue)
+                            {
+                                // update the environment's state timeout to the one provided by the agent.
+                                cloudEnvironment.StateTimeout = jobResultData.Timeout;
+                            }
                         }
                     }
 

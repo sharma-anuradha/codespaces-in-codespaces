@@ -70,13 +70,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
+        public async Task MonitorProvisioningStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            // Check for flighting switch (second-level flag for provisioning state)
+            if (!await EnvironmentMonitorSettings.EnableProvisioningStateTransitionMonitoring(logger.NewChildLogger()))
+            {
+                // Skip this monitor
+                return;
+            }
+
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
+                CurrentState = CloudEnvironmentState.Provisioning,
+                TargetState = CloudEnvironmentState.Available,
+                TransitionTimeout = await EnvironmentMonitorSettings.ProvisionEnvironmentAcknowledgementTimeoutInSeconds(logger.NewChildLogger()),
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task MonitorProvisioningStateTransitionAsync(string environmentId, Guid computeId, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            // Check for flighting switch (second-level flag for provisioning state)
+            if (!await EnvironmentMonitorSettings.EnableProvisioningStateTransitionMonitoring(logger.NewChildLogger()))
+            {
+                // Skip this monitor
+                return;
+            }
+
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
+                CurrentState = CloudEnvironmentState.Provisioning,
+                TargetState = CloudEnvironmentState.Available,
+                TransitionTimeout = timeout,
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
         public async Task MonitorResumeStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
         {
             var input = new EnvironmentStateTransitionInput()
             {
                 EnvironmentId = environmentId,
                 ComputeResourceId = computeId,
-                ContinuationToken = string.Empty,
                 CurrentState = CloudEnvironmentState.Starting,
                 TargetState = CloudEnvironmentState.Available,
                 TransitionTimeout = await EnvironmentMonitorSettings.ResumeEnvironmentTimeout(logger.NewChildLogger()),
@@ -92,7 +135,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 EnvironmentId = environmentId,
                 ComputeResourceId = computeId,
-                ContinuationToken = string.Empty,
                 CurrentState = CloudEnvironmentState.ShuttingDown,
                 TargetState = CloudEnvironmentState.Shutdown,
                 TransitionTimeout = await EnvironmentMonitorSettings.ShutdownEnvironmentTimeout(logger.NewChildLogger()),
@@ -108,7 +150,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 EnvironmentId = environmentId,
                 ComputeResourceId = computeId,
-                ContinuationToken = string.Empty,
                 CurrentState = CloudEnvironmentState.Unavailable,
                 TargetState = CloudEnvironmentState.Available,
                 TransitionTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger.NewChildLogger()),

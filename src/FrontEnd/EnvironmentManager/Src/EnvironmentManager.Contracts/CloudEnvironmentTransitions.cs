@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentTansitions.cs" company="Microsoft">
+﻿// <copyright file="CloudEnvironmentTransitions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,12 +9,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <summary>
     /// Transtions of cloud environments.
     /// </summary>
-    public class CloudEnvironmentTansitions
+    public class CloudEnvironmentTransitions
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CloudEnvironmentTansitions"/> class.
+        /// Initializes a new instance of the <see cref="CloudEnvironmentTransitions"/> class.
         /// </summary>
-        public CloudEnvironmentTansitions()
+        public CloudEnvironmentTransitions()
         {
             Archiving = new TransitionState();
             Provisioning = new TransitionState();

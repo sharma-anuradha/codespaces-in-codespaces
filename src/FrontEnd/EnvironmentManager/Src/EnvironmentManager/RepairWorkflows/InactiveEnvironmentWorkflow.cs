@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
     /// <summary>
     /// Used to mark an environment as inactive.
     /// </summary>
-    internal class InactiveEnvironmentWorkflow : IInactiveEnvironmentWorkflow
+    public class InactiveEnvironmentWorkflow : IInactiveEnvironmentWorkflow
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="InactiveEnvironmentWorkflow"/> class.

@@ -36,6 +36,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public DateTime EndTime { get; set; }
 
         /// <summary>
+        /// Gets or sets the timeout for the currently running job step.
+        /// </summary>
+        [DataMember(IsRequired = false, EmitDefaultValue = false)]
+        public DateTime? Timeout { get; set; }
+
+        /// <summary>
         /// Gets or sets the job errors.
         /// </summary>
         [DataMember(IsRequired = false, EmitDefaultValue = false)]

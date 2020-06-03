@@ -21,6 +21,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
+        public Task MonitorProvisioningStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task MonitorProvisioningStateTransitionAsync(string environmentId, Guid computeId, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
         public Task MonitorResumeStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;

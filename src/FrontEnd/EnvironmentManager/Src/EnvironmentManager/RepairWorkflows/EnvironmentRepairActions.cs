@@ -10,9 +10,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
     public enum EnvironmentRepairActions
     {
         /// <summary>
-        /// Mark an environment as Unavailable.
+        /// Do nothing.
         /// </summary>
-        Unavailable = 2,
+        None = 0,
 
         /// <summary>
         /// Suspend Environment.
@@ -20,8 +20,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
         ForceSuspend = 1,
 
         /// <summary>
-        /// Do nothing.
+        /// Mark an environment as Unavailable.
         /// </summary>
-        None = 0,
+        Unavailable = 2,
+
+        /// <summary>
+        /// Mark an environment as Failed.
+        /// </summary>
+        Fail = 3,
     }
 }

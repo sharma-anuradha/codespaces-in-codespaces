@@ -85,6 +85,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IForceSuspendEnvironmentWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
             services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<ForceSuspendEnvironmentWorkflow>());
 
+            services.AddSingleton<FailEnvironmentWorkflow>();
+            services.AddSingleton<IFailEnvironmentWorkflow>(x => x.GetRequiredService<FailEnvironmentWorkflow>());
+            services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<FailEnvironmentWorkflow>());
+
             services.AddSingleton<InactiveEnvironmentWorkflow>();
             services.AddSingleton<IInactiveEnvironmentWorkflow>(x => x.GetRequiredService<InactiveEnvironmentWorkflow>());
             services.AddSingleton<IEnvironmentRepairWorkflow>(x => x.GetRequiredService<InactiveEnvironmentWorkflow>());
