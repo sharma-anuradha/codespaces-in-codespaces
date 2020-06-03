@@ -93,6 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             {
                 Requires.NotNull(planId, nameof(planId));
                 Requires.NotNull(scopedCreateSecretInput, nameof(scopedCreateSecretInput));
+                ValidateUserContext();
                 AuthorizeSecretScope(scopedCreateSecretInput.Scope);
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
 
@@ -134,6 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secrets_by_plan", async (childLogger) =>
             {
                 Requires.NotNull(planId, nameof(planId));
+                ValidateUserContext();
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
                 var scopedSecrets = new List<ScopedSecretResult>();
 
@@ -170,6 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             {
                 Requires.NotNull(planId, nameof(planId));
                 Requires.NotNull(scopedUpdateSecretInput, nameof(scopedUpdateSecretInput));
+                ValidateUserContext();
                 AuthorizeSecretScope(scopedUpdateSecretInput.Scope);
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
 
@@ -211,6 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             {
                 Requires.NotNull(planId, nameof(planId));
                 Requires.NotEmpty(secretId, nameof(secretId));
+                ValidateUserContext();
                 AuthorizeSecretScope(secretScope);
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
 
@@ -246,6 +250,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             {
                 Requires.NotNull(planId, nameof(planId));
                 Requires.NotEmpty(secretId, nameof(secretId));
+                ValidateUserContext();
                 AuthorizeSecretScope(secretScope);
                 var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
 
@@ -278,6 +283,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         {
             return await logger.OperationScopeAsync($"{LoggingBaseName}_get_secret_stores_by_plan", async (childLogger) =>
             {
+                ValidateUserContext();
                 var userId = CurrentUserProvider.CurrentUserIdSet.PreferredUserId;
                 return await SecretStoreRepository.GetAllPlanSecretStoresByUserAsync(userId, planId, childLogger);
             });
@@ -482,6 +488,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             }
 
             throw new ProcessingFailedException($"The SKU '{skuName}' does not exist in the plan sku catalog.");
+        }
+
+        private void ValidateUserContext()
+        {
+            UnauthorizedUtil.IsRequired(CurrentUserProvider.CurrentUserIdSet);
+            UnauthorizedUtil.IsRequired(CurrentUserProvider.Identity);
         }
 
         private void AuthorizeSecretScope(SecretScope scope)

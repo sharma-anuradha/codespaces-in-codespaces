@@ -1348,61 +1348,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private async Task<FilterSecretsBody> ConstructFilterSecretsDataAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
-            var planId = Requires.NotNull(cloudEnvironment.PlanId, nameof(cloudEnvironment.PlanId));
-            var filterSecretsBody = default(FilterSecretsBody);
-
-            var secretStores = await SecretStoreManager.GetAllSecretStoresByPlanAsync(planId, logger);
-            if (secretStores.Any())
-            {
-                var prioritizedSecretStoreResources = new List<PrioritizedSecretStoreResource>();
-                var planScopeSecretStore = secretStores.SingleOrDefault(secretStore => secretStore.Scope == SecretScopeModel.Plan &&
-                                                                                       secretStore.SecretResource?.ResourceId != default &&
-                                                                                       secretStore.SecretResource?.IsReady == true);
-                var userScopeSecretStore = secretStores.SingleOrDefault(secretStore => secretStore.Scope == SecretScopeModel.User &&
-                                                                                       secretStore.SecretResource?.ResourceId != default &&
-                                                                                       secretStore.SecretResource?.IsReady == true);
-
-                if (planScopeSecretStore != default)
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_construct_filter_secrets_data",
+                async (childLogger) =>
                 {
-                    prioritizedSecretStoreResources.Add(new PrioritizedSecretStoreResource
-                    {
-                        Priority = 2,
-                        ResourceId = planScopeSecretStore.SecretResource.ResourceId,
-                    });
-                }
+                    var planId = Requires.NotNull(cloudEnvironment.PlanId, nameof(cloudEnvironment.PlanId));
+                    var filterSecretsBody = default(FilterSecretsBody);
 
-                if (userScopeSecretStore != default)
-                {
-                    prioritizedSecretStoreResources.Add(new PrioritizedSecretStoreResource
+                    var secretStores = await SecretStoreManager.GetAllSecretStoresByPlanAsync(planId, logger);
+                    if (secretStores.Any())
                     {
-                        Priority = 1,
-                        ResourceId = userScopeSecretStore.SecretResource.ResourceId,
-                    });
-                }
+                        var prioritizedSecretStoreResources = new List<PrioritizedSecretStoreResource>();
+                        var planScopeSecretStore = secretStores.SingleOrDefault(secretStore => secretStore.Scope == SecretScopeModel.Plan &&
+                                                                                               secretStore.SecretResource?.ResourceId != default &&
+                                                                                               secretStore.SecretResource?.IsReady == true);
+                        var userScopeSecretStore = secretStores.SingleOrDefault(secretStore => secretStore.Scope == SecretScopeModel.User &&
+                                                                                               secretStore.SecretResource?.ResourceId != default &&
+                                                                                               secretStore.SecretResource?.IsReady == true);
 
-                if (prioritizedSecretStoreResources.Any())
-                {
-                    var secretFilterDataCollection = new List<SecretFilterData>();
-
-                    // Add git repo filter data
-                    if (!string.IsNullOrEmpty(cloudEnvironment.Seed?.SeedMoniker))
-                    {
-                        secretFilterDataCollection.Add(new SecretFilterData
+                        if (planScopeSecretStore != default)
                         {
-                            Type = SecretFilterType.GitRepo,
-                            Data = cloudEnvironment.Seed?.SeedMoniker,
-                        });
+                            prioritizedSecretStoreResources.Add(new PrioritizedSecretStoreResource
+                            {
+                                Priority = 2,
+                                ResourceId = planScopeSecretStore.SecretResource.ResourceId,
+                            });
+                        }
+
+                        if (userScopeSecretStore != default)
+                        {
+                            prioritizedSecretStoreResources.Add(new PrioritizedSecretStoreResource
+                            {
+                                Priority = 1,
+                                ResourceId = userScopeSecretStore.SecretResource.ResourceId,
+                            });
+                        }
+
+                        if (prioritizedSecretStoreResources.Any())
+                        {
+                            var secretFilterDataCollection = new List<SecretFilterData>();
+
+                            // Add git repo filter data
+                            if (!string.IsNullOrEmpty(cloudEnvironment.Seed?.SeedMoniker))
+                            {
+                                secretFilterDataCollection.Add(new SecretFilterData
+                                {
+                                    Type = SecretFilterType.GitRepo,
+                                    Data = cloudEnvironment.Seed?.SeedMoniker,
+                                });
+                            }
+
+                            filterSecretsBody = new FilterSecretsBody
+                            {
+                                FilterData = secretFilterDataCollection,
+                                PrioritizedSecretStoreResources = prioritizedSecretStoreResources,
+                            };
+                        }
                     }
 
-                    filterSecretsBody = new FilterSecretsBody
-                    {
-                        FilterData = secretFilterDataCollection,
-                        PrioritizedSecretStoreResources = prioritizedSecretStoreResources,
-                    };
-                }
-            }
-
-            return filterSecretsBody;
+                    return filterSecretsBody;
+                },
+                swallowException: true);
         }
 
         private Task<CloudEnvironmentServiceResult> QueueCreateAsync(
