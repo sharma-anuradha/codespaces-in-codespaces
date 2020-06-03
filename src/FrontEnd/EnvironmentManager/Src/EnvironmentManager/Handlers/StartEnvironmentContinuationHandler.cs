@@ -296,7 +296,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 operationInput.EnvironmentId,
                 resourceList,
                 logger.NewChildLogger());
-            var storageStatus = statusResponse.SingleOrDefault(x => x.Type == record.Value.Storage.Type);
+            var storageStatus = record.Value.Storage == default ? default : statusResponse.SingleOrDefault(x => x.Type == record.Value.Storage.Type);
             var osDiskStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk);
 
             // Check if we got all the resources
