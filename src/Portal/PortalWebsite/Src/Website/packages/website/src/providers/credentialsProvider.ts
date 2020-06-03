@@ -13,7 +13,7 @@ import {
     isHostedOnGithub} from 'vso-client-core';
 
 import { authService } from '../services/authService';
-import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
+import { getStoredGitHubToken, getGitHubAccessToken } from '../services/gitHubAuthenticationService';
 import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
 import { createCascadeTokenKey } from '../split/github/createCascadeTokenKey';
 import { GitHubStrategy } from './GitHubStrategy';
@@ -90,6 +90,17 @@ class GistPadStrategy implements IAuthStrategy {
     }
 }
 
+/// todo: Remove this after migrating to Github Virtual FileSystem extension created by VSCode team
+class GitHubStrategyForServerless implements IAuthStrategy {
+    async canHandleService(service: string, account: string) {
+        return service === 'vscode-github' && account === 'accesstoken';
+    }
+
+    async getToken(service: string, account: string): Promise<string | null> {
+        return getGitHubAccessToken();
+    }
+}
+
 class AzureDevOpsStrategy implements IAuthStrategy {
     async canHandleService(service: string, account: string) {
         return service === 'vscode-azdev' && account === 'accesstoken';
@@ -123,6 +134,7 @@ const getProviders = () => {
             new LiveShareWebStrategy(),
             new GistPadStrategy(),
             new AzureDevOpsStrategy(),
+            new GitHubStrategyForServerless(),
         ];
 };
 

@@ -10,6 +10,7 @@ import {
     IEnvironment,
     isHostedOnGithub,
     vsls,
+    EnvironmentStateInfo,
 } from 'vso-client-core';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 import {
@@ -41,6 +42,7 @@ import {
     isSuspended,
     isNotAvailable,
     isStarting,
+    isCreating,
 } from '../../utils/environmentUtils';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
@@ -69,6 +71,7 @@ import { createUniqueId } from '../../dependencies';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
+import { IServerlessSplashscreenProps } from '../serverlessSpalshscreen/serverlessSplashscreen';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
 
@@ -83,6 +86,7 @@ import './workbench.css';
 export interface IWorkbenchState {
     connectError: string | null;
     connectRequested: boolean;
+    isServerlessSplashScreenShown: boolean;
 }
 
 export interface WorkbenchProps {
@@ -90,6 +94,7 @@ export interface WorkbenchProps {
     workbenchFavicon: string;
     autoStart: boolean;
     SplashScreenComponent: React.JSXElementConstructor<IWorkbenchSplashScreenProps>;
+    ServerlessSplashscreenComponent: React.JSXElementConstructor<IServerlessSplashscreenProps>;
     PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
     apiEndpoint: string;
@@ -114,10 +119,10 @@ const logger = createTrace('WorkbenchView');
 class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     constructor(props: WorkbenchProps, state: IWorkbenchState) {
         super(props, state);
-
         this.state = {
             connectError: null,
             connectRequested: false,
+            isServerlessSplashScreenShown: false,
         };
     }
 
@@ -186,6 +191,9 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             }
 
             this.cancelPolling();
+            if (this.state.isServerlessSplashScreenShown) {
+                window.location.reload(true);
+            }
             this.mountWorkbench(environmentInfo as IEnvironment);
 
             return;
@@ -193,6 +201,17 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
         if (this.state && this.state.connectError) {
             return;
+        }
+
+        if (!this.state.isServerlessSplashScreenShown) {
+            let isServerlessSplashScreenShown = !!(
+                isCreating(environmentInfo) &&
+                localStorage.getItem('vscs-showserverless') === 'true' &&
+                environmentInfo?.seed.moniker.includes('github.com')
+            );
+            if (isServerlessSplashScreenShown) {
+                this.setState({ isServerlessSplashScreenShown });
+            }
         }
 
         if (this.notifySeconds && Date.now() >= this.notifySeconds) {
@@ -209,7 +228,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 this.props.liveShareEndpoint,
                 this.correlationId || createUniqueId(),
                 BrowserSyncService,
-                GitCredentialService,
+                GitCredentialService
             );
 
             if (environmentInfo.connection) {
@@ -298,12 +317,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
     // tslint:disable-next-line: max-func-body-length
     async mountWorkbench(environmentInfo: IEnvironment) {
-        const {
-            token,
-            liveShareEndpoint,
-            apiEndpoint,
-            getEnvironment
-        } = this.props;
+        const { token, liveShareEndpoint, apiEndpoint, getEnvironment } = this.props;
 
         if (this.workbenchMounted) {
             return;
@@ -485,9 +499,17 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
     private workbenchRef: HTMLDivElement | null = null;
 
     private renderWorkbench() {
-        const { environmentInfo, SplashScreenComponent } = this.props;
+        const {
+            environmentInfo,
+            SplashScreenComponent,
+            ServerlessSplashscreenComponent,
+        } = this.props;
         if (!environmentInfo) {
             return <Loader></Loader>;
+        }
+
+        if (this.state.isServerlessSplashScreenShown) {
+            return <ServerlessSplashscreenComponent environment={environmentInfo} />;
         }
 
         if (isHostedOnGithub()) {
@@ -507,10 +529,11 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     />
                 </div>
             );
+        } else if (this.state.isServerlessSplashScreenShown) {
+            return <ServerlessSplashscreenComponent environment={environmentInfo} />;
         } else {
             this.connectionAdapter =
-                this.connectionAdapter ||
-                new SplashCommunicationProvider(this.onCommandReceived);
+                this.connectionAdapter || new SplashCommunicationProvider(this.onCommandReceived);
             return (
                 <SplashScreenComponent
                     onRetry={this.handleClickToRetry}
@@ -543,6 +566,7 @@ const getProps: (
     | 'connectingFavicon'
     | 'workbenchFavicon'
     | 'SplashScreenComponent'
+    | 'ServerlessSplashscreenComponent'
     | 'PageNotFoundComponent'
     | keyof typeof mapDispatch
 > = (state, props) => {

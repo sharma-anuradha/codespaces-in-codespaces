@@ -6,6 +6,7 @@ import { getVSCodeAssetPath } from 'vso-workbench';
 
 import { Workbench } from '../workbench/workbench';
 import { WorkbenchSplashScreen } from '../workbenchSplashScreen/workbenchSplashScreen';
+import { ServerlessSplashscreen } from '../serverlessSpalshscreen/serverlessSplashscreen';
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 
 const managementFavicon = 'favicon.ico';
@@ -20,6 +21,7 @@ export class WorkbenchPage extends Component<IWorkbenchPageProps, {}> {
                 connectingFavicon={managementFavicon}
                 workbenchFavicon={vscodeFavicon}
                 SplashScreenComponent={WorkbenchSplashScreen}
+                ServerlessSplashscreenComponent={ServerlessSplashscreen}
                 PageNotFoundComponent={PageNotFound}
                 {...this.props}
             />

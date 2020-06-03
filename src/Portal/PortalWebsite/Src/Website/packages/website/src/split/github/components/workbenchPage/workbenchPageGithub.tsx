@@ -6,6 +6,7 @@ import { Workbench } from '../../../../components/workbench/workbench';
 import { PageNotFoundGithub } from '../pageNotFound/pageNotFoundGithub';
 import { FAVICON_PATH, DEFAULT_TITLE } from '../../constants';
 import { WorkbenchSplashScreen } from '../../../../components/workbenchSplashScreen/workbenchSplashScreen';
+import { ServerlessSplashscreen } from '../../../../components/serverlessSpalshscreen/serverlessSplashscreen';
 
 interface IWorkbenchPageProps extends RouteComponentProps<{ id: string }> {}
 
@@ -19,6 +20,7 @@ export const WorkbenchPageGithub = (props: IWorkbenchPageProps) => {
             connectingFavicon={FAVICON_PATH}
             workbenchFavicon={FAVICON_PATH}
             SplashScreenComponent={WorkbenchSplashScreen}
+            ServerlessSplashscreenComponent={ServerlessSplashscreen}
             PageNotFoundComponent={PageNotFoundGithub}
             {...props}
         />
