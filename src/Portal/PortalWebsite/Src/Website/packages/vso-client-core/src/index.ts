@@ -30,6 +30,7 @@ export { createCancellationToken } from './utils/timer';
 export { debounceInterval } from './utils/debounceInterval';
 export { RequestStore } from './utils/RequestStore';
 export { arrayUnique } from './utils/arrayUnique';
+export { updateFavicon } from './utils/updateFavicon';
 
 // interfaces
 export { IKeychain } from './interfaces/IKeychain';
