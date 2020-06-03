@@ -81,7 +81,7 @@
         }]
 },
 {
-"apiVersions": [ "2019-07-01-preview"],
+"apiVersions": [ "2020-05-26-preview"],
 "locations": ["West Europe",
           "East US",
           "West Us 2",
