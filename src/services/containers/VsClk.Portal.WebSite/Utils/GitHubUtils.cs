@@ -29,6 +29,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             var locationSplit = hostString.Split(".");
             var mainDomain = string.Join(".", locationSplit.TakeLast(2));
             return string.Equals(mainDomain, "github.com", StringComparison.InvariantCultureIgnoreCase) ||
+                string.Equals(mainDomain, "github.dev", StringComparison.InvariantCultureIgnoreCase) ||
                 string.Equals(mainDomain, "githubusercontent.com", StringComparison.InvariantCultureIgnoreCase) ||
                 string.Equals(mainDomain, "githubusercontent.localhost", StringComparison.InvariantCultureIgnoreCase) ||
                 string.Equals(mainDomain, "github.localhost", StringComparison.InvariantCultureIgnoreCase);

@@ -3,7 +3,7 @@ const atob = require('atob');
 const { execSync } = require('child_process');
 const { writeFile } = require('fs-extra');
 
-const { devCert, githubDevCert } = require('./constants');
+const { devCert, githubDevCert, githubDotDevCert } = require('./constants');
 
 const getCert = async (certName, certOutputPath) => {
     try {
@@ -25,3 +25,4 @@ const getCert = async (certName, certOutputPath) => {
 
 getCert('dev-core-vsengsaas-visualstudio-com-ssl', devCert);
 getCert('workspaces-dev-github-com-ssl', githubDevCert);
+getCert('dev-github-dev-ssl', githubDotDevCert);

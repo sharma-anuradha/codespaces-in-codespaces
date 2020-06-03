@@ -5,6 +5,14 @@ workspaces-dev.github.com {
     file com.github.workspaces-dev
 }
 
+local.github.dev {
+    log
+    errors
+
+    file com.local.github.dev
+}
+
+
 codespaces-dev.github.com {
     log
     errors

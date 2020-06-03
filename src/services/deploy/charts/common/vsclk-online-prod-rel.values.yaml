@@ -9,6 +9,7 @@ ingress:
     - online.core.vsengsaas.visualstudio.com
     - "*.workspaces.github.com"
     - "*.codespaces.github.com"
+    - "*.github.dev"
     - vsclk-online-prod-rel-tm.trafficmanager.net
   tls:
     - hosts:
@@ -20,6 +21,9 @@ ingress:
     - hosts:
         - "*.codespaces.github.com"
       secretName: ssl-cert-github-cs
+    - hosts:
+        - "*.github.dev"
+      secretName: ssl-cert-github-dot-dev
 
 githubAuthEndpoint:
   hosts:

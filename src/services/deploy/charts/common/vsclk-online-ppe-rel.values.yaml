@@ -8,6 +8,7 @@ ingress:
     - online-ppe.core.vsengsaas.visualstudio.com
     - "*.workspaces-ppe.github.com"
     - "*.codespaces-ppe.github.com"
+    - "*.ppe.github.dev"
     - vsclk-online-ppe-rel-tm.trafficmanager.net
   tls:
     - hosts:
@@ -19,6 +20,9 @@ ingress:
     - hosts:
         - "*.codespaces-ppe.github.com"
       secretName: ssl-cert-github-cs
+    - hosts:
+        - "*.ppe.github.dev"
+      secretName: ssl-cert-github-dot-dev
 
 githubAuthEndpoint:
   hosts:

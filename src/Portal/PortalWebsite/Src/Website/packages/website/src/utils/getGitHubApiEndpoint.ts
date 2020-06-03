@@ -5,7 +5,8 @@ const localApiEndpoint = 'https://api.github.localhost';
 
 const allowedHostnames = [
     'dev.core.vsengsaas.visualstudio.com',
-    'workspaces-dev.github.com'
+    'workspaces-dev.github.com',
+    'local.github.dev',
 ];
 
 const getCurrentHostName = () => {
