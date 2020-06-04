@@ -19,8 +19,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretFilterType;
-using SecretFilterTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
 using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
 using SecretType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretType;
 using SecretTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretType;
@@ -234,44 +232,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                 catch (Exception e)
                 {
                     throw new ProcessingFailedException((int)MessageCodes.FailedToDeleteSecret, innerException: e);
-                }
-            });
-        }
-
-        /// <inheritdoc/>
-        public async Task<ScopedSecretResult> DeleteSecretFilterAsync(
-            string planId,
-            Guid secretId,
-            SecretFilterType secretFilterType,
-            SecretScope secretScope,
-            IDiagnosticsLogger logger)
-        {
-            return await logger.OperationScopeAsync($"{LoggingBaseName}_delete_secret_filter", async (childLogger) =>
-            {
-                Requires.NotNull(planId, nameof(planId));
-                Requires.NotEmpty(secretId, nameof(secretId));
-                ValidateUserContext();
-                AuthorizeSecretScope(secretScope);
-                var vsoPlan = await GetAuthorizedPlanAsync(planId, childLogger.NewChildLogger());
-
-                var secretStore = await GetSecretStoreAsync(
-                    vsoPlan,
-                    secretScope,
-                    createIfNotExists: false,
-                    childLogger);
-
-                try
-                {
-                    var secret = await SecretManagerHttpClient.DeleteSecretFilterAsync(
-                        secretStore.SecretResource.ResourceId,
-                        secretId,
-                        Mapper.Map<SecretFilterTypeHttpContract>(secretFilterType),
-                        childLogger);
-                    return ScopeSecret(secretStore.Scope, secret);
-                }
-                catch (Exception e)
-                {
-                    throw new ProcessingFailedException((int)MessageCodes.FailedToUpdateSecret, innerException: e);
                 }
             });
         }

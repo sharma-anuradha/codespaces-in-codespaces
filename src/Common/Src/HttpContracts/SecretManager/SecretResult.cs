@@ -40,9 +40,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         public SecretType Type { get; set; }
 
         /// <summary>
+        /// Gets or sets notes.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "notes")]
+        public string Notes { get; set; }
+
+        /// <summary>
         /// Gets or sets secret filters.
         /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "filters")]
-        public IDictionary<SecretFilterType, string> Filters { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "filters")]
+        public IEnumerable<SecretFilterBody> Filters { get; set; }
     }
 }

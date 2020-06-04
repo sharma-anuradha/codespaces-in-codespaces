@@ -49,19 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Secret
         }
 
         /// <inheritdoc/>
-        public async Task<SecretResult> DeleteSecretFilterAsync(
-            Guid resourceId,
-            Guid secretId,
-            SecretFilterType secretFilterType,
-            IDiagnosticsLogger logger)
-        {
-            Requires.NotEmpty(resourceId, nameof(resourceId));
-            Requires.NotEmpty(secretId, nameof(secretId));
-            var uri = SecretManagerHttpContract.GetDeleteSecretFilterUri(resourceId, secretId, secretFilterType);
-            return await SendAsync<object, SecretResult>(SecretManagerHttpContract.DeleteSecretFilterMethod, uri, null, logger);
-        }
-
-        /// <inheritdoc/>
         public async Task<IEnumerable<ResourceSecretsResult>> GetSecretsAsync(
             IEnumerable<Guid> resourceIds,
             IDiagnosticsLogger logger)

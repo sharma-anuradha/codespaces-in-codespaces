@@ -110,43 +110,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         }
 
         /// <inheritdoc/>
-        public async Task<UserSecretResult> DeleteSecretFilterAsync(
-            Guid resourceId,
-            Guid secretId,
-            SecretFilterType secretFilterType,
-            IDiagnosticsLogger logger)
-        {
-            return await logger.RetryOperationScopeAsync($"{LoggingBaseName}_delete_secret_filter", async childLogger =>
-            {
-                Requires.NotEmpty(resourceId, nameof(resourceId));
-                Requires.NotEmpty(secretId, nameof(secretId));
-
-                var isSecretChanged = false;
-                var keyVaultResource = await GetKeyVaultResourceAsync(resourceId, childLogger.NewChildLogger());
-                var secret = GetSecretFromKeyVaultResource(secretId, keyVaultResource);
-
-                // Delete the specified secret filters if it exists
-                if (secret.Filters != null)
-                {
-                    if (secret.Filters.ContainsKey(secretFilterType))
-                    {
-                        secret.Filters.Remove(secretFilterType);
-                        isSecretChanged = true;
-                    }
-                }
-
-                // Update resource record in cosmos db if it is modified
-                if (isSecretChanged)
-                {
-                    secret.LastModified = DateTime.UtcNow;
-                    await ResourceRepository.UpdateAsync(keyVaultResource, childLogger.NewChildLogger());
-                }
-
-                return Mapper.Map<UserSecretResult>(secret);
-            });
-        }
-
-        /// <inheritdoc/>
         public async Task<IEnumerable<ResourceSecrets>> GetSecretsAsync(
             IEnumerable<Guid> resourceIds,
             IDiagnosticsLogger logger)
@@ -194,19 +157,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
                     isSecretChanged = true;
                 }
 
-                // Update secret filters if needed
-                if (updateSecretInput.Filters != null & updateSecretInput.Filters.Count() > 0)
+                // Update secret notes if needed
+                if (!string.IsNullOrEmpty(updateSecretInput.Notes))
                 {
-                    if (secret.Filters == null)
-                    {
-                        secret.Filters = new Dictionary<SecretFilterType, string>();
-                    }
+                    secret.Notes = updateSecretInput.Notes;
+                    isSecretChanged = true;
+                }
 
-                    foreach (var filter in updateSecretInput.Filters)
-                    {
-                        secret.Filters[filter.Key] = filter.Value;
-                    }
-
+                // Update secret filters if needed
+                if (updateSecretInput.Filters != null)
+                {
+                    secret.Filters = updateSecretInput.Filters;
                     isSecretChanged = true;
                 }
 

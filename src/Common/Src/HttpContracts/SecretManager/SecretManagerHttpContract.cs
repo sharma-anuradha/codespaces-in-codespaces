@@ -30,11 +30,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         public const string SecretManagementOperation = "secrets";
 
         /// <summary>
-        /// The secret filter management operation.
-        /// </summary>
-        public const string FilterManagementOperation = "filters";
-
-        /// <summary>
         /// The get secrets http method.
         /// </summary>
         public static readonly HttpMethod GetSecretsMethod = HttpMethod.Get;
@@ -53,11 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// The delete secret http method.
         /// </summary>
         public static readonly HttpMethod DeleteSecretMethod = HttpMethod.Delete;
-
-        /// <summary>
-        /// The delete secret filter http method.
-        /// </summary>
-        public static readonly HttpMethod DeleteSecretFilterMethod = HttpMethod.Delete;
 
         /// <summary>
         /// Get the get secrets uri, for getting all secrets for given resource ids.
@@ -100,15 +90,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// <returns>Uri.</returns>
         public static string GetDeleteSecretUri(Guid resourceId, Guid secretId) =>
             $"{ResourceSecretManagerV1Route}/{resourceId}/{SecretManagementOperation}/{secretId}";
-
-        /// <summary>
-        /// Get the delete secret filter uri.
-        /// </summary>
-        /// <param name="resourceId">The resource id.</param>
-        /// <param name="secretId">The secret id.</param>
-        /// <param name="secretFilterType">The secret filter type.</param>
-        /// <returns>Uri.</returns>
-        public static string GetDeleteSecretFilterUri(Guid resourceId, Guid secretId, SecretFilterType secretFilterType) =>
-            $"{ResourceSecretManagerV1Route}/{resourceId}/{SecretManagementOperation}/{secretId}/{FilterManagementOperation}/{secretFilterType}";
     }
 }

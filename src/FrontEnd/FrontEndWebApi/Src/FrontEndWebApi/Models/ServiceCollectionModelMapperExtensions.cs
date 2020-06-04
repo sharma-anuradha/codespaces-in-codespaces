@@ -49,10 +49,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                     cfg.CreateMap<PlanResourceUpdateBody, VsoPlan>();
                     cfg.CreateMap<UpdateCloudEnvironmentBody, CloudEnvironmentUpdate>();
                     cfg.CreateMap<PlanAccessToken, PlanAccessTokenResult>();
-                    cfg.CreateMap<ScopedCreateSecretBody, ScopedCreateSecretInput>();
-                    cfg.CreateMap<ScopedCreateSecretInput, CreateSecretBody>();
-                    cfg.CreateMap<ScopedUpdateSecretBody, ScopedUpdateSecretInput>();
-                    cfg.CreateMap<ScopedUpdateSecretInput, UpdateSecretBody>();
+                    cfg.CreateMap<SecretFilterBody, SecretFilter>();
+                    cfg.CreateMap<ScopedCreateSecretBody, ScopedCreateSecretInput>()
+                        .ForMember(dest => dest.Filters, opt => opt.Condition(src => src.Filters != null));
+                    cfg.CreateMap<ScopedCreateSecretInput, CreateSecretBody>()
+                        .ForMember(dest => dest.Filters, opt => opt.Condition(src => src.Filters != null));
+                    cfg.CreateMap<ScopedUpdateSecretBody, ScopedUpdateSecretInput>()
+                        .ForMember(dest => dest.Filters, opt => opt.Condition(src => src.Filters != null));
+                    cfg.CreateMap<ScopedUpdateSecretInput, UpdateSecretBody>()
+                        .ForMember(dest => dest.Filters, opt => opt.Condition(src => src.Filters != null));
                     cfg.CreateMap<SecretResult, ScopedSecretResult>();
                     cfg.CreateMap<ScopedSecretResult, ScopedSecretResultBody>();
                 });

@@ -28,8 +28,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models
         public string Value { get; set; }
 
         /// <summary>
+        /// Gets or sets notes.
+        /// </summary>
+        public string Notes { get; set; }
+
+        /// <summary>
         /// Gets or sets secret filters to update.
         /// </summary>
-        public IDictionary<SecretFilterType, string> Filters { get; set; }
+        public IEnumerable<SecretFilter> Filters { get; set; }
     }
 }

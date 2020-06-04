@@ -70,13 +70,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 
             foreach (var secretFilter in secret.Filters)
             {
-                var filter = filterDataCollection?.SingleOrDefault(filterData => filterData.Type == secretFilter.Key);
-                if (filter == default)
+                var filterData = filterDataCollection?.SingleOrDefault(filterData => filterData.Type == secretFilter.Type);
+                if (filterData == default)
                 {
                     return false;
                 }
 
-                if (!MatchWildCard(filter.Data, secretFilter.Value))
+                if (!MatchWildCard(filterData.Data, secretFilter.Value))
                 {
                     return false;
                 }

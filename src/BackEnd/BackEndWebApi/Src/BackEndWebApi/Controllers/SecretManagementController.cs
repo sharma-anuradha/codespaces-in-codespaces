@@ -16,7 +16,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretMan
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
-using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
 {
@@ -186,47 +185,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
             }
         }
 
-        /// <summary>
-        /// Delete a filter from a secret under a specified resource.
-        /// </summary>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="secretId">Secret Id.</param>
-        /// <param name="secretFilterType">Secret filter type.</param>
-        /// <param name="logger">The logger.</param>
-        /// <returns>The IActionResult.</returns>
-        [HttpDelete("{resourceId}/"
-                    + SecretManagerHttpContract.SecretManagementOperation
-                    + "/{secretId}/"
-                    + SecretManagerHttpContract.FilterManagementOperation
-                    + "/{secretFilterType}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpOperationalScope("delete_filter")]
-        public async Task<IActionResult> DeleteSecretFilterAsync(
-            [FromRoute] Guid resourceId,
-            [FromRoute] Guid secretId,
-            [FromRoute] SecretFilterType secretFilterType,
-            [FromServices] IDiagnosticsLogger logger)
-        {
-            try
-            {
-                Requires.NotEmpty(resourceId, nameof(resourceId));
-                Requires.NotEmpty(secretId, nameof(secretId));
-
-                var secretResult = await SecretManagerHttp.DeleteSecretFilterAsync(resourceId, secretId, secretFilterType, logger.NewChildLogger());
-                return Ok(secretResult);
-            }
-            catch (NotFoundException)
-            {
-                return NotFound();
-            }
-            catch (ArgumentException)
-            {
-                return BadRequest();
-            }
-        }
-
         /// <inheritdoc/>
         async Task<SecretResult> ISecretManagerHttpContract.CreateSecretAsync(
             Guid resourceId,
@@ -247,19 +205,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         {
             logger.AddBaseResourceId(resourceId);
             await SecretManager.DeleteSecretAsync(resourceId, secretId, logger);
-        }
-
-        /// <inheritdoc/>
-        async Task<SecretResult> ISecretManagerHttpContract.DeleteSecretFilterAsync(
-            Guid resourceId,
-            Guid secretId,
-            SecretFilterType secretFilterTypeContract,
-            IDiagnosticsLogger logger)
-        {
-            logger.AddBaseResourceId(resourceId);
-            var secretFilterType = Mapper.Map<KeyVaultProvider.Models.SecretFilterType>(secretFilterTypeContract);
-            var secretResult = await SecretManager.DeleteSecretFilterAsync(resourceId, secretId, secretFilterType, logger);
-            return Mapper.Map<SecretResult>(secretResult);
         }
 
         /// <inheritdoc/>

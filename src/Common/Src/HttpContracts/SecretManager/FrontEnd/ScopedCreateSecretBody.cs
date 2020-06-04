@@ -23,8 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
 
         /// <summary>
         /// Gets or sets secret name.
+        /// Valid characters:
+        ///     Only alpha-numeric charaters and underscore,
+        ///     Cannot start with a number,
+        ///     Length must be between 1 and 200 charatcers.
         /// </summary>
-        [StringLength(200, MinimumLength = 1)]
+        [RegularExpression("^[a-zA-Z_][a-zA-Z0-9_]{0,199}$")]
         [JsonProperty(Required = Required.Always, PropertyName = "secretName")]
         public string SecretName { get; set; }
 
@@ -43,10 +47,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         public SecretType Type { get; set; }
 
         /// <summary>
+        /// Gets or sets notes.
+        /// </summary>
+        [StringLength(200)]
+        [JsonProperty(Required = Required.Default, PropertyName = "notes")]
+        public string Notes { get; set; }
+
+        /// <summary>
         /// Gets or sets secret filters.
         /// </summary>
-        [DictionaryValueStringLength(200, MinimumLength = 1)]
         [JsonProperty(Required = Required.Default, PropertyName = "filters")]
-        public IDictionary<SecretFilterType, string> Filters { get; set; }
+        public IEnumerable<SecretFilterBody> Filters { get; set; }
     }
 }

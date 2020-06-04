@@ -20,10 +20,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
         /// <param name="cfg">Mapper configuration.</param>
         public static void AddSecretManager(this IMapperConfigurationExpression cfg)
         {
-            cfg.CreateMap<CreateSecretBody, CreateSecretInput>();
+            cfg.CreateMap<SecretFilterBody, SecretFilter>();
+            cfg.CreateMap<CreateSecretBody, CreateSecretInput>()
+                .ForMember(dest => dest.Filters, opt => opt.Condition(src => src.Filters != null));
             cfg.CreateMap<CreateSecretInput, UserSecret>();
             cfg.CreateMap<UserSecret, UserSecretResult>();
-            cfg.CreateMap<UpdateSecretBody, UpdateSecretInput>();
+            cfg.CreateMap<UpdateSecretBody, UpdateSecretInput>()
+                .ForMember(dest => dest.Filters, opt => opt.Condition(src => src.Filters != null));
             cfg.CreateMap<UserSecretResult, SecretResult>();
             cfg.CreateMap<ResourceSecrets, ResourceSecretsResult>();
         }

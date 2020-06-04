@@ -65,20 +65,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Delete a secret filter.
-        /// </summary>
-        /// <param name="resourceId">Key vault Resource Id.</param>
-        /// <param name="secretId">Secret Id.</param>
-        /// <param name="secretFilterType">Secret filter type.</param>
-        /// <param name="logger">IDiagnostics Logger.</param>
-        /// <returns>Updated secret information.</returns>
-        Task<UserSecretResult> DeleteSecretFilterAsync(
-            Guid resourceId,
-            Guid secretId,
-            SecretFilterType secretFilterType,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
         /// Get applicable secrets' data after applying the secret filters.
         /// </summary>
         /// <param name="filterSecretsInput">Input to calculate applicable secrets.</param>

@@ -76,21 +76,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             Guid secretId,
             SecretScope secretScope,
             IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Delete a filter on an existing secret.
-        /// </summary>
-        /// <param name="planId">The plan id.</param>
-        /// <param name="secretId">The secret id.</param>
-        /// <param name="secretFilterType">The secret filter type.</param>
-        /// <param name="secretScope">The secret scope.</param>
-        /// <param name="logger">IDiagnostics Logger.</param>
-        /// <returns>Updated secret.</returns>
-        Task<ScopedSecretResult> DeleteSecretFilterAsync(
-            string planId,
-            Guid secretId,
-            SecretFilterType secretFilterType,
-            SecretScope secretScope,
-            IDiagnosticsLogger logger);
     }
 }

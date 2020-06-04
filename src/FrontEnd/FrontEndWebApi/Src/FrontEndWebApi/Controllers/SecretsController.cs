@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
@@ -20,8 +22,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretFilterType;
-using SecretFilterTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
 using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
 using SecretScopeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretScope;
 
@@ -89,6 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             Requires.NotNullOrEmpty(planId, nameof(planId));
             Requires.NotNull(scopedCreateSecretBody, nameof(scopedCreateSecretBody));
+            CheckForDuplicateFilters(scopedCreateSecretBody.Filters);
 
             var scopedCreateSecretInput = Mapper.Map<ScopedCreateSecretInput>(scopedCreateSecretBody);
 
@@ -113,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpOperationalScope("create")]
+        [HttpOperationalScope("get")]
         public async Task<IActionResult> GetSecretStoresByPlan(
             [FromQuery] string planId,
             [FromServices] IDiagnosticsLogger logger)
@@ -150,6 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             Requires.NotNullOrEmpty(planId, nameof(planId));
             Requires.NotEmpty(secretId, nameof(secretId));
             Requires.NotNull(scopedUpdateSecretBody, nameof(scopedUpdateSecretBody));
+            CheckForDuplicateFilters(scopedUpdateSecretBody.Filters);
 
             var scopedUpdateSecretInput = Mapper.Map<ScopedUpdateSecretInput>(scopedUpdateSecretBody);
 
@@ -176,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("delete")]
-        public async Task<IActionResult> UpdateSecretAsync(
+        public async Task<IActionResult> DeleteSecretAsync(
             [FromQuery] string planId,
             [FromQuery] SecretScopeHttpContract scope,
             [FromRoute] Guid secretId,
@@ -194,39 +196,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Delete a filter from a secret.
-        /// </summary>
-        /// <param name="planId">The plan id.</param>
-        /// <param name="scope">The secret scope.</param>
-        /// <param name="secretId">The secret id.</param>
-        /// <param name="filterType">The Secret filter type.</param>
-        /// <param name="logger">The logger.</param>
-        /// <returns>The IActionResult.</returns>
-        [HttpDelete("{secretId}/filters/{filterType}")]
-        [ThrottlePerUserLow(nameof(SecretsController), nameof(CreateSecretAsync))]
-        [ProducesResponseType(typeof(ScopedSecretResultBody), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [HttpOperationalScope("delete_filter")]
-        public async Task<IActionResult> UpdateSecretAsync(
-            [FromQuery] string planId,
-            [FromQuery] SecretScopeHttpContract scope,
-            [FromRoute] Guid secretId,
-            [FromRoute] SecretFilterTypeHttpContract filterType,
-            [FromServices] IDiagnosticsLogger logger)
+        private void CheckForDuplicateFilters(IEnumerable<SecretFilterBody> filters)
         {
-            Requires.NotNullOrEmpty(planId, nameof(planId));
-            Requires.NotEmpty(secretId, nameof(secretId));
-
-            var scopedSecretResult = await SecretStoreManager.DeleteSecretFilterAsync(
-                planId,
-                secretId,
-                Mapper.Map<SecretFilterType>(filterType),
-                Mapper.Map<SecretScope>(scope),
-                logger.NewChildLogger());
-
-            return Ok(Mapper.Map<ScopedSecretResultBody>(scopedSecretResult));
+            if (filters != null && filters.Any())
+            {
+                // Where there exists anotherFilter with same type as the current filter, then the filters collection has duplicates.
+                var hasDuplicates = filters.Where(filter => filters.Any(anotherFilter => filter != anotherFilter && filter.Type == anotherFilter.Type)).Any();
+                ValidationUtil.IsTrue(!hasDuplicates, "Duplicate filters are not allowed");
+            }
         }
     }
 }

@@ -61,19 +61,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
             Guid resourceId,
             Guid secretId,
             IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Delete a secret filter.
-        /// </summary>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="secretId">Secret Id.</param>
-        /// <param name="secretFilterType">Secret filter type.</param>
-        /// <param name="logger">IDiagnostics Logger.</param>
-        /// <returns>Updated secret.</returns>
-        Task<SecretResult> DeleteSecretFilterAsync(
-            Guid resourceId,
-            Guid secretId,
-            SecretFilterType secretFilterType,
-            IDiagnosticsLogger logger);
     }
 }

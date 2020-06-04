@@ -1393,14 +1393,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             var secretFilterDataCollection = new List<SecretFilterData>();
 
                             // Add git repo filter data
-                            if (!string.IsNullOrEmpty(cloudEnvironment.Seed?.SeedMoniker))
+                            secretFilterDataCollection.Add(new SecretFilterData
                             {
-                                secretFilterDataCollection.Add(new SecretFilterData
-                                {
-                                    Type = SecretFilterType.GitRepo,
-                                    Data = cloudEnvironment.Seed?.SeedMoniker,
-                                });
-                            }
+                                Type = SecretFilterType.GitRepo,
+                                Data = cloudEnvironment.Seed?.SeedMoniker ?? string.Empty,
+                            });
 
                             filterSecretsBody = new FilterSecretsBody
                             {
