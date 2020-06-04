@@ -15,27 +15,33 @@ export class GitHubStrategy implements IAuthStrategy {
     }
 
     public async canHandleService(service: string, account: string) {
-        const isVSOGitHubRequest = (service === 'vso-github' &&
-            (account.startsWith('github-token_') || account.startsWith('cascade-token_')));
+        return false; 
 
-        return isVSOGitHubRequest;
+        // TODO - reenable after extension migrates to native auth
+        // const isVSOGitHubRequest = (service === 'vso-github' &&
+        //     (account.startsWith('github-token_') || account.startsWith('cascade-token_')));
+
+        // return isVSOGitHubRequest;
     }
 
     public async getToken(service: string, account: string): Promise<string | null> {
-        /**
-         * GitHub token for VSO extension.
-         */
-        if (account.startsWith('github-token_')) {
-            const token = await this.getGithubToken();
+        return null; 
+        
+        // TODO - reenable after extension migrates to native auth
+        // /**
+        //  * GitHub token for VSO extension.
+        //  */
+        // if (account.startsWith('github-token_')) {
+        //     const token = await this.getGithubToken();
 
-            return token;
-        }
+        //     return token;
+        // }
 
-        /**
-         * Cascade token for VSO extension.
-         */
-        const token = await this.getCascadeToken();
+        // /**
+        //  * Cascade token for VSO extension.
+        //  */
+        // const token = await this.getCascadeToken();
 
-        return token;
+        // return token;
     }
 }

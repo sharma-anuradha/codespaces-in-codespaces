@@ -1,5 +1,5 @@
 import {
-    GitHubStrategy as GitHubStrategyWorkbench, DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+    DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID, IAuthStrategy,
 } from 'vso-workbench';
 import {
     localStorageKeychain,
@@ -32,7 +32,7 @@ const isGithubRequest = (service: string, account: string) => {
     return isGithubRequest;
 };
 
-export class GitHubStrategy extends GitHubStrategyWorkbench {
+export class GitHubStrategy implements IAuthStrategy {
     protected getGithubToken = async () => {
         return await getGithubToken();
     }
@@ -45,7 +45,10 @@ export class GitHubStrategy extends GitHubStrategyWorkbench {
     }
 
     public async canHandleService(service: string, account: string) {
-        return (await super.canHandleService(service, account)) || isGithubRequest(service, account);
+        return isGithubRequest(service, account) || (
+            service === 'vso-github' &&
+            (account.startsWith('github-token_') || account.startsWith('cascade-token_'))
+        );
     }
 
     public async getToken(service: string, account: string) {
@@ -82,10 +85,20 @@ export class GitHubStrategy extends GitHubStrategyWorkbench {
                 scopes: ['read:user', 'user:email', 'repo'].sort(),
             };
 
-            const githubSessions = JSON.stringify([ githubSession, githubSessionPR ]);
+            const githubSessions = JSON.stringify([githubSession, githubSessionPR]);
             return githubSessions;
         }
 
-        return await super.getToken(service, account);
+        if (account.startsWith('github-token_')) {
+            const token = await this.getGithubToken();
+            return token;
+        }
+
+        if (account.startsWith('cascade-token_')) {
+            const token = await this.getCascadeToken();
+            return token;
+        }
+
+        return null;
     }
 }
