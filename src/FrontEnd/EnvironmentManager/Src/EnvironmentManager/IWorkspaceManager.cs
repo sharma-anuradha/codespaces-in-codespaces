@@ -23,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="computeResourceId">compute id.</param>
         /// <param name="connectionServiceUri">connection uri.</param>
         /// <param name="sessionPath">session path.</param>
+        /// <param name="emailAddress">email address of the host.</param>
         /// <param name="authToken">auth token.</param>
         /// <param name="logger">logger.</param>
         /// <returns>result.</returns>
@@ -32,6 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid computeResourceId,
             Uri connectionServiceUri,
             string sessionPath,
+            string emailAddress,
             string authToken,
             IDiagnosticsLogger logger);
 

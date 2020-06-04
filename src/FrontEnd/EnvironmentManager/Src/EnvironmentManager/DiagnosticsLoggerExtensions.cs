@@ -19,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     {
         private const string LogValueCloudEnvironmentId = "CloudEnvironmentId";
         private const string LogValueSessionId = "SessionId";
+        private const string LogValueWorkspaceId = "WorkspaceId";
         private const string LogValueComputeResourceId = "ComputeResourceId";
         private const string LogValueStorageResourceId = "StorageResourceId";
         private const string LogValueArchiveStorageResourceId = "ArchiveStorageResourceId";
@@ -53,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddEnvironmentId(cloudEnvironment.Id)
                     .AddCloudEnvironmentType(cloudEnvironment.Type)
                     .AddSessionId(cloudEnvironment.Connection?.ConnectionSessionId)
+                    .AddWorkspaceId(cloudEnvironment.Connection?.WorkspaceId)
                     .AddComputeResourceId(cloudEnvironment.Compute?.ResourceId)
                     .AddOSDiskResourceId(cloudEnvironment.OSDisk?.ResourceId)
                     .AddStorageResourceId(cloudEnvironment.Storage?.ResourceId)
@@ -87,6 +89,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddSessionId(this IDiagnosticsLogger logger, string sessionId)
             => logger.FluentAddBaseValue(LogValueSessionId, sessionId);
+
+        /// <summary>
+        /// Add the environment connection invitation id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="workspaceId">The workspace id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddWorkspaceId(this IDiagnosticsLogger logger, string workspaceId)
+            => logger.FluentAddBaseValue(LogValueWorkspaceId, workspaceId);
 
         /// <summary>
         /// Add the environment connection compute id to the logger.

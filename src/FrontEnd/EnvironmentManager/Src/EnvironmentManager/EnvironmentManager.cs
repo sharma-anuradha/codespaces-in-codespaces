@@ -187,8 +187,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Swap between available and awaiting based on the workspace status
                         case CloudEnvironmentState.Available:
                         case CloudEnvironmentState.Awaiting:
-                            var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                            var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
+                            var invitationId = cloudEnvironment.Connection?.ConnectionSessionId;
+                            var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(invitationId, childLogger.NewChildLogger());
 
                             childLogger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
                                 .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
@@ -447,6 +447,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                 Guid.Empty,
                                 startCloudEnvironmentParameters.ConnectionServiceUri,
                                 cloudEnvironment.Connection?.ConnectionSessionPath,
+                                startCloudEnvironmentParameters.UserProfile.Email,
                                 null,
                                 childLogger.NewChildLogger());
                         }
@@ -563,6 +564,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Compute.ResourceId,
                         startCloudEnvironmentParameters.ConnectionServiceUri,
                         cloudEnvironment.Connection?.ConnectionSessionPath,
+                        startCloudEnvironmentParameters.UserProfile.Email,
                         null,
                         childLogger.NewChildLogger());
 
@@ -690,16 +692,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         }
                     }
 
-                    if (cloudEnvironment.Connection?.ConnectionSessionId != null)
+                    if (cloudEnvironment.Connection?.WorkspaceId != null)
                     {
                         await childLogger.OperationScopeAsync(
                             $"{LogBaseName}_delete_workspace",
                             async (innerLogger) =>
                             {
                                 innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                                    .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.ConnectionSessionId);
+                                    .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.WorkspaceId);
 
-                                await WorkspaceManager.DeleteWorkspaceAsync(cloudEnvironment.Connection.ConnectionSessionId, innerLogger.NewChildLogger());
+                                await WorkspaceManager.DeleteWorkspaceAsync(cloudEnvironment.Connection.WorkspaceId, innerLogger.NewChildLogger());
                             },
                             swallowException: true);
                     }
@@ -758,16 +760,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         };
                     }
 
-                    var connectionSessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                    if (!string.IsNullOrWhiteSpace(connectionSessionId))
+                    var connectionWorkspaceRootId = cloudEnvironment.Connection?.WorkspaceId;
+                    if (!string.IsNullOrWhiteSpace(connectionWorkspaceRootId))
                     {
                         // Delete the previous liveshare session from database.
                         // Do not block start process on delete of old workspace from liveshare db.
-                        _ = Task.Run(() => WorkspaceManager.DeleteWorkspaceAsync(connectionSessionId, childLogger.NewChildLogger()));
+                        _ = Task.Run(() => WorkspaceManager.DeleteWorkspaceAsync(connectionWorkspaceRootId, childLogger.NewChildLogger()));
                         cloudEnvironment.Connection.ConnectionComputeId = null;
                         cloudEnvironment.Connection.ConnectionComputeTargetId = null;
                         cloudEnvironment.Connection.ConnectionServiceUri = null;
                         cloudEnvironment.Connection.ConnectionSessionId = null;
+                        cloudEnvironment.Connection.WorkspaceId = null;
                     }
 
                     SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
@@ -823,6 +826,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Compute.ResourceId,
                         startCloudEnvironmentParameters.ConnectionServiceUri,
                         cloudEnvironment.Connection?.ConnectionSessionPath,
+                        startCloudEnvironmentParameters.UserProfile.Email,
                         null,
                         childLogger.NewChildLogger());
 

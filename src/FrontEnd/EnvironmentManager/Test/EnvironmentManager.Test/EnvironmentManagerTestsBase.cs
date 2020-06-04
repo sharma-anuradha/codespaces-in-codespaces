@@ -235,7 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             string provider = "mock-provider",
             string id = "mock-id",
             Dictionary<string, object> programs = null,
-            string email = default)
+            string email = "someone@somewhere.com")
         {
             return new Profile
             {

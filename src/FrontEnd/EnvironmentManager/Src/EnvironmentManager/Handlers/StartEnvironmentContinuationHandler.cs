@@ -460,6 +460,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 record.Value.Compute.ResourceId,
                 operationInput.StartCloudEnvironmentParameters.ConnectionServiceUri,
                 record.Value.Connection?.ConnectionSessionPath,
+                operationInput.StartCloudEnvironmentParameters.UserProfile.Email,
                 operationInput.StartCloudEnvironmentParameters.UserAuthToken,
                 logger.NewChildLogger());
 

@@ -5,6 +5,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
 {
@@ -55,6 +56,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         {
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc/>
+        public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, IDiagnosticsLogger logger) => Task.FromResult(Guid.NewGuid().ToString());
 
         /// <inheritdoc/>
         public Task<WorkspaceResponse> GetStatusAsync(string workspaceId, IDiagnosticsLogger logger)

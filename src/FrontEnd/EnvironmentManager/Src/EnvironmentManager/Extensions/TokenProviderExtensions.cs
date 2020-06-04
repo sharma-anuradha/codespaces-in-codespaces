@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
                     PlanAccessTokenScopes.ShareSession,
                     PlanAccessTokenScopes.JoinSession)));
                 claims.Add(
-                    new Claim(CustomClaims.Session, environment.Connection.ConnectionSessionId));
+                    new Claim(CustomClaims.Session, environment.Connection.WorkspaceId));
             }
 
             // Copy additional optional identity claims from the authenticated user.

@@ -13,9 +13,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     {
         /// <summary>
         /// Gets or sets the connection session id.
+        /// This is an invitation id scoped for the host with email address.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "sessionId")]
         public string ConnectionSessionId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the id of workspace created in LiveShare.
+        /// All the invitations created are linked to the workspace id.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "workspaceId")]
+        public string WorkspaceId { get; set; }
 
         /// <summary>
         /// Gets or sets the connection session path.

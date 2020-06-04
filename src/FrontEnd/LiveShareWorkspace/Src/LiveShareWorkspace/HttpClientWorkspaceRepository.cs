@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace.Contracts;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
@@ -82,6 +83,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         }
 
         /// <inheritdoc/>
+        public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_create_invitation_id",
+                async (childLogger) =>
+                {
+                    var payload = JsonConvert.SerializeObject(invitationLinkInfo);
+                    var content = new StringContent(payload, Encoding.UTF8, "application/json");
+                    var response = await HttpClientProvider.HttpClient.PutAsync(InvitationLinkPath(invitationLinkInfo.WorkspaceId), content);
+                    logger.AddClientHttpResponseDetails(response);
+
+                    await response.ThrowIfFailedAsync();
+
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var invitationLinkResponse = JsonConvert.DeserializeObject<InvitationLink>(responseContent);
+                    return invitationLinkResponse.Id;
+                });
+        }
+
+        /// <inheritdoc/>
         public Task<WorkspaceResponse> GetStatusAsync(string workspaceId, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
@@ -104,5 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
                     return workspaceResponse;
                 });
         }
+
+        private string InvitationLinkPath(string workspaceId) => $"{Path}/{workspaceId}/link";
     }
 }
