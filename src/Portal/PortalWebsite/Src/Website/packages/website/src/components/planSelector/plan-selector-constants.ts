@@ -1,13 +1,16 @@
 import { SelectableOptionMenuItemType } from 'office-ui-fabric-react/lib/utilities/selectableOption/SelectableOption.types';
 import { IPlansDropdownOption } from '../../interfaces/IPlansDropdownOption';
+import { TFunction } from 'i18next';
 
 export const createNewPlanKey = 'Create-Plan';
 
-export const createNewPlanDropdownOption = {
-    key: createNewPlanKey,
-    text: '• Create new plan',
-    plan: null,
-} as IPlansDropdownOption;
+export function createNewPlanDropdownOption(translationFunc: TFunction) {
+    return {
+        key: createNewPlanKey,
+        text: `• ${translationFunc('createNewPlan')}`,
+        plan: null,
+    } as IPlansDropdownOption
+}
 
 export const dividerDropdownOption = {
     key: 'divider-key',

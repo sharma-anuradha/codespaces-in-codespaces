@@ -8,6 +8,7 @@ import {
 } from 'vso-client-core';
 
 import { ISku } from '../interfaces/ISku';
+import { TFunction } from 'i18next';
 
 export function isEnvironmentAvailable(
     local: ILocalEnvironment | undefined
@@ -83,100 +84,100 @@ export function isInStableState({ state }: ILocalEnvironment): boolean {
         state === EnvironmentStateInfo.Shutdown;
 }
 
-export function stateToDisplayName(state: EnvironmentStateInfo) {
+export function stateToDisplayName(state: EnvironmentStateInfo, translation: TFunction) {
     switch (state) {
         case EnvironmentStateInfo.Provisioning:
-            return 'Creating';
+            return translation('creating');
         case EnvironmentStateInfo.Failed:
-            return 'Failed to Create';
+            return translation('failedToCreate');
         case EnvironmentStateInfo.Shutdown:
-            return 'Suspended';
+            return translation('suspended');
         case EnvironmentStateInfo.ShuttingDown:
-            return 'Suspending';
+            return translation('suspending');
         default:
             return state;
     }
 }
 
-export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
+export function environmentErrorCodeToString(code: EnvironmentErrorCodes, translation: TFunction) {
     switch (code) {
         case EnvironmentErrorCodes.exceededQuota:
-            return 'You have exceeded the Codespace quota.';
+            return translation('exceededQuota');
         case EnvironmentErrorCodes.environmentNameAlreadyExists:
-            return 'Cloud Codespace already exists.';
+            return translation('environmentNameAlreadyExists');
         case EnvironmentErrorCodes.environmentDoesNotExist:
-            return 'Cloud Codespace does not exist.';
+            return translation('environmentDoesNotExist');
         case EnvironmentErrorCodes.environmentNotAvailable:
-            return 'Codespace is not in available state.';
+            return translation('environmentNotAvailable');
         case EnvironmentErrorCodes.environmentNotShutdown:
-            return 'Codespace is not in suspended state.';
+            return translation('environmentNotShutdown');
         case EnvironmentErrorCodes.unableToAllocateResources:
-            return 'Please try again in a few minutes or select a plan in another location.';
+            return translation('unableToAllocateResources');
         case EnvironmentErrorCodes.unableToAllocateResourcesWhileStarting:
-            return 'Unable to start the Codespace. Please try again in a few minutes.';
+            return translation('unableToAllocateResourcesWhileStarting');
         case EnvironmentErrorCodes.unableToUpdateSku:
-            return 'Codespace\'s current instance type does not support any changes.';
+            return translation('unableToUpdateSku');
         case EnvironmentErrorCodes.requestedSkuIsInvalid:
-            return 'Codespace\'s current instance type does not support the requested instance type.';
+            return translation('requestedSkuIsInvalid');
         case EnvironmentErrorCodes.requestedAutoShutdownDelayMinutesIsInvalid:
-            return 'Requested auto-suspend delay is invalid.';
+            return translation('requestedAutoShutdownDelayMinutesIsInvalid');
         case  EnvironmentErrorCodes.heartbeatUnhealthy:
-            return 'The Codespace was reported as unhealthy, suspend and restart the Codespace.';
+            return translation('heartbeatUnhealthy');
         case  EnvironmentErrorCodes.customContainersCreationFailed: 
-            return 'The Codespace creation based on devcontainer.json failed, please review the console for more details.';
+            return translation('customContainersCreationFailed');
         case  EnvironmentErrorCodes.shutdownFailed: 
-            return 'Error Code: 1001';
+            return translation('errorCode') + ': 1001';
         case  EnvironmentErrorCodes.cMBMutexFailure: 
-            return 'Error Code: 1002';
+            return translation('errorCode') + ': 1002';
         case  EnvironmentErrorCodes.cMBGeneralError: 
-            return 'Error Code: 1003';
+            return translation('errorCode') + ': 1003';
         case  EnvironmentErrorCodes.startEnvironmentHandlerFailedToStartContainer: 
-            return 'Failed to start container.';
+            return translation('startEnvironmentHandlerFailedToStartContainer');
         case  EnvironmentErrorCodes.startEnvironmentHandlerRequiredParameterMissing: 
-            return 'Error Code: 1005';
+            return translation('errorCode') + ': 1005';
         case  EnvironmentErrorCodes.startEnvironmentHandlerKitchensinkMissing: 
-            return 'Error Code: 1006';
+            return translation('errorCode') + ': 1006';
         case  EnvironmentErrorCodes.startEnvironmentHandlerLiveshareLoginFailed: 
-            return 'Error Code: 1007';
+            return translation('errorCode') + ': 1007';
         case  EnvironmentErrorCodes.startEnvironmentHandlerMoreThanOneContainerFoundOnRestart: 
-            return 'Error Code: 1008';
+            return translation('errorCode') + ': 1008';
         case  EnvironmentErrorCodes.customContainersGeneralError: 
-            return 'Unknown error in Codespace creation.';
+            return translation('customContainersGeneralError');
         case  EnvironmentErrorCodes.customContainersKitchensinkCreationFailed: 
-            return 'Failed to create container with standard image.';
+            return translation('customContainersKitchensinkCreationFailed');
         case  EnvironmentErrorCodes.customContainersKitchensinkStartFailed: 
-            return 'Failed to start standard container.';
+            return translation('customContainersKitchensinkStartFailed');
         case  EnvironmentErrorCodes.customContainersCloneFailed: 
-            return 'The repository could not be cloned.';
+            return translation('customContainersCloneFailed');
         case  EnvironmentErrorCodes.customContainersPrivateClonetimeout : 
-            return 'Timeout waiting while attempting to clone a private repository.';
+            return translation('customContainersPrivateClonetimeout');
         case  EnvironmentErrorCodes.customContainersCouldNotPullImage: 
-            return 'Could not pull the image referenced in the DockerFile.';
+            return translation('customContainersCouldNotPullImage');
         case  EnvironmentErrorCodes.customContainersCouldNotBuildUserImage : 
-            return 'The custom container could not be built.';
+            return translation('customContainersCouldNotBuildUserImage');
         case  EnvironmentErrorCodes.customContainersCouldNotCreateUserContainer: 
-            return 'The custom container failed to create.';
+            return translation('customContainersCouldNotCreateUserContainer');
         case  EnvironmentErrorCodes.customContainersCouldNotRunUserContainer: 
-            return 'The custom container failed to run.';
+            return translation('customContainersCouldNotRunUserContainer');
         case  EnvironmentErrorCodes.customContainersCLICopyFailed :
-            return  'Failed to copy the VSOnline Agent to the custom container.';
+            return translation('customContainersCLICopyFailed');
         case  EnvironmentErrorCodes.customContainersDependenciesFailed: 
-            return 'The VSOnline Agent dependencies failed to install in the custom container.';
+            return translation('customContainersDependenciesFailed');
         case  EnvironmentErrorCodes.customContainersCLIStartFailed : 
-            return 'The VSOnline Agent failed to start in the custom container.';
+            return translation('customContainersCLIStartFailed');
         case  EnvironmentErrorCodes.customContainersIncorrectUserID :
-            return 'The dockerfile or image references a user id instead of a username. Please configure the remoteUser or containerUser property in devcontainer.json';
+            return translation('customContainersIncorrectUserID');
 
         case  EnvironmentErrorCodes.customContainersComposeGeneralError :
-            return 'Unknown error running docker compose.';
+            return translation('customContainersComposeGeneralError');
         case  EnvironmentErrorCodes.customContainersComposeValidationError :
-            return 'Docker Compose support requires a docker-compose file and the service property to be set in devcontainer.json';
+            return translation('customContainersComposeValidationError');
         case  EnvironmentErrorCodes.customContainersComposeConfigError :
-            return 'Error inspecting docker-compose file for services. Please check your docker-compose file for issues.';
+            return translation('customContainersComposeConfigError');
         case  EnvironmentErrorCodes.customContainersWrongServiceError :
-            return 'The specified service was not found in the docker-compose file.';
+            return translation('customContainersWrongServiceError');
         case  EnvironmentErrorCodes.customContainersComposeUpError :
-            return 'Running docker-compose up failed. Please inspect the logs for more information.';
+            return translation('customContainersComposeUpError');
 
         case EnvironmentErrorCodes.shutdownStaticEnvironment:
         case EnvironmentErrorCodes.startStaticEnvironment:
@@ -188,14 +189,14 @@ export function environmentErrorCodeToString(code: EnvironmentErrorCodes) {
 
 const STANDARD_SPECS = '4 cores, 8 GB RAM';
 const PREMIUM_SPECS = '8 cores, 16 GB RAM';
-export function getSkuSpecLabel(sku: ISku) {
+export function getSkuSpecLabel(sku: ISku, translation: TFunction) {
     switch (sku.name) {
         case 'standardLinux':
-            return `Standard (Linux): ${STANDARD_SPECS}`;
+            return `${translation('standardLinux')}: ${STANDARD_SPECS}`;
         case 'premiumLinux':
-            return `Premium (Linux): ${PREMIUM_SPECS}`;
+            return `${translation('premiumLinux')}: ${PREMIUM_SPECS}`;
         case 'premiumWindows':
-            return `Premium (Windows): ${PREMIUM_SPECS}`;
+            return `${translation('premiumWindows')}: ${PREMIUM_SPECS}`;
         default:
             return sku.displayName;
     }

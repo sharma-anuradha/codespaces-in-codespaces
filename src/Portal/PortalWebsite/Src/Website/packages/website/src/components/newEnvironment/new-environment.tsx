@@ -11,10 +11,12 @@ import {
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../loader/loader';
 import { newPlanPath } from '../../routerPaths';
+import { useTranslation } from 'react-i18next';
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
 
 export function NewEnvironment(props: RouteComponentProps) {
+    const { t: translation } = useTranslation();
     const { selectedPlan, isLoadingPlan, isMadeInitialPlansRequest } = useSelector(
         (state: ApplicationState) => ({
             selectedPlan: state.plans.selectedPlan,
@@ -50,7 +52,7 @@ export function NewEnvironment(props: RouteComponentProps) {
     const createEnvironmentCallback = useCallback(
         async (parameters: CreateEnvironmentParams) => {
             try {
-                const environmentId = await dispatch(createEnvironment(parameters));
+                const environmentId = await dispatch(createEnvironment(parameters, translation));
 
                 storeDotfilesConfiguration(parameters);
 
@@ -65,7 +67,7 @@ export function NewEnvironment(props: RouteComponentProps) {
     const hideError = useCallback(() => setErrorMessage(undefined), []);
 
     if (!isMadeInitialPlansRequest || isLoadingPlan) {
-        return <Loader message='Fetching your billing plans...' />;
+        return <Loader message={translation('fetchingBillingPlans')} translation={translation}/>;
     }
 
     if (!selectedPlan) {

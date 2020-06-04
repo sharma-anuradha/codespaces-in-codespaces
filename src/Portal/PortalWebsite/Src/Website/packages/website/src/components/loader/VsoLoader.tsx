@@ -4,7 +4,17 @@ import { LoaderProps } from './loader';
 
 export class VsoLoader extends Component<LoaderProps> {
     render() {
-        const { message = 'Loading...', labelPosition = 'right', className = '', } = this.props;
-        return (<Spinner className={`vsonline-loader ${className}`} label={message} ariaLabel={message} ariaLive='assertive' labelPosition={labelPosition} />);
+        const { 
+            message = this.props.translation('loading'),
+            labelPosition = 'right',
+            className = '',
+        } = this.props;
+        return (<Spinner
+                    className={`vsonline-loader ${className}`}
+                    label={message}
+                    ariaLabel={message}
+                    ariaLive='assertive'
+                    labelPosition={labelPosition}
+                />);
     }
 }

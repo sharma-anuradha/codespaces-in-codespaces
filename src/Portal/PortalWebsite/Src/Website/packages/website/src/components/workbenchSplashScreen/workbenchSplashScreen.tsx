@@ -8,6 +8,8 @@ import { RenderSplashScreen, ConnectionAdapter } from 'vso-workbench';
 import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environments';
 import { stateToDisplayName } from '../../utils/environmentUtils';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
+import { useTranslation } from 'react-i18next';
+import { injectMessageParameters } from 'website/src/utils/injectMessageParameters';
 
 interface IConnectSplashScreen {
     isOnVSCodespaces: boolean;
@@ -29,7 +31,7 @@ export const ConnectSplashScreen: React.FunctionComponent<IConnectSplashScreen> 
                     <Text className='text-color'>{props.title}</Text>
                 </Stack.Item>
                 <Stack.Item>
-                    <PrimaryButton onClick={props.onConnect}>Connect</PrimaryButton></Stack.Item>
+                    <PrimaryButton onClick={props.onConnect}>{props.buttonText}</PrimaryButton></Stack.Item>
                 {props.isOnVSCodespaces
                 ? <Stack.Item>
                     <BackToEnvironmentsLink />
@@ -45,27 +47,28 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
     const { showPrompt, environment, connectError, onRetry, onConnect } = props;
     const { friendlyName } = environment;
     const isOnVSCodespaces = !isHostedOnGithub();
+    const { t: translation } = useTranslation();
 
     if (connectError !== null) {
         return (
             <ConnectSplashScreen
             isOnVSCodespaces={isOnVSCodespaces}
-                title={`Connecting to Codespace ${friendlyName} failed. ${connectError}`}
-                buttonText='Retry'
+                title={injectMessageParameters(translation('connectingFailed'), friendlyName, connectError)}
+                buttonText={translation('retry')}
                 onConnect={onRetry}
                 >
             </ConnectSplashScreen>
         );
     }
     
-    const envState = stateToDisplayName(environment!.state).toLocaleLowerCase();
+    const envState = stateToDisplayName(environment!.state, translation).toLocaleLowerCase();
     if (showPrompt) {
-        const title = `Codespace "${friendlyName}" is ${envState}.`
+        const title = injectMessageParameters(translation('codespaceIsAtState'), friendlyName, envState)
         return (
             <ConnectSplashScreen
                 isOnVSCodespaces={isOnVSCodespaces}
                 title={title}
-                buttonText='Connect'
+                buttonText={translation('connect')}
                 onConnect={onConnect}
                 >
             </ConnectSplashScreen>

@@ -7,6 +7,7 @@ import { Loader } from './components/loader/loader';
 import { telemetry } from './utils/telemetry';
 import { loginPath, environmentsPath } from './routerPaths';
 import { ServiceUnavailable } from './components/ServiceUnavailable/ServiceUnavailable';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
@@ -17,6 +18,7 @@ type Props = {
     RouteComponentProps;
 
 const ProtectedRouteView = (props: Props) => {
+    const { t: translation } = useTranslation();
     if (props.match.path === '/environment/:id') {
         telemetry.setCurrentEnvironmentId((props.match.params as any).id as string);
     } else {
@@ -36,7 +38,7 @@ const ProtectedRouteView = (props: Props) => {
     }
 
     if (isAuthenticating && !isAuthenticated) {
-        return <Loader message='Signing in...' />;
+        return <Loader message={translation('signingIn')} translation={translation}/>;
     }
 
     if (!isAuthenticating && !isAuthenticated) {

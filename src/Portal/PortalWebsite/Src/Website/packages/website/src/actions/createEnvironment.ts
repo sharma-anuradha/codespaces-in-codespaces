@@ -11,6 +11,7 @@ import { getUserInfo } from './getUserInfo';
 import { ServiceResponseError } from './middleware/useWebClient';
 import { environmentErrorCodeToString } from '../utils/environmentUtils';
 import { useActionContext } from './middleware/useActionContext';
+import { TFunction } from 'i18next';
 
 type PartialEnvironmentInfo = Omit<CreateEnvironmentParameters, 'userEmail' | 'userName'>;
 
@@ -52,7 +53,7 @@ export type FocusCreateEnvironmentButtonAction = ReturnType<
 >;
 
 // Exposed - callable actions that have side-effects
-export async function createEnvironment(parameters: PartialEnvironmentInfo) {
+export async function createEnvironment(parameters: PartialEnvironmentInfo, translation: TFunction) {
     const dispatch = useDispatch();
 
     // Have a lieId so we can identify the instance for optimistic UI updates.
@@ -105,10 +106,10 @@ export async function createEnvironment(parameters: PartialEnvironmentInfo) {
         if (err instanceof ServiceResponseError) {
             const code = (await err.response.json()) as EnvironmentErrorCodes;
 
-            err.message = environmentErrorCodeToString(code);
+            err.message = environmentErrorCodeToString(code, translation);
 
             dispatch(
-                createEnvironmentFailureAction(lieId, environmentErrorCodeToString(code), err)
+                createEnvironmentFailureAction(lieId, environmentErrorCodeToString(code, translation), err)
             );
         }
 

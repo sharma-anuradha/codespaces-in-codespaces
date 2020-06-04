@@ -4,11 +4,13 @@ import { Dropdown, IDropdownProps, IDropdown } from 'office-ui-fabric-react/lib/
 import { Loader } from '../loader/loader';
 
 import './dropdown-with-loader.css';
+import { TFunction } from 'i18next';
 
 interface DropDownWithLoaderProps extends IDropdownProps {
     loadingMessage: string;
     isLoading: boolean;
     shouldFocus?: boolean;
+    translation: TFunction;
 }
 
 const loaderOptionKey = 'loader';
@@ -57,6 +59,7 @@ export class DropDownWithLoader extends Component<DropDownWithLoaderProps> {
                 return (
                     <Loader
                         message={loadingMessage}
+                        translation={this.props.translation}
                         className='vsonline-dropdown-with-loader__loader' />
                 );
             })

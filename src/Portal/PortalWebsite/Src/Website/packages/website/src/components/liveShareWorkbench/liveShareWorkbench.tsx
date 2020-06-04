@@ -13,11 +13,12 @@ import { telemetry } from '../../utils/telemetry';
 import { vscode, PortForwardingExternalUriProvider } from 'vso-workbench';
 import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
 import { createTrace } from 'vso-client-core';
+import { withTranslation, WithTranslation } from 'react-i18next';
 
 declare var AMDLoader: any;
 let CallingService: any;
 
-export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }> {
+export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }>, WithTranslation {
     liveShareWebExtensionEndpoint: string;
     portalEndpoint: string;
     portForwardingDomainTemplate: string;
@@ -85,10 +86,11 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps> {
                 ['workspaceId', this.props.sessionId],
                 ['correlationId', 'null'],
             ]);
+            const { t: translation } = this.props;
 
             const link: IApplicationLink = {
                 uri: vscode.URI.parse(`vsls:?${params}`),
-                label: 'Open in Desktop',
+                label: translation('openInDesktop'),
             };
 
             return [link];
@@ -180,9 +182,9 @@ const getResolveCommands = (extensionUrl: string, sessionId: string) => {
 
 type ExternalProps = Omit<
     LiveShareWorkbenchProps,
-    keyof ReturnType<typeof getProps> | keyof RouteComponentProps
+    keyof ReturnType<typeof getProps> | keyof RouteComponentProps | keyof WithTranslation
 >;
 
 export const LiveShareWorkbench: ComponentClass<ExternalProps> = withRouter(
-    connect(getProps)(LiveShareWorkbenchView)
+    withTranslation()(connect(getProps)(LiveShareWorkbenchView))
 );

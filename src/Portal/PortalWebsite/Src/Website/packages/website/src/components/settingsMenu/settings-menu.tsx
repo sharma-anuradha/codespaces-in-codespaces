@@ -20,6 +20,7 @@ import { telemetry } from 'vso-workbench/src/telemetry/telemetry';
 import { deletePlan } from '../../actions/deletePlan';
 
 import { ApplicationState } from '../../reducers/rootReducer';
+import { useTranslation } from 'react-i18next';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
 
 import { getPlanEnvironments } from '../environments/environments';
@@ -28,6 +29,7 @@ import { PlanSelector } from '../planSelector/plan-selector';
 import { Loader } from '../loader/loader';
 
 import './settings-menu.css';
+import { injectMessageParametersJSX } from 'website/src/utils/injectMessageParameters';
 
 const setTelemetryVSCodeConfig = () => {
     const vscodeConfig = getVSCodeVersion();
@@ -46,25 +48,30 @@ interface IDeletePlanWarningMessageProps {
 }
 
 function DeletePlanWarningMessage(props: IDeletePlanWarningMessageProps) {
-    return (
-        props.selectedPlan && (
+    const { t: translation } = useTranslation();
+    if (props.selectedPlan) {
+        const codespacesElement =props.environments.length == 1
+        ? ( <span>
+                <b> 1</b> Codespace
+            </span>)
+        : ( <span>
+                <b> {props.environments.length}</b> Codespaces
+            </span>);
+        
+        const deleteWarning = injectMessageParametersJSX(
+            translation('deletePlanWarning'),
+            <b>{props.selectedPlan.name}</b>,
+            codespacesElement,
+        );
+        return (
             <div>
-                Deleting <b>{props.selectedPlan.name}</b> will also delete the
-                {props.environments.length == 1 ? (
-                    <span>
-                        <b> 1</b> Codespace
-                    </span>
-                ) : (
-                    <span>
-                        <b> {props.environments.length}</b> Codespaces
-                    </span>
-                )}{' '}
-                associated with the plan.
+                {deleteWarning}
                 <p />
-                Do you want to proceed?
+                {translation('wantToProceed')}
             </div>
-        )
-    );
+        );
+    }
+    return <></>
 }
 
 function PlanSelectorWrapper(props: IPlanSelectorWrapperProps) {
@@ -99,6 +106,7 @@ export function SettingsMenu(props: RouteComponentProps) {
     const [isDeletingPlan, setIsDeletingPlan] = useState<boolean>(false);
     const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+    const { t: translation } = useTranslation();
 
     const deleteSelectedPlan = useCallback(
         async (selectedPlan: ActivePlanInfo | null) => {
@@ -114,23 +122,24 @@ export function SettingsMenu(props: RouteComponentProps) {
                     return;
                 }
 
-                setSuccessMessage('Your plan was successfully deleted.');
+                setSuccessMessage(translation('planDeleteSucceeded'));
                 setIsDeletingPlan(false);
             } else {
-                setErrorMessage('No plan selected');
+                setErrorMessage(translation('noPlanSelected'));
             }
         },
         [selectedPlan]
     );
 
+
     return (
         <PortalLayout hideNavigation={isHostedOnGithub()}>
             <div className='settings-menu ms-Grid-row ms-Fabric'>
-                <h2>Settings</h2>
+                <h2>{translation('settings')}</h2>
 
                 {isDeletingPlan && (
                     <div className='settings-menu__overlay'>
-                        <Loader message='Deleting the plan...' />
+                        <Loader message={translation('deletingPlan')} translation={translation}/>
                     </div>
                 )}
 
@@ -157,11 +166,11 @@ export function SettingsMenu(props: RouteComponentProps) {
                 )}
 
                 <div className='vsonline-settings-menu__section' />
-                <h3>Insiders channel</h3>
+                <h3>{translation('insidersChannel')}</h3>
                 <Toggle
                     defaultChecked={window.localStorage.getItem('vso-featureset') === 'insider'}
-                    onText='On'
-                    offText='Off'
+                    onText={translation('on')}
+                    offText={translation('off')}
                     onChange={(e, checked) => {
                         window.localStorage.setItem(
                             'vso-featureset',
@@ -171,9 +180,9 @@ export function SettingsMenu(props: RouteComponentProps) {
                     }}
                 ></Toggle>
                 <div className='vsonline-settings-menu__section vsonline-settings-menu__separator' />
-                <h3>Plans</h3>
+                <h3>{translation('plans')}</h3>
                 <div className='vsonline-settings-menu__delete-text'>
-                    When a plan is deleted, the associated Codespaces will be deleted as well.
+                    {translation('deletePlanInfo')}
                 </div>
                 <PlanSelectorWrapper
                     {...props}
@@ -186,7 +195,7 @@ export function SettingsMenu(props: RouteComponentProps) {
                     onClick={() => setShowWarning(true)}
                     allowDisabledFocus
                     disabled={!selectedPlan}
-                    text='Delete'
+                    text={translation('delete')}
                 />
                 <div className='vsonline-settings-menu__section vsonline-settings-menu__separator' />
                 <div id='target'></div>
@@ -201,7 +210,7 @@ export function SettingsMenu(props: RouteComponentProps) {
                 onDismiss={() => setShowWarning(false)}
                 dialogContentProps={{
                     type: DialogType.normal,
-                    title: 'Warning',
+                    title: translation('warning'),
                 }}
                 modalProps={{
                     layerProps: {
@@ -219,9 +228,9 @@ export function SettingsMenu(props: RouteComponentProps) {
                 <DialogFooter>
                     <PrimaryButton
                         onClick={() => deleteSelectedPlan(selectedPlan)}
-                        text='Confirm'
+                        text={translation('confirm')}
                     />
-                    <DefaultButton onClick={() => setShowWarning(false)} text='Cancel' />
+                    <DefaultButton onClick={() => setShowWarning(false)} text={translation('cancel')} />
                 </DialogFooter>
             </Dialog>
         </PortalLayout>

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { storeGitHubAccessTokenResponse } from '../../services/gitHubAuthenticationService';
+import { useTranslation } from 'react-i18next';
 
 import './OAuthLogin.css';
 
@@ -23,7 +24,7 @@ const getRedirectionUrl = (state: string) => {
 
 export function GitHubLogin() {
     const url = new URL(window.location.href);
-
+    const { t: translation } = useTranslation();
     useEffect(() => {
         const handle = async () => {
             const accessToken = url.searchParams.get('accessToken');
@@ -54,13 +55,13 @@ export function GitHubLogin() {
 
     let content = (
         <div className='oauth-login__message'>
-            You are signed in into GitHub, closing page.
+            {translation('githubSignInSucceeded')}
         </div>
     );
 
     const errorMessageText = url.searchParams.get('errorMessage');
     if (errorMessageText) {
-        content = <div className='oauth-login__message'>GitHub authentication failed.</div>;
+        content = <div className='oauth-login__message'>{translation('githubSignInFailed')}</div>;
     }
 
     const state = url.searchParams.get('state');

@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { storeAzDevAccessTokenResponse } from '../../services/azDevAuthenticationService';
+import { useTranslation } from 'react-i18next';
 
 import './OAuthLogin.css';
 
 export function AzDevLogin() {
     const url = new URL(window.location.href);
+    const { t: translation } = useTranslation();
 
     useEffect(() => {
         const accessToken = url.searchParams.get('accessToken');
@@ -29,13 +31,13 @@ export function AzDevLogin() {
 
     let content = (
         <div className='oauth-login__message'>
-            You are signed in into Azure DevOps now and can close this page.
+            {translation('azureSignInSucceeded')}
         </div>
     );
 
     const errorMessageText = url.searchParams.get('errorMessage');
     if (errorMessageText) {
-        content = <div className='oauth-login__message'>Azure DevOps authentication failed.</div>;
+        content = <div className='oauth-login__message'>{translation('azureSignInFailed')}</div>;
     }
 
     return (

@@ -19,7 +19,9 @@
     },
     "include": [
         "package.json",
-        "src/**/*"
+        "src/**/*",
+        "src/loc/resources/*",
+        "src/utils/injectMessageParameters.ts"
     ],
     "exclude": [
         "commonjs",

@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import { connect, ConnectedComponent } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import React, { Component, ComponentClass } from 'react';
+import { connect } from 'react-redux';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { getAzDevCredentials } from '../../actions/getAzDevCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
@@ -11,6 +11,7 @@ import {
     RepoType_QueryParam,
     ServerlessWorkbench,
 } from '../serverlessWorkbench/serverlessWorkbench';
+import { withTranslation, WithTranslation } from 'react-i18next';
 
 type Params = {
     org: string;
@@ -19,7 +20,7 @@ type Params = {
     commitId: string;
 };
 
-export interface AzDevWorkbenchProps extends RouteComponentProps<Params> {
+export interface AzDevWorkbenchProps extends RouteComponentProps<Params>,  WithTranslation {
     org: string;
     projectName: string;
     repoName: string;
@@ -48,13 +49,14 @@ class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchSt
     }
 
     render() {
+        const { t: translation } = this.props;
         // Enable this only for dev currently while we explore the idea.
         if (!window.location.hostname.includes('online.dev')) {
             return <PageNotFound />;
         }
 
         if (this.state.loading) {
-            return <Loader message='Logging into Azure DevOps...'></Loader>;
+            return <Loader message={translation('loggingAzureDevOps')} translation={translation}></Loader>;
         }
 
         const extensionUrls = [this.props.richNavWebExtensionEndpoint];
@@ -75,10 +77,8 @@ class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchSt
     }
 }
 
-const getProps: (
-    state: ApplicationState,
-    props: RouteComponentProps<Params>
-) => Omit<AzDevWorkbenchProps, keyof RouteComponentProps<Params>> = (state, props) => {
+const getProps = (state: ApplicationState, props: { match: { params: Params } 
+                                                    location : { search : string }}) => {
     const org = props.match.params.org;
     const projectName = props.match.params.projectName;
     const repoName = props.match.params.repoName;
@@ -99,8 +99,10 @@ const getProps: (
 };
 
 type MappedProperties = keyof ReturnType<typeof getProps>;
+type ExternalProps = Omit<
+    AzDevWorkbenchProps,
+    MappedProperties | keyof RouteComponentProps<Params> | keyof WithTranslation
+>;
 
-export const AzDevWorkbench: ConnectedComponent<
-    typeof AzDevWorkbenchView,
-    Omit<AzDevWorkbenchProps, MappedProperties> & RouteComponentProps<Params>
-> = connect(getProps)(AzDevWorkbenchView);
+export const AzDevWorkbench: ComponentClass<ExternalProps> = 
+    withRouter(withTranslation()(connect(getProps)(AzDevWorkbenchView)));

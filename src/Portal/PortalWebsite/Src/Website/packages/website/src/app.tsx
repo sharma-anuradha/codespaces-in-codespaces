@@ -11,7 +11,8 @@ import { ApplicationLoadEvent } from './utils/telemetry/ApplicationLoadEvent';
 import { MessageBar, MessageBarType, Link } from 'office-ui-fabric-react';
 import { isSupportedBrowser, isPartiallySupportedBrowser } from './utils/detection';
 import classnames from 'classnames';
-
+import { withTranslation, WithTranslation } from 'react-i18next';
+import './loc/i18n'
 import './app.css';
 
 export interface AppState {
@@ -19,7 +20,7 @@ export interface AppState {
 }
 
 type StoreType = ReturnType<typeof configureStore>;
-interface AppProps {
+interface AppProps extends WithTranslation {
     store: StoreType;
     configuration: ConfigurationState;
     init: Function;
@@ -65,10 +66,9 @@ class AppRoot extends Component<AppProps, AppState> {
     }
 
     private renderMain() {
-        const { store, configuration, routeConfig } = this.props;
-
+        const { store, configuration, routeConfig, t: translation} = this.props;
         if (!configuration) {
-            return <Loader message='Fetching configuration...' />;
+            return <Loader message={translation('fetchingConfiguration')} translation={translation}/>;
         }
 
         return (
@@ -83,12 +83,13 @@ class AppRoot extends Component<AppProps, AppState> {
     }
 
     render() {
+        const { t: translation } = this.props;
         const partiallySupportedBrowserBar = (
             <div>
                 <MessageBar messageBarType={MessageBarType.warning}>
-                    Some features might not work because of browser restrictions -
+                    {translation('browserRestrictions')}
                     <Link href='https://aka.ms/vso-browser-support' target='_blank'>
-                        Learn more
+                        {translation('learnMore')}
                     </Link>
                     {'. '}
                     <Link
@@ -146,4 +147,4 @@ const getConfig = ({ configuration }: ApplicationState) => ({
     configuration,
 });
 
-export const App = connect(getConfig)(AppRoot);
+export const App = withTranslation()(connect(getConfig)(AppRoot));

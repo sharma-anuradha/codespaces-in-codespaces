@@ -6,6 +6,15 @@ import {
 } from '../environment-card';
 import { ActivePlanInfo } from '../../../reducers/plans-reducer';
 
+const englishStrings = require("../../../loc/resources/WebsiteStringResources.json");
+
+const mockTranslationFunc = (key: string) => {
+    if (!key) {
+        return undefined;
+    }
+    return englishStrings[key];
+}
+
 describe('environment-card', () => {
     describe('buildEnvironmentSettingsUpdateRequest', () => {
         const environment = <ILocalEnvironment>{
@@ -78,7 +87,8 @@ describe('environment-card', () => {
                         allowedSkus: [sku1, sku2],
                     },
                     environment,
-                    plan
+                    plan,
+                    mockTranslationFunc
                 )
             ).toEqual({
                 skuEditOptions: [
@@ -112,7 +122,8 @@ describe('environment-card', () => {
                         allowedSkus: [sku2],
                     },
                     environment,
-                    plan
+                    plan,
+                    mockTranslationFunc
                 )
             ).toEqual({
                 skuEditOptions: [

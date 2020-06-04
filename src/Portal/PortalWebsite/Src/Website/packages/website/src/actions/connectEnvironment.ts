@@ -6,6 +6,7 @@ import { stateChangeEnvironmentAction } from './environmentStateChange';
 import { ServiceResponseError } from './middleware/useWebClient';
 import { environmentErrorCodeToString } from '../utils/environmentUtils';
 import { action } from './middleware/useActionCreator';
+import { TFunction } from 'i18next';
 
 export const connectEnvironmentActionType = 'async.environments.connectEnvironment';
 export const connectEnvironmentSuccessActionType = 'async.environments.connectEnvironment.success';
@@ -22,6 +23,7 @@ export const connectEnvironmentFailureAction = (environmentId: string, error: Er
 // Exposed - callable actions that have side-effects
 export async function connectEnvironment(
     environmentInfo: IEnvironment,
+    translation: TFunction,
 ): Promise<IEnvironment | undefined> {
     const { id, state } = environmentInfo;
     // 1. Try to connect environment
@@ -59,7 +61,7 @@ export async function connectEnvironment(
                     if (typeof errorCode !== 'number') {
                         throw new Error();
                     }
-                    err.message = environmentErrorCodeToString(errorCode);
+                    err.message = environmentErrorCodeToString(errorCode , translation);
                 } catch {
                     err.message = text;
                 }

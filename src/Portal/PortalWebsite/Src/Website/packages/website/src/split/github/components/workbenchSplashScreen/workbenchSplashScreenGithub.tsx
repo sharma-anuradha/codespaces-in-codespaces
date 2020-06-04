@@ -5,6 +5,7 @@ import { PortalLayout } from '../../../../components/portalLayout/portalLayout';
 import { Loader } from '../../../../components/loader/loader';
 import { isActivating, stateToDisplayName } from '../../../../utils/environmentUtils';
 import { IWorkbenchSplashScreenProps } from '../../../../interfaces/IWorkbenchSplashScreenProps';
+import { useTranslation } from 'react-i18next';
 
 interface IRenderSplashScreenProps {
     message: string;
@@ -36,6 +37,7 @@ export const WorkbenchSplashScreenGithub = (props: IWorkbenchSplashScreenProps) 
         connectError,
         onRetry
     } = props;
+    const { t: translation } = useTranslation();
 
     const { friendlyName } = environment;
 
@@ -47,12 +49,12 @@ export const WorkbenchSplashScreenGithub = (props: IWorkbenchSplashScreenProps) 
         );
     }
 
-    const envState = stateToDisplayName(environment.state).toLocaleLowerCase();
+    const envState = stateToDisplayName(environment.state, translation).toLocaleLowerCase();
     return (
         <RenderSplashScreen message={`Codespace "${friendlyName}" is ${envState}.`}>
             {
                 isActivating(environment)
-                    ? <Loader />
+                    ? <Loader translation={translation}/>
                     : null
             }
         </RenderSplashScreen>

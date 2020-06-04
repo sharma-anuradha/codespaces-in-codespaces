@@ -49,6 +49,9 @@ import {
     EnvironmentErrorCodes,
     IEnvironment,
 } from 'vso-client-core';
+import { useTranslation } from 'react-i18next';
+import { injectMessageParameters } from '../../utils/injectMessageParameters';
+import { TFunction } from 'i18next';
 
 const friendlyNameDisplayLength = 20;
 export interface EnvironmentCardProps {
@@ -126,6 +129,7 @@ function DetailValueOrEdit({
     settingsChangeState: EnvironmentSettingsChangeState;
 }) {
     const { value, text, editable, editOptions, setValue } = detail;
+    const { t: translation } = useTranslation();
 
     if (settingsChangeState === EnvironmentSettingsChangeState.Display || !editable) {
         return (
@@ -146,16 +150,18 @@ function DetailValueOrEdit({
                 isLoading={!editOptions}
                 options={editOptions || []}
                 selectedKey={currentValueOption && currentValueOption.key}
-                loadingMessage={'Loading available settings...'}
+                loadingMessage={translation('loadingAvailableSettings')}
                 disabled={disabled}
                 // tslint:disable-next-line: react-this-binding-issue
                 onChange={(_, option) => setValue!(option)}
+                translation={translation}
             />
         );
     }
 }
 
 function Status({ environment }: { environment: ILocalEnvironment }) {
+    const { t: translation } = useTranslation();
     let backgroundColor;
     let color;
     switch (environment.state) {
@@ -175,7 +181,7 @@ function Status({ environment }: { environment: ILocalEnvironment }) {
 
     return (
         <Text
-            title={environmentErrorCodeToString(Number(environment.lastStateUpdateReason))}
+            title={environmentErrorCodeToString(Number(environment.lastStateUpdateReason), translation)}
             block
             className='environment-card__status'
             style={{
@@ -183,7 +189,7 @@ function Status({ environment }: { environment: ILocalEnvironment }) {
                 backgroundColor,
             }}
         >
-            {stateToDisplayName(environment.state)}
+            {stateToDisplayName(environment.state, translation)}
         </Text>
     );
 }
@@ -211,12 +217,13 @@ const Actions = ({
     const isWindowsEnv = environment.skuName?.toLowerCase().includes('windows');
     const serviceUri = `https://${window.location.hostname}/api/v1/`;
     const vsComServiceUri = btoa(serviceUri);
+    const { t: translation } = useTranslation();
 
     let items = [
         {
             key: 'open-vscode',
             iconProps: { iconName: 'OpenInNewWindow' },
-            name: 'Open in VS Code',
+            name: translation('openInVSCode'),
             disabled: environmentIsALie(environment) || isNotConnectable(environment),
             onClick: async () => {
                 try {
@@ -230,7 +237,7 @@ const Actions = ({
         {
             key: 'open-vscode-insiders',
             iconProps: { iconName: 'OpenInNewWindow' },
-            name: 'Open in VS Code Insiders',
+            name: translation('openInVSCodeInsiders'),
             disabled: environmentIsALie(environment) || isNotConnectable(environment),
             onClick: async () => {
                 try {
@@ -244,14 +251,14 @@ const Actions = ({
         {
             key: 'open-web',
             iconProps: { iconName: 'PlugConnected' },
-            name: 'Connect',
+            name: translation('connect'),
             disabled: environmentIsALie(environment) || isNotConnectable(environment),
             href: `environment/${environment.id!}`,
         },
         {
             key: 'enable-editing',
             iconProps: { iconName: 'Edit' },
-            name: 'Change Settings',
+            name: translation('changeSettings'),
             disabled: environmentIsALie(environment) || !isInStableState(environment),
             onClick: () => {
                 if (!environment.id) {
@@ -268,7 +275,7 @@ const Actions = ({
         {
             key: 'shutdown',
             iconProps: { iconName: 'PowerButton' },
-            name: 'Suspend',
+            name: translation('suspend'),
             disabled: environmentIsALie(environment) || isNotSuspendable(environment),
             onClick: () => {
                 if (environment.id) {
@@ -279,7 +286,7 @@ const Actions = ({
         {
             key: 'delete',
             iconProps: { iconName: 'Delete' },
-            name: isSelfHostedEnvironment(environment) ? 'Unregister' : 'Delete',
+            name: isSelfHostedEnvironment(environment) ? translation('unregister') : translation('delete'),
             disabled: environmentIsALie(environment),
             onClick: () => {
                 if (environment.id) setDeleteDialogHidden(false);
@@ -292,7 +299,7 @@ const Actions = ({
             {
                 key: 'open-vs',
                 iconProps: { iconName: 'OpenInNewWindow' },
-                name: 'Open in Visual Studio',
+                name: translation('openInVisualStudio'),
                 disabled: environmentIsALie(environment) || isNotConnectable(environment),
                 onClick: async () => {
                     const link = `https://visualstudio.microsoft.com/services/visual-studio-online/start-vs/?environmentId=${environment.id}&serviceUri=${vsComServiceUri}`;
@@ -306,7 +313,7 @@ const Actions = ({
         <>
             <IconButton
                 iconProps={{}}
-                title='More'
+                title={translation('More')}
                 menuIconProps={{ iconName: 'MoreVertical', style: { fontSize: '1.6rem' } }}
                 menuProps={{
                     isBeakVisible: false,
@@ -361,13 +368,17 @@ type DeleteDialogProps = {
 };
 
 function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: DeleteDialogProps) {
+    const { t: translation } = useTranslation();
+    const title = injectMessageParameters(translation('deleteCodespaceTitle'), environment.friendlyName);
+    const subText = injectMessageParameters(translation('deleteCodespaceSubText'), environment.friendlyName);
+
     return (
         <Dialog
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Delete Codespace ${environment.friendlyName}`,
-                subText: `You are about to delete the ${environment.friendlyName}. Are you sure?`,
+                title,
+                subText,
             }}
             modalProps={{
                 isBlocking: true,
@@ -380,7 +391,7 @@ function DeleteDialog({ deleteEnvironment, environment, cancel, hidden }: Delete
                         // tslint:disable-next-line: react-this-binding-issue
                         () => deleteEnvironment(environment.id!)
                     }
-                    text='Delete'
+                    text={translation('delete')}
                 />
                 <DefaultButton onClick={cancel} text='Cancel' />
             </DialogFooter>
@@ -404,14 +415,17 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
         shutdownEnvironment(environment as IEnvironment);
         close();
     }, [shutdownEnvironment, close, environment.id, environment.state]);
+    const { t: translation } = useTranslation();
+    const title = injectMessageParameters(translation('suspendCodespaceTitle'), environment.friendlyName);
+    const subText = injectMessageParameters(translation('suspendCodespaceSubText'), environment.friendlyName);
 
     return (
         <Dialog
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Suspend Codespace ${environment.friendlyName}`,
-                subText: `You are about to suspend ${environment.friendlyName}. Are you sure?`,
+                title,
+                subText,
             }}
             modalProps={{
                 isBlocking: true,
@@ -419,8 +433,8 @@ function ShutdownDialog({ shutdownEnvironment, environment, close, hidden }: Shu
             }}
         >
             <DialogFooter>
-                <PrimaryButton onClick={suspendEnvironment} text='Suspend' />
-                <DefaultButton onClick={close} text='Cancel' />
+                <PrimaryButton onClick={suspendEnvironment} text={translation('suspend')} />
+                <DefaultButton onClick={close} text={translation('cancel')} />
             </DialogFooter>
         </Dialog>
     );
@@ -450,14 +464,17 @@ function ChangeSettingsDialog({
         enableEditing();
         close();
     }, [shutdownEnvironment, close, environment.id, environment.state]);
+    const { t: translation } = useTranslation();
+    const title = injectMessageParameters(translation('suspendCodespaceTitle'), environment.friendlyName);
+    const subText = injectMessageParameters(translation('changeSettingsSubText'), environment.friendlyName);
 
     return (
         <Dialog
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Suspend Codespace ${environment.friendlyName}`,
-                subText: `Changing the settings of ${environment.friendlyName} requires it be suspended first.  Do you want to continue?`,
+                title,
+                subText,
             }}
             modalProps={{
                 isBlocking: true,
@@ -465,8 +482,8 @@ function ChangeSettingsDialog({
             }}
         >
             <DialogFooter>
-                <PrimaryButton onClick={suspendEnvironment} text='Suspend' />
-                <DefaultButton onClick={close} text='Cancel' />
+                <PrimaryButton onClick={suspendEnvironment} text={translation('suspend')} />
+                <DefaultButton onClick={close} text={translation('cancel')} />
             </DialogFooter>
         </Dialog>
     );
@@ -479,12 +496,14 @@ type UnsuccessfulUrlDialogProps = {
 };
 
 function UnsuccessfulUrlDialog({ accept, hidden, vscodeName }: UnsuccessfulUrlDialogProps) {
+    const { t: translation } = useTranslation();
+    const title = injectMessageParameters(translation('couldNotFindVSCodeInstallation'), vscodeName);
     return (
         <Dialog
             hidden={hidden}
             dialogContentProps={{
                 type: DialogType.normal,
-                title: `Could not find ${vscodeName} installation.`,
+                title,
             }}
             modalProps={{
                 isBlocking: true,
@@ -492,7 +511,7 @@ function UnsuccessfulUrlDialog({ accept, hidden, vscodeName }: UnsuccessfulUrlDi
             }}
         >
             <DialogFooter>
-                <DefaultButton onClick={accept} text='Accept' />
+                <DefaultButton onClick={accept} text={translation('accept')} />
             </DialogFooter>
         </Dialog>
     );
@@ -545,23 +564,24 @@ function EnvironmentErrorsDialog({
 const getSkuDisplayName = (
     selectedPlan: ActivePlanInfo,
     skuName: string,
+    translation: TFunction,
     defaultDisplayName?: string
 ) => {
     if (!selectedPlan.availableSkus) {
         return skuName;
     }
     const sku = selectedPlan.availableSkus.find((sku) => sku.name === skuName);
-    return sku ? getSkuSpecLabel(sku) : defaultDisplayName || skuName;
+    return sku ? getSkuSpecLabel(sku, translation) : defaultDisplayName || skuName;
 };
 
-const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0) => {
+const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0, translationFunc: TFunction) => {
     if (timeoutInMinutes === 0) {
-        return 'Never';
+        return translationFunc('never');
     } else if (timeoutInMinutes < 60) {
-        return `After ${timeoutInMinutes} minutes`;
+        return injectMessageParameters(translationFunc('afterMinutes'), timeoutInMinutes);
     } else {
         const timeoutInHours = timeoutInMinutes / 60;
-        return `After ${timeoutInHours} hours`;
+        return injectMessageParameters(translationFunc('afterHours'), timeoutInHours);
     }
 };
 
@@ -617,21 +637,21 @@ function ApplyEnvironmentSettingsChangeButton({
     submitSettingsUpdate,
     disabled,
 }: ApplyEnvironmentSettingsChangeButtonProps) {
+    const { t: translation } = useTranslation();
     const loader = (
-        <Loader message={''} className={'environment-card__change-settings-apply-button-loader'} />
+        <Loader message={''} className={'environment-card__change-settings-apply-button-loader'} translation={translation}/>
     );
-
     let text: string;
     let isLoading: boolean;
 
     if (environment.state !== EnvironmentStateInfo.Shutdown) {
-        text = 'Suspending...';
+        text = translation('suspendingProgress');
         isLoading = true;
     } else if (settingsChangeState === EnvironmentSettingsChangeState.Submitting) {
-        text = 'Submitting...';
+        text = translation('submitting');
         isLoading = true;
     } else {
-        text = 'Apply';
+        text = translation('apply');
         isLoading = false;
     }
 
@@ -676,6 +696,7 @@ function Footer({
     startEditing,
     cancelEditing,
 }: FooterProps) {
+    const { t: translation } = useTranslation();
     if (settingsChangeState === EnvironmentSettingsChangeState.Display) {
         return (
             <Actions
@@ -697,7 +718,7 @@ function Footer({
                     submitSettingsUpdate={submitSettingsUpdate}
                 />
                 <DefaultButton
-                    text={'Cancel'}
+                    text={translation('cancel')}
                     onClick={cancelEditing}
                     className={'environment-card__change-settings-button'}
                     disabled={buttonsDisabled}
@@ -729,10 +750,11 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
     }, []);
 
     const selectedPlan = useSelector((state: ApplicationState) => state.plans.selectedPlan);
+    const { t: translation } = useTranslation();
     let details: Detail[] = [];
 
     details.push({
-        key: 'Created',
+        key: translation('created'),
         value: props.environment.created,
         text: moment(props.environment.created).format('LLLL'),
         editable: false,
@@ -740,7 +762,7 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
 
     if (props.environment.seed && props.environment.seed.moniker) {
         details.push({
-            key: 'Repository',
+            key: translation('repository'),
             value: props.environment.seed.moniker,
             text: props.environment.seed.moniker,
             editable: false,
@@ -752,14 +774,15 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
     const editOptions = getDropdownOptionForSettingsUpdates(
         availableSettings,
         props.environment!,
-        selectedPlan!
+        selectedPlan!,
+        translation,
     );
 
     const [skuName, setSkuName] = useState(props.environment.skuName);
     details.push({
-        key: 'Instance',
+        key: translation('instance'),
         value: skuName,
-        text: getSkuDisplayName(selectedPlan!, skuName),
+        text: getSkuDisplayName(selectedPlan!, skuName, translation),
         editable: !isSelfHosted,
         editOptions: editOptions.skuEditOptions,
         setValue: (opt) => opt && setSkuName(String(opt.key)),
@@ -770,9 +793,9 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
     );
     if (!isSelfHosted) {
         details.push({
-            key: 'Suspend',
+            key: translation('suspend'),
             value: autoShutdownDelayMinutes,
-            text: suspendTimeoutToDisplayName(autoShutdownDelayMinutes),
+            text: suspendTimeoutToDisplayName(autoShutdownDelayMinutes, translation),
             editable: !isSelfHosted,
             editOptions: editOptions.autoShutdownDelayEditOptions,
             setValue: (opt) => opt && setAutoShutdownDelayMinutes(Number(opt.key)),
@@ -848,7 +871,9 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
             async (err) => {
                 if (err instanceof ServiceResponseError) {
                     const codes = (await err.response.json()) as EnvironmentErrorCodes[];
-                    setSettingsChangeErrors(codes.map(environmentErrorCodeToString));
+                    setSettingsChangeErrors(codes.map((code) => {
+                        return environmentErrorCodeToString(code, translation);
+                    }));
                 } else {
                     setSettingsChangeErrors([err.toString()]);
                 }
@@ -900,12 +925,12 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
                 />
             </Stack>
             <EnvironmentErrorsDialog
-                title={'We are getting things ready.'}
+                title={translation('weAreGettingThingsReady')}
                 errorMessages={errorMessages}
                 clearErrorMessages={clearErrorMessages}
             />
             <EnvironmentErrorsDialog
-                title={'Failed to update settings.'}
+                title={translation('failedToUpdateSettings')}
                 errorMessages={settingsChangeErrors}
                 clearErrorMessages={clearSettingsChangeErrorMessages}
             />
@@ -916,7 +941,8 @@ export function EnvironmentCard(props: EnvironmentCardProps) {
 export function getDropdownOptionForSettingsUpdates(
     availableSettings: EnvironmentSettingsAllowedUpdates | undefined,
     environment: ILocalEnvironment,
-    selectedPlan: ActivePlanInfo
+    selectedPlan: ActivePlanInfo,
+    translateFunc: TFunction,
 ): {
     skuEditOptions?: IDropdownOption[];
     autoShutdownDelayEditOptions?: IDropdownOption[];
@@ -929,24 +955,24 @@ export function getDropdownOptionForSettingsUpdates(
         availableSettings.allowedSkus &&
         availableSettings.allowedSkus.map((sku) => ({
             key: sku.name,
-            text: getSkuDisplayName(selectedPlan, sku.name, sku.displayName),
+            text: getSkuDisplayName(selectedPlan, sku.name, translateFunc, sku.displayName),
         }));
 
     addCurrentSettingValueOptionIfNotExists(skuEditOptions, {
         key: environment.skuName,
-        text: getSkuDisplayName(selectedPlan, environment.skuName, environment.skuDisplayName),
+        text: getSkuDisplayName(selectedPlan, environment.skuName, translateFunc, environment.skuDisplayName),
     });
 
     const autoShutdownDelayEditOptions =
         availableSettings.allowedAutoShutdownDelayMinutes &&
         availableSettings.allowedAutoShutdownDelayMinutes.map((delay) => ({
             key: delay,
-            text: suspendTimeoutToDisplayName(delay),
+            text: suspendTimeoutToDisplayName(delay, translateFunc),
         }));
 
     addCurrentSettingValueOptionIfNotExists(autoShutdownDelayEditOptions, {
         key: environment.autoShutdownDelayMinutes,
-        text: suspendTimeoutToDisplayName(environment.autoShutdownDelayMinutes),
+        text: suspendTimeoutToDisplayName(environment.autoShutdownDelayMinutes, translateFunc),
     });
 
     return {

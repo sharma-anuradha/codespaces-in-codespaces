@@ -19,6 +19,7 @@ import { unavailableErrorMessage } from '../../actions/serviceUnavailable';
 import { notificationsSubscribe } from '../../actions/notificationsSubscribe';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { useDispatch } from '../../actions/middleware/useDispatch';
+import { useTranslation } from 'react-i18next';
 
 import './ServiceUnavailable.css';
 
@@ -29,6 +30,7 @@ const FormWithEmail: FC<{ defaultUserEmail: string }> = ({ defaultUserEmail }) =
     const dispatch = useDispatch();
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [showErrorMessage, setShowErrorMessage] = useState(false);
+    const { t: translation } = useTranslation();
 
     const postEmail: FormEventHandler = useCallback(
         async (event) => {
@@ -56,8 +58,7 @@ const FormWithEmail: FC<{ defaultUserEmail: string }> = ({ defaultUserEmail }) =
             <Stack horizontalAlign='center'>
                 <Stack.Item>
                     <Label id='email-label' htmlFor='email'>
-                        We can send you an email when we are ready to enable Codespace creation
-                        again.
+                        {translation('sendEmailTitle')}
                     </Label>
                 </Stack.Item>
                 <Stack.Item>
@@ -75,21 +76,21 @@ const FormWithEmail: FC<{ defaultUserEmail: string }> = ({ defaultUserEmail }) =
                             className='email-form__button'
                             disabled={disabled}
                         >
-                            Notify Me
+                            {translation('notifyMe')}
                         </PrimaryButton>
                     </Stack>
                 </Stack.Item>
                 <Stack.Item>
                     {showSuccessMessage && (
                         <MessageBar messageBarType={MessageBarType.success} style={{ width: 358 }}>
-                            We'll let you know.
+                            {translation('weWillLetYouKnow')}
                         </MessageBar>
                     )}
                 </Stack.Item>
                 <Stack.Item>
                     {showErrorMessage && (
                         <MessageBar messageBarType={MessageBarType.error} style={{ width: 358 }}>
-                            Something went wrong. Please try again later.
+                            {translation('somethingWentWrong')}
                         </MessageBar>
                     )}
                 </Stack.Item>

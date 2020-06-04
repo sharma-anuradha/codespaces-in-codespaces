@@ -7,12 +7,14 @@ import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { loginPath, environmentsPath } from '../../routerPaths';
 import { loginSilent, acquireTokenRedirect } from '../../actions/login';
 import { Loader } from '../loader/loader';
+import { withTranslation, WithTranslation } from 'react-i18next';
 import { clientApplication } from '../../services/msalConfig';
 import { PortalLayout } from '../portalLayout/portalLayout';
 
 let loginSilentPromise: any = undefined;
 
-export interface LoginCallbackProps {}
+export interface LoginCallbackProps extends WithTranslation {
+}
 
 enum LoginState {
     LoginPending = 'Pending',
@@ -27,7 +29,7 @@ interface LoginCallbackState {
 
 export const INTERACTION_REQUIRED_AUTH_FLAG = 'InteractionRequiredAuthFlag';
 
-export class LoginCallback extends Component<LoginCallbackProps, LoginCallbackState> {
+export class LoginCallbackInternal extends Component<LoginCallbackProps, LoginCallbackState> {
     constructor(props: LoginCallbackProps) {
         super(props);
         this.state = { loginState: LoginState.LoginPending };
@@ -63,6 +65,7 @@ export class LoginCallback extends Component<LoginCallbackProps, LoginCallbackSt
     }
 
     render() {
+        const { t: translation } = this.props;
         if (this.state.loginState === LoginState.LoginPassed) {
             return <Redirect to={environmentsPath} />;
         } else if (this.state.loginState === LoginState.LoginFailed) {
@@ -91,7 +94,7 @@ export class LoginCallback extends Component<LoginCallbackProps, LoginCallbackSt
                 </PortalLayout>
             );
         }
-        return <Loader message='Signing in...' />;
+        return <Loader message={translation('signingIn')} translation={translation} />;
     }
 
     private resetInteractionRequiredFlag() {
@@ -115,3 +118,5 @@ export class LoginCallback extends Component<LoginCallbackProps, LoginCallbackSt
         location.href = loginPath;
     }
 }
+
+export const LoginCallback = withTranslation()(LoginCallbackInternal);

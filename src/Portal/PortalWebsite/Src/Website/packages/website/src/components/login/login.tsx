@@ -16,6 +16,7 @@ import { Loader } from '../loader/loader';
 import { environmentsPath } from '../../routerPaths';
 import { EverywhereImage } from '../EverywhereImage/EverywhereImage';
 import { blogPostUrl, pricingInfoUrl, privacyStatementUrl } from '../../constants';
+import { useTranslation } from 'react-i18next';
 import { INTERACTION_REQUIRED_AUTH_FLAG } from './loginCallback';
 
 import './login.css';
@@ -50,6 +51,7 @@ function addCookieConsentCookie() {
 }
 
 const LoginPageSignInForm = (props: LoginProps) => {
+    const { t: translation } = useTranslation();
     const loginClick = useCallback(() => {
         addCookieConsentCookie(); // Workaround to add MSCC cookie for SPA
         localStorage.removeItem(INTERACTION_REQUIRED_AUTH_FLAG);
@@ -65,7 +67,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
             </Stack.Item>
             <Stack.Item>
                 <Text className='login-page__subtitle'>
-                    Cloud-powered dev environments accessible from anywhere
+                    {translation('signInTitle')}
                 </Text>
             </Stack.Item>
 
@@ -75,13 +77,13 @@ const LoginPageSignInForm = (props: LoginProps) => {
 
             <Stack.Item>
                 <PrimaryButton onClick={loginClick} className='login-page__login-button'>
-                    Sign in
+                    {translation('signIn')}
                 </PrimaryButton>
             </Stack.Item>
             <Stack.Item className='login-page__learn-more-wrapper'>
                 <Link className='login-page__learn-more' href={blogPostUrl}>
                     <span className='login-page__learn-more'>
-                        <span>Learn more</span>
+                        <span>{translation('learnMore')}</span>
                         <span>
                             <Icon iconName='ChevronRight' className='login-page__learn-more-icon' />
                         </span>
@@ -89,7 +91,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
                 </Link>
                 <Link className='login-page__learn-more' href={pricingInfoUrl}>
                     <span className='login-page__learn-more'>
-                        <span>Pricing</span>
+                        <span>{translation('pricing')}</span>
                         <span>
                             <Icon iconName='ChevronRight' className='login-page__learn-more-icon' />
                         </span>
@@ -97,7 +99,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
                 </Link>
                 <Link className='login-page__learn-more' href={privacyStatementUrl}>
                     <span className='login-page__learn-more'>
-                        <span>Privacy notice</span>
+                        <span>{translation('privaceNotice')}</span>
                         <span>
                             <Icon iconName='ChevronRight' className='login-page__learn-more-icon' />
                         </span>
@@ -109,11 +111,12 @@ const LoginPageSignInForm = (props: LoginProps) => {
 };
 
 const LoginPage2FAStepForm = (props: LoginProps) => {
+    const { t: translation } = useTranslation();
     return (
         <Fragment>
             <Stack.Item>
                 <PrimaryButton onClick={props.complete2FA} className='login-page__login-button'>
-                    Complete 2-factor authentication
+                    {translation('twoFactorAuth')}
                 </PrimaryButton>
             </Stack.Item>
         </Fragment>
@@ -131,6 +134,7 @@ const LoginForm = (props: LoginProps) => {
 // tslint:disable-next-line: max-func-body-length
 function LoginView(props: LoginProps) {
     const [markupHtml, setMarkupHtml] = useState('');
+    const { t: translation } = useTranslation();
     useEffect(() => {
         const cookieConsentSignal = Signal.from(
             fetch('/cookie-consent', {
@@ -159,7 +163,7 @@ function LoginView(props: LoginProps) {
 
     const { isAuthenticated, isAuthenticating, isInteractionRequired } = props;
     if (!isAuthenticated && isAuthenticating && !isInteractionRequired) {
-        return <Loader message='Signing in...' />;
+        return <Loader message={translation('signingIn')} translation={translation} />;
     }
     if (props.isAuthenticated) {
         if (!props.redirectUrl) {
@@ -174,7 +178,7 @@ function LoginView(props: LoginProps) {
         if (isAuthCookieSet) {
             window.location.href = withAllowedSubdomain(redirectUrl);
         } else {
-            return <Loader message='Signing in...' />;
+            return <Loader message={translation('signingIn')} translation={translation} />;
         }
     }
 

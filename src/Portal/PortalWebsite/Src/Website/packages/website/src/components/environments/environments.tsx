@@ -26,8 +26,9 @@ import { fetchEnvironments } from '../../actions/fetchEnvironments';
 import { pollActivatingEnvironments } from '../../actions/pollEnvironment';
 import { environmentIsALie } from '../../utils/environmentUtils';
 import { blurCreateEnvironmentButton } from '../../actions/createEnvironment';
+import { withTranslation, WithTranslation } from 'react-i18next';
 
-interface EnvironmentsPanelProps extends RouteComponentProps {
+interface EnvironmentsPanelProps extends RouteComponentProps, WithTranslation {
     deleteEnvironment: (...name: Parameters<typeof deleteEnvironment>) => void;
     shutdownEnvironment: (...name: Parameters<typeof shutdownEnvironment>) => void;
     pollActivatingEnvironments(): void;
@@ -67,7 +68,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
     }
 
     private renderEnvironments() {
-        const { environments } = this.props;
+        const { environments, t: translation } = this.props;
 
         const cards = (
             <EnvironmentList
@@ -86,7 +87,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
                         <div className='ms-Grid-col ms-sm6 ms-md8 ms-lg3 environments-panel__tar'>
                             <PrimaryButton
                                 componentRef={this.createEnvironmentButtonRef}
-                                text='Create Codespace'
+                                text={translation('createCodespace')}
                                 className='environments-panel__create-button'
                                 onClick={this.showCreateEnvPanel}
                                 onBlur={blurCreateEnvironmentButton}
@@ -121,10 +122,11 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
     };
 
     private renderSpinner() {
+        const { t: translation } = this.props;
         return (
             <Spinner
                 className='environments-panel__environments-spinner'
-                label='Fetching your Codespaces...'
+                label={translation('fetchingCodespaces')}
                 ariaLive='assertive'
                 labelPosition='right'
             />
@@ -178,4 +180,4 @@ const mapDispatch = {
     pollActivatingEnvironments,
 };
 
-export const EnvironmentsPanel = connect(stateToProps, mapDispatch)(EnvironmentsPanelView);
+export const EnvironmentsPanel = withTranslation()(connect(stateToProps, mapDispatch)(EnvironmentsPanelView));

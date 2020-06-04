@@ -19,6 +19,16 @@ import { defaultConfig } from '../../services/configurationService';
 import { ServiceResponseError } from '../middleware/useWebClient';
 import { environmentErrorCodeToString } from '../../utils/environmentUtils';
 
+const englishStrings = require("../../loc/resources/WebsiteStringResources.json");
+
+const mockTranslationFunc = (key: string) => {
+    if (!key) {
+        return undefined;
+    }
+    return englishStrings[key];
+}
+
+
 jest.mock('../../services/authService', () => {
     return {
         authService: {
@@ -75,7 +85,7 @@ describe('createEnvironment', () => {
             skuName: 'standardLinux',
         };
 
-        await store.dispatch(createEnvironment(createEnvironmentRequest));
+        await store.dispatch(createEnvironment(createEnvironmentRequest, mockTranslationFunc));
 
         expect(store.dispatchedActions).not.toHaveFailed();
         expect(store.dispatchedActions).toHaveBeenDispatchedInOrder(
@@ -132,7 +142,7 @@ describe('createEnvironment', () => {
         };
 
         try {
-            await store.dispatch(createEnvironment(createEnvironmentRequest));
+            await store.dispatch(createEnvironment(createEnvironmentRequest, mockTranslationFunc));
         } catch {
             const failAction = getDispatchedAction(
                 store.dispatchedActions,
@@ -144,7 +154,7 @@ describe('createEnvironment', () => {
             );
             expect(successAction).toBeUndefined();
             expect(failAction.error).toBeInstanceOf(ServiceResponseError);
-            expect(failAction.payload!.errorMessage).toBe(environmentErrorCodeToString(4));
+            expect(failAction.payload!.errorMessage).toBe(environmentErrorCodeToString(4, mockTranslationFunc));
             expect(store.dispatch);
             expect(store.dispatchedActions).toHaveFailed();
         }

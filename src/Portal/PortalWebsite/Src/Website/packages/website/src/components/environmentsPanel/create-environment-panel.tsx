@@ -45,6 +45,9 @@ import { Loader } from '../loader/loader';
 import { isNotNullOrEmpty } from '../../utils/isNotNullOrEmpty';
 import { getSkuSpecLabel } from '../../utils/environmentUtils';
 import { IAuthenticationAttempt } from '../../services/authenticationServiceBase';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import { injectMessageParameters } from '../../utils/injectMessageParameters';
+import { TFunction } from 'i18next';
 
 
 type CreateEnvironmentParams = Parameters<typeof createEnvironment>[0];
@@ -56,6 +59,21 @@ const SKU_PRICING_URL = 'https://aka.ms/vso-pricing';
 const USE_TRUSTWORTHY_REPO_LABEL_TEXT = 'You should only use ';
 const USE_TRUSTWORTHY_REPO_LABEL_LINK = 'repositories you trust';
 const USE_TRUSTWORTHY_REPO_URL = 'https://aka.ms/vso-trusted-repos';
+
+export enum validationMessagesKeys {
+    valid,
+    testFailed,
+    nameIsRequired,
+    nameIsTooLong,
+    nameIsInvalid,
+    unableToConnect,
+    invalidGitUrl,
+    noAccess,
+    noAccessDotFiles,
+    privateRepoNoAuth,
+    noPlanSelected,
+    noSkusAvailable,
+}
 
 async function queryGitService(url: string, bearerToken?: string): Promise<boolean> {
     const webClient = useWebClient();
@@ -86,55 +104,55 @@ export async function validateGitRepository(
     gitHubAccessToken: string | null = null,
     azDevAccessToken: string | null = null,
     required = false
-): Promise<string> {
+): Promise<validationMessagesKeys> {
     const valid = '';
     const maybeGitUrl = normalizeGitUrl(maybeRepository);
     if (!required && !maybeRepository) {
-        return valid;
+        return validationMessagesKeys.valid;
     }
     if (!maybeGitUrl) {
-        return validationMessages.invalidGitUrl;
+        return validationMessagesKeys.invalidGitUrl;
     }
 
     const gitServiceProvider = getSupportedGitService(maybeGitUrl);
     const queryableUrl = getQueryableUrl(maybeGitUrl);
     if (!queryableUrl) {
-        return validationMessages.invalidGitUrl;
+        return validationMessagesKeys.invalidGitUrl;
     }
 
     if (gitServiceProvider === SupportedGitService.GitHub && gitHubAccessToken) {
         const isAccessible = await queryGitService(queryableUrl, gitHubAccessToken);
         if (!isAccessible) {
-            return validationMessages.noAccess;
+            return validationMessagesKeys.noAccess;
         } else {
-            return valid;
+            return validationMessagesKeys.valid;
         }
     } else if (gitServiceProvider === SupportedGitService.GitHub) {
         try {
             const isAccessible = await queryGitService(queryableUrl);
             if (!isAccessible) {
-                return validationMessages.privateRepoNoAuth;
+                return validationMessagesKeys.privateRepoNoAuth;
             } else {
-                return valid;
+                return validationMessagesKeys.valid;
             }
         } catch {
-            return validationMessages.testFailed;
+            return validationMessagesKeys.testFailed;
         }
     } else if (gitServiceProvider === SupportedGitService.AzureDevOps && azDevAccessToken) {
         // ToDo: Check to see if AzDevOpsRepo is a valid Repo
-        return valid;
+        return validationMessagesKeys.valid;
     } else if (gitServiceProvider === SupportedGitService.AzureDevOps) {
         // ToDo: Check if AzureDevOps repo is a public repo. https://docs.microsoft.com/en-us/azure/devops/organizations/public/make-project-public?view=azure-devops
-        return validationMessages.privateRepoNoAuth;
+        return validationMessagesKeys.privateRepoNoAuth;
     } else {
         try {
             if (await queryGitService(queryableUrl)) {
-                return valid;
+                return validationMessagesKeys.valid;
             } else {
-                return validationMessages.unableToConnect;
+                return validationMessagesKeys.unableToConnect;
             }
         } catch {
-            return validationMessages.testFailed;
+            return validationMessagesKeys.testFailed;
         }
     }
 }
@@ -163,24 +181,22 @@ function normalizeOptionalValue(value: string): string | undefined {
     return value;
 }
 
-export const validationMessages = {
-    valid: '',
-    testFailed: 'Failed to check repository access, please try again.',
-    nameIsRequired: 'Name is required.',
-    nameIsTooLong: 'Maximum name length is 90.',
-    nameIsInvalid:
-        'Invalid characters. The name can include alphanumeric, underscore, parentheses, hyphen, period and space.',
-    unableToConnect: 'Unable to connect to this repository. Create an empty Codespace.',
-    invalidGitUrl: 'We are unable to clone this repository automatically.',
-    noAccess:
-        'The repository does not exist, or you do not have access to it. Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.',
-    noAccessDotFiles:
-        'The Dotfiles repository does not exist, or you do not have access to it.  Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.',
-    privateRepoNoAuth:
-        'Repository doesn’t appear to exist. If it’s private, then you’ll need to authenticate.',
-    noPlanSelected: 'No plan selected - please select one',
-    noSkusAvailable: 'No instance types are available - please select a different plan',
-};
+export function getValidationMessage(key: validationMessagesKeys, translationFunc: (key: string) => string) {
+    switch (key) {
+        case validationMessagesKeys.valid: return translationFunc('');
+        case validationMessagesKeys.testFailed: return translationFunc('testFailed');
+        case validationMessagesKeys.nameIsRequired: return translationFunc('nameIsRequired');
+        case validationMessagesKeys.nameIsTooLong: return translationFunc('nameIsTooLong');
+        case validationMessagesKeys.nameIsInvalid: return translationFunc('nameIsInvalid');
+        case validationMessagesKeys.unableToConnect: return translationFunc('unableToConnect');
+        case validationMessagesKeys.invalidGitUrl: return translationFunc('invalidGitUrl');
+        case validationMessagesKeys.noAccess: return translationFunc('noAccess');
+        case validationMessagesKeys.noAccessDotFiles: return translationFunc('noAccessDotFiles');
+        case validationMessagesKeys.privateRepoNoAuth: return translationFunc('privateRepoNoAuth');
+        case validationMessagesKeys.noPlanSelected: return translationFunc('noPlanSelected');
+        case validationMessagesKeys.noSkusAvailable: return translationFunc('noSkusAvailable');
+    }
+}
 
 enum ValidationState {
     Initial,
@@ -202,7 +218,7 @@ type NumberFieldState = {
     validation: ValidationState;
 };
 
-export interface CreateEnvironmentPanelProps {
+export interface CreateEnvironmentPanelProps extends WithTranslation {
     defaultName?: string | null;
     defaultRepo?: string | null;
 
@@ -294,11 +310,13 @@ function formToEnvironmentParams(plan: IPlan, fields: FormFields): CreateEnviron
 }
 
 export const defaultAutoShutdownDelayMinutes: number = 30;
-const autoShutdownOptions: IDropdownOption[] = [
-    { key: 5, text: '5 Minutes' },
-    { key: 30, text: '30 Minutes' },
-    { key: 120, text: '2 Hours' },
-];
+function autoShutdownOptions(translationFunc: TFunction): IDropdownOption[] {
+    return [
+        { key: 5, text: injectMessageParameters(translationFunc('autoShutdownMinutes'), '5') },
+        { key: 30, text: injectMessageParameters(translationFunc('autoShutdownMinutes'), '30') },
+        { key: 120, text: injectMessageParameters(translationFunc('autoShutdownHours'), '2') },
+    ]
+}
 
 const openExternalUrl = (url: string) => {
     window.open(url, '_blank');
@@ -341,6 +359,7 @@ export class CreateEnvironmentPanelView extends Component<
 
         // Workaround for DropDown not having validateOnLoad
         const isInitialSkuValid = this.isSkuNameValid(defaultSkuSelection, availableSkus);
+        const { t: translation } = props;
 
         this.state = {
             ...initialFormState,
@@ -394,14 +413,15 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     render() {
+        const { t: translation } = this.props;
         return (
             <Panel
                 isOpen={true}
                 type={PanelType.smallFixedFar}
                 isFooterAtBottom={true}
                 onDismiss={this.dismissPanel}
-                headerText='Create Codespace'
-                closeButtonAriaLabel='Close'
+                headerText={translation('createCodespace')}
+                closeButtonAriaLabel={translation('close')}
                 onRenderFooterContent={this.onRenderFooterContent}
             >
                 {this.renderOverlay()}
@@ -413,6 +433,7 @@ export class CreateEnvironmentPanelView extends Component<
 
     private renderOverlay() {
         const { isCreatingEnvironment } = this.state;
+        const { t: translation} = this.props;
 
         if (!isCreatingEnvironment) {
             return null;
@@ -420,12 +441,13 @@ export class CreateEnvironmentPanelView extends Component<
 
         return (
             <div className='create-environment-panel__overlay'>
-                <Loader message='Creating the Codespace...' />
+                <Loader message={translation('creatingCodespace')} translation={translation} />
             </div>
         );
     }
 
     private renderCreateEnvironmentInputs() {
+        const { t: translation} = this.props;
         const errorMessageBar = isDefined(this.state.friendlyName.errorMessage) ? (
             <MessageBar messageBarType={MessageBarType.error} isMultiline={true}>
                 {this.state.friendlyName.errorMessage}
@@ -443,9 +465,9 @@ export class CreateEnvironmentPanelView extends Component<
         ) : null;
         const selfHostedMessageBar = (
             <MessageBar messageBarType={MessageBarType.info} isMultiline={true} truncated={true}>
-                Want to access your existing machines remotely? Use self-hosting!
+                {translation('selfHostedMessage')}
                 <Link href='https://aka.ms/vso-self-hosted' target='_blank'>
-                    More info...
+                    {translation('moreInfo')}
                 </Link>
             </MessageBar>
         );
@@ -467,15 +489,16 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private renderEnvironmentCreation() {
+        const { t: translation } = this.props;
         const onSuspendRenderLabel = createLabelRenderCallback(
-            'View suspend behavior details',
+            translation('viewSuspendBehaviorDetails'),
             'https://aka.ms/vso-docs/how-to/suspend'
         );
 
         return (
             <Stack tokens={{ childrenGap: 4 }}>
                 <TextField
-                    label='Codespace Name'
+                    label={translation('codespaceName')}
                     ariaLabel='Codespace Name'
                     className={this.state.friendlyName.style}
                     placeholder=''
@@ -491,7 +514,7 @@ export class CreateEnvironmentPanelView extends Component<
                     required
                 />
                 <TextField
-                    label='Git Repository'
+                    label={translation('gitRepository')}
                     ariaLabel='Git Repository'
                     className={this.state.gitRepositoryUrl.style}
                     placeholder=''
@@ -506,9 +529,9 @@ export class CreateEnvironmentPanelView extends Component<
                 />
                 {this.renderSkuSelector()}
                 <Dropdown
-                    label='Suspend idle Codespace after...'
+                    label={translation('suspendIdleCodespaceAfter')}
                     ariaLabel='Suspend idle Codespace after...'
-                    options={autoShutdownOptions}
+                    options={autoShutdownOptions(translation)}
                     onChange={this.onChangeAutoShutdownDelayMinutes}
                     selectedKey={this.state.autoShutdownDelayMinutes.value}
                     onRenderLabel={onSuspendRenderLabel as IRenderFunction<IDropdownProps>}
@@ -518,8 +541,9 @@ export class CreateEnvironmentPanelView extends Component<
     }
 
     private renderDotFiles() {
-        const dotFilesDetailsTitle = 'View dotfiles details';
-        const dotFilesRepositoryTitle = 'Dotfiles Repository';
+        const { t: translation } = this.props;
+        const dotFilesDetailsTitle = translation('dotFilesDetails');
+        const dotFilesRepositoryTitle = translation('dotFilesRepository');
         const onDotfilesRenderLabel = createLabelRenderCallback(
             dotFilesDetailsTitle,
             'https://aka.ms/vso-docs/reference/personalizing',
@@ -527,7 +551,7 @@ export class CreateEnvironmentPanelView extends Component<
         );
 
         return (
-            <Collapsible tokens={{ childrenGap: 4 }} title={'Dotfiles (optional)'}>
+            <Collapsible tokens={{ childrenGap: 4 }} title={`Dotfiles (${translation('optional')})`}>
                 <TextField
                     autoFocus
                     ariaLabel={dotFilesRepositoryTitle} // Omitting label due to office-ui's onRenderLabel accessibility conflict
@@ -544,7 +568,7 @@ export class CreateEnvironmentPanelView extends Component<
                     onRenderLabel={onDotfilesRenderLabel as IRenderFunction<ITextFieldProps>}
                 />
                 <TextField
-                    label='Dotfiles Install Command'
+                    label={translation('dotFilesInstallCommand')}
                     ariaLabel='Dotfiles Install Command'
                     placeholder='./install.sh'
                     onKeyDown={this.submitForm}
@@ -554,7 +578,7 @@ export class CreateEnvironmentPanelView extends Component<
                     validateOnLoad={false}
                 />
                 <TextField
-                    label='Dotfiles Target Path'
+                    label={translation('dotFilesTargetPath')}
                     ariaLabel='Dotfiles Target Path'
                     placeholder='~/dotfiles'
                     onKeyDown={this.submitForm}
@@ -571,10 +595,11 @@ export class CreateEnvironmentPanelView extends Component<
 
     private renderSkuSelector() {
         const availableSkus = this.getAvailableSkus();
+        const { t: translation } = this.props;
 
         const options: IDropdownOption[] = availableSkus
             ? availableSkus.map((s) => {
-                  const text = getSkuSpecLabel(s);
+                  const text = getSkuSpecLabel(s, translation);
                   return { key: s.name, text };
               })
             : [];
@@ -592,17 +617,18 @@ export class CreateEnvironmentPanelView extends Component<
         return (
             <DropDownWithLoader
                 componentRef={this.skuDropdownRef}
-                label='Instance Type'
+                label={translation('instanceType')}
                 ariaLabel='Instance Type'
                 options={options}
                 isLoading={!this.props.isPlanLoadingFinished || false}
-                loadingMessage='Loading available instance types'
+                loadingMessage={translation('loadingAvailableInstanceTypes')}
                 selectedKey={this.state.skuName.value}
                 errorMessage={errorMessage}
                 disabled={!!errorMessage}
                 onChange={this.onChangeSkuName}
                 onRenderOption={this.onSkuOptionRender as IRenderFunction<ISelectableOption>}
                 onRenderLabel={onSkuLabelRender as IRenderFunction<IDropdownProps>}
+                translation={translation}
             />
         );
     }
@@ -632,17 +658,16 @@ export class CreateEnvironmentPanelView extends Component<
     };
 
     private onRenderFooterContent = () => {
+        const { t: translation } = this.props;
         let authStatusMessage;
         if (isDefined(this.state.authenticationAttempt)) {
             let authStatusMessageString;
             switch (this.state.authenticationAttempt.gitServiceType) {
                 case SupportedGitService.AzureDevOps:
-                    authStatusMessageString =
-                        "We've opened a new tab for you to grant permission to the Azure DevOps repositories";
+                    authStatusMessageString = translation('azureAuthMessageString');
                     break;
                 default:
-                    authStatusMessageString =
-                        "We've opened a new tab for you to grant permission to the specified GitHub repositories";
+                    authStatusMessageString = translation('githubAuthMessageString');
             }
             authStatusMessage = (
                 <div className='create-environment-panel__auth'>
@@ -682,8 +707,8 @@ export class CreateEnvironmentPanelView extends Component<
         const label =
             this.state.shouldTryToAuthenticateForRepo ||
             this.state.shouldTryToAuthenticateForDotfiles
-                ? 'Auth & Create'
-                : 'Create';
+                ? translation('authAndCreate')
+                : translation('create');
 
         return (
             <Stack tokens={{ childrenGap: 'l1' }}>
@@ -772,10 +797,10 @@ export class CreateEnvironmentPanelView extends Component<
                     this.props.gitHubAccessToken,
                     this.props.azDevAccessToken
                 );
-                if (validationMessage !== validationMessages.valid) {
+                if (validationMessage !== validationMessagesKeys.valid) {
                     this.showRepoError();
                     this.onNotifyValidationResultGitRepositoryUrl(
-                        validationMessages.noAccess,
+                        getValidationMessage(validationMessagesKeys.noAccess, this.props.t),
                         this.state.gitRepositoryUrl.value
                     );
                 }
@@ -784,16 +809,16 @@ export class CreateEnvironmentPanelView extends Component<
                     this.props.gitHubAccessToken,
                     this.props.azDevAccessToken
                 );
-                if (dotfilesValidationMessage !== validationMessages.valid) {
+                if (dotfilesValidationMessage !== validationMessagesKeys.valid) {
                     this.showDotfilesError();
                     this.onNotifyValidationResultDotfilesRepository(
-                        validationMessages.noAccess,
+                        getValidationMessage(validationMessagesKeys.noAccess, this.props.t),
                         this.state.dotfilesRepository.value
                     );
                 }
                 if (
-                    validationMessage !== validationMessages.valid ||
-                    dotfilesValidationMessage !== validationMessages.valid
+                    validationMessage !== validationMessagesKeys.valid ||
+                    dotfilesValidationMessage !== validationMessagesKeys.valid
                 ) {
                     throw new Error('Failed to access git repositories.');
                 }
@@ -992,11 +1017,11 @@ export class CreateEnvironmentPanelView extends Component<
         const regex = /^[-\w\._\(\) ]+$/g;
 
         if (value.length === 0) {
-            return validationMessages.nameIsRequired;
+            return getValidationMessage(validationMessagesKeys.nameIsRequired, this.props.t);
         } else if (value.length > 90) {
-            return validationMessages.nameIsTooLong;
+            return getValidationMessage(validationMessagesKeys.nameIsTooLong, this.props.t);
         } else if (!regex.test(value)) {
-            return validationMessages.nameIsInvalid;
+            return getValidationMessage(validationMessagesKeys.nameIsInvalid, this.props.t);
         }
     };
 
@@ -1026,7 +1051,7 @@ export class CreateEnvironmentPanelView extends Component<
         this.setState({
             gitRepositoryUrl: {
                 ...this.state.gitRepositoryUrl,
-                errorMessage: validationMessages.noAccess,
+                errorMessage: getValidationMessage(validationMessagesKeys.noAccess, this.props.t),
                 style: errorTextfieldClassname,
             },
         });
@@ -1036,7 +1061,7 @@ export class CreateEnvironmentPanelView extends Component<
         this.setState({
             dotfilesRepository: {
                 ...this.state.dotfilesRepository,
-                errorMessage: validationMessages.noAccessDotFiles,
+                errorMessage: getValidationMessage(validationMessagesKeys.noAccessDotFiles, this.props.t),
                 style: errorTextfieldClassname,
             },
         });
@@ -1057,22 +1082,22 @@ export class CreateEnvironmentPanelView extends Component<
             this.props.azDevAccessToken
         );
         switch (validationResult) {
-            case validationMessages.invalidGitUrl:
-            case validationMessages.unableToConnect:
-            case validationMessages.testFailed: {
-                return validationResult;
+            case validationMessagesKeys.invalidGitUrl:
+            case validationMessagesKeys.unableToConnect:
+            case validationMessagesKeys.testFailed: {
+                return getValidationMessage(validationResult, this.props.t);
             }
 
-            case validationMessages.noAccess: {
+            case validationMessagesKeys.noAccess: {
                 if (textField === 'git') {
                     this.showRepoError();
                 } else if (textField === 'dotfiles') {
                     this.showDotfilesError();
                 }
-                return validationMessages.valid;
+                return getValidationMessage(validationMessagesKeys.valid, this.props.t);
             }
 
-            case validationMessages.privateRepoNoAuth: {
+            case validationMessagesKeys.privateRepoNoAuth: {
                 if (textField === 'git') {
                     this.setState({
                         shouldTryToAuthenticateForRepo: true,
@@ -1082,11 +1107,11 @@ export class CreateEnvironmentPanelView extends Component<
                         shouldTryToAuthenticateForDotfiles: true,
                     });
                 }
-                return validationMessages.valid;
+                return getValidationMessage(validationMessagesKeys.valid, this.props.t);
             }
 
             default: {
-                return validationMessages.valid;
+                return getValidationMessage(validationMessagesKeys.valid, this.props.t);
             }
         }
     };
@@ -1094,9 +1119,9 @@ export class CreateEnvironmentPanelView extends Component<
     private getSkuNameValidationMessage() {
         if (this.props.isPlanLoadingFinished) {
             if (!this.props.selectedPlan) {
-                return validationMessages.noPlanSelected;
+                return getValidationMessage(validationMessagesKeys.noPlanSelected, this.props.t);
             } else if (!isNotNullOrEmpty(this.props.selectedPlan.availableSkus)) {
-                return validationMessages.noSkusAvailable;
+                return getValidationMessage(validationMessagesKeys.noSkusAvailable, this.props.t);
             }
         }
     }
@@ -1178,7 +1203,7 @@ export class CreateEnvironmentPanelView extends Component<
     };
 }
 
-export const CreateEnvironmentPanel = connect(
+export const CreateEnvironmentPanel = withTranslation()(connect(
     ({
         githubAuthentication: { gitHubAccessToken },
         azDevAuthentication: { azDevAccessToken },
@@ -1195,4 +1220,4 @@ export const CreateEnvironmentPanel = connect(
         storeGitHubCredentials,
         storeAzDevCredentials,
     }
-)(CreateEnvironmentPanelView);
+)(CreateEnvironmentPanelView));

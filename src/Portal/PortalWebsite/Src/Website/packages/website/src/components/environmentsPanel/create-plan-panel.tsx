@@ -33,11 +33,12 @@ import { createPlan } from '../../actions/createPlan';
 import { createResourceGroup } from '../../actions/createResourceGroup';
 import { locationToDisplayName } from '../../utils/locations';
 import { ILocations } from '../../interfaces/ILocation';
+import { WithTranslation, withTranslation } from 'react-i18next';
 
 const RESOURCE_REGISTRATION_POLLING_INTERVAL_MS = 300;
 const RESOURCE_REGISTRATION_MAX_POLLS = 100;
 
-export interface CreatePlanPanelProps {
+export interface CreatePlanPanelProps extends WithTranslation {
     hidePanel: (canContinueToEnvironment?: boolean) => void;
     createPlan: typeof createPlan;
     createResourceGroup: typeof createResourceGroup;
@@ -140,6 +141,7 @@ export class CreatePlanPanelComponent extends Component<
             !this.state.isGettingSubscriptions &&
             this.state.subscriptionList &&
             this.state.subscriptionList.length === 0;
+        const { t: translation } = this.props;
 
         return (
             <Panel
@@ -166,6 +168,7 @@ export class CreatePlanPanelComponent extends Component<
                             loadingMessage='Fetching your subscriptions...'
                             selectedKey={selectedSubscription}
                             className='create-environment-panel__dropdown'
+                            translation={translation}
                         />
                         {isSubscriptionEmpty && (
                             <Link href='https://azure.microsoft.com/en-us/free/' target='_blank'>
@@ -181,6 +184,7 @@ export class CreatePlanPanelComponent extends Component<
                             isLoading={isGettingClosestLocation}
                             selectedKey={selectedLocation}
                             className='create-environment-panel__dropdown'
+                            translation={translation}
                         />
                     </Stack>
 
@@ -216,6 +220,8 @@ export class CreatePlanPanelComponent extends Component<
 
     getResourceGroupValidation(): string | undefined {
         const { newGroup } = this.state;
+        const { t: translation } = this.props;
+
         if (newGroup && this.selectedResourceGroup && newGroup === this.selectedResourceGroup) {
             return validateResourceName(newGroup);
         }
@@ -224,6 +230,7 @@ export class CreatePlanPanelComponent extends Component<
 
     private renderOverlay() {
         const { isCreatingPlan } = this.state;
+        const { t: translation } = this.props;
 
         if (!isCreatingPlan || !this.planName) {
             return null;
@@ -231,7 +238,7 @@ export class CreatePlanPanelComponent extends Component<
 
         return (
             <div className='create-environment-panel__overlay'>
-                <Loader message='Creating the plan...' />
+                <Loader message={translation('creatingPlan')} translation={translation} />
             </div>
         );
     }
@@ -286,6 +293,7 @@ export class CreatePlanPanelComponent extends Component<
         if (!this.isCurrentStateValid()) {
             return;
         }
+        const { t: translation } = this.props;
 
         try {
             this.setState({ isCreatingPlan: true });
@@ -652,7 +660,7 @@ export class CreatePlanPanelComponent extends Component<
     };
 }
 
-export const CreatePlanPanel = connect(
+export const CreatePlanPanel = withTranslation()(connect(
     ({ configuration, locations }: ApplicationState) => ({
         configuration,
         locations
@@ -661,4 +669,4 @@ export const CreatePlanPanel = connect(
         createResourceGroup,
         createPlan,
     }
-)(CreatePlanPanelComponent);
+)(CreatePlanPanelComponent));

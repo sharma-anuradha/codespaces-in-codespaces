@@ -20,6 +20,7 @@ import { logout } from '../../actions/logout';
 import './titlebar.css';
 import { settingsPath } from '../../routerPaths';
 import { useActionContext } from '../../actions/middleware/useActionContext';
+import { useTranslation } from 'react-i18next';
 
 const getDevelopmentEmojiPrefix = () => {
     const isDev = process.env.NODE_ENV === 'development';
@@ -65,6 +66,7 @@ export const TitleBar: SFC<RouteComponentProps> = (props) => {
 
     let hoverCardRef = React.createRef<IHoverCard>();
     const logoutfn = useCallback(() => logout({ isExplicit: true }), []);
+    const { t: translation } = useTranslation();
 
     if (isAuthenticated) {
         const plainCardProps: IPlainCardProps = {
@@ -78,7 +80,7 @@ export const TitleBar: SFC<RouteComponentProps> = (props) => {
                                 props.history.push(settingsPath);
                             }}
                         >
-                            Settings
+                            {translation('settings')}
                         </DefaultButton>
                     </div>
                     <div className='vsonline-avatarmenu__item'>
@@ -86,7 +88,7 @@ export const TitleBar: SFC<RouteComponentProps> = (props) => {
                             className='vsonline-avatarmenu__item-button'
                             onClick={logoutfn}
                         >
-                            Sign out
+                            {translation('signOut')}
                         </DefaultButton>
                     </div>
                 </div>

@@ -9,9 +9,10 @@ import { BackToEnvironmentsLink } from '../back-to-environments/back-to-environm
 import '../portalLayout/portalLayout.css';
 import errorUfo from './error-ufo-404.svg';
 import './pageNotFound.css';
-
+import { useTranslation } from 'react-i18next';
 
 export function PageNotFound() {
+    const { t: translation } = useTranslation();
     return (
         <PortalLayout hideNavigation={isHostedOnGithub()}>
             <Stack
@@ -23,7 +24,7 @@ export function PageNotFound() {
             >
                 <Stack.Item>
                     <Text className='page-not-found__title'>
-                        We can't find what you are looking for.
+                        {translation('pageNotFound')}
                     </Text>
                 </Stack.Item>
 

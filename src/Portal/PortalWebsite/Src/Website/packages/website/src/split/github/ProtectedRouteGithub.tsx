@@ -8,6 +8,7 @@ import { telemetry } from '../../utils/telemetry';
 import { authService } from './authServiceGithub';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { Loader } from '../../components/loader/loader';
+import { useTranslation } from 'react-i18next';
 
 const trace = createTrace('protected-route');
 
@@ -20,6 +21,8 @@ type Props = {
     RouteComponentProps;
 
 const ProtectedRouteView = (props: Props) => {
+    const { t: translation } = useTranslation();
+
     if (props.match.path === '/environment/:id') {
         telemetry.setCurrentEnvironmentId((props.match.params as any).id as string);
     } else {
@@ -35,7 +38,7 @@ const ProtectedRouteView = (props: Props) => {
     } = props;
 
     if (isAuthenticating && !isAuthenticated) {
-        return <Loader />;
+        return <Loader translation={translation} />;
     }
 
     if (!isAuthenticating && !isAuthenticated) {

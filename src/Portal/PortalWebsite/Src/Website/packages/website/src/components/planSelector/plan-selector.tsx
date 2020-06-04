@@ -18,8 +18,10 @@ import { IPlansDropdownOption } from '../../interfaces/IPlansDropdownOption';
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
 import { locationToDisplayName } from '../../utils/locations';
 import '../titlebar/titlebar.css';
+import { injectMessageParameters } from '../../utils/injectMessageParameters';
+import { withTranslation, WithTranslation } from 'react-i18next';
 
-interface PlanSelectorProps extends RouteComponentProps {
+interface PlanSelectorProps extends RouteComponentProps, WithTranslation {
     plansList: IPlan[];
     selectedPlanId: string | null;
     isMadeInitialPlansRequest: boolean;
@@ -62,12 +64,13 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
             isLoadingPlan,
             shouldPlanSelectorReceiveFocus,
             className = '',
+            t: translation,
         } = this.props;
 
         const loadingMessage = !isMadeInitialPlansRequest
-            ? 'Fetching plan information...'
+            ? translation('fetchingPlanInformation')
             : isLoadingPlan
-            ? 'Fetching your plans...'
+            ? translation('fetchingPlans')
             : '';
 
         return (
@@ -80,20 +83,28 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
                 loadingMessage={loadingMessage}
                 ariaLabel='Plan Dropdown'
                 shouldFocus={shouldPlanSelectorReceiveFocus}
+                translation={translation}
             />
         );
     }
 
     private plansToDropdownArray(plans: IPlan[]): IPlansDropdownOption[] {
+        const { t: translation } = this.props;
         const planOptions = plans.map(
             (plan: IPlan): IPlansDropdownOption => {
                 const friendlyLocation = locationToDisplayName(plan.location);
+                const title = injectMessageParameters(
+                    translation('planDropdownTitle'),
+                    plan.subscription,
+                    plan.resourceGroup,
+                    friendlyLocation
+                );
 
                 return {
                     key: plan.id,
                     text: plan.name,
                     plan,
-                    title: `Subscription Id: ${plan.subscription}\nResource Group: ${plan.resourceGroup}\nLocation: ${friendlyLocation}`,
+                    title,
                 };
             }
         );
@@ -103,7 +114,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
         }
 
         if (!this.props.hasNoCreate) {
-            planOptions.push(createNewPlanDropdownOption);
+            planOptions.push(createNewPlanDropdownOption(this.props.t));
         }
 
         return planOptions;
@@ -148,6 +159,6 @@ const getPlansStoreState = ({ plans, serviceStatus: { isServiceAvailable } }: Ap
     };
 };
 
-export const PlanSelector = connect(getPlansStoreState, {
+export const PlanSelector = withTranslation()(connect(getPlansStoreState, {
     selectPlan,
-})(PlanSelectorComponent);
+})(PlanSelectorComponent));

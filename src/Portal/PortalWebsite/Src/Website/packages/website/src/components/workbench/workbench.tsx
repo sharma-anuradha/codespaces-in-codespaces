@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React, { Component, ComponentClass } from 'react';
 import { connect, ConnectedComponent } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { IWorkbenchConstructionOptions, IWebSocketFactory, IHomeIndicator, URI } from 'vscode-web';
 
@@ -82,6 +82,7 @@ import {
 } from '../../providers/externalUriProvider';
 
 import './workbench.css';
+import { withTranslation, WithTranslation } from 'react-i18next';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -89,7 +90,7 @@ export interface IWorkbenchState {
     isServerlessSplashScreenShown: boolean;
 }
 
-export interface WorkbenchProps {
+export interface WorkbenchProps extends WithTranslation {
     connectingFavicon: string;
     workbenchFavicon: string;
     autoStart: boolean;
@@ -181,6 +182,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
     // tslint:disable-next-line: max-func-body-length
     checkForEnvironmentStatus(environmentInfo: ILocalEnvironment | undefined) {
+        const { t: translation } = this.props;
         if (!environmentInfo) {
             return;
         }
@@ -266,7 +268,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         if (!this.isConnecting && isSuspended(environmentInfo) && environmentInfo.id) {
             this.isConnecting = true;
             this.props
-                .connectEnvironment(environmentInfo as IEnvironment)
+                .connectEnvironment(environmentInfo as IEnvironment, translation)
                 .catch((error) => {
                     this.setState({ connectError: error });
                 })
@@ -503,9 +505,10 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             environmentInfo,
             SplashScreenComponent,
             ServerlessSplashscreenComponent,
+            t: translation,
         } = this.props;
         if (!environmentInfo) {
-            return <Loader></Loader>;
+            return <Loader translation={translation}></Loader>;
         }
 
         if (this.state.isServerlessSplashScreenShown) {
@@ -569,6 +572,7 @@ const getProps: (
     | 'ServerlessSplashscreenComponent'
     | 'PageNotFoundComponent'
     | keyof typeof mapDispatch
+    | keyof WithTranslation
 > = (state, props) => {
     const environmentInfo = state.environments.environments.find((e) => {
         return e.id === props.match.params.id;
@@ -601,9 +605,12 @@ const getProps: (
     };
 };
 
-type MappedProperties = keyof typeof mapDispatch | keyof ReturnType<typeof getProps>;
+type MappedProperties = keyof typeof mapDispatch | keyof ReturnType<typeof getProps> | keyof WithTranslation;
 
-export const Workbench: ConnectedComponent<
-    typeof WorkbenchView,
-    Omit<WorkbenchProps, MappedProperties> & RouteComponentProps<{ id: string }>
-> = connect(getProps, mapDispatch)(WorkbenchView);
+type ExternalProps = Omit<
+    WorkbenchProps,
+    MappedProperties
+>;
+
+export const Workbench: ComponentClass<ExternalProps> =
+    withRouter(withTranslation()(connect(getProps, mapDispatch)(WorkbenchView)));
