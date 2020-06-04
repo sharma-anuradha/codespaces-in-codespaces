@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.Cosmos;
@@ -39,6 +40,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions;
 using Newtonsoft.Json;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 {
@@ -356,6 +358,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                         new string[0]
                     },
                 });
+
+                x.SchemaFilter<EnumSchemaFilter>();
             });
         }
 
@@ -430,6 +434,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             });
 
             Warmup(app);
+        }
+
+        private class EnumSchemaFilter : ISchemaFilter
+        {
+            public void Apply(OpenApiSchema model, SchemaFilterContext context)
+            {
+                if (context.Type.IsEnum)
+                {
+                    model.Enum.Clear();
+                    foreach (var value in Enum.GetValues(context.Type))
+                    {
+                        var displayString = $"{(int)value} ({value.ToString()})";
+                        model.Enum.Add(new OpenApiString(displayString));
+                    }
+                }
+            }
         }
     }
 }
