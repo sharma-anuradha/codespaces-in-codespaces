@@ -43,59 +43,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
-                 $"{LogBaseName}_create_workspace",
-                 async (childLogger) =>
-                 {
-                     Requires.NotNullOrEmpty(environmentId, nameof(environmentId));
-                     Requires.NotNull(connectionServiceUri, nameof(connectionServiceUri));
-                     Requires.NotNullOrEmpty(emailAddress, nameof(emailAddress));
+                $"{LogBaseName}_create_workspace",
+                async (childLogger) =>
+                {
+                    Requires.NotNullOrEmpty(environmentId, nameof(environmentId));
+                    Requires.NotNull(connectionServiceUri, nameof(connectionServiceUri));
 
-                     var workspaceRequest = new WorkspaceRequest()
-                     {
-                         Name = environmentId.ToString(),
-                         ConnectionMode = ConnectionMode.Auto,
-                         AreAnonymousGuestsAllowed = false,
-                         ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
-                     };
+                    var workspaceRequest = new WorkspaceRequest()
+                    {
+                        Name = environmentId.ToString(),
+                        ConnectionMode = ConnectionMode.Auto,
+                        AreAnonymousGuestsAllowed = false,
+                        ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
+                    };
 
-                     var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest, authToken, logger);
-                     if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
-                     {
-                         logger
-                             .AddEnvironmentId(environmentId)
-                             .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateWorkspaceAsync)), "Failed to create workspace");
-                         return null;
-                     }
+                    var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest, authToken, logger);
+                    if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
+                    {
+                        logger
+                            .AddEnvironmentId(environmentId)
+                            .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateWorkspaceAsync)), "Failed to create workspace");
+                        return null;
+                    }
 
-                     var invitationLinkInfo = new SharedInvitationLinkInfo()
-                     {
-                         WorkspaceId = workspaceResponse.Id,
-                         GuestUsers = new string[]
-                            {
-                                emailAddress,
-                            },
-                     };
+                    var guestUsers = string.IsNullOrWhiteSpace(emailAddress)
+                        ? null // TODO - use user Ids once LS supports it
+                        : new string[] { emailAddress };
 
-                     var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, logger);
-                     if (string.IsNullOrWhiteSpace(workspaceInvitationId))
-                     {
-                         logger
-                             .AddEnvironmentId(workspaceResponse.Id)
-                             .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateWorkspaceAsync)), "Failed to create invitation id");
-                         return null;
-                     }
+                    var invitationLinkInfo = new SharedInvitationLinkInfo()
+                    {
+                        WorkspaceId = workspaceResponse.Id,
+                        GuestUsers = guestUsers,
+                    };
 
-                     return new ConnectionInfo
-                     {
-                         ConnectionServiceUri = connectionServiceUri.AbsoluteUri,
-                         ConnectionComputeId = computeResourceId.ToString(),
-                         ConnectionComputeTargetId = environmentType.ToString(),
-                         ConnectionSessionId = workspaceInvitationId,
-                         WorkspaceId = workspaceResponse.Id,
-                         ConnectionSessionPath = sessionPath,
-                     };
-                 },
-                 swallowException: false);
+                    var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, logger);
+                    if (string.IsNullOrWhiteSpace(workspaceInvitationId))
+                    {
+                        logger
+                            .AddEnvironmentId(workspaceResponse.Id)
+                            .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateWorkspaceAsync)), "Failed to create invitation id");
+                        return null;
+                    }
+
+                    return new ConnectionInfo
+                    {
+                        ConnectionServiceUri = connectionServiceUri.AbsoluteUri,
+                        ConnectionComputeId = computeResourceId.ToString(),
+                        ConnectionComputeTargetId = environmentType.ToString(),
+                        ConnectionSessionId = workspaceInvitationId,
+                        WorkspaceId = workspaceResponse.Id,
+                        ConnectionSessionPath = sessionPath,
+                    };
+                },
+                swallowException: false);
         }
 
         /// <inheritdoc/>
