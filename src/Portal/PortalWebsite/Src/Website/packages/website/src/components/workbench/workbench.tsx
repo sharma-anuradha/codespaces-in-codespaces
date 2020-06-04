@@ -46,6 +46,7 @@ import {
 } from '../../utils/environmentUtils';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
+import { commands } from './workbenchCommands';
 
 const getWorkspaceUrl = (defaultUrl: URL) => {
     if (!isHostedOnGithub()) {
@@ -82,6 +83,7 @@ import {
 } from '../../providers/externalUriProvider';
 
 import './workbench.css';
+import { telemetryMarks } from 'vso-workbench/src/telemetry/telemetryMarks';
 import { withTranslation, WithTranslation } from 'react-i18next';
 
 export interface IWorkbenchState {
@@ -456,16 +458,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                   title: 'Go Home',
               }
             : undefined;
-
-        const commands = [
-            {
-                id: '_github.gohome',
-                handler: () => {
-                    PostMessageRepoInfoRetriever.sendMessage('vso-go-home');
-                },
-            },
-        ];
-
+ 
         const defaultLayout = getWorkbenchDefaultLayout(
             environmentInfo,
             userDataProvider.isFirstRun
@@ -520,6 +513,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
 
         if (!isNotAvailable(environmentInfo)) {
+            window.performance.mark(telemetryMarks.timeToInteractive);
             return (
                 <div className='vsonline-workbench'>
                     <div

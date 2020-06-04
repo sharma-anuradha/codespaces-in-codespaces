@@ -68,7 +68,8 @@ type SendTelemetryProps =
     | ['vsonline/portal/ls-connection-opened', IVSCodeConnectWithDurationProperties]
     | ['vsonline/portal/ls-connection-initializing', IVSCodeConnectProperties]
     | ['vsonline/portal/ls-connection-close', IVSCodeConnectProperties]
-    | ['vsonline/portal/connect-with-retry', { correlationId: string; duration: number }];
+    | ['vsonline/portal/connect-with-retry', { correlationId: string; duration: number }]
+    | ['vsonline/portal/vscode-time-to-interactive', { hostedOn: string; duration: number }];
 
 let isTelemetryInitialized = false;
 export function sendTelemetry(...args: SendTelemetryProps): void;
