@@ -131,6 +131,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("https://*.codespaces.github.com");
                     currentOrigins.Add("https://*.codespaces-ppe.github.com");
                     currentOrigins.Add("https://*.codespaces-dev.github.com");
+                    currentOrigins.Add("https://portal.azure.com");
+                    currentOrigins.Add("https://df.onecloud.azure-test.net");
 
                     // github.dev
                     currentOrigins.Add("https://*.github.dev");
