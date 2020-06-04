@@ -1,7 +1,7 @@
 import { IPartnerInfo, ICrossDomainPartnerInfo } from 'vso-client-core';
 
 const getFallbackSalesforceRedirectionUrl = (): URL | null => {
-    return new URL('https://login.salesforce.com/lightning/n/WebIDE__Workspace_Manager');
+    return new URL('https://login.salesforce.com/lightning/n/CodeBuilder__Workspace_Manager');
 };
 
 const getFallbackPartnerRedirectionUrl = (): URL | null => {
