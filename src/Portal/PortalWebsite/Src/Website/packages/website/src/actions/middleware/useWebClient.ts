@@ -3,7 +3,7 @@ import { isDefined } from 'vso-client-core';
 import { useActionContext } from './useActionContext';
 
 import { trace as baseTrace } from '../../utils/trace';
-import { getTopLevelDomain } from '../../utils/getTopLevelDomain';
+import { getTopLevelDomain } from 'vso-client-core';
 import { wait } from '../../dependencies';
 import { sendTelemetry } from '../../utils/telemetry';
 

@@ -1,4 +1,4 @@
-import { isHostedOnGithub, getCurrentEnvironmentId } from 'vso-client-core';
+import { isHostedOnGithub, getCurrentEnvironmentId, IEnvironment, IVSCodeConfig } from 'vso-client-core';
 import { registerServiceWorker } from 'vso-service-worker-client';
 import { getVSCodeVersion } from '../../utils/getVSCodeVersion';
 import { AuthenticationError } from '../../errors/AuthenticationError';
@@ -22,6 +22,8 @@ import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
 import { getExtensions } from './getDefaultExtensions';
 import { getWorkbenchDefaultLayout } from '../../utils/getWorkbenchDefaultLayout';
 import { ensureVSCodeChannelFlag } from '../../utils/ensureVSCodeChannelFlag';
+import { commands } from './workbenchCommands';
+import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -38,6 +40,83 @@ export class Workbench {
 
     constructor(private readonly options: IDefaultWorkbenchOptions) {}
 
+    public getProviders(
+        environmentInfo: IEnvironment,
+        vscodeConfig: IVSCodeConfig,
+        token: string,
+        options: IDefaultWorkbenchOptions,
+        userDataProvider: UserDataProvider
+    ) {
+        return async (connector: EnvConnector) => {
+            const workspaceProvider = new WorkspaceProvider(
+                new URLSearchParams(location.search),
+                environmentInfo,
+                (url) => url
+            );
+            const urlCallbackProvider = new UrlCallbackProvider();
+            const resourceUriProvider = resourceUriProviderFactory(
+                vscodeConfig.commit,
+                environmentInfo.connection.sessionId,
+                connector
+            );
+
+            let resolveExternalUri;
+            if (options.enableEnvironmentPortForwarding) {
+                const ensurePortIsForwarded = connector.ensurePortIsForwarded.bind(
+                    connector,
+                    environmentInfo,
+                    token,
+                    options.liveShareEndpoint
+                );
+                const externalUriProvider = new PortForwardingExternalUriProvider(
+                    options.portForwardingDomainTemplate,
+                    environmentInfo.id,
+                    ensurePortIsForwarded
+                );
+                resolveExternalUri = externalUriProvider.resolveExternalUri;
+            } else {
+                const externalUriProvider = new EnvironmentsExternalUriProvider(
+                    environmentInfo,
+                    token,
+                    connector,
+                    options.liveShareEndpoint
+                );
+                resolveExternalUri = (uri: URI): Promise<URI> => {
+                    return externalUriProvider.resolveExternalUri(uri);
+                };
+            }
+
+            const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(
+                telemetry
+            );
+
+            const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
+
+            const defaultLayout = getWorkbenchDefaultLayout(
+                environmentInfo,
+                userDataProvider.isFirstRun
+            );
+
+            const providers: IWorkbenchConstructionOptions = {
+                credentialsProvider,
+                userDataProvider,
+                workspaceProvider,
+                urlCallbackProvider,
+                resourceUriProvider,
+                resolveExternalUri,
+                resolveCommonTelemetryProperties,
+                applicationLinks,
+                homeIndicator: await getHomeIndicator(),
+                enableSyncByDefault: true,
+                commands,
+                authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+                defaultLayout,
+            };
+
+            return providers;
+        }
+    }
+
     public connect = async () => {
         const {
             getToken,
@@ -45,8 +124,6 @@ export class Workbench {
             liveShareEndpoint,
             onConnection,
             onError,
-            enableEnvironmentPortForwarding,
-            portForwardingDomainTemplate,
         } = this.options;
 
         try {
@@ -63,6 +140,13 @@ export class Workbench {
 
             const userDataProvider = await getUserDataProvider();
             const extensions = await getExtensions(userDataProvider.isFirstRun);
+            const providersFunc = this.getProviders(
+                environmentInfo,
+                vscodeConfig,
+                token,
+                this.options,
+                userDataProvider
+            );
 
             this.workbench = new VSCodeWorkbench({
                 domElementId,
@@ -70,80 +154,14 @@ export class Workbench {
                 environmentInfo,
                 extensions,
                 onConnection,
-                getProviders: async (connector: EnvConnector) => {
-                    const workspaceProvider = new WorkspaceProvider(
-                        new URLSearchParams(location.search),
-                        environmentInfo,
-                        (url) => url
-                    );
-                    const urlCallbackProvider = new UrlCallbackProvider();
-                    const resourceUriProvider = resourceUriProviderFactory(
-                        vscodeConfig.commit,
-                        environmentInfo.connection.sessionId,
-                        connector
-                    );
-
-                    let resolveExternalUri;
-                    if (enableEnvironmentPortForwarding) {
-                        const ensurePortIsForwarded = connector.ensurePortIsForwarded.bind(
-                            connector,
-                            environmentInfo,
-                            token,
-                            liveShareEndpoint
-                        );
-                        const externalUriProvider = new PortForwardingExternalUriProvider(
-                            portForwardingDomainTemplate,
-                            environmentInfo.id,
-                            ensurePortIsForwarded
-                        );
-                        resolveExternalUri = externalUriProvider.resolveExternalUri;
-                    } else {
-                        const externalUriProvider = new EnvironmentsExternalUriProvider(
-                            environmentInfo,
-                            token,
-                            connector,
-                            liveShareEndpoint
-                        );
-                        resolveExternalUri = (uri: URI): Promise<URI> => {
-                            return externalUriProvider.resolveExternalUri(uri);
-                        };
-                    }
-
-                    const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(
-                        telemetry
-                    );
-
-                    const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
-
-                    const defaultLayout = getWorkbenchDefaultLayout(
-                        environmentInfo,
-                        userDataProvider.isFirstRun
-                    );
-
-                    const providers: IWorkbenchConstructionOptions = {
-                        credentialsProvider,
-                        userDataProvider,
-                        workspaceProvider,
-                        urlCallbackProvider,
-                        resourceUriProvider,
-                        resolveExternalUri,
-                        resolveCommonTelemetryProperties,
-                        applicationLinks,
-                        homeIndicator: await getHomeIndicator(),
-                        enableSyncByDefault: true,
-                        authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
-                        defaultLayout,
-                    };
-
-                    return providers;
-                },
+                getProviders: providersFunc,
                 getToken,
-                liveShareEndpoint: liveShareEndpoint,
+                liveShareEndpoint,
             });
 
             await Promise.all([
                 registerServiceWorker({
-                    liveShareEndpoint: liveShareEndpoint,
+                    liveShareEndpoint,
                     features: {
                         useSharedConnection: true,
                     },

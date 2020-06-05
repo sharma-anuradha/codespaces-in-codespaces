@@ -31,6 +31,7 @@ export { debounceInterval } from './utils/debounceInterval';
 export { RequestStore } from './utils/RequestStore';
 export { arrayUnique } from './utils/arrayUnique';
 export { updateFavicon } from './utils/updateFavicon';
+export { getTopLevelDomain } from './utils/getTopLevelDomain';
 
 // interfaces
 export { IKeychain } from './interfaces/IKeychain';

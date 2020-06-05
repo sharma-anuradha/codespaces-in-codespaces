@@ -1,20 +1,12 @@
-import { PostMessageRepoInfoRetriever } from '../../split/github/postMessageRepoInfoRetriever';
-import { sendTelemetry } from 'vso-workbench/src/telemetry/telemetry';
-import { telemetryMarks } from 'vso-workbench/src/telemetry/telemetryMarks'
+import { telemetryMarks } from "../../telemetry/telemetryMarks";
+import { sendTelemetry } from "../../telemetry/telemetry";
 import { getTopLevelDomain } from 'vso-client-core';
 
 export enum commandIds {
-    githubGoHome = '_github.gohome',
     codespacesTimeToInteractive = '_codespaces.timeToInteractive'
 }
 
 export const commands = [
-    {
-        id: commandIds.githubGoHome,
-        handler: () => {
-            PostMessageRepoInfoRetriever.sendMessage('vso-go-home');
-        },
-    },
     {
         id: commandIds.codespacesTimeToInteractive,
         handler: () => {

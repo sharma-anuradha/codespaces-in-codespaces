@@ -6,6 +6,7 @@ import { Workbench } from '../Workbench/Workbench';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
 import { Fragment } from 'react';
 import { SplashScreenState } from './SplashScreenState';
+import { telemetryMarks } from '../../../telemetry/telemetryMarks';
 
 export interface IWorkbenchPageRenderProps {
     environmentInfo: IEnvironment | null;
@@ -58,6 +59,9 @@ export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderPro
         } = this.props;
 
         if (environmentState === EnvironmentStateInfo.Available) {
+            if (window.performance.mark) {
+                window.performance.mark(telemetryMarks.timeToInteractive);
+            }
             return (
                 <Workbench
                     onError={handleAPIError}
