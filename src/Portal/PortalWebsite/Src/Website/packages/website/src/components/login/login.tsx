@@ -67,7 +67,7 @@ const LoginPageSignInForm = (props: LoginProps) => {
             </Stack.Item>
             <Stack.Item>
                 <Text className='login-page__subtitle'>
-                    {translation('signInTitle')}
+                    {translation('signInPageTitle')}
                 </Text>
             </Stack.Item>
 
