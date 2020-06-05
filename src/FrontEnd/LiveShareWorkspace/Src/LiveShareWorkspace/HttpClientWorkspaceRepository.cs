@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         }
 
         /// <inheritdoc/>
-        public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, IDiagnosticsLogger logger)
+        public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, string authToken, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_create_invitation_id",
@@ -91,7 +91,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
                 {
                     var payload = JsonConvert.SerializeObject(invitationLinkInfo);
                     var content = new StringContent(payload, Encoding.UTF8, "application/json");
-                    var response = await HttpClientProvider.HttpClient.PutAsync(InvitationLinkPath(invitationLinkInfo.WorkspaceId), content);
+
+                    var httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, InvitationLinkPath(invitationLinkInfo.WorkspaceId));
+                    httpRequestMessage.Headers.Add("Accept", "application/json");
+                    if (!string.IsNullOrEmpty(authToken))
+                    {
+                        httpRequestMessage.Headers.Add(AuthHeaderName, AuthTokenPrefix + authToken);
+                    }
+
+                    httpRequestMessage.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                    var response = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
                     logger.AddClientHttpResponseDetails(response);
 
                     await response.ThrowIfFailedAsync();

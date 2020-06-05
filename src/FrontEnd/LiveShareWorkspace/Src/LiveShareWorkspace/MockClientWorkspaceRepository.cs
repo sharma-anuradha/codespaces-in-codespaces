@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         }
 
         /// <inheritdoc/>
-        public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, IDiagnosticsLogger logger) => Task.FromResult(Guid.NewGuid().ToString());
+        public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, string authToken, IDiagnosticsLogger logger) => Task.FromResult(Guid.NewGuid().ToString());
 
         /// <inheritdoc/>
         public Task<WorkspaceResponse> GetStatusAsync(string workspaceId, IDiagnosticsLogger logger)

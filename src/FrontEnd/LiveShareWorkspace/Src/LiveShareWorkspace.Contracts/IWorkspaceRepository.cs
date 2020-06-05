@@ -42,8 +42,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// Gets an invitation link for the workspace.
         /// </summary>
         /// <param name="invitationLinkInfo">The parameters for invitation link.</param>
+        /// <param name="authToken">The auth token.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>Workspace id which is scoped to the invitees.</returns>
-        Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, IDiagnosticsLogger logger);
+        Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, string authToken, IDiagnosticsLogger logger);
     }
 }

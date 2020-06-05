@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         GuestUsers = guestUsers,
                     };
 
-                    var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, logger);
+                    var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, authToken, logger);
                     if (string.IsNullOrWhiteSpace(workspaceInvitationId))
                     {
                         logger
