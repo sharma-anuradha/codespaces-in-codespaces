@@ -530,6 +530,92 @@
                     "timeout": "PT2M"
                 }
             ]
+        },
+        {
+            "name": "registeredSubscriptions",
+            "routingType": "ProxyOnly, Tenant",
+            "endpoints": [
+                {
+                    "apiVersions": [
+                        "2019-07-01-preview"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-privatepreview"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-alpha"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2019-07-01-beta"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2020-05-26-preview"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2020-05-26-privatepreview"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2020-05-26-alpha"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                },
+                {
+                    "apiVersions": [
+                        "2020-05-26-beta"
+                    ],
+                    "endpointUri": "https://global.metarp.azure.com",
+                    "locations": [
+                        ""
+                    ],
+                    "timeout": "PT2M"
+                }
+            ]
         }
     ],
     "management": {
