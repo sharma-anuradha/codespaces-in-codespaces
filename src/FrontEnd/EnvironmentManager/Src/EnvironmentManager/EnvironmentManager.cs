@@ -844,6 +844,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var startingStateReson = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
                     await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Starting, CloudEnvironmentStateUpdateTriggers.StartEnvironment, startingStateReson, childLogger.NewChildLogger());
 
+                    cloudEnvironment.Transitions.ShuttingDown.ResetStatus(true);
+
                     // Persist updates madee to date
                     await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
 
@@ -1021,6 +1023,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     else
                     {
                         await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.ShuttingDown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, childLogger.NewChildLogger());
+                        cloudEnvironment.Transitions.Resuming.ResetStatus(true);
 
                         // Update the database state.
                         cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -1049,7 +1052,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
 
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_suspsend_callback",
+                $"{LogBaseName}_suspend_callback",
                 async (childLogger) =>
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
@@ -1066,16 +1069,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         };
                     }
 
-                    if (cloudEnvironment.State == CloudEnvironmentState.ShuttingDown)
-                    {
-                        return await ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
-                    }
-
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = cloudEnvironment,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
+                    return await CleanupComputeAsync(cloudEnvironment, logger.NewChildLogger());
                 });
         }
 
@@ -1350,6 +1344,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  logger.NewChildLogger());
         }
 
+        private async Task<CloudEnvironmentServiceResult> CleanupComputeAsync(
+            CloudEnvironment cloudEnvironment,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_cleanup_compute",
+                async (childLogger) =>
+                {
+                    if (cloudEnvironment.OSDisk != default)
+                    {
+                        await EnvironmentContinuation.ShutdownAsync(
+                            Guid.Parse(cloudEnvironment.Id),
+                            false,
+                            "Suspending",
+                            logger.NewChildLogger());
+
+                        // Clean up is handled by the shutdown environment continuation handler.
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            HttpStatusCode = StatusCodes.Status200OK,
+                        };
+                    }
+
+                    var computeIdToken = cloudEnvironment.Compute?.ResourceId;
+
+                    childLogger.FluentAddValue("ComputeResourceId", computeIdToken);
+
+                    var shutdownState = CloudEnvironmentState.Shutdown;
+
+                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, logger);
+
+                    await childLogger.RetryOperationScopeAsync(
+                                $"{LogBaseName}_cleanup_compute_record_update",
+                                async (retryLogger) =>
+                                {
+                                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(cloudEnvironment.Id, logger.NewChildLogger());
+                                    cloudEnvironment.State = shutdownState;
+                                    cloudEnvironment.Compute = null;
+
+                                    // Update the database state.
+                                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                                });
+
+                    // Delete the allocated resources.
+                    if (computeIdToken != default)
+                    {
+                        await ResourceBrokerClient.DeleteAsync(
+                            Guid.Parse(cloudEnvironment.Id),
+                            computeIdToken.Value,
+                            childLogger.NewChildLogger());
+                    }
+
+                    return new CloudEnvironmentServiceResult
+                    {
+                        CloudEnvironment = cloudEnvironment,
+                        HttpStatusCode = StatusCodes.Status200OK,
+                    };
+                });
+        }
+
         private async Task<FilterSecretsBody> ConstructFilterSecretsDataAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
@@ -1499,6 +1554,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         CloudEnvironmentStateUpdateTriggers.StartEnvironment,
                         string.Empty,
                         childLogger.NewChildLogger());
+
+                    cloudEnvironment.Transitions.ShuttingDown.ResetStatus(true);
 
                     // Persist core cloud environment record
                     cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());

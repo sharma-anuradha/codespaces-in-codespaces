@@ -116,7 +116,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
             this.skuCatalog = skuCatalogMock.Object;
             this.environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
-            this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository) };
+            var serviceProvider = new Mock<IServiceProvider>().Object;
+            this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository, serviceProvider) };
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
             this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
             this.subscriptionManager = new MockSubscriptionManager();

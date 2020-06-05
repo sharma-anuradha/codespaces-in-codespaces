@@ -27,7 +27,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
             return Task.FromResult(new ContinuationResult() { });
         }
 
+        /// <inheritdoc/>
         public Task<ContinuationResult> ResumeAsync(Guid environmentId, DateTime lastStateUpdated, StartCloudEnvironmentParameters startCloudEnvironmentParameters, string reason, IDiagnosticsLogger logger)
+        {
+            return Task.FromResult(new ContinuationResult() { });
+        }
+
+        /// <inheritdoc/>
+        public Task<ContinuationResult> ShutdownAsync(Guid environmentId, bool forceSuspend, string reason, IDiagnosticsLogger logger)
         {
             return Task.FromResult(new ContinuationResult() { });
         }

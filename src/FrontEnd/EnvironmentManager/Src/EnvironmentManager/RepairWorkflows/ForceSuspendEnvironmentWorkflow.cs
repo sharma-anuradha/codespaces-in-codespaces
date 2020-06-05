@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -25,14 +26,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
         /// <param name="environmentStateManager">target environment state manager.</param>
         /// <param name="resourceBrokerHttpClient">target resource Broker Http Client.</param>
         /// <param name="environmentRepository">target repository.</param>
+        /// <param name="serviceProvider">Service provider.</param>
         public ForceSuspendEnvironmentWorkflow(
             IEnvironmentStateManager environmentStateManager,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            ICloudEnvironmentRepository environmentRepository)
+            ICloudEnvironmentRepository environmentRepository,
+            IServiceProvider serviceProvider)
         {
-            EnvironmentStateManager = environmentStateManager;
-            ResourceBrokerHttpClient = resourceBrokerHttpClient;
-            EnvironmentRepository = environmentRepository;
+            EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
+            ResourceBrokerHttpClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
+            EnvironmentRepository = Requires.NotNull(environmentRepository, nameof(environmentRepository));
+            ServiceProvider = Requires.NotNull(serviceProvider, nameof(serviceProvider));
         }
 
         /// <inheritdoc/>
@@ -44,6 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
 
         private ICloudEnvironmentRepository EnvironmentRepository { get; }
 
+        private IServiceProvider ServiceProvider { get; }
+
         /// <inheritdoc/>
         public async Task ExecuteAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
@@ -54,6 +60,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
                 $"{LogBaseName}_execute",
                 async (childLogger) =>
                 {
+                    // If environment has OSDisk (a.k.a windows environment, force suspend via continuation operations).
+                    if (cloudEnvironment?.OSDisk != default)
+                    {
+                        var environmentContinuationOperations = ServiceProvider.GetService<IEnvironmentContinuationOperations>();
+                        await environmentContinuationOperations.ShutdownAsync(Guid.Parse(cloudEnvironment.Id), true, LogBaseName, logger.NewChildLogger());
+                        return;
+                    }
+
                     // Deal with getting the state to the correct place
                     var shutdownState = CloudEnvironmentState.Shutdown;
                     if (cloudEnvironment?.Storage?.Type == ResourceType.StorageArchive)

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -53,11 +54,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (isOsDiskAllocationRequired)
             {
                 properties.OSDiskResourceID = cloudEnvironment.OSDisk?.ResourceId.ToString();
-                if (cloudEnvironment?.Transitions?.Resuming?.Status != default)
+
+                // Note: Since this method could be called in two ways
+                // 1) Straight from web-request. In that case the transitions are correctly preserved. So looking at the last transition would do.
+                // 2) Via continuations. Resuming will have already added Initializing and InProgress states for the current continuation, so we just look back till we find a success or failed/cancelled.
+                if (cloudEnvironment?.Transitions?.Resuming?.StatusChanges != default)
                 {
-                    if (cloudEnvironment.Transitions.Resuming.Status.Value == Common.Continuation.OperationState.Failed)
+                    var pastStatus = cloudEnvironment.Transitions.Resuming.StatusChanges.OrderByDescending(x => x.Time).Select(x => x.Status);
+                    foreach (var status in pastStatus)
                     {
-                        properties.HardBoot = true;
+                        if (status == Common.Continuation.OperationState.Succeeded)
+                        {
+                            break;
+                        }
+                        else if (status == Common.Continuation.OperationState.Failed || status == Common.Continuation.OperationState.Cancelled)
+                        {
+                            properties.HardBoot = true;
+                            break;
+                        }
                     }
                 }
             }

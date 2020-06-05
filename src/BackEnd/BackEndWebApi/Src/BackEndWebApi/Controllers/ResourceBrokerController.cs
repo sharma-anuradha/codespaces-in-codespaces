@@ -208,6 +208,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             logger.AddBaseEnvironmentId(environmentId);
 
             var result = await ResourceBrokerHttp.StatusAsync(environmentId, id, logger.NewChildLogger());
+
+            if (result.Any(x => x == default))
+            {
+                return NotFound();
+            }
+
             return Ok(result);
         }
 
@@ -337,22 +343,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             var resourceResponses = new List<StatusResponseBody>();
             foreach (var resourceResult in resourceResults)
             {
-                resourceResponses.Add(new StatusResponseBody
+                if (resourceResult == default)
                 {
-                    ResourceId = resourceResult.ResourceId,
-                    SkuName = resourceResult.SkuName,
-                    Location = resourceResult.Location,
-                    Type = resourceResult.Type,
-                    IsReady = resourceResult.IsReady,
-                    ProvisioningStatus = resourceResult.ProvisioningStatus,
-                    ProvisioningStatusChanged = resourceResult.ProvisioningStatusChanged,
-                    StartingStatus = resourceResult.StartingStatus,
-                    StartingStatusChanged = resourceResult.StartingStatusChanged,
-                    DeletingStatus = resourceResult.DeletingStatus,
-                    DeletingStatusChanged = resourceResult.DeletingStatusChanged,
-                    CleanupStatus = resourceResult.CleanupStatus,
-                    CleanupStatusChanged = resourceResult.CleanupStatusChanged,
-                });
+                    resourceResponses.Add(default);
+                }
+                else
+                {
+                    resourceResponses.Add(new StatusResponseBody
+                    {
+                        ResourceId = resourceResult.ResourceId,
+                        SkuName = resourceResult.SkuName,
+                        Location = resourceResult.Location,
+                        Type = resourceResult.Type,
+                        IsReady = resourceResult.IsReady,
+                        ProvisioningStatus = resourceResult.ProvisioningStatus,
+                        ProvisioningStatusChanged = resourceResult.ProvisioningStatusChanged,
+                        StartingStatus = resourceResult.StartingStatus,
+                        StartingStatusChanged = resourceResult.StartingStatusChanged,
+                        DeletingStatus = resourceResult.DeletingStatus,
+                        DeletingStatusChanged = resourceResult.DeletingStatusChanged,
+                        CleanupStatus = resourceResult.CleanupStatus,
+                        CleanupStatusChanged = resourceResult.CleanupStatusChanged,
+                    });
+                }
             }
 
             if (resourceResponses.Count() != resourceRequests.Count())
@@ -360,7 +373,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 throw new InvalidOperationException("Invalid response where result count did not match input count.");
             }
 
-            return resourceResponses;
+            return resourceResponses.AsEnumerable();
         }
 
         /// <inheritdoc/>

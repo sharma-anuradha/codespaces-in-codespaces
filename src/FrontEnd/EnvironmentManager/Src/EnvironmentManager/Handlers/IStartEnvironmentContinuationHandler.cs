@@ -7,9 +7,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
     /// <summary>
-    /// Interface for CreateEnvironmentContinuationHandler.
+    /// Interface for StartEnvironmentContinuationHandler.
     /// </summary>
-    internal interface IStartEnvironmentContinuationHandler : IContinuationTaskMessageHandler
+    public interface IStartEnvironmentContinuationHandler : IContinuationTaskMessageHandler
     {
     }
 }

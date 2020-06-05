@@ -251,7 +251,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var metricsLogger = new MockEnvironmentMetricsLogger();
             var environmentContinuation = new MockEnvironmentContinuation();
             var environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
-            var environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(environmentStateManager, resourceBroker, environmentRepository) };
+            var serviceProvider = new Mock<IServiceProvider>();
+            var environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(environmentStateManager, resourceBroker, environmentRepository, serviceProvider.Object) };
             var resourceAllocationManager = new ResourceAllocationManager(resourceBroker);
             var workspaceManager = new WorkspaceManager(workspaceRepository);
             var subscriptionManager = new MockSubscriptionManager();

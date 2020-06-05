@@ -23,5 +23,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Resuming Environment operation.
         /// </summary>
         Resuming,
+
+        /// <summary>
+        /// Shutting down environment operation.
+        /// </summary>
+        ShuttingDown,
     }
 }

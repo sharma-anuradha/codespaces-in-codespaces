@@ -109,6 +109,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
 
+            services.AddSingleton<ShutdownEnvironmentContinuationHandler>();
+            services.AddSingleton<IShutdownEnvironmentContinuationHandler>(x => x.GetRequiredService<ShutdownEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ShutdownEnvironmentContinuationHandler>());
+
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
             services.AddSingleton<IEnvironmentContinuationOperations, EnvironmentContinuationOperations>();

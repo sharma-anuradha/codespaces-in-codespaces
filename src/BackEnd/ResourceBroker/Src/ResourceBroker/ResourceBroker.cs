@@ -280,6 +280,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 {
                     // Get record from db
                     var record = await ResourceRepository.GetAsync(input.ResourceId.ToString(), logger.NewChildLogger());
+                    if (record == default)
+                    {
+                        return default;
+                    }
+
                     var recordDetails = record.GetDetails();
 
                     // Build result

@@ -63,5 +63,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
             string reason,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Shutdown the environment.
+        /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
+        /// <param name="forceSuspend">True to force suspend.</param>
+        /// <param name="reason">Reason.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<ContinuationResult> ShutdownAsync(
+            Guid environmentId,
+            bool forceSuspend,
+            string reason,
+            IDiagnosticsLogger logger);
     }
 }

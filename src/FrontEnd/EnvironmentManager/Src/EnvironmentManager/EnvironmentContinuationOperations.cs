@@ -103,6 +103,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }
 
+        /// <inheritdoc/>
+        public async Task<ContinuationResult> ShutdownAsync(
+            Guid environmentId,
+            bool forceSuspend,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(environmentId, reason);
+
+            var input = new ShutdownEnvironmentContinuationInput()
+            {
+                EnvironmentId = environmentId,
+                Reason = reason,
+                Force = forceSuspend,
+            };
+
+            var target = ShutdownEnvironmentContinuationHandler.DefaultQueueTarget;
+
+            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+        }
+
         private IDictionary<string, string> BuildLoggingProperties(
             Guid resourceId,
             string reason)
