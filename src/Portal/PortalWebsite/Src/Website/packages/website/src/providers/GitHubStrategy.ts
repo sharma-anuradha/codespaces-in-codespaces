@@ -14,19 +14,19 @@ import { SessionData } from 'vscode-web';
 const GH_PR_EXTENSION_STABLE_SERVICE = 'vscode-pull-request-github';
 const GH_PR_EXTENSION_STABLE_ACCOUNT = 'github.com';
 
-const githubPrExtensionServices = [
+const githubKnownServices = [
     `${getVSCodeScheme()}-github.login`,
     GH_PR_EXTENSION_STABLE_SERVICE,
 ];
 
-const githubPrExtensionAccounts = [
+const githubKnownAccounts = [
     'account',
     GH_PR_EXTENSION_STABLE_ACCOUNT,
 ];
 
 const isGithubRequest = (service: string, account: string) => {
-    const isGithubAccount = githubPrExtensionAccounts.includes(account);
-    const isGithubService = githubPrExtensionServices.includes(service);
+    const isGithubAccount = githubKnownAccounts.includes(account);
+    const isGithubService = githubKnownServices.includes(service);
     const isGithubRequest = (isGithubService && isGithubAccount);
 
     return isGithubRequest;
@@ -85,10 +85,22 @@ export class GitHubStrategy implements IAuthStrategy {
                 scopes: ['read:user', 'user:email', 'repo'].sort(),
             };
 
-            const githubSessions = JSON.stringify([githubSession, githubSessionPR]);
+            const githubSessionVSCS: SessionData = {
+                id: 'github-session-vs-codespaces',
+                accessToken: token,
+                scopes: ['read:user', 'user:email', 'repo', 'write:discussion'].sort(),
+            };
+
+            const githubSessions = JSON.stringify([
+                githubSession,
+                githubSessionPR,
+                githubSessionVSCS,
+            ]);
+
             return githubSessions;
         }
 
+        // Fallback for old VSCS extensions using GitHubBrowserAuthentication
         if (account.startsWith('github-token_')) {
             const token = await this.getGithubToken();
             return token;
