@@ -18,7 +18,7 @@ import { getRoutingDetails, allowRequestsForEnvironment } from './lib/url-utils'
 import { createLogger } from './lib/logger';
 import { ServiceRegistry } from './lib/service-registry';
 import { ConfigurationManager } from './lib/configuration-manager';
-import { CredentialsManager } from './lib/credentials-manager';
+import { CredentialsManager, SimpleCredentialsManager } from './lib/credentials-manager';
 import { LiveShareConnectionFactory } from './lib/connection-factory';
 import { ConnectionManager } from './lib/connection-manager';
 import { PassThroughHttpClient, LiveShareHttpClient } from './lib/http-client';
@@ -33,7 +33,6 @@ const logger = createLogger();
 const serviceRegistry = new ServiceRegistry();
 
 serviceRegistry.registerInstance('ConfigurationManager', new ConfigurationManager());
-serviceRegistry.registerInstance('CredentialsManager', new CredentialsManager());
 serviceRegistry.registerFactory('ConnectionFactory', (serviceRegistry) => {
     return new LiveShareConnectionFactory(serviceRegistry.getInstance('LiveShareClient'));
 });
@@ -132,11 +131,6 @@ self.addEventListener('message', async (event) => {
 
     switch (message.type) {
         case authenticateMessageType: {
-            const credentialsManager = serviceRegistry.getInstance('CredentialsManager');
-            credentialsManager.setCredentials(message.payload.sessionId, {
-                token: message.payload.token,
-            });
-
             if (message.payload.environmentId) {
                 allowRequestsForEnvironment(
                     message.payload.environmentId,
@@ -152,6 +146,11 @@ self.addEventListener('message', async (event) => {
             ) {
                 await registerWebLiveShareClient();
             }
+
+            const credentialsManager = serviceRegistry.getInstance('CredentialsManager');
+            credentialsManager.setCredentials(message.payload.sessionId, {
+                token: message.payload.token,
+            });
 
             const connectionManager = serviceRegistry.getInstance('ConnectionManager');
             connectionManager.initializeConnection(message.payload);
@@ -192,6 +191,7 @@ async function updateConfiguration(configuration: ServiceWorkerConfiguration) {
 
     configurationManager.updateConfiguration(configuration);
 
+    serviceRegistry.unregisterInstance('CredentialsManager');
     serviceRegistry.unregisterInstance('LiveShareClient');
     serviceRegistry.unregisterInstance('ConnectionFactory');
     serviceRegistry.unregisterInstance('ConnectionManager');
@@ -229,11 +229,15 @@ function registerInMemoryLiveShareClient() {
         serviceRegistry.canResolve('LiveShareClient') &&
         serviceRegistry.getInstance('LiveShareClient') instanceof LiveShareWebClient
     ) {
+        serviceRegistry.unregisterInstance('CredentialsManager');
         serviceRegistry.unregisterInstance('LiveShareClient');
         serviceRegistry.unregisterInstance('ConnectionFactory');
         serviceRegistry.unregisterInstance('ConnectionManager');
         serviceRegistry.unregisterInstance('HttpClient');
     }
+
+    const credentialsManager = new CredentialsManager();
+    serviceRegistry.registerInstance('CredentialsManager', credentialsManager);
 
     serviceRegistry.registerInstance('LiveShareClient', new InMemoryLiveShareClient());
 }
@@ -251,16 +255,19 @@ async function registerWebLiveShareClient() {
         serviceRegistry.canResolve('LiveShareClient') &&
         serviceRegistry.getInstance('LiveShareClient') instanceof InMemoryLiveShareClient
     ) {
+        serviceRegistry.unregisterInstance('CredentialsManager');
         serviceRegistry.unregisterInstance('LiveShareClient');
         serviceRegistry.unregisterInstance('ConnectionFactory');
         serviceRegistry.unregisterInstance('ConnectionManager');
         serviceRegistry.unregisterInstance('HttpClient');
     }
 
-    const credentialsManager = serviceRegistry.getInstance('CredentialsManager');
     const configuration = await serviceRegistry
         .getInstance('ConfigurationManager')
         .getConfiguration();
+
+    const credentialsManager = new SimpleCredentialsManager();
+    serviceRegistry.registerInstance('CredentialsManager', credentialsManager);
 
     serviceRegistry.registerInstance(
         'LiveShareClient',

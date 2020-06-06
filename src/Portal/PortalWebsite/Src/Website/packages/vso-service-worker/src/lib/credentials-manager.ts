@@ -2,7 +2,13 @@ export interface Credentials {
     readonly token: string;
 }
 
-export class CredentialsManager {
+export interface ICredentialsManager {
+    setCredentials(sessionId: string, credentials: Credentials): void;
+    getCredentials(sessionId: string): Credentials | undefined;
+    deleteCredentials(sessionId: string): void;
+}
+
+export class CredentialsManager implements ICredentialsManager {
     private readonly credentials = new Map<string, Credentials>();
 
     setCredentials(sessionId: string, credentials: Credentials) {
@@ -15,5 +21,21 @@ export class CredentialsManager {
 
     deleteCredentials(sessionId: string) {
         this.credentials.delete(sessionId.toUpperCase());
+    }
+}
+
+export class SimpleCredentialsManager implements ICredentialsManager {
+    private credentials?: Credentials;
+
+    setCredentials(sessionId: string, credentials: Credentials) {
+        this.credentials = credentials;
+    }
+
+    getCredentials(sessionId: string): Credentials | undefined {
+        return this.credentials;
+    }
+
+    deleteCredentials(sessionId: string) {
+        this.credentials = undefined;
     }
 }

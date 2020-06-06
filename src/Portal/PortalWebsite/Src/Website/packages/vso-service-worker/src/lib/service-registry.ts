@@ -2,7 +2,7 @@ import { ILiveShareClient } from 'vso-client-core';
 
 import { ConfigurationManager } from './configuration-manager';
 import { ConnectionManager } from './connection-manager';
-import { CredentialsManager } from './credentials-manager';
+import { ICredentialsManager } from './credentials-manager';
 import { LiveShareConnectionFactory } from './connection-factory';
 import { IHttpClient } from './http-client';
 import { createLogger, Logger } from './logger';
@@ -27,7 +27,7 @@ export class ServiceRegistry {
         this.singletons.delete(serviceHandle);
     }
 
-    getInstance(serviceHandle: 'CredentialsManager', useSingleton?: boolean): CredentialsManager;
+    getInstance(serviceHandle: 'CredentialsManager', useSingleton?: boolean): ICredentialsManager;
     getInstance(
         serviceHandle: 'ConnectionFactory',
         useSingleton?: boolean
@@ -66,8 +66,8 @@ export class ServiceRegistry {
 
         throw new CriticalError(`Service not registered: ${serviceHandle}`);
     }
-    registerInstance(serviceHandle: 'CredentialsManager', service: CredentialsManager): void;
-    registerInstance(serviceHandle: 'CredentialsManager', service: CredentialsManager): void;
+    registerInstance(serviceHandle: 'CredentialsManager', service: ICredentialsManager): void;
+    registerInstance(serviceHandle: 'CredentialsManager', service: ICredentialsManager): void;
     registerInstance(serviceHandle: 'ConnectionFactory', service: LiveShareConnectionFactory): void;
     registerInstance(serviceHandle: 'ConnectionManager', service: ConnectionManager): void;
     registerInstance(serviceHandle: 'ConfigurationManager', service: ConfigurationManager): void;
@@ -84,7 +84,7 @@ export class ServiceRegistry {
     }
     registerFactory(
         serviceHandle: 'CredentialsManager',
-        factory: (serviceRegistry: ServiceRegistry) => CredentialsManager
+        factory: (serviceRegistry: ServiceRegistry) => ICredentialsManager
     ): void;
     registerFactory(
         serviceHandle: 'ConnectionFactory',

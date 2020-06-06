@@ -123,6 +123,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     return await FetchStaticAsset("service-worker.js", "application/javascript");
                 case "service-worker.js.map":
                     return await FetchStaticAsset("service-worker.js.map", "application/octet-stream");
+                case "static/js/service-worker.js":
+                    return await FetchStaticAsset("static/js/service-worker.js", "application/javascript");
+                case "static/js/service-worker.js.map":
+                    return await FetchStaticAsset("static/js/service-worker.js.map", "application/octet-stream");
                 case "favicon.ico":
                     return await FetchStaticAsset("favicon.ico", "image/x-icon");
                 case "site.css":
@@ -282,11 +286,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)
         {
             // Locally we don't produce the physical file, so we grab it from the portal itself.
-            // The portal runs on https://localhost:443 only right now, because of authentication.
+            // The portal runs on http://localhost:3030 only right now, because of authentication.
             if (AppSettings.IsLocal)
             {
                 var client = new HttpClient();
-                var stream = await client.GetStreamAsync($"https://localhost:443/{path}");
+                var stream = await client.GetStreamAsync($"http://localhost:3030/{path}");
 
                 return File(stream, mediaType);
             }

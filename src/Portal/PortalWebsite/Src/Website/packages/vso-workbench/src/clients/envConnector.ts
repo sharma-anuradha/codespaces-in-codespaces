@@ -19,7 +19,10 @@ import {
     tryAuthenticateMessageType,
     updateLiveShareConnectionInfo,
 } from 'vso-service-worker-client';
-import { postServiceWorkerMessage, onMessage as onServiceWorkerMessage } from 'vso-service-worker-client';
+import {
+    postServiceWorkerMessage,
+    onMessage as onServiceWorkerMessage,
+} from 'vso-service-worker-client';
 import { sendTelemetry } from '../telemetry/sendTelemetry';
 
 export type RemoteVSCodeServerDescription = {
@@ -61,13 +64,18 @@ export class EnvConnector {
                 }
 
                 const workspaceClient = await this.workspaceClient.promise;
-                postServiceWorkerMessage({
-                    type: updateLiveShareConnectionInfo,
-                    payload: {
-                        sessionId: workspaceClient.getWorkspaceInfo()!.id,
-                        workspaceInfo: workspaceClient.getWorkspaceInfo()!,
-                        workspaceAccess: workspaceClient.getWorkspaceAccess()!,
-                    },
+                const workspaceInfo = workspaceClient.getWorkspaceInfo()!;
+                const ids = [workspaceInfo.id, ...(workspaceInfo.invitationLinks ?? [])];
+
+                ids.forEach((sessionId) => {
+                    postServiceWorkerMessage({
+                        type: updateLiveShareConnectionInfo,
+                        payload: {
+                            sessionId,
+                            workspaceInfo,
+                            workspaceAccess: workspaceClient.getWorkspaceAccess()!,
+                        },
+                    });
                 });
             })
         );
@@ -219,13 +227,18 @@ export class EnvConnector {
             await workspaceClient.connect(sessionId);
 
             if (!skipServiceWorkerNotification) {
-                postServiceWorkerMessage({
-                    type: updateLiveShareConnectionInfo,
-                    payload: {
-                        sessionId,
-                        workspaceInfo: workspaceClient.getWorkspaceInfo()!,
-                        workspaceAccess: workspaceClient.getWorkspaceAccess()!,
-                    },
+                const workspaceInfo = workspaceClient.getWorkspaceInfo()!;
+                const ids = [workspaceInfo.id, ...(workspaceInfo.invitationLinks ?? [])];
+
+                ids.forEach((sessionId) => {
+                    postServiceWorkerMessage({
+                        type: updateLiveShareConnectionInfo,
+                        payload: {
+                            sessionId,
+                            workspaceInfo,
+                            workspaceAccess: workspaceClient.getWorkspaceAccess()!,
+                        },
+                    });
                 });
             }
 

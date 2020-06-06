@@ -3,6 +3,7 @@ export interface IWorkspaceInfo {
     readonly name: string;
     readonly ownerId: string;
     readonly joinLink: string;
+    readonly invitationLinks?: string[];
     readonly connectLinks: string[];
     readonly relayLink?: string;
     readonly relaySas?: string;
