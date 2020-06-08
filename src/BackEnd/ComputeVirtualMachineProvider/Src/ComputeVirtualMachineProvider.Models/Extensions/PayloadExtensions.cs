@@ -12,12 +12,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
     /// </summary>
     public static class PayloadExtensions
     {
+        /// <summary>
+        /// VM Agent Blob URL property
+        /// </summary>
+        public const string VMAgentBlobUrl = "vmAgentBlobUrl";
+
         private const string VMTokenTag = "vmToken";
         private const string ResourceIDTag = "resourceId";
         private const string ServiceHostTag = "serviceHostName";
         private const string InputQueueNameTag = "inputQueueName";
         private const string InputQueueUrlTag = "inputQueueUrl";
         private const string InputQueueSasTokenTag = "inputQueueSasToken";
+
         private const string VisualStudioInstallationDirTag = "visualStudioInstallationDir";
         private const string UserNameTag = "userName";
         private const string StorageAccountNameTag = "storageAccountName";
@@ -45,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 [InputQueueNameTag] = input.QueueConnectionInfo.Name,
                 [InputQueueUrlTag] = input.QueueConnectionInfo.Url,
                 [InputQueueSasTokenTag] = input.QueueConnectionInfo.SasToken,
+                [VMAgentBlobUrl] = input.VmAgentBlobUrl,
             };
 
             var queueMessage = new QueueMessage
