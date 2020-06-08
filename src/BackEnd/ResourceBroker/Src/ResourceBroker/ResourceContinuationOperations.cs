@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             logger.FluentAddBaseValue("StorageResourceId", storageResourceId)
                 .FluentAddBaseValue("OSDiskResourceId", osDiskResourceId)
-                .FluentAddBaseValue("OSDiskResourceId", archiveStorageResourceId);
+                .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
 
             var loggingProperties = await BuildLoggingProperties(computeResourceId, reason, logger);
 
