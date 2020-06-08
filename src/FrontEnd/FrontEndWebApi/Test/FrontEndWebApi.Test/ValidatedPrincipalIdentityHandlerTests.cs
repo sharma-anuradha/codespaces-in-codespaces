@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         {
             { MockVsClaims() },
             { MockAadClaims() },
-          
+
             { MockCascadeClaims("plan-resource-id", new[] { "read:allenvironments" }) },
             { MockCascadeClaims("plan-resource-id", new[] { "read:allenvironments", "write:environments" })},
 
@@ -102,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             return new TestCase
             {
-                TestIdentity = identity, 
+                TestIdentity = identity,
                 ExpectedHttpContextPlan = null,
                 ExpectedHttpContextScopes = null,
             };

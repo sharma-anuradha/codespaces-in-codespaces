@@ -29,13 +29,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 1);
             var planId = "/subscriptions/8def34ce-053c-43ba-8501-37599fb7f010/resourceGroups/cloudEnvironments/providers/Microsoft.VSOnline/plans/samanoha-dev-stamp-plan";
             var planInfo = VsoPlanInfo.TryParse(planId);
+            var profile = userProvider.Profile;
 
             // with no Sku info.
-            var actionResult = await skuUtils.IsVisible(null, planInfo, userProvider.Profile);
+            var actionResult = await skuUtils.IsVisible(null, planInfo, profile);
             Assert.False(actionResult);
 
             // with no plan info.
-            actionResult = await skuUtils.IsVisible(sku, null, userProvider.Profile);
+            actionResult = await skuUtils.IsVisible(sku, null, profile );
             Assert.False(actionResult);
 
             // with no user profile info. its always true for any non-windows skus as of now.
@@ -43,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.True(actionResult);
 
             // with all the valid inputs.
-            actionResult = await skuUtils.IsVisible(sku, planInfo, userProvider.Profile);
+            actionResult = await skuUtils.IsVisible(sku, planInfo, profile);
             Assert.True(actionResult);
         }
     }

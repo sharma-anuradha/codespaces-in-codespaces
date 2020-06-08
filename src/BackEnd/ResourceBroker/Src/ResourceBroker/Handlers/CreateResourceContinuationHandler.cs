@@ -194,7 +194,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                     // Get VM Agent Blob Url
                     var token = await TokenProvider.GenerateVmTokenAsync(resource.Value.Id, logger);
-                    var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName);
+                    var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName, logger.NewChildLogger());
 
                     // Add additional tags
                     resourceTags.Add(ResourceTagName.ComputeOS, computeDetails.OS.ToString());
@@ -236,7 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
                     var linuxCopyItem = new StorageCopyItem()
                     {
-                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, storageDetails.ImageName, TimeSpan.FromDays(100)),
+                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, storageDetails.ImageName, logger.NewChildLogger(), TimeSpan.FromDays(100)),
                         StorageType = StorageType.Linux,
                     };
 
@@ -245,7 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
                     var windowsCopyItem = new StorageCopyItem()
                     {
-                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, $"{storageDetails.ImageName}.disk.vhdx", TimeSpan.FromDays(100)),
+                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, $"{storageDetails.ImageName}.disk.vhdx", logger.NewChildLogger(), TimeSpan.FromDays(100)),
                         StorageType = StorageType.Windows,
                     };
 

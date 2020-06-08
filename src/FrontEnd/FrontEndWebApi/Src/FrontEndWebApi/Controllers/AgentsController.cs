@@ -60,7 +60,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices]IDiagnosticsLogger logger)
         {
             var (uri, name) = await agentUrlGenerator.ReadOnlyUrlByVMFamily(
-                azureLocation, ResourceType.ComputeVM, family, logger);
+                azureLocation, ResourceType.ComputeVM, family, logger.NewChildLogger());
+
             if (uri == null)
             {
                 return NotFound();

@@ -14,6 +14,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images
     /// <inheritdoc/>
     public class ImagesHttpClient : HttpClientBase, IImagesHttpClient
     {
+        private const string LogBaseName = "images_http_client";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ImagesHttpClient"/> class.
         /// </summary>
@@ -37,11 +39,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images
             Requires.NotNullOrEmpty(defaultValue, nameof(defaultValue));
 
             var requestUri = ImagesHttpContract.GetImageUri(imageType, family, property, defaultValue);
-            return Retry.DoAsync(async (attemptNumber) =>
-            {
-                var result = await SendAsync<string, string>(ImagesHttpContract.GetImageHttpMethod, requestUri, null, logger.NewChildLogger());
-                return result;
-            });
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_get_image",
+                async (childLogger) =>
+                {
+                    return await childLogger.RetryOperationScopeAsync(
+                        $"{LogBaseName}_get_image_retry_scope",
+                        async (retryLogger) =>
+                        {
+                            return await SendAsync<string, string>(ImagesHttpContract.GetImageHttpMethod, requestUri, null, logger.NewChildLogger());
+                        });
+                });
         }
     }
 }

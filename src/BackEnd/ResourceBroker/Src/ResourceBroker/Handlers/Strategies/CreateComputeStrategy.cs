@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
 
             // Get VM Agent Blob Url
             var token = await TokenProvider.GenerateVmTokenAsync(resource.Value.Id, logger);
-            var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName);
+            var url = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, computeDetails.VmAgentImageName, logger.NewChildLogger());
 
             // Get queue connection information.
             var inputQueueComponent = operationInput.CustomComponents.Single(x => x.ComponentType == ResourceType.InputQueue);

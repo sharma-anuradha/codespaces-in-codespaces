@@ -212,7 +212,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             moq.Setup(obj => obj.Profile)
                 .Returns(() =>
                 {
-                    return new UserProfile.Profile
+                    return new Profile
                     {
                         ProviderId = "mock-provider-id",
                         Programs = programs

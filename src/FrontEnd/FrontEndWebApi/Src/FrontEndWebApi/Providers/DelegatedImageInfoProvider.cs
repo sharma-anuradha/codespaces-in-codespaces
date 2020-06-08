@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -17,6 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers
     {
         private const string PropertyName = "name";
         private const string PropertyVersion = "version";
+        private const string LogBaseName = "delegated_image_info_provider";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DelegatedImageInfoProvider"/> class.
@@ -48,15 +50,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers
             string defaultImageName,
             IDiagnosticsLogger logger)
         {
-            var key = GetCacheKey(PropertyName, imageFamilyType, imageFamilyName);
-            var result = await Cache.GetAsync<string>(key, logger);
-            if (result == null)
-            {
-                result = await ImagesHttpClient.GetAsync(imageFamilyType, imageFamilyName, PropertyName, defaultImageName, logger);
-                await Cache.SetAsync(key, result, CacheExpiry, logger);
-            }
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_get_image_name",
+                async (childLogger) =>
+                {
+                    var key = GetCacheKey(PropertyName, imageFamilyType, imageFamilyName);
+                    var result = await Cache.GetAsync<string>(key, logger);
+                    if (result == null)
+                    {
+                        result = await ImagesHttpClient.GetAsync(imageFamilyType, imageFamilyName, PropertyName, defaultImageName, logger);
+                        await Cache.SetAsync(key, result, CacheExpiry, logger);
+                    }
 
-            return result;
+                    return result;
+                });
         }
 
         /// <inheritdoc/>
@@ -66,15 +73,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers
             string defaultImageVersion,
             IDiagnosticsLogger logger)
         {
-            var key = GetCacheKey(PropertyVersion, imageFamilyType, imageFamilyName);
-            var result = await Cache.GetAsync<string>(key, logger);
-            if (result == null)
-            {
-                result = await ImagesHttpClient.GetAsync(imageFamilyType, imageFamilyName, PropertyVersion, defaultImageVersion, logger);
-                await Cache.SetAsync(key, result, CacheExpiry, logger);
-            }
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_get_image_version",
+                async (childLogger) =>
+                {
+                    var key = GetCacheKey(PropertyVersion, imageFamilyType, imageFamilyName);
+                    var result = await Cache.GetAsync<string>(key, logger);
+                    if (result == null)
+                    {
+                        result = await ImagesHttpClient.GetAsync(imageFamilyType, imageFamilyName, PropertyVersion, defaultImageVersion, logger);
+                        await Cache.SetAsync(key, result, CacheExpiry, logger);
+                    }
 
-            return result;
+                    return result;
+                });
         }
 
         private string GetCacheKey(string propertyName, ImageFamilyType imageFamilyType, string imageFamilyName)

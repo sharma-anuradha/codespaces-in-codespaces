@@ -4,6 +4,7 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
@@ -11,6 +12,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
     /// <inheritdoc/>
     public class CurrentImageInfoProvider : ICurrentImageInfoProvider
     {
+        private const string LogBaseName = "currentImageInfoProvider";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CurrentImageInfoProvider"/> class.
         /// </summary>
@@ -30,8 +33,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
             string defaultImageName,
             IDiagnosticsLogger logger)
         {
-            var key = GetConfigurationKey(imageFamilyType, imageFamilyName, "name");
-            return SystemConfiguration.GetValueAsync(key, logger, defaultImageName);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_getImageName",
+                async (childLogger) =>
+                {
+                    var key = GetConfigurationKey(imageFamilyType, imageFamilyName, "name");
+                    return await SystemConfiguration.GetValueAsync(key, logger, defaultImageName);
+                });
         }
 
         /// <inheritdoc/>
@@ -41,8 +49,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
             string defaultImageVersion,
             IDiagnosticsLogger logger)
         {
-            var key = GetConfigurationKey(imageFamilyType, imageFamilyName, "version");
-            return SystemConfiguration.GetValueAsync(key, logger, defaultImageVersion);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_getImageVersion",
+                (childLogger) =>
+                {
+                    var key = GetConfigurationKey(imageFamilyType, imageFamilyName, "version");
+                    return SystemConfiguration.GetValueAsync(key, logger, defaultImageVersion);
+                });
         }
 
         /// <summary>

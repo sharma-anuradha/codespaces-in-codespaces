@@ -6,8 +6,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
+using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.WindowsAzure.Storage.Blob;
 
@@ -18,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class BlobImageUrlGenerator : IImageUrlGenerator
     {
+        private const string LogBaseName = "blob_image_url_generator";
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly ISkuCatalog skuCatalog;
@@ -53,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             var blobName = await imageFamilies[family].GetCurrentImageNameAsync(logger);
-            var url = await ReadOnlyUrlByImageName(location, resourceType, blobName, expiryTime);
+            var url = await ReadOnlyUrlByImageName(location, resourceType, blobName, logger.NewChildLogger(), expiryTime);
             return (url, blobName);
         }
 
@@ -62,51 +65,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             AzureLocation location,
             ResourceType resourceType,
             string imageName,
+            IDiagnosticsLogger logger,
             TimeSpan expiryTime = default)
         {
-            string accountName, accountKey, containerName;
-            switch (resourceType)
-            {
-                case ResourceType.ComputeVM:
-                    (accountName, accountKey) = await controlPlaneAzureResourceAccessor
-                        .GetStampStorageAccountForComputeVmAgentImagesAsync(location);
-                    containerName = controlPlaneInfo.VirtualMachineAgentContainerName;
-                    break;
-                case ResourceType.StorageFileShare:
-                    (accountName, accountKey) = await controlPlaneAzureResourceAccessor
-                        .GetStampStorageAccountForStorageImagesAsync(location);
-                    containerName = controlPlaneInfo.FileShareTemplateContainerName;
-                    break;
-                default:
-                    throw new ArgumentException($"Unhandled ResourceType: {resourceType}");
-            }
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_get_read_only_url_by_image_name",
+                async (childLogger) =>
+                {
+                    string accountName, accountKey, containerName;
+                    switch (resourceType)
+                    {
+                        case ResourceType.ComputeVM:
+                            (accountName, accountKey) = await controlPlaneAzureResourceAccessor
+                                .GetStampStorageAccountForComputeVmAgentImagesAsync(location);
+                            containerName = controlPlaneInfo.VirtualMachineAgentContainerName;
+                            break;
+                        case ResourceType.StorageFileShare:
+                            (accountName, accountKey) = await controlPlaneAzureResourceAccessor
+                                .GetStampStorageAccountForStorageImagesAsync(location);
+                            containerName = controlPlaneInfo.FileShareTemplateContainerName;
+                            break;
+                        default:
+                            throw new ArgumentException($"Unhandled ResourceType: {resourceType}");
+                    }
 
-            var blobStorageClientOptions = new BlobStorageClientOptions
-            {
-                AccountName = accountName,
-                AccountKey = accountKey,
-            };
-            var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+                    var blobStorageClientOptions = new BlobStorageClientOptions
+                    {
+                        AccountName = accountName,
+                        AccountKey = accountKey,
+                    };
+                    var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
 
-            if (expiryTime == default)
-            {
-                expiryTime = TimeSpan.FromHours(4);
-            }
+                    if (expiryTime == default)
+                    {
+                        expiryTime = TimeSpan.FromHours(4);
+                    }
 
-            var container = blobClientProvider.GetCloudBlobContainer(containerName);
-            var blob = container.GetBlobReference(imageName);
-            if (!await blob.ExistsAsync())
-            {
-                throw new InvalidOperationException($"{blob.Uri} does not exist.");
-            }
+                    var container = blobClientProvider.GetCloudBlobContainer(containerName);
+                    var blob = container.GetBlobReference(imageName);
 
-            var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
-            {
-                Permissions = SharedAccessBlobPermissions.Read,
-                SharedAccessExpiryTime = DateTime.UtcNow.Add(expiryTime),
-            });
+                    var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+                    {
+                        Permissions = SharedAccessBlobPermissions.Read,
+                        SharedAccessExpiryTime = DateTime.UtcNow.Add(expiryTime),
+                    });
 
-            return blob.Uri + sas;
+                    return blob.Uri + sas;
+                });
         }
     }
 }

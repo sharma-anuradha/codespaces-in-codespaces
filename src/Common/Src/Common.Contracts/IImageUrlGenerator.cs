@@ -31,8 +31,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="location">Azure location of image.</param>
         /// <param name="resourceType">Type of image.</param>
         /// <param name="imageName">Name of image.</param>
+        /// <param name="logger">The logger to use for this operation.</param>
         /// <param name="expiryTime">Amount of time for which the object should remain accessible.</param>
         /// <returns>The full url or null if imageName not found.</returns>
-        Task<string> ReadOnlyUrlByImageName(AzureLocation location, ResourceType resourceType, string imageName, TimeSpan expiryTime = default);
+        Task<string> ReadOnlyUrlByImageName(AzureLocation location, ResourceType resourceType, string imageName, IDiagnosticsLogger logger, TimeSpan expiryTime = default);
     }
 }
