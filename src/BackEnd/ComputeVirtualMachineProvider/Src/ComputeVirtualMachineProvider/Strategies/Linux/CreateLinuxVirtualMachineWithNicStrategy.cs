@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Azure.Management.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
@@ -24,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="clientFactory">azure client factory.</param>
         /// <param name="queueProvider">queue provider.</param>
         public CreateLinuxVirtualMachineWithNicStrategy(
-            IAzureClientFactory clientFactory,
+            IAzureClientFPAFactory clientFactory,
             IQueueProvider queueProvider)
             : base(clientFactory, queueProvider, TemplateName)
         {

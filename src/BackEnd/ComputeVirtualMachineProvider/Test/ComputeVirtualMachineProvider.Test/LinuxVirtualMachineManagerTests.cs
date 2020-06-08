@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
@@ -37,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var queueProvider = new VirtualMachineQueueProvider(testContext.ResourceAccessor);
             var azureDeploymentManager = new VirtualMachineDeploymentManager(
                 clientFactory,
+                new Mock<IAzureClientFPAFactory>().Object, // pass mock as its only needed for vnet scenarios.
                 queueProvider,
                 new List<ICreateVirtualMachineStrategy>() { new CreateLinuxVirtualMachineBasicStrategy(clientFactory, queueProvider) });
             var computeProvider = new VirtualMachineProvider(azureDeploymentManager);

@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
@@ -12,7 +14,11 @@ using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.Identity.Client;
+using Microsoft.VsSaaS.Azure.KeyVault;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Identity;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Network.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
@@ -30,17 +31,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
         /// </summary>
         /// <param name="clientFactory">provides azure client.</param>
         public NetworkInterfaceDeploymentManager(
-            IAzureClientFactory clientFactory)
+            IAzureClientFPAFactory clientFactory)
         {
             ClientFactory = Requires.NotNull(clientFactory, nameof(clientFactory));
             TemplateJson = GetNetworkInterfaceTemplate();
         }
 
-        private IAzureClientFactory ClientFactory { get; }
+        private IClientFactory ClientFactory { get; }
 
         private string TemplateJson { get; }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// test.
+        /// </summary>
+        /// <param name="input">t.</param>
+        /// <param name="logger">r.</param>
+        /// <returns>e.</returns>
         public Task<(OperationState OperationState, NextStageInput NextInput)> BeginCreateNetworkInterfaceAsync(
            NetworkInterfaceProviderCreateInput input,
            IDiagnosticsLogger logger)
@@ -52,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
                         Requires.NotNullOrEmpty(input.ResourceGroup, nameof(input.ResourceGroup));
                         Requires.NotNullOrEmpty(input.SubnetAzureResourceId, nameof(input.SubnetAzureResourceId));
 
-                        var azure = await ClientFactory.GetAzureClientAsync(input.SubnetSubscription);
+                        var azure = await ClientFactory.GetAzureClientAsync(input.SubnetSubscription, childLogger.NewChildLogger());
                         await azure.CreateResourceGroupIfNotExistsAsync(input.ResourceGroup, input.Location.ToString());
                         var networkInterfaceName = Guid.NewGuid().ToString();
                         var parameters = new Dictionary<string, Dictionary<string, object>>()
@@ -94,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
                     async (childLogger) =>
                     {
                         var resource = input.AzureResourceInfo;
-                        var azure = await ClientFactory.GetAzureClientAsync(resource.SubscriptionId);
+                        var azure = await ClientFactory.GetAzureClientAsync(resource.SubscriptionId, childLogger.NewChildLogger());
                         var operationState = await DeploymentUtils.CheckArmResourceDeploymentState(
                             azure,
                             input.TrackingId,
@@ -131,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
                     $"{LogBase}_begin_delete",
                     async (childLogger) =>
                     {
-                        var nicClient = await ClientFactory.GetNetworkManagementClient(input.ResourceInfo.SubscriptionId);
+                        var nicClient = await ClientFactory.GetNetworkManagementClient(input.ResourceInfo.SubscriptionId, childLogger.NewChildLogger());
                         await nicClient.NetworkInterfaces.BeginDeleteAsync(input.ResourceInfo.ResourceGroup, input.ResourceInfo.Name);
                         return (OperationState.InProgress, new NextStageInput(input.ResourceInfo.Name, input.ResourceInfo));
                     });
@@ -146,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
                      $"{LogBase}_check_delete_status",
                      async (childLogger) =>
                      {
-                         var nicAzureClient = await ClientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId);
+                         var nicAzureClient = await ClientFactory.GetAzureClientAsync(input.AzureResourceInfo.SubscriptionId, childLogger.NewChildLogger());
                          var resource = await nicAzureClient.NetworkInterfaces.GetByResourceGroupAsync(
                              input.AzureResourceInfo.ResourceGroup,
                              input.AzureResourceInfo.Name);

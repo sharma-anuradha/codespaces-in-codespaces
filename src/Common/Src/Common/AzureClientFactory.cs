@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Fluent;
@@ -12,7 +13,9 @@ using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.VsSaaS.Azure.KeyVault;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -25,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureClientFactory"/> class.
         /// </summary>
-        /// <param name="subscriptionCatalog">The azure subscription catalog..</param>
+        /// <param name="subscriptionCatalog">The azure subscription catalog.</param>
         public AzureClientFactory(
             IAzureSubscriptionCatalog subscriptionCatalog)
         {
@@ -34,8 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private IAzureSubscriptionCatalog SubscriptionCatalog { get; }
 
+        private IKeyVaultSecretReader KeyVaultSecretReader { get; }
+
         /// <inheritdoc/>
-        public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId)
+        public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId, IDiagnosticsLogger logger = default)
         {
             var azureSubscriptionId = subscriptionId.ToString();
             try
@@ -80,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId)
+        public async Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId, IDiagnosticsLogger logger = default)
         {
             var azureSubscriptionId = subscriptionId.ToString();
             try

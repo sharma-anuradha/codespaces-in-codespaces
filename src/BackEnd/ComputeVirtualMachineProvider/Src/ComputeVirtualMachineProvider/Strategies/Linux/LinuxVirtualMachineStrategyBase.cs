@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -46,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="queueProvider">queue provider.</param>
         /// <param name="templateName">template name.</param>
         public LinuxVirtualMachineStrategyBase(
-            IAzureClientFactory clientFactory,
+            IClientFactory clientFactory,
             IQueueProvider queueProvider,
             string templateName)
         {
@@ -61,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <summary>
         /// Gets azure client provider.
         /// </summary>
-        protected IAzureClientFactory ClientFactory { get; }
+        protected IClientFactory ClientFactory { get; }
 
         /// <summary>
         /// Gets queue client provider.
@@ -88,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
 
             VirtualMachineDeploymentManager.UpdateResourceTags(input.CustomComponents, virtualMachineName, resourceTags);
 
-            var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
+            var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription, logger.NewChildLogger());
             await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
             string vmInitScript = GetVmInitScriptAsync(

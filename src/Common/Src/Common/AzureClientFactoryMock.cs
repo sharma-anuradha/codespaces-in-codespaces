@@ -11,6 +11,7 @@ using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -32,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId)
+        public async Task<IAzure> GetAzureClientAsync(Guid subscriptionId, IDiagnosticsLogger logger = default)
         {
             var credentials = SdkContext.AzureCredentialsFactory
                 .FromFile(authFile);
@@ -73,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId)
+        public async Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId, IDiagnosticsLogger logger = default)
         {
             var credentials = SdkContext.AzureCredentialsFactory
                .FromFile(authFile);

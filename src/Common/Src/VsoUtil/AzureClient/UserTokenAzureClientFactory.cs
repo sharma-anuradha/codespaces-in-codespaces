@@ -14,6 +14,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Extensions.Options;
 using Microsoft.Rest;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.AzureClient
@@ -50,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.AzureClient
         }
 
         /// <inheritdoc/>
-        public Task<IAzure> GetAzureClientAsync(Guid subscriptionId)
+        public Task<IAzure> GetAzureClientAsync(Guid subscriptionId, IDiagnosticsLogger logger = default)
         {
             return Task.FromResult(Microsoft.Azure.Management.Fluent.Azure
                 .Authenticate(rootClient, TenantId)
@@ -82,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.AzureClient
         }
 
         /// <inheritdoc/>
-        public Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId)
+        public Task<INetworkManagementClient> GetNetworkManagementClient(Guid subscriptionId, IDiagnosticsLogger logger = default)
         {
             return Task.FromResult<INetworkManagementClient>(new NetworkManagementClient(rootClient)
             {

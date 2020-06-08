@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="templateName">vm template name.</param>
         /// <param name="controlPlaneAzureResourceAccessor">control plane azure resource accessor.</param>
         public CreateWindowsVirtualMachineWithNicStrategy(
-            IAzureClientFactory clientFactory,
+            IAzureClientFPAFactory clientFactory,
             IQueueProvider queueProvider,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
             : base(clientFactory, queueProvider, TemplateName, controlPlaneAzureResourceAccessor)

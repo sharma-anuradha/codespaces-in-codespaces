@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="templateName">vm template name.</param>
         /// <param name="controlPlaneAzureResourceAccessor">control plane azure resource accessor.</param>
         public WindowsVirtualMachineStrategyBase(
-            IAzureClientFactory clientFactory,
+            IClientFactory clientFactory,
             IQueueProvider queueProvider,
             string templateName,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <summary>
         /// Gets client factory.
         /// </summary>
-        protected IAzureClientFactory ClientFactory { get; }
+        protected IClientFactory ClientFactory { get; }
 
         /// <summary>
         /// Gets queue provider.
@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             var deploymentName = $"Create-WindowsVm-{virtualMachineName}";
             try
             {
-                var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
+                var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription, logger.NewChildLogger());
                 await azure.CreateResourceGroupIfNotExistsAsync(input.AzureResourceGroup, input.AzureVmLocation.ToString());
 
                 // Get information about the storage account to pass into the custom script.

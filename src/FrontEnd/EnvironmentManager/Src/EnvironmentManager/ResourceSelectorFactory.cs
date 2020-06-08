@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     Type = ResourceType.OSDisk,
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
-                    QueueCreateResource = cloudEnvironmentOptions.QueueResourceAllocation,
+                    QueueCreateResource = queueComputeRequest,
                     ExtendedProperties = properties,
                 };
 

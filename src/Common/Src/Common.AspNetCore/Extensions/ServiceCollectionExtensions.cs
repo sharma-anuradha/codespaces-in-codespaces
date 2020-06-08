@@ -49,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         public static IServiceCollection AddAzureClientFactory(this IServiceCollection services)
         {
             services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
+            services.AddSingleton<IAzureClientFPAFactory, AzureClientFPAFactory>();
             return services;
         }
 
