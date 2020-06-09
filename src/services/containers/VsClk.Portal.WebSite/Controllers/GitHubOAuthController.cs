@@ -126,7 +126,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private const string LoginEndpoint = "login/oauth/authorize";
         private const string AccessTokenEndpoint = "login/oauth/access_token";
-        private const string DefaultScope = "repo";
+        private const string DefaultScope = "repo workflow";
 
         public string ClientId { get; }
         public string ClientSecret { get; }

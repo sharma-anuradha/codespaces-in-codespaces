@@ -10,7 +10,6 @@ import { SupportedGitService } from 'vso-ts-agent';
 import { IAuthenticationAttempt } from './authenticationServiceBase';
 import { IRepoInfo, PostMessageRepoInfoRetriever } from '../split/github/postMessageRepoInfoRetriever';
 
-
 export const trace = createTrace('GitHubCredentialService');
 
 const unencryptedLocalStorageKey = 'githubAccessToken';
