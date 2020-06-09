@@ -1,12 +1,12 @@
 {
     "Projects": [
       {
-        "LanguageSet": "Azure_Languages",
+        "LanguageSet": "VS_Main_Languages",
         "LocItems": [
           {
             "SourceFile": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\WebsiteStringResources.json",
             "CopyOption": "LangIDOnName",
-            "OutputPath": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\resources\\"
+            "OutputPath": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\"
           }
         ]
       }
