@@ -16,7 +16,6 @@ type Props = {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
-    isServiceAvailable: boolean;
 } & RouteProps &
     RouteComponentProps;
 
@@ -30,7 +29,6 @@ const ProtectedRouteView = (props: Props) => {
     }
 
     const {
-        isServiceAvailable,
         isAuthenticating,
         isAuthenticated,
         component: Component,
@@ -48,17 +46,15 @@ const ProtectedRouteView = (props: Props) => {
 
         return null;
     }
-    
+
     return <Component {...rest} />;
 };
 
 const getAccessInfo = ({
     authentication: { isAuthenticated, isAuthenticating },
-    serviceStatus: { isServiceAvailable },
 }: ApplicationState) => ({
     isAuthenticated,
     isAuthenticating,
-    isServiceAvailable,
 });
 
 const AuthenticatedRoute = connect(getAccessInfo)(ProtectedRouteView);

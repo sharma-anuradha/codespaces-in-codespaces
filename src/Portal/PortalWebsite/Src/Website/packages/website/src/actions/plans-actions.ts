@@ -2,7 +2,6 @@ import { action } from './middleware/useActionCreator';
 
 import {
     useWebClient,
-    ServiceResponseError,
     ServiceAuthenticationError,
 } from './middleware/useWebClient';
 import { useDispatch } from './middleware/useDispatch';
@@ -10,7 +9,6 @@ import { IPlan } from '../interfaces/IPlan';
 import { useActionContext } from './middleware/useActionContext';
 import { ActivePlanInfo } from '../reducers/plans-reducer';
 import { getLocation } from './locations-actions';
-import { serviceUnavailableAtTheMoment } from './serviceUnavailable';
 import { logout } from './logout';
 
 export const selectPlanActionType = 'async.plan.select';
@@ -106,10 +104,6 @@ export async function getPlans() {
             retryCount: 2,
         });
     } catch (err) {
-        if (err instanceof ServiceResponseError && err.statusCode === 503) {
-            return dispatch(serviceUnavailableAtTheMoment());
-        }
-
         return dispatch(getPlansFailureAction(err));
     }
 

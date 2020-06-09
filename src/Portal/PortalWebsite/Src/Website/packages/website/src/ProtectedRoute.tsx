@@ -6,14 +6,12 @@ import { ApplicationState } from './reducers/rootReducer';
 import { Loader } from './components/loader/loader';
 import { telemetry } from './utils/telemetry';
 import { loginPath, environmentsPath } from './routerPaths';
-import { ServiceUnavailable } from './components/ServiceUnavailable/ServiceUnavailable';
 import { useTranslation } from 'react-i18next';
 
 type Props = {
     component: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
     isAuthenticated: boolean;
     isAuthenticating: boolean;
-    isServiceAvailable: boolean;
 } & RouteProps &
     RouteComponentProps;
 
@@ -26,19 +24,14 @@ const ProtectedRouteView = (props: Props) => {
     }
 
     const {
-        isServiceAvailable,
         isAuthenticating,
         isAuthenticated,
         component: Component,
         ...rest
     } = props;
 
-    if (!isServiceAvailable) {
-        return <ServiceUnavailable />;
-    }
-
     if (isAuthenticating && !isAuthenticated) {
-        return <Loader message={translation('signingIn')} translation={translation}/>;
+        return <Loader message={translation('signingIn')} translation={translation} />;
     }
 
     if (!isAuthenticating && !isAuthenticated) {
@@ -46,8 +39,8 @@ const ProtectedRouteView = (props: Props) => {
             location.pathname === environmentsPath
                 ? undefined
                 : new URLSearchParams({
-                      redirectUrl: location.href,
-                  }).toString();
+                    redirectUrl: location.href,
+                }).toString();
         return (
             <Redirect
                 to={{
@@ -63,11 +56,9 @@ const ProtectedRouteView = (props: Props) => {
 
 const getAccessInfo = ({
     authentication: { isAuthenticated, isAuthenticating },
-    serviceStatus: { isServiceAvailable },
 }: ApplicationState) => ({
     isAuthenticated,
     isAuthenticating,
-    isServiceAvailable,
 });
 
 const AuthenticatedRoute = connect(getAccessInfo)(ProtectedRouteView);

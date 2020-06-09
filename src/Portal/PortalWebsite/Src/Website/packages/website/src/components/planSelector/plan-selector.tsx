@@ -28,7 +28,6 @@ interface PlanSelectorProps extends RouteComponentProps, WithTranslation {
     isLoadingPlan: boolean;
     shouldPlanSelectorReceiveFocus: boolean;
     className?: string;
-    isServiceAvailable: boolean;
     hasNoCreate?: boolean;
 }
 
@@ -53,10 +52,6 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
     }
 
     render() {
-        if (!this.props.isServiceAvailable) {
-            return null;
-        }
-
         const {
             selectedPlanId,
             plansList,
@@ -70,8 +65,8 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
         const loadingMessage = !isMadeInitialPlansRequest
             ? translation('fetchingPlanInformation')
             : isLoadingPlan
-            ? translation('fetchingPlans')
-            : '';
+                ? translation('fetchingPlans')
+                : '';
 
         return (
             <DropDownWithLoader
@@ -140,7 +135,7 @@ export class PlanSelectorComponent extends Component<PlanSelectorProps> {
     };
 }
 
-const getPlansStoreState = ({ plans, serviceStatus: { isServiceAvailable } }: ApplicationState) => {
+const getPlansStoreState = ({ plans }: ApplicationState) => {
     const plansList = plans.plans;
     const {
         selectedPlan,
@@ -154,7 +149,6 @@ const getPlansStoreState = ({ plans, serviceStatus: { isServiceAvailable } }: Ap
         isMadeInitialPlansRequest,
         isLoadingPlan,
         shouldPlanSelectorReceiveFocus,
-        isServiceAvailable,
         selectedPlanId: selectedPlan && selectedPlan.id,
     };
 };
