@@ -84,5 +84,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public string MetricsLoggerMdsdEventSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Agent settings.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public AgentSettings AgentSettings { get; set; }
     }
 }

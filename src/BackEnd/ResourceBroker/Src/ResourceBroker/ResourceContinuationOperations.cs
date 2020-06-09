@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     OSDiskResourceId = extendedProperties.OSDiskResourceID,
                     SubnetResourceId = extendedProperties.SubnetResourceId,
                     HardBoot = extendedProperties.HardBoot,
+                    UpdateAgent = extendedProperties.UpdateAgent,
                 };
             }
 

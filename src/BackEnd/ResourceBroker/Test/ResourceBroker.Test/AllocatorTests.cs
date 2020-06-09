@@ -55,6 +55,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var taskHelper = new Mock<ITaskHelper>().Object;
             var mapper = new Mock<IMapper>().Object;
             var diskProvider = new Mock<IDiskProvider>().Object;
+            var agentSettings = new AgentSettings()
+            {
+                MinimumVersion = "1.2.3.4"
+            };
 
             var allocStrategy = new AllocationOSDiskStrategy(
                 resourceRepository,
@@ -63,7 +67,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 resourceContinuationOperations,
                 taskHelper,
                 mapper,
-                diskProvider);
+                diskProvider,
+                agentSettings);
 
             var allocateInputOSDisk = new AllocateInput()
             {

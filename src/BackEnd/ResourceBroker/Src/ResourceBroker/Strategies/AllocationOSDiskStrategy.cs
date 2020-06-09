@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Management.Batch.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -43,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="mapper">Mapper.</param>
         /// <param name="diskProvider">Disk provider.</param>
+        /// <param name="agentSettings">Agent settings.</param>
         public AllocationOSDiskStrategy(
             IResourceRepository resourceRepository,
             IResourcePoolManager resourcePool,
@@ -50,7 +52,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             IResourceContinuationOperations resourceContinuationOperations,
             ITaskHelper taskHelper,
             IMapper mapper,
-            IDiskProvider diskProvider)
+            IDiskProvider diskProvider,
+            AgentSettings agentSettings)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
@@ -59,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             DiskProvider = Requires.NotNull(diskProvider, nameof(diskProvider));
+            AgentSettings = Requires.NotNull(agentSettings, nameof(agentSettings));
         }
 
         private IResourceRepository ResourceRepository { get; }
@@ -74,6 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         private IMapper Mapper { get; }
 
         private IDiskProvider DiskProvider { get; }
+
+        private AgentSettings AgentSettings { get; }
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
@@ -245,6 +251,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                 throw new InvalidOperationException($"OS disk is attached to a VM.");
             }
 
+            extendedProperties.UpdateAgent = ShouldUpdateAgent(extendedProperties, osDiskResource);
+
             var computeResource = await ResourceContinuationOperations.QueueCreateAsync(
                 Guid.NewGuid(),
                 ResourceType.ComputeVM,
@@ -256,6 +264,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
 
             return (computeResource, osDiskResource);
+        }
+
+        private bool ShouldUpdateAgent(AllocateExtendedProperties extendedProperties, ResourceRecord osDiskResource)
+        {
+            if (extendedProperties.UpdateAgent)
+            {
+                return extendedProperties.UpdateAgent;
+            }
+
+            if (osDiskResource.HeartBeatSummary?.LatestRawHeartBeat?.AgentVersion == default)
+            {
+                // Older environment will automatically follow agent update path.
+                return true;
+            }
+
+            var minimumAgentVersion = Version.Parse(AgentSettings.MinimumVersion);
+            var currentAgentVersion = Version.Parse(osDiskResource.HeartBeatSummary.LatestRawHeartBeat.AgentVersion);
+            if (minimumAgentVersion > currentAgentVersion)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryQueueComputeAndOSDisk(

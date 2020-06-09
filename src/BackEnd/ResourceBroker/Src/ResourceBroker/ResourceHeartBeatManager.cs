@@ -78,20 +78,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                       // Storage resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
                       resourceRecord.IsReady = true;
                       resourceRecord.Ready = DateTime.UtcNow;
+                  }
 
-                      // Update os disk record if it exists.
-                      var computeDetails = resourceRecord.GetComputeDetails();
-                      var osDiskRecordId = computeDetails.OSDiskRecordId;
-                      if (osDiskRecordId != default)
+                  // Update os disk record if it exists.
+                  var computeDetails = resourceRecord.GetComputeDetails();
+                  var osDiskRecordId = computeDetails.OSDiskRecordId;
+                  if (osDiskRecordId != default)
+                  {
+                      var osDiskResourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), logger.NewChildLogger());
+                      if (osDiskResourceRecord != default)
                       {
-                          var osDiskResourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), logger.NewChildLogger());
-                          if (osDiskResourceRecord != default && !osDiskResourceRecord.IsReady)
+                          if (!osDiskResourceRecord.IsReady)
                           {
                               osDiskResourceRecord.IsReady = true;
                               osDiskResourceRecord.Ready = DateTime.UtcNow;
-
-                              await ResourceRepository.UpdateAsync(osDiskResourceRecord, logger.NewChildLogger());
                           }
+
+                          // Copies over heartbeat information to OSDisk as well. When compute is gone, we will rely on the information in the OSDisk.
+                          osDiskResourceRecord.HeartBeatSummary = heartBeatSummaryRecord;
+
+                          await ResourceRepository.UpdateAsync(osDiskResourceRecord, logger.NewChildLogger());
                       }
                   }
 

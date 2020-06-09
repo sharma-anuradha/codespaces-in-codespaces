@@ -88,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
             {
                 options = new VirtualMachineResumeOptions()
                 {
-                    HardBoot = computeOptions.HardBoot,
+                    HardBoot = computeOptions.HardBoot || computeOptions.UpdateAgent,
                 };
             }
 

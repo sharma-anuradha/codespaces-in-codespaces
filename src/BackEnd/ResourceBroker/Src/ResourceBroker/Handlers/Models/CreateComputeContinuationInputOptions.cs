@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets a value indicating whether the compute go through a hardboot, slower but reliable.
         /// </summary>
         public bool HardBoot { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the agent should be updated.
+        /// </summary>
+        public bool UpdateAgent { get; set; }
     }
 }

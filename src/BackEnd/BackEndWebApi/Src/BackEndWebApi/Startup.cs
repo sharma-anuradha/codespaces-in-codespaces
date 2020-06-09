@@ -114,6 +114,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
+            // Adding agent settings.
+            services.AddSingleton(AppSettings.AgentSettings);
+
             services.AddDocumentDbClientProvider(options =>
             {
                 var (hostUrl, authKey) = ControlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync().Result;

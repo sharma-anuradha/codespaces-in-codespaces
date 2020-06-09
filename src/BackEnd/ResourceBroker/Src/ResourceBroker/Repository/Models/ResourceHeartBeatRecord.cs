@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
     public class ResourceHeartBeatRecord
     {
         /// <summary>
-        /// Gets or sets uTC timestamp of the heartbeat.
+        /// Gets or sets UTC timestamp of the heartbeat.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "timestamp")]
         public DateTime TimeStamp { get; set; }

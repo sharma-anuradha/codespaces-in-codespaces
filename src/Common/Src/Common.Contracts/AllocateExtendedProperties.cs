@@ -30,5 +30,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets or sets a value indicating whether the environment should be hard booted.
         /// </summary>
         public bool HardBoot { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the agent should be updated.
+        /// </summary>
+        public bool UpdateAgent { get; set; }
     }
 }
