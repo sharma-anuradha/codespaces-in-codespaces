@@ -29,6 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
 
         public bool DeveloperPersonalStamp { get; set; } = true;
 
+        public bool GenerateLocalHostNameFromNgrok { get; set; } = false;
+
         public FrontEnd FrontEnd { get; set; }
 
         public ControlPlaneSettings ControlPlaneSettings { get; set; }

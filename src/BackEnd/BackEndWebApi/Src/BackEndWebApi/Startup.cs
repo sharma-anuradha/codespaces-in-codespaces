@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -25,6 +26,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions;
@@ -91,6 +94,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                         throw new InvalidOperationException("Cannot use mocks outside of local development");
                     }
                 }
+            }
+
+            if (HostingEnvironment.IsDevelopment())
+            {
+                services.AddNgrok();
             }
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
@@ -222,6 +230,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             {
                 x.MapControllers();
             });
+
+            // Finish setting up config
+            if (HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
+            {
+                var ngrokHosted = app.ApplicationServices.GetService<NgrokHostedService>();
+
+                // We need to first verify that the Ngrok process is running first, rather than
+                // spin up a new session on our own, since that should be started with the frontend project.
+                var isNgrokRunning = ngrokHosted.IsNgrokRunning().Result;
+                if (!isNgrokRunning)
+                {
+                    throw new TimeoutException("Could not find existing Ngrok process. Did you start the frontend service?");
+                }
+
+                // Normally, the Ngrok service would start up after the application has started to launch.
+                // We need it to start sooner than that, since we need the hostname in advance.
+                ngrokHosted.OnApplicationStarted().Wait();
+                var tunnels = ngrokHosted.GetTunnelsAsync().Result;
+                ConfigureLocalHostname(new Uri(tunnels.First().PublicURL).Host);
+            }
 
             // Swagger/OpenAPI
             app.UseSwagger(x =>

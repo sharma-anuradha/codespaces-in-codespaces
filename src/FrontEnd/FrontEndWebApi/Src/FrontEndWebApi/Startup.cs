@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
@@ -22,6 +23,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
@@ -87,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             {
                 // Enable PII data in logs for Dev
                 IdentityModelEventSource.ShowPII = true;
-                ConfigureDevSettings();
+                services.AddNgrok();
             }
 
             if (IsRunningInAzure() &&
@@ -290,14 +293,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
             // Set the forwarding hostname for local development.
-            if (AppSettings.GenerateLocalHostNameFromNgrok)
-            {
-                services.AddServiceUriBuilder(NgrokHelperUtils.GetLocalNgrokHostname().Result);
-            }
-            else
-            {
-                services.AddServiceUriBuilder(frontEndAppSettings.ForwardingHostForLocalDevelopment);
-            }
+            services.AddServiceUriBuilder(frontEndAppSettings.ForwardingHostForLocalDevelopment);
 
             // Both DocumentDB and Cosmos DB client providers point to the same instance database.
             services
@@ -393,6 +389,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             app.UseVsSaaS(!isProduction);
 
             // Finish setting up config
+            if (HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
+            {
+                var ngrokHosted = app.ApplicationServices.GetService<NgrokHostedService>();
+
+                // Normally, the Ngrok service would start up after the application has started to launch.
+                // We need it to start sooner than that, since we need the hostname in advance.
+                ngrokHosted.OnApplicationStarted().Wait();
+                var tunnels = ngrokHosted.GetTunnelsAsync().Result;
+                ConfigureLocalHostname(new Uri(tunnels.First().PublicURL).Host);
+            }
+
             var frontEndAppSettings = app.ApplicationServices.GetService<AppSettings>().FrontEnd;
             var systemConfig = app.ApplicationServices.GetService<ISystemConfiguration>();
             frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);

@@ -180,33 +180,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         }
 
         /// <summary>
-        /// Configures special settings intended for local development.
+        /// Configures the hostname for local development.
         /// </summary>
-        protected void ConfigureDevSettings()
+        /// <param name="hostname">The hostname.</param>
+        protected void ConfigureLocalHostname(string hostname)
         {
-            if (AppSettings.GenerateLocalHostNameFromNgrok)
-            {
-                ConfigureLocalHostname();
-            }
-        }
-
-        /// <summary>
-        /// Configures the hostname for local development via Ngrok.
-        /// </summary>
-        protected void ConfigureLocalHostname()
-        {
-            var ngrokHostname = NgrokHelperUtils.GetLocalNgrokHostname().Result;
-
             if (string.IsNullOrEmpty(AppSettings.ControlPlaneSettings.DnsHostName))
             {
-                AppSettings.ControlPlaneSettings.DnsHostName = ngrokHostname;
+                AppSettings.ControlPlaneSettings.DnsHostName = hostname;
             }
 
             foreach (var stamp in AppSettings.ControlPlaneSettings.Stamps)
             {
                 if (string.IsNullOrEmpty(stamp.Value.DnsHostName))
                 {
-                    stamp.Value.DnsHostName = ngrokHostname;
+                    stamp.Value.DnsHostName = hostname;
                 }
             }
         }
