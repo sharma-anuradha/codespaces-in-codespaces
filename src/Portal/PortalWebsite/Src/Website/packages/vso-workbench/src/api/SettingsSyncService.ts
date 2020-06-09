@@ -1,9 +1,10 @@
 import { arrayUnique } from 'vso-client-core';
+import { VSCodeDefaultAuthSession } from 'vs-codespaces-authorization';
+
 import { TSettingsSyncResourceId } from '../interfaces/TSettingsSyncResourceId';
 import { ISettingsSyncServiceResponse } from '../interfaces/ISettingsSyncServiceResponse';
 import { ISettingsSyncVSCodeExtension } from '../interfaces/ISettingsSyncVSCodeExtension';
 import { authService } from '../auth/authService';
-import { INativeAuthProviderSession } from '../../../vso-client-core/src/interfaces/IPartnerInfo';
 
 export const SETTINGS_THEME_KEY = 'workbench.colorTheme';
 export const GITHUB_THEME_NAME = 'GitHub Light';
@@ -53,7 +54,7 @@ export const getSettingsSyncSettings= async (): Promise<Record<string, any>> => 
 };
 
 export class SettingsSyncService {
-    constructor(private readonly credentials: INativeAuthProviderSession) {}
+    constructor(private readonly credentials: VSCodeDefaultAuthSession) {}
 
     private makeRequest = async (resourceId: TSettingsSyncResourceId): Promise<string | null> => {
         try {

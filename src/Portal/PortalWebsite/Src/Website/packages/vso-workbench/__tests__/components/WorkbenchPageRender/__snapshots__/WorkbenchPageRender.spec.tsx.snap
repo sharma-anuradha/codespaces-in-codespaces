@@ -256,7 +256,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
           className="vso-splash-screen__message"
         >
            
-          The workspace has been deleted.
+          The codespace has been deleted.
         </div>
       </div>
        
@@ -862,7 +862,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
           className="vso-splash-screen__message"
         >
            
-          The workspace is not available.
+          The codespace is not available.
         </div>
       </div>
        
@@ -1162,7 +1162,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
           className="vso-splash-screen__message"
         >
            
-          The workspace is shutdown.
+          The codespace is shutdown.
         </div>
         <div
           className="vso-splash-screen__button"
@@ -1472,7 +1472,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
           className="vso-splash-screen__message"
         >
            
-          The workspace is shutting down.
+          The codespace is shutting down.
         </div>
       </div>
        
@@ -1772,7 +1772,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
           className="vso-splash-screen__message"
         >
            
-          The workspace failed.
+          The codespace failed.
         </div>
       </div>
        
@@ -2072,7 +2072,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
           className="vso-splash-screen__message"
         >
            
-          Starting the workspace...
+          Starting the codespace...
         </div>
       </div>
        

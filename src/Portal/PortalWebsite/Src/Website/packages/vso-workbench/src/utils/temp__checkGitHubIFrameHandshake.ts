@@ -1,9 +1,9 @@
+import { authorizePlatformInternal, VSCodespacesPlatformInfoInternal } from 'vs-codespaces-authorization';
 import {
     PostMessageChannel,
     createTrace,
     isInIframe,
     randomString,
-    ICrossDomainPartnerInfo,
     isGithubTLD,
     PARTNER_INFO_KEYCHAIN_KEY
 } from 'vso-client-core';
@@ -36,22 +36,12 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
     self.addEventListener('load', async () => {
         try {
             const info = await postMessageChannel.getRepoInfo(randomString(), 'vso-retrieve-repository-info') as any;
-            
-            const formEl = document.createElement('form');
-            formEl.setAttribute('action', `${location.origin}/platform-authentication`);
-            formEl.setAttribute('method', 'POST');
-            
-            const cascadeTokenInput = document.createElement('input');
-            const partnerInfoInput = document.createElement('input');
 
-            cascadeTokenInput.name = 'cascadeToken';
-            cascadeTokenInput.value = info.cascadeToken;
-
-            const data: ICrossDomainPartnerInfo = {
+            const data: VSCodespacesPlatformInfoInternal = {
                 partnerName: 'github',
                 // where to redirect to in case the credentials expire
                 managementPortalUrl: 'https://github.com/codespaces',
-                cascadeToken: info.cascadeToken,
+                codespaceToken: info.cascadeToken,
                 credentials: [
                     {
                         // Sat Nov 20 2286 09:46:40 GMT-0800 (Pacific Standard Time)
@@ -76,9 +66,15 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                     // list of the VSCode extension ids that should be installed on the first codespace run
                     // hence user has the option to remove the extensions explicitelly
                     defaultExtensions: [
-                        'GitHub.vscode-pull-request-github',
-                        'github.github-vscode-theme',
-                        'ms-vsliveshare.vsliveshare'
+                        {
+                            id: 'GitHub.vscode-pull-request-github',
+                        },
+                        {
+                            id: 'github.github-vscode-theme',
+                        },
+                        {
+                            id: 'ms-vsliveshare.vsliveshare',
+                        }
                     ],
                     // settings sync / native auth providers
                     enableSyncByDefault: true,
@@ -102,14 +98,7 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                 },
             };
 
-            partnerInfoInput.name = 'partnerInfo';
-            partnerInfoInput.value = JSON.stringify(data);
-
-            formEl.appendChild(cascadeTokenInput);
-            formEl.appendChild(partnerInfoInput);
-            document.body.append(formEl);
-
-            formEl.submit();
+            await authorizePlatformInternal(`${location.origin}/platform-authentication`, data);
         } catch (e) {
             trace.error(e);
 

@@ -11,7 +11,7 @@ export class GitHubStrategy implements IAuthStrategy {
     }
 
     protected getCascadeToken = async () => {
-        return await authService.getCachedCascadeToken();
+        return await authService.getCachedCodespaceToken();
     }
 
     public async canHandleService(service: string, account: string) {

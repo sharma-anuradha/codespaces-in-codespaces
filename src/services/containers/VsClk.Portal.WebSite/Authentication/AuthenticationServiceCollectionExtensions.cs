@@ -224,20 +224,27 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 
                 try {
                     var bodyParams = HttpUtility.ParseQueryString(rawMessage);
-                    var cascadeToken = bodyParams.Get("cascadeToken");
+                    var codespaceToken = bodyParams.Get("codespaceToken");
+                    if (string.IsNullOrWhiteSpace(codespaceToken)) {
+                        codespaceToken = bodyParams.Get("cascadeToken");
+                    }
 
-                    if (!string.IsNullOrWhiteSpace(cascadeToken)) {
-                        context.Token = cascadeToken;
+                    if (!string.IsNullOrWhiteSpace(codespaceToken)) {
+                        context.Token = codespaceToken;
                         return;
                     }
                 } catch (Exception) {}
 
                 try {
                     var info = JsonConvert.DeserializeObject<PartnerInfo>(rawMessage);
-                    var cascadeToken = info.CascadeToken;
+                    var codespaceToken = info.CodespaceToken;
 
-                    if (!string.IsNullOrWhiteSpace(cascadeToken)) {
-                        context.Token = cascadeToken;
+                    if (string.IsNullOrWhiteSpace(codespaceToken)) {
+                        codespaceToken = info.CascadeToken;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(codespaceToken)) {
+                        context.Token = codespaceToken;
                         return;
                     }
                 } catch (Exception) {}

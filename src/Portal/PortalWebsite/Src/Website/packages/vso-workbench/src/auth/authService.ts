@@ -7,8 +7,12 @@ import {
     debounceInterval,
     timeConstants,
     getCurrentEnvironmentId,
-    INativeAuthProviderSession,
 } from 'vso-client-core';
+
+import {
+    VSCodespacesPlatformInfoGeneral,
+    VSCodeDefaultAuthSession
+} from 'vs-codespaces-authorization';
 
 import { FatalPlatformRedirectionError } from '../errors/FatalPlatformRedirectionError';
 import { getPartnerLoginRedirectionURL } from '../utils/getPartnerLoginRedirectionURL';
@@ -57,16 +61,18 @@ export class AuthService {
         return githubToken.token;
     };
 
-    public getCachedCascadeToken = async (): Promise<string | null> => {
+    public getCachedCodespaceToken = async (): Promise<string | null> => {
         const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
 
         if (!partnerInfo) {
             return null;
         }
 
-        return 'cascadeToken' in partnerInfo
-            ? partnerInfo.cascadeToken
-            : partnerInfo.token;
+        if ('codespaceToken' in partnerInfo) {
+            return partnerInfo.codespaceToken;
+        }
+
+        return partnerInfo.token;
     };
 
     public getCachedToken = async (): Promise<string | null> => {
@@ -137,23 +143,23 @@ export class AuthService {
         5 * timeConstants.MINUTE_MS
     );
 
-    public getSettingsSyncSession = async ():  Promise<INativeAuthProviderSession | null> => {
+    public getSettingsSyncSession = async ():  Promise<VSCodeDefaultAuthSession | null> => {
         const info = await this.getPartnerInfo();
-        if (!info) {
+        if (!info || !('codespaceToken' in info)) {
             return null;
         }
     
-        if (!('cascadeToken' in info)) {
-            return null;
-        }
-    
-        const { vscodeSettings } = info;
+        const { vscodeSettings } = info as VSCodespacesPlatformInfoGeneral;
         if (!vscodeSettings) {
             return null;
         }
-    
+
+        if (!('authenticationSessionId' in vscodeSettings)) {
+            return null;
+        }
+
         const { authenticationSessionId, defaultAuthSessions } = vscodeSettings;
-        if (!authenticationSessionId || !defaultAuthSessions?.length) {
+        if (!defaultAuthSessions?.length) {
             return null;
         }
     

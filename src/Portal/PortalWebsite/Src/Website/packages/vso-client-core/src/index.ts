@@ -21,7 +21,7 @@ export { isGithubTLD } from './utils/isGithubTLD';
 export { isHostedOnGithub } from './utils/isHostedOnGithub';
 export { getFeatureSet } from './utils/getFeatureSet';
 export { getVSCodeScheme } from './utils/getVSCodeScheme';
-export { getCurrentEnvironmentId } from './utils/getCurrentEnvironmentId';
+export { getCurrentEnvironmentId, setCurrentCodespaceId } from './utils/getCurrentEnvironmentId';
 export { isInIframe } from './utils/isInIframe';
 export { wait } from './utils/wait';
 export { isDefined } from './utils/isDefined';
@@ -63,7 +63,7 @@ export { IVSCodeConfig } from './interfaces/IVSCodeConfig';
 export { ICredentialsProvider } from './interfaces/ICredentialsProvider';
 export { IGitCredential } from './interfaces/IGitCredential';
 export { TPostMessageChannelMessages } from './interfaces/TPostMessageChannelMessages';
-export { IPartnerInfo, ICrossDomainPartnerInfo, INativeAuthProviderSession } from './interfaces/IPartnerInfo';
+export { IPartnerInfo } from './interfaces/IPartnerInfo';
 export { EnvironmentType, EnvironmentErrorCodes } from './interfaces/IEnvironment';
 export { FeatureSet } from './interfaces/FeatureSet';
 

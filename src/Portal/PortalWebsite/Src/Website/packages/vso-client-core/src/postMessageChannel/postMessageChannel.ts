@@ -2,7 +2,7 @@ import { Signal } from '../utils/Signal';
 import { randomString } from '../utils/randomString';
 import { isKnownPartnerTLD } from '../utils/isKnownPartnerTLD';
 import { IPartnerInfo } from '../interfaces/IPartnerInfo';
-import { validatePartnerInfo } from './validatePartnerInfo';
+import { validatePartnerInfoPostmessage } from './validatePartnerInfo';
 import { TPostMessageChannelMessages } from '../interfaces/TPostMessageChannelMessages';
 import { createTrace } from '../utils/createTrace';
 
@@ -93,7 +93,7 @@ export class PostMessageChannel {
         }
 
         const { data } = e;
-        validatePartnerInfo(data);
+        validatePartnerInfoPostmessage(data);
 
         this.signals.delete(responseId);
         signal.complete(data);

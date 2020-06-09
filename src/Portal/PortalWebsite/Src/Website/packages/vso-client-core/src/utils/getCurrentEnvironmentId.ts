@@ -2,7 +2,13 @@ import { isGitHubHostname } from './isGitHubHostname';
 import { KNOWN_VSO_HOSTNAMES } from '../constants';
 import { isGithubTLD } from './isGithubTLD';
 
+let staticCodespaceId: string | null = null;
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const setCurrentCodespaceId = (id: string) => {
+    staticCodespaceId = id;
+};
 
 /**
  * https://online.dev.core.vsengsaas.visualstudio.com/workspace/{id}
@@ -11,6 +17,10 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
  * https://{:id}.workspaces-dev.github.com
  */
 export const getCurrentEnvironmentId = () => {
+    if (staticCodespaceId) {
+        return staticCodespaceId;
+    }
+
     const { pathname, hostname, href } = location;
 
     const isKnownExactOrigin = KNOWN_VSO_HOSTNAMES.includes(hostname);

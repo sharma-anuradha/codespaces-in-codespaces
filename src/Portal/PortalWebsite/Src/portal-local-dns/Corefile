@@ -1,10 +1,3 @@
-workspaces-dev.github.com {
-    log
-    errors
-
-    file com.github.workspaces-dev
-}
-
 local.github.dev {
     log
     errors
@@ -12,6 +5,12 @@ local.github.dev {
     file com.local.github.dev
 }
 
+workspaces-dev.github.com {
+    log
+    errors
+
+    file com.github.workspaces-dev
+}
 
 codespaces-dev.github.com {
     log

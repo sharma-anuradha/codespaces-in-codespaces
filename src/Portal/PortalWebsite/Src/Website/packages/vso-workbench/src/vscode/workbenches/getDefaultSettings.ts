@@ -13,3 +13,4 @@ export const getDefaultSettings = async (): Promise<Record<string, any>> => {
 
     return defaultSettings || {};
 };
+    

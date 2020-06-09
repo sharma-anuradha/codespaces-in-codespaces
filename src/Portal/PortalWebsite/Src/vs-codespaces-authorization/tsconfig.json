@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "baseUrl": "./",
+        "composite": true,
+        "jsx": "react",
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "target": "es2017",
+        "sourceMap": true,
+        "declarationMap": true,
+        "strict": true,
+        "strictBindCallApply": true,
+        "experimentalDecorators": true,
+        "incremental": true,
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": ["node_modules", "dist"],
+    "references": []
+  }

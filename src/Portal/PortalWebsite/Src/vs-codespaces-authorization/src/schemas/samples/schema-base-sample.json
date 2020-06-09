@@ -1,0 +1,30 @@
+{
+    "partnerName": "github",
+    "managementPortalUrl": "https://github.com/codespaces",
+    "codespaceToken": "<codespaces JWT>",
+    "credentials": [{
+        "expiration": 10000000000000,
+        "token": "<github token>",
+        "host": "github.com",
+        "path": "/"
+    }],
+    "codespaceId": "<codespace guid>",
+    "vscodeSettings": {
+        "vscodeChannel": "insider",
+        "defaultSettings": {
+           "workbench.colorTheme": "GitHub Light",
+           "workbench.startupEditor": "welcomePageInEmptyWorkbench"
+        },
+        "defaultExtensions": [{
+            "id": "GitHub.vscode-pull-request-github"
+        }, {
+            "id": "GitHub.vscode-pull-request-github"
+        }],
+        "defaultAuthSessions": [{
+            "type": "github",
+            "id": "github-session-github-pr",
+            "accessToken": "<github token>",
+            "scopes": ["read:user", "user:email", "repo"]
+        }]
+    }
+}

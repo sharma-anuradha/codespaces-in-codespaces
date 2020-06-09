@@ -21,12 +21,19 @@ export const getDefaultSettingsExtensions = async (): Promise<string[]> => {
         return [];
     }
 
-    // old payload does not have the settings property
-    const defaultExtensions = ('vscodeSettings' in info)
-        ? info.vscodeSettings.defaultExtensions
-        : undefined;
+    if (!('vscodeSettings' in info)) {
+        return [];
+    }
 
-    return defaultExtensions || [];
+    const { defaultExtensions } = info.vscodeSettings;
+
+    if (defaultExtensions) {
+        return defaultExtensions.map((extension) => {
+            return extension.id;
+        });
+    }
+
+    return [];
 };
 
 export const getExtensions = async (isFirstRun: boolean): Promise<string[]> => {

@@ -1,14 +1,17 @@
 import { getCurrentEnvironmentId, authService } from 'vso-client-core';
-import { IHomeIndicator } from 'vscode-web';
+import { VSCodeHomeIndicator } from 'vs-codespaces-authorization';
 
-export const getHomeIndicator = async (): Promise<IHomeIndicator | undefined> => {
+export const getHomeIndicator = async (): Promise<VSCodeHomeIndicator | undefined> => {
     const info = await authService.getCachedPartnerInfo(getCurrentEnvironmentId());
     if (!info) {
         return;
     }
-    // old payload does not have the settings property
-    const homeIndicator = ('cascadeToken' in info && info.vscodeSettings)
-        ? info.vscodeSettings.homeIndicator
-        : undefined;
-    return homeIndicator;
+
+    if (!('codespaceToken' in info)) {
+        return;
+    }
+
+    if ('homeIndicator' in info.vscodeSettings) {
+        return info.vscodeSettings.homeIndicator;
+    }
 };

@@ -1,0 +1,6 @@
+schema-base.d.ts
+schema-extended.d.ts
+src/schemas/schema-base.json
+dist/
+src/*.d.ts
+src/*.d.ts.map

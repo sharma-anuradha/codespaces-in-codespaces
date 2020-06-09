@@ -199,7 +199,7 @@ export class AuthServiceGithub {
         return token;
     };
 
-    public getCachedCascadeToken = async () => {
+    public getCachedCodespaceToken = async () => {
         await this.initializeSignal.promise;
 
         if (!this.repoInfo) {

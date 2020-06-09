@@ -1,15 +1,13 @@
-import { IPartnerInfo, ICrossDomainPartnerInfo } from '../interfaces/IPartnerInfo';
-
 export const KNOWN_PARTNERS = ['github', 'salesforce'];
 
-export const validatePartnerInfo = (info: IPartnerInfo | ICrossDomainPartnerInfo) => {
+export const validatePartnerInfoPostmessage = (info: any) => {
     const token =
         'cascadeToken' in info
             ? info.cascadeToken // new partner info format
             : info.token; // old postMessage partner info format
 
     if (!token) {
-        throw new Error('No Cascade token set.');
+        throw new Error('No cascadeToken token set.');
     }
 
     const codespaceId =

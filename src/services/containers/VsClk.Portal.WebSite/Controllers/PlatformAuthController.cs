@@ -134,6 +134,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public string Icon { get; set; }
         }
 
+        public class VSCodeExtension
+        {
+            [JsonProperty("id")]
+            public string Id { get; set; }
+
+            [JsonProperty("kind")]
+            public string Kind { get; set; }
+        }
+
         public class VSCodeSettings
         {
             [JsonProperty("homeIndicator")]
@@ -143,7 +152,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public Dictionary<string, object> DefaultSettings { get; set; }
 
             [JsonProperty("defaultExtensions")]
-            public List<string> DefaultExtensions { get; set; }
+            public List<VSCodeExtension> DefaultExtensions { get; set; }
 
             [JsonProperty("enableSyncByDefault")]
             public bool EnableSyncByDefault { get; set; }
@@ -169,6 +178,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             [JsonProperty("codespaceId")]
             public string CodespaceId { get; set; }
             
+            [JsonProperty("codespaceToken")]
+            public string CodespaceToken { get; set; }
+
             [JsonProperty("cascadeToken")]
             public string CascadeToken { get; set; }
 
@@ -184,7 +196,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [Consumes("application/x-www-form-urlencoded")]
         public IActionResult PlatformAuthentication(
             [FromForm] string partnerInfo,
-            [FromForm] string cascadeToken
+            [FromForm] string codespaceToken
         )
         {
             if (string.IsNullOrWhiteSpace(partnerInfo))
@@ -193,7 +205,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             var partnerInfoData = JsonConvert.DeserializeObject<PartnerInfo>(partnerInfo);
-            partnerInfoData.CascadeToken = cascadeToken;
+            partnerInfoData.CodespaceToken = codespaceToken;
 
             if (string.IsNullOrWhiteSpace(partnerInfoData.ManagementPortalUrl))
             {

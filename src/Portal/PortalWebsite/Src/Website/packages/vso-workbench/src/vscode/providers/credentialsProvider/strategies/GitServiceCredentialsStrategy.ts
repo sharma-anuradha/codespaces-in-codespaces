@@ -39,7 +39,7 @@ const findCredential = async (service: string, account: string): Promise<string 
             return null;
         }
 
-        const isExpired = isExpiredCredential(c);
+        const isExpired = isExpiredCredential(c as IGitCredential);
         const isPath = account === '*' || account === c.path;
 
         if (isPath && !isExpired) {
@@ -64,6 +64,7 @@ export class GitCredentialHelperStrategy implements IAuthStrategy {
 
         return !!result;
     }
+
     async getToken(service: string, account: string): Promise<string | null> {
         const result = await findCredential(service, account);
 

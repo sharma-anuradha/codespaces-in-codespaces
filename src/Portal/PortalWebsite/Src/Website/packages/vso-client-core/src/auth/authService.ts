@@ -4,20 +4,21 @@ import { setKeychainKeys } from '../keychain/localstorageKeychainKeys';
 import { localStorageKeychain } from '../keychain/localstorageKeychain';
 import { createTrace } from '../utils/createTrace';
 import { IKeychainKey } from '../interfaces/IKeychainKey';
-import { IPartnerInfo, ICrossDomainPartnerInfo } from '../interfaces/IPartnerInfo';
-import { validatePartnerInfo as validatePartnerInfoPostmessage, KNOWN_PARTNERS } from '../postMessageChannel/validatePartnerInfo';
+import { IPartnerInfo } from '../interfaces/IPartnerInfo';
+import { validatePartnerInfoPostmessage, KNOWN_PARTNERS } from '../postMessageChannel/validatePartnerInfo';
 import { PARTNER_INFO_KEYCHAIN_KEY } from '../constants';
+import { VSCodespacesPlatformInfoGeneral } from 'vs-codespaces-authorization';
 
 const trace = createTrace('vso-client-core:authService');
 
-const validatePartnerInfo = (partnerInfo: IPartnerInfo | ICrossDomainPartnerInfo) => {
-    if (!(partnerInfo as ICrossDomainPartnerInfo).cascadeToken) {
+const validatePartnerInfo = (partnerInfo: IPartnerInfo | VSCodespacesPlatformInfoGeneral) => {
+    if (!(partnerInfo as VSCodespacesPlatformInfoGeneral).codespaceToken) {
         return validatePartnerInfoPostmessage(partnerInfo as IPartnerInfo);
     } else {
-        const info = partnerInfo as ICrossDomainPartnerInfo;
+        const info = partnerInfo as VSCodespacesPlatformInfoGeneral;
 
-        if (!info.cascadeToken) {
-            throw new Error('No `cascadeToken` set.');
+        if (!info.codespaceToken) {
+            throw new Error('No `codespaceToken` set.');
         }
     
         if (!info.managementPortalUrl) {
@@ -43,28 +44,28 @@ export class AuthService {
         return key;
     };
 
-    public getPartnerInfoToken = (info: IPartnerInfo | ICrossDomainPartnerInfo) => {
-        const token = 'cascadeToken' in info
-            ? info.cascadeToken
+    public getPartnerInfoToken = (info: IPartnerInfo | VSCodespacesPlatformInfoGeneral) => {
+        const token = 'codespaceToken' in info
+            ? info.codespaceToken
             : info.token;
         
         return token;
     };
 
-    public storePartnerInfo = async (info: IPartnerInfo | ICrossDomainPartnerInfo) => {
+    public storePartnerInfo = async (info: IPartnerInfo | VSCodespacesPlatformInfoGeneral) => {
         const token = this.getPartnerInfoToken(info);
 
         const keys = await createKeys(token);
         if (!keys || !keys.length) {
             trace.error(`Cannot create the encryption keys.`);
-            throw new Error('Cannot get the encryption keys, is the Cascade token correct?');
+            throw new Error('Cannot get the encryption keys, is the Codespace token correct?');
         }
 
         this.keys = keys;
 
         setKeychainKeys(keys);
 
-        const codespaceId = 'cascadeToken' in info
+        const codespaceId = 'codespaceId' in info
             ? info.codespaceId
             : info.environmentId;
 
@@ -92,7 +93,7 @@ export class AuthService {
         return keys;
     };
 
-    public getCachedPartnerInfo = async (environmentId: string): Promise<IPartnerInfo | ICrossDomainPartnerInfo | null> => {
+    public getCachedPartnerInfo = async (environmentId: string): Promise<IPartnerInfo | VSCodespacesPlatformInfoGeneral | null> => {
         if (!this.keys.length) {
             const keys = await this.getKeychainKeys();
             if (!keys) {
@@ -113,7 +114,7 @@ export class AuthService {
         return crossDomainPartnerInfo;
     };
 
-    private async getInfoForKey(key: typeof PARTNER_INFO_KEYCHAIN_KEY): Promise<ICrossDomainPartnerInfo | null>;
+    private async getInfoForKey(key: typeof PARTNER_INFO_KEYCHAIN_KEY): Promise<VSCodespacesPlatformInfoGeneral | null>;
     private async getInfoForKey(key: string): Promise<IPartnerInfo | null>;
     private async getInfoForKey(key: any) {
         const keychainKey = (key === PARTNER_INFO_KEYCHAIN_KEY)
@@ -130,7 +131,7 @@ export class AuthService {
             const info = JSON.parse(infoString);
             validatePartnerInfo(info);
 
-            return info as IPartnerInfo | ICrossDomainPartnerInfo;
+            return info as IPartnerInfo | VSCodespacesPlatformInfoGeneral;
         } catch (e) {
             trace.error(e.message, e.stack);
         }

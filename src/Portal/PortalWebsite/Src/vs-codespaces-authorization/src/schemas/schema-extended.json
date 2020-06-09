@@ -1,0 +1,513 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://aka.ms/vscs-platform-json-schema-extended",
+    "type": "object",
+    "title": "VS Codespaces Platform Info",
+    "description": "The JSON schema to build/validate the Visual Studio Codespaces platform authorization payload.",
+    "default": {},
+    "examples": [
+        {
+            "partnerName": "github",
+            "managementPortalUrl": "https://github.com/codespaces",
+            "codespaceToken": "<codespaces JWT>",
+            "credentials": [
+                {
+                    "expiration": 10000000000000,
+                    "token": "<github token>",
+                    "host": "github.com",
+                    "path": "/"
+                }
+            ],
+            "codespaceId": "<codespace guid>",
+            "vscodeSettings": {
+                "vscodeChannel": "insider",
+                "defaultSettings": {
+                    "workbench.colorTheme": "GitHub Light",
+                    "workbench.startupEditor": "welcomePageInEmptyWorkbench"
+                },
+                "defaultExtensions": [
+                    {
+                        "id": "GitHub.vscode-pull-request-github",
+                        "kind": "workspace"
+                    },
+                    {
+                        "id": "GitHub.vscode-pull-request-github"
+                    }
+                ],
+                "defaultAuthSessions": [
+                    {
+                        "type": "github",
+                        "id": "a0446d79-9ec8-4373-ba94-df7bc46a9acf",
+                        "accessToken": "<github token>",
+                        "scopes": [
+                            "read:user",
+                            "user:email",
+                            "repo"
+                        ]
+                    }
+                ]
+            }
+        }
+    ],
+    "required": [
+        "partnerName",
+        "managementPortalUrl",
+        "codespaceToken",
+        "credentials",
+        "codespaceId",
+        "vscodeSettings"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "partnerName": {
+            "$id": "#/properties/partnerName",
+            "type": "string",
+            "title": "partnerName",
+            "description": "Visual Studio Codespaces unique partner name.",
+            "default": ""
+        },
+        "managementPortalUrl": {
+            "$id": "#/properties/managementPortalUrl",
+            "type": "string",
+            "title": "managementPortalUrl",
+            "description": "Where to redirect to in case the credentials expire.",
+            "default": "",
+            "examples": [
+                "https://foo.com/codespaces"
+            ]
+        },
+        "codespaceToken": {
+            "$id": "#/properties/codespaceToken",
+            "type": "string",
+            "title": "codespaceToken",
+            "description": "The Codespace JWT token.",
+            "default": ""
+        },
+        "credentials": {
+            "$id": "#/properties/credentials",
+            "type": "array",
+            "title": "credentials",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "expiration": 10000000000000,
+                        "token": "<git token>",
+                        "host": "github.com",
+                        "path": "/"
+                    }
+                ]
+            ],
+            "additionalItems": false,
+            "items": {
+                "anyOf": [
+                    {
+                        "$id": "#/properties/credentials/items/anyOf/0",
+                        "type": "object",
+                        "title": "Git Credentials",
+                        "description": "Credentials to perform git operations.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "expiration": 10000000000000,
+                                "token": "git token",
+                                "host": "github.com",
+                                "path": "/"
+                            }
+                        ],
+                        "required": [
+                            "token",
+                            "host"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "expiration": {
+                                "$id": "#/properties/credentials/items/anyOf/0/properties/expiration",
+                                "type": "integer",
+                                "title": "expiration",
+                                "description": "The expiration timestamp of the token. [UTC timestamp in milliseconds]",
+                                "default": 0,
+                                "examples": [
+                                    10000000000000
+                                ]
+                            },
+                            "token": {
+                                "$id": "#/properties/credentials/items/anyOf/0/properties/token",
+                                "type": "string",
+                                "title": "token",
+                                "description": "The token to perform git operations.",
+                                "default": "",
+                                "examples": [
+                                    "<github token>"
+                                ]
+                            },
+                            "host": {
+                                "$id": "#/properties/credentials/items/anyOf/0/properties/host",
+                                "type": "string",
+                                "title": "host",
+                                "description": "The host of the token. [https://www.git-scm.com/docs/gitcredentials]",
+                                "default": "",
+                                "examples": [
+                                    "github.com"
+                                ]
+                            },
+                            "path": {
+                                "$id": "#/properties/credentials/items/anyOf/0/properties/path",
+                                "type": "string",
+                                "title": "path",
+                                "description": "The path of the git token. Can be omitted or set to `*`. [https://www.git-scm.com/docs/gitcredentials]",
+                                "default": "",
+                                "examples": [
+                                    "/"
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "$id": "#/properties/credentials/items"
+            }
+        },
+        "codespaceId": {
+            "$id": "#/properties/codespaceId",
+            "type": "string",
+            "title": "codespaceId",
+            "description": "The Codespace id (GUID).",
+            "default": "",
+            "examples": [
+                "<codespace guid>"
+            ]
+        },
+        "vscodeSettings": {
+            "$id": "#/properties/vscodeSettings",
+            "type": "object",
+            "title": "vscodeSettings",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "vscodeChannel": "insider",
+                    "defaultSettings": {
+                        "aa": true,
+                        "bb": 2,
+                        "cc": "str",
+                        "dd": null
+                    },
+                    "defaultExtensions": [
+                        {
+                            "id": "GitHub.vscode-pull-request-github"
+                        },
+                        {
+                            "id": "GitHub.vscode-pull-request-github"
+                        }
+                    ],
+                    "defaultAuthSessions": [
+                        {
+                            "type": "github",
+                            "id": "github-session-github-pr",
+                            "accessToken": "<github token>",
+                            "scopes": [
+                                "read:user",
+                                "user:email",
+                                "repo"
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "required": [],
+            "additionalProperties": false,
+            "properties": {
+                "vscodeChannel": {
+                    "$id": "#/properties/vscodeSettings/properties/vscodeChannel",
+                    "type": "string",
+                    "title": "vscodeChannel",
+                    "description": "The VSCode dogfood channel.",
+                    "default": "stable",
+                    "enum": [
+                        "stable",
+                        "insider"
+                    ],
+                    "examples": [
+                        "stable",
+                        "insider"
+                    ]
+                },
+                "defaultSettings": {
+                    "$id": "#/properties/vscodeSettings/properties/defaultSettings",
+                    "type": "object",
+                    "title": "defaultSettings",
+                    "description": "The VSCode workbench settings.",
+                    "default": {},
+                    "examples": [
+                        {
+                            "workbench.colorTheme": "GitHub Light",
+                            "window.zoomLevel": 0,
+                            "workbench.activityBar.visible": true
+                        }
+                    ],
+                    "required": [],
+                    "additionalProperties": true,
+                    "properties": {}
+                },
+                "defaultExtensions": {
+                    "$id": "#/properties/vscodeSettings/properties/defaultExtensions",
+                    "type": "array",
+                    "title": "defaultExtensions",
+                    "description": "The list of the VSCode extensions to preinstall.",
+                    "default": [],
+                    "examples": [
+                        [
+                            {
+                                "id": "GitHub.vscode-pull-request-github"
+                            },
+                            {
+                                "id": "ms-vsliveshare.vsliveshare"
+                            }
+                        ]
+                    ],
+                    "additionalItems": true,
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/vscodeSettings/properties/defaultExtensions/items/anyOf/0",
+                                "type": "object",
+                                "title": "VSCode extension",
+                                "description": "Extension id.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "id": "GitHub.vscode-pull-request-github"
+                                    }
+                                ],
+                                "required": [
+                                    "id"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "id": {
+                                        "$id": "#/properties/vscodeSettings/properties/defaultExtensions/items/anyOf/0/properties/id",
+                                        "type": "string",
+                                        "title": "id",
+                                        "description": "VSCode extension id",
+                                        "default": "",
+                                        "examples": [
+                                            "GitHub.vscode-pull-request-github"
+                                        ]
+                                    },
+                                    "kind": {
+                                        "$id": "#/properties/vscodeSettings/properties/defaultExtensions/items/anyOf/0/properties/type",
+                                        "type": "string",
+                                        "enum": [
+                                            "ui",
+                                            "workspace",
+                                            "web"
+                                        ],
+                                        "title": "type",
+                                        "description": "Type of the VSCode extension.",
+                                        "default": "",
+                                        "examples": [
+                                            "ui",
+                                            "workspace",
+                                            "web"
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "$id": "#/properties/vscodeSettings/properties/defaultExtensions/items"
+                    }
+                },
+                "defaultAuthSessions": {
+                    "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions",
+                    "type": "array",
+                    "title": "defaultAuthSessions",
+                    "description": "Default sessions for the built-in VSCode Auth Provider.",
+                    "default": [],
+                    "examples": [
+                        [
+                            {
+                                "type": "github",
+                                "id": "github-session-github-pr",
+                                "accessToken": "<github token>",
+                                "scopes": [
+                                    "read:user",
+                                    "user:email",
+                                    "repo"
+                                ]
+                            }
+                        ]
+                    ],
+                    "additionalItems": true,
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0",
+                                "type": "object",
+                                "title": "VSCode default auth session",
+                                "description": "A VSCode Auth Provider session.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "type": "github",
+                                        "id": "github-session-github-pr",
+                                        "accessToken": "<github token>",
+                                        "scopes": [
+                                            "read:user",
+                                            "user:email",
+                                            "repo"
+                                        ]
+                                    }
+                                ],
+                                "required": [
+                                    "type",
+                                    "id",
+                                    "accessToken",
+                                    "scopes"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "type": {
+                                        "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0/properties/type",
+                                        "type": "string",
+                                        "title": "type",
+                                        "description": "Id of the auth provider.",
+                                        "default": "",
+                                        "examples": [
+                                            "github",
+                                            "microsoft",
+                                            "<custom one>"
+                                        ]
+                                    },
+                                    "id": {
+                                        "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0/properties/id",
+                                        "type": "string",
+                                        "title": "id",
+                                        "description": "The id of the session.",
+                                        "default": "",
+                                        "examples": [
+                                            "<guid>"
+                                        ]
+                                    },
+                                    "accessToken": {
+                                        "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0/properties/accessToken",
+                                        "type": "string",
+                                        "title": "accessToken",
+                                        "description": "The session access token.",
+                                        "default": "",
+                                        "examples": [
+                                            "<github token>"
+                                        ]
+                                    },
+                                    "scopes": {
+                                        "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0/properties/scopes",
+                                        "type": "array",
+                                        "title": "scopes",
+                                        "description": "List of the permission scopes the token was issued with.",
+                                        "default": [],
+                                        "examples": [
+                                            [
+                                                "read:user",
+                                                "user:email"
+                                            ]
+                                        ],
+                                        "additionalItems": true,
+                                        "items": {
+                                            "anyOf": [
+                                                {
+                                                    "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0/properties/scopes/items/anyOf/0",
+                                                    "type": "string",
+                                                    "title": "Token Scope",
+                                                    "description": "A token permission scope.",
+                                                    "default": "",
+                                                    "examples": [
+                                                        "read:user",
+                                                        "user:email"
+                                                    ]
+                                                }
+                                            ],
+                                            "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items/anyOf/0/properties/scopes/items"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "$id": "#/properties/vscodeSettings/properties/defaultAuthSessions/items"
+                    }
+                },
+                "homeIndicator": {
+                    "$id": "#/properties/vscodeSettings/properties/homeIndicator",
+                    "type": "object",
+                    "title": "VSCode Home Indicator",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": {},
+                    "examples": [
+                        {
+                            "icon": "github-inverted",
+                            "href": "https://github.com/codespaces",
+                            "title": "Go Home"
+                        }
+                    ],
+                    "required": [
+                        "icon",
+                        "href",
+                        "title"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                        "icon": {
+                            "$id": "#/properties/vscodeSettings/properties/homeIndicator/properties/icon",
+                            "type": "string",
+                            "title": "icon",
+                            "description": "Home indicator icon.",
+                            "default": "",
+                            "examples": [
+                                "github-inverted"
+                            ]
+                        },
+                        "href": {
+                            "$id": "#/properties/vscodeSettings/properties/homeIndicator/properties/href",
+                            "type": "string",
+                            "title": "href",
+                            "description": "Home indicator link.",
+                            "default": "",
+                            "examples": [
+                                "https://github.com/codespaces"
+                            ]
+                        },
+                        "title": {
+                            "$id": "#/properties/vscodeSettings/properties/homeIndicator/properties/title",
+                            "type": "string",
+                            "title": "title",
+                            "description": "Home indicator title.",
+                            "default": "",
+                            "examples": [
+                                "Go Home"
+                            ]
+                        }
+                    }
+                },
+                "enableSyncByDefault": {
+                    "$id": "#/properties/vscodeSettings/properties/enableSyncByDefault",
+                    "type": "boolean",
+                    "title": "enableSyncByDefault",
+                    "description": "The flag to enable the Settings Sync by default.",
+                    "default": false,
+                    "examples": [
+                        true
+                    ]
+                },
+                "authenticationSessionId": {
+                    "$id": "#/properties/vscodeSettings/properties/authenticationSessionId",
+                    "type": "string",
+                    "title": "authenticationSessionId",
+                    "description": "Authentication session id to use as default for the Settings Sync Service. Should match an `id` form the `defaultAuthSessions` list.",
+                    "default": "",
+                    "examples": [
+                        "github-session-github-pr"
+                    ]
+                }
+            }
+        }
+    }
+}

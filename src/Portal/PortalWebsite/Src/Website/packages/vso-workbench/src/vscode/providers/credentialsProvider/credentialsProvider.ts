@@ -118,8 +118,7 @@ export const credentialsProvider = new CredentialsProvider([
     new GitHubStrategy(),
     /**
      * Used to add the default authentication sessions used by the Native VSCode
-     * authentication providers, these data is coming from
-     * the ICrossDomainPartnerInfo.vscodeSettings.defaultAuthSessions payload (optional).
+     * authentication providers, these data is coming from partner info payload.
      */
     new NativeVSCodeProvidersStrategy(),
 ]);

@@ -1,3 +1,5 @@
+import { VSCodeDefaultAuthSession } from 'vs-codespaces-authorization';
+
 import {
     getVSCodeScheme,
 } from 'vso-client-core';
@@ -6,7 +8,6 @@ import { IAuthStrategy } from '../../../../interfaces/IAuthStrategy';
 
 import { authService } from '../../../../auth/authService';
 import {
-    INativeAuthProviderSession,
     TSupportedNativeVSCodeAuthProviders,
 } from '../../../../../../vso-client-core/src/interfaces/IPartnerInfo';
 
@@ -16,9 +17,9 @@ import {
  */
 export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
     private getSessions = (
-        sessions: INativeAuthProviderSession[],
+        sessions: VSCodeDefaultAuthSession[],
         type: TSupportedNativeVSCodeAuthProviders
-    ): INativeAuthProviderSession[] => {
+    ): VSCodeDefaultAuthSession[] => {
         const result = sessions.filter((session) => {
             return session.type === type;
         });
@@ -34,14 +35,14 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
         return (service === `${getVSCodeScheme()}-microsoft.login`);
     };
 
-    private getDefaultSession = async (): Promise<INativeAuthProviderSession[] | null> => {
+    private getDefaultSession = async (): Promise<VSCodeDefaultAuthSession[] | null> => {
         const info = await authService.getPartnerInfo();
         if (!info) {
             throw new Error('Cannot get partner info.');
         }
 
-        if (!('cascadeToken' in info)) {
-            throw new Error('The old payload provided or no `cascadeToken` set.');
+        if (!('codespaceToken' in info)) {
+            throw new Error('The old payload provided or no `codespaceToken` set.');
         }
 
         // no sessions set

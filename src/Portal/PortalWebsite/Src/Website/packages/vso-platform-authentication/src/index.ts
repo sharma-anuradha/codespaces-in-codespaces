@@ -23,7 +23,7 @@ import {
     try {
         const data = JSON.parse(atob(textContent));
 
-        const keys = await createKeys(data.cascadeToken);
+        const keys = await createKeys(data.codespaceToken);
         if (!keys.length) {
             throw new Error('Cannot create encryption keys.');
         }

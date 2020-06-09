@@ -34,10 +34,10 @@ const connectSplashScreen = async (environmentInfo: IEnvironment) => {
         GitCredentialService,
     );
 
-    const token = await authService.getCachedCascadeToken();
+    const token = await authService.getCachedCodespaceToken();
 
     if (!token) {
-        throw new Error('Cannot get Cascade token.');
+        throw new Error('Cannot get Codespace token.');
     }
 
     await result.connect(environmentInfo.connection.sessionId, token);
@@ -69,16 +69,16 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
             );
         }
         case EnvironmentWorkspaceState.Error: {
-            return <SplashScreenMessage message={message || 'Workspace error.'} />;
+            return <SplashScreenMessage message={message || 'Codespace error.'} />;
         }
         case EnvironmentStateInfo.Starting: {
-            return <SplashScreenMessage message='Starting the workspace...' />;
+            return <SplashScreenMessage message='Starting the codespace...' />;
         }
         case EnvironmentStateInfo.Deleted: {
-            return <SplashScreenMessage message='The workspace has been deleted.' />;
+            return <SplashScreenMessage message='The codespace has been deleted.' />;
         }
         case EnvironmentStateInfo.Failed: {
-            return <SplashScreenMessage message='The workspace failed.' />;
+            return <SplashScreenMessage message='The codespace failed.' />;
         }
         case EnvironmentStateInfo.Provisioning: {
             if (!environmentInfo) {
@@ -103,12 +103,12 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
             return <SplashScreenMessage message='Connecting...' />;
         }
         case EnvironmentStateInfo.ShuttingDown: {
-            return <SplashScreenMessage message='The workspace is shutting down.' />;
+            return <SplashScreenMessage message='The codespace is shutting down.' />;
         }
         case EnvironmentStateInfo.Shutdown: {
             return (
                 <SplashScreenMessage
-                    message='The workspace is shutdown.'
+                    message='The codespace is shutdown.'
                     button={{
                         text: 'Connect',
                         onClick: startEnvironment,
@@ -117,10 +117,10 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
             );
         }
         case EnvironmentStateInfo.Unavailable: {
-            return <SplashScreenMessage message='The workspace is not available.' />;
+            return <SplashScreenMessage message='The codespace is not available.' />;
         }
         default: {
-            return <SplashScreenMessage message='Unknown workspace state.' />;
+            return <SplashScreenMessage message='Unknown codespace state.' />;
         }
     }
 };

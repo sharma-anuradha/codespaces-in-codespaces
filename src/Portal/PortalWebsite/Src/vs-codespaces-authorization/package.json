@@ -1,0 +1,28 @@
+{
+  "name": "vs-codespaces-authorization",
+  "version": "0.1.15",
+  "description": "VS Codespaces authorization client",
+  "main": "./dist/index.js",
+  "types": "./src/types/index.d.ts",
+  "author": "Oleg Solomka <olsolomk@microsoft.com>",
+  "license": "LICENSE.md",
+  "scripts": {
+    "prepare": "yarn setup",
+    "build:webpack": "cross-env NODE_ENV=production webpack --config ./webpack/webpack.config.js",
+    "watch:webpack": "cross-env NODE_ENV=development webpack --watch --progress --config ./webpack/webpack.config.js",
+    "setup": "node ./src/scripts/generate-base-schema.js && node ./src/scripts/validate-schemas.js && node ./src/scripts/generate-schema-types.js && yarn build:webpack",
+    "publish:module": "yarn setup && standard-version && yarn publish"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.10",
+    "cross-env": "^7.0.2",
+    "json-schema-to-typescript": "^9.1.0",
+    "jsonschema": "^1.2.6",
+    "semver": "^7.3.2",
+    "standard-version": "^8.0.0",
+    "ts-loader": "^7.0.5",
+    "typescript": "^3.9.3",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  }
+}

@@ -3,7 +3,8 @@ import {
     EnvironmentStateInfo,
     createTrace,
     timeConstants,
-    IEnvironment
+    IEnvironment,
+    setCurrentCodespaceId
 } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
@@ -37,8 +38,18 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
         this.startPollingEnvironment();
     }
 
-    private startPollingEnvironment = (interval = 2 * SECOND_MS) => {
+    private startPollingEnvironment = async (interval = 2 * SECOND_MS) => {
         this.stopPollEnvironment();
+
+        const info = await authService.getPartnerInfo();
+        if (info) {
+            const id = ('environmentId' in info)
+                ? info.environmentId
+                : info.codespaceId;
+
+            setCurrentCodespaceId(id);
+        }
+
         this.interval = setInterval(this.pollEnvironment, interval);
     };
 
@@ -58,7 +69,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
             value: EnvironmentStateInfo.Starting,
         });
 
-        this.startPollingEnvironment();
+        await this.startPollingEnvironment();
     };
 
     private environmentInfo: IEnvironment | null = null;

@@ -10,7 +10,7 @@ export async function getAuthToken() {
     try {
         dispatch(getAuthTokenAction());
 
-        let token = await authService.getCachedCascadeToken();
+        let token = await authService.getCachedCodespaceToken();
 
         if (!token) {
             token = await authService.getCascadeToken();
