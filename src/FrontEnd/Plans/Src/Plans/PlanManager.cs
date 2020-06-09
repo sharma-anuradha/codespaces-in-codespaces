@@ -5,12 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Linq;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -19,7 +14,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
@@ -102,18 +96,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             result.VsoPlan = await planRepository.CreateOrUpdateAsync(model, logger);
             return result;
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> IsPlanCreationAllowedForUserAsync(Profile currentUser, IDiagnosticsLogger logger)
-        {
-            if (currentUser.IsCloudEnvironmentsPreviewUser())
-            {
-                return true;
-            }
-
-            var globalPlanLimit = await planManagerSettings.GetGlobalPlanLimitAsync(logger);
-            return globalPlanLimit <= 0 || cachedTotalPlansCount < globalPlanLimit;
         }
 
         /// <inheritdoc/>
@@ -408,7 +390,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             };
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public async Task<bool> ApplyPlanPropertiesChangesAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;

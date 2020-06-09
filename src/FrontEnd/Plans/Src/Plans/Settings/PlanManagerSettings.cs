@@ -52,22 +52,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
             Requires.NotNull(subscriptionId, nameof(subscriptionId));
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
+            var subscriptionLimit = await SystemConfiguration.GetSubscriptionValueAsync<int?>("quota:max-plans-per-sub", subscriptionId, logger, null);
+            if (subscriptionLimit != null)
+            {
+                return subscriptionLimit.Value;
+            }
+
             var globalLimit = await SystemConfiguration.GetValueAsync("quota:max-plans-per-sub", logger, DefaultMaxPlansPerSubscription);
-            var subscriptionLimit = await SystemConfiguration.GetSubscriptionValueAsync("quota:max-plans-per-sub", subscriptionId, logger, globalLimit);
 
-            return subscriptionLimit;
-        }
-
-        /// <summary>
-        /// Gets the system-wide (global) limit of plans in the VSO service.
-        /// </summary>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Target value.</returns>
-        public Task<int> GetGlobalPlanLimitAsync(IDiagnosticsLogger logger)
-        {
-            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
-
-            return SystemConfiguration.GetValueAsync("quota:global-max-plans", logger, DefaultGlobalPlanLimit);
+            return globalLimit;
         }
     }
 }

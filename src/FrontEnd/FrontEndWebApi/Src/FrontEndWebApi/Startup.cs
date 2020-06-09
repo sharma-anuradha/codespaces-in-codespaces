@@ -41,7 +41,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserSubscriptions;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -317,9 +316,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Add HeartBeat data handlers
             services.AddHeartBeatDataHandlers();
-
-            // Add user-subscriptions
-            services.AddVsoDocumentDbCollection<UserSubscription, IUserSubscriptionRepository, UserSubscriptionRepository>(UserSubscriptionRepository.ConfigureOptions);
 
             services.AddTokenProvider(appSettings.AuthenticationSettings);
 

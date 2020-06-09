@@ -101,7 +101,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ThrottlePerUserLow(nameof(PlansController), nameof(ListByOwnerAsync))]
         [ProducesResponseType(typeof(PlanResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [HttpOperationalScope("list_byowner")]
         public async Task<IActionResult> ListByOwnerAsync(
             [FromServices]IDiagnosticsLogger logger)
@@ -113,18 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var result = plans.Select((a) => MapAccountToResult(a, logger))
                 .Where((a) => a != null).ToArray();
 
-            // If the global limit of plans is exceeded, the client should block new users from creating plans
-            var profile = CurrentUserProvider.Profile;
-            var isUserAllowedToCreatePlans =
-                result.Length > 0 || await PlanManager.IsPlanCreationAllowedForUserAsync(profile, logger);
-            if (isUserAllowedToCreatePlans)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable);
-            }
+            return Ok(result);
         }
 
         private PlanResult MapAccountToResult(VsoPlan vsoPlan, IDiagnosticsLogger logger)

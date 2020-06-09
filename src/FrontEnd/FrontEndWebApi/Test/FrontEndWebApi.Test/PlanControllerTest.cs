@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
@@ -19,17 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public class PlanControllerTest
     {
-        private readonly IPlanRepository accountRepository;
-        private readonly PlanManager accountManager;
-        private readonly ISubscriptionManager subscriptionManager;
-        private readonly IDiagnosticsLoggerFactory loggerFactory;
-        private readonly IDiagnosticsLogger logger; 
-
         public PlanControllerTest()
         {
-            loggerFactory = new DefaultLoggerFactory();
-            logger = loggerFactory.New();
-
             var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
@@ -38,23 +29,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns(Task.FromResult(planSettings.DefaultMaxPlansPerSubscription));
 
             planSettings.Init(mockSystemConfiguration.Object);
-
-            accountRepository = new MockPlanRepository();
-            subscriptionManager = new MockSubscriptionManager();
-            accountManager = new PlanManager(accountRepository, planSettings, new Mock<ISkuCatalog>().Object, subscriptionManager);
         }
 
-        public static TheoryData<IEnumerable<VsoPlan>, bool, Type> CapacityWarningTests = new TheoryData<IEnumerable<VsoPlan>, bool, Type>
+        public static TheoryData<IEnumerable<VsoPlan>> ListPlansTests = new TheoryData<IEnumerable<VsoPlan>>
         {
-            { new VsoPlan[] { MockPlan() }, true, typeof(OkObjectResult) },     // Existing user, whitelisted
-            { new VsoPlan[] { MockPlan() }, false, typeof(OkObjectResult) },    // Existing user, not whitelisted
-            { new VsoPlan[0], true, typeof(OkObjectResult) },                   // New user, whitelisted
-            { new VsoPlan[0], false, typeof(StatusCodeResult) },                // New user, not whitelisted
+            { new VsoPlan[] { MockPlan() } },
+            { new VsoPlan[0] },
         };
 
         [Theory]
-        [MemberData(nameof(CapacityWarningTests))]
-        public async Task GetPlansWithCapacityWarning(IEnumerable<VsoPlan> plans, bool isWhiteListed, Type expectedResult)
+        [MemberData(nameof(ListPlansTests))]
+        public async Task GetPlansWithCapacityWarning(IEnumerable<VsoPlan> plans)
         {
             var mockPlanManager = new Mock<IPlanManager>();
 
@@ -62,25 +47,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.ListAsync(It.IsAny<UserIdSet>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), false))
                 .Returns(Task.FromResult(plans));
 
-            mockPlanManager
-                .Setup(obj => obj.IsPlanCreationAllowedForUserAsync(It.IsAny<UserProfile.Profile>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(Task.FromResult(isWhiteListed));
-
             var logger = new Mock<IDiagnosticsLogger>().Object;
             var controller = CreateTestPlansController(mockPlanManager.Object);
 
             var result = await controller.ListByOwnerAsync(logger);
-            Assert.IsType(expectedResult, result);
+            var okResult = result as OkObjectResult;
+            Assert.NotNull(okResult);
 
-            if (result is StatusCodeResult statusResult)
+            var resultArray = okResult.Value as PlanResult[];
+            Assert.NotNull(resultArray);
+
+            Assert.Equal(plans.Count(), resultArray.Length);
+
+            foreach (var expectedPlan in plans)
             {
-                Assert.Equal(503, statusResult.StatusCode);
+                Assert.Contains(resultArray, (planResult) =>
+                    planResult.Subscription == expectedPlan.Plan.Subscription &&
+                    planResult.ResourceGroup == expectedPlan.Plan.ResourceGroup &&
+                    planResult.Name == expectedPlan.Plan.Name);
             }
         }
 
         private PlansController CreateTestPlansController(IPlanManager planManager, ICurrentUserProvider currentUserProvider = null)
         {
-            currentUserProvider = currentUserProvider ?? MockCurrentUserProvider();
+            currentUserProvider ??= MockCurrentUserProvider();
 
             var controller = new PlansController(
                 planManager,
@@ -109,7 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns("mock-bearer-token");
             moq
                 .Setup(obj => obj.Profile)
-                .Returns(() => 
+                .Returns(() =>
                 {
                     return new UserProfile.Profile
                     {
