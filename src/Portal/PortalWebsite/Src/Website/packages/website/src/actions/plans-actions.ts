@@ -63,7 +63,7 @@ export const selectPlan = async (plan: IPlan | null) => {
         dispatch(selectPlanAction());
 
         if (plan) {
-            const locationInfo = await getLocation(plan.location);
+            const locationInfo = await getLocation(plan.location, plan.id);
 
             const activePlan = {
                 ...plan,
@@ -110,7 +110,7 @@ export async function getPlans() {
     try {
         if (plansList.length) {
             const defaultPlan = plansList[0];
-            const locationInfo = await getLocation(defaultPlan.location);
+            const locationInfo = await getLocation(defaultPlan.location, defaultPlan?.id);
 
             dispatch(
                 getPlansSuccessAction(plansList, {

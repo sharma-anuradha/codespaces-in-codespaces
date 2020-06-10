@@ -25,7 +25,7 @@ export type createPlanSuccessAction = ReturnType<typeof createPlanSuccessAction>
 export type createPlanFailureAction = ReturnType<typeof createPlanFailureAction>;
 
 // Exposed - callable actions that have side-effects
-export async function createPlan(resourceGroupPath: string, planName: string, location: string) {
+export async function createPlan(resourceGroupPath: string, planName: string, location: string, defaultEnvironmentSku: string | undefined) {
     const dispatch = useDispatch();
 
     try {
@@ -42,7 +42,7 @@ export async function createPlan(resourceGroupPath: string, planName: string, lo
         const data = {
             location,
             tags: {},
-            properties: { userId },
+            properties: { userId, defaultEnvironmentSku },
         };
 
         const url = new URL(

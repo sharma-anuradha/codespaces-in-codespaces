@@ -1,18 +1,20 @@
 import React, { Component, FormEvent } from 'react';
 import { connect } from 'react-redux';
-import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react/lib/Button';
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
 import { Stack } from 'office-ui-fabric-react/lib/Stack';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
-import { IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+import { IDropdown, IDropdownOption, IDropdownProps } from 'office-ui-fabric-react/lib/Dropdown';
 import { ComboBox, IComboBoxOption, IComboBoxProps } from 'office-ui-fabric-react/lib/ComboBox';
 import { Link } from 'office-ui-fabric-react/lib/Link';
-import { KeyCodes } from '@uifabric/utilities';
+import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { KeyCodes, IRenderFunction } from '@uifabric/utilities';
 
 import { isDefined } from 'vso-client-core';
 
 import { DropDownWithLoader } from '../dropdown-with-loader/dropdown-with-loader';
+import { ISelectableOption } from 'office-ui-fabric-react/lib/utilities/selectableOption/SelectableOption.types';
 
 import { Loader } from '../loader/loader';
 
@@ -33,7 +35,13 @@ import { createPlan } from '../../actions/createPlan';
 import { createResourceGroup } from '../../actions/createResourceGroup';
 import { locationToDisplayName } from '../../utils/locations';
 import { ILocations } from '../../interfaces/ILocation';
+import { getLocation } from '../../actions/locations-actions';
+import { getSkuSpecLabel } from '../../utils/environmentUtils';
 import { WithTranslation, withTranslation } from 'react-i18next';
+
+const SKU_SHOW_PRICING_KEY = 'show-pricing';
+const SKU_PRICING_LABEL = 'Show pricing information...';
+const SKU_PRICING_URL = 'https://aka.ms/vso-pricing';
 
 const RESOURCE_REGISTRATION_POLLING_INTERVAL_MS = 300;
 const RESOURCE_REGISTRATION_MAX_POLLS = 100;
@@ -56,6 +64,8 @@ interface INewGroupOption extends IStringOption {
 }
 
 const asc = (a: IStringOption, b: IStringOption) => (a.text > b.text ? 1 : -1);
+const noSkuSelectedKey:string = '';
+const noSkuSelectedText:string = '--';
 
 const subscriptionIdStorageKey = 'user_setting_planSubscription';
 
@@ -64,6 +74,7 @@ export interface CreatePlanPanelState {
     subscriptionList: IStringOption[];
     resourceGroupList: INewGroupOption[];
     locationsList: IStringOption[];
+    skuList: IDropdownOption[];
     selectedSubscription?: string;
     newGroup?: string;
     userSelectedResourceGroup?: string;
@@ -72,6 +83,8 @@ export interface CreatePlanPanelState {
     isGettingSubscriptions: boolean;
     isGettingResourceGroups: boolean;
     isGettingClosestLocation: boolean;
+    isGettingSkuList: boolean;
+    selectedDefaultSku?: string,
     errorMessage?: string;
 }
 
@@ -104,10 +117,12 @@ export class CreatePlanPanelComponent extends Component<
             newGroup: `vso-rg-${createUniqueId().substr(0, 7)}`,
             resourceGroupList: [],
             locationsList: [],
+            skuList: [],
             isCreatingPlan: false,
             isGettingSubscriptions: true,
             isGettingResourceGroups: true,
             isGettingClosestLocation: true,
+            isGettingSkuList: true,
         };
     }
 
@@ -125,12 +140,14 @@ export class CreatePlanPanelComponent extends Component<
         const {
             isGettingSubscriptions,
             isGettingClosestLocation,
+            isGettingSkuList,
             subscriptionList,
             resourceGroupList,
             locationsList,
             selectedSubscription,
             selectedLocation,
             newGroup,
+            selectedDefaultSku,
         } = this.state;
 
         const resourceGroupDescription = isDefined(newGroup)
@@ -211,7 +228,11 @@ export class CreatePlanPanelComponent extends Component<
                             errorMessage={this.getResourceGroupValidation()}
                             className='create-environment-panel__dropdown'
                         />
+
                         {resourceGroupDescription}
+                        
+                        {this.renderSkuSelector()}
+
                     </Collapsible>
                 </Stack>
             </Panel>
@@ -242,6 +263,52 @@ export class CreatePlanPanelComponent extends Component<
             </div>
         );
     }
+
+    private skuDropdownRef = React.createRef<IDropdown>();
+
+    private renderSkuSelector() {
+        const { t: translation } = this.props;
+        const onSkuLabelRender = createLabelRenderCallback(SKU_PRICING_LABEL, SKU_PRICING_URL);
+        return (
+            <DropDownWithLoader
+                componentRef={this.skuDropdownRef}
+                label='Default Instance Type'
+                ariaLabel='Default Instance Type'
+                options={this.state.skuList}
+                isLoading={this.state.isGettingSkuList}
+                loadingMessage='Loading available instance types'
+                selectedKey={this.state.selectedDefaultSku}
+                onChange={this.defaultSkuChanged}
+                onRenderOption={this.onSkuOptionRender as IRenderFunction<ISelectableOption>}
+                onRenderLabel={onSkuLabelRender as IRenderFunction<IDropdownProps>}
+                translation={translation}
+            />
+        );
+    }
+
+    private onSkuOptionRender = (option: IDropdownOption) => {
+        return (
+            <div>
+                {option.data && option.data.icon && (
+                    <Icon
+                        style={{ marginRight: '.8rem' }}
+                        iconName={option.data.icon}
+                        aria-hidden='true'
+                        title={option.data.icon}
+                    />
+                )}
+                <span>
+                    {option.data && option.data.url ? (
+                        <Link href={option.data.url} target='blank'>
+                            {option.text}
+                        </Link>
+                    ) : (
+                        option.text
+                    )}
+                </span>
+            </div>
+        );
+    };
 
     private hideErrorMessage = () => {
         this.setState({
@@ -308,6 +375,11 @@ export class CreatePlanPanelComponent extends Component<
                 throw new PlanCreationError(PlanCreationFailureReason.NoLocation);
             }
 
+            let selectedDefaultSku = this.state.selectedDefaultSku;
+            if (selectedDefaultSku == noSkuSelectedKey) {
+                selectedDefaultSku = undefined;
+            }
+
             const subscriptionId = this.state.selectedSubscription;
             const resourceGroupName = this.selectedResourceGroup;
             const location = this.state.selectedLocation;
@@ -323,7 +395,7 @@ export class CreatePlanPanelComponent extends Component<
 
             await this.checkResourceProvider(subscriptionId);
 
-            await this.props.createPlan(resourceGroupPath, this.planName, location);
+            await this.props.createPlan(resourceGroupPath, this.planName, location, selectedDefaultSku);
 
             await getPlans();
             this.props.hidePanel(true);
@@ -465,6 +537,8 @@ export class CreatePlanPanelComponent extends Component<
                 };
             });
 
+            await this.getAvailableSkus(selectedLocation || closestLocation);
+
             this.setState({
                 selectedLocation: selectedLocation || closestLocation,
                 locationsList: locationsList.sort(asc),
@@ -473,6 +547,56 @@ export class CreatePlanPanelComponent extends Component<
             // ignore
         } finally {
             this.setState({ isGettingClosestLocation: false });
+        }
+    }
+
+    private async getAvailableSkus(location: string) {
+        
+        try {
+            
+            const originalSelectedDefaultSku = this.state.selectedDefaultSku;
+            this.setState({ isGettingSkuList: true, skuList: [], selectedDefaultSku: '' });
+        
+            const locationInfo = await getLocation(location, undefined);
+            const skus = locationInfo?.skus;
+            const { t: translation } = this.props;
+            
+            let skuListOptions: IDropdownOption[] = []
+
+            if (skus && skus.length > 0) {
+                skuListOptions = locationInfo.skus.map((s) => {
+                    const text = getSkuSpecLabel(s, translation);
+                    return { key: s.name, text };
+                });
+            }
+
+            skuListOptions.push({
+                key: SKU_SHOW_PRICING_KEY,
+                text: SKU_PRICING_LABEL,
+                data: { icon: 'OpenInNewTab', url: SKU_PRICING_URL },
+                ariaLabel: `${SKU_PRICING_LABEL}, ${SKU_PRICING_URL}`,
+            });
+
+            skuListOptions.unshift({   
+                key: noSkuSelectedKey, 
+                text: noSkuSelectedText,
+            })
+
+            this.setState({
+                skuList: skuListOptions,
+            });
+
+            if (originalSelectedDefaultSku && originalSelectedDefaultSku != noSkuSelectedKey) {
+                if (skus && skus.find(s => s.name == originalSelectedDefaultSku)) {
+                    this.setState({
+                        selectedDefaultSku: originalSelectedDefaultSku,
+                    });
+                }
+            }
+        } catch {
+            // ignore
+        } finally {
+            this.setState({ isGettingSkuList: false });
         }
     }
 
@@ -653,15 +777,58 @@ export class CreatePlanPanelComponent extends Component<
             throw new Error('Resource group id should always be a string.');
         }
 
+        this.getAvailableSkus(option.key);
+
         this.setState({
             selectedLocation: option.key,
             errorMessage: undefined,
         });
     };
+
+    private defaultSkuChanged: (
+        event: FormEvent<HTMLDivElement>,
+        option?: IDropdownOption,
+        index?: number
+    ) => void = (_e, option) => {
+        if (!option) {
+            return;
+        }
+
+        if (option.key === SKU_SHOW_PRICING_KEY) {
+            return;
+        }
+
+        if (typeof option.key === 'number') {
+            throw new Error('Default Sku name should always be a string.');
+        }
+
+        this.setState({
+            selectedDefaultSku: option.key,
+            errorMessage: undefined,
+        });
+    };
 }
 
-export const CreatePlanPanel = withTranslation()(connect(
-    ({ configuration, locations }: ApplicationState) => ({
+const openExternalUrl = (url: string) => {
+    window.open(url, '_blank');
+};
+function createLabelRenderCallback(title: string, onClickUrl: string, customLabel?: string) {
+    return (props: IDropdownProps) => {
+        return (
+            <Stack id={title} horizontal verticalAlign='center'>
+                <span style={{ fontWeight: 600 }}>{props.label || customLabel}</span>
+                <IconButton
+                    iconProps={{ iconName: 'Info' }}
+                    title={title}
+                    ariaLabel={title}
+                    styles={{ root: { marginBottom: -3 } }}
+                    onClick={openExternalUrl.bind(null, onClickUrl)}
+                />
+            </Stack>
+        );
+    };
+}
+export const CreatePlanPanel = withTranslation()(connect(    ({ configuration, locations }: ApplicationState) => ({
         configuration,
         locations
     }),

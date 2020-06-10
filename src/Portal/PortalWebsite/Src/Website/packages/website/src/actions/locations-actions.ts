@@ -70,13 +70,16 @@ export async function getLocations() {
     }
 }
 
-export async function getLocation(location: string) {
+export async function getLocation(location: string, planId: string | undefined) {
     const dispatch = useDispatch();
 
     try {
         dispatch(getLocationAction());
-
-        const locationInfo = await doApiGetRequest<ILocation>(`/locations/${location}`);
+        let endpoint  = `/locations/${location}`;
+        if (planId) {
+            endpoint = `${endpoint}?planId=${planId}`
+        }
+        const locationInfo = await doApiGetRequest<ILocation>(endpoint);
 
         dispatch(getLocationSuccessAction(locationInfo));
         return locationInfo;
