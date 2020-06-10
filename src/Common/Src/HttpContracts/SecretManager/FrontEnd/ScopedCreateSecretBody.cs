@@ -26,9 +26,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// Valid characters:
         ///     Only alpha-numeric charaters and underscore,
         ///     Cannot start with a number,
+        ///     Cannot start with the word CLOUDENV and CODESPACE
         ///     Length must be between 1 and 200 charatcers.
         /// </summary>
-        [RegularExpression("^[a-zA-Z_][a-zA-Z0-9_]{0,199}$")]
+        [RegularExpression("^(?!CLOUDENV.*$)(?!CODESPACE.*$)[a-zA-Z_][a-zA-Z0-9_]{0,199}$")]
         [JsonProperty(Required = Required.Always, PropertyName = "secretName")]
         public string SecretName { get; set; }
 

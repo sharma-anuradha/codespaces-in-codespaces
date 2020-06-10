@@ -13,5 +13,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models
         /// Git repo.
         /// </summary>
         GitRepo = 1,
+
+        /// <summary>
+        /// Codespace name.
+        /// </summary>
+        CodespaceName = 2,
     }
 }

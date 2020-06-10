@@ -13,5 +13,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models
         /// Git repo filter glob.
         /// </summary>
         GitRepo = 1,
+
+        /// <summary>
+        /// Codespace name.
+        /// </summary>
+        CodespaceName = 2,
     }
 }

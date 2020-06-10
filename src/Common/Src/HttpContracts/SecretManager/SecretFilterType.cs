@@ -13,5 +13,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         /// Git repo.
         /// </summary>
         GitRepo = 1,
+
+        /// <summary>
+        /// Codespace name.
+        /// </summary>
+        CodespaceName = 2,
     }
 }

@@ -1454,6 +1454,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                 Data = cloudEnvironment.Seed?.SeedMoniker ?? string.Empty,
                             });
 
+                            // Add codespace name filter data
+                            secretFilterDataCollection.Add(new SecretFilterData
+                            {
+                                Type = SecretFilterType.CodespaceName,
+                                Data = cloudEnvironment.FriendlyName,
+                            });
+
                             filterSecretsBody = new FilterSecretsBody
                             {
                                 FilterData = secretFilterDataCollection,
