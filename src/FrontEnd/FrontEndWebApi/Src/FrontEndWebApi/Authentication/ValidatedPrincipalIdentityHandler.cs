@@ -107,7 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             // Get the mapping between canonical user id and profile id and save it for the current user context.
             var map = await GetUserIdentityMap(identity, profile, logger);
-            CurrentUserProvider.SetUserIds(map.Id, map.CanonicalUserId, map.ProfileId, map.ProfileProviderId);
+            CurrentUserProvider.SetUserIds(map.Id, new UserIdSet(
+                map.CanonicalUserId, map.ProfileId, map.ProfileProviderId, map.LinkedUserIds));
 
             // Always set the current user id to the cannoncal user id if we have one.
             var currentUserId = map.CanonicalUserId ?? map.ProfileId;
@@ -154,7 +155,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     updateCanonicalUserId = identity.GetCanonicalUserId();
                 }
 
-                map = await IdentityMapRepository.BackgroundUpdateIfChangedAsync(map, updateCanonicalUserId, updateProfileId, updateProfileProviderId, logger);
+                map = await IdentityMapRepository.BackgroundUpdateIfChangedAsync(
+                    map, updateCanonicalUserId, updateProfileId, updateProfileProviderId, null, logger);
             }
 
             return map;
@@ -184,20 +186,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 CurrentUserProvider.SetBearerToken(jwtToken.RawData);
             }
 
+            Profile profile;
             try
             {
-                var profile = await ProfileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
-                if (profile is null)
-                {
-                    return Fail("Could not get Live Share profile: null");
-                }
-
-                return profile;
+                profile = await ProfileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
             }
             catch (Exception ex)
             {
                 return Fail($"Could not get Live Share profile: {ex.Message}");
             }
+
+            if (profile is null)
+            {
+                return Fail("Could not get Live Share profile.");
+            }
+
+            return profile;
         }
 
         private void DebugWriteIdentityInfo(ClaimsIdentity identity)

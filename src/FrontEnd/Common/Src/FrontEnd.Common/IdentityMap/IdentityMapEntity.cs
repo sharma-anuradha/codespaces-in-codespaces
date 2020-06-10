@@ -79,6 +79,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         [GDPR(Action = GDPRAction.Export)]
         public string CanonicalUserId { get; set; }
 
+        /// <inheritdoc/>
+        [GDPR(Action = GDPRAction.Export)]
+        public string[] LinkedUserIds { get; set; }
+
         /// <summary>
         /// Make a composite id from the user name and tenant id.
         /// The ID may alter the <paramref name="userName"/> portion to

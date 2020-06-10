@@ -27,6 +27,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Partners;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -48,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly ITokenProvider tokenProvider;
         private readonly IMapper mapper;
         private readonly ISystemConfiguration systemConfiguration;
+        private readonly ICurrentUserProvider currentUserProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
@@ -57,18 +59,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="mapper">The IMapper interface.</param>
         /// <param name="environmentManager">The IEnvironmentManager interface.</param>
         /// <param name="systemConfiguration">The ISystemConfiguration interface.</param>
+        /// <param name="currentUserProvider">Current user provider.</param>
         public SubscriptionsController(
             IPlanManager planManager,
             ITokenProvider tokenProvider,
             IMapper mapper,
             IEnvironmentManager environmentManager,
-            ISystemConfiguration systemConfiguration)
+            ISystemConfiguration systemConfiguration,
+            ICurrentUserProvider currentUserProvider)
         {
             this.planManager = planManager;
             this.tokenProvider = tokenProvider;
             this.mapper = mapper;
             this.environmentManager = environmentManager;
             this.systemConfiguration = systemConfiguration;
+            this.currentUserProvider = currentUserProvider;
         }
 
         /// <summary>
@@ -383,10 +388,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     var plans = await this.planManager.ListAsync(
                         userIdSet: null, subscriptionId, resourceGroup, name: null, logger);
-
-                    var knownPlanResourceIds = new HashSet<string>(plans.Select((plan) => plan.Plan.ResourceId));
-
-                    resourceList.Value = resourceList.Value?.Where((resource) => knownPlanResourceIds.Contains(resource.Id));
+                    resourceList.Value = FilterPlanResources(resourceList.Value, plans.ToArray());
 
                     logger.LogInfo("plan_list_by_resourcegroup_success");
 
@@ -426,10 +428,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     var plans = await planManager.ListAsync(
                         userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
-
-                    var knownPlanResourceIds = new HashSet<string>(plans.Select((plan) => plan.Plan.ResourceId));
-
-                    resourceList.Value = resourceList.Value?.Where((resource) => knownPlanResourceIds.Contains(resource.Id));
+                    resourceList.Value = FilterPlanResources(resourceList.Value, plans.ToArray());
 
                     logger.LogInfo("plan_list_by_subscription_success");
 
@@ -481,8 +480,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     };
 
                     var plan = await planManager.GetAsync(planInfo, logger);
+                    var plans = plan != null ? new[] { plan } : Array.Empty<VsoPlan>();
+                    resource = FilterPlanResources(new[] { resource }, plans).FirstOrDefault();
 
-                    if (plan == null)
+                    if (resource == null)
                     {
                         return CreateErrorResponse("GetResourceFailed", "Plan not found", HttpStatusCode.NotFound);
                     }
@@ -988,6 +989,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private static IActionResult CreateErrorResponse(string errorCode, string errorMessage = default, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             return ResourceProviderErrorResponse.Create(errorCode, errorMessage, statusCode);
+        }
+
+        private static Ownership GetPlanOwnership(VsoPlan plan, UserIdSet userIdSet, bool isMsa)
+        {
+            if (plan.UserId == null)
+            {
+                // Multi-user plan: ARM RBAC already allowed the caller list access.
+                return Ownership.Shared;
+            }
+            else if (userIdSet?.EqualsAny(plan.UserId) == true)
+            {
+                // Single-user plan matches the current user ID or a linked ID.
+                return Ownership.CurrentUser;
+            }
+            else if (isMsa && userIdSet?.LinkedUserIds == null)
+            {
+                // Single-user plan that doesn't match the current user ID,
+                // and the user is an MSA with no linked IDs.
+                return Ownership.Unknown;
+            }
+            else
+            {
+                // Single-user plan that doesn't match the current user ID.
+                return Ownership.OtherUser;
+            }
+        }
+
+        /// <summary>
+        /// Filters plan resources to match the DB, and fills in computed resource properties.
+        /// </summary>
+        private IEnumerable<PlanResource> FilterPlanResources(
+            IEnumerable<PlanResource> resources, ICollection<VsoPlan> plans)
+        {
+            var userIdSet = this.currentUserProvider.CurrentUserIdSet;
+            var isMsa = AuthenticationBuilderRPSaasExtensions.IsArmMsaIdentity(
+                HttpContext.User?.Identities.FirstOrDefault());
+            resources = resources.Select((resource) =>
+            {
+                var plan = plans.FirstOrDefault((p) => p.Plan.ResourceId == resource.Id);
+                if (plan == null)
+                {
+                    // The plan was not found in the DB.
+                    return null;
+                }
+
+                if (resource.Properties == null)
+                {
+                    resource.Properties = new PlanResourceProperties();
+                }
+
+                // Return the ownership status via the plan `userId` property. This is a *slight*
+                // abuse of that property, but the actual plan user ID can only be set at plan
+                // creation time, and this status is related to it, and it's all for a soon-to-be-
+                // deprecated ownership system.
+                resource.Properties.UserId = GetPlanOwnership(plan, userIdSet, isMsa).ToString();
+
+                return resource;
+            }).Where((resource) => resource != null);
+            return resources;
         }
     }
 }

@@ -54,7 +54,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 
                     logger.AddClientHttpResponseDetails(response);
 
-                    if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                        response.StatusCode == HttpStatusCode.NotFound)
                     {
                         return null;
                     }

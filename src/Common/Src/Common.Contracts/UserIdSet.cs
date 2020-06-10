@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Linq;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
@@ -15,11 +17,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="canonicalUserId">The canonical user id.</param>
         /// <param name="profileId">The profile id.</param>
         /// <param name="profileProviderId">The profile provider id.</param>
-        public UserIdSet(string canonicalUserId, string profileId, string profileProviderId)
+        /// <param name="linkedUserIds">Optional array of linked user IDs. See
+        /// <see cref="LinkedUserIds"/>.</param>
+        public UserIdSet(
+            string canonicalUserId,
+            string profileId,
+            string profileProviderId,
+            string[] linkedUserIds = null)
         {
             CanonicalUserId = canonicalUserId;
             ProfileId = profileId;
             ProfileProviderId = profileProviderId;
+            LinkedUserIds = linkedUserIds;
         }
 
         /// <summary>
@@ -47,6 +56,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string ProfileProviderId { get; }
 
         /// <summary>
+        /// Gets an array of user IDs that have been linked to the current identity
+        /// through alternate sign-in flows.
+        /// </summary>
+        /// <remarks>
+        /// Specifically, this enables linking different versions of MSA identities for
+        /// the same account.
+        ///
+        /// This property is null for non-MSA identities or for MSA identities that have
+        /// not yet had their links initialized.
+        /// </remarks>
+        public string[] LinkedUserIds { get; }
+
+        /// <summary>
         /// Gets either the canonical user id (preferred) or else the profile id.
         /// </summary>
         public string PreferredUserId => CanonicalUserId ?? ProfileId;
@@ -63,7 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
                 return false;
             }
 
-            return id == CanonicalUserId || id == ProfileId || id == ProfileProviderId;
+            return id == CanonicalUserId || id == ProfileId || id == ProfileProviderId ||
+                LinkedUserIds?.Contains(id) == true;
         }
     }
 }

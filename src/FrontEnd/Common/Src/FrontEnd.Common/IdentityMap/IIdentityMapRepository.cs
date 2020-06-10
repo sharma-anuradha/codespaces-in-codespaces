@@ -39,9 +39,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         /// <param name="canonicalUserId">The canonical user id, or null if not specified.</param>
         /// <param name="profileId">The Profile id, or null if not specified.</param>
         /// <param name="profileProviderId">The Profile provider id, or null if not specified.</param>
+        /// <param name="linkedUserIds">Array of linked user IDs, or null if not specified.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The updated instance.</returns>
-        Task<IIdentityMapEntity> BackgroundUpdateIfChangedAsync(IIdentityMapEntity map, string canonicalUserId, string profileId, string profileProviderId, IDiagnosticsLogger logger);
+        Task<IIdentityMapEntity> BackgroundUpdateIfChangedAsync(
+            IIdentityMapEntity map,
+            string canonicalUserId,
+            string profileId,
+            string profileProviderId,
+            string[] linkedUserIds,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Get an <see cref="IIdentityMapEntity"/> record by <see cref="UserIdSet"/>.

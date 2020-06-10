@@ -104,6 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
             string canonicalUserId,
             string profileId,
             string profileProviderId,
+            string[] linkedUserIds,
             IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
@@ -127,6 +128,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
             if (profileProviderId != null && map.ProfileProviderId != profileProviderId)
             {
                 map.ProfileProviderId = profileProviderId;
+                update = true;
+            }
+
+            if (linkedUserIds != null && map.LinkedUserIds != linkedUserIds)
+            {
+                map.LinkedUserIds = linkedUserIds;
                 update = true;
             }
 
@@ -168,6 +175,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
                 CanonicalUserId = map.CanonicalUserId,
                 ProfileId = map.ProfileId,
                 ProfileProviderId = map.ProfileProviderId,
+                LinkedUserIds = map.LinkedUserIds,
             };
 
             TaskHelper.RunBackground(

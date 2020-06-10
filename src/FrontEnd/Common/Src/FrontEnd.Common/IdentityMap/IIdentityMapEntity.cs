@@ -35,5 +35,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap
         /// Gets or sets the canonical user id.
         /// </summary>
         string CanonicalUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets an array of user IDs that have been linked to the current identity
+        /// through alternate sign-in flows.
+        /// </summary>
+        /// <remarks>
+        /// Specifically, this enables linking different versions of MSA identities for
+        /// the same account.
+        ///
+        /// This property is null for non-MSA identities or for MSA identities that have
+        /// not yet had their links initialized.
+        /// </remarks>
+        string[] LinkedUserIds { get; set; }
     }
 }

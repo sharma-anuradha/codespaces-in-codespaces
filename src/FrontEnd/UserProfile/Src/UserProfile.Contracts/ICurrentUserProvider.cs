@@ -69,9 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// Set the user  id values.
         /// </summary>
         /// <param name="idMapKey">The identity map key.</param>
-        /// <param name="canonicalUserId">The v2 user id.</param>
-        /// <param name="profileId">The profile id.</param>
-        /// <param name="profileProviderId">The profile provider id.</param>
-        void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId);
+        /// <param name="userIdSet">The user ID set.</param>
+        void SetUserIds(string idMapKey, UserIdSet userIdSet);
     }
 }

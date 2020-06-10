@@ -91,9 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             builder
                 .AddJwtBearer(VsoAuthenticationScheme, options =>
                 {
-                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
-
-                    options.TokenValidationParameters = jwtReader.GetValidationParameters(logger);
+                    options.TokenValidationParameters = jwtReader.GetValidationParameters(
+                        () => ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>());
 
                     options.Events = new JwtBearerEvents
                     {

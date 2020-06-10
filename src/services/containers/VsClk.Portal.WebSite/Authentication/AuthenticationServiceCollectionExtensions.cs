@@ -165,9 +165,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 scheme,
                 options =>
                 {
-                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
-
-                    options.TokenValidationParameters = cascadeJwtReader.GetValidationParameters(logger);
+                    options.TokenValidationParameters = cascadeJwtReader.GetValidationParameters(
+                        () => ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>());
 
                     options.Events = new JwtBearerEvents
                     {

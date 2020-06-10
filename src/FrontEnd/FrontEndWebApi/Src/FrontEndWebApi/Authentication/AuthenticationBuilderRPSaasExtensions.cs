@@ -4,21 +4,28 @@
 
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -40,7 +47,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// </summary>
         public const string SourceArmTokenClaims = "SourceArmTokenClaims";
 
-        private const string SignedUserHeaderKey = "x-ms-arm-signed-user-token";
+        private const string ArmUserTokenHeaderName = "x-ms-arm-signed-user-token";
+
+        private const string CodespaceUserTokenHeaderName = "x-ms-codespace-user-token";
+
+        // This is captured during configuration - don't change any settings on it
+        private static JwtBearerOptions AadBearerOptions { get; set; } = null;
 
         private static IEnumerable<string> DefaultAudiences { get; } = new string[]
         {
@@ -48,9 +60,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             "https://management.azure.com/",
         };
 
-        private static IJwtReader SignedUserJwtReader { get; set; } = null;
+        private static IJwtReader ArmUserJwtReader { get; set; } = null;
 
-        private static RPSaaSCertifcateCache SignedUserCertCache { get; set; } = null;
+        private static RPSaaSCertifcateCache ArmIssuerCredentialCache { get; set; } = null;
 
         /// <summary>
         /// Add RPSaaS specific Jwt Bearer.
@@ -63,12 +75,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             builder
                 .AddJwtBearer(AuthenticationScheme, options =>
                 {
-                    var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
-
-                    SignedUserJwtReader = new JwtReader();
+                    ArmUserJwtReader = new JwtReader();
                     foreach (var audience in DefaultAudiences)
                     {
-                        SignedUserJwtReader.AddAudience(audience);
+                        ArmUserJwtReader.AddAudience(audience);
                     }
 
                     var armTokenReader = new JwtReader();
@@ -79,7 +89,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
                     armTokenReader.AddIssuer(settings.IssuerHostname.TrimEnd('/') + "/{tenantid}/");
 
-                    var armTokenValidationParameters = armTokenReader.GetValidationParameters(logger, resolveIssuerSigningKeys: false);
+                    var armTokenValidationParameters = armTokenReader.GetValidationParameters(
+                        () => ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>(),
+                        resolveIssuerSigningKeys: false);
 
                     options.TokenValidationParameters = armTokenValidationParameters;
 
@@ -96,12 +108,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 {
                     var logger = serviceProvider.GetRequiredService<IDiagnosticsLogger>();
 
-                    SignedUserCertCache = new RPSaaSCertifcateCache(settings.SignedUserTokenCertUrl, logger);
+                    ArmIssuerCredentialCache = new RPSaaSCertifcateCache(settings.SignedUserTokenCertUrl, logger);
 
-                    return SignedUserCertCache;
+                    return ArmIssuerCredentialCache;
+                })
+                .Configure<JwtBearerOptions>(JwtBearerUtility.AadAuthenticationScheme, (options) =>
+                {
+                    AadBearerOptions = options;
                 });
-
             return builder;
+        }
+
+        /// <summary>
+        /// Checks if an ARM user identity is an MSA.
+        /// </summary>
+        /// <param name="identity">User identity provided by ARM.</param>
+        /// <returns>True if the user identity is a Microsoft Account (MSA), else false.</returns>
+        /// <remarks>
+        /// MSA tokens for ARM users do not use one of the well-known MSA tenants, because the
+        /// ARM user identities are in the tenant that is associated with the subscription, which
+        /// for MSA users is typically a tenant created by Azure automatically as their default
+        /// tenant (unless they have signed in as a guest in another tenant).
+        /// </remarks>
+        internal static bool IsArmMsaIdentity(ClaimsIdentity identity)
+        {
+            var idpClaim = identity?.FindFirst("idp")?.Value;
+            var altSecIdClaim = identity?.FindFirst("altsecid")?.Value;
+            var isMsa = idpClaim == "live.com" || altSecIdClaim?.StartsWith("1:live.com:") == true;
+            return isMsa;
         }
 
         /// <summary>
@@ -138,9 +172,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             {
                 await Task.CompletedTask;
 
-                var identity = context.Principal;
-                var issuerClaim = identity.FindFirstValue("iss");
-                var appIdClaim = identity.FindFirstValue("appid");
+                var armServicePrincipal = context.Principal;
+                var issuerClaim = armServicePrincipal.FindFirstValue("iss");
+                var appIdClaim = armServicePrincipal.FindFirstValue("appid");
 
                 var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
@@ -149,68 +183,152 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     .FluentAddValue("Audience", context.Options.Audience)
                     .FluentAddValue("Authority", context.Options.Authority)
                     .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
-                    .FluentAddValue("PrincipalIdentityName", identity.Identity.Name)
-                    .FluentAddValue("PrincipalIsAuthenticationType", identity.Identity.AuthenticationType)
-                    .FluentAddValue("PrincipalIsAuthenticated", identity.Identity.IsAuthenticated.ToString())
+                    .FluentAddValue("PrincipalIdentityName", armServicePrincipal.Identity.Name)
+                    .FluentAddValue("PrincipalAuthenticationType", armServicePrincipal.Identity.AuthenticationType)
+                    .FluentAddValue("PrincipalIsAuthenticated", armServicePrincipal.Identity.IsAuthenticated.ToString())
                     .FluentAddValue("ArmAppId", appIdClaim);
 
                 if (appIdClaim != settings.AppId)
                 {
-                    logger.LogInfo("jwt_appid_notmatched");
+                    logger.LogError("jwt_appid_notmatched");
                     context.Fail("AppId claim did not match expected claim");
                     return;
                 }
 
-                context.HttpContext.Items[SourceArmTokenClaims] = identity;
+                context.HttpContext.Items[SourceArmTokenClaims] = armServicePrincipal;
 
-                var signedUserHeader = context.HttpContext.Request.Headers[SignedUserHeaderKey].FirstOrDefault();
-                if (string.IsNullOrWhiteSpace(signedUserHeader))
+                ClaimsPrincipal armUserPrincipal;
+                var armUserToken = context.HttpContext.Request.Headers[ArmUserTokenHeaderName].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(armUserToken))
                 {
-                    logger.LogInfo("jwt_armsigneduser_notprovided");
+                    logger.LogError("jwt_armuser_notprovided");
                     context.Fail("ARM signed user token header not provided");
                     return;
                 }
 
-                var claimsPrincipal = TryGetSignedUserClaimsPrincipal(signedUserHeader, issuerClaim, logger);
-                if (claimsPrincipal == null)
+                try
                 {
-                    logger.LogInfo("jwt_armsigneduser_novtvalid");
-                    context.Fail("Failed to extract ClaimsPrincipal from ARM signed user token header");
+                    armUserPrincipal = ValidateArmUserToken(armUserToken, issuerClaim, logger);
+                }
+                catch (Exception ex)
+                {
+                    logger.AddErrorDetail(ex.Message).LogError("jwt_armuser_notvalid");
+                    context.Fail("Failed to extract ClaimsPrincipal from ARM signed user token header: " + ex.Message);
+                    return;
+                }
+
+                // Update the current user to the calling user instead of the calling service.
+                if (!context.HttpContext.SetUserContextFromClaimsPrincipal(
+                    armUserPrincipal, isEmailClaimRequired: true, out string errorMessage))
+                {
+                    logger.AddErrorDetail(errorMessage).LogError("jwt_armuser_notvalid_claims");
+                    context.Fail(errorMessage);
                     return;
                 }
 
                 logger.LogInfo("jwt_aadrpsaas_success");
-                context.Principal = claimsPrincipal;
+                context.Principal = armUserPrincipal;
+
+                var armUserIdentity = armUserPrincipal.Identities.First();
+                await SetCurrentUserIdentityAsync(context, armUserIdentity, logger);
             };
         }
 
-        private static ClaimsPrincipal TryGetSignedUserClaimsPrincipal(string token, string tenant, IDiagnosticsLogger logger)
+        /// <summary>
+        /// Validates an additional user token that was supplied in a header for ID linking.
+        /// </summary>
+        private static async Task SetCurrentUserIdentityAsync(
+            TokenValidatedContext context,
+            ClaimsIdentity armUserIdentity,
+            IDiagnosticsLogger logger)
         {
-            AddSignedUserTenantIfNew(tenant);
+            var httpContext = context.HttpContext;
 
-            try
+            var isMsa = IsArmMsaIdentity(armUserIdentity);
+
+            var idMapRepository = httpContext.RequestServices.GetRequiredService<IIdentityMapRepository>();
+            var userName = armUserIdentity.GetUserEmail(true);
+            var tenantId = armUserIdentity.GetTenantId();
+            var idMap = await idMapRepository.GetByUserNameAsync(userName, tenantId, logger) ??
+                new IdentityMapEntity(userName, tenantId);
+
+            // Check for a codespace user token header (only valid for MSAs).
+            var codespaceUserToken = httpContext.Request.Headers[CodespaceUserTokenHeaderName]
+                .FirstOrDefault();
+            if (isMsa && !string.IsNullOrWhiteSpace(codespaceUserToken))
             {
-                return SignedUserJwtReader.ReadTokenPrincipal(token, logger);
+                // Authenticate the token.
+                ClaimsPrincipal codespaceUserPrincipal;
+                try
+                {
+                    codespaceUserPrincipal = await ValidateAadTokenAsync(codespaceUserToken, httpContext);
+                }
+                catch (Exception ex)
+                {
+                    logger.AddErrorDetail(ex.Message).LogError("jwt_user_notvalid");
+                    context.Fail("User token authentication failed: " + ex.Message);
+                    return;
+                }
+
+                // Get the legacy user ID corresponding to this additional authenticated identity.
+                var codespaceUserIdentity = codespaceUserPrincipal.Identities.First();
+                var codespaceUserId = codespaceUserIdentity.GetLegacyUserId();
+
+                // Add the legacy user ID to the list of linked IDs for the ARM user identity.
+                if (idMap.LinkedUserIds?.Contains(codespaceUserId) != true)
+                {
+                    var linkedIds = new List<string>(idMap.LinkedUserIds ?? Array.Empty<string>());
+                    linkedIds.Add(codespaceUserId);
+                    await idMapRepository.BackgroundUpdateIfChangedAsync(
+                        idMap, null, null, null, linkedIds.ToArray(), logger);
+                }
             }
-            catch (SecurityTokenException)
-            {
-                return null;
-            }
+
+            // Set the current user ID set. The profile wasn't fetched, so the user ID set might not
+            // include the profile IDs, but it does include any linked IDs.
+            var currentUserProvider = httpContext.RequestServices.GetRequiredService<ICurrentUserProvider>();
+            var userIdSet = new UserIdSet(
+                idMap.CanonicalUserId, idMap.ProfileId, idMap.ProfileProviderId, idMap.LinkedUserIds);
+            currentUserProvider.SetUserIds(idMap.Id, userIdSet);
         }
 
-        private static void AddSignedUserTenantIfNew(string tenant)
+        private static async Task<ClaimsPrincipal> ValidateAadTokenAsync(string token, HttpContext httpContext)
         {
-            if (SignedUserJwtReader.IssuerCredentials.ContainsKey(tenant))
+            var validationParameters = AadBearerOptions.TokenValidationParameters.Clone();
+            var config = await AadBearerOptions.ConfigurationManager.GetConfigurationAsync(httpContext.RequestAborted);
+            if (config != null)
+            {
+                var issuers = new[] { config.Issuer };
+                validationParameters.ValidIssuers = validationParameters.ValidIssuers?.Concat(issuers) ?? issuers;
+
+                validationParameters.IssuerSigningKeys = validationParameters.IssuerSigningKeys?.Concat(config.SigningKeys)
+                    ?? config.SigningKeys;
+            }
+
+            var validator = new JwtSecurityTokenHandler();
+            return validator.ValidateToken(token, validationParameters, out var _);
+        }
+
+        private static ClaimsPrincipal ValidateArmUserToken(string token, string tenant, IDiagnosticsLogger logger)
+        {
+            AddArmUserTenantIfNew(tenant);
+
+            return ArmUserJwtReader.ReadTokenPrincipal(token, logger);
+        }
+
+        private static void AddArmUserTenantIfNew(string tenant)
+        {
+            if (ArmUserJwtReader.IssuerCredentials.ContainsKey(tenant))
             {
                 return;
             }
 
-            lock (SignedUserJwtReader)
+            lock (ArmUserJwtReader)
             {
                 // Double check existence in case it was added while acquiring the lock
-                if (!SignedUserJwtReader.IssuerCredentials.ContainsKey(tenant))
+                if (!ArmUserJwtReader.IssuerCredentials.ContainsKey(tenant))
                 {
-                    SignedUserJwtReader.AddIssuer(tenant, SignedUserCertCache);
+                    ArmUserJwtReader.AddIssuer(tenant, ArmIssuerCredentialCache);
                 }
             }
         }

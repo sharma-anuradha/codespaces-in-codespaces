@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
 
@@ -248,13 +249,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mapper = MockUtil.MockMapper();
             var configuration = new Mock<ISystemConfiguration>();
             var tokenProvider = new Mock<ITokenProvider>();
+            var currentUserProvider = new Mock<ICurrentUserProvider>();
 
             var controller = new SubscriptionsController(
                 planManager,
                 tokenProvider.Object,
                 mapper,
                 environmentManager,
-                configuration.Object);
+                configuration.Object,
+                currentUserProvider.Object);
 
             var logger = new Mock<IDiagnosticsLogger>();
             // This is called inside HttpContext.HttpScopeAsync

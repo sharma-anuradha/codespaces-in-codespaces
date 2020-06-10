@@ -203,7 +203,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mock.Setup(obj => obj.GetByUserNameAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(entity.Object);
 
-            mock.Setup(obj => obj.BackgroundUpdateIfChangedAsync(It.IsAny<IIdentityMapEntity>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            mock.Setup(obj => obj.BackgroundUpdateIfChangedAsync(
+                It.IsAny<IIdentityMapEntity>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string[]>(),
+                It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(entity.Object);
 
             return mock.Object;
@@ -272,9 +278,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Profile = profile;
             }
 
-            public void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId)
+            public void SetUserIds(string idMapKey, UserIdSet userIdSet)
             {
-                CurrentUserIdSet = new UserIdSet(canonicalUserId, profileId, profileProviderId);
+                CurrentUserIdSet = userIdSet;
             }
         }
     }

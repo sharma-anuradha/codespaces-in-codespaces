@@ -102,19 +102,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <inheritdoc/>
-        public void SetUserIds(string idMapKey, string canonicalUserId, string profileId, string profileProviderId)
+        public void SetUserIds(string idMapKey, UserIdSet userIdSet)
         {
             var httpContext = ContextAccessor?.HttpContext;
             if (httpContext != null)
             {
                 // Save the id map key and the canonicaluserid.
                 httpContext.Items[HttpContextCurrentUserIdMapKey] = idMapKey;
-                httpContext.SetCurrentUserCanonicalUserId(canonicalUserId);
+                httpContext.SetCurrentUserCanonicalUserId(userIdSet.CanonicalUserId);
 
                 // Don't set profileId or profileProviderId because these come from the identity map
                 // and do not necessarily match the current Profile.
                 // Instead, just set the userIdSet.
-                var userIdSet = new UserIdSet(canonicalUserId, profileId, profileProviderId);
                 httpContext.Items[HttpContextCurrentUserIdSetKey] = userIdSet;
             }
         }
