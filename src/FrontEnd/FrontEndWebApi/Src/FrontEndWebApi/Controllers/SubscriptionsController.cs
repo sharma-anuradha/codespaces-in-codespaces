@@ -102,16 +102,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     try
                     {
-                        var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
-                            ? resource.Properties.UserId
-                            : HttpContext.User.GetUserIdFromClaims();
+                        if (!(await planManager.ShouldCreateMultiUserPlansAsync(logger)))
+                        {
+                            // UserId is only required when creating single user plans
+                            var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
+                                ? resource.Properties.UserId
+                                : HttpContext.User.GetUserIdFromClaims();
+
+                            ValidationUtil.IsRequired(userId);
+                        }
 
                         ValidationUtil.IsRequired(subscriptionId);
                         ValidationUtil.IsRequired(resourceGroup);
                         ValidationUtil.IsRequired(providerNamespace);
                         ValidationUtil.IsRequired(resourceType);
                         ValidationUtil.IsRequired(resourceName);
-                        ValidationUtil.IsRequired(userId);
                         ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                         ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
                     }
@@ -175,10 +180,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_create",
                 async (logger) =>
                 {
-                    var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
-                        ? resource.Properties.UserId
-                        : HttpContext.User.GetUserIdFromClaims();
-
                     var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
 
                     ValidationUtil.IsRequired(subscriptionId);
@@ -191,7 +192,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(
                         Enum.TryParse(nospacesLocation, true, out AzureLocation location),
                         $"Invalid location: ${resource.Location}");
-                    ValidationUtil.IsRequired(userId);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
                     var plan = new VsoPlan
@@ -208,9 +208,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                             DefaultEnvironmentSku = resource.Properties?.DefaultEnvironmentSku,
                             VnetProperties = resource.Properties.VnetProperties.BuildVsoVnetProperty(),
                         },
-                        UserId = userId,
                         Partner = partner,
                     };
+
+                    if (!(await planManager.ShouldCreateMultiUserPlansAsync(logger)))
+                    {
+                        // UserId should not be set for multi-user plans
+                        var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
+                            ? resource.Properties.UserId
+                            : HttpContext.User.GetUserIdFromClaims();
+
+                        ValidationUtil.IsRequired(userId);
+
+                        plan.UserId = userId;
+                    }
+
                     var result = await planManager.CreateAsync(plan, logger);
 
                     logger.AddVsoPlan(plan);

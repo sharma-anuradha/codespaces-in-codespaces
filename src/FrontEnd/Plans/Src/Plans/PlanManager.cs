@@ -107,6 +107,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
+        public async Task<bool> ShouldCreateMultiUserPlansAsync(IDiagnosticsLogger logger)
+        {
+            return await planManagerSettings.MultiUserPlansEnabledAsync(logger);
+        }
+
+        /// <inheritdoc/>
         public async Task RefreshTotalPlansCountAsync(IDiagnosticsLogger logger)
         {
             cachedTotalPlansCount = await planRepository.GetCountAsync(logger);

@@ -134,5 +134,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <returns>A boolean value indicating whether the plan properties update was successful.</returns>
         Task<bool> ApplyPlanPropertiesChangesAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Checks if new plans should be created as multi-user plans.
+        /// </summary>
+        /// <param name="logger">The IDiagnosticsLogger.</param>
+        /// <returns>True if new plans should be created as multi-user plans.</returns>
+        Task<bool> ShouldCreateMultiUserPlansAsync(IDiagnosticsLogger logger);
     }
 }
