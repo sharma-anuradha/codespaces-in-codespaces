@@ -43,7 +43,7 @@
     "test": "yarn workspaces run test",
     "test:ci": "yarn workspaces run test --ci --reporters=\"jest-junit\"",
     "start:dns": "run-script-os",
-    "start:dns:win32": ".\\scripts\\shell\\start-dns-server-win32.bat",
+    "start:dns:win32": "powershell .\\scripts\\shell\\start-dns-server-win32.ps1",
     "start:dns:linux": "sh ./scripts/shell/start-dns-server-linux.sh",
     "start:dns:darwin": "sh ./scripts/shell/start-dns-server-darwin.sh",
     "watch:client": "webpack-dev-server --config config/webpack/webpack.config.js",
