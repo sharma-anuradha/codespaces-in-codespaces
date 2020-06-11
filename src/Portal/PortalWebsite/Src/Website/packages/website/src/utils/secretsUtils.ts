@@ -83,7 +83,7 @@ export const useValidatableState = <S>(initialState: S) => {
 };
 
 const errors = {
-    [SecretErrorCodes.ExceededSecretsQuota]: 'exceededEnvironmentVariablesQuota',
+    [SecretErrorCodes.ExceededSecretsQuota]: 'secretErrorExceededQuota',
     [SecretErrorCodes.FailedToCreateSecret]: 'secretErrorFailedToCreate',
     [SecretErrorCodes.FailedToCreateSecretStore]: 'secretErrorFailedToCreate',
     [SecretErrorCodes.FailedToDeleteSecret]: 'secretErrorFailedToDelete',
