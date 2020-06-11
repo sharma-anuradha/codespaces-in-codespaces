@@ -5,6 +5,7 @@
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Settings;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -103,5 +104,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets privacy CommandFeed Settings.
         /// </summary>
         public PrivacyCommandFeedSettings PrivacyCommandFeedSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Subscription Manager Settings.
+        /// </summary>
+        public SubscriptionManagerSettings SubscriptionManagerSettings { get; set; }
     }
 }

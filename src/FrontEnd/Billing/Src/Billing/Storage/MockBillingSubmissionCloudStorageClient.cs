@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Mock class for the bill submission client.
+    /// </summary>
     public class MockBillingSubmissionCloudStorageClient : IBillingSubmissionCloudStorageClient
     {
         /// <inheritdoc/>

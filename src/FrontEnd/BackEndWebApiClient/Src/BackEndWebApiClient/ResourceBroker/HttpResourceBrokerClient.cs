@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     /// <summary>
     /// An http resource broker client.
     /// </summary>
-    public class HttpResourceBrokerClient : HttpClientBase, IResourceBrokerResourcesExtendedHttpContract
+    public class HttpResourceBrokerClient : HttpClientBase<BackEndHttpClientProviderOptions>, IResourceBrokerResourcesExtendedHttpContract
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpResourceBrokerClient"/> class.

@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 {
@@ -20,9 +21,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// Creates a plan.
         /// </summary>
         /// <param name="model">The vso plan model.</param>
+        /// <param name="subscription">the subscription.</param>
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <returns>The created plan or error code in case of failure.</returns>
-        Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, IDiagnosticsLogger logger);
+        Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, Subscription subscription, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Check if plan creation is allowed in the given subscription.

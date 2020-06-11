@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Images;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Images
 {
     /// <inheritdoc/>
-    public class ImagesHttpClient : HttpClientBase, IImagesHttpClient
+    public class ImagesHttpClient : HttpClientBase<BackEndHttpClientProviderOptions>, IImagesHttpClient
     {
         private const string LogBaseName = "images_http_client";
 

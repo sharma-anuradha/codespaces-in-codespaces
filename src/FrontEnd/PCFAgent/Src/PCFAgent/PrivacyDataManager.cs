@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -144,7 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
             await logger.OperationScopeAsync("pcf_queue_environment_for_deletion", async (childLogger) =>
             {
                 childLogger.AddCloudEnvironment(environment);
-                var continuationInput = new EnvironmentDeletionContinuationInput { EnvironmentId = environment.Id };
+                var continuationInput = new EnvironmentContinuationInput { EnvironmentId = environment.Id };
                 await CrossRegionActivator.ExecuteForDataPlane(EnvironmentDeletionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
             });
         }

@@ -59,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             accountRepository = new MockPlanRepository();
             subscriptionManager = new MockSubscriptionManager();
-            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog(), subscriptionManager);
+            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog());
         }
 
         [Fact]
@@ -186,7 +186,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [Fact]
         public async Task EnvironmentController_StartAsync()
         {
-            var mockEnv = MockUtil.MockCloudEnvironment();
+            var planId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/cloudenvironment/providers/Microsoft.VSOnline/plans/my-good-plan";
+            var mockEnv = MockUtil.MockCloudEnvironment(planId: planId);
 
             var expectedRequestUri = "https://testhost/api/v1/environments/";
             var expectedEnvId = mockEnv.Id;
@@ -600,7 +601,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             serviceUriBuilder ??= MockUtil.MockServiceUriBuilder();
             skuUtils ??= MockUtil.MockSkuUtils(true);
             var metrics = MockUtil.MockMetricsManager();
-
+            var subManager = MockUtil.MockSubscriptionManager();
             var settings = new FrontEndAppSettings
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
@@ -619,7 +620,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 settings,
                 skuUtils,
                 tokenProvider.Object,
-                metrics);
+                metrics,
+                subManager);
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();

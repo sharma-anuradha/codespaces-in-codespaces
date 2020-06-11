@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
     /// <summary>
     /// Http client for sending heartbeats to the Backend.
     /// </summary>
-    public class HttpResourceHeartBeatClient : HttpClientBase, IResourceHeartBeatHttpContract
+    public class HttpResourceHeartBeatClient : HttpClientBase<BackEndHttpClientProviderOptions>, IResourceHeartBeatHttpContract
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpResourceHeartBeatClient"/> class.

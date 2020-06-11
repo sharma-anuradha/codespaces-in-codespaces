@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Health
     /// <summary>
     /// Http Client for Health monitor.
     /// </summary>
-    public class HttpHealthMonitorClient : HttpClientBase
+    public class HttpHealthMonitorClient : HttpClientBase<BackEndHttpClientProviderOptions>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpHealthMonitorClient"/> class.

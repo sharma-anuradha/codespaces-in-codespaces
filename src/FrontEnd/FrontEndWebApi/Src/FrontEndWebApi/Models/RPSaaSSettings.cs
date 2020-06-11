@@ -29,5 +29,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the Url where the ARM signed user token public cert can be fetched from.
         /// </summary>
         public string SignedUserTokenCertUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Url where registered subscription information can be found.
+        /// </summary>
+        public string RegisteredSubscriptionsUrl { get; set; }
     }
 }

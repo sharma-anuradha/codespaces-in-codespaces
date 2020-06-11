@@ -9,7 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 {
     /// <summary>
-    /// Task which logs information about plans and subscriptions
+    /// Task which logs information about plans and subscriptions.
     /// </summary>
     public interface ILogSubscriptionStatisticsTask
     {

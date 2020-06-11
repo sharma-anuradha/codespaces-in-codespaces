@@ -16,7 +16,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions
         /// <summary>
         /// <see cref="IServiceCollection"/> extensions for the disk provider.
         /// </summary>
-        /// <param name="services">The service collection</param>
+        /// <param name="services">The service collection.</param>
         /// <param name="mocksSettings">The mocks settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddDiskProvider(

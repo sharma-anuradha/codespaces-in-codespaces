@@ -32,6 +32,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
@@ -68,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="skuUtils">skuUtils to find sku's eligiblity.</param>
         /// <param name="tokenProvider">Token Provider.</param>
         /// <param name="metricsManager">The metrics manager.</param>
+        /// <param name="subscriptionManager">The subscription manager.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -80,7 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             FrontEndAppSettings frontEndAppSettings,
             ISkuUtils skuUtils,
             ITokenProvider tokenProvider,
-            IMetricsManager metricsManager)
+            IMetricsManager metricsManager,
+            ISubscriptionManager subscriptionManager)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -94,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             SkuUtils = Requires.NotNull(skuUtils, nameof(skuUtils));
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
             MetricsManager = Requires.NotNull(metricsManager, nameof(metricsManager));
+            SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -119,6 +123,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private ITokenProvider TokenProvider { get; }
 
         private IMetricsManager MetricsManager { get; }
+
+        private ISubscriptionManager SubscriptionManager { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -309,10 +315,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             var startEnvParams = GetStartCloudEnvironmentParameters();
+            var planInfo = VsoPlanInfo.TryParse(environment.PlanId);
+            var subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
+
+            if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
+            {
+                var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
+                logger.AddSubscriptionId(planInfo.Subscription);
+                logger.AddReason(message);
+                return new ForbidResult();
+            }
 
             var result = await EnvironmentManager.ResumeAsync(
                 environment,
                 startEnvParams,
+                subscription,
                 logger.NewChildLogger());
 
             if (result.CloudEnvironment == null)
@@ -468,6 +485,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // Ignore metrics exceptions here. Do not fail to create an environment due to missing metrics info.
             }
 
+            var subscription = await SubscriptionManager.GetSubscriptionAsync(planDetails.Plan.Subscription, logger.NewChildLogger());
+            if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
+            {
+                var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
+                logger.AddSubscriptionId(planInfo.Subscription);
+                logger.AddReason(message);
+                return new ForbidResult();
+            }
+
             // Create the environement
             var createCloudEnvironmentResult = default(CloudEnvironmentServiceResult);
             try
@@ -481,6 +507,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     cloudEnvironmentOptions,
                     startEnvParams,
                     plan,
+                    subscription,
                     logger.NewChildLogger());
             }
             catch (HttpResponseStatusException e)

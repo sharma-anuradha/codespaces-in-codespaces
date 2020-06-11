@@ -76,6 +76,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public Task<T> GetAsync(DocumentDbKey key, IDiagnosticsLogger logger)
         {
+            if (!store.ContainsKey(key.Id))
+            {
+                return Task.FromResult<T>(default);
+            }
+
             return Task.FromResult<T>(store[key.Id]);
         }
 

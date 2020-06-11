@@ -28,5 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         /// Azure subscription has been marked as banned.
         /// </summary>
         SubscriptionBanned = 3,
+
+        /// <summary>
+        /// Azure subscription state is not 'Registered'.
+        /// </summary>
+        SubscriptionStateNotRegistered = 4,
     }
 }

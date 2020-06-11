@@ -14,9 +14,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
     public enum BannedReason
     {
         /// <summary>
-        /// Other or unknown reason.
+        /// Not banned.
         /// </summary>
-        Other = 0,
+        None = 0,
 
         /// <summary>
         /// The VMs are suspected of DDOS attacks.
@@ -27,5 +27,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// The subscription is suspected of fraudulent activity.
         /// </summary>
         SuspectedFraud = 2,
+
+        /// <summary>
+        /// Other or unknown reason.
+        /// </summary>
+        Other = 3,
     }
 }

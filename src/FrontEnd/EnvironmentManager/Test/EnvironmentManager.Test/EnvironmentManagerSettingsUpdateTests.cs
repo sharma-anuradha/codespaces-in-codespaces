@@ -278,7 +278,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentRepairWorkflows,
                 resourceAllocationManager,
                 workspaceManager,
-                subscriptionManager,
                 secretStoreManager,
                 resourceSelector);
         }

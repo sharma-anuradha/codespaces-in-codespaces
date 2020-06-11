@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Secret
     /// <summary>
     /// Http client for interacting with backend for secret management.
     /// </summary>
-    public class SecretManagerHttpClient : HttpClientBase, ISecretManagerHttpContract
+    public class SecretManagerHttpClient : HttpClientBase<BackEndHttpClientProviderOptions>, ISecretManagerHttpContract
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SecretManagerHttpClient"/> class.

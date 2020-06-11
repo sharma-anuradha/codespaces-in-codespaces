@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Xunit;
 using UsageDictionary = System.Collections.Generic.Dictionary<string, double>;

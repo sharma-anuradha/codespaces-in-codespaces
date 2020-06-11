@@ -182,10 +182,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the billing event manager and the billing event repository
             services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
 
-            // Add the subscription manager
-            services.AddSubscriptionManager(
-                options => { },
+            // Add the subscription managers
+            services.AddSubscriptionManagers(
+                frontEndAppSettings.SubscriptionManagerSettings,
                 frontEndAppSettings.UseMocksForLocalDevelopment);
+            services.AddSubscriptionsHttpProvider(
+                 options =>
+                 {
+                     options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSSettings.RegisteredSubscriptionsUrl, nameof(frontEndAppSettings.RPSaaSSettings.RegisteredSubscriptionsUrl));
+                 });
+
+            // Add FirstPartyAppSettings
+            services.AddSingleton(appSettings.FirstPartyAppSettings);
 
             // Add the secret store manager
             services.AddSecretStoreManager();
@@ -401,6 +409,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
             frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
             frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
+            frontEndAppSettings.SubscriptionManagerSettings.Init(systemConfig);
 
             app.UseEndpoints(x =>
             {

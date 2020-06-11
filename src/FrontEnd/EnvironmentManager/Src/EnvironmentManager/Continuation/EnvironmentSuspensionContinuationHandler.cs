@@ -1,32 +1,32 @@
-﻿// <copyright file="EnvironmentDeletionContinuationHandler.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentSuspensionContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation
 {
     /// <summary>
-    /// PCF delete environments handler.
+    /// Suspention environments handler.
     /// </summary>
-    public class EnvironmentDeletionContinuationHandler : IContinuationTaskMessageHandler
+    public class EnvironmentSuspensionContinuationHandler : IContinuationTaskMessageHandler
     {
         /// <summary>
         /// Gets default target name for item on queue.
         /// </summary>
-        public const string DefaultQueueTarget = "EnvironmentDeletionHandler";
+        public const string DefaultQueueTarget = "EnvironmentSuspentionHandler";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnvironmentDeletionContinuationHandler"/> class.
+        /// Initializes a new instance of the <see cref="EnvironmentSuspensionContinuationHandler"/> class.
         /// </summary>
         /// <param name="serviceProvider">Dependency Injection service provider.</param>
-        public EnvironmentDeletionContinuationHandler(IServiceProvider serviceProvider)
+        public EnvironmentSuspensionContinuationHandler(IServiceProvider serviceProvider)
         {
             ServiceProvider = serviceProvider;
         }
@@ -48,23 +48,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// <inheritdoc/>
         public async Task<ContinuationResult> Continue(ContinuationInput input, IDiagnosticsLogger logger)
         {
-            return await logger.OperationScopeAsync("pcf_handle_environment_deletion", async (childLogger) =>
+            return await logger.OperationScopeAsync("handle_environment_suspension", async (childLogger) =>
             {
-                var environmentDeletionInput = input as EnvironmentDeletionContinuationInput;
+                var environmentSuspensionInput = input as EnvironmentContinuationInput;
 
-                if (environmentDeletionInput != null)
+                if (environmentSuspensionInput != null)
                 {
-                    var environment = await EnvironmentManager.GetAsync(environmentDeletionInput.EnvironmentId, logger.NewChildLogger());
+                    var environment = await EnvironmentManager.GetAsync(environmentSuspensionInput.EnvironmentId, logger.NewChildLogger());
                     if (environment != null)
                     {
                         childLogger.AddCloudEnvironment(environment);
-                        var isDeleted = await EnvironmentManager.DeleteAsync(environment, logger.NewChildLogger());
-                        if (isDeleted)
+                        var isSuspended = await EnvironmentManager.SuspendAsync(environment, logger.NewChildLogger());
+                        if (isSuspended.HttpStatusCode == StatusCodes.Status200OK)
                         {
                             return CreateFinalResult(OperationState.Succeeded);
                         }
 
-                        return CreateFinalResult(OperationState.Failed, "DeletionFailed");
+                        return CreateFinalResult(OperationState.Failed, "SuspensionFailed");
                     }
 
                     return CreateFinalResult(OperationState.Succeeded);

@@ -27,7 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(1);
         private readonly ISkuCatalog skuCatalog;
-        private readonly ISubscriptionManager subscriptionManager;
         private int cachedTotalPlansCount;
 
         /// <summary>
@@ -36,26 +35,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="planRepository">Target plan repository.</param>
         /// <param name="planManagerSettings">Target plan manager settings.</param>
         /// <param name="skuCatalog">The sku catalog.</param>
-        /// <param name="subscriptionManager">The subscription manager.</param>
         public PlanManager(
             IPlanRepository planRepository,
             PlanManagerSettings planManagerSettings,
-            ISkuCatalog skuCatalog,
-            ISubscriptionManager subscriptionManager)
+            ISkuCatalog skuCatalog)
         {
             this.planRepository = planRepository;
             this.planManagerSettings = Requires.NotNull(planManagerSettings, nameof(planManagerSettings));
             this.skuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
-            this.subscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
         }
 
         /// <inheritdoc/>
-        public async Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, IDiagnosticsLogger logger)
+        public async Task<PlanManagerServiceResult> CreateAsync(VsoPlan model, Subscription subscription, IDiagnosticsLogger logger)
         {
             var result = default(PlanManagerServiceResult);
 
             // Validate subscription
-            if (await subscriptionManager.IsBannedAsync(model.Plan.Subscription, logger))
+            if (subscription.IsBanned)
             {
                 logger.LogError($"{LogBaseName}_create_bannedsubscription_error");
 
@@ -72,6 +68,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
+
+                return result;
+            }
+
+            // Validate subscription state
+            if (!subscription.CanCreateEnvironmentsAndPlans)
+            {
+                logger.LogErrorWithDetail("plan_create_error", $"Plan creation failed. Subscription is not in a Registered state.");
+                result.VsoPlan = null;
+                result.ErrorCode = Contracts.ErrorCodes.SubscriptionStateNotRegistered;
 
                 return result;
             }

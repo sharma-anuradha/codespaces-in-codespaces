@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         private readonly ISubscriptionManager subscriptionManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
-        private static readonly string subscription = Guid.NewGuid().ToString();
+        private static readonly string subscriptionId = Guid.NewGuid().ToString();
         private readonly decimal standardLinuxComputeUnitPerHr = 125;
         private readonly decimal premiumLinuxComputeUnitPerHr = 242;
         private readonly decimal standardLinuxStorageUnitPerHr = 2;
@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             planRepository = new MockPlanRepository();
             subscriptionManager = new MockSubscriptionManager();
-            planManager = new PlanManager(planRepository, settings, skuCatalog, subscriptionManager);
+            planManager = new PlanManager(planRepository, settings, skuCatalog);
         }
 
         private Mock<ISkuCatalog> GetMockSKuCatalog()
@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             {
                 Plan = new VsoPlanInfo
                 {
-                    Subscription = subscriptionOption ?? subscription,
+                    Subscription = subscriptionOption ?? subscriptionId,
                     ResourceGroup = "myRG",
                     Name = name,
                     Location = AzureLocation.WestUs2,
@@ -95,7 +95,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task CreatePlan()
         {
-            var savedModel = (await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), logger)).VsoPlan;
+            var subscription = new Subscription();
+            var savedModel = (await planManager.CreateAsync(GeneratePlan("CreatePlanTest"),subscription, logger)).VsoPlan;
             Assert.NotNull(savedModel);
             Assert.NotNull(savedModel.Id);
         }
@@ -105,7 +106,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         {
             var plan = GeneratePlan("CreatePlanTest");
             plan.SkuPlan.Name = "oldSku";
-            var savedModel = (await planManager.CreateAsync(plan, logger)).VsoPlan;
+            var subscription = new Subscription();
+            var savedModel = (await planManager.CreateAsync(plan, subscription, logger)).VsoPlan;
             Assert.NotNull(savedModel);
             Assert.Equal(plan.Plan.Name, savedModel.Plan.Name);
 
@@ -114,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             plan = GeneratePlan("CreatePlanTest");
             plan.SkuPlan.Name = "NewSku";
-            var overwrittenPlan = await planManager.CreateAsync(plan, logger);
+            var overwrittenPlan = await planManager.CreateAsync(plan, subscription, logger);
             Assert.Equal(overwrittenPlan.VsoPlan.Plan.Name, plan.Plan.Name);
             Assert.Equal("NewSku", overwrittenPlan.VsoPlan.SkuPlan.Name);
             Assert.False(overwrittenPlan.VsoPlan.IsDeleted);
@@ -126,11 +128,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task CreateAccountChecksPerSubscriptionQuota()
         {
+            var subscription = new Subscription();
             VsoPlan toDelete = null;
             PlanManagerServiceResult result;
             for (var i = 1; i <= 20; i++)
             {
-                result = await planManager.CreateAsync(GeneratePlan($"CreatePlanTest-{i}"), logger);
+                result = await planManager.CreateAsync(GeneratePlan($"CreatePlanTest-{i}"), subscription, logger);
                 if (i == 1)
                 {
                     toDelete = result.VsoPlan;
@@ -138,19 +141,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             }
 
             // 21st SkuPlan should fail.
-            result = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), logger);
+            result = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), subscription, logger);
             Assert.Null(result.VsoPlan);
             Assert.Equal(ErrorCodes.ExceededQuota, result.ErrorCode);
 
             // 20 Accounts exist for given subscription.
-            var listAccounts = await planManager.ListAsync(null, subscription, "myRG", null, logger);
+            var listAccounts = await planManager.ListAsync(null, subscriptionId, "myRG", null, logger);
             Assert.Equal(20, listAccounts.Count());
 
             // Delete 1 SkuPlan.
             await planManager.DeleteAsync(toDelete, logger);
 
             // User should be able to create a new SkuPlan.
-            var successResult = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), logger);
+            var successResult = await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), subscription, logger);
             Assert.NotNull(successResult.VsoPlan);
             Assert.Equal("CreatePlanTest", successResult.VsoPlan.Plan.Name);
             Assert.Equal(ErrorCodes.Unknown, successResult.ErrorCode);
@@ -159,7 +162,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task GetPlan()
         {
-            var original = (await planManager.CreateAsync(GeneratePlan("GetPlanTest"), logger)).VsoPlan;
+            var subscription = new Subscription();
+            var original = (await planManager.CreateAsync(GeneratePlan("GetPlanTest"), subscription, logger)).VsoPlan;
             var savedModel = await planManager.GetAsync(original.Plan, logger);
             Assert.NotNull(savedModel);
             Assert.NotNull(savedModel.Id);
@@ -169,7 +173,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task GetPlanWithoutLocationProperty()
         {
-            var plan = (await planManager.CreateAsync(GeneratePlan("GetPlanTest"), logger)).VsoPlan;
+            var subscription = new Subscription();
+            var plan = (await planManager.CreateAsync(GeneratePlan("GetPlanTest"), subscription, logger)).VsoPlan;
 
             var lookupPlan = GeneratePlan("GetPlanTest");
             lookupPlan.Plan.Location = default;
@@ -191,10 +196,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task UpdatePlan()
         {
-            var original = (await planManager.CreateAsync(GeneratePlan("UpdatePlanTest"), logger)).VsoPlan;
+            var subscription = new Subscription();
+            var original = (await planManager.CreateAsync(GeneratePlan("UpdatePlanTest"), subscription, logger)).VsoPlan;
             var savedModel = await planManager.GetAsync(original.Plan, logger);
             savedModel.SkuPlan = new Sku { Name = "Private" };
-            var updatedModel = await planManager.CreateAsync(savedModel, logger);
+            var updatedModel = await planManager.CreateAsync(savedModel, subscription, logger);
             Assert.Equal(savedModel, updatedModel.VsoPlan);
             Assert.Equal("Private", updatedModel.VsoPlan.SkuPlan.Name);
         }
@@ -202,7 +208,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task DeletePlan()
         {
-            var savedModel = (await planManager.CreateAsync(GeneratePlan("DeletePlanTest"), logger)).VsoPlan;
+            var subscription = new Subscription();
+            var savedModel = (await planManager.CreateAsync(GeneratePlan("DeletePlanTest"), subscription, logger)).VsoPlan;
             var result = await planManager.DeleteAsync(savedModel, logger);
             Assert.True(result.IsDeleted);
 
@@ -213,7 +220,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task DeletePlan_ButStillFindIt()
         {
-            var savedModel = (await planManager.CreateAsync(GeneratePlan("DeletePlanTest"), logger)).VsoPlan;
+            var subscription = new Subscription();
+            var savedModel = (await planManager.CreateAsync(GeneratePlan("DeletePlanTest"), subscription, logger)).VsoPlan;
             var result = await planManager.DeleteAsync(savedModel, logger);
             Assert.True(result.IsDeleted);
 
@@ -227,9 +235,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         public async Task GetPlansBySubscriptionAndRGAndName()
         {
             var model1 = GeneratePlan("Model1");
-            await planManager.CreateAsync(model1, logger);
-            await planManager.CreateAsync(GeneratePlan("Model2"), logger);
-            await planManager.CreateAsync(GeneratePlan("Model3"), logger);
+            var subscription = new Subscription();
+            await planManager.CreateAsync(model1, subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model2"), subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model3"), subscription, logger);
 
             var modelList = await planManager.ListAsync(
                 userIdSet: null, model1.Plan.Subscription, model1.Plan.ResourceGroup, model1.Plan.Name, logger);
@@ -242,9 +251,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         public async Task GetPlansBySubscriptionAndRG()
         {
             var model1 = GeneratePlan("Model1");
-            await planManager.CreateAsync(model1, logger);
-            await planManager.CreateAsync(GeneratePlan("Model2"), logger);
-            await planManager.CreateAsync(GeneratePlan("Model3"), logger);
+            var subscription = new Subscription();
+            await planManager.CreateAsync(model1, subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model2"), subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model3"), subscription, logger);
 
             var modelList = await planManager.ListAsync(
                 userIdSet: null, model1.Plan.Subscription, model1.Plan.ResourceGroup, null, logger);
@@ -259,9 +269,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var subscriptionGuid1 = Guid.NewGuid().ToString();
             var subscriptionGuid2 = Guid.NewGuid().ToString();
             var model1 = GeneratePlan("Model1", subscriptionGuid1);
-            await planManager.CreateAsync(model1, logger);
-            await planManager.CreateAsync(GeneratePlan("Model2", subscriptionGuid2), logger);
-            await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2), logger);
+            var subscription = new Subscription();
+            await planManager.CreateAsync(model1,subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model2", subscriptionGuid2), subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2), subscription, logger);
 
             var modelListFirst = await planManager.ListAsync(
                 userIdSet: null, subscriptionGuid1, resourceGroup: null, name: null, logger);
@@ -285,9 +296,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var testUserSet2 = new UserIdSet(testUser2);
             var subscriptionGuid1 = Guid.NewGuid().ToString();
             var subscriptionGuid2 = Guid.NewGuid().ToString();
-            await planManager.CreateAsync(GeneratePlan("Model1", subscriptionGuid1, testUser1), logger);
-            await planManager.CreateAsync(GeneratePlan("Model2", subscriptionGuid2, testUser2), logger);
-            await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2, testUser2), logger);
+            var subscription = new Subscription();
+            await planManager.CreateAsync(GeneratePlan("Model1", subscriptionGuid1, testUser1), subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model2", subscriptionGuid2, testUser2), subscription, logger);
+            await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2, testUser2), subscription, logger);
 
             var modelListFirst = await planManager.ListAsync(
                 userIdSet: testUserSet1, subscriptionId: null, resourceGroup: null, name: null, logger);
@@ -305,6 +317,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task PlanProperties_PatchTest()
         {
+            var subscription = new Subscription();
             var createResult = await planManager.CreateAsync(new VsoPlan
             {
                 Plan = new VsoPlanInfo
@@ -314,7 +327,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                     ResourceGroup = "resourceGroup",
                     Subscription = "subscription",
                 }
-            }, logger);
+            }, subscription, logger);
 
             Assert.NotNull(createResult.VsoPlan);
 
@@ -355,6 +368,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         [Fact]
         public async Task PlanProperties_PatchVnetPropertyTest()
         {
+            var subscription = new Subscription();
+
             var createResult = await planManager.CreateAsync(new VsoPlan
             {
                 Plan = new VsoPlanInfo
@@ -364,7 +379,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                     ResourceGroup = "resourceGroup",
                     Subscription = "subscription",
                 }
-            }, logger);
+            }, subscription, logger);
 
             Assert.NotNull(createResult.VsoPlan);
 

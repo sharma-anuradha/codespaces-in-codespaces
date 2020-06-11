@@ -229,6 +229,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 AppSettings.DataPlaneSettings,
                 AppSettings.SkuCatalogSettings,
                 AppSettings.PlanSkuCatalogSettings,
+                AppSettings.QuotaFamilySettings,
                 AppSettings.ApplicationServicePrincipal);
 
             loggingBaseValues = new LoggingBaseValues

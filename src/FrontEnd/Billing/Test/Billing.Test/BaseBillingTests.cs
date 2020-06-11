@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             planRepository = new MockPlanRepository();
             planManagerSettings = new PlanManagerSettings();
             subscriptionManager = new MockSubscriptionManager();
-            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object, subscriptionManager);
+            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object);
             
             serializer = JsonSerializer.CreateDefault();
         }

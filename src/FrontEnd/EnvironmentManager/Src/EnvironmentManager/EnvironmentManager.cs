@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -49,7 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentRepairWorkflows">The environment repair workflows.</param>
         /// <param name="resourceAllocationManager">The environment resource allocation manager.</param>
         /// <param name="workspaceManager">The workspace manager.</param>
-        /// <param name="subscriptionManager">The subscription manager.</param>
         /// <param name="secretStoreManager">The secret store manager.</param>
         /// <param name="resourceSelector">Resource selector.</param>
         public EnvironmentManager(
@@ -65,7 +65,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             IResourceAllocationManager resourceAllocationManager,
             IWorkspaceManager workspaceManager,
-            ISubscriptionManager subscriptionManager,
             ISecretStoreManager secretStoreManager,
             IResourceSelectorFactory resourceSelector)
         {
@@ -82,7 +81,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
             ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
-            SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
             ResourceSelector = Requires.NotNull(resourceSelector, nameof(resourceSelector));
         }
 
@@ -111,8 +109,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IResourceAllocationManager ResourceAllocationManager { get; }
 
         private IWorkspaceManager WorkspaceManager { get; }
-
-        private ISubscriptionManager SubscriptionManager { get; }
 
         private IResourceSelectorFactory ResourceSelector { get; }
 
@@ -361,6 +357,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentOptions cloudEnvironmentOptions,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
             VsoPlanInfo plan,
+            Subscription subscription,
             IDiagnosticsLogger logger)
         {
             // Validate input
@@ -403,7 +400,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return result;
                     }
 
-                    if (await SubscriptionManager.IsBannedAsync(plan.Subscription, childLogger.NewChildLogger()))
+                    if (subscription.IsBanned)
                     {
                         childLogger.LogError($"{LogBaseName}_create_subscriptionbanned_error");
                         result.MessageCode = MessageCodes.SubscriptionIsBanned;
@@ -413,8 +410,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     var countOfEnvironmentsInPlan = environmentsInPlan.Count();
                     var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, childLogger.NewChildLogger());
+                    var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(childLogger.NewChildLogger());
 
-                    if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
+                    if (!computeCheckEnabled && (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan))
                     {
                         childLogger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
                         result.MessageCode = MessageCodes.ExceededQuota;
@@ -498,6 +496,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         result.MessageCode = MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid;
                         result.HttpStatusCode = StatusCodes.Status400BadRequest;
 
+                        return result;
+                    }
+
+                    var sku = GetSku(cloudEnvironment);
+                    var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, sku, childLogger);
+                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > subscription.CurrentMaximumQuota[sku.ComputeSkuFamily]))
+                    {
+                        childLogger.LogError($"{LogBaseName}_create_exceed_compute_quota");
+                        result.MessageCode = MessageCodes.ExceededQuota;
+                        result.HttpStatusCode = StatusCodes.Status403Forbidden;
                         return result;
                     }
 
@@ -716,6 +724,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public Task<CloudEnvironmentServiceResult> ResumeAsync(
             CloudEnvironment cloudEnvironment,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            Subscription subscription,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
@@ -728,6 +737,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     childLogger.AddCloudEnvironment(cloudEnvironment);
                     childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
+
+                    if (subscription.SubscriptionState != SubscriptionStateEnum.Registered)
+                    {
+                        childLogger.LogError($"{LogBaseName}_resume_subscriptionstate_error");
+                        return new CloudEnvironmentServiceResult
+                        {
+                            CloudEnvironment = cloudEnvironment,
+                            MessageCode = MessageCodes.SubscriptionStateIsNotRegistered,
+                            HttpStatusCode = StatusCodes.Status403Forbidden,
+                        };
+                    }
 
                     // Static Environment
                     if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
@@ -747,6 +767,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         {
                             CloudEnvironment = cloudEnvironment,
                             HttpStatusCode = StatusCodes.Status200OK,
+                        };
+                    }
+
+                    var sku = GetSku(cloudEnvironment);
+                    var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, sku, childLogger);
+                    var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(childLogger.NewChildLogger());
+
+                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > subscription.CurrentMaximumQuota[sku.ComputeSkuFamily]))
+                    {
+                        childLogger.LogError($"{LogBaseName}_resume_exceed_compute_quota");
+
+                        return new CloudEnvironmentServiceResult
+                        {
+                            MessageCode = MessageCodes.ExceededQuota,
+                            HttpStatusCode = StatusCodes.Status403Forbidden,
                         };
                     }
 
@@ -772,8 +807,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.Connection.ConnectionSessionId = null;
                         cloudEnvironment.Connection.WorkspaceId = null;
                     }
-
-                    SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
 
                     if (sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(cloudEnvironment.SubnetResourceId))
                     {
@@ -860,14 +893,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Kick off start-compute before returning.
                     await StartComputeAsync(
-                        cloudEnvironment,
-                        computerResource.ResourceId,
-                        osDiskResource?.ResourceId,
-                        storageResource?.ResourceId,
-                        archiveStorageResource?.ResourceId,
-                        null,
-                        startCloudEnvironmentParameters,
-                        childLogger.NewChildLogger());
+        cloudEnvironment,
+        computerResource.ResourceId,
+        osDiskResource?.ResourceId,
+        storageResource?.ResourceId,
+        archiveStorageResource?.ResourceId,
+        null,
+        startCloudEnvironmentParameters,
+        childLogger.NewChildLogger());
 
                     // Kick off state transition monitoring.
                     try
@@ -940,31 +973,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         {
                             // Conduct update to swapout archived storage for file storage
                             await childLogger.RetryOperationScopeAsync(
-                                $"{LogBaseName}_resume_callback_update",
-                                async (retryLogger) =>
-                                {
-                                    // Fetch record so that we aren't updating the reference passed in
-                                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(
-                                        cloudEnvironment.Id, retryLogger.NewChildLogger());
+                $"{LogBaseName}_resume_callback_update",
+                async (retryLogger) =>
+                {
+                    // Fetch record so that we aren't updating the reference passed in
+                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(
+        cloudEnvironment.Id, retryLogger.NewChildLogger());
 
-                                    // Fetch resource details
-                                    var storageDetails = await ResourceBrokerClient.StatusAsync(
-                                        Guid.Parse(cloudEnvironment.Id), storageResourceId, retryLogger.NewChildLogger());
+                    // Fetch resource details
+                    var storageDetails = await ResourceBrokerClient.StatusAsync(
+        Guid.Parse(cloudEnvironment.Id), storageResourceId, retryLogger.NewChildLogger());
 
-                                    // Switch out storage reference
-                                    cloudEnvironment.Storage = new ResourceAllocationRecord
-                                    {
-                                        ResourceId = storageResourceId,
-                                        Location = storageDetails.Location,
-                                        SkuName = storageDetails.SkuName,
-                                        Type = storageDetails.Type,
-                                        Created = DateTime.UtcNow,
-                                    };
-                                    cloudEnvironment.Transitions.Archiving.ResetStatus(true);
+                    // Switch out storage reference
+                    cloudEnvironment.Storage = new ResourceAllocationRecord
+                    {
+                        ResourceId = storageResourceId,
+                        Location = storageDetails.Location,
+                        SkuName = storageDetails.SkuName,
+                        Type = storageDetails.Type,
+                        Created = DateTime.UtcNow,
+                    };
+                    cloudEnvironment.Transitions.Archiving.ResetStatus(true);
 
-                                    // Update record
-                                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, retryLogger.NewChildLogger());
-                                });
+                    // Update record
+                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, retryLogger.NewChildLogger());
+                });
 
                             // Delete archive blob once its not needed any more
                             await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), archiveStorageResourceId.Value, childLogger.NewChildLogger());
@@ -1344,6 +1377,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  logger.NewChildLogger());
         }
 
+        /// <inheritdoc/>
+        public Task<IEnumerable<CloudEnvironment>> ListBySubscriptionAsync(Subscription subscription, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(logger, nameof(logger));
+            Requires.NotNull(logger, nameof(subscription));
+
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_list",
+                async (childLogger) =>
+                {
+                    return await CloudEnvironmentRepository.GetAllEnvironmentsInSubscriptionAsync(subscription.Id, logger.NewChildLogger());
+                });
+        }
+
         private async Task<CloudEnvironmentServiceResult> CleanupComputeAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
@@ -1494,11 +1541,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                     // Highly unlikely, but still...
                     await EnvironmentStateManager.SetEnvironmentStateAsync(
-                        cloudEnvironment,
-                        CloudEnvironmentState.Queued,
-                        CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
-                        string.Empty,
-                        childLogger.NewChildLogger());
+        cloudEnvironment,
+        CloudEnvironmentState.Queued,
+        CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
+        string.Empty,
+        childLogger.NewChildLogger());
 
                     // Persist core cloud environment record
                     cloudEnvironment = await CloudEnvironmentRepository.CreateAsync(cloudEnvironment, childLogger.NewChildLogger());
@@ -1530,6 +1577,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 });
         }
 
+        private ICloudEnvironmentSku GetSku(CloudEnvironment cloudEnvironment)
+        {
+            if (!SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku))
+            {
+                throw new ArgumentException($"Invalid SKU: {cloudEnvironment.SkuName}");
+            }
+
+            return sku;
+        }
+
+        private async Task<int> GetCurrentComputeUsedForSubscriptionAsync(Subscription subscription, ICloudEnvironmentSku desiredSku, IDiagnosticsLogger logger)
+        {
+            var allEnvs = await CloudEnvironmentRepository.GetAllEnvironmentsInSubscriptionAsync(subscription.Id, logger);
+            var computeUsed = 0;
+            foreach (var env in allEnvs)
+            {
+                if (IsEnvironmentInComputeUtilizingState(env))
+                {
+                    var sku = GetSku(env);
+                    if (sku.ComputeSkuFamily.Equals(desiredSku.ComputeSkuFamily, StringComparison.OrdinalIgnoreCase))
+                    {
+                        computeUsed += sku.ComputeSkuCores;
+                    }
+                }
+            }
+
+            return computeUsed;
+        }
+
+        private bool IsEnvironmentInComputeUtilizingState(CloudEnvironment cloudEnvironment)
+        {
+            switch (cloudEnvironment.State)
+            {
+                case CloudEnvironmentState.None:
+                case CloudEnvironmentState.Created:
+                case CloudEnvironmentState.Queued:
+                case CloudEnvironmentState.Provisioning:
+                case CloudEnvironmentState.Available:
+                case CloudEnvironmentState.Awaiting:
+                case CloudEnvironmentState.Unavailable:
+                case CloudEnvironmentState.Starting:
+                case CloudEnvironmentState.ShuttingDown:
+                    return true;
+                case CloudEnvironmentState.Deleted:
+                case CloudEnvironmentState.Shutdown:
+                case CloudEnvironmentState.Archived:
+                case CloudEnvironmentState.Failed:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
         private Task<ResourceAllocationRecord> AllocateComputeAsync(
             CloudEnvironment cloudEnvironment,
             IDiagnosticsLogger logger)
@@ -1556,11 +1656,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // This avoids a race condition where the record doesn't exist but the callback could be invoked.
                     // Highly unlikely, but still...
                     await EnvironmentStateManager.SetEnvironmentStateAsync(
-                        cloudEnvironment,
-                        CloudEnvironmentState.Queued,
-                        CloudEnvironmentStateUpdateTriggers.StartEnvironment,
-                        string.Empty,
-                        childLogger.NewChildLogger());
+        cloudEnvironment,
+        CloudEnvironmentState.Queued,
+        CloudEnvironmentStateUpdateTriggers.StartEnvironment,
+        string.Empty,
+        childLogger.NewChildLogger());
 
                     cloudEnvironment.Transitions.ShuttingDown.ResetStatus(true);
 

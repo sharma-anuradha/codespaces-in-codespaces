@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
 {
@@ -26,17 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         public MockEnvironmentManager()
         {
             cloudEnvironment = new CloudEnvironment() { LastUsed = DateTime.UtcNow.AddDays(-1), };
-        }
-
-        /// <inheritdoc/>
-        public Task<CloudEnvironmentServiceResult> CreateAsync(
-            CloudEnvironment environmentRegistration,
-            CloudEnvironmentOptions options,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
-            VsoPlanInfo plan,
-            IDiagnosticsLogger logger)
-        {
-            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
@@ -71,12 +61,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
 
         /// <inheritdoc/>
         public Task<IEnumerable<CloudEnvironment>> ListAsync(IDiagnosticsLogger logger, string planId = null, string name = null, UserIdSet userIdSet = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public Task<CloudEnvironmentServiceResult> ResumeAsync(CloudEnvironment cloudEnvironment, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -134,6 +118,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
 
         /// <inheritdoc/>
         public Task<CloudEnvironmentUpdateResult> UpdateFoldersListAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentFolderBody update, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironmentServiceResult> CreateAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, StartCloudEnvironmentParameters startCloudEnvironmentParameters, VsoPlanInfo plan, Subscription subscription, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironmentServiceResult> ResumeAsync(CloudEnvironment cloudEnvironment, StartCloudEnvironmentParameters startCloudEnvironmentParameters, Subscription subscription, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<CloudEnvironment>> ListBySubscriptionAsync(Subscription subscription, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

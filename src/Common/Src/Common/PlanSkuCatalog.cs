@@ -22,7 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="planSkuCatalogOptions">The options instance for the plan sku catalog.</param>
         /// <param name="controlPlaneInfo">The control-plane info.</param>
-        /// <param name="logger">The diagnostics logger.</param>
         public PlanSkuCatalog(
             IOptions<PlanSkuCatalogOptions> planSkuCatalogOptions,
             IControlPlaneInfo controlPlaneInfo)
@@ -37,7 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="planSkuCatalogSettings">The sku catalog settings.</param>
         /// <param name="controlPlaneInfo">The control-plane info.</param>
-        /// <param name="logger">The diagnostics logger.</param>
         public PlanSkuCatalog(
             PlanSkuCatalogSettings planSkuCatalogSettings,
             IControlPlaneInfo controlPlaneInfo)

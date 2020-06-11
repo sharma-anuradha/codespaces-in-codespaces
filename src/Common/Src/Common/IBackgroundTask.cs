@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// Defines a task which is designed to run periodically in the background.

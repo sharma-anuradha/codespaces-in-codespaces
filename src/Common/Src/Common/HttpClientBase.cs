@@ -17,14 +17,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
     /// <summary>
     /// Http client base class.
     /// </summary>
-    public abstract class HttpClientBase
+    /// <typeparam name="TOptions">The options type.</typeparam>
+    public abstract class HttpClientBase<TOptions>
+        where TOptions : class, IHttpClientProviderOptions, new()
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientBase"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientBase{TOptions}"/> class.
         /// </summary>
         /// <param name="httpClientProvider">Http client provider.</param>
         public HttpClientBase(
-            IHttpClientProvider<BackEndHttpClientProviderOptions> httpClientProvider)
+            IHttpClientProvider<TOptions> httpClientProvider)
         {
             HttpClientProvider = Requires.NotNull(httpClientProvider, nameof(httpClientProvider));
         }
@@ -93,8 +95,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
             // TODO: add the correlation id header..any other interesting headers.
             httpRequestMessage.Headers.Add("Accept", "application/json");
 
-            var body = JsonConvert.SerializeObject(input);
-            httpRequestMessage.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            if (input != null)
+            {
+                var body = JsonConvert.SerializeObject(input);
+                httpRequestMessage.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            }
 
             // Send the request
             HttpResponseMessage httpResponseMessage;

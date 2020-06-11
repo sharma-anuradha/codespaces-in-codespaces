@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -20,6 +21,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
@@ -92,6 +94,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public static IMetricsManager MockMetricsManager()
         {
             var moq = new Mock<IMetricsManager>();
+            return moq.Object;
+        }
+
+        public static ISubscriptionManager MockSubscriptionManager()
+        {
+            var moq = new Mock<ISubscriptionManager>();
+            moq.Setup(t => t.CanSubscriptionCreatePlansAndEnvironmentsAsync(It.IsAny<Subscription>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(true));
             return moq.Object;
         }
 
@@ -333,12 +343,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     It.IsAny<CloudEnvironmentOptions>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
                     It.IsAny<VsoPlanInfo>(),
+                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     CloudEnvironment env,
                     CloudEnvironmentOptions options,
                     StartCloudEnvironmentParameters startParams,
                     VsoPlanInfo plan,
+                    Subscription subscription,
                     IDiagnosticsLogger logger) =>
                 {
                     Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
@@ -361,10 +373,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.ResumeAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
+                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     CloudEnvironment env,
                     StartCloudEnvironmentParameters startParams,
+                    Subscription subscription,
                     IDiagnosticsLogger logger) =>
                 {
                     Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());

@@ -77,5 +77,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Task<int> GetEnvironmentsArchiveJobActiveCountAsync(
             AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets all environments that belong to a specific subscription.
+        /// </summary>
+        /// <param name="subscriptionId">The subscriptionId.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>The number of active jobs.</returns>
+        Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(
+            string subscriptionId,
+            IDiagnosticsLogger logger);
     }
 }

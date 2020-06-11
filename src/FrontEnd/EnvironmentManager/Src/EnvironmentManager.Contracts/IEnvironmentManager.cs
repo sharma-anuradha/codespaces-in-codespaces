@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -75,6 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="options">The environment registration options.</param>
         /// <param name="startCloudEnvironmentParameters">The parameters for starting compute.</param>
         /// <param name="plan">The plan the environment will be created in.</param>
+        /// <param name="subscription">the subscription the environment is part of.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment service result.</returns>
         Task<CloudEnvironmentServiceResult> CreateAsync(
@@ -82,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentOptions options,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
             VsoPlanInfo plan,
+            Subscription subscription,
             IDiagnosticsLogger logger);
 
         /// <summary>
@@ -97,9 +100,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="cloudEnvironment">The environment.</param>
         /// <param name="startCloudEnvironmentParameters">The parameters for staring compute.</param>
+        /// <param name="subscription">The subscription the environment is part of.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironmentServiceResult> ResumeAsync(CloudEnvironment cloudEnvironment, StartCloudEnvironmentParameters startCloudEnvironmentParameters, IDiagnosticsLogger logger);
+        Task<CloudEnvironmentServiceResult> ResumeAsync(
+            CloudEnvironment cloudEnvironment,
+            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            Subscription subscription,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Completes the start of a shutdown environment.
@@ -190,5 +198,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentOptions cloudEnvironmentOptions,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets all environments under the given Azure subscription.
+        /// </summary>
+        /// <param name="subscription">Required Azure subscription.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
+        Task<IEnumerable<CloudEnvironment>> ListBySubscriptionAsync(Subscription subscription, IDiagnosticsLogger logger);
     }
 }

@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
@@ -27,6 +28,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Partners;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
@@ -49,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private readonly ITokenProvider tokenProvider;
         private readonly IMapper mapper;
         private readonly ISystemConfiguration systemConfiguration;
+        private readonly ISubscriptionManager subscriptionManager;
         private readonly ICurrentUserProvider currentUserProvider;
 
         /// <summary>
@@ -59,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="mapper">The IMapper interface.</param>
         /// <param name="environmentManager">The IEnvironmentManager interface.</param>
         /// <param name="systemConfiguration">The ISystemConfiguration interface.</param>
+        /// <param name="subscriptionManager">The ISubscriptionManager interface.</param>
         /// <param name="currentUserProvider">Current user provider.</param>
         public SubscriptionsController(
             IPlanManager planManager,
@@ -66,6 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IMapper mapper,
             IEnvironmentManager environmentManager,
             ISystemConfiguration systemConfiguration,
+            ISubscriptionManager subscriptionManager,
             ICurrentUserProvider currentUserProvider)
         {
             this.planManager = planManager;
@@ -73,6 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             this.mapper = mapper;
             this.environmentManager = environmentManager;
             this.systemConfiguration = systemConfiguration;
+            this.subscriptionManager = subscriptionManager;
             this.currentUserProvider = currentUserProvider;
         }
 
@@ -194,6 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         $"Invalid location: ${resource.Location}");
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
                     var plan = new VsoPlan
                     {
                         Plan = new VsoPlanInfo
@@ -223,7 +230,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         plan.UserId = userId;
                     }
 
-                    var result = await planManager.CreateAsync(plan, logger);
+                    var subscription = await this.subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
+
+                    var result = await planManager.CreateAsync(plan, subscription, logger);
 
                     logger.AddVsoPlan(plan);
 
@@ -953,6 +962,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     return Task.FromResult<IActionResult>(new StatusCodeResult((int)HttpStatusCode.NotImplemented));
                 });
+        }
+
+        /// <summary>
+        /// Handles Subscription Lifecycle notifications.
+        /// // https://armwiki.azurewebsites.net/rpaas/sublifecycle.html.
+        /// </summary>
+        /// <param name="subscriptionId">subscription Id.</param>
+        /// <param name="providerNamespace">resource provider namespace.</param>
+        /// <param name="resourceType">resource type.</param>
+        /// <param name="rpSubscriptionNotification">JSON body request.</param>
+        /// <returns>IActionResult.</returns>
+        [HttpPut("{subscriptionId}/providers/{providerNamespace}/{resourceType}/SubscriptionLifeCycleNotification")]
+        public Task<IActionResult> OnSubscriptionLifeCycleNotification(
+            string subscriptionId,
+            string providerNamespace,
+            string resourceType,
+            [FromBody] RPSubscriptionNotification rpSubscriptionNotification)
+        {
+            return HttpContext.HttpScopeAsync<IActionResult>(
+                $"{LoggingBaseName}_subscription_notification",
+                async (logger) =>
+                {
+                    ValidationUtil.IsRequired(subscriptionId);
+                    ValidationUtil.IsRequired(providerNamespace);
+                    ValidationUtil.IsRequired(resourceType);
+                    ValidationUtil.IsRequired(rpSubscriptionNotification);
+                    ValidationUtil.IsRequired(rpSubscriptionNotification.State);
+                    ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
+                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+
+                    if (!Enum.TryParse(rpSubscriptionNotification.State, true, out SubscriptionStateEnum subscriptionStateEnum))
+                    {
+                        logger.AddValue("SubscriptionState", rpSubscriptionNotification.State);
+                        logger.LogErrorWithDetail("subscription_state_error", $"Subscription state could not be parsed.");
+                        return CreateErrorResponse("InvalidSubscriptionState", "InvalidSubscriptionState", HttpStatusCode.BadRequest);
+                    }
+
+                    var subscription = await subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
+
+                    subscription = await subscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, logger);
+
+                    return new StatusCodeResult((int)HttpStatusCode.OK);
+                },
+                (ex, logger) => Task.FromResult(CreateErrorResponse("UpdateSubscriptionFailed")),
+                swallowException: true);
         }
 
         /// <summary>

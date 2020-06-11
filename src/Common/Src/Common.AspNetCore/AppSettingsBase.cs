@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -34,6 +35,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public ServicePrincipalSettings ApplicationServicePrincipal { get; set; }
 
         /// <summary>
+        /// Gets or sets the First Party App settings.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public FirstPartyAppSettings FirstPartyAppSettings { get; set; }
+
+        /// <summary>
         /// Gets or sets the control-plane settings.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -43,6 +50,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// Gets or sets the SKU catalog settings.
         /// </summary>
         public SkuCatalogSettings SkuCatalogSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the per family quota settings.
+        /// </summary>
+        public IDictionary<string, IDictionary<string, int>> QuotaFamilySettings { get; set; }
 
         /// <summary>
         /// Gets or sets the Plan SKU catalog settings.

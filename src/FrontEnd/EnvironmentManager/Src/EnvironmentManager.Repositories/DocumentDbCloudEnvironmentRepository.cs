@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
@@ -236,6 +237,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
             var count = items.FirstOrDefault();
             return count;
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
+        {
+            // TODO: Make this query a direct match on a non-existant subscription field.
+            var query = new SqlQuerySpec(
+                @"SELECT *
+                FROM c
+                WHERE CONTAINS(c.planId, @subscription)",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@subscription", Value = subscriptionId },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger.NewChildLogger());
+            return items;
         }
     }
 }

@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
@@ -340,6 +341,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mapper = MockUtil.MockMapper();
             var configuration = new Mock<ISystemConfiguration>();
             var tokenProvider = new Mock<ITokenProvider>();
+            var subscriptionManager = new Mock<ISubscriptionManager>();
             var currentUserProvider = new Mock<ICurrentUserProvider>();
 
             var controller = new SubscriptionsController(
@@ -348,6 +350,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 mapper,
                 environmentManager,
                 configuration.Object,
+                subscriptionManager.Object,
                 currentUserProvider.Object);
 
             var logger = new Mock<IDiagnosticsLogger>();
@@ -397,11 +400,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                        ) ?? Enumerable.Empty<VsoPlan>()
                );
 
-            mock.Setup(x => x.CreateAsync(It.IsAny<VsoPlan>(), It.IsAny<IDiagnosticsLogger>()))
-                .Callback((VsoPlan plan, IDiagnosticsLogger logger) => knownPlans.Add(plan))
+            mock.Setup(x => x.CreateAsync(It.IsAny<VsoPlan>(), It.IsAny<Subscription>(), It.IsAny<IDiagnosticsLogger>()))
+                .Callback((VsoPlan plan, Subscription subscription, IDiagnosticsLogger logger) => knownPlans.Add(plan))
                 .ReturnsAsync
                 (
-                    (VsoPlan plan, IDiagnosticsLogger logger) => new Plans.Contracts.PlanManagerServiceResult { VsoPlan = plan, }
+                    (VsoPlan plan, Subscription sub, IDiagnosticsLogger logger) => new Plans.Contracts.PlanManagerServiceResult { VsoPlan = plan, }
                 );
 
             mock.Setup(x => x.IsPlanCreationAllowedAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))

@@ -58,6 +58,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         [JsonProperty(Required = Required.Always)]
         public string LeaseContainerName { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether if the environment per plan check is enabled.
+        /// </summary>
+        public bool DefaultComputeCheckEnabled { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -156,6 +161,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:environment-failed-worker-enabled", logger, DefaultEnvironmentFailedWorkerEnabled);
+        }
+
+        /// <summary>
+        /// Getos or sets the Compute Check.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> ComputeCheckEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:compute-check-enabled", logger, DefaultComputeCheckEnabled);
         }
     }
 }

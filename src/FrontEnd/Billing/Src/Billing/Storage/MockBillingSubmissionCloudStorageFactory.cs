@@ -7,6 +7,9 @@ using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Factory used to generate per location storage clients.
+    /// </summary>
     public class MockBillingSubmissionCloudStorageFactory : IBillingSubmissionCloudStorageFactory
     {
         /// <inheritdoc/>

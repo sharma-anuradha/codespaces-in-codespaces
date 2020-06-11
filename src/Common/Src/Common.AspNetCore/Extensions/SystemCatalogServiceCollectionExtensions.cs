@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -19,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         /// <param name="dataPlaneSettings">The data plane settings.</param>
         /// <param name="skuCatalogSettings">The sku catalog settings.</param>
         /// <param name="planSkuCatalogSettings">The plan sku catalog settings.</param>
+        /// <param name="quotaFamilySettings"> The quota family settings.</param>
         /// <param name="applicationServicePrincipalSettings">The default application service principal. Can be null.</param>
         /// <returns>The service collection instance.</returns>
         public static IServiceCollection AddSystemCatalog(
@@ -26,6 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
             DataPlaneSettings dataPlaneSettings,
             SkuCatalogSettings skuCatalogSettings,
             PlanSkuCatalogSettings planSkuCatalogSettings,
+            IDictionary<string, IDictionary<string, int>> quotaFamilySettings,
             ServicePrincipalSettings applicationServicePrincipalSettings)
         {
             Requires.NotNull(serviceCollection, nameof(serviceCollection));
@@ -48,6 +51,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
             // The Plan SKU Catalog
             serviceCollection.Configure<PlanSkuCatalogOptions>(x => x.Settings = planSkuCatalogSettings);
             serviceCollection.AddSingleton<IPlanSkuCatalog, PlanSkuCatalog>();
+
+            // Add the Quota Family catalog
+            serviceCollection.Configure<QuotaFamilySettingsOptions>(x => x.Settings = quotaFamilySettings);
+            serviceCollection.AddSingleton<IQuotaFamilyCatalog, QuotaFamilyCatalog>();
 
             // The composite System Catlog
             serviceCollection.AddSingleton<ISystemCatalog, SystemCatalogProvider>();

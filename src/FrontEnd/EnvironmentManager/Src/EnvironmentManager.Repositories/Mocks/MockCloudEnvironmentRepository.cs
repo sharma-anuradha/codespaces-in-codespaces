@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks
@@ -44,6 +45,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public Task<int> GetEnvironmentsArchiveJobActiveCountAsync(AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
+        {
+            return GetWhereAsync(t => t.PlanId.Contains(subscriptionId), logger.NewChildLogger());
         }
     }
 }

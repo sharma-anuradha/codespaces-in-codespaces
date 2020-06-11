@@ -84,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 DefaultMaxPlansPerSubscription = defaultCount,
                 DefaultAutoSuspendDelayMinutesOptions = new int[] { 0, 5, 30, 120 },
             };
-            var environmentSettings = new EnvironmentManagerSettings() { DefaultMaxEnvironmentsPerPlan = defaultCount };
+            var environmentSettings = new EnvironmentManagerSettings() { DefaultMaxEnvironmentsPerPlan = defaultCount, DefaultComputeCheckEnabled = false };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
             mockSystemConfiguration
@@ -107,7 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var skuMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
             skuMock.Setup((s) => s.ComputeOS).Returns(ComputeOS.Linux);
-
+            skuMock.Setup(s => s.ComputeSkuCores).Returns(defaultCount);
+            skuMock.Setup(s => s.ComputeSkuFamily).Returns("standardDSv3Family");
             var skuDictionary = new Dictionary<string, ICloudEnvironmentSku>
             {
                 ["test"] = skuMock.Object,
@@ -137,7 +138,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentRepairWorkflows,
                 this.resourceAllocationManager,
                 this.workspaceManager,
-                this.subscriptionManager,
                 this.secretStoreManager,
                 this.resourceSelector);
         }
@@ -163,6 +163,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     CallbackUriFormat = testCallbackUriFormat,
                 },
                 testPlan,
+                new Subscription()
+                {
+                    Id = testPlan.Subscription,
+                    QuotaId = "testQuotaValue",
+                },
                 this.logger);
 
             return serviceResult;

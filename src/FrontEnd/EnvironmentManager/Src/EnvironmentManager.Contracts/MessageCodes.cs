@@ -110,5 +110,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Restoring From Archive.
         /// </summary>
         EnvironmentArchived = 19,
+
+        /// <summary>
+        /// The subscription state is not active.
+        /// </summary>
+        SubscriptionStateIsNotRegistered = 20,
     }
 }
