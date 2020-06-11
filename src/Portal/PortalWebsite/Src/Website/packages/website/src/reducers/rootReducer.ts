@@ -8,6 +8,7 @@ import { githubAuthentication } from './githubAuthenticationReducer';
 import { azDevAuthentication } from './azDevAuthenticationReducer';
 import { userInfo } from './userInfo';
 import { plansReducer } from './plans-reducer';
+import { secrets } from './secrets';
 import { testReducer as __test } from './testReducer';
 
 import { BaseAction } from '../actions/middleware/types';
@@ -26,6 +27,7 @@ const reducers = {
     azDevAuthentication,
     userInfo,
     plans: plansReducer,
+    secrets,
     __test,
 };
 

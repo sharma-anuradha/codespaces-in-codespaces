@@ -42,6 +42,17 @@ export { localStorageKeychain } from './keychain/localstorageKeychain';
 export { enhanceEncryptionKeys } from './keychain/enhanceEncryptionKeys';
 export { IEnvironment, EnvironmentStateInfo, ILocalEnvironment } from './interfaces/IEnvironment';
 export { ILiveShareClient, IWorkspaceInfo, IWorkspaceAccess } from './interfaces/ILiveShareClient';
+export {
+    ISecret,
+    ICreateSecretRequest,
+    IUpdateSecretRequest,
+    SecretScope,
+    SecretType,
+    FilterType,
+    ISecretFilter,
+    SecretAction,
+    SecretErrorCodes,
+} from './interfaces/ISecret';
 
 import * as vsls from './interfaces/vsls';
 export { vsls };
@@ -73,7 +84,7 @@ export { TelemetryService } from './telemetry/TelemetryService';
 export { cleanupPII, cleanupPIIForExternal } from './telemetry/cleanupPII';
 
 // constants
-import { SECOND_MS, MINUTE_MS, HOUR_MS, DAY_MS, } from './constants';
+import { SECOND_MS, MINUTE_MS, HOUR_MS, DAY_MS } from './constants';
 
 export const timeConstants = { SECOND_MS, MINUTE_MS, HOUR_MS, DAY_MS };
 export { KNOWN_VSO_HOSTNAMES } from './constants';

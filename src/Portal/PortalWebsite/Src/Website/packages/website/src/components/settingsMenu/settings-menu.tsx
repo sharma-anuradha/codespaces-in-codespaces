@@ -22,14 +22,15 @@ import { deletePlan } from '../../actions/deletePlan';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { useTranslation } from 'react-i18next';
 import { ActivePlanInfo } from '../../reducers/plans-reducer';
-
+import { injectMessageParametersJSX } from '../../utils/injectMessageParameters';
 import { getPlanEnvironments } from '../environments/environments';
+
 import { PortalLayout } from '../portalLayout/portalLayout';
 import { PlanSelector } from '../planSelector/plan-selector';
 import { Loader } from '../loader/loader';
+import { SecretsList } from '../secrets/secrets-list';
 
 import './settings-menu.css';
-import { injectMessageParametersJSX } from 'website/src/utils/injectMessageParameters';
 
 const setTelemetryVSCodeConfig = () => {
     const vscodeConfig = getVSCodeVersion();
@@ -50,18 +51,21 @@ interface IDeletePlanWarningMessageProps {
 function DeletePlanWarningMessage(props: IDeletePlanWarningMessageProps) {
     const { t: translation } = useTranslation();
     if (props.selectedPlan) {
-        const codespacesElement =props.environments.length == 1
-        ? ( <span>
-                <b> 1</b> Codespace
-            </span>)
-        : ( <span>
-                <b> {props.environments.length}</b> Codespaces
-            </span>);
-        
+        const codespacesElement =
+            props.environments.length == 1 ? (
+                <span>
+                    <b> 1</b> {translation('codespace')}
+                </span>
+            ) : (
+                <span>
+                    <b> {props.environments.length}</b> {translation('codespaces')}
+                </span>
+            );
+
         const deleteWarning = injectMessageParametersJSX(
             translation('deletePlanWarning'),
             <b>{props.selectedPlan.name}</b>,
-            codespacesElement,
+            codespacesElement
         );
         return (
             <div>
@@ -71,7 +75,7 @@ function DeletePlanWarningMessage(props: IDeletePlanWarningMessageProps) {
             </div>
         );
     }
-    return <></>
+    return null;
 }
 
 function PlanSelectorWrapper(props: IPlanSelectorWrapperProps) {
@@ -131,7 +135,6 @@ export function SettingsMenu(props: RouteComponentProps) {
         [selectedPlan]
     );
 
-
     return (
         <PortalLayout hideNavigation={isHostedOnGithub()}>
             <div className='settings-menu ms-Grid-row ms-Fabric'>
@@ -139,7 +142,7 @@ export function SettingsMenu(props: RouteComponentProps) {
 
                 {isDeletingPlan && (
                     <div className='settings-menu__overlay'>
-                        <Loader message={translation('deletingPlan')} translation={translation}/>
+                        <Loader message={translation('deletingPlan')} translation={translation} />
                     </div>
                 )}
 
@@ -198,6 +201,8 @@ export function SettingsMenu(props: RouteComponentProps) {
                     text={translation('delete')}
                 />
                 <div className='vsonline-settings-menu__section vsonline-settings-menu__separator' />
+                <SecretsList />
+                <div className='vsonline-settings-menu__section vsonline-settings-menu__separator' />
                 <div id='target'></div>
             </div>
             <Dialog
@@ -230,7 +235,10 @@ export function SettingsMenu(props: RouteComponentProps) {
                         onClick={() => deleteSelectedPlan(selectedPlan)}
                         text={translation('confirm')}
                     />
-                    <DefaultButton onClick={() => setShowWarning(false)} text={translation('cancel')} />
+                    <DefaultButton
+                        onClick={() => setShowWarning(false)}
+                        text={translation('cancel')}
+                    />
                 </DialogFooter>
             </Dialog>
         </PortalLayout>

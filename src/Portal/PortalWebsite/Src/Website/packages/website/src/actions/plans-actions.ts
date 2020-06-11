@@ -10,6 +10,7 @@ import { useActionContext } from './middleware/useActionContext';
 import { ActivePlanInfo } from '../reducers/plans-reducer';
 import { getLocation } from './locations-actions';
 import { logout } from './logout';
+import { fetchSecrets } from './fetchSecrets';
 
 export const selectPlanActionType = 'async.plan.select';
 export const selectPlanSuccessActionType = 'async.plan.select.success';
@@ -70,6 +71,8 @@ export const selectPlan = async (plan: IPlan | null) => {
                 availableSkus: (locationInfo && locationInfo.skus) || [],
             };
 
+            await dispatch(fetchSecrets(plan.id));
+
             dispatch(selectPlanSuccessAction(activePlan));
         } else {
             dispatch(selectPlanSuccessAction(null));
@@ -87,7 +90,7 @@ export async function getPlans() {
     const dispatch = useDispatch();
     const actionContext = useActionContext();
 
-    const { configuration } = actionContext.state;
+    const { configuration, plans } = actionContext.state;
 
     if (!configuration) {
         throw new Error('No configuration set, aborting.');
@@ -109,18 +112,15 @@ export async function getPlans() {
 
     try {
         if (plansList.length) {
-            const defaultPlan = plansList[0];
-            const locationInfo = await getLocation(defaultPlan.location, defaultPlan?.id);
-
-            dispatch(
-                getPlansSuccessAction(plansList, {
-                    ...defaultPlan,
-                    availableSkus: (locationInfo && locationInfo.skus) || [],
-                })
-            );
-        } else {
-            dispatch(getPlansSuccessAction(plansList));
+            if (!plans.selectedPlan) {
+                const defaultPlan = plansList[0];
+                await dispatch(selectPlan(defaultPlan));
+            }
+            else {
+                await dispatch(fetchSecrets(plans.selectedPlan.id));
+            }
         }
+        dispatch(getPlansSuccessAction(plansList));
 
         return plansList;
     } catch (err) {
