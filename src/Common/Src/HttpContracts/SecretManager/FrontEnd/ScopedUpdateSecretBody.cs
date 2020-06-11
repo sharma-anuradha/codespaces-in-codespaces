@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Secre
         ///     Length must be between 1 and 200 charatcers.
         /// </summary>
         [RegularExpression("^(?!CLOUDENV.*$)(?!CODESPACE.*$)[a-zA-Z_][a-zA-Z0-9_]{0,199}$")]
-        [JsonProperty(Required = Required.Always, PropertyName = "secretName")]
+        [JsonProperty(Required = Required.Default, PropertyName = "secretName")]
         public string SecretName { get; set; }
 
         /// <summary>
