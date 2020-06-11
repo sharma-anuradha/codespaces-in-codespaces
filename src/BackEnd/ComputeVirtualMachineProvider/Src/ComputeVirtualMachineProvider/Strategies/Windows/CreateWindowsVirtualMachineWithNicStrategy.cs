@@ -55,7 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
              string storageAccountAccessKey,
              string vmInitScriptFileUri,
              string userName,
-             IDictionary<string, object> initScriptParametersBlob)
+             IDictionary<string, object> initScriptParametersBlob,
+             IDiagnosticsLogger logger)
         {
             var networkInterface = input.CustomComponents.Where(c => c.ComponentType == ResourceType.NetworkInterface).Single();
             initScriptParametersBlob["firstBoot"] = "true";

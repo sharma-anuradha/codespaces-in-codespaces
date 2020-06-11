@@ -4,6 +4,9 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
+    /// <summary>
+    /// Provides auto generated resource names for compute components.
+    /// </summary>
     public static class VirtualMachineResourceNames
     {
         /// <summary>

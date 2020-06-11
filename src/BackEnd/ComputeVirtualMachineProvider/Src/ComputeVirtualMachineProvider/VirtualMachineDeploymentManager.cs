@@ -92,6 +92,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         }
 
         /// <inheritdoc/>
+        public async Task<OperationState> UpdateTagsAsync(
+            VirtualMachineProviderUpdateTagsInput input,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            return await logger.OperationScopeAsync(
+                $"{LogBase}_update_tags",
+                async (childLogger) =>
+                {
+                    var azure = (input.CustomComponents != default &&
+                    input.CustomComponents.Any(c => c.ComponentType == ResourceType.NetworkInterface)) ?
+                        await ClientFPAFactory.GetAzureClientAsync(input.VirtualMachineResourceInfo.SubscriptionId) :
+                        await ClientFactory.GetAzureClientAsync(input.VirtualMachineResourceInfo.SubscriptionId);
+
+                    var virtualMachine = await azure.VirtualMachines.GetByResourceGroupAsync(input.VirtualMachineResourceInfo.ResourceGroup, input.VirtualMachineResourceInfo.Name);
+                    var mergedTags = GetMergedTags(virtualMachine.Tags, input.AdditionalComputeResourceTags);
+                    await virtualMachine.Update()
+                            .WithTags(mergedTags)
+                            .ApplyAsync();
+
+                    return OperationState.Succeeded;
+                });
+        }
+
+        /// <inheritdoc/>
         public Task<(OperationState OperationState, NextStageInput NextInput)> BeginCreateComputeAsync(
             VirtualMachineProviderCreateInput input,
             IDiagnosticsLogger logger)
@@ -219,7 +246,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 {
                     TrackingId = trackingId,
                     AzureResourceInfo = input.AzureResourceInfo,
-                    Version = 1,
+                    Version = NextStageInput.CurrentVersion,
                 });
             }
             catch (Exception ex)
@@ -236,7 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             try
             {
-                if (input.Version == 1)
+                if (input.Version == NextStageInput.CurrentVersion)
                 {
                     return await CheckDeleteComputeStatusVer1Async(input, logger);
                 }
@@ -244,6 +271,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 {
                     throw new ArgumentException($"{nameof(input)} version {input.Version} is not valid.");
                 }
+            }
+            catch (ArgumentException)
+            {
+                throw;
             }
             catch (AggregateException ex)
             {
@@ -258,7 +289,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 }
 
                 logger.LogErrorWithDetail($"{LogBase}__error", s.ToString());
-                NextStageInput nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1);
+                var nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1)
+                {
+                    Version = NextStageInput.CurrentVersion,
+                };
                 if (input.RetryAttempt < 5)
                 {
                     return (OperationState.InProgress, nextStageInput);
@@ -396,6 +430,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return Task.CompletedTask;
         }
 
+        private static IDictionary<string, string> GetMergedTags(IReadOnlyDictionary<string, string> existingTags, IDictionary<string, string> newTags)
+        {
+            var mergedTags = new Dictionary<string, string>();
+
+            if (existingTags != default)
+            {
+                foreach (var tag in existingTags)
+                {
+                    mergedTags.Add(tag.Key, tag.Value);
+                }
+            }
+
+            if (newTags != default)
+            {
+                foreach (var tag in newTags)
+                {
+                    // Overwrites.
+                    mergedTags[tag.Key] = tag.Value;
+                }
+            }
+
+            return mergedTags;
+        }
+
         private async Task<(OperationState OperationState, NextStageInput NextInput)> CheckDeleteComputeStatusVer1Async(NextStageInput input, IDiagnosticsLogger logger)
         {
             var (computeVmLocation, resourceDeletionPlan) = JsonConvert
@@ -513,7 +571,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 TrackingId = trackingId,
                 AzureResourceInfo = input.AzureResourceInfo,
-                Version = 1,
+                Version = NextStageInput.CurrentVersion,
             });
         }
     }

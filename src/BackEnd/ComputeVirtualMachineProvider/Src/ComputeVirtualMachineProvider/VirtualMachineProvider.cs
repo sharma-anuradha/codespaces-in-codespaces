@@ -219,5 +219,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 },
                 swallowException: true);
         }
+
+        /// <inheritdoc/>
+        public Task<VirtualMachineProviderUpdateTagsResult> UpdateTagsAsync(
+            VirtualMachineProviderUpdateTagsInput input,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(logger, nameof(logger));
+
+            return logger.OperationScopeAsync(
+                 "virtual_machine_compute_provider_update_tags_compute",
+                 async (childLogger) =>
+                 {
+                     var updateTagsResult = await manager.UpdateTagsAsync(input, childLogger.NewChildLogger());
+                     var result = new VirtualMachineProviderUpdateTagsResult()
+                     {
+                         Status = updateTagsResult,
+                     };
+
+                     return result;
+                 },
+                 (ex, childLogger) =>
+                 {
+                     var result = new VirtualMachineProviderUpdateTagsResult() { Status = OperationState.Failed, ErrorReason = ex.Message };
+                     childLogger.FluentAddValue(nameof(result.Status), result.Status.ToString())
+                        .FluentAddValue(nameof(result.ErrorReason), result.ErrorReason);
+                     return Task.FromResult(result);
+                 },
+                 swallowException: true);
+        }
     }
 }

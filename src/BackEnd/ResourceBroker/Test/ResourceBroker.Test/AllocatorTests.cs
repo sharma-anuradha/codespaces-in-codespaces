@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -59,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             {
                 MinimumVersion = "1.2.3.4"
             };
+            var computeProvider = new Mock<IComputeProvider>().Object;
 
             var allocStrategy = new AllocationOSDiskStrategy(
                 resourceRepository,
@@ -68,11 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 taskHelper,
                 mapper,
                 diskProvider,
-                agentSettings);
+                agentSettings,
+                computeProvider);
 
             var allocateInputOSDisk = new AllocateInput()
             {
-                Type =  ResourceType.OSDisk,
+                Type = ResourceType.OSDisk,
                 Location = VsSaaS.Common.AzureLocation.WestUs2,
             };
 

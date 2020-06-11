@@ -114,12 +114,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
                             .WithTags(resourceTags)
                             .ApplyAsync();
 
-                    // Updates VM with component resource id, so it does not delete the os disk.
-                    var mergedTags = GetMergedTags(virtualMachine.Tags, input.AdditionalComputeResourceTags);
-                    await virtualMachine.Update()
-                            .WithTags(mergedTags)
-                            .ApplyAsync();
-
                     return new DiskProviderAcquireOSDiskResult()
                     {
                         AzureResourceInfo = new AzureResourceInfo()
@@ -170,30 +164,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider
                 QueueResourceInfo = continuation.QueueAzureResourceInfo,
                 ContinuationToken = JsonConvert.SerializeObject(nextContinuation),
             };
-        }
-
-        private static IDictionary<string, string> GetMergedTags(IReadOnlyDictionary<string, string> existingTags, IDictionary<string, string> newTags)
-        {
-            var mergedTags = new Dictionary<string, string>();
-
-            if (existingTags != default)
-            {
-                foreach (var tag in existingTags)
-                {
-                    mergedTags.Add(tag.Key, tag.Value);
-                }
-            }
-
-            if (newTags != default)
-            {
-                foreach (var tag in newTags)
-                {
-                    // Overwrites.
-                    mergedTags[tag.Key] = tag.Value;
-                }
-            }
-
-            return mergedTags;
         }
 
         private async Task<DiskProviderDeleteResult> CheckAttachedDiskStateAsync(

@@ -54,7 +54,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             string storageAccountAccessKey,
             string vmInitScriptFileUri,
             string userName,
-            IDictionary<string, object> initScriptParametersBlob)
+            IDictionary<string, object> initScriptParametersBlob,
+            IDiagnosticsLogger logger)
         {
             var storageProfile = new StorageProfile()
             {

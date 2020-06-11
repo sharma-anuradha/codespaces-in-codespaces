@@ -55,7 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
              string storageAccountAccessKey,
              string vmInitScriptFileUri,
              string userName,
-             IDictionary<string, object> initScriptParametersBlob)
+             IDictionary<string, object> initScriptParametersBlob,
+             IDiagnosticsLogger logger)
         {
             var networkInterface = input.CustomComponents.Where(c => c.ComponentType == ResourceType.NetworkInterface).Single();
             var b64ParametersBlob = EncodeScriptParameters(initScriptParametersBlob);
@@ -83,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             }
 
             // TODO:: May move to disk provider.
-            var disk = await ValidateOSDisk(input, osDiskInfo);
+            var disk = await ValidateOSDisk(input, osDiskInfo, logger);
             var storageProfile = new StorageProfile()
             {
                 OsDisk = new OSDisk(

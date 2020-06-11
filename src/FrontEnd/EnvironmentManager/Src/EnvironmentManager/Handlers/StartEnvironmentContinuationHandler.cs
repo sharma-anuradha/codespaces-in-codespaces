@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public static string DefaultQueueTarget => "JobStartEnvironment";
 
         /// <inheritdoc/>
-        protected override string LogBaseName => DefaultQueueTarget;
+        protected override string LogBaseName => EnvironmentLoggingConstants.ContinuationTaskMessageHandlerStartEnv;
 
         /// <inheritdoc/>
         protected override string DefaultTarget => DefaultQueueTarget;
@@ -98,6 +98,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = $"FailedEnvironmentStartState record in invalid state '{record.Value.State}'" };
             }
+
+            // Add environment id and resource ids to logger
+            LogResource(operationInput, logger);
 
             // Run operation
             switch (operationInput.CurrentState)

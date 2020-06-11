@@ -17,6 +17,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Abstractions;
@@ -45,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         /// <param name="mapper">Mapper.</param>
         /// <param name="diskProvider">Disk provider.</param>
         /// <param name="agentSettings">Agent settings.</param>
+        /// <param name="computeProvider">Compute provider.</param>
         public AllocationOSDiskStrategy(
             IResourceRepository resourceRepository,
             IResourcePoolManager resourcePool,
@@ -53,7 +56,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             ITaskHelper taskHelper,
             IMapper mapper,
             IDiskProvider diskProvider,
-            AgentSettings agentSettings)
+            AgentSettings agentSettings,
+            IComputeProvider computeProvider)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
@@ -63,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             DiskProvider = Requires.NotNull(diskProvider, nameof(diskProvider));
             AgentSettings = Requires.NotNull(agentSettings, nameof(agentSettings));
+            ComputeProvider = Requires.NotNull(computeProvider, nameof(computeProvider));
         }
 
         private IResourceRepository ResourceRepository { get; }
@@ -80,6 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         private IDiskProvider DiskProvider { get; }
 
         private AgentSettings AgentSettings { get; }
+
+        private IComputeProvider ComputeProvider { get; }
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
@@ -186,7 +193,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             };
 
             // Acquire OS disk information.
-            // Updates ComputeVM tags as well.
             var diskResourceResult = await DiskProvider.AcquireOSDiskAsync(
                 new DiskProviderAcquireOSDiskInput()
                 {
@@ -234,6 +240,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
                         computeResource = await ResourceRepository.UpdateAsync(computeResource, innerLogger.NewChildLogger());
                     });
+
+            // Updates ComputeVM tags to include OS Disk record id.
+            await ComputeProvider.UpdateTagsAsync(
+               new VirtualMachineProviderUpdateTagsInput()
+               {
+                   VirtualMachineResourceInfo = computeResource.AzureResourceInfo,
+                   CustomComponents = computeResource.Components?.Items?.Values.ToList(),
+                   AdditionalComputeResourceTags = computeResourceTags,
+               },
+               logger.NewChildLogger());
 
             return (computeResource, osDiskResource);
         }

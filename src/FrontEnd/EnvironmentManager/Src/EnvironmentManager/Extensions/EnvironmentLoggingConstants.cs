@@ -45,6 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         public const string ContinuationTaskMessageHandlerArchive = "continuation_task_message_handler_archive";
 
         /// <summary>
+        /// Continuation Task Message Handler Start Environment.
+        /// </summary>
+        public const string ContinuationTaskMessageHandlerStartEnv = "continuation_task_message_handler_start_environment";
+
+        /// <summary>
         /// Log Continuation Task Worker Pool Manager name.
         /// </summary>
         public const string ContinuationTaskWorkerPoolManager = "continuation_task_worker_pool_manager";

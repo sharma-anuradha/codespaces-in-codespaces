@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderStartComputeResult.cs" company="Microsoft">
+﻿// <copyright file="VirtualMachineProviderUpdateTagsResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,9 +7,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Models
 {
     /// <summary>
-    /// VirtualMachine Provider Start Compute Result.
+    /// VirtualMachine Provider UpdateTags Result.
     /// </summary>
-    public class VirtualMachineProviderStartComputeResult : ContinuationResult
+    public class VirtualMachineProviderUpdateTagsResult : ContinuationResult
     {
     }
 }

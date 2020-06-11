@@ -62,5 +62,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         ///     of the create request.
         /// </returns>
         Task<VirtualMachineProviderShutdownResult> ShutdownAsync(VirtualMachineProviderShutdownInput input, IDiagnosticsLogger diagnosticsLogger);
+
+        /// <summary>
+        /// Update compute tags.
+        /// </summary>
+        /// <param name="input">inpute.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<VirtualMachineProviderUpdateTagsResult> UpdateTagsAsync(VirtualMachineProviderUpdateTagsInput input, IDiagnosticsLogger logger);
     }
 }

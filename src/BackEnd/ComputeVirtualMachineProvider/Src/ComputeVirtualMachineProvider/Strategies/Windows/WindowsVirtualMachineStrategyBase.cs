@@ -114,7 +114,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                      storageAccountAccessKey,
                      vmInitScriptFileUri,
                      userName,
-                     initScriptParametersBlob);
+                     initScriptParametersBlob,
+                     logger);
 
                 await PreCreateTaskAsync(input, logger);
 
@@ -180,10 +181,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// </summary>
         /// <param name="input">input.</param>
         /// <param name="osDiskInfo">os disk info.</param>
+        /// <param name="logger">logger.</param>
         /// <returns>result.</returns>
-        protected async Task<IDisk> ValidateOSDisk(VirtualMachineProviderCreateInput input, AzureResourceInfo osDiskInfo)
+        protected async Task<IDisk> ValidateOSDisk(VirtualMachineProviderCreateInput input, AzureResourceInfo osDiskInfo, IDiagnosticsLogger logger)
         {
-            var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription);
+            var azure = await ClientFactory.GetAzureClientAsync(input.AzureSubscription, logger);
             var disk = await azure.Disks.GetByResourceGroupAsync(osDiskInfo.ResourceGroup, osDiskInfo.Name);
 
             if (disk.IsAttachedToVirtualMachine)
@@ -205,6 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="vmInitScriptFileUri">vmInitScriptFileUri.</param>
         /// <param name="userName">userName.</param>
         /// <param name="initScriptParametersBlob">script parameters.</param>
+        /// <param name="logger">logger.</param>
         /// <returns>parameters.</returns>
         protected abstract Task<Dictionary<string, Dictionary<string, object>>> GetVMParametersAsync(
           VirtualMachineProviderCreateInput input,
@@ -214,7 +217,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
           string storageAccountAccessKey,
           string vmInitScriptFileUri,
           string userName,
-          IDictionary<string, object> initScriptParametersBlob);
+          IDictionary<string, object> initScriptParametersBlob,
+          IDiagnosticsLogger logger);
 
         /// <summary>
         /// Executes pre create task.

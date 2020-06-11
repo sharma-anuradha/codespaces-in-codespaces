@@ -56,7 +56,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             string storageAccountAccessKey,
             string vmInitScriptFileUri,
             string userName,
-            IDictionary<string, object> initScriptParametersBlob)
+            IDictionary<string, object> initScriptParametersBlob,
+            IDiagnosticsLogger logger)
         {
             var createWithOSDisk = input.CustomComponents.Any(x =>
                                            x.ComponentType == ResourceType.OSDisk &&
@@ -83,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             var osDiskInfo = input.CustomComponents.Single(x => x.ComponentType == ResourceType.OSDisk).AzureResourceInfo;
 
             // TODO:: May move to disk provider.
-            var disk = await ValidateOSDisk(input, osDiskInfo);
+            var disk = await ValidateOSDisk(input, osDiskInfo, logger);
             var storageProfile = new StorageProfile()
             {
                 OsDisk = new OSDisk(

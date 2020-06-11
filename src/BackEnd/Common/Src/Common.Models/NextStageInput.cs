@@ -13,13 +13,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
     public class NextStageInput
     {
         /// <summary>
+        /// Current version for tracking id.
+        /// </summary>
+        public static readonly int CurrentVersion = 1;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="NextStageInput"/> class.
         /// </summary>
         [JsonConstructor]
         public NextStageInput()
         {
             RetryAttempt = 0;
-            Version = 0;
         }
 
         /// <summary>
@@ -28,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
         /// <param name="trackingId">tracking id.</param>
         /// <param name="azureResourceInfo">Azure resource info.</param>
         public NextStageInput(string trackingId, AzureResourceInfo azureResourceInfo)
-            : this(trackingId, azureResourceInfo, 0)
+            : this(trackingId, azureResourceInfo, retryAttempt: 0)
         {
         }
 
@@ -43,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models
             TrackingId = trackingId;
             AzureResourceInfo = azureResourceInfo;
             RetryAttempt = retryAttempt;
+            Version = CurrentVersion;
         }
 
         /// <summary>

@@ -78,5 +78,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             VirtualMachineProviderShutdownInput input,
             int retryAttempt,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Update compute tags.
+        /// </summary>
+        /// <param name="input">input.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>result.</returns>
+        Task<OperationState> UpdateTagsAsync(
+            VirtualMachineProviderUpdateTagsInput input,
+            IDiagnosticsLogger logger);
     }
 }
