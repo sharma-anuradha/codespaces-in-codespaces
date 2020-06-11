@@ -38,6 +38,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string StampStorageAccountName { get; }
 
         /// <summary>
+        /// Gets the control-plane stamp service bus resource group name.
+        /// </summary>
+        string ServiceBusResourceGroupName { get; }
+
+        /// <summary>
         /// Gets the control-plane stamp service bus namespace name.
         /// </summary>
         string StampServiceBusNamespaceName { get; }

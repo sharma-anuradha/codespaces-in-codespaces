@@ -78,8 +78,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             $"{StampResourceGroupName}-sa".Replace("-", string.Empty).ToLowerInvariant();
 
         /// <inheritdoc/>
+        public string ServiceBusResourceGroupName =>
+            ControlPlaneStampSettings.ServiceBusResourceGroupName ?? StampResourceGroupName;
+
+        /// <inheritdoc/>
         public string StampServiceBusNamespaceName =>
-            $"{StampResourceGroupName}-service-bus";
+            ControlPlaneStampSettings.ServiceBusNamespaceName ?? $"{StampResourceGroupName}-service-bus";
 
         /// <remarks>
         /// This map will need to grow as we add new supported data-plane locations.

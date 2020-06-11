@@ -272,7 +272,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public async Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger)
         {
-            var resourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName;
+            var resourceGroup = ControlPlaneInfo.Stamp.ServiceBusResourceGroupName;
             var namespaceName = ControlPlaneInfo.Stamp.StampServiceBusNamespaceName;
 
             var cacheKey = $"serviceBusPrimaryKey:{resourceGroup}:{namespaceName}";

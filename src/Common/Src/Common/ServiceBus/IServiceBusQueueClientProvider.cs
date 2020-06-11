@@ -17,18 +17,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
         /// <summary>
         /// Gets the queue client for service bus queue operations.
         /// </summary>
+        /// <param name="queueName">The service bus queue name.</param>
+        /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The queue client instance.</returns>
         Task<IQueueClient> GetQueueClientAsync(string queueName, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the session client for service bus queue operations.
         /// </summary>
+        /// <param name="queueName">The service bus queue name.</param>
+        /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The queue client instance.</returns>
         Task<ISessionClient> GetSessionClientAsync(string queueName, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the sender client for service bus queue operations.
         /// </summary>
+        /// <param name="queueName">The service bus queue name.</param>
+        /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The message sender client instance.</returns>
         Task<IMessageSender> GetMessageSender(string queueName, IDiagnosticsLogger logger);
     }

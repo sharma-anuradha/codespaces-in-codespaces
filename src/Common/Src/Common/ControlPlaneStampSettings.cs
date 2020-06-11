@@ -29,6 +29,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string DnsHostName { get; set; }
 
         /// <summary>
+        /// Gets or sets the service bus resouce group name.
+        /// </summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public string ServiceBusResourceGroupName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the the service bus namespace name.
+        /// </summary>
+        [JsonProperty(Required = Required.AllowNull)]
+        public string ServiceBusNamespaceName { get; set; }
+
+        /// <summary>
         /// Gets or sets the list of supported data-plane locations.
         /// </summary>
         [JsonProperty(Required = Required.Always, ItemConverterType = typeof(StringEnumConverter))]
