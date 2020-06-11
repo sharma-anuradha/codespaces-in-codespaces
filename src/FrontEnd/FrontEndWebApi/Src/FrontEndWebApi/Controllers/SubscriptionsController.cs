@@ -694,7 +694,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         new[] { PlanAccessTokenScopes.ReadEnvironments, },
-                        HttpContext.User.Claims,
+                        (ClaimsIdentity)HttpContext.User.Identity,
                         expiration,
                         logger);
 
@@ -753,7 +753,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         new[] { PlanAccessTokenScopes.WriteEnvironments, },
-                        HttpContext.User.Claims,
+                        (ClaimsIdentity)HttpContext.User.Identity,
                         expiration,
                         logger);
 
@@ -812,7 +812,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         new[] { PlanAccessTokenScopes.ReadEnvironments, PlanAccessTokenScopes.DeleteEnvironments, },
-                        HttpContext.User.Claims,
+                        (ClaimsIdentity)HttpContext.User.Identity,
                         expiration,
                         logger);
 

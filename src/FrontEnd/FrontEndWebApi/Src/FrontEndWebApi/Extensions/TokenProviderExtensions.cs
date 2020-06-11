@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// <param name="provider">The token provider.</param>
         /// <param name="plan">The plan the token applies to.</param>
         /// <param name="scopes">The scope claim of the token.</param>
-        /// <param name="userClaims">The claims of the user the token is granted to.</param>
+        /// <param name="identity">The identity of the user the token is granted to.</param>
         /// <param name="requestedExpiration">The expiration of the token.</param>
         /// <param name="logger">logger.</param>
         /// <returns>security token.</returns>
@@ -39,27 +39,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
             this ITokenProvider provider,
             VsoPlan plan,
             string[] scopes,
-            IEnumerable<Claim> userClaims,
+            ClaimsIdentity identity,
             DateTime? requestedExpiration,
             IDiagnosticsLogger logger)
         {
-            Requires.NotNull(userClaims, nameof(userClaims));
+            Requires.NotNull(identity, nameof(identity));
 
-            var tid =
-                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.TenantId)?.Value ??
-                userClaims.FirstOrDefault((c) => c.Type == "http://schemas.microsoft.com/identity/claims/tenantid")?.Value;
+            var tid = identity.GetTenantId();
+            var oid = identity.GetObjectId();
+            var username = identity.GetPreferredUserName()
+                ?? identity.GetUserEmail(isEmailClaimRequired: false);
+            var displayName = identity.GetUserDisplayName();
 
-            var oid =
-                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.OId)?.Value ??
-                userClaims.FirstOrDefault((c) => c.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-
-            var username =
-                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.Username)?.Value ??
-                userClaims.FirstOrDefault((c) => c.Type == CustomClaims.UniqueName)?.Value;
-
-            var displayName = userClaims.FirstOrDefault((c) => c.Type == CustomClaims.DisplayName)?.Value;
-
-            var expiration = userClaims.FirstOrDefault((c) => c.Type == JwtRegisteredClaimNames.Exp)?.Value;
+            var expiration = identity.Claims.FirstOrDefault((c) => c.Type == JwtRegisteredClaimNames.Exp)?.Value;
             DateTime? sourceTokenExpiration = null;
             if (int.TryParse(expiration, out int secSinceEpoch))
             {

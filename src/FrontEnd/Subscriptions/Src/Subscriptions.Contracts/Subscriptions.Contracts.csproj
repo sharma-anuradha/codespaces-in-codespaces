@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.33.0" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Cosmos" Version="$(VsSaaSPackageVersion)" />
-    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="1.0.38" />
+    <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Common" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
