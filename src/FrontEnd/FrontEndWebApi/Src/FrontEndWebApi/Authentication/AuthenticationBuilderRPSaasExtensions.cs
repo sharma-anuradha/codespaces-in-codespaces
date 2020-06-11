@@ -219,7 +219,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
                 // Update the current user to the calling user instead of the calling service.
                 if (!context.HttpContext.SetUserContextFromClaimsPrincipal(
-                    armUserPrincipal, isEmailClaimRequired: true, out string errorMessage))
+                    armUserPrincipal, isEmailClaimRequired: false, out string errorMessage))
                 {
                     logger.AddErrorDetail(errorMessage).LogError("jwt_armuser_notvalid_claims");
                     context.Fail(errorMessage);
@@ -246,8 +246,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             var isMsa = IsArmMsaIdentity(armUserIdentity);
 
+            var userName = armUserIdentity.GetUserEmail(isEmailClaimRequired: false);
+            if (string.IsNullOrEmpty(userName))
+            {
+                if (httpContext.Request.Headers.ContainsKey(CodespaceUserTokenHeaderName))
+                {
+                    // An additional token was provided for updating the id map,
+                    // but id mapping isn't possible without an email claim.
+                    logger.LogError("jwt_armuser_missing_email");
+                    context.Fail("Cannot update identity map due to missing email claim.");
+                }
+                else
+                {
+                    // Allow the request to proceed without any id mapping.
+                    logger.LogWarning("jwt_armuser_missing_email");
+                }
+
+                return;
+            }
+
             var idMapRepository = httpContext.RequestServices.GetRequiredService<IIdentityMapRepository>();
-            var userName = armUserIdentity.GetUserEmail(true);
             var tenantId = armUserIdentity.GetTenantId();
             var idMap = await idMapRepository.GetByUserNameAsync(userName, tenantId, logger) ??
                 new IdentityMapEntity(userName, tenantId);
