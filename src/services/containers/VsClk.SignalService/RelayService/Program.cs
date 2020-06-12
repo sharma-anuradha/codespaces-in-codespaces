@@ -4,7 +4,7 @@
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.VsCloudKernel.SignalService;
 
 namespace Microsoft.VsCloudKernel.RelayService
 {
@@ -19,15 +19,7 @@ namespace Microsoft.VsCloudKernel.RelayService
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    config.SetBasePath(context.HostingEnvironment.ContentRootPath)
-                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-#if DEBUG
-                    .AddJsonFile("appsettings.Debug.json", optional: true)
-#else
-                    .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-#endif
-                    .AddEnvironmentVariables()
-                    .AddCommandLine(args);
+                    StartupUtils.ConfigureAppConfiguration(context, config, args);
                 })
                 .UseStartup<Startup>();
     }

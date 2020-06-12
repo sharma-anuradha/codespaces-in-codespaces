@@ -32,6 +32,11 @@ namespace Microsoft.VsCloudKernel.SignalService
         public const string PropertyDataId = "data";
 
         /// <summary>
+        /// Indicate a property to define a perf type when sending hub data.
+        /// </summary>
+        public const string PropertyAuditPerfTypeId = "perfType";
+
+        /// <summary>
         /// Create message properties based on a sequence id.
         /// </summary>
         /// <param name="sequenceId">The next sequence id.</param>

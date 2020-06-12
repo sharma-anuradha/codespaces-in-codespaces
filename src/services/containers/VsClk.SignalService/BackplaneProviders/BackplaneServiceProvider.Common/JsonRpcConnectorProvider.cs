@@ -73,7 +73,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         /// <inheritdoc/>
         public async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
-            using (await connectSemaphore.EnterAsync(cancellationToken))
+            using (await this.connectSemaphore.EnterAsync(cancellationToken))
             {
                 if (IsConnected)
                 {

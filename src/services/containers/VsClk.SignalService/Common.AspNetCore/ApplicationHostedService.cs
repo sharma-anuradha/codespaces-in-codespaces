@@ -5,6 +5,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -15,9 +17,12 @@ namespace Microsoft.VsCloudKernel.SignalService
     public class ApplicationHostedService<TBackplaneServicType> : BackgroundService
         where TBackplaneServicType : class, IHostedService
     {
-        public ApplicationHostedService(TBackplaneServicType hostedService)
+        private readonly ILogger logger;
+
+        public ApplicationHostedService(TBackplaneServicType hostedService, ILogger<ApplicationHostedService<TBackplaneServicType>> logger)
         {
             HostedService = Requires.NotNull(hostedService, nameof(hostedService));
+            this.logger = logger;
         }
 
         private TBackplaneServicType HostedService { get; }
@@ -29,9 +34,12 @@ namespace Microsoft.VsCloudKernel.SignalService
         }
 
         /// <inheritdoc/>
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            return HostedService.RunAsync(stoppingToken);
+            while (true)
+            {
+                await this.logger.InvokeWithUnhandledErrorAsync(() => HostedService.RunAsync(stoppingToken));
+            }
         }
     }
 }

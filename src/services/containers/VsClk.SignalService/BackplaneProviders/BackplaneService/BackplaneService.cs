@@ -20,7 +20,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// </summary>
     /// <typeparam name="TBackplaneManagerType">The backplane manager type.</typeparam>
     /// <typeparam name="TNotify">The notification type.</typeparam>
-    public class BackplaneService<TBackplaneManagerType, TNotify>
+    public abstract class BackplaneService<TBackplaneManagerType, TNotify> : IHostedService
         where TBackplaneManagerType : class, IBackplaneManagerBase
     {
         private readonly CancellationTokenSource disposeTokenSource = new CancellationTokenSource();
@@ -87,6 +87,45 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         {
             ServiceCounters?.OnInvokeMethod(GetType().Name, methodName, t);
         }
+
+        /// <inheritdoc/>
+        public abstract Task DisposeAsync();
+
+        /// <inheritdoc/>
+        public async Task RunAsync(CancellationToken stoppingToken)
+        {
+            const int TimespanUpdateSecs = 15;
+            const int TimespanUpdateTelemetrySecs = 60;
+
+            var updateMetricsCounter = new SecondsCounter(BackplaneManagerConst.UpdateMetricsSecs, TimespanUpdateSecs);
+            var updateTelemetryCounter = new SecondsCounter(TimespanUpdateTelemetrySecs, TimespanUpdateSecs);
+
+            ResetPerfCounters();
+            while (true)
+            {
+                // wait
+                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateSecs), stoppingToken);
+
+                // update aggregated metrics
+                if (updateMetricsCounter.Next())
+                {
+                    await UpdateBackplaneMetricsAsync(stoppingToken);
+                }
+
+                // update telemetry metrics
+                if (updateTelemetryCounter.Next())
+                {
+                    LogTelemetryMetrics();
+                    ResetPerfCounters();
+                }
+            }
+        }
+
+        protected abstract void LogTelemetryMetrics();
+
+        protected abstract Task UpdateBackplaneMetricsAsync(CancellationToken stoppingToken);
+
+        protected abstract void ResetPerfCounters();
 
         protected bool TrackDataChanged(DataChanged dataChanged, TrackDataChangedOptions options = TrackDataChangedOptions.None)
         {

@@ -16,6 +16,7 @@ enum HubMethods {
     JoinHub = 'JoinHubAsync',
     SendDataHubEx = 'SendDataHubExAsync',
     LeaveHub = 'LeaveHubAsync',
+    Update = 'UpdateAsync', 
 };
 
 export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProxy {
@@ -89,7 +90,7 @@ export class RelayServiceProxy extends HubProxyBase implements IRelayServiceProx
 
         if (relayHub) {
             if (relayHub.isDisconected) {
-                await relayHub.rejoin() 
+                await relayHub.rejoin(joinOptions) 
             }
         } else {
             relayHub = await this._joinHubInternal(
@@ -218,6 +219,10 @@ class RelayHubProxy implements IRelayHubProxy {
 
         await this.relayServiceProxy.send(HubMethods.SendDataHubEx, sendHubDataParam, dataArray);
         return 0;
+    }
+
+    public async update(properties: { [key: string]: any; }): Promise<void> {
+        await this.relayServiceProxy.invoke(HubMethods.Update, this.id, properties);
     }
 
     public dispose(): Promise<void> {

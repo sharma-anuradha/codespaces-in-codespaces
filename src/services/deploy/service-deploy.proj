@@ -1,0 +1,20 @@
+<Project DefaultTargets="deploy" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <bin>..\..\..\bin\release</bin>
+    <DeployDir>$(bin)\service-deploy</DeployDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <DeployFiles Include="$(MSBuildThisFileDirectory)\**\*.*" />
+  </ItemGroup>
+
+  <Target Name="deploy" >
+    <Message Text="Deploying files" />
+    <Copy
+        SourceFiles="@(DeployFiles)"
+        DestinationFolder="$(DeployDir)\%(RecursiveDir)"
+    />
+  </Target>
+
+  </Project>

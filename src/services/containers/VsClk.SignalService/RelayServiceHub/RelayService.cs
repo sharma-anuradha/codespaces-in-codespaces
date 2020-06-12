@@ -155,6 +155,8 @@ namespace Microsoft.VsCloudKernel.SignalService
             Dictionary<string, object> messageProperties,
             CancellationToken cancellationToken)
         {
+            var sw = Stopwatch.StartNew();
+
             Requires.NotNullOrEmpty(connectionId, nameof(connectionId));
             Requires.NotNullOrEmpty(hubId, nameof(hubId));
             Requires.NotNullOrEmpty(type, nameof(type));
@@ -173,6 +175,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                     messageProperties = messageProperties
                         .Where(kvp => !kvp.Key.StartsWith(RelayHubMessageProperties.PropertyAuditPrefixId))
                         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                    // track a perf type for this hub message
+                    if (auditProperties.TryGetValue(RelayHubMessageProperties.PropertyAuditPerfTypeId, out var perfType))
+                    {
+                        MethodPerf($"{nameof(SendDataHubAsync)}_{perfType}", TimeSpan.Zero);
+                    }
                 }
             }
 
@@ -198,6 +206,9 @@ namespace Microsoft.VsCloudKernel.SignalService
                     messageProperties);
                 await BackplaneManager.SendDataHubAsync(relayDataHub, cancellationToken);
             }
+
+            // Note: we want to track perf numbers by
+            MethodPerf($"{nameof(SendDataHubAsync)}_{type}", sw.Elapsed);
 
             return uniqueId;
         }

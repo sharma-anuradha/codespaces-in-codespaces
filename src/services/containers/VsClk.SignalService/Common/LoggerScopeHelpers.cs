@@ -21,6 +21,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
         public const string TotalMemoryProperty = "TotalMemory";
         public const string CpuUsageProperty = "CpuUsage";
 
+        private const string MethodUnhandledException = "UnhandledException";
+
         public static IDisposable BeginScope(this ILogger logger, params (string, object)[] scopes)
         {
             Requires.NotNull(logger, nameof(logger));
@@ -94,6 +96,26 @@ namespace Microsoft.VsCloudKernel.SignalService.Common
             using (var proc = Process.GetCurrentProcess())
             {
                 return (proc.WorkingSet64 / OneMb, GC.GetTotalMemory(false) / OneMb);
+            }
+        }
+
+        public static async Task<bool> InvokeWithUnhandledErrorAsync(this ILogger logger, Func<Task> callback, Func<string> contextCallback = null)
+        {
+            Assumes.NotNull(callback);
+
+            try
+            {
+                await callback();
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception error)
+            {
+                logger.LogMethodScope(LogLevel.Error, error, $"Unhandled exception on context:[{(contextCallback == null ? "null" : contextCallback())}]", MethodUnhandledException);
+                return false;
             }
         }
 

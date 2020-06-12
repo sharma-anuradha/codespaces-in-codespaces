@@ -50,6 +50,7 @@ export interface IRelayHubProxy extends IRelayDataHubProxy {
 
     sendData(sendOption: SendOption, targetParticipants: string[] | null, type: string, data: Uint8Array, properties?: { [key: string]: any; }, methodOption?: HubMethodOption): Promise<number>;
     rejoin(joinOptions?: JoinOptions): Promise<void>;
+    update(properties: { [key: string]: any; }): Promise<void>;
     dispose(): Promise<void>;
 }
 

@@ -3,7 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="SignalService\SignalService.csproj" />
     <ProjectReference Include="BackplaneProviders\BackplaneService\BackplaneService.csproj" />
-    <ProjectReference Include="SignalService\RelayService.csproj" />
+    <ProjectReference Include="RelayService\RelayService.csproj" />
   </ItemGroup>
 
 </Project>

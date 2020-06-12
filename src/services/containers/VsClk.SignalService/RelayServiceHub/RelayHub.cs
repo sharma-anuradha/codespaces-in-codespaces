@@ -241,9 +241,12 @@ namespace Microsoft.VsCloudKernel.SignalService
                     if (participantProperties != null)
                     {
                         // merge the properties
-                        foreach (var kvp in properties)
+                        if (properties != null)
                         {
-                            participantProperties[kvp.Key] = kvp.Value;
+                            foreach (var kvp in properties)
+                            {
+                                participantProperties[kvp.Key] = kvp.Value;
+                            }
                         }
                     }
                     else

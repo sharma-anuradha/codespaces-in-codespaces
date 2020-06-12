@@ -1,6 +1,11 @@
 
 export class RelayHubMessageProperties {
+    
     public static propertySequenceId = 'sequenceId';
+
+    public static propertyAuditPrefixId = 'audit-';
+
+    public static propertyAuditPerfTypeId = 'perfType';
 
     public static createMessageSequence(sequence: number): { [key: string]: any; } {
         return {

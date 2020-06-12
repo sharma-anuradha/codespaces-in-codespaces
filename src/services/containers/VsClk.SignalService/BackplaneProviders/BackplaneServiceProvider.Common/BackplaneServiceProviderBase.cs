@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.Services.Backplane.Common;
+using Microsoft.VsCloudKernel.SignalService.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
 {
@@ -51,9 +52,24 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         public async Task AttemptConnectAsync(CancellationToken cancellationToken)
         {
+            const int TimeoutRetryFailureMillisecs = 500;
+
             this.connectedTcs = new TaskCompletionSource<bool>();
-            await BackplaneConnectorProvider.AttemptConnectAsync(cancellationToken);
-            await BackplaneConnectorProvider.InvokeAsync<object>(RegisterServiceMethod, new object[] { ServiceType, HostServiceId }, cancellationToken);
+
+            while (true)
+            {
+                if (await Logger.InvokeWithUnhandledErrorAsync(async () =>
+                {
+                    await BackplaneConnectorProvider.AttemptConnectAsync(cancellationToken);
+                    await BackplaneConnectorProvider.InvokeAsync<object>(RegisterServiceMethod, new object[] { ServiceType, HostServiceId }, cancellationToken);
+                }))
+                {
+                    break;
+                }
+
+                // await after the unexpected failure
+                await Task.Delay(TimeoutRetryFailureMillisecs, cancellationToken);
+            }
 
             this.connectedTcs.TrySetResult(true);
         }
@@ -62,7 +78,7 @@ namespace Microsoft.VsCloudKernel.SignalService
         {
             if (!IsConnected)
             {
-                if (this.numberOfAttempts > MaxAttemptsToWait)
+                if (this.connectedTcs == null || this.numberOfAttempts > MaxAttemptsToWait)
                 {
                     throw new BackplaneNotAvailableException();
                 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="AuthenticateProfileServiceExtension.cs" company="Microsoft">
+﻿// <copyright file="JwtBearerOptionsPostConfigureOptions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.VsCloudKernel.SignalService.Common;
 using Newtonsoft.Json.Linq;
 
@@ -20,38 +21,48 @@ namespace Microsoft.VsCloudKernel.SignalService
 {
     /// <summary>
     /// Helper class to enable authentication based on an external profile service Uri
-    /// The service Uri will reject non authroized token but also return the proper normalized userId
+    /// The service Uri will reject non authroized token but also return the proper normalized userId.
     /// </summary>
-    public static class AuthenticateProfileServiceExtension
+    public class JwtBearerOptionsPostConfigureOptions : IPostConfigureOptions<JwtBearerOptions>
     {
         private const string MethodAuthenticateProfileScope = "AuthenticateProfile";
         private const string MethodAuthenticateFailedScope = "AuthenticateFailed";
         private const string MethodAuthenticateExpiredScope = "AuthenticateExpired";
         private const string ValidTo = "ValidTo";
 
-        public static void AddProfileServiceJwtBearer(
-            this IServiceCollection services,
-            string authenticateProfileServiceUri,
-            ILogger logger,
-            string agentId)
+        private readonly Startup startup;
+        private readonly IOptionsMonitor<AppSettings> appSettingsOption;
+        private readonly ILogger logger;
+
+        public JwtBearerOptionsPostConfigureOptions(
+            Startup startup,
+            IOptionsMonitor<AppSettings> appSettingsOption,
+            ILogger<JwtBearerOptionsPostConfigureOptions> logger)
+        {
+            this.startup = startup;
+            this.appSettingsOption = appSettingsOption;
+            this.logger = logger;
+        }
+
+        public void PostConfigure(string name, JwtBearerOptions options)
         {
             // Create a token cache
             var tokenCache = new ConcurrentDictionary<string, (DateTime, ClaimsPrincipal)>();
 
-            services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(msgCtxt, authenticateProfileServiceUri, logger, agentId, tokenCache),
-                    };
-                });
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = (msgCtxt) => OnMessageReceivedAsync(
+                    msgCtxt,
+                    this.appSettingsOption,
+                    this.logger,
+                    $"signlr-{this.startup.ServiceId}-{this.startup.Stamp}",
+                    tokenCache),
+            };
         }
 
         private static async Task OnMessageReceivedAsync(
             MessageReceivedContext context,
-            string authenticateProfileServiceUri,
+            IOptionsMonitor<AppSettings> appSettingsOption,
             ILogger logger,
             string agentId,
             ConcurrentDictionary<string, (DateTime, ClaimsPrincipal)> tokenCache)
@@ -116,7 +127,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 // define UserAgent
                 httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(agentId)));
 
-                var response = await httpClient.GetAsync(authenticateProfileServiceUri);
+                var response = await httpClient.GetAsync(appSettingsOption.CurrentValue.AuthenticateProfileServiceUri);
 
                 // update if token is expired to avoid noise on telemetry
                 isTokenExpired = response.StatusCode == System.Net.HttpStatusCode.Unauthorized && IsTokenExpired(response);
@@ -166,7 +177,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                         (LoggerScopeHelpers.MethodScope, MethodAuthenticateFailedScope),
                         (ValidTo, validTo)))
                     {
-                        logger.LogWarning(error, $"Error retrieving profile from Url:'{authenticateProfileServiceUri}'");
+                        logger.LogWarning(error, $"Error retrieving profile from Url:'{appSettingsOption.CurrentValue.AuthenticateProfileServiceUri}'");
                     }
                 }
 

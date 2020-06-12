@@ -20,7 +20,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
     {
         private const string EndpointPrefix = "Endpoint=";
 
-        private readonly AppSettings appSettings;
+        private readonly IOptionsMonitor<AppSettings> appSettingsProvider;
         private readonly ContactService presenceService;
         private readonly RelayService relayService;
         private readonly HealthService healthService;
@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         private readonly ILogger logger;
 
         public StatusController(
-            IOptions<AppSettings> appSettingsProvider,
+            IOptionsMonitor<AppSettings> appSettingsProvider,
             ContactService presenceService,
             RelayService relayService,
             HealthService healthService,
@@ -37,7 +37,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
             IList<ServiceEndpoint> serviceEndpoints,
             ILogger<StatusController> logger)
         {
-            this.appSettings = appSettingsProvider.Value;
+            this.appSettingsProvider = appSettingsProvider;
             this.presenceService = presenceService;
             this.relayService = relayService;
             this.healthService = healthService;
@@ -54,6 +54,8 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
         [HttpGet]
         public object Get()
         {
+            var appSettings = this.appSettingsProvider.CurrentValue;
+
             dynamic statusObj = new
             {
                 this.presenceService.ServiceId,
@@ -68,17 +70,17 @@ namespace Microsoft.VsCloudKernel.SignalService.Controllers
                 },
                 AppSettings = new
                 {
-                    this.appSettings.Stamp,
-                    this.appSettings.BaseUri,
-                    this.appSettings.ImageTag,
-                    this.appSettings.AuthenticateProfileServiceUri,
-                    this.appSettings.UseTelemetryProvider,
-                    this.appSettings.IsPrivacyEnabled,
-                    this.appSettings.SubscriptionId,
-                    this.appSettings.ResourceGroupName,
-                    this.appSettings.ResourceGroupInstanceName,
-                    this.appSettings.CorsOrigin,
-                    this.appSettings.IsJsonRpcMessagePackEnabled,
+                    appSettings.Stamp,
+                    appSettings.BaseUri,
+                    appSettings.ImageTag,
+                    appSettings.AuthenticateProfileServiceUri,
+                    appSettings.UseTelemetryProvider,
+                    appSettings.IsPrivacyEnabled,
+                    appSettings.SubscriptionId,
+                    appSettings.ResourceGroupName,
+                    appSettings.ResourceGroupInstanceName,
+                    appSettings.CorsOrigin,
+                    appSettings.IsJsonRpcMessagePackEnabled,
                 },
                 this.startup.PreferredLocation,
                 this.startup.EnableAuthentication,

@@ -23,7 +23,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// <summary>
     /// Our backplane service that will handle multiple contact service request.
     /// </summary>
-    public class ContactBackplaneService : BackplaneService<IContactBackplaneManager, IContactBackplaneServiceNotification>, IHostedService
+    public class ContactBackplaneService : BackplaneService<IContactBackplaneManager, IContactBackplaneServiceNotification>
     {
         private const string TotalContactsProperty = "NumberOfContacts";
         private const string TotalConnectionsProperty = "NumberOfConnections";
@@ -161,55 +161,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         /// </summary>
         private bool IsGlobalUpdateContactThrottle { get; set; }
 
-        public async Task RunAsync(CancellationToken stoppingToken)
-        {
-            const int TimespanUpdateSecs = 15;
-            const int TimespanUpdateTelemetrySecs = 60;
-
-            var updateMetricsCounter = new SecondsCounter(BackplaneManagerConst.UpdateMetricsSecs, TimespanUpdateSecs);
-            var updateTelemetryCounter = new SecondsCounter(TimespanUpdateTelemetrySecs, TimespanUpdateSecs);
-
-            ResetPerfCounters();
-            while (true)
-            {
-                // wait
-                await Task.Delay(TimeSpan.FromSeconds(TimespanUpdateSecs), stoppingToken);
-
-                // update aggregated metrics
-                if (updateMetricsCounter.Next())
-                {
-                    await BackplaneManager.UpdateBackplaneMetricsAsync(
-                        this.startupBase.ServiceInfo,
-                        GetAggregatedMetrics(),
-                        stoppingToken);
-                }
-
-                // update telemetry metrics
-                if (updateTelemetryCounter.Next())
-                {
-                    var aggregatedMetrics = GetAggregatedMetrics();
-
-                    using (Logger.BeginScope(
-                        (LoggerScopeHelpers.MethodScope, "UpdateMetrics"),
-                        (TotalUpdateContactsProperty, UpdateContactActionBlock.InputCount),
-                        (BackplaneManagerConst.BackplaneChangesCountProperty, BackplaneManager.BackplaneChangesCount),
-                        (TotalContactsProperty, ServiceDataProvider.TotalContacts),
-                        (TotalConnectionsProperty, ServiceDataProvider.TotalConnections),
-                        (TotalSignalRConnectionsProperty, aggregatedMetrics.TotalSelfCount)))
-                    {
-                        var perfCountersPerMinute = new List<int>();
-                        perfCountersPerMinute.Add(this.updateContactActionBlockPerfCounter);
-                        var totalProcessedUpdates = this.updateContactActionBlockPerfCounter;
-                        var averageWaitingTime = totalProcessedUpdates != 0 ? this.updateContactWaitingTimePerfCounter / totalProcessedUpdates : 0;
-                        Logger.LogInformation($"Queue :{this.updateQueueCount}, Throttle:{IsGlobalUpdateContactThrottle}, Wait time(ms):{averageWaitingTime}, Perf (events x min):[{string.Join(',', perfCountersPerMinute)}]");
-                    }
-
-                    ResetPerfCounters();
-                }
-            }
-        }
-
-        public async Task DisposeAsync()
+        public override async Task DisposeAsync()
         {
             await CompleteActionBlockAsync(UpdateContactActionBlock, nameof(UpdateContactActionBlock));
             await CompleteActionBlockAsync(SendMessageActionBlock, nameof(SendMessageActionBlock));
@@ -316,6 +268,40 @@ namespace Microsoft.VsCloudKernel.BackplaneService
             await SendMessageActionBlock.SendAsync((Stopwatch.StartNew(), messageData), cancellationToken);
         }
 
+        protected override void LogTelemetryMetrics()
+        {
+            var aggregatedMetrics = GetAggregatedMetrics();
+
+            using (Logger.BeginScope(
+                (LoggerScopeHelpers.MethodScope, "UpdateMetrics"),
+                (TotalUpdateContactsProperty, UpdateContactActionBlock.InputCount),
+                (BackplaneManagerConst.BackplaneChangesCountProperty, BackplaneManager.BackplaneChangesCount),
+                (TotalContactsProperty, ServiceDataProvider.TotalContacts),
+                (TotalConnectionsProperty, ServiceDataProvider.TotalConnections),
+                (TotalSignalRConnectionsProperty, aggregatedMetrics.TotalSelfCount)))
+            {
+                var perfCountersPerMinute = new List<int>();
+                perfCountersPerMinute.Add(this.updateContactActionBlockPerfCounter);
+                var totalProcessedUpdates = this.updateContactActionBlockPerfCounter;
+                var averageWaitingTime = totalProcessedUpdates != 0 ? this.updateContactWaitingTimePerfCounter / totalProcessedUpdates : 0;
+                Logger.LogInformation($"Queue :{this.updateQueueCount}, Throttle:{IsGlobalUpdateContactThrottle}, Wait time(ms):{averageWaitingTime}, Perf (events x min):[{string.Join(',', perfCountersPerMinute)}]");
+            }
+        }
+
+        protected override Task UpdateBackplaneMetricsAsync(CancellationToken stoppingToken)
+        {
+            return BackplaneManager.UpdateBackplaneMetricsAsync(
+                this.startupBase.ServiceInfo,
+                GetAggregatedMetrics(),
+                stoppingToken);
+        }
+
+        protected override void ResetPerfCounters()
+        {
+            this.updateContactActionBlockPerfCounter = 0;
+            this.updateContactWaitingTimePerfCounter = 0;
+        }
+
         private async Task UpdateContactHelperAsync<T>(ContactDataChanged<T> contactDataChanged, CancellationToken cancellationToken)
             where T : class
         {
@@ -398,12 +384,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                     this.throttledContactsCount = 0;
                 }
             }
-        }
-
-        private void ResetPerfCounters()
-        {
-            this.updateContactActionBlockPerfCounter = 0;
-            this.updateContactWaitingTimePerfCounter = 0;
         }
 
         private ContactServiceMetrics GetAggregatedMetrics()

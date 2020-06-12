@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Common.AspNetCore\StartupUtils.cs" Link="StartupUtils.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="$(Microsoft_AspNetCore_SignalR_Protocols_NewtonsoftJson_Version)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="$(Microsoft_AspNetCore_SignalR_Protocols_MessagePackVersion_Version)" />
   </ItemGroup>

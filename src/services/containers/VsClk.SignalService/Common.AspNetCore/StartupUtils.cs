@@ -17,12 +17,10 @@ namespace Microsoft.VsCloudKernel.SignalService
             config.SetBasePath(context.HostingEnvironment.ContentRootPath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
 #if DEBUG
-            .AddJsonFile("appsettings.Development.json", optional: true)
-            .AddJsonFile("appsettings.Debug.json", optional: true)
-#else
-            .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true)
+            .AddJsonFile("appsettings.Debug.json", optional: true, reloadOnChange: true)
 #endif
             .AddEnvironmentVariables()
+            .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true)
             .AddCommandLine(args);
         }
     }

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Azure.SignalR;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.VsCloudKernel.Services.Backplane.Common;
 
 namespace Microsoft.VsCloudKernel.SignalService
@@ -115,10 +117,10 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Logger.LogInformation("Authentication enabled...");
 
                 EnableAuthentication = true;
-                services.AddProfileServiceJwtBearer(
-                    authenticateProfileServiceUri,
-                    CreateLoggerInstance(typeof(AuthenticateProfileServiceExtension)),
-                    $"signlr-{ServiceId}-{Stamp}");
+                services
+                    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer();
+                services.AddSingleton<IPostConfigureOptions<JwtBearerOptions>, JwtBearerOptionsPostConfigureOptions>();
             }
 
             if (!GetBoolConfiguration(NoBackplaneOption))

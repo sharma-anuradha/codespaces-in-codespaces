@@ -53,7 +53,36 @@ namespace Microsoft.VsCloudKernel.SignalService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Logger.LogDebug($"ExecuteAsync");
+            while (true)
+            {
+                await Logger.InvokeWithUnhandledErrorAsync(() => RunAsync(stoppingToken));
+            }
+        }
+
+        private static string ToString(Dictionary<string, (int, TimeSpan)> methodPerfCounter)
+        {
+            // Note: this will return something like:
+            // method1= NTimes:AvgTime, method2= NTimes:AvgTime, etc..
+            // in which NTimes is the number of times the method was invoked and AvgTime is the average time it takes to execute which is => Total Time accumulated/NTimes
+            return string.Join(',', methodPerfCounter.Select(kvp => $"{kvp.Key}={kvp.Value.Item1}:{ToAvgTime(kvp.Value)}"));
+        }
+
+        private static string ToString(Dictionary<string, Dictionary<string, (int, TimeSpan)>> hubMethodPerfCounters)
+        {
+            // Note this will return a pattern
+            // service1=> [method perfs], service2=> [method perfs]
+            // in which [method perfs] is describe previous method.
+            return string.Join(',', hubMethodPerfCounters.Select(kvp => $"{kvp.Key}:[{ToString(kvp.Value)}]"));
+        }
+
+        private static double ToAvgTime((int, TimeSpan) value)
+        {
+            return Math.Round(value.Item2.TotalMilliseconds / value.Item1, 2);
+        }
+
+        private async Task RunAsync(CancellationToken stoppingToken)
+        {
+            Logger.LogDebug($"RunAsync");
 
             await RunBackplaneManagersAsync(true, stoppingToken);
 
@@ -90,10 +119,11 @@ namespace Microsoft.VsCloudKernel.SignalService
                     {
                         foreach (var kvpMethod in kvpSrvc.Value)
                         {
-                            perfScopes.Add(($"{kvpSrvc.Key}_{kvpMethod.Key}_count", kvpMethod.Value.Item1));
+                            var scopeKey = kvpMethod.Key.Replace('-', '_');
+                            perfScopes.Add(($"{kvpSrvc.Key}_{scopeKey}_count", kvpMethod.Value.Item1));
                             if (kvpMethod.Value.Item2 != TimeSpan.Zero)
                             {
-                                perfScopes.Add(($"{kvpSrvc.Key}_{kvpMethod.Key}_avgTime", ToAvgTime(kvpMethod.Value)));
+                                perfScopes.Add(($"{kvpSrvc.Key}_{scopeKey}_avgTime", ToAvgTime(kvpMethod.Value)));
                             }
                         }
                     }
@@ -111,32 +141,13 @@ namespace Microsoft.VsCloudKernel.SignalService
             }
         }
 
-        private static string ToString(Dictionary<string, (int, TimeSpan)> methodPerfCounter)
-        {
-            // Note: this will return something like:
-            // method1= NTimes:AvgTime, method2= NTimes:AvgTime, etc..
-            // in which NTimes is the number of times the method was invoked and AvgTime is the average time it takes to execute which is => Total Time accumulated/NTimes
-            return string.Join(',', methodPerfCounter.Select(kvp => $"{kvp.Key}={kvp.Value.Item1}:{ToAvgTime(kvp.Value)}"));
-        }
-
-        private static string ToString(Dictionary<string, Dictionary<string, (int, TimeSpan)>> hubMethodPerfCounters)
-        {
-            // Note this will return a pattern
-            // service1=> [method perfs], service2=> [method perfs]
-            // in which [method perfs] is describe previous method.
-            return string.Join(',', hubMethodPerfCounters.Select(kvp => $"{kvp.Key}:[{ToString(kvp.Value)}]"));
-        }
-
-        private static double ToAvgTime((int, TimeSpan) value)
-        {
-            return Math.Round(value.Item2.TotalMilliseconds / value.Item1, 2);
-        }
-
         private async Task RunBackplaneManagersAsync(bool updateBackplaneMetrics, CancellationToken stoppingToken)
         {
             foreach (var backplaneManager in BackplaneManagers)
             {
-                await backplaneManager.HandleNextAsync(updateBackplaneMetrics, stoppingToken);
+                await Logger.InvokeWithUnhandledErrorAsync(
+                    () => backplaneManager.HandleNextAsync(updateBackplaneMetrics, stoppingToken),
+                    () => $"method:{nameof(RunBackplaneManagersAsync)}, backplaneManager:{backplaneManager.GetType().Name}");
             }
         }
     }

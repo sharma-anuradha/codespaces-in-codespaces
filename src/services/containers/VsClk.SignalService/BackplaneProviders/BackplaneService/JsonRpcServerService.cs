@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VsCloudKernel.SignalService;
+using Microsoft.VsCloudKernel.SignalService.Common;
 using StreamJsonRpc;
 
 namespace Microsoft.VsCloudKernel.BackplaneService
@@ -56,6 +57,34 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             while (true)
             {
+                await Logger.InvokeWithUnhandledErrorAsync(() => RunAsync(listener, stoppingToken));
+            }
+        }
+
+        /// <summary>
+        /// Creates a TCP listener that listens on all local addresses for both IPv6 and IPv4.
+        /// </summary>
+        private static TcpListener CreateListener(int port)
+        {
+            try
+            {
+                var listener = new TcpListener(IPAddress.IPv6Any, port);
+                listener.Server.SetSocketOption(
+                    SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
+                return listener;
+            }
+            catch (SocketException)
+            {
+                // If IPV6 is turned off on the client machine, use IPV4 socket.
+                var listener = new TcpListener(IPAddress.Any, port);
+                return listener;
+            }
+        }
+
+        private async Task RunAsync(TcpListener listener, CancellationToken stoppingToken)
+        {
+            while (true)
+            {
                 stoppingToken.ThrowIfCancellationRequested();
 
                 TcpClient client;
@@ -88,26 +117,6 @@ namespace Microsoft.VsCloudKernel.BackplaneService
                 jsonRpc.AddLocalRpcMethod(RegisterServiceMethod, registerCallback);
                 jsonRpc.AllowModificationWhileListening = true;
                 jsonRpc.StartListening();
-            }
-        }
-
-        /// <summary>
-        /// Creates a TCP listener that listens on all local addresses for both IPv6 and IPv4.
-        /// </summary>
-        private static TcpListener CreateListener(int port)
-        {
-            try
-            {
-                var listener = new TcpListener(IPAddress.IPv6Any, port);
-                listener.Server.SetSocketOption(
-                    SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
-                return listener;
-            }
-            catch (SocketException)
-            {
-                // If IPV6 is turned off on the client machine, use IPV4 socket.
-                var listener = new TcpListener(IPAddress.Any, port);
-                return listener;
             }
         }
     }

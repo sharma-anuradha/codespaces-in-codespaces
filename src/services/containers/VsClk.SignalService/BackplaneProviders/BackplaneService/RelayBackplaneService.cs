@@ -17,7 +17,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
     /// <summary>
     /// The relay backplane service that will sync local/global relays.
     /// </summary>
-    public class RelayBackplaneService : BackplaneService<IRelayBackplaneManager, IRelayBackplaneServiceNotification>, IHostedService
+    public class RelayBackplaneService : BackplaneService<IRelayBackplaneManager, IRelayBackplaneServiceNotification>
     {
         private const int MaxSendDataHubBuffer = 5000;
 
@@ -56,13 +56,7 @@ namespace Microsoft.VsCloudKernel.BackplaneService
         private RelayHubManager RelayHubManager { get; } = new RelayHubManager();
 
         /// <inheritdoc/>
-        public Task RunAsync(CancellationToken stoppingToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        /// <inheritdoc/>
-        public async Task DisposeAsync()
+        public override async Task DisposeAsync()
         {
             await CompleteActionBlockAsync(SendDataHubActionBlock, nameof(SendDataHubActionBlock));
         }
@@ -122,6 +116,19 @@ namespace Microsoft.VsCloudKernel.BackplaneService
 
             await FireNotifyRelayHubChangedAsync(dataChanged, cancellationToken);
             await BackplaneManager.NotifyRelayHubChangedAsync(dataChanged, DisposeToken);
+        }
+
+        protected override void LogTelemetryMetrics()
+        {
+        }
+
+        protected override Task UpdateBackplaneMetricsAsync(CancellationToken stoppingToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        protected override void ResetPerfCounters()
+        {
         }
 
         private IDisposable BeginHubScope(string hubId, string method)
