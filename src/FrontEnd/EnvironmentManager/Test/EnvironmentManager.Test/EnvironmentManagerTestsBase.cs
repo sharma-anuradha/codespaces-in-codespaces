@@ -54,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private readonly IWorkspaceManager workspaceManager;
         public readonly IEnvironmentMonitor environmentMonitor;
         public readonly IEnvironmentStateManager environmentStateManager;
+        public readonly Mock<IEnvironmentContinuationOperations> environmentContinuationOperations = new Mock<IEnvironmentContinuationOperations>(MockBehavior.Loose);
         public const string testUserId = "test-user";
         public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
         public const string testAccessToken = "test-token";
@@ -131,7 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.tokenProvider,
                 this.skuCatalog,
                 this.environmentMonitor,
-                new MockEnvironmentContinuation(),
+                environmentContinuationOperations.Object,
                 environmentSettings,
                 planSettings,
                 this.environmentStateManager,

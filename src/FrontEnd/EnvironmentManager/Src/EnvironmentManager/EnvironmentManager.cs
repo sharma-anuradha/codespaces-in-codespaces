@@ -1401,11 +1401,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     if (cloudEnvironment.OSDisk != default)
                     {
-                        await EnvironmentContinuation.ShutdownAsync(
-                            Guid.Parse(cloudEnvironment.Id),
-                            false,
-                            "Suspending",
-                            logger.NewChildLogger());
+                        // Callbacks get triggered multiple times. We want to avoid queueing multiple continuations.
+                        if (cloudEnvironment.Transitions?.ShuttingDown?.Status != Common.Continuation.OperationState.InProgress)
+                        {
+                            await EnvironmentContinuation.ShutdownAsync(
+                                Guid.Parse(cloudEnvironment.Id),
+                                false,
+                                "Suspending",
+                                logger.NewChildLogger());
+                        }
 
                         // Clean up is handled by the shutdown environment continuation handler.
                         return new CloudEnvironmentServiceResult
