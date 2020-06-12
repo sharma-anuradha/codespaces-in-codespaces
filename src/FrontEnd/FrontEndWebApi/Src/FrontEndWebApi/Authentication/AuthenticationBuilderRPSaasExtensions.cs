@@ -51,6 +51,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private const string CodespaceUserTokenHeaderName = "x-ms-codespace-user-token";
 
+        private const string RPaaSCorrelationIdHeaderName = "x-ms-correlation-request-id";
+
         // This is captured during configuration - don't change any settings on it
         private static JwtBearerOptions AadBearerOptions { get; set; } = null;
 
@@ -188,6 +190,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     .FluentAddValue("PrincipalIsAuthenticated", armServicePrincipal.Identity.IsAuthenticated.ToString())
                     .FluentAddValue("ArmAppId", appIdClaim);
 
+                context.Request.Headers.TryGetValue(RPaaSCorrelationIdHeaderName, out var rpaasCorrelationId);
+                logger.FluentAddBaseValue("RPaaSCorrelationId", rpaasCorrelationId);
+
                 if (appIdClaim != settings.AppId)
                 {
                     logger.LogError("jwt_appid_notmatched");
@@ -208,7 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
                 try
                 {
-                    armUserPrincipal = ValidateArmUserToken(armUserToken, issuerClaim, logger);
+                    armUserPrincipal = ValidateArmUserToken(armUserToken, issuerClaim, logger.NewChildLogger());
                 }
                 catch (Exception ex)
                 {
