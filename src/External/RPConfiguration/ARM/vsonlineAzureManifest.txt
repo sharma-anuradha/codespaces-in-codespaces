@@ -168,6 +168,13 @@
                     "desired": "Microsoft.VSOnline/plans/delegates/delete"
                 }
             ],
+            "linkedAccessChecks": [
+                {
+                    "actionName": "Microsoft.VSOnline/plans/write",
+                    "linkedProperty": "properties.vnetProperties.SubnetId",
+                    "linkedAction": "Microsoft.Network/virtualNetworks/subnets/join/action"
+                }
+            ],
             "endpoints": [
                 {
                     "apiVersions": [
