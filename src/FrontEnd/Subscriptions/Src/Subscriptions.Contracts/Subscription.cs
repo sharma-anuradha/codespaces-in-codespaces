@@ -68,16 +68,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// <summary>
         /// Gets or sets the maximum quota for this subscription. This is used as an override for defaults in the Db.
         /// </summary>
+        [JsonIgnore]
         public IDictionary<string, int> CurrentMaximumQuota { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the Subscription is banned.
         /// </summary>
+        [JsonIgnore]
         public bool IsBanned => BannedReason != BannedReason.None;
 
         /// <summary>
         /// Gets or sets a value indicating whether the Subscription can create Environments and Plans.
         /// </summary>
+        [JsonIgnore]
         public bool CanCreateEnvironmentsAndPlans { get; set; } = true;
     }
 }

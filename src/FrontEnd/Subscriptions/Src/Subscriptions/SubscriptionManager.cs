@@ -169,23 +169,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                     {
                         subscription.SubscriptionState = state;
                         subscription.SubscriptionStateUpdateDate = DateTime.UtcNow;
-                        return await SubscriptionRepository.UpdateAsync(subscription, logger);
-                    }
 
-                    if (subscription.SubscriptionState == SubscriptionStateEnum.Suspended ||
-                        subscription.SubscriptionState == SubscriptionStateEnum.Warned)
-                    {
-                        // Warned = Suspended
-                        // - Shut down all environments
-                        // - User can read resources but can not create new environments or resume old environments
-                        await ApplyWarnedSuspendedRulesToResources(subscription, logger);
-                    }
-                    else if (subscription.SubscriptionState == SubscriptionStateEnum.Deleted)
-                    {
-                        // Deleted
-                        // - Delete all resources
-                        // - User can not performa any actions
-                        await ApplyDeletedRulesToResources(subscription, logger);
+                        if (subscription.SubscriptionState == SubscriptionStateEnum.Suspended ||
+                            subscription.SubscriptionState == SubscriptionStateEnum.Warned)
+                        {
+                            // Warned = Suspended
+                            // - Shut down all environments
+                            // - User can read resources but can not create new environments or resume old environments
+                            await ApplyWarnedSuspendedRulesToResources(subscription, logger);
+                        }
+                        else if (subscription.SubscriptionState == SubscriptionStateEnum.Deleted)
+                        {
+                            // Deleted
+                            // - Delete all resources
+                            // - User can not performa any actions
+                            await ApplyDeletedRulesToResources(subscription, logger);
+                        }
+
+                        return await SubscriptionRepository.UpdateAsync(subscription, logger);
                     }
 
                     return subscription;

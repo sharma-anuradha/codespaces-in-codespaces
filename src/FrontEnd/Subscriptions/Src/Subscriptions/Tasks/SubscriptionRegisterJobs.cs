@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Update subscription details.
             TaskHelper.RunBackgroundLoop(
             $"update_subscription_details_run",
-            (childLogger) => UpdateSubscriptionDetailsTask.RunAsync(TimeSpan.FromHours(4), childLogger),
+            (childLogger) => UpdateSubscriptionDetailsTask.RunAsync(TimeSpan.FromHours(10), childLogger),
             TimeSpan.FromHours(4));
 
             TaskHelper.RunBackgroundLoop(

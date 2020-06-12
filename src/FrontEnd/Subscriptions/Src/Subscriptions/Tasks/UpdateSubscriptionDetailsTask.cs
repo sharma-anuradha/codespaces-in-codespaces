@@ -84,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
                           idShards,
                           (idShard, itemLogger) => CoreRunUnitAsync(idShard, itemLogger),
                           childLogger,
-                          (idShard, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{idShard}4", taskInterval, itemLogger));
+                          (idShard, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{idShard}1", taskInterval, itemLogger));
 
                      return !Disposed;
                  },
