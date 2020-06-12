@@ -179,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, id)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.OperationReason, reason);
 
-            // Since we don't have the azyre resource, we are just goignt to delete this record
+            // Since we don't have the azure resource, we are just going to delete this record
             await ResourceRepository.DeleteAsync(id, logger.NewChildLogger());
         }
 

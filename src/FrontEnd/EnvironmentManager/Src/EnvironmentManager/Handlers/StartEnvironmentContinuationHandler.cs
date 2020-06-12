@@ -345,6 +345,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             operationInput.OSDiskResource = osDiskResponse.BuildQueueInputResource();
             operationInput.StorageResource = storageResponse.BuildQueueInputResource();
 
+            bool didUpdate = await UpdateResourceInfoAsync(operationInput, record, logger);
+            if (!didUpdate)
+            {
+                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
+            }
+
             operationInput.CurrentState = StartEnvironmentContinuationInputState.CheckResourceState;
 
             LogResource(operationInput, logger);
@@ -354,6 +360,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 NextInput = operationInput,
                 Status = OperationState.InProgress,
             };
+        }
+
+        private async Task<bool> UpdateResourceInfoAsync(StartEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_update_resources_post_allocate",
+                async (childLogger) =>
+                {
+                    var hasStorageResource = operationInput.StorageResource != default;
+                    var hasOSDiskResource = operationInput.OSDiskResource != default;
+
+                    var computeResource = operationInput.ComputeResource.BuildResourceRecord();
+                    var osDiskResource = operationInput.OSDiskResource.BuildResourceRecord();
+                    var storageResource = operationInput.StorageResource.BuildResourceRecord();
+
+                    return await UpdateRecordAsync(
+                        operationInput,
+                        record,
+                        (environment, innerLogger) =>
+                        {
+                            // Update state to be failed
+                            record.Value.Compute = computeResource;
+                            if (hasOSDiskResource)
+                            {
+                                record.Value.OSDisk = osDiskResource;
+                            }
+
+                            // For archived environments, dont switch storage resource.
+                            if (hasStorageResource && record.Value.Storage?.Type != ResourceType.StorageArchive)
+                            {
+                                record.Value.Storage = storageResource;
+                            }
+
+                            return Task.FromResult(true);
+                        },
+                        logger);
+                });
         }
 
         private async Task<ContinuationResult> RunCheckResourceProvisioningAsync(
@@ -402,32 +445,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 (!hasOSDiskResource || osDiskStatus.IsReady) &&
                 (!hasStorageResource || storageStatus.IsReady))
             {
-                var computeResource = operationInput.ComputeResource.BuildResourceRecord();
-                var osDiskResource = operationInput.OSDiskResource.BuildResourceRecord();
-                var storageResource = operationInput.StorageResource.BuildResourceRecord();
-
-                var didUpdate = await UpdateRecordAsync(
-                    operationInput,
-                    record,
-                    (environment, innerLogger) =>
-                    {
-                        // Update state to be failed
-                        record.Value.Compute = computeResource;
-                        if (hasOSDiskResource)
-                        {
-                            record.Value.OSDisk = osDiskResource;
-                        }
-
-                        // For archived environments, dont switch storage resource.
-                        if (hasStorageResource && record.Value.Storage?.Type != ResourceType.StorageArchive)
-                        {
-                            record.Value.Storage = storageResource;
-                        }
-
-                        return Task.FromResult(true);
-                    },
-                    logger);
-
+                bool didUpdate = await UpdateResourceInfoAsync(operationInput, record, logger);
                 if (!didUpdate)
                 {
                     return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
