@@ -1,0 +1,30 @@
+# Reference: https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki/308/Pipeline-Spec-YAML-Stage-Commands
+
+restore:
+  commands:
+    - !!defaultcommand
+      name: "dotnet restore"
+      command: "build/signalr/restore.sh"
+
+build:
+  commands:
+    - !!buildcommand
+      name: "dotnet build"
+      command: "build/signalr/build.sh"
+      artifacts:
+        - from: "bin/release"
+          to: "binaries"
+          include:
+            - "**/*"
+
+test:
+  commands:
+    - !!testcommand
+      name: "dotnet test"
+      command: "build/signalr/test.sh"
+      testresults:
+        - from: "bin/release/testresults"
+          title: "Test Results"
+          type: "vstest"
+          include:
+            - "*.trx"
