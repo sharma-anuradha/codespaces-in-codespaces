@@ -25,6 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
         public int DefaultGlobalPlanLimit { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether vnet injection is enabled.
+        /// </summary>
+        public bool DefaultVnetInjectionEnabled { get; set; }
+
+        /// <summary>
         /// Gets or sets the options for auto suspend delay minutes.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -73,6 +78,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:multi-user-plans", logger, false);
+        }
+
+        /// <summary>
+        /// Gets or sets whether vnet injection is enabled.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> VnetInjectionEnabledAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:plan-vnet-injection-enabled", logger, DefaultVnetInjectionEnabled);
         }
     }
 }

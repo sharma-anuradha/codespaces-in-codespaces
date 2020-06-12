@@ -115,5 +115,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The subscription state is not active.
         /// </summary>
         SubscriptionStateIsNotRegistered = 20,
+
+        /// <summary>
+        /// The feature is disabled.
+        /// </summary>
+        FeatureDisabled = 21,
     }
 }

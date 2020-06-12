@@ -37,12 +37,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             loggerFactory = new DefaultLoggerFactory();
             logger = loggerFactory.New();
 
-            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, DefaultGlobalPlanLimit = 100 };
+            var settings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20, DefaultGlobalPlanLimit = 100, DefaultVnetInjectionEnabled = true };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
             mockSystemConfiguration
                 .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), settings.DefaultMaxPlansPerSubscription))
                 .Returns(Task.FromResult(settings.DefaultMaxPlansPerSubscription));
+
+            mockSystemConfiguration
+               .Setup(x => x.GetValueAsync<bool>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), settings.DefaultVnetInjectionEnabled))
+               .Returns(Task.FromResult(settings.DefaultVnetInjectionEnabled));
 
             settings.Init(mockSystemConfiguration.Object);
 
@@ -96,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         public async Task CreatePlan()
         {
             var subscription = new Subscription();
-            var savedModel = (await planManager.CreateAsync(GeneratePlan("CreatePlanTest"),subscription, logger)).VsoPlan;
+            var savedModel = (await planManager.CreateAsync(GeneratePlan("CreatePlanTest"), subscription, logger)).VsoPlan;
             Assert.NotNull(savedModel);
             Assert.NotNull(savedModel.Id);
         }
@@ -270,7 +274,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var subscriptionGuid2 = Guid.NewGuid().ToString();
             var model1 = GeneratePlan("Model1", subscriptionGuid1);
             var subscription = new Subscription();
-            await planManager.CreateAsync(model1,subscription, logger);
+            await planManager.CreateAsync(model1, subscription, logger);
             await planManager.CreateAsync(GeneratePlan("Model2", subscriptionGuid2), subscription, logger);
             await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2), subscription, logger);
 

@@ -105,6 +105,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
+        public async Task<bool> CheckFeatureFlagsAsync(VsoPlan model, PlanFeatureFlag featureFlag, IDiagnosticsLogger logger)
+        {
+            switch (featureFlag)
+            {
+                case PlanFeatureFlag.VnetInjection:
+                    var isVnetFeaturesEnabled = await planManagerSettings.VnetInjectionEnabledAsync(logger.NewChildLogger());
+                    var isVnetPropertySet = model.Properties?.VnetProperties?.SubnetId != default;
+                    return !isVnetPropertySet || isVnetFeaturesEnabled;
+                default: throw new ArgumentException($"{featureFlag} is not recognized.");
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
             var plans = await ListAsync(userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
@@ -330,6 +343,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 vsoPlan.Properties.DefaultAutoSuspendDelayMinutes < 0)
             {
                 logger.LogErrorWithDetail("plan_property_validate_error", $"{nameof(vsoPlan.Properties.DefaultAutoSuspendDelayMinutes)} value {vsoPlan.Properties.DefaultAutoSuspendDelayMinutes} not supported.");
+                return false;
+            }
+
+            // Validate vnet injection
+            if (!await CheckFeatureFlagsAsync(vsoPlan, PlanFeatureFlag.VnetInjection, logger))
+            {
+                logger.LogErrorWithDetail("plan_property_validate_error", $"Vnet property can't be added as {PlanFeatureFlag.VnetInjection} is disabled.");
                 return false;
             }
 

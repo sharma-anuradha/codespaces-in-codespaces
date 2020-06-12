@@ -314,6 +314,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return RedirectToLocation(owningStamp);
             }
 
+            // Add VNet information to environment.
+            VsoPlanInfo.TryParse(environment.PlanId, out var plan);
+            var planDetails = await PlanManager.GetAsync(plan, logger);
+            if (!await PlanManager.CheckFeatureFlagsAsync(planDetails, PlanFeatureFlag.VnetInjection, logger.NewChildLogger()))
+            {
+                var message = $"{HttpStatusCode.BadRequest}: The requested vnet injection feature is disabled";
+                logger.AddReason(message);
+                return BadRequest(message);
+            }
+
+            var subnetId = planDetails.Properties?.VnetProperties?.SubnetId;
+            environment.SubnetResourceId = subnetId;
+
             var startEnvParams = GetStartCloudEnvironmentParameters();
             var planInfo = VsoPlanInfo.TryParse(environment.PlanId);
             var subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
@@ -417,6 +430,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             cloudEnvironment.ControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
 
             // Add VNet information to environment.
+            if (!await PlanManager.CheckFeatureFlagsAsync(planDetails, PlanFeatureFlag.VnetInjection, logger.NewChildLogger()))
+            {
+                var message = $"{HttpStatusCode.BadRequest}: The requested vnet injection feature is disabled";
+                logger.AddReason(message);
+                return BadRequest(message);
+            }
+
             var subnetId = planDetails.Properties?.VnetProperties?.SubnetId;
             cloudEnvironment.SubnetResourceId = subnetId;
 

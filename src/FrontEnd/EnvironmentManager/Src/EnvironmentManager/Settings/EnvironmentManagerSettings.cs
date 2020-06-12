@@ -164,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         }
 
         /// <summary>
-        /// Getos or sets the Compute Check.
+        /// Gets or sets the Compute Check.
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>

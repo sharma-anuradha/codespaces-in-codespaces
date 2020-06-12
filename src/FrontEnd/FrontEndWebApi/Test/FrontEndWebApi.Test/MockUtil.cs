@@ -108,8 +108,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public static ISkuUtils MockSkuUtils(bool value)
         {
             var moq = new Mock<ISkuUtils>();
-             moq.Setup(x => x.IsVisible(It.IsAny<CloudEnvironmentSku>(), It.IsAny<VsoPlanInfo>(), It.IsAny<Profile>()))
-                .Returns((CloudEnvironmentSku sku, VsoPlanInfo planInfo, UserProfile.Profile profile) => Task.FromResult(value));
+            moq.Setup(x => x.IsVisible(It.IsAny<CloudEnvironmentSku>(), It.IsAny<VsoPlanInfo>(), It.IsAny<Profile>()))
+               .Returns((CloudEnvironmentSku sku, VsoPlanInfo planInfo, UserProfile.Profile profile) => Task.FromResult(value));
             return moq.Object;
         }
 
@@ -427,6 +427,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             moq
                 .Setup(obj => obj.GetAsync(It.IsAny<VsoPlanInfo>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
                 .Returns(getPlan());
+
+            moq
+                .Setup(obj => obj.CheckFeatureFlagsAsync(It.IsAny<VsoPlan>(), It.IsAny<PlanFeatureFlag>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(true));
 
             return moq.Object;
         }

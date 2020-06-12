@@ -143,5 +143,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <returns>True if new plans should be created as multi-user plans.</returns>
         Task<bool> ShouldCreateMultiUserPlansAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// validate plan details for feature flags.
+        /// </summary>
+        /// <param name="model">plan details.</param>
+        /// <param name="featureFlag">feature flag.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<bool> CheckFeatureFlagsAsync(VsoPlan model, PlanFeatureFlag featureFlag, IDiagnosticsLogger logger);
     }
 }

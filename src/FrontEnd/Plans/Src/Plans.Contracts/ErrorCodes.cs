@@ -33,5 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         /// Azure subscription state is not 'Registered'.
         /// </summary>
         SubscriptionStateNotRegistered = 4,
+
+        /// <summary>
+        /// Feature is disabled.
+        /// </summary>
+        FeatureDisabled = 5,
     }
 }
