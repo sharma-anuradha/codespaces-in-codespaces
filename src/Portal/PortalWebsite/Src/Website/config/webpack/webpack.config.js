@@ -59,9 +59,7 @@ const prodOptimization = {
     },
 };
 
-const optimization = production
-    ? prodOptimization
-    : {};
+const optimization = production ? prodOptimization : {};
 
 const publicPath = '/';
 
@@ -92,7 +90,7 @@ module.exports = [
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
             plugins: [new TsconfigPathsPlugin({ configFile: paths.tsConfig })],
-            modules: ['node_modules', 'vscode-downloads/workbench-page/web-standalone'],
+            modules: ['node_modules', 'vscode-downloads/workbench-page'],
             alias: {
                 'net': paths.mocks.net,
                 'node-rsa': paths.mocks.nodeRsa,
@@ -267,7 +265,6 @@ module.exports = [
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
             plugins: [new TsconfigPathsPlugin({ configFile: paths.tsConfig })],
-            modules: ['node_modules', 'vscode-downloads/workbench-page/web-standalone'],
             alias: {
                 'net': paths.mocks.net,
                 'node-rsa': paths.mocks.nodeRsa,

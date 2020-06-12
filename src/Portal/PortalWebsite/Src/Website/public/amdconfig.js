@@ -16,8 +16,8 @@ if (paramsFeatureSet === insiderFlag) {
 }
 
 const commits = {
-    insider: 'a5d1cc28bb5da32ec67e86cc50f84c67cc690321',
-    stable: '5763d909d5f12fe19f215cbfdd29a91c0fa9208a',
+    insider: '7e4cc2c435927e5a2845897961a2af10ee7f784d',
+    stable: 'a5d1cc28bb5da32ec67e86cc50f84c67cc690321',
 };
 
 const commitId = commits[vscodeQuality].substr(0, 7);
