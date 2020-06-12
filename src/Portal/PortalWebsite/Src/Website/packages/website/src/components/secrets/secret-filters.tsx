@@ -115,7 +115,7 @@ export function FiltersList(props: IFiltersListProps) {
                     key={filter.type}
                 />
             ))}
-            {props.isFiltersValid || (
+            {!props.isFiltersValid && (
                 <div className='validation-error-message'>
                     <span>{translation('secretFilterError')}</span>
                 </div>
