@@ -46,22 +46,26 @@ The subscription metadata in [Service Tree](https://servicetree.msftcloudes.com/
 
 ### Update Access Control
 
-Either in the Azure Portal or via the command line, the subscription admin must add the following Role Assignments.
+Use the PowerShell script `OnboardDataSub.ps1` to set the following Role Assignments.
 
 | Scope | Assignee | Role |
 | --- | --- | --- |
-| Subscription | vsclk-online-prod-app-sp | Contributor |
 | Subscription | vsclk-core-breakglass-823b | Owner |
+| Subscription | vsclk-online-{prod}-app-sp | Contributor |
 | Subscription | vsclk-core-readers-fd84 | Reader |
 
-```bash
-subscription="???"
-prod_app_sp="0343473b-5b3b-45ff-96a4-42afab47ef14" # vsclk-online-prod-app-sp
-breakglass_group="86701306-e3cd-4b17-85a1-2956e25a2527" # vsclk-core-breakglass-823b
-readers_group="6837c2b1-4f15-45e3-a9f5-9bfac0726a47" # vsclk-core-readers-fd84
-az role assignment create --subscription ${subscription} --scope /subscriptions/${subscription} --assignee ${prod_app_sp} --role Contributor
-az role assignment create --subscription ${subscription} --scope /subscriptions/${subscription} --assignee ${breakglass_group} --role Owner
-az role assignment create --subscription ${subscription} --scope /subscriptions/${subscription} --assignee ${readers_group} --role Reader
+In addition, for -dev subscriptions:
+
+| Scope | Assignee | Role |
+| --- | --- | --- |
+| Subscription | vsclk-core-admin-a98a | Owner |
+| Subscription | vsclk-core-contributors-3a5d | Owner |
+| Subscription | vsclk-core-contributors-3a5d | Contributor |
+
+```powershell
+.\OnboardDataSub.ps1 -subscriptionName "vso-dev-data-001-01" -env dev
+.\OnboardDataSub.ps1 -subscriptionName "vso-ppe-data-001-01" -env ppe
+.\OnboardDataSub.ps1 -subscriptionName "vso-prod-data-001-01" -env prod
 ```
 
 ### Request Quota Increases
