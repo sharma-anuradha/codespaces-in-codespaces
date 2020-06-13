@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         {
             // Setup logging
             var duration = Stopwatch.StartNew();
-            var logger = context.HttpContext.GetLogger().NewChildLogger();
+            var logger = context.HttpContext.GetLogger();
 
             // Setup the logger as an arg for convenence
             context.ActionArguments["logger"] = logger;
