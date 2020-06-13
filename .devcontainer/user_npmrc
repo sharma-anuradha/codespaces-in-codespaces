@@ -1,0 +1,32 @@
+; begin auth token for Cascade
+//devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/:username=devdiv
+//devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/:email=npm requires email to be set but doesn't use the value
+//devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/:username=devdiv
+//devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/:email=npm requires email to be set but doesn't use the value
+; end auth token for Cascade
+; begin auth token for NodeRepos
+//devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/:username=devdiv
+//devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/:email=npm requires email to be set but doesn't use the value
+//devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/:username=devdiv
+//devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/:email=npm requires email to be set but doesn't use the value
+; end auth token for NodeRepos
+; begin auth token for VS
+//devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/:username=devdiv
+//devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/:email=npm requires email to be set but doesn't use the value
+//devdiv.pkgs.visualstudio.com/_packaging/VS/npm/:username=devdiv
+//devdiv.pkgs.visualstudio.com/_packaging/VS/npm/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/_packaging/VS/npm/:email=npm requires email to be set but doesn't use the value
+; end auth token for VS
+; begin auth token for playwright
+//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/registry/:username=devdiv
+//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/registry/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/registry/:email=npm requires email to be set but doesn't use the value
+//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/:username=devdiv
+//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/:_password=${DEVDIV_PAT_BASE64}
+//devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/:email=npm requires email to be set but doesn't use the value
+; end auth token for playwright
