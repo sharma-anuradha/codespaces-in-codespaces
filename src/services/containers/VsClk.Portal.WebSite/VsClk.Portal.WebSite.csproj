@@ -37,9 +37,15 @@
     <None Update="Dockerfile">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-      <None Update="@(SpaRoot)">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </None>
+    <Content Include="Charts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\deploy\charts\common\vsclk-online*.yaml" LinkBase="Charts\common">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Update="@(SpaRoot)">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
