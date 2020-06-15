@@ -89,6 +89,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             {
                 // Enable PII data in logs for Dev
                 IdentityModelEventSource.ShowPII = true;
+            }
+
+            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment())
+            {
                 services.AddNgrok();
             }
 
@@ -394,7 +398,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             app.UseVsSaaS(!isProduction);
 
             // Finish setting up config
-            if (HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
+            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
             {
                 var ngrokHosted = app.ApplicationServices.GetService<NgrokHostedService>();
 

@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                 }
             }
 
-            if (HostingEnvironment.IsDevelopment())
+            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment())
             {
                 services.AddNgrok();
             }
@@ -232,7 +232,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             });
 
             // Finish setting up config
-            if (HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
+            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)
             {
                 var ngrokHosted = app.ApplicationServices.GetService<NgrokHostedService>();
 
