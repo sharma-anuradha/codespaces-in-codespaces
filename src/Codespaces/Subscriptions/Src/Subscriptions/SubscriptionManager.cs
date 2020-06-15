@@ -164,32 +164,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_update_subscription_state",
                 async (childLogger) =>
                 {
-                    // only do work if there's a newer value
-                    if (subscription.SubscriptionState != state)
+                    // TODO: Only do work if state has changed
+                    subscription.SubscriptionState = state;
+                    subscription.SubscriptionStateUpdateDate = DateTime.UtcNow;
+
+                    if (subscription.SubscriptionState == SubscriptionStateEnum.Suspended ||
+                        subscription.SubscriptionState == SubscriptionStateEnum.Warned)
                     {
-                        subscription.SubscriptionState = state;
-                        subscription.SubscriptionStateUpdateDate = DateTime.UtcNow;
-
-                        if (subscription.SubscriptionState == SubscriptionStateEnum.Suspended ||
-                            subscription.SubscriptionState == SubscriptionStateEnum.Warned)
-                        {
-                            // Warned = Suspended
-                            // - Shut down all environments
-                            // - User can read resources but can not create new environments or resume old environments
-                            await ApplyWarnedSuspendedRulesToResources(subscription, logger);
-                        }
-                        else if (subscription.SubscriptionState == SubscriptionStateEnum.Deleted)
-                        {
-                            // Deleted
-                            // - Delete all resources
-                            // - User can not performa any actions
-                            await ApplyDeletedRulesToResources(subscription, logger);
-                        }
-
-                        return await SubscriptionRepository.UpdateAsync(subscription, logger);
+                        // Warned = Suspended
+                        // - Shut down all environments
+                        // - User can read resources but can not create new environments or resume old environments
+                        await ApplyWarnedSuspendedRulesToResources(subscription, logger);
+                    }
+                    else if (subscription.SubscriptionState == SubscriptionStateEnum.Deleted)
+                    {
+                        // Deleted
+                        // - Delete all resources
+                        // - User can not performa any actions
+                        await ApplyDeletedRulesToResources(subscription, logger);
                     }
 
-                    return subscription;
+                    return await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger);
                 }, swallowException: true);
         }
 
