@@ -8,7 +8,7 @@ import { HttpError } from '../errors/HttpError';
 const cache: { [key: string]: Promise<IEnvironment> | undefined } = {};
 
 export class VsoAPI {
-    public getEnvironmentInfo = async (id: string, token: string) => {
+    public getEnvironmentInfo = async (id: string, token: string): Promise<IEnvironment> => {
         const key = `${id}_${token}`;
 
         let currentRequest = cache[key];
@@ -61,10 +61,13 @@ export class VsoAPI {
         }
     };
 
-    public startEnvironment = async (id: string, token: string) => {
-        const url = `${config.api}/environments/${id}/start`;
+    public startCodespace = async (codespace: IEnvironment, token: string) => {
+        // all write operations should go to the region the codespace is in
+        const apiEndpoint = config.getCodespaceRegionalApiEndpoint(codespace);
 
-        const envStartResponse = await fetch(url, {
+        const url = new URL(`${apiEndpoint}/environments/${codespace.id}/start`);
+
+        const envStartResponse = await fetch(url.toString(), {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,

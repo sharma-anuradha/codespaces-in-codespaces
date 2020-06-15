@@ -4,20 +4,20 @@ import {
     createTrace,
     timeConstants,
     IEnvironment,
-    setCurrentCodespaceId
+    setCurrentCodespaceId,
 } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
 import { getEnvironmentInfo } from './utils/getEnvironmentInfo';
 import { IWorkbenchStateObject } from './IWorkbenchStateObject';
-import { startEnvironment } from './utils/startEnvironment';
 import { config } from '../../../config/config';
 import { WorkbenchPageRender } from './WorkbenchPageRender';
 import { errorToState } from './errorToState';
 import { authService } from '../../../auth/authService';
 import { sendTelemetry } from '../../../telemetry/sendTelemetry';
 import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
+import { vsoAPI } from '../../../api/vsoAPI';
 
 const { SECOND_MS } = timeConstants;
 
@@ -26,7 +26,7 @@ const trace = createTrace('workbench');
 export const isAutoStart = () => {
     const params = new URLSearchParams(location.search);
     return params.get('autoStart') !== 'false';
-}
+};
 
 export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
     private interval: ReturnType<typeof setInterval> | undefined;
@@ -43,9 +43,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
         const info = await authService.getPartnerInfo();
         if (info) {
-            const id = ('environmentId' in info)
-                ? info.environmentId
-                : info.codespaceId;
+            const id = 'environmentId' in info ? info.environmentId : info.codespaceId;
 
             setCurrentCodespaceId(id);
         }
@@ -60,14 +58,37 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
         }
     };
 
-    private startEnvironment = async () => {
-        trace.info(`Environment in shutdown state, starting.`);
-
-        await startEnvironment(this.setState.bind(this), this.handleAPIError, trace.info);
-
+    private startCodespace = async () => {
         this.setState({
             value: EnvironmentStateInfo.Starting,
         });
+
+        trace.info(`Environment in shutdown state, starting.`);
+
+        if (!this.environmentInfo) {
+            throw new Error(`Fetch environment info first.`);
+        }
+
+        const token = await authService.getCachedToken();
+        if (!token) {
+            trace.info(`No token found.`);
+
+            this.setState({
+                value: EnvironmentWorkspaceState.SignedOut,
+            });
+
+            return;
+        }
+
+        trace.info(`Starting codespace`);
+
+        await this.stopPollEnvironment();
+
+        try {
+            await vsoAPI.startCodespace(this.environmentInfo, token);
+        } catch (e) {
+            this.handleAPIError(e);
+        }
 
         await this.startPollingEnvironment();
     };
@@ -131,11 +152,11 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
             trace.info(`Getting environment info..`);
 
-            const environmentInfo = await getEnvironmentInfo(
+            this.environmentInfo = await getEnvironmentInfo(
                 this.setState.bind(this),
                 this.handleAPIError
             );
-            if (!environmentInfo) {
+            if (!this.environmentInfo) {
                 /**
                  * error state already handled by
                  * the `getEnvironmentInfo` function
@@ -146,9 +167,9 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
             /**
              * Check if we need to autostart the environment.
              */
-            const isShutdown = environmentInfo.state === EnvironmentStateInfo.Shutdown;
+            const isShutdown = this.environmentInfo.state === EnvironmentStateInfo.Shutdown;
             if (isAutoStart() && isShutdown) {
-                return await this.startEnvironment();
+                return await this.startCodespace();
             }
 
             authService.onEvent((event) => {
@@ -159,7 +180,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
 
             authService.keepUserAuthenticated();
 
-            this.setState({ value: environmentInfo.state });
+            this.setState({ value: this.environmentInfo.state });
         } catch (e) {
             this.handleAPIError(e);
         }
@@ -185,7 +206,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
                 environmentInfo={this.environmentInfo}
                 environmentState={value}
                 message={message}
-                startEnvironment={this.startEnvironment}
+                startEnvironment={this.startCodespace}
                 handleAPIError={this.handleAPIError}
                 onSignIn={authService.redirectToLogin}
             />

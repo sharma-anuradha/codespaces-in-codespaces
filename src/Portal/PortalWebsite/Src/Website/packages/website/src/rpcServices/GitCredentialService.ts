@@ -2,7 +2,7 @@ import {
     createTrace,
     isHostedOnGithub,
     getCurrentEnvironmentId,
-    localStorageKeychain
+    localStorageKeychain,
 } from 'vso-client-core';
 
 import {
@@ -23,7 +23,7 @@ export class GitCredentialService extends GitCredentialServiceBase {
                 if (isHostedOnGithub()) {
                     const key = createGitHubTokenKey(getCurrentEnvironmentId());
                     const token = await localStorageKeychain.get(key);
-                    
+
                     if (token) {
                         return token;
                     }

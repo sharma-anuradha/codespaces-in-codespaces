@@ -11,7 +11,7 @@ import {
 
 import {
     VSCodespacesPlatformInfoGeneral,
-    VSCodeDefaultAuthSession
+    VSCodeDefaultAuthSession,
 } from 'vs-codespaces-authorization';
 
 import { FatalPlatformRedirectionError } from '../errors/FatalPlatformRedirectionError';
@@ -143,12 +143,12 @@ export class AuthService {
         5 * timeConstants.MINUTE_MS
     );
 
-    public getSettingsSyncSession = async ():  Promise<VSCodeDefaultAuthSession | null> => {
+    public getSettingsSyncSession = async (): Promise<VSCodeDefaultAuthSession | null> => {
         const info = await this.getPartnerInfo();
         if (!info || !('codespaceToken' in info)) {
             return null;
         }
-    
+
         const { vscodeSettings } = info as VSCodespacesPlatformInfoGeneral;
         if (!vscodeSettings) {
             return null;
@@ -162,17 +162,17 @@ export class AuthService {
         if (!defaultAuthSessions?.length) {
             return null;
         }
-    
+
         const session = defaultAuthSessions.find((s) => {
             return s.id === authenticationSessionId;
         });
-    
+
         if (!session) {
             return null;
         }
-    
+
         return session;
-    }
+    };
 }
 
 export const authService = new AuthService();

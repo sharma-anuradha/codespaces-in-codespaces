@@ -458,7 +458,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                   title: 'Go Home',
               }
             : undefined;
- 
+
         const defaultLayout = getWorkbenchDefaultLayout(
             environmentInfo,
             userDataProvider.isFirstRun
@@ -599,12 +599,13 @@ const getProps: (
     };
 };
 
-type MappedProperties = keyof typeof mapDispatch | keyof ReturnType<typeof getProps> | keyof WithTranslation;
+type MappedProperties =
+    | keyof typeof mapDispatch
+    | keyof ReturnType<typeof getProps>
+    | keyof WithTranslation;
 
-type ExternalProps = Omit<
-    WorkbenchProps,
-    MappedProperties
->;
+type ExternalProps = Omit<WorkbenchProps, MappedProperties>;
 
-export const Workbench: ComponentClass<ExternalProps> =
-    withRouter(withTranslation()(connect(getProps, mapDispatch)(WorkbenchView)));
+export const Workbench: ComponentClass<ExternalProps> = withRouter(
+    withTranslation()(connect(getProps, mapDispatch)(WorkbenchView))
+);

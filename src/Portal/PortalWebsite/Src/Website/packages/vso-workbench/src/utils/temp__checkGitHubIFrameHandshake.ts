@@ -1,11 +1,14 @@
-import { authorizePlatformInternal, VSCodespacesPlatformInfoInternal } from 'vs-codespaces-authorization';
+import {
+    authorizePlatformInternal,
+    VSCodespacesPlatformInfoInternal,
+} from 'vs-codespaces-authorization';
 import {
     PostMessageChannel,
     createTrace,
     isInIframe,
     randomString,
     isGithubTLD,
-    PARTNER_INFO_KEYCHAIN_KEY
+    PARTNER_INFO_KEYCHAIN_KEY,
 } from 'vso-client-core';
 import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../constants';
 
@@ -16,8 +19,8 @@ const trace = createTrace(`vso-platform-authentication:auth-page`);
  * GitHub `postMessage` handshake data to automatically authorize the new platform:
  *  - This will work under local GitHub stamp and inside the Iframe.
  *  - And no prior auth was made (PARTNER_INFO_KEYCHAIN_KEY key).
- * 
- * If all above holds, then the script will get the repo info, transform it to 
+ *
+ * If all above holds, then the script will get the repo info, transform it to
  * the `ICrossDomainPlatformInfo` and do top-level POST navigation to the `/platform-authentication`
  * route with the data, implementing the new auth flow. This allows us in meantime piggyback on the
  * current GitHub auth flow while developing the new experience.
@@ -35,7 +38,10 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
     const postMessageChannel = new PostMessageChannel('https://github.com');
     self.addEventListener('load', async () => {
         try {
-            const info = await postMessageChannel.getRepoInfo(randomString(), 'vso-retrieve-repository-info') as any;
+            const info = (await postMessageChannel.getRepoInfo(
+                randomString(),
+                'vso-retrieve-repository-info'
+            )) as any;
 
             const data: VSCodespacesPlatformInfoInternal = {
                 partnerName: 'github',
@@ -48,15 +54,18 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                         expiration: 10000000000000,
                         token: info.githubToken,
                         host: 'github.com',
-                        path: '/'
-                    }
+                        path: '/',
+                    },
                 ],
-                codespaceId: info.workspaceId,
+                codespaceId: info.environmentId,
                 vscodeSettings: {
                     // set the GitHub theme as default, note that this will work only
                     //  - on fresh codespace
                     //  - and if the settings sync service is not turned on (or user using the default theme)
-                    defaultSettings: {'workbench.colorTheme': 'GitHub Light', 'workbench.startupEditor': 'welcomePageInEmptyWorkbench'},
+                    defaultSettings: {
+                        'workbench.colorTheme': 'GitHub Light',
+                        'workbench.startupEditor': 'welcomePageInEmptyWorkbench',
+                    },
                     // go home button
                     homeIndicator: {
                         icon: 'github-inverted',
@@ -74,7 +83,7 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                         },
                         {
                             id: 'ms-vsliveshare.vsliveshare',
-                        }
+                        },
                     ],
                     // settings sync / native auth providers
                     enableSyncByDefault: true,
@@ -93,8 +102,8 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                             id: 'github-session-github-pr',
                             accessToken: info.githubToken,
                             scopes: ['read:user', 'user:email', 'repo'].sort(),
-                        }
-                    ]
+                        },
+                    ],
                 },
             };
 
@@ -112,4 +121,4 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
             throw e;
         }
     });
-}
+};

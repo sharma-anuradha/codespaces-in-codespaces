@@ -18,7 +18,7 @@ const isExpiredCredential = (credential: IGitCredential) => {
     return delta <= timeConstants.HOUR_MS;
 };
 
-const findCredential = async (service: string, account: string): Promise<string | null> => {
+export const findGitCredential = async (service: string, account: string): Promise<string | null> => {
     if (!account || !service) {
         return null;
     }
@@ -60,13 +60,13 @@ const findCredential = async (service: string, account: string): Promise<string 
  */
 export class GitCredentialHelperStrategy implements IAuthStrategy {
     async canHandleService(service: string, account: string) {
-        const result = await findCredential(service, account);
+        const result = await findGitCredential(service, account);
 
         return !!result;
     }
 
     async getToken(service: string, account: string): Promise<string | null> {
-        const result = await findCredential(service, account);
+        const result = await findGitCredential(service, account);
 
         return result;
     }

@@ -1,6 +1,6 @@
 import * as debug from 'debug';
 
-import { IVSCodeConfig, IEnvironment, randomString } from 'vso-client-core';
+import { IVSCodeConfig, IEnvironment, randomString, vsls } from 'vso-client-core';
 import { IWebSocketFactory, IWorkbenchConstructionOptions } from 'vscode-web';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 
@@ -14,6 +14,8 @@ import { authService } from '../../auth/authService';
 import { vscode } from '../vscodeAssets/vscode';
 import { config } from '../../config/config';
 import { getUriAuthority } from '../../utils/getUriAuthority';
+import { GitCredentialService } from '../../rpcServices/GitCredentialService';
+import { BrowserSyncService } from '../../rpcServices/BrowserSyncService';
 
 interface IWorkbenchOptions {
     domElementId: string;
@@ -37,13 +39,10 @@ logContent.log =
 export class VSCodeWorkbench {
     private envConnector: EnvConnector | null = null;
 
-    constructor(private readonly options: IWorkbenchOptions) { }
+    constructor(private readonly options: IWorkbenchOptions) {}
 
     public connect = async () => {
-        const {
-            getToken,
-            onConnection,
-        } = this.options;
+        const { getToken, onConnection } = this.options;
 
         const token = await getToken();
 
@@ -52,7 +51,23 @@ export class VSCodeWorkbench {
         }
 
         if (!this.envConnector) {
-            this.envConnector = new EnvConnector(() => { });
+            this.envConnector = new EnvConnector(async (e) => {
+                const { workspaceClient, workspaceService, rpcConnection } = e;
+
+                // Expose credential service
+                const gitCredentialService = new GitCredentialService(
+                    workspaceService,
+                    rpcConnection
+                );
+                await gitCredentialService.shareService();
+
+                // Expose browser sync service
+                const sourceEventService = workspaceClient.getServiceProxy<vsls.SourceEventService>(
+                    vsls.SourceEventService
+                );
+
+                new BrowserSyncService(sourceEventService);
+            });
         }
 
         await vscode.getVSCode();
