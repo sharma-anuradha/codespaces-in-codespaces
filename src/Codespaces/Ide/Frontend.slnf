@@ -1,0 +1,41 @@
+{
+  "solution": {
+    "path": "..\\..\\Ide\\CloudEnvironmentsServices.sln",
+    "projects": [
+      "..\\Common\\Src\\Auth\\Auth.csproj",
+      "..\\Common\\Src\\Common.AspNetCore\\Common.AspNetCore.csproj",
+      "..\\Common\\Src\\Common.Contracts\\Common.Contracts.csproj",
+      "..\\Common\\Src\\Common\\Common.csproj",
+      "..\\Common\\Src\\HttpContracts\\HttpContracts.csproj",
+      "..\\Codespaces\\BackEndWebApiClient\\Src\\BackEndWebApiClient.Contracts\\BackEndWebApiClient.Contracts.csproj",
+      "..\\Codespaces\\BackEndWebApiClient\\Src\\BackEndWebApiClient\\BackEndWebApiClient.csproj",
+      "..\\Codespaces\\Billing\\Src\\Billing.Contracts\\Billing.Contracts.csproj",
+      "..\\Codespaces\\Billing\\Src\\Billing\\Billing.csproj",
+      "..\\Codespaces\\Billing\\Test\\Billing.Test\\Billing.Test.csproj",
+      "..\\Codespaces\\Common\\Src\\FrontEnd.Common\\FrontEnd.Common.csproj",
+      "..\\Codespaces\\EnvironmentManager\\Src\\EnvironmentManager.Contracts\\EnvironmentManager.Contracts.csproj",
+      "..\\Codespaces\\EnvironmentManager\\Src\\EnvironmentManager.Repositories\\EnvironmentManager.Repositories.csproj",
+      "..\\Codespaces\\EnvironmentManager\\Src\\EnvironmentManager\\EnvironmentManager.csproj",
+      "..\\Codespaces\\EnvironmentManager\\Test\\EnvironmentManager.Test\\EnvironmentManager.Test.csproj",
+      "..\\Codespaces\\FrontEndWebApi\\Src\\FrontEndWebApi\\FrontEndWebApi.csproj",
+      "..\\Codespaces\\FrontEndWebApi\\Test\\FrontEndWebApi.Test\\FrontEndWebApi.Test.csproj",
+      "..\\Codespaces\\LiveShareAuthentication\\Src\\LiveShareAuthentication.Contracts\\LiveShareAuthentication.Contracts.csproj",
+      "..\\Codespaces\\LiveShareAuthentication\\Src\\LiveShareAuthentication\\LiveShareAuthentication.csproj",
+      "..\\Codespaces\\LiveShareWorkspace\\Src\\LiveShareWorkspace.Contracts\\LiveShareWorkspace.Contracts.csproj",
+      "..\\Codespaces\\LiveShareWorkspace\\Src\\LiveShareWorkspace\\LiveShareWorkspace.csproj",
+      "..\\Codespaces\\Monitoring\\Src\\Monitoring\\Monitoring.csproj",
+      "..\\Codespaces\\Monitoring\\Test\\Monitoring.Test\\Monitoring.Test.csproj",
+      "..\\Codespaces\\PCFAgent\\Src\\PCFAgent\\PCFAgent.csproj",
+      "..\\Codespaces\\Plans\\Src\\Plans.Contracts\\Plans.Contracts.csproj",
+      "..\\Codespaces\\Plans\\Src\\Plans\\Plans.csproj",
+      "..\\Codespaces\\Plans\\Test\\Plans.Test\\Plans.Test.csproj",
+      "..\\Codespaces\\Subscriptions\\Src\\Subscriptions.Contracts\\Subscriptions.Contracts.csproj",
+      "..\\Codespaces\\Subscriptions\\Src\\Subscriptions\\Subscriptions.csproj",
+      "..\\Codespaces\\UserProfile\\Src\\UserProfile.Contracts\\UserProfile.Contracts.csproj",
+      "..\\Codespaces\\UserProfile\\Src\\UserProfile\\UserProfile.csproj",
+      "..\\Codespaces\\ResourceAllocation\\Src\\ResourceAllocation\\ResourceAllocation.csproj",
+      "..\\Codespaces\\ResourceAllocation\\Src\\ResourceAllocation.Abstractions\\ResourceAllocation.Abstractions.csproj",
+      "..\\Codespaces\\ResourceAllocation\\Src\\ResourceAllocation.Contracts\\ResourceAllocation.Contracts.csproj"
+    ]
+  }
+}

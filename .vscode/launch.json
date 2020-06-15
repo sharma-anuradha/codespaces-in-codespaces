@@ -17,7 +17,7 @@
             "preLaunchTask": "buildServices",
             "program": "${workspaceFolder}/bin/debug/BackEndWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src/BackEnd/BackEndWebApi/Src/BackEndWebApi",
+            "cwd": "${workspaceFolder}/src/Resources/BackEndWebApi/Src/BackEndWebApi",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
@@ -37,7 +37,7 @@
             "preLaunchTask": "buildServices",
             "program": "${workspaceFolder}/bin/debug/FrontEndWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src/FrontEnd/FrontEndWebApi/Src/FrontEndWebApi",
+            "cwd": "${workspaceFolder}/src/Codespaces/FrontEndWebApi/Src/FrontEndWebApi",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",

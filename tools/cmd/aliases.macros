@@ -1,8 +1,8 @@
 ;= navigation commands
-backend=pushd "%ROOT%\src\backend\$*"
+backend=pushd "%ROOT%\src\Resources\$*"
 deploy=pushd "%ROOT%\src\deploy\$*"
 bin=pushd "%ROOT%\bin\$*"
-frontend=pushd "%ROOT%\src\frontend\$*"
+frontend=pushd "%ROOT%\src\Codespaces\$*"
 root=pushd "%ROOT%\$*"
 src=pushd "%ROOT%\src\$*"
 tools=pushd "%ROOT%\tools\$*"

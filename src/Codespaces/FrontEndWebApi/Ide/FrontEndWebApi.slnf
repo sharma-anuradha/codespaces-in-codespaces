@@ -2,7 +2,7 @@
   "solution": {
     "path": "..\\..\\..\\Ide\\CloudEnvironmentsServices.sln",
     "projects": [
-      "..\\FrontEnd\\FrontEndWebApi\\Src\\FrontEndWebApi\\FrontEndWebApi.csproj"
+      "..\\Codespaces\\FrontEndWebApi\\Src\\FrontEndWebApi\\FrontEndWebApi.csproj"
     ]
   }
 }

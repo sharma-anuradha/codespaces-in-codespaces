@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "..\\..\\..\\Ide\\CloudEnvironmentsServices.sln",
+    "projects": [
+      "..\\Resources\\Common\\Src\\Common.Abstractions\\Common.Abstractions.csproj",
+      "..\\Resources\\Common\\Src\\Common.Models\\Common.Models.csproj",
+      "..\\Resources\\Common\\Src\\Common\\BackEnd.Common.csproj",
+      "..\\Resources\\Common\\Test\\Common.Test\\BackEnd.Common.Test.csproj"
+    ]
+  }
+}

@@ -13,10 +13,10 @@
     <Content Include="$(MSBuildThisFileDirectory)\**" Exclude="$(MSBuildProjectFullPath)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\BackEnd\BackEndWebApi\Src\BackEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\Resources\BackEndWebApi\Src\BackEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="$(ChartName)\charts" >

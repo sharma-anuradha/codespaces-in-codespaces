@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="containers/dirs.proj" />
-    <ProjectReference Include="lib/dirs.proj" />
   </ItemGroup>
 
 </Project>

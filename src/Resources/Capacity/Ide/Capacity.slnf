@@ -1,0 +1,12 @@
+{
+  "solution": {
+    "path": "..\\..\\..\\Ide\\CloudEnvironmentsServices.sln",
+    "projects": [
+      "..\\Resources\\Capacity\\Src\\Capacity.Contracts\\Capacity.Contracts.csproj",
+      "..\\Resources\\Capacity\\Src\\Capacity\\Capacity.csproj",
+      "..\\Resources\\Capacity\\Test\\Capacity.Test\\Capacity.Test.csproj",
+      "..\\Common\\Src\\Common.Contracts\\Common.Contracts.csproj",
+      "..\\Common\\Src\\Common\\Common.csproj"
+    ]
+  }
+}

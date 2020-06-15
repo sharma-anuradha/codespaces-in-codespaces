@@ -296,7 +296,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
         private static async Task ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken token)
         {
             /*
-             TODO This code should get reconciled with src\FrontEnd\FrontEndWebApi\Src\FrontEndWebApi\Authentication\ValidatedPrincipalIdentityHandler.cs 
+             TODO This code should get reconciled with src\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\Authentication\ValidatedPrincipalIdentityHandler.cs 
              if it is nececssary to deal with ambiguous MSA user identities.
              */
             await Task.CompletedTask;

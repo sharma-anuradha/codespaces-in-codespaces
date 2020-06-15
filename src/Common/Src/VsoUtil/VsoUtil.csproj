@@ -19,10 +19,10 @@
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\Common.AspNetCore\Common.AspNetCore.csproj" />
-    <ProjectReference Include="..\..\..\BackEnd\Capacity\Src\Capacity\Capacity.csproj" />
-    <ProjectReference Include="..\..\..\BackEnd\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\BackEnd\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
-    <ProjectReference Include="..\..\..\BackEnd\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj" />
+    <ProjectReference Include="..\..\..\Resources\Capacity\Src\Capacity\Capacity.csproj" />
+    <ProjectReference Include="..\..\..\Resources\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Resources\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
+    <ProjectReference Include="..\..\..\Resources\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj" />
     <ProjectReference Include="..\..\..\PortForwarding\Connections.Contracts\Src\Connections.Contracts\Connections.Contracts.csproj" />
   </ItemGroup>
 

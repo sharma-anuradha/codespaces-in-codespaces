@@ -7,10 +7,10 @@ exit /b %errorloevel%
 
 :main
     if exist projects.txt del projects.txt
-    dir /s /b "%root%..\Backend\*.csproj"   >> projects.txt
+    dir /s /b "%root%..\Resources\*.csproj"   >> projects.txt
     dir /s /b "%root%..\Common\*.csproj"    >> projects.txt
     dir /s /b "%root%..\Deploy\*.csproj"    >> projects.txt
-    dir /s /b "%root%..\FrontEnd\*.csproj"  >> projects.txt
+    dir /s /b "%root%..\Codespaces\*.csproj"  >> projects.txt
     type projects.txt | sort > projects2.txt
     copy /y projects2.txt projects.txt > nul
     del projects2.txt

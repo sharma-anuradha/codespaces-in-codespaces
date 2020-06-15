@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "src/BackEnd"
+			"path": "src/Resources"
 		},
 		{
-			"path": "src/FrontEnd"
+			"path": "src/Codespaces"
 		},
 		{
 			"path": "src/Common"
