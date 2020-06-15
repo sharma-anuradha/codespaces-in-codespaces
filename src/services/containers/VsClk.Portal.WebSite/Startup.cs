@@ -68,7 +68,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.AddSingleton(appSettings);
             AppSettings = appSettings;
 
-            services.AddSpaStaticFiles(configuration => { configuration.RootPath =  "ClientApp/build"; });
+            services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
             PortForwardingHostUtils = new PortForwardingHostUtils(appSettings.PortForwardingHostsConfigs);
             services.AddSingleton(PortForwardingHostUtils);
@@ -107,8 +107,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             // Forwarded headers
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders =
-                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.ForwardedHeaders = ForwardedHeaders.All;
             });
 
             services.AddSingleton<AsyncWarmupHelper>();
@@ -117,6 +116,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseForwardedHeaders();
+
             if (HostEnvironment.IsDevelopment() || AppSettings.IsLocal)
             {
                 app.UseDeveloperExceptionPage();
@@ -172,18 +173,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         {
             app.UseResponseCompression();
 
-            app.UseForwardedHeaders();
-            // TODO: the following is temporary until we get forwarded headers properly configured in nginx
-            // For the short term this is safe as we know all public traffic is https
-            // https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-3.1
-            if (!HostEnvironment.IsDevelopment() || !AppSettings.IsLocal)
-            {
-                app.Use((context, next) =>
-                {
-                    context.Request.Scheme = "https";
-                    return next();
-                });
-            }
 
             if (!HostEnvironment.IsDevelopment())
             {

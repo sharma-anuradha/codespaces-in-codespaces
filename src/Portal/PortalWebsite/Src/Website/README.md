@@ -56,15 +56,10 @@ yarn && yarn setup
 az login
 ```
 
-6. Get the right credentials
-```
-az acr login --name vsclkonlinedev
-```
-
-7. Uncomment the line `127.0.0.1 localhost` in your `hosts` file and replace `localhost` with `online.dev.core.vsengsaas.visualstudio.com`.  
+6. Uncomment the line `127.0.0.1 localhost` in your `hosts` file and replace `localhost` with `online.dev.core.vsengsaas.visualstudio.com`.  
 https://support.rackspace.com/how-to/modify-your-hosts-file
 
-8. Setup the local DNS server
+7. Setup the local DNS & nginx server
 
 > This only needs to happen the first time. After that, the setting should be set in system settings, and `yarn start` should be sufficient.
 
@@ -78,7 +73,7 @@ macOS
 sudo yarn start:dns
 ```
 
-9. Flush your DNS
+8. Flush your DNS
 
 Windows
 ```
@@ -90,12 +85,12 @@ macOS
 sudo killall -HUP mDNSResponder; sleep 2;
 ```
 
-10. Start the portal
+9. Start the portal
 ```
 yarn start
 ```
 
-11. Open https://online.dev.core.vsengsaas.visualstudio.com in the browser. You should see a 🚧 in the top bar if the portal is running locally.
+10. Open https://online.dev.core.vsengsaas.visualstudio.com in the browser. You should see a 🚧 in the top bar if the portal is running locally.
 
 ## Tip & Tricks
 

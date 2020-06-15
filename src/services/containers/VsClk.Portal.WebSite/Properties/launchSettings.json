@@ -4,44 +4,13 @@
         "Production": {
             "commandName": "Project"
         },
-        "Local": {
-            "commandName": "Project",
-            "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Local",
-                "PORTAL_AppSettings__IsLocal": "true",
-                "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-cert.pfx"
-            },
-            "applicationUrl": "https://online.dev.core.vsengsaas.visualstudio.com",
-            "launchUrl": "https://online.dev.core.vsengsaas.visualstudio.com/login"
+      "Local": {
+        "commandName": "Project",
+        "environmentVariables": {
+          "ASPNETCORE_ENVIRONMENT": "Local",
+          "PORTAL_AppSettings__IsLocal": "true"
         },
-        "LocalGitHub": {
-            "commandName": "Project",
-          "environmentVariables": {
-            "ASPNETCORE_ENVIRONMENT": "Local",
-            "PORTAL_AppSettings__IsLocal": "true",
-            "ASPNETCORE_Kestrel__Certificates__Default__Path": "local-github-dev.pfx"
-          },
-            "applicationUrl": "https://*.local.github.dev",
-            "launchUrl": "https://*.local.github.dev"
-        },
-        "LocalGitHubOld": {
-            "commandName": "Project",
-          "environmentVariables": {
-            "ASPNETCORE_ENVIRONMENT": "Local",
-            "PORTAL_AppSettings__IsLocal": "true",
-            "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-github-cert.pfx"
-          },
-            "applicationUrl": "https://*.workspaces-dev.github.com",
-            "launchUrl": "https://*.workspaces-dev.github.com/environment/*"
-        },
-        "LocalPlatform": {
-            "commandName": "Project",
-            "environmentVariables": {
-                "ASPNETCORE_ENVIRONMENT": "Local",
-                "PORTAL_AppSettings__IsLocal": "true",
-                "ASPNETCORE_Kestrel__Certificates__Default__Path": "dev-github-cert.pfx"
-            },
-            "applicationUrl": "https://*:443"
-        }
+        "applicationUrl": "http://0.0.0.0:5000"
+      }
     }
 }

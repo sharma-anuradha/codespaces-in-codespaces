@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
@@ -23,14 +24,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         /// </summary>
         /// <param name="queueClientProvider">The service bus queue provider.</param>
         /// <param name="messageHandler">The message handler.</param>
+        /// <param name="hostApplicationLifetime">The host application lifetime object.</param>
         /// <param name="logger">The logger.</param>
         public EstablishedConnectionsWorker(
             IServiceBusQueueClientProvider queueClientProvider,
             IConnectionEstablishedMessageHandler messageHandler,
+            IHostApplicationLifetime hostApplicationLifetime,
             IDiagnosticsLogger logger)
         {
             QueueClientProvider = Requires.NotNull(queueClientProvider, nameof(queueClientProvider));
             MessageHandler = Requires.NotNull(messageHandler, nameof(messageHandler));
+            HostApplicationLifetime = Requires.NotNull(hostApplicationLifetime, nameof(hostApplicationLifetime));
             Logger = Requires.NotNull(logger, nameof(logger));
         }
 
@@ -38,26 +42,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
 
         private IConnectionEstablishedMessageHandler MessageHandler { get; }
 
+        private IHostApplicationLifetime HostApplicationLifetime { get; }
+
         private IDiagnosticsLogger Logger { get; }
 
         /// <inheritdoc/>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var client = await QueueClientProvider.GetQueueClientAsync(QueueNames.EstablishedConnections, Logger);
+            try
+            {
+                var client = await QueueClientProvider.GetQueueClientAsync(QueueNames.EstablishedConnections, Logger);
 
-            client.RegisterSessionHandler(
-                ProcessSessionMessage,
-                new SessionHandlerOptions((e) =>
-                {
-                    Logger.LogException("established_connection_worker_handle_session_message_exception", e.Exception);
+                client.RegisterSessionHandler(
+                    ProcessSessionMessage,
+                    new SessionHandlerOptions((e) =>
+                    {
+                        Logger.LogException("established_connection_worker_handle_session_message_exception", e.Exception);
 
-                    return Task.CompletedTask;
-                })
-                {
-                    MaxConcurrentSessions = 1,
-                    AutoComplete =
-                        true, // We'll have the relevant information for debugging in logs so we can get rid of the message.
-                });
+                        return Task.CompletedTask;
+                    })
+                    {
+                        AutoComplete = true, // We'll have the relevant information for debugging in logs so we can get rid of the message.
+                    });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException("established_connection_worker_register_message_handler_failed", ex);
+                HostApplicationLifetime.StopApplication();
+                throw;
+            }
         }
 
         private Task ProcessSessionMessage(

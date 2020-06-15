@@ -1,4 +1,5 @@
-CONTAINER_NAME=vscs-local-dns-server
+OLD_CONTAINER_NAME=vscs-local-dns-server
+CONTAINER_NAME=portal-local-dns-server
 
 docker_state=$(docker info >/dev/null 2>&1)
 if [[ $? -ne 0 ]]; then
@@ -10,13 +11,15 @@ fi
 
 echo "\n* Starting the DNS server.."
 
-docker stop $CONTAINER_NAME &> /dev/null
-docker rm $CONTAINER_NAME &> /dev/null
+docker stop $OLD_CONTAINER_NAME &> /dev/null
+docker rm $OLD_CONTAINER_NAME &> /dev/null
 
 echo "* Starting the DNS server docker container.."
-docker run --name $CONTAINER_NAME -d --rm \
-    --publish 53:53/tcp --publish 53:53/udp \
-    vsclkonlinedev.azurecr.io/portal-local-dns:latest
+pushd ../../../
+
+docker-compose up --build -d
+
+popd
 
 if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "! Could not start the DNS server docker container, terminating.."
