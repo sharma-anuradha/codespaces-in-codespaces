@@ -82,7 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     if (!sku.SkuName.Equals("premiumWindows") &&
                         !sku.SkuName.Equals("internalWindows") &&
                         !sku.SkuName.Equals("premiumWindowsStaging") &&
-                        !sku.SkuName.Equals("premiumWindowsInternalStaging"))
+                        !sku.SkuName.Equals("premiumWindowsInternalStaging") &&
+                        !sku.SkuName.Equals("premiumWindowsServerInternalStaging"))
                     {
                         Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                         Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
@@ -96,7 +97,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             sku.SkuName.Equals("basicLinux") ||
                             sku.SkuName.Equals("premiumWindows") ||
                             sku.SkuName.Equals("premiumWindowsStaging") ||
-                            sku.SkuName.Equals("premiumWindowsInternalStaging"))
+                            sku.SkuName.Equals("premiumWindowsInternalStaging") ||
+                            sku.SkuName.Equals("premiumWindowsServerInternalStaging"))
                         {
                             Assert.True(sku.StoragePoolLevel == 0);
                             Assert.True(sku.ComputePoolLevel == 0);
