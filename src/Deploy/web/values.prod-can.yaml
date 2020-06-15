@@ -1,0 +1,12 @@
+# Config for port-forwarding
+port-forwarding-web-api:
+  config:
+    aspNetEnv: Production
+    overrideAppSettingsJson: appsettings.prod-can.json
+  ingress:
+    hosts:
+      - '*.app.canary.online.visualstudio.com'
+    tls:
+      - hosts:
+        - '*.app.canary.online.visualstudio.com'
+        secretName: ssl-cert

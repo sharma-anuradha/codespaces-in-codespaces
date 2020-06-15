@@ -1,0 +1,20 @@
+# Config for port-forwarding
+port-forwarding-web-api:
+  config:
+    aspNetEnv: Staging
+    overrideAppSettingsJson: appsettings.ppe-load.json
+  ingress:
+    hosts:
+      - '*.app.ppe-load-online.core.vsengsaas.visualstudio.com'
+      - '*.app.eastus-ppe-load-online.core.vsengsaas.visualstudio.com'
+      - '*.app.southeastasia-ppe-load-online.core.vsengsaas.visualstudio.com'
+      - '*.app.westeurope-ppe-load-online.core.vsengsaas.visualstudio.com'
+      - '*.app.westus2-ppe-load-online.core.vsengsaas.visualstudio.com'
+    tls:
+      - hosts:
+        - '*.app.ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.eastus-ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.southeastasia-ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.westeurope-ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.westus2-ppe-load-online.core.vsengsaas.visualstudio.com'
+        secretName: ssl-cert

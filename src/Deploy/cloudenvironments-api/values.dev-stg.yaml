@@ -21,25 +21,6 @@ backend-web-api:
     aspNetEnv: Development
     overrideAppSettingsJson: appsettings.dev-stg.json
 
-# Config for port-forwarding
-port-forwarding-web-api:
-  config:
-    aspNetEnv: Development
-    overrideAppSettingsJson: appsettings.dev-stg.json
-  portForwardingAgent:
-    enabled: true
-  ingress:
-    hosts:
-      - '*.app.online-stg.dev.core.vsengsaas.visualstudio.com'
-      - '*.app.stg-online.dev.core.vsengsaas.visualstudio.com'
-      - '*.app.westus2-stg-online.dev.core.vsengsaas.visualstudio.com'
-    tls:
-      - hosts:
-        - '*.app.online-stg.dev.core.vsengsaas.visualstudio.com'
-        - '*.app.stg-online.dev.core.vsengsaas.visualstudio.com'
-        - '*.app.westus2-stg-online.dev.core.vsengsaas.visualstudio.com'
-        secretName: ssl-cert
-
 # Config for tokens
 tokens-web-api:
   config:

@@ -23,27 +23,6 @@ backend-web-api:
     aspNetEnv: Development
     overrideAppSettingsJson: false
 
-# Config for port-forwarding
-port-forwarding-web-api:
-  config:
-    aspNetEnv: Development
-    overrideAppSettingsJson: false
-  portForwardingAgent:
-    enabled: true
-  ingress:
-    hosts:
-      - '*.app.online.dev.core.vsengsaas.visualstudio.com'
-      - '*.app.ci-online.dev.core.vsengsaas.visualstudio.com'
-      - '*.app.westus2-ci-online.dev.core.vsengsaas.visualstudio.com'
-      - '*.app.westeurope-ci-online.dev.core.vsengsaas.visualstudio.com'
-    tls:
-      - hosts:
-        - '*.app.online.dev.core.vsengsaas.visualstudio.com'
-        - '*.app.ci-online.dev.core.vsengsaas.visualstudio.com'
-        - '*.app.westus2-ci-online.dev.core.vsengsaas.visualstudio.com'
-        - '*.app.westeurope-ci-online.dev.core.vsengsaas.visualstudio.com'
-        secretName: ssl-cert
-
 # Config for tokens
 tokens-web-api:
   config:

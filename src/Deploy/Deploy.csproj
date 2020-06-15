@@ -5,26 +5,29 @@
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
     <RestorePackages>false</RestorePackages>
-
-    <ChartName>cloudenvironments-api</ChartName>
+    <ApiChartName>cloudenvironments-api</ApiChartName>
+    <WebChartName>web</WebChartName>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)\**" Exclude="$(MSBuildProjectFullPath)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\Resources\BackEndWebApi\Src\BackEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\Resources\BackEndWebApi\Src\BackEndWebApi\Charts\**" LinkBase="$(ApiChartName)\charts">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\Charts\**" LinkBase="$(ApiChartName)\charts">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="$(ChartName)\charts" >
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="$(MSBuildThisFileDirectory)\..\Tokens\Src\TokenService\Charts\**" LinkBase="$(ChartName)\charts" >
+    <Content Include="$(MSBuildThisFileDirectory)\..\Tokens\Src\TokenService\Charts\**" LinkBase="$(ApiChartName)\charts">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)\..\PortForwarding\PortForwardingWebApi\Src\PortForwardingWebApi\Charts\**" LinkBase="$(WebChartName)\charts">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

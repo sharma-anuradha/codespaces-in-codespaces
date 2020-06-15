@@ -27,29 +27,6 @@ backend-web-api:
     aspNetEnv: Production
     overrideAppSettingsJson: false
 
-# Config for port-forwarding
-port-forwarding-web-api:
-  config:
-    aspNetEnv: Production
-    overrideAppSettingsJson: false
-  ingress:
-    hosts:
-      - '*.app.online.visualstudio.com'
-      - '*.app.online.core.vsengsaas.visualstudio.com'
-      - '*.app.eastus.online.visualstudio.com'
-      - '*.app.westeurope.online.visualstudio.com'
-      - '*.app.westus2.online.visualstudio.com'
-      - '*.app.southeastasia.online.visualstudio.com'
-    tls:
-      - hosts:
-        - '*.app.online.visualstudio.com'
-        - '*.app.online.core.vsengsaas.visualstudio.com'
-        - '*.app.eastus.online.visualstudio.com'
-        - '*.app.westeurope.online.visualstudio.com'
-        - '*.app.westus2.online.visualstudio.com'
-        - '*.app.southeastasia.online.visualstudio.com'
-        secretName: ssl-cert
-
 # Config for tokens
 tokens-web-api:
   config:
