@@ -1,8 +1,11 @@
+using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
@@ -18,8 +21,37 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             HostEnvironment = hostEnvironment;
         }
 
+        public class HttpGetIfHostTLDAttribute : HttpGetAttribute, IActionConstraint
+        {
+            public string[] TLDs { get; set; }
+
+            public HttpGetIfHostTLDAttribute (string route, params string[] tlds): base(route) {
+                TLDs = tlds;
+            }
+
+            public bool Accept(ActionConstraintContext context)
+            {
+                var host = context.RouteContext.HttpContext.Request.Host.Host;
+
+                if (!string.IsNullOrEmpty(host))
+                {
+                    foreach(var tld in TLDs)
+                    {
+                        if (host.ToLower().EndsWith(tld.ToLower()))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+        }
+
+
         [HttpGet("~/codespace")]
         [HttpGet("~/workspace/{id}")]
+        [HttpGetIfHostTLD("~/", ".github.dev", ".codespaces.visualstudio.com")]
         public Task<ActionResult> Index() => FetchStaticAsset("workbench.html", "text/html");
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)
