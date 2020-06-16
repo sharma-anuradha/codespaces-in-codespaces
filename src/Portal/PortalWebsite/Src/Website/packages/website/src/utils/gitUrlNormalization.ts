@@ -112,7 +112,7 @@ export function normalizeGitUrl(maybeUrl: string): string | undefined {
     if (isGitHubRepositoryName(maybeUrl)) {
         // Transform repository name (vso/test) into URL provided in GitHub
         // clone dialog, also make sure everything is ok URL-wise.
-        const url = new URL(`${maybeUrl}.git`, 'https://github.com');
+        const url = new URL(maybeUrl, 'https://github.com');
         return url.toString();
     }
 

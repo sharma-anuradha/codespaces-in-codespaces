@@ -111,9 +111,9 @@ describe('git url utils', () => {
 
         test.each`
             shortHandRepositoryName | fullRepositoryUrl
-            ${'vso/test'}           | ${'https://github.com/vso/test.git'}
-            ${'vso/1.test'}         | ${'https://github.com/vso/1.test.git'}
-            ${'microsoft/vscode'}   | ${'https://github.com/microsoft/vscode.git'}
+            ${'vso/test'}           | ${'https://github.com/vso/test'}
+            ${'vso/1.test'}         | ${'https://github.com/vso/1.test'}
+            ${'microsoft/vscode'}   | ${'https://github.com/microsoft/vscode'}
         `(
             'transforms "$shortHandRepositoryName" into "$fullRepositoryUrl"',
             ({ shortHandRepositoryName, fullRepositoryUrl }) => {
