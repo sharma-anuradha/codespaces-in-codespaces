@@ -125,12 +125,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Equal("NewSku", overwrittenPlan.VsoPlan.SkuPlan.Name);
             Assert.False(overwrittenPlan.VsoPlan.IsDeleted);
             Assert.NotEqual(savedModel.SkuPlan.Name, overwrittenPlan.VsoPlan.SkuPlan.Name);
-            Assert.Single((await planManager.ListAsync(new UserIdSet(plan.UserId), plan.Plan.Subscription, plan.Plan.ResourceGroup, null, logger, false)));
-            Assert.Single((await planManager.ListAsync(new UserIdSet(plan.UserId), plan.Plan.Subscription, plan.Plan.ResourceGroup, null, logger, true)));
+            Assert.Single((await planManager.ListAsync(
+                new UserIdSet(plan.UserId), plan.Plan.ProviderNamespace, plan.Plan.Subscription, plan.Plan.ResourceGroup, null, logger, false)));
+            Assert.Single((await planManager.ListAsync(
+                new UserIdSet(plan.UserId), plan.Plan.ProviderNamespace, plan.Plan.Subscription, plan.Plan.ResourceGroup, null, logger, true)));
         }
 
         [Fact]
-        public async Task CreateAccountChecksPerSubscriptionQuota()
+        public async Task CreatePlanChecksPerSubscriptionQuota()
         {
             var subscription = new Subscription();
             VsoPlan toDelete = null;
@@ -149,8 +151,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Null(result.VsoPlan);
             Assert.Equal(ErrorCodes.ExceededQuota, result.ErrorCode);
 
-            // 20 Accounts exist for given subscription.
-            var listAccounts = await planManager.ListAsync(null, subscriptionId, "myRG", null, logger);
+            // 20 plans exist for given subscription.
+            var listAccounts = await planManager.ListAsync(null, null, subscriptionId, "myRG", null, logger);
             Assert.Equal(20, listAccounts.Count());
 
             // Delete 1 SkuPlan.
@@ -245,7 +247,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             await planManager.CreateAsync(GeneratePlan("Model3"), subscription, logger);
 
             var modelList = await planManager.ListAsync(
-                userIdSet: null, model1.Plan.Subscription, model1.Plan.ResourceGroup, model1.Plan.Name, logger);
+                userIdSet: null, model1.Plan.ProviderNamespace, model1.Plan.Subscription, model1.Plan.ResourceGroup, model1.Plan.Name, logger);
             Assert.NotNull(modelList);
             Assert.IsAssignableFrom<IEnumerable>(modelList);
             Assert.All(modelList, item => Assert.Contains(model1.Plan.Subscription, item.Plan.Subscription));
@@ -261,7 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             await planManager.CreateAsync(GeneratePlan("Model3"), subscription, logger);
 
             var modelList = await planManager.ListAsync(
-                userIdSet: null, model1.Plan.Subscription, model1.Plan.ResourceGroup, null, logger);
+                userIdSet: null, model1.Plan.ProviderNamespace, model1.Plan.Subscription, model1.Plan.ResourceGroup, null, logger);
             Assert.NotNull(modelList);
             Assert.IsAssignableFrom<IEnumerable>(modelList);
             Assert.All(modelList, item => Assert.Contains(model1.Plan.Subscription, item.Plan.Subscription));
@@ -279,13 +281,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2), subscription, logger);
 
             var modelListFirst = await planManager.ListAsync(
-                userIdSet: null, subscriptionGuid1, resourceGroup: null, name: null, logger);
+                userIdSet: null, providerNamespace: null, subscriptionGuid1, resourceGroup: null, name: null, logger);
             var listFirst = modelListFirst.ToList();
             Assert.NotNull(listFirst);
             Assert.Single(listFirst);
 
             var modelListSecond = await planManager.ListAsync(
-                userIdSet: null, subscriptionGuid2, resourceGroup: null, name: null, logger);
+                userIdSet: null, providerNamespace: null, subscriptionGuid2, resourceGroup: null, name: null, logger);
             var listSecond = modelListSecond.ToList();
             Assert.NotNull(listSecond);
             Assert.Equal(2, listSecond.Count());
@@ -306,13 +308,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             await planManager.CreateAsync(GeneratePlan("Model3", subscriptionGuid2, testUser2), subscription, logger);
 
             var modelListFirst = await planManager.ListAsync(
-                userIdSet: testUserSet1, subscriptionId: null, resourceGroup: null, name: null, logger);
+                userIdSet: testUserSet1, providerNamespace: null, subscriptionId: null, resourceGroup: null, name: null, logger);
             var listFirst = modelListFirst.ToList();
             Assert.NotNull(listFirst);
             Assert.Single(listFirst);
 
             var modelListSecond = await planManager.ListAsync(
-                userIdSet: testUserSet2, subscriptionId: null, resourceGroup: null, name: null, logger);
+                userIdSet: testUserSet2, providerNamespace: null, subscriptionId: null, resourceGroup: null, name: null, logger);
             var listSecond = modelListSecond.ToList();
             Assert.NotNull(listSecond);
             Assert.Equal(2, listSecond.Count());

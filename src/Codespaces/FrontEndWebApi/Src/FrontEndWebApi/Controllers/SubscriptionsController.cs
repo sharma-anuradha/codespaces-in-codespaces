@@ -45,7 +45,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private const string LoggingBaseName = "subscriptions_controller";
         private const string PlanResourceType = "plans";
-        private const string ResourceType = "Microsoft.VSOnline";
         private readonly IPlanManager planManager;
         private readonly IEnvironmentManager environmentManager;
         private readonly ITokenProvider tokenProvider;
@@ -108,23 +107,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     try
                     {
-                        if (!(await planManager.ShouldCreateMultiUserPlansAsync(logger)))
-                        {
-                            // UserId is only required when creating single user plans
-                            var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
-                                ? resource.Properties.UserId
-                                : HttpContext.User.GetUserIdFromClaims();
-
-                            ValidationUtil.IsRequired(userId);
-                        }
-
                         ValidationUtil.IsRequired(subscriptionId);
                         ValidationUtil.IsRequired(resourceGroup);
                         ValidationUtil.IsRequired(providerNamespace);
                         ValidationUtil.IsRequired(resourceType);
                         ValidationUtil.IsRequired(resourceName);
-                        ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                        ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
                     }
                     catch (Exception ex)
                     {
@@ -132,7 +119,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("NullParameters");
                     }
 
-                    if (!await planManager.IsPlanCreationAllowedAsync(subscriptionId, logger))
+                    try
+                    {
+                        ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType), "Invalid resource type.");
+                        ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace), "Invalid resource provider namespace.");
+
+                        // UserId is required when creating single user plans, disallowed otherwise.
+                        if (providerNamespace == VsoPlanInfo.VsoProviderNamespace)
+                        {
+                            var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
+                                ? resource.Properties.UserId
+                                : HttpContext.User.GetUserIdFromClaims();
+
+                            ValidationUtil.IsRequired(userId, "A userId is required.");
+                        }
+                        else
+                        {
+                            ValidationUtil.IsTrue(string.IsNullOrEmpty(resource.Properties?.UserId), "A userId is not supported.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogErrorWithDetail("plan_create_validate_error", ex.Message);
+                        return CreateErrorResponse("ValidateResourceFailed");
+                    }
+
+                    if (!await planManager.IsPlanCreationAllowedAsync(providerNamespace, subscriptionId, logger))
                     {
                         logger.LogErrorWithDetail("plan_create_validate_error", "Plan creation is not allowed.");
                         return CreateErrorResponse("ValidateResourceFailed");
@@ -199,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Enum.TryParse(nospacesLocation, true, out AzureLocation location),
                         $"Invalid location: ${resource.Location}");
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var plan = new VsoPlan
                     {
@@ -209,6 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                             Name = resourceName,
                             ResourceGroup = resourceGroup,
                             Subscription = subscriptionId,
+                            ProviderNamespace = providerNamespace,
                         },
                         Properties = new VsoPlanProperties
                         {
@@ -218,16 +231,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Partner = partner,
                     };
 
-                    if (!(await planManager.ShouldCreateMultiUserPlansAsync(logger)))
+                    // UserId is required when creating single user plans, disallowed otherwise.
+                    if (providerNamespace == VsoPlanInfo.VsoProviderNamespace)
                     {
-                        // UserId should not be set for multi-user plans
                         var userId = !string.IsNullOrEmpty(resource.Properties?.UserId)
                             ? resource.Properties.UserId
                             : HttpContext.User.GetUserIdFromClaims();
 
                         ValidationUtil.IsRequired(userId);
-
                         plan.UserId = userId;
+                    }
+                    else
+                    {
+                        ValidationUtil.IsTrue(string.IsNullOrEmpty(resource.Properties?.UserId));
                     }
 
                     var subscription = await this.subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
@@ -309,7 +325,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var planInfo = new VsoPlanInfo
                     {
@@ -405,10 +421,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceList);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var plans = await this.planManager.ListAsync(
-                        userIdSet: null, subscriptionId, resourceGroup, name: null, logger);
+                        userIdSet: null, providerNamespace, subscriptionId, resourceGroup, name: null, logger);
                     resourceList.Value = FilterPlanResources(resourceList.Value, plans.ToArray());
 
                     logger.LogInfo("plan_list_by_resourcegroup_success");
@@ -445,10 +461,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceList);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var plans = await planManager.ListAsync(
-                        userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
+                        userIdSet: null, providerNamespace, subscriptionId, resourceGroup: null, name: null, logger);
                     resourceList.Value = FilterPlanResources(resourceList.Value, plans.ToArray());
 
                     logger.LogInfo("plan_list_by_subscription_success");
@@ -491,7 +507,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsRequired(resource);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var planInfo = new VsoPlanInfo
                     {
@@ -546,7 +562,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var plan = new VsoPlanInfo
                     {
@@ -559,7 +575,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     vsoPlan.Plan = plan;
 
                     // Check if plan exists
-                    var currentPlan = (await planManager.ListAsync(null, subscriptionId, resourceGroup, resourceName, logger))?.SingleOrDefault();
+                    var plans = await planManager.ListAsync(
+                        null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
+                    var currentPlan = plans.SingleOrDefault();
                     if (currentPlan == null)
                     {
                         logger.LogErrorWithDetail("plan_patch_failed", "Plan does not exist.");
@@ -613,7 +631,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     var planInfo = new VsoPlanInfo
                     {
@@ -681,11 +699,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
+                    var plans = await planManager.ListAsync(
+                        userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var plan = result.SingleOrDefault();
+                    var plan = plans.SingleOrDefault();
                     if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
@@ -740,11 +759,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
+                    var plans = await planManager.ListAsync(
+                        userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var plan = result.SingleOrDefault();
+                    var plan = plans.SingleOrDefault();
                     if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
@@ -799,11 +819,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
+                    var plans = await planManager.ListAsync(
+                        userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var plan = result.SingleOrDefault();
+                    var plan = plans.SingleOrDefault();
                     if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
@@ -884,15 +905,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resourceType);
                     ValidationUtil.IsRequired(resourceName);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     Requires.NotNull(requestBody, nameof(requestBody));
                     Requires.NotNull(requestBody.Identity, nameof(requestBody.Identity));
                     Requires.NotNull(requestBody.Scope, nameof(requestBody.Scope));
 
-                    var result = await planManager.ListAsync(userIdSet: null, subscriptionId, resourceGroup, resourceName, logger);
+                    var plans = await planManager.ListAsync(
+                        userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
-                    var plan = result.SingleOrDefault();
+                    var plan = plans.SingleOrDefault();
                     if (plan == null)
                     {
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
@@ -990,7 +1012,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(rpSubscriptionNotification);
                     ValidationUtil.IsRequired(rpSubscriptionNotification.State);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
-                    ValidationUtil.IsTrue(ResourceProviderIsValid(providerNamespace));
+                    ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
                     if (!Enum.TryParse(rpSubscriptionNotification.State, true, out SubscriptionStateEnum subscriptionStateEnum))
                     {
@@ -1017,16 +1039,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private static bool ResourceTypeIsValid(string resourceType)
         {
             return PlanResourceType.Equals(resourceType, StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        /// <summary>
-        /// Helper method to determine if the input is a valid resource provider.
-        /// </summary>
-        /// <param name="resourceProvider">The resource provider's name.</param>
-        /// <returns>Bool.</returns>
-        private static bool ResourceProviderIsValid(string resourceProvider)
-        {
-            return resourceProvider.Equals(ResourceType, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>

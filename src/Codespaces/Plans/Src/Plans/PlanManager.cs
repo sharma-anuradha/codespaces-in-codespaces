@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             }
 
             // Validate Plan quota is not reached.
-            if (!await IsPlanCreationAllowedAsync(model.Plan.Subscription, logger))
+            if (!await IsPlanCreationAllowedAsync(model.Plan.ProviderNamespace, model.Plan.Subscription, logger))
             {
                 logger.LogError($"{LogBaseName}_create_maxplansforsubscription_error");
 
@@ -118,17 +118,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public async Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger)
+        public async Task<bool> IsPlanCreationAllowedAsync(string providerNamespace, string subscriptionId, IDiagnosticsLogger logger)
         {
-            var plans = await ListAsync(userIdSet: null, subscriptionId, resourceGroup: null, name: null, logger);
+            var plans = await ListAsync(userIdSet: null, providerNamespace, subscriptionId, resourceGroup: null, name: null, logger);
 
             return plans.Count() < await planManagerSettings.MaxPlansPerSubscriptionAsync(subscriptionId, logger);
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> ShouldCreateMultiUserPlansAsync(IDiagnosticsLogger logger)
-        {
-            return await planManagerSettings.MultiUserPlansEnabledAsync(logger);
         }
 
         /// <inheritdoc/>
@@ -144,6 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             return (await ListAsync(
                 userIdSet: null,
+                providerNamespace: plan.ProviderNamespace,
                 subscriptionId: plan.Subscription,
                 resourceGroup: plan.ResourceGroup,
                 name: plan.Name,
@@ -154,12 +149,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <inheritdoc/>
         public async Task<IEnumerable<VsoPlan>> ListAsync(
             UserIdSet userIdSet,
+            string providerNamespace,
             string subscriptionId,
             string resourceGroup,
             string name,
             IDiagnosticsLogger logger,
             bool includeDeleted = false)
         {
+            IEnumerable<VsoPlan> plans;
+
             // Consider pulling the IsDeleted in the getWhere calls to be conditional on includeDeleted == true
             if (userIdSet != null)
             {
@@ -168,7 +166,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                     ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
                     ValidationUtil.IsRequired(resourceGroup, nameof(resourceGroup));
 
-                    return (await this.planRepository.GetWhereAsync(
+                    plans = (await this.planRepository.GetWhereAsync(
                         (model) => (model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId) &&
                             model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup &&
@@ -181,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     ValidationUtil.IsRequired(subscriptionId, nameof(subscriptionId));
 
-                    return (await this.planRepository.GetWhereAsync(
+                    plans = (await this.planRepository.GetWhereAsync(
                         (model) => (model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId) &&
                             model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup,
@@ -191,7 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 }
                 else if (subscriptionId != null)
                 {
-                    return (await this.planRepository.GetWhereAsync(
+                    plans = (await this.planRepository.GetWhereAsync(
                         (model) => (model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId) &&
                             model.Plan.Subscription == subscriptionId,
                         logger,
@@ -200,7 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 }
                 else
                 {
-                    return (await planRepository
+                    plans = (await planRepository
                         .GetWhereAsync(
                         (model) => model.UserId == userIdSet.CanonicalUserId || model.UserId == userIdSet.ProfileProviderId,
                         logger,
@@ -216,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 {
                     ValidationUtil.IsRequired(resourceGroup, nameof(resourceGroup));
 
-                    return (await planRepository.GetWhereAsync(
+                    plans = (await planRepository.GetWhereAsync(
                         (model) => model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup &&
                             model.Plan.Name == name,
@@ -226,7 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 }
                 else if (resourceGroup != null)
                 {
-                    return (await planRepository.GetWhereAsync(
+                    plans = (await planRepository.GetWhereAsync(
                         (model) => model.Plan.Subscription == subscriptionId &&
                             model.Plan.ResourceGroup == resourceGroup,
                         logger,
@@ -235,13 +233,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 }
                 else
                 {
-                    return (await planRepository.GetWhereAsync(
+                    plans = (await planRepository.GetWhereAsync(
                         (model) => model.Plan.Subscription == subscriptionId,
                         logger,
                         null))
                         .Where(x => x.IsDeleted == false || x.IsDeleted == includeDeleted);
                 }
             }
+
+            if (providerNamespace != null)
+            {
+                plans = plans.Where((p) => p.Plan.ProviderNamespace == providerNamespace);
+            }
+
+            return plans;
         }
 
         /// <inheritdoc/>

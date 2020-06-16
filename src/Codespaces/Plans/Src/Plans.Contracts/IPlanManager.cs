@@ -29,10 +29,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <summary>
         /// Check if plan creation is allowed in the given subscription.
         /// </summary>
+        /// <param name="providerNamespace">RP namespace that the plan will be created in.</param>
         /// <param name="subscriptionId">The subscription id.</param>
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <returns>A boolean value indicating whether plan creation is allowed.</returns>
-        Task<bool> IsPlanCreationAllowedAsync(string subscriptionId, IDiagnosticsLogger logger);
+        Task<bool> IsPlanCreationAllowedAsync(string providerNamespace, string subscriptionId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Refreshes the total plan count.
@@ -79,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// Lists the available plans for the specified parameters.
         /// </summary>
         /// <param name="userIdSet">The user id.</param>
+        /// <param name="providerNamespace">The RP namespace, or null to include any.</param>
         /// <param name="subscriptionId">The subscription id.</param>
         /// <param name="resourceGroup">The resource group.</param>
         /// <param name="name">The name.</param>
@@ -86,7 +88,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="includeDeleted">If deleted plans need to be included.</param>
         /// <returns>The list of plans.</returns>
         Task<IEnumerable<VsoPlan>> ListAsync(
-            UserIdSet userIdSet, string subscriptionId, string resourceGroup, string name, IDiagnosticsLogger logger, bool includeDeleted = false);
+            UserIdSet userIdSet,
+            string providerNamespace,
+            string subscriptionId,
+            string resourceGroup,
+            string name,
+            IDiagnosticsLogger logger,
+            bool includeDeleted = false);
 
         /// <summary>
         /// Gets the plans by shard.
@@ -136,13 +144,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <returns>A boolean value indicating whether the plan properties update was successful.</returns>
         Task<bool> ApplyPlanPropertiesChangesAsync(VsoPlan vsoPlan, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Checks if new plans should be created as multi-user plans.
-        /// </summary>
-        /// <param name="logger">The IDiagnosticsLogger.</param>
-        /// <returns>True if new plans should be created as multi-user plans.</returns>
-        Task<bool> ShouldCreateMultiUserPlansAsync(IDiagnosticsLogger logger);
 
         /// <summary>
         /// validate plan details for feature flags.

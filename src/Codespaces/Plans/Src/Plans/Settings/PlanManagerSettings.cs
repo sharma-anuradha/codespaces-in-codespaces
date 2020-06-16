@@ -69,18 +69,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings
         }
 
         /// <summary>
-        /// Gets the feature flag for enabling creating new plans as multi-user plans.
-        /// </summary>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Target value.</returns>
-        public Task<bool> MultiUserPlansEnabledAsync(IDiagnosticsLogger logger)
-        {
-            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
-
-            return SystemConfiguration.GetValueAsync("featureflag:multi-user-plans", logger, false);
-        }
-
-        /// <summary>
         /// Gets or sets whether vnet injection is enabled.
         /// </summary>
         /// <param name="logger">Target logger.</param>

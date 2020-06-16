@@ -75,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 Subscription = subscriptionId,
                 ResourceGroup = resourceGroupName,
                 Name = resourceName,
+                ProviderNamespace = VsoPlanInfo.VsoProviderNamespace,
             };
 
             var plan = await PlanManager.GetAsync(planId, logger);
@@ -107,7 +108,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
             var plans = await PlanManager.ListAsync(
-                currentUserIdSet, subscriptionId: null, resourceGroup: null, name: null, logger);
+                currentUserIdSet,
+                VsoPlanInfo.VsoProviderNamespace,
+                subscriptionId: null,
+                resourceGroup: null,
+                name: null,
+                logger);
 
             var result = plans.Select((a) => MapAccountToResult(a, logger))
                 .Where((a) => a != null).ToArray();

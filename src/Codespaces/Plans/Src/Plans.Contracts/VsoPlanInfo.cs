@@ -15,8 +15,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
     /// </summary>
     public class VsoPlanInfo : IEquatable<VsoPlanInfo>
     {
+        /// <summary>Previous Azure Resource Provider namespace.</summary>
+        public const string VsoProviderNamespace = "Microsoft.VSOnline";
+
         /// <summary>Azure Resource Provider namespace.</summary>
-        public const string ProviderName = "Microsoft.VSOnline";
+        public const string CodespacesProviderNamespace = "Microsoft.Codespaces";
 
         /// <summary>Resource type of plan resources.</summary>
         public const string PlanResourceType = "plans";
@@ -37,6 +40,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "resourceGroup")]
         public string ResourceGroup { get; set; }
+
+        /// <summary>
+        /// Gets or sets the RP namespace the plan resource was created in.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to "Microsoft.VSOnline" because plans created in that namespace
+        /// did not persist the namespace.
+        /// </remarks>
+        [JsonProperty(Required = Required.Default, PropertyName = "providerNamespace")]
+        public string ProviderNamespace { get; set; } = VsoProviderNamespace;
 
         /// <summary>
         /// Gets or sets the name (not full path) of the plan resource.
@@ -70,12 +83,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         {
             get
             {
+                var providerNamespace = ProviderNamespace;
                 Requires.Argument(Subscription.IsValidSubscriptionId(), nameof(Subscription), "Invalid subscription ID.");
                 Requires.Argument(ResourceGroup.IsValidResourceGroupName(), nameof(ResourceGroup), "Invalid resource group name.");
+                Requires.Argument(TryParseProviderNamespace(ref providerNamespace), nameof(ProviderNamespace), "Invalid provider namespace.");
                 Requires.Argument(IsValidPlanName(Name), nameof(Name), "Invalid plan name.");
 
                 return $"/{Subscriptions}/{Subscription}/{ResourceGroups}/{ResourceGroup}" +
-                    $"/{Providers}/{ProviderName}/{PlanResourceType}/{Name}";
+                    $"/{Providers}/{providerNamespace}/{PlanResourceType}/{Name}";
             }
         }
 
@@ -104,7 +119,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 parts[1] != Subscriptions ||
                 parts[3] != ResourceGroups ||
                 parts[5] != Providers ||
-                parts[6] != ProviderName ||
                 parts[7] != PlanResourceType)
             {
                 plan = null;
@@ -113,11 +127,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
             var subscription = parts[2];
             var resourceGroup = parts[4];
+            var providerNamespace = parts[6];
             var name = parts[8];
 
             if (!subscription.IsValidSubscriptionId() ||
                 !resourceGroup.IsValidResourceGroupName() ||
                 !IsValidPlanName(name))
+            {
+                plan = null;
+                return false;
+            }
+
+            if (!TryParseProviderNamespace(ref providerNamespace))
             {
                 plan = null;
                 return false;
@@ -155,27 +176,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 parts[1] != Subscriptions ||
                 parts[3] != ResourceGroups ||
                 parts[5] != Providers ||
-                parts[6] != ProviderName ||
                 parts[7] != PlanResourceType)
             {
-                plan = null;
+                return null;
             }
 
             var subscription = parts[2];
             var resourceGroup = parts[4];
+            var providerNamespace = parts[6];
             var name = parts[8];
 
             if (!subscription.IsValidSubscriptionId() ||
                 !resourceGroup.IsValidResourceGroupName() ||
                 !IsValidPlanName(name))
             {
-                plan = null;
+                return null;
+            }
+
+            if (!TryParseProviderNamespace(ref providerNamespace))
+            {
+                return null;
             }
 
             plan.Subscription = subscription;
             plan.ResourceGroup = resourceGroup;
             plan.Name = name;
             return plan;
+        }
+
+        /// <summary>
+        /// Determines if the input is a valid resource provider, and normalizes the case.
+        /// </summary>
+        /// <param name="providerNamespace">The resource provider namespace. If valid, the reference
+        /// is updated to the case-normalized provider namespace.</param>
+        /// <returns>True if valid, else false.</returns>
+        public static bool TryParseProviderNamespace(ref string providerNamespace)
+        {
+            if (providerNamespace == null)
+            {
+                return false;
+            }
+            else if (providerNamespace.Equals(VsoPlanInfo.CodespacesProviderNamespace, StringComparison.InvariantCultureIgnoreCase))
+            {
+                providerNamespace = VsoPlanInfo.CodespacesProviderNamespace;
+                return true;
+            }
+            else if (providerNamespace.Equals(VsoPlanInfo.VsoProviderNamespace, StringComparison.InvariantCultureIgnoreCase))
+            {
+                providerNamespace = VsoPlanInfo.VsoProviderNamespace;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary> Tests if this plan equals another plan.</summary>
@@ -186,6 +240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             return other != null &&
                 Subscription == other.Subscription &&
                 ResourceGroup == other.ResourceGroup &&
+                ProviderNamespace == other.ProviderNamespace &&
                 Name == other.Name &&
                 Location == other.Location;
         }

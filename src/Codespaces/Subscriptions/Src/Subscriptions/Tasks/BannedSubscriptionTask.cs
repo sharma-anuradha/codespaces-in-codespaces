@@ -104,7 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
               $"{LogBaseName}_subscription_run",
               async (childLogger) =>
               {
-                  var plansForSubscription = await PlanManager.ListAsync(null, sub.Id, null, null, childLogger, includeDeleted: false);
+                  var plansForSubscription = await PlanManager.ListAsync(null, null, sub.Id, null, null, childLogger, includeDeleted: false);
                   if (!plansForSubscription.Any())
                   {
                       childLogger
