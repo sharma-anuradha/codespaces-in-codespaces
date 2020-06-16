@@ -104,19 +104,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             // VS SaaS Authentication
             services.AddPortalWebSiteAuthentication(appSettings);
 
-            // Forwarded headers
-            services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardedHeaders = ForwardedHeaders.All;
-            });
-
             services.AddSingleton<AsyncWarmupHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseForwardedHeaders();
+            app.UseForwardedHeaders(new ForwardedHeadersOptions {
+                ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+            });
 
             if (HostEnvironment.IsDevelopment() || AppSettings.IsLocal)
             {
@@ -172,7 +168,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         private void ConfigurePortal(IApplicationBuilder app)
         {
             app.UseResponseCompression();
-
 
             if (!HostEnvironment.IsDevelopment())
             {
