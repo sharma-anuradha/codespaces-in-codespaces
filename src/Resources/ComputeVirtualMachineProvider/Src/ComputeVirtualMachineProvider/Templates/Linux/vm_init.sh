@@ -47,7 +47,7 @@ docker-compose --version
 echo "Create container temp folder"
 containerTmp=/mnt/containerTmp
 mkdir -p $containerTmp
-chmod o+rw $containerTmp
+chmod o+rwt $containerTmp
 setfacl -dR -m o::rw $containerTmp
 
 # Block Azure Instance Metadata Service IP on host (OUTPUT) and also in containers (DOCKER-USER)
