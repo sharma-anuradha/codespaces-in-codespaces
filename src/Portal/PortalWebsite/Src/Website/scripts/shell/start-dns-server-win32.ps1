@@ -17,7 +17,7 @@ docker rm $OLD_CONTAINER_NAME 2>&1>$null
 
 Write-Output "* Starting the DNS server docker container.."
 
-docker-compose -f ..\..\..\docker-compose.yml up -d --build
+docker-compose up -d --build
 
 if (!$?) {
     Write-Output "! Could not start the DNS server docker container, terminating.."

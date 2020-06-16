@@ -27,7 +27,7 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
         return result;
     };
 
-    private isGitHubService = (service: string)=> {
+    private isGitHubService = (service: string) => {
         return (service === `${getVSCodeScheme()}-github.login`);
     };
 
@@ -41,8 +41,8 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
             throw new Error('Cannot get partner info.');
         }
 
-        if (!('codespaceToken' in info)) {
-            throw new Error('The old payload provided or no `codespaceToken` set.');
+        if (!('vscodeSettings' in info)) {
+            throw new Error('No `vscodeSettings` is set on payload.');
         }
 
         // no sessions set

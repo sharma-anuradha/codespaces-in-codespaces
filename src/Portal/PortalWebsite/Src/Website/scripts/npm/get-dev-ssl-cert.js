@@ -1,7 +1,7 @@
 const atob = require('atob');
 
 const { execSync } = require('child_process');
-const { writeFile } = require('fs-extra');
+const { outputFile } = require('fs-extra');
 
 const {
     devCert,
@@ -23,7 +23,7 @@ const getCert = async (certName, certOutputPath) => {
         const { value } = JSON.parse(azureCliResponse);
         const decodedValue = atob(value);
 
-        await writeFile(certOutputPath, decodedValue, 'binary');
+        await outputFile(certOutputPath, decodedValue, 'binary');
     } catch (err) {
         console.error('Failed to update the "dev-cert".', err);
     }

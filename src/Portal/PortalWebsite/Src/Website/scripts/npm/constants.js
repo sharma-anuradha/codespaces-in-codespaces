@@ -16,7 +16,7 @@ const dotnetPortalRoot = path.resolve(
     'VsClk.Portal.WebSite'
 );
 
-const nginxPath = path.resolve(root, '..', 'nginx');
+const nginxPath = path.resolve(root, '..', 'portal-local-proxy');
 
 const node_modules = path.join(root, 'node_modules');
 const vscodeAssetsTargetPathBase = path.join(root, 'vscode-downloads', 'workbench-page', assetName);
