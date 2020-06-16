@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Add the <see cref="EstablishedConnectionsWorker"/> to the service collection.
+        /// Add the <see cref="KubernetesAgentMappingClient"/> to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="appSettings">The service settings.</param>

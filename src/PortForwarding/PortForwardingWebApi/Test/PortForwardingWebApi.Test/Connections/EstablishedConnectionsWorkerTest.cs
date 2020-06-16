@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
@@ -29,10 +30,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 .Setup(provider => provider.GetQueueClientAsync(QueueNames.EstablishedConnections, It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(queueClient.Object);
             var messageHandler = new Mock<IConnectionEstablishedMessageHandler>();
+            var hostApplicationLifetime = new Mock<IHostApplicationLifetime>();
 
             var worker = new EstablishedConnectionsWorker(
                 queueClientProvider.Object,
                 messageHandler.Object,
+                hostApplicationLifetime.Object,
                 logger);
 
             await worker.StartAsync(CancellationToken.None);

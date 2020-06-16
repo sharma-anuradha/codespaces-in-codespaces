@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="BackEnd/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
+    <ProjectReference Include="Resources/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
     <ProjectReference Include="Common/dirs.proj" />
     <ProjectReference Include="Deploy/Deploy.csproj" Condition="'$(BuildFrontendBackend)' == 'true'" />
-    <ProjectReference Include="FrontEnd/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
+    <ProjectReference Include="Codespaces/dirs.proj" Condition="'$(BuildFrontendBackend)' == 'true'" />
     <ProjectReference Include="Portal/dirs.proj" Condition="'$(BuildPortal)' == 'true'" />
     <ProjectReference Include="PortForwarding/dirs.proj" Condition="'$(BuildPortForwarding)' == 'true'" />
     <ProjectReference Include="Tokens/dirs.proj" Condition="'$(BuildTokenService)' == 'true'" />
