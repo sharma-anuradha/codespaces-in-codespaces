@@ -140,6 +140,8 @@ try {
 
     # Finally, commit the squashed changes using original logs/author
     _Git reset --soft $lastReorgCommit
+    # Except, undo deletion of migration scripts...
+    _Git restore --staged --worktree tools/migrations
     _Git commit --author="${squashedAuthor}" -m "${squashedLog}"
 }
 finally {
