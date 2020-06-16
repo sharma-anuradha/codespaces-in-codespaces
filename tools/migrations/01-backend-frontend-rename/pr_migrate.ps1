@@ -137,6 +137,10 @@ try {
 
     # Run the migration script
     pwsh.exe -File "${migrateScriptPath}" -repoPath $repoPath
+    if ($? -eq $false) {
+        Write-Error "There was an error running ${migrateScriptPath}. See output for details."
+        return
+    }
 
     # Finally, commit the squashed changes using original logs/author
     _Git reset --soft $lastReorgCommit
