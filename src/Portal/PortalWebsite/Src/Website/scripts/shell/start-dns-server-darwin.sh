@@ -15,11 +15,7 @@ docker stop $OLD_CONTAINER_NAME &> /dev/null
 docker rm $OLD_CONTAINER_NAME &> /dev/null
 
 echo "* Starting the DNS server docker container.."
-pushd ../../../
-
 docker-compose up --build -d
-
-popd
 
 if [ ! "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
     echo "! Could not start the DNS server docker container, terminating.."
