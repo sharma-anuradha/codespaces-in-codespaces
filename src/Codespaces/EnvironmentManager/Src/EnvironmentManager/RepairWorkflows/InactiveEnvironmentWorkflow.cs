@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
         /// <inheritdoc />
         public async Task ExecuteAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
-            await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Unavailable, CloudEnvironmentStateUpdateTriggers.EnvironmentMonitor, "EnvironmentUnavailable", logger);
+            await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Unavailable, CloudEnvironmentStateUpdateTriggers.EnvironmentMonitor, "EnvironmentUnavailable", null, logger);
             await EnvironmentRepository.UpdateAsync(cloudEnvironment, logger);
         }
     }

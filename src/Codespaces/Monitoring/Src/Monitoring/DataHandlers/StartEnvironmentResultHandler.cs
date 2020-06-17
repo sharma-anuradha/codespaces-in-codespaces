@@ -112,6 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             handlerContext.CloudEnvironmentState = newState;
                             handlerContext.Reason = errorMessage;
                             handlerContext.Trigger = CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed;
+                            handlerContext.IsUserError = jobResultData.JobErrorType == JobErrorType.User;
                             return handlerContext;
                         }
                         else if (cloudEnvironment.State == CloudEnvironmentState.Starting)

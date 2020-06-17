@@ -293,7 +293,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
                     // Update state to be archived
                     await EnvironmentStateManager.SetEnvironmentStateAsync(
-                        environment, CloudEnvironmentState.Archived, "ArchiveComplete", MessageCodes.EnvironmentArchived.ToString(), innerLogger);
+                        environment, CloudEnvironmentState.Archived, "ArchiveComplete", MessageCodes.EnvironmentArchived.ToString(), null, innerLogger);
 
                     return true;
                 },

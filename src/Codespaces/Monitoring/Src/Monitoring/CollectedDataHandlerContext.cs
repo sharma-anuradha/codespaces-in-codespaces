@@ -39,5 +39,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
         /// Gets or sets the trigger for the environment update.
         /// </summary>
         public string Trigger { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the failure is because of user error.
+        /// </summary>
+        public bool? IsUserError { get; set; }
     }
 }

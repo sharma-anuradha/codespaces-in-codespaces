@@ -42,6 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CloudEnvironmentState newState,
             string trigger,
             string reason,
+            bool? isUserError,
             IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
@@ -51,13 +52,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var oldState = cloudEnvironment.State;
                     var oldStateUpdated = cloudEnvironment.LastStateUpdated;
 
+                    string failedStateReason = string.Empty;
+                    if (newState == CloudEnvironmentState.Failed)
+                    {
+                        if (isUserError == true)
+                        {
+                            failedStateReason = "user";
+                        }
+                    }
+
                     logger.FluentAddBaseValue("CloudEnvironmentOldState", oldState)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdated", oldStateUpdated)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason)
                         .FluentAddBaseValue("CloudEnvironmentNewState", newState)
                         .FluentAddBaseValue("CloudEnvironmentNewUpdatedTrigger", trigger)
-                        .FluentAddBaseValue("CloudEnvironmentNewUpdatedReason", reason);
+                        .FluentAddBaseValue("CloudEnvironmentNewUpdatedReason", reason)
+                        .FluentAddBaseValue("CloudEnvironmentFailedStateReason", failedStateReason);
 
                     VsoPlanInfo plan;
                     if (cloudEnvironment.PlanId == default)

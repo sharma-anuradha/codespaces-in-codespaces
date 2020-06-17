@@ -61,6 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairW
                         CloudEnvironmentState.Failed,
                         nameof(FailEnvironmentWorkflow),
                         string.Empty,
+                        null,
                         childLogger);
 
                     var cloudEnvironmentId = Guid.Parse(cloudEnvironment.Id);

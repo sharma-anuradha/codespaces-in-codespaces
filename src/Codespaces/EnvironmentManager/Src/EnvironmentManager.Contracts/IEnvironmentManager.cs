@@ -56,9 +56,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="newState">New state, if the state needs to be updated.</param>
         /// <param name="trigger">The trigger for the state change.</param>
         /// <param name="reason">Reason for state change, if the state needs to be updated.</param>
+        /// <param name="isUserError">Is failure because of user error.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> UpdateAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> UpdateAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, bool? isUserError, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.

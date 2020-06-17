@@ -30,6 +30,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public JobState JobState { get; set; }
 
         /// <summary>
+        /// Gets or sets the job state.
+        /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
+        [DataMember(IsRequired = false, EmitDefaultValue = true)]
+        public JobErrorType? JobErrorType { get; set; }
+
+        /// <summary>
         /// Gets or sets the job end time.
         /// </summary>
         [DataMember(IsRequired = false, EmitDefaultValue = false)]

@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
 
         protected async void UpdateCloudEnvironmentForTest(CloudEnvironment cloudEnvironment)
         {
-            await environmentManager.UpdateAsync(cloudEnvironment, CloudEnvironmentState.None, string.Empty, string.Empty, logger);
+            await environmentManager.UpdateAsync(cloudEnvironment, CloudEnvironmentState.None, string.Empty, string.Empty, null, logger);
         }
 
         protected async Task<CloudEnvironment> GetCloudEnvironment()

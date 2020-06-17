@@ -230,6 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                                                     CloudEnvironmentState.Failed,
                                                     nameof(FailOperationCleanupCoreAsync),
                                                     string.Empty,
+                                                    null,
                                                     innerLogger);
                                     return true;
                                 },
@@ -507,6 +508,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             CloudEnvironmentState.Provisioning,
                             CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
                             string.Empty,
+                            null,
                             logger.NewChildLogger());
                         return true;
                     },

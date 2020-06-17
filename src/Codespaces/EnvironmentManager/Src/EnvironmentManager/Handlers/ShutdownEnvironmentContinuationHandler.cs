@@ -167,7 +167,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         private async Task<ContinuationResult> MarkShutdownAsync(ShutdownEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
         {
-            await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, logger.NewChildLogger());
+            await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Shutdown, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, null, logger.NewChildLogger());
 
             var didUpdate = await UpdateRecordAsync(
                     operationInput,

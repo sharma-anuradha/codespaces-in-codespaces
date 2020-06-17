@@ -19,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="state">target state.</param>
         /// <param name="trigger">target trigger.</param>
         /// <param name="reason">target reason.</param>
+        /// <param name="isUserError">Is user generated error.</param>
         /// <param name="logger">target logger.</param>
         /// <returns>task.</returns>
         Task SetEnvironmentStateAsync(
@@ -26,6 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
           CloudEnvironmentState state,
           string trigger,
           string reason,
+          bool? isUserError,
           IDiagnosticsLogger logger);
     }
 }
