@@ -271,6 +271,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             {
                 options.MdsdEventSource = AppSettings.MetricsLoggerMdsdEventSource;
             });
+
+            // Enable common Standard Out to Logs support.
+            if (AppSettings.RedirectStandardOutToLogsDirectory)
+            {
+                string assemblyFolder = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                var directory = Path.Combine(assemblyFolder, $"..\\..\\..\\logs\\{Assembly.GetEntryAssembly().GetName().Name}");
+                var logDirectory = Path.GetFullPath(directory);
+                var logFile = $"{DateTime.Now.ToString("s").Replace(":", ".")}.txt";
+                var logFileDirectory = Path.Combine(logDirectory, logFile);
+
+                Directory.CreateDirectory(logDirectory);
+                Console.WriteLine($"Output redirected to Logs at {logFileDirectory}...");
+                var filestream = new FileStream(logFileDirectory, FileMode.OpenOrCreate, FileAccess.Write);
+                var writer = new StreamWriter(filestream);
+                writer.AutoFlush = true;
+                Console.SetOut(writer);
+            }
         }
 
         /// <summary>

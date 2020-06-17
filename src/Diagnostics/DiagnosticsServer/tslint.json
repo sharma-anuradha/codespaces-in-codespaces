@@ -1,0 +1,33 @@
+{
+    "extends": ["tslint:recommended", "tslint-react", "tslint-config-prettier", "tslint-microsoft-contrib/recommended"],
+    "rules": {
+        "prefer-type-cast": false,
+        "no-relative-imports": false,
+        "no-console": {
+            "severity": "warning",
+            "options": [
+                "log",
+                "error",
+                "debug",
+                "info",
+                "time",
+                "timeEnd",
+                "trace"
+            ]
+        },
+        "curly": true,
+        "function-name": false,
+        "jsx-no-lambda": false,
+        "no-unnecessary-local-variable": false,
+        "no-backbone-get-set-outside-model": false,
+        "no-unused-variable": true,
+        "mocha-no-side-effect-code": false,
+        "no-suspicious-comment": false,
+        "export-name": false,
+        "import-name": false,
+        "object-literal-shorthand": true,
+        "quotemark": [true, "double", "jsx-double"],
+        "use-simple-attributes": false,
+        "react-this-binding-issue": false
+    }
+}

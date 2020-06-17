@@ -86,6 +86,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public bool GenerateLocalHostNameFromNgrok { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether to redirect output from standard out to the logs directory.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public bool RedirectStandardOutToLogsDirectory { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the unique identifier for developer for developer stamps.
         /// </summary>
         [JsonProperty(Required = Required.Default)]

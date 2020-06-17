@@ -19,6 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Ngrok
     /// </summary>
     public class NgrokHttpClient
     {
+        private const string ListCapturedRequestsPath = "/api/requests/http?limit={0}";
         private const string ListTunnelsPath = "/api/tunnels";
         private const string GetTunnelPathFormat = "/api/tunnels/{0}";
         private const string StartTunnelPath = "/api/tunnels";
@@ -42,6 +43,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Ngrok
         /// Gets the base HttpClient.
         /// </summary>
         public HttpClient Client { get; }
+
+        /// <summary>
+        /// Lists the requests Ngrok has captured.
+        /// </summary>
+        /// <param name="limit">Number of requests to return. Defaults to 50.</param>
+        /// <param name="cancellationToken">Notification that the Task should stop.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        public async Task<dynamic> ListCapturedRequestsAsync(int limit = 50, CancellationToken cancellationToken = default)
+        {
+            var response = await Client.GetAsync(string.Format(ListCapturedRequestsPath, limit));
+            await ThrowIfError(response);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+            var requestResponse = JsonConvert.DeserializeObject<dynamic>(responseString);
+            return requestResponse.requests;
+        }
 
         /// <summary>
         /// Lists the Ngrok tunnels currently running.
