@@ -1,0 +1,22 @@
+{
+    "endpointCredentials": [
+        // DevDiv
+        {
+            "endpoint": "https://devdiv.pkgs.visualstudio.com/_packaging/VS/nuget/v3/index.json",
+            "username": "optional",
+            "password": "'$DEVDIV_PAT'"
+        },
+        // Cascade
+        {
+            "endpoint": "https://devdiv.pkgs.visualstudio.com/_packaging/Cascade/nuget/v3/index.json",
+            "username": "optional",
+            "password": "'$DEVDIV_PAT'"
+        },
+        // vssaas-sdk
+        {
+            "endpoint": "https://devdiv.pkgs.visualstudio.com/_packaging/vssaas-sdk/nuget/v3/index.json",
+            "username": "optional",
+            "password": "'$DEVDIV_PAT'"
+        }
+    ]
+}
