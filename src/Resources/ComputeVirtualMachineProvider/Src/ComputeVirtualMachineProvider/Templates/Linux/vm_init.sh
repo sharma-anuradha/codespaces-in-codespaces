@@ -15,9 +15,6 @@ SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL='__REPLACE_OUTPUT_QUEUE_URL__'
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN='__REPLACE_OUTPUT_QUEUE_SASTOKEN__'
 SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 
-echo "Updating packages ..."
-apt-get -yq update
-
 echo "Increase file watcher limit"
 echo "fs.inotify.max_user_watches=524288" | tee -a /etc/sysctl.conf
 sysctl -p
@@ -25,18 +22,40 @@ sysctl -p
 echo "Create docker group with ID 800"
 groupadd -g 800 docker
 
-echo "Install docker ..."
-# Install moby-engine=3.0.11+azure-2 (as well as dependencies: moby-cli, pigz)
-# URL below was taken from https://packages.microsoft.com/ubuntu/18.04/prod/dists/bionic/main/binary-amd64/Packages
-tmp_moby_engine_debfile=$(mktemp)
-tmp_moby_cli_debfile=$(mktemp)
-tmp_pigz_debfile=$(mktemp)
-wget -qO- -O $tmp_moby_engine_debfile https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-engine/moby-engine_3.0.11+azure-2_amd64.deb
-wget -qO- -O $tmp_moby_cli_debfile https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-cli/moby-cli_3.0.11+azure-2_amd64.deb
-wget -qO- -O $tmp_pigz_debfile http://azure.archive.ubuntu.com/ubuntu/pool/universe/p/pigz/pigz_2.4-1_amd64.deb
-dpkg --install $tmp_moby_engine_debfile $tmp_moby_cli_debfile $tmp_pigz_debfile
-rm $tmp_moby_engine_debfile $tmp_moby_cli_debfile $tmp_pigz_debfile
+# apt-get update is causing issues when script is run as Custom Script Extension.
+# Since we install packages manually, we don't run apt-get update.
+# echo "Updating packages ..."
+# apt-get -yq update
+
+# URL below was taken from:
+# https://packages.microsoft.com/ubuntu/18.04/prod/dists/bionic/main/binary-amd64/Packages
+# http://azure.archive.ubuntu.com/ubuntu/dists/bionic-updates/main/binary-amd64/Packages.gz
+# http://azure.archive.ubuntu.com/ubuntu/dists/bionic/main/binary-amd64/Packages.gz
+echo "Install Debian packages ..."
+declare -a DebPackagesArray=(
+    # moby-engine=3.0.11+azure-2 (as well as dependencies: moby-cli, pigz)
+    "https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-engine/moby-engine_3.0.11+azure-2_amd64.deb"
+    "https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-cli/moby-cli_3.0.11+azure-2_amd64.deb"
+    "http://azure.archive.ubuntu.com/ubuntu/pool/universe/p/pigz/pigz_2.4-1_amd64.deb"
+    # chrony=3.2-4ubuntu4.4 (as well as dependencies: libnss, libnspr4)
+    "http://azure.archive.ubuntu.com/ubuntu/pool/main/c/chrony/chrony_3.2-4ubuntu4.4_amd64.deb"
+    "http://azure.archive.ubuntu.com/ubuntu/pool/main/n/nss/libnss3_3.35-2ubuntu2.8_amd64.deb"
+    "http://azure.archive.ubuntu.com/ubuntu/pool/main/n/nspr/libnspr4_4.18-1ubuntu1_amd64.deb"
+    # unzip
+    "http://azure.archive.ubuntu.com/ubuntu/pool/main/u/unzip/unzip_6.0-21ubuntu1_amd64.deb"
+    )
+all_tmp_debfiles=""
+for val in ${DebPackagesArray[@]}; do
+    tmp_debfile=$(mktemp)
+    wget -qO- -O $tmp_debfile $val
+    all_tmp_debfiles+=" $tmp_debfile"
+done
+dpkg --install $all_tmp_debfiles
+rm $all_tmp_debfiles
 apt-get install -fy
+echo "Installation of Debian packages completed."
+
+echo "Verify docker ..."
 docker --version
 
 echo "Install docker-compose"
@@ -54,20 +73,14 @@ setfacl -dR -m o::rw $containerTmp
 # This needs to happen after the docker install for DOCKER-USER to exist in iptables.
 
 echo "Block Azure Instance Metadata Service ..."
-# Temporarily disable iptables-persistent which restores iptables on VM restart
-#echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
-#echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-#apt-get -yq update && apt-get install -y iptables-persistent
 INSTANCE_METADATA_IP=169.254.169.254
 iptables -I OUTPUT -d $INSTANCE_METADATA_IP -j DROP
 iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP
-# iptables-save > /etc/iptables/rules.v4
 
 echo "Update Time Sync Configuration ..."
 # disable NTP-based time sync
 timedatectl set-ntp off
 # configure VMICTimeSync (host-only) time sync
-apt-get -yq install chrony
 cp /etc/chrony/chrony.conf /etc/chrony/chrony.conf.backup
 cat > /etc/chrony/chrony.conf <<EOF
 keyfile /etc/chrony/chrony.keys
@@ -79,9 +92,6 @@ refclock PHC /dev/ptp0 poll 3 dpoll -2 offset 0
 makestep 1.0 -1
 EOF
 systemctl restart chrony.service
-
-echo "Install unzip ..."
-apt-get -yq update && apt-get install -y --no-install-recommends unzip
 
 echo "Download vso agent ..."
 mkdir -p /.vsonline/vsoagent/bin
