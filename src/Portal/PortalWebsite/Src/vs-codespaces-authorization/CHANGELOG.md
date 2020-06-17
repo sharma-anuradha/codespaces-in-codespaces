@@ -2,8 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-### [0.1.15](https://devdiv.visualstudio.com///compare/v0.1.14...v0.1.15) (2020-06-05)
+### 0.1.16 (2020-06-17)
 
+### Bug Fixes
+
+* Update `$schema` link with `#` at the end, according to the [spec](https://json-schema.org/understanding-json-schema/reference/schema.html)
+
+### [0.1.15](https://devdiv.visualstudio.com///compare/v0.1.14...v0.1.15) (2020-06-05)
 
 ### Bug Fixes
 

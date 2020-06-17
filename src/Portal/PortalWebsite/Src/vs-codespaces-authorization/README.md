@@ -26,7 +26,12 @@ import { authorizePlatform } from 'vs-codespaces-authorization';
 await authorizePlatform(
     'https://online.visualstudio.com/platform-authentication',
     {
-        // platform authorization payload data (see below)
+      "partnerName": "github",
+      "managementPortalUrl": "https://github.com/codespaces",
+      "codespaceToken": "<codespace JWT>",
+      "credentials": [],
+      "codespaceId": "<codespace guid>",
+      "vscodeSettings": {}
     }
 );
 
