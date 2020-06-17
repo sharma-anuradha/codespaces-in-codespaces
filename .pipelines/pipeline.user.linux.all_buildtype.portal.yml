@@ -1,13 +1,5 @@
 # Reference: https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki/308/Pipeline-Spec-YAML-Stage-Commands
 
-environment:
-  host:
-    os: "linux"
-  runtime:
-    provider: "appcontainer"
-    image: "cdpxlinux.azurecr.io/global/ubuntu-1804-all:5.0"
-    source_mode: "link"
-
 restore:
   commands:
     - !!defaultcommand
