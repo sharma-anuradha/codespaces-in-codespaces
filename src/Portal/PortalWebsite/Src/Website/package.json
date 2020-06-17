@@ -31,9 +31,6 @@
     "vscode:download": "node --unhandled-rejections=strict scripts/npm/download-vscode.js",
     "vscode:update": "node --unhandled-rejections=strict scripts/npm/update-vscode.js",
     "start": "yarn start:dns && run-p watch:portal watch:client",
-    "start:github": "yarn start:dns && run-p watch:portal:github watch:client",
-    "start:github:old": "yarn start:dns && run-p watch:portal:github:old watch:client",
-    "start:platform": "yarn start:dns && run-p watch:portal:platform watch:client",
     "start:portal": "dotnet run --launch-profile Local --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj",
     "start:webpack-dev-server": "webpack-dev-server --config config/webpack/webpack.config.js",
     "setup": "yarn setup:get-dev-ssl-cert && yarn setup:get-service-principal && yarn setup:update-github-secret",
@@ -47,10 +44,7 @@
     "start:dns:linux": "sh ./scripts/shell/start-dns-server-linux.sh",
     "start:dns:darwin": "sh ./scripts/shell/start-dns-server-darwin.sh",
     "watch:client": "webpack-dev-server --config config/webpack/webpack.config.js",
-    "watch:portal": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile Local",
-    "watch:portal:github": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalGitHub",
-    "watch:portal:github:old": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalGitHubOld",
-    "watch:portal:platform": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile LocalPlatform"
+    "watch:portal": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile Local"
   },
   "devDependencies": {
     "colors": "^1.4.0",

@@ -166,7 +166,7 @@ module.exports = [
                 templateParameters: {
                     PUBLIC_URL: publicPath,
                 },
-                chunks: ['amdconfig', 'workbench'],
+                chunks: ['workbench'],
             }),
             new HtmlWebpackPlugin({
                 inject: true,

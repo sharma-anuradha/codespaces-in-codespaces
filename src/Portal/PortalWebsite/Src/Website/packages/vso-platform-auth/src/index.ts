@@ -21,6 +21,9 @@ self.addEventListener('load', async () => {
                     'defaultExtensions': ['salesforce.codey-midnight'],
                 },
                 vscodeChannel: 'insider',
+                productConfiguration: {
+                    sendASmile: null
+                },
             };
         }
 

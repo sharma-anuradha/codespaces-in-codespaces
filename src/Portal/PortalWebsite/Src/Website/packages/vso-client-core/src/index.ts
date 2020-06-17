@@ -19,7 +19,7 @@ export { randomBytes } from './utils/randomBytes';
 export { isThenable } from './utils/isThenable';
 export { isGithubTLD } from './utils/isGithubTLD';
 export { isHostedOnGithub } from './utils/isHostedOnGithub';
-export { getFeatureSet } from './utils/getFeatureSet';
+export { getFeatureSet, setFeatureSet } from './utils/getFeatureSet';
 export { getVSCodeScheme } from './utils/getVSCodeScheme';
 export { getCurrentEnvironmentId, setCurrentCodespaceId } from './utils/getCurrentEnvironmentId';
 export { isInIframe } from './utils/isInIframe';

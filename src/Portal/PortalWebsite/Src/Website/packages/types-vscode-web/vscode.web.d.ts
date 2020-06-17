@@ -1,4 +1,11 @@
 declare module 'vscode-web' {
+    interface IProductConfiguration {
+        readonly sendASmile?: {
+            readonly reportIssueUrl: string,
+            readonly requestFeatureUrl: string
+        };
+    }
+
     interface SessionData {
         id: string;
         account?: {
@@ -755,6 +762,11 @@ declare module 'vscode-web' {
         readonly homeIndicator?: IHomeIndicator;
 
         readonly defaultLayout?: IDefaultLayout;
+
+        /**
+         * Optional override for the product configuration properties.
+         */
+        readonly productConfiguration?: Partial<IProductConfiguration>;
     }
 
     export interface IWorkbench {

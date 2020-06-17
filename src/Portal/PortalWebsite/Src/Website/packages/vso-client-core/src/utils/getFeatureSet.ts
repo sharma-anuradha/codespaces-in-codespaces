@@ -1,6 +1,12 @@
 import { FeatureSet } from '../interfaces/FeatureSet';
 import { VSCS_FEATURESET_LOCALSTORAGE_KEY } from '../constants';
 
+let memoryFeatureSet: FeatureSet | null;
+
+export const setFeatureSet = (valueToSet: FeatureSet | null) => {
+    memoryFeatureSet = valueToSet;
+}
+
 export const getFeatureSet = (): FeatureSet => {
     const params = new URLSearchParams(location.search);
     const paramsFeatureSet = params.get('dogfoodChannel');
@@ -22,6 +28,10 @@ export const getFeatureSet = (): FeatureSet => {
     
     if (vsoFeatureSet === FeatureSet.Insider) {
         vscodeQuality = FeatureSet.Insider;
+    }
+
+    if (memoryFeatureSet) {
+        return memoryFeatureSet;
     }
 
     return vscodeQuality;

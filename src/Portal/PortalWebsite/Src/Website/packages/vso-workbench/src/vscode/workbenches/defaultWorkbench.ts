@@ -21,9 +21,9 @@ import { getUserDataProvider } from './getUserDataProvider';
 import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
 import { getExtensions } from './getDefaultExtensions';
 import { getWorkbenchDefaultLayout } from '../../utils/getWorkbenchDefaultLayout';
-import { ensureVSCodeChannelFlag } from '../../utils/ensureVSCodeChannelFlag';
 import { commands } from './workbenchCommands';
 import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
+import { getProductConfiguration } from './getProductConfiguration';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -90,7 +90,7 @@ export class Workbench {
                 telemetry
             );
 
-            const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
+            const applicationLinks = await applicationLinksProviderFactory(workspaceProvider);
 
             const defaultLayout = getWorkbenchDefaultLayout(
                 environmentInfo,
@@ -107,6 +107,7 @@ export class Workbench {
                 resolveCommonTelemetryProperties,
                 applicationLinks,
                 homeIndicator: await getHomeIndicator(),
+                productConfiguration: await getProductConfiguration(),
                 enableSyncByDefault: true,
                 commands,
                 authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
@@ -127,7 +128,7 @@ export class Workbench {
         } = this.options;
 
         try {
-            const vscodeConfig = getVSCodeVersion();
+            const vscodeConfig = await getVSCodeVersion();
             const token = await getToken();
             if (!token) {
                 throw new AuthenticationError('Cannot get authentication token.');
@@ -182,8 +183,6 @@ export class Workbench {
             if (!this.workbench) {
                 throw new Error('Connection not initialized, please call "connect" first.');
             }
-
-            await ensureVSCodeChannelFlag();
 
             await this.workbench.mount();
         } catch (e) {
