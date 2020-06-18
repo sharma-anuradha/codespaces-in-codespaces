@@ -178,13 +178,13 @@ class LogViewerCard extends React.Component<{
       realItems.length > 0 ? (
         <Table className="log-table">
           <thead>
-            {this.getColumns().map((n) => (
-              <th key={uuidv4()}>{n}</th>
+            {this.getColumns().map((n, index) => (
+              <th key={`td${index}`} >{n}</th>
             ))}
           </thead>
           <tbody>
-            {realItems.map((n) => (
-              <tr key={uuidv4()} className="log-row" onClick={() => this.showLog(n)}>
+            {realItems.map((n, index) => (
+              <tr key={`tr${index}`} className="log-row" onClick={() => this.showLog(n)}>
                 {this.renderRow(n)}
               </tr>
             ))}
