@@ -4,7 +4,6 @@ export { UserDataProvider } from './vscode/providers/userDataProvider/userDataPr
 export { WorkspaceProvider } from './vscode/providers/workspaceProvider/workspaceProvider';
 export { UrlCallbackProvider } from './vscode/providers/userDataProvider/urlCallbackProvider';
 export { resourceUriProviderFactory } from './vscode/providers/resourceUriProvider/resourceUriProviderFactory';
-export { applicationLinksProviderFactory } from './vscode/providers/applicationLinksProvider/applicationLinksProviderFactory';
 export { CredentialsProvider } from './vscode/providers/credentialsProvider/credentialsProvider';
 export {
     BaseExternalUriProvider,

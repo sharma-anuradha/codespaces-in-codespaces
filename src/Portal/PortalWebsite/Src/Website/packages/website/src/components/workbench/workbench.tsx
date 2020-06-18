@@ -22,7 +22,6 @@ import {
     UrlCallbackProvider,
     WorkspaceProvider,
     resourceUriProviderFactory,
-    applicationLinksProviderFactory,
     vscode,
     getVSCodeVersion,
     getExtensions,
@@ -423,7 +422,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             environmentInfo,
             getWorkspaceUrl
         );
-        const applicationLinks = applicationLinksProviderFactory(workspaceProvider);
 
         let resolveExternalUri;
         if (this.props.enableEnvironmentPortForwarding) {
@@ -479,7 +477,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             resourceUriProvider,
             resolveExternalUri,
             resolveCommonTelemetryProperties,
-            applicationLinks,
             homeIndicator,
             commands,
             authenticationSessionId,

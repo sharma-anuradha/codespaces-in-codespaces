@@ -2,7 +2,7 @@ import React, { Component, ComponentClass } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
-import { URI, IApplicationLink, IHostCommand } from 'vscode-web';
+import { URI, IHostCommand } from 'vscode-web';
 
 import { ApplicationState } from '../../reducers/rootReducer';
 import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
@@ -18,7 +18,9 @@ import { withTranslation, WithTranslation } from 'react-i18next';
 declare var AMDLoader: any;
 let CallingService: any;
 
-export interface LiveShareWorkbenchProps extends RouteComponentProps<{ id: string }>, WithTranslation {
+export interface LiveShareWorkbenchProps
+    extends RouteComponentProps<{ id: string }>,
+        WithTranslation {
     liveShareWebExtensionEndpoint: string;
     portalEndpoint: string;
     portForwardingDomainTemplate: string;
@@ -48,7 +50,6 @@ const liveShareEnvParam = (env: string, currentSearch: string): string | null =>
 
 class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps> {
     private resolveExternalUri: (uri: URI) => Promise<URI>;
-    private applicationLinksProvider: () => IApplicationLink[];
 
     private getSessionLinkParamsWithEnvironment = (otherParams: string[][]) => {
         const { history, portalEndpoint } = this.props;
@@ -79,27 +80,10 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps> {
                 return externalUriProvider.resolveExternalUri(uri);
             };
         }
-
-        this.applicationLinksProvider = () => {
-            const params = this.getSessionLinkParamsWithEnvironment([
-                ['action', 'join'],
-                ['workspaceId', this.props.sessionId],
-                ['correlationId', 'null'],
-            ]);
-            const { t: translation } = this.props;
-
-            const link: IApplicationLink = {
-                uri: vscode.URI.parse(`vsls:?${params}`),
-                label: translation('openInDesktop'),
-            };
-
-            return [link];
-        };
     }
 
     render() {
-        let { liveShareWebExtensionEndpoint: extensionUrl,
-            portalEndpoint: env } = this.props;
+        let { liveShareWebExtensionEndpoint: extensionUrl, portalEndpoint: env } = this.props;
 
         // In the dev environment allow a localhost url to make it easy to test
         // LiveShare changes locally
@@ -123,7 +107,6 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps> {
                 folderUri={folderUri}
                 extensionUrls={extensionUrls}
                 resolveExternalUri={this.resolveExternalUri}
-                applicationLinksProvider={this.applicationLinksProvider}
                 resolveCommands={getResolveCommands(extensionUrl, this.props.sessionId)}
             />
         );
@@ -151,14 +134,11 @@ const getProps = (state: ApplicationState, props: { match: { params: { id: strin
 
 const getCallingServiceApi = async (callingServiceUrl: string): Promise<any> => {
     return new Promise((resolve) => {
-        AMDLoader.global.require(
-            [callingServiceUrl],
-            (calling: any) => {
-                resolve(calling);
-            }
-        );
+        AMDLoader.global.require([callingServiceUrl], (calling: any) => {
+            resolve(calling);
+        });
     });
-}
+};
 
 const getResolveCommands = (extensionUrl: string, sessionId: string) => {
     return async (): Promise<IHostCommand[]> => {
@@ -175,9 +155,9 @@ const getResolveCommands = (extensionUrl: string, sessionId: string) => {
                 id: '_liveshareweb.getMachineId',
                 handler: () => telemetry.getContext().browserId,
             },
-            ...CallingService.getCommands()
+            ...CallingService.getCommands(),
         ];
-    }
+    };
 };
 
 type ExternalProps = Omit<

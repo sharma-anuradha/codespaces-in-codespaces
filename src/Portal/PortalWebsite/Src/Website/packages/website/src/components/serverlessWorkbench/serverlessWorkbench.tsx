@@ -11,13 +11,7 @@ import {
     getVSCodeVersion,
 } from 'vso-workbench';
 
-import {
-    IWorkbenchConstructionOptions,
-    URI,
-    IURLCallbackProvider,
-    IHostCommand,
-    IApplicationLink,
-} from 'vscode-web';
+import { IWorkbenchConstructionOptions, URI, IURLCallbackProvider, IHostCommand } from 'vscode-web';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
 
@@ -40,7 +34,6 @@ export interface ServerlessWorkbenchProps {
     resolveExternalUri?: (uri: URI) => Promise<URI>;
     urlCallbackProvider?: IURLCallbackProvider;
     targetURLFactory?: (folderUri: URI) => URL | undefined;
-    applicationLinksProvider?: () => IApplicationLink[]; // URI cannot be used before initializing vscode and so this needs to be lazy.
     resolveCommands?: () => Promise<IHostCommand[]>;
 }
 
@@ -209,9 +202,6 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
         staticExtensions = staticExtensions.concat(this.getBuiltinStaticExtensions());
 
         const { urlCallbackProvider = new UrlCallbackProvider(), resolveCommands } = this.props;
-        const applicationLinks = this.props.applicationLinksProvider
-            ? this.props.applicationLinksProvider()
-            : undefined;
         const commands = resolveCommands ? await resolveCommands() : undefined;
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
@@ -221,7 +211,6 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
             resolveExternalUri,
             resolveCommonTelemetryProperties,
             staticExtensions,
-            applicationLinks,
             commands,
         };
 

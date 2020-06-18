@@ -15,7 +15,6 @@ import {
 import { credentialsProvider } from '../providers/credentialsProvider/credentialsProvider';
 import { URI, IWorkbenchConstructionOptions } from 'vscode-web';
 import { telemetry } from '../../telemetry/telemetry';
-import { applicationLinksProviderFactory } from '../providers/applicationLinksProvider/applicationLinksProviderFactory';
 import { getHomeIndicator } from './getHomeIndicator';
 import { getUserDataProvider } from './getUserDataProvider';
 import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
@@ -38,7 +37,7 @@ interface IDefaultWorkbenchOptions {
 export class Workbench {
     private workbench: VSCodeWorkbench | null = null;
 
-    constructor(private readonly options: IDefaultWorkbenchOptions) {}
+    constructor(private readonly options: IDefaultWorkbenchOptions) { }
 
     public getProviders(
         environmentInfo: IEnvironment,
@@ -90,8 +89,6 @@ export class Workbench {
                 telemetry
             );
 
-            const applicationLinks = await applicationLinksProviderFactory(workspaceProvider);
-
             const defaultLayout = getWorkbenchDefaultLayout(
                 environmentInfo,
                 userDataProvider.isFirstRun
@@ -105,7 +102,6 @@ export class Workbench {
                 resourceUriProvider,
                 resolveExternalUri,
                 resolveCommonTelemetryProperties,
-                applicationLinks,
                 homeIndicator: await getHomeIndicator(),
                 productConfiguration: await getProductConfiguration(),
                 enableSyncByDefault: true,
