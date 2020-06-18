@@ -78,7 +78,7 @@ export class Workbench {
                     environmentInfo,
                     token,
                     connector,
-                    options.liveShareEndpoint
+                    options.liveShareEndpoint,
                 );
                 resolveExternalUri = (uri: URI): Promise<URI> => {
                     return externalUriProvider.resolveExternalUri(uri);

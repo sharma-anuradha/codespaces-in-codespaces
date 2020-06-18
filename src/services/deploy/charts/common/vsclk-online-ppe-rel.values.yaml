@@ -86,6 +86,7 @@ config:
   gitHubPortForwardingDomainTemplate: "{0}.apps.ppe.workspaces.githubusercontent.com"
   portForwardingEnableEnvironmentEndpoints: "true"
   gitHubportForwardingEnableEnvironmentEndpoints: "true"
+  portForwardingServiceEnabled: "false"
 
 azure-secrets:
   # vsclk-core-dev

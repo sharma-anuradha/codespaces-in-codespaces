@@ -1,6 +1,5 @@
 import { useWebClient } from '../actions/middleware/useWebClient';
 
-
 export type TEnvironment = 'development' | 'local' | 'staging' | 'production';
 
 export interface IConfiguration {
@@ -26,7 +25,7 @@ export const defaultConfig: IConfiguration = {
     environment: 'production',
     portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
     enableEnvironmentPortForwarding: false,
-    environmentsApiPath: '/api/v1/environments'
+    environmentsApiPath: '/api/v1/environments',
 };
 
 export const configurationEndpoint = '/configuration';
@@ -44,5 +43,3 @@ export async function getServiceConfiguration(): Promise<IConfiguration> {
         ...config,
     };
 }
-
-

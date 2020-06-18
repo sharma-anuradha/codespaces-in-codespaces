@@ -103,5 +103,5 @@ export class CrossDomainPFAuthenticator {
     public dispose() {
         document.body.removeChild(this.formEl);
         document.body.removeChild(this.iframeEl);
-    };
+    }
 }

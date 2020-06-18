@@ -1,5 +1,5 @@
 import React, { Component, ComponentClass } from 'react';
-import { connect, ConnectedComponent } from 'react-redux';
+import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { IWorkbenchConstructionOptions, IWebSocketFactory, IHomeIndicator, URI } from 'vscode-web';
@@ -10,7 +10,6 @@ import {
     IEnvironment,
     isHostedOnGithub,
     vsls,
-    EnvironmentStateInfo,
 } from 'vso-client-core';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 import {
@@ -442,7 +441,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 environmentInfo,
                 token,
                 envConnector,
-                liveShareEndpoint
+                liveShareEndpoint,
             );
             resolveExternalUri = (uri: URI): Promise<URI> => {
                 return externalUriProvider.resolveExternalUri(uri);

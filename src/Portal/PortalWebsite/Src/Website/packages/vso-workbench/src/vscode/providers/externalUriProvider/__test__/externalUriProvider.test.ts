@@ -48,7 +48,6 @@ describe('externalUriProvider', () => {
         it('salesforce port forwarding domain', async () => {
             const uriProvider = new PortForwardingExternalUriProvider(
                 '{0}-sf.app.online.visualstudio.com',
-
                 'envId'
             );
 

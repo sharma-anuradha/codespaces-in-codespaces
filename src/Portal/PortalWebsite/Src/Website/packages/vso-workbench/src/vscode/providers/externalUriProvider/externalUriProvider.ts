@@ -11,7 +11,7 @@ import { AuthenticationError } from '../../../errors/AuthenticationError';
 export abstract class BaseExternalUriProvider {
     protected abstract ensurePortIsForwarded(port: number): Promise<void>;
 
-    constructor(protected readonly sessionId: string) { }
+    constructor(protected readonly sessionId: string) {}
 
     public async resolveExternalUri(uri: URI): Promise<URI> {
         const port = this.getLocalHostPortToForward(uri);
@@ -75,7 +75,7 @@ export class EnvironmentsExternalUriProvider extends BaseExternalUriProvider {
         private readonly environmentInfo: IEnvironment,
         private readonly accessToken: string,
         private readonly connector: EnvConnector,
-        private readonly liveShareEndpoint: string
+        private readonly liveShareEndpoint: string,
     ) {
         super(environmentInfo.connection.sessionId);
     }
@@ -88,7 +88,7 @@ export class PortForwardingExternalUriProvider {
     constructor(
         private readonly portForwardingDomainTemplate: string,
         private readonly id: string,
-        private readonly ensurePortForwarded: (port: number) => Promise<void> = async () => { }
+        private readonly ensurePortForwarded: (port: number) => Promise<void> = async () => {}
     ) {
         this.resolveExternalUri = this.resolveExternalUri.bind(this);
         this.getPortFromUri = this.getPortFromUri.bind(this);

@@ -29,6 +29,7 @@ export interface IConfiguration {
     environment: TEnvironment;
     portForwardingDomainTemplate: string;
     enableEnvironmentPortForwarding: boolean;
+    portForwardingServiceEnabled: boolean;
 }
 
 const CONFIG: IConfig = {
@@ -46,6 +47,7 @@ const CONFIG: IConfig = {
         environment: 'production',
         portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
         enableEnvironmentPortForwarding: false,
+        portForwardingServiceEnabled: false,
     },
     partnerConfigs: {
         github: {
@@ -150,6 +152,10 @@ class Config {
 
     get enableEnvironmentPortForwarding() {
         return CONFIG.portalConfig.enableEnvironmentPortForwarding;
+    }
+
+    get portForwardingServiceEnabled() {
+        return CONFIG.portalConfig.portForwardingServiceEnabled;
     }
 
     get portForwardingDomainTemplate() {

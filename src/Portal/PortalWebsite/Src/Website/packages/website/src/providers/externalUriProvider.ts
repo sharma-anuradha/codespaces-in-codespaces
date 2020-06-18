@@ -39,7 +39,6 @@ abstract class BaseExternalUriProvider extends WorkbenchBaseExternalUriProvider 
             throw new Error('No token available.');
         }
         await setAuthCookie(token, `${newUri.scheme}://${newUri.authority}`);
-
         return newUri;
     }
 }
@@ -58,7 +57,7 @@ export class EnvironmentsExternalUriProvider extends BaseExternalUriProvider {
         private readonly environmentInfo: IEnvironment,
         private readonly accessToken: string,
         private readonly connector: EnvConnector,
-        private readonly liveShareEndpoint: string
+        private readonly liveShareEndpoint: string,
     ) {
         super(environmentInfo.connection.sessionId);
     }
@@ -82,7 +81,7 @@ export class PortForwardingExternalUriProvider {
     constructor(
         private readonly portForwardingDomainTemplate: string,
         private readonly id: string,
-        private readonly ensurePortForwarded: (port: number) => Promise<void> = async () => { }
+        private readonly ensurePortForwarded: (port: number) => Promise<void> = async () => {}
     ) {
         this.resolveExternalUri = this.resolveExternalUri.bind(this);
         this.getPortFromUri = this.getPortFromUri.bind(this);
