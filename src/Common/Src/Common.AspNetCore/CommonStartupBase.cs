@@ -95,6 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             }
 
             builder.AddEnvironmentVariables();
+            builder.AddEnvironmentVariables(prefix: "VSCS_");
 
             Configuration = builder.Build();
         }

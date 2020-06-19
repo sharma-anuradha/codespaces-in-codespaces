@@ -22,6 +22,11 @@ pods:
   readinessProbeTimeoutSeconds: 60
   targetCpuUtilizationPercentage: 80
 
+serviceBus:
+  overrideDev: false
+  namespace:
+  resourceGroup:
+
 image:
   pullPolicy: IfNotPresent
   repositoryUrl:
