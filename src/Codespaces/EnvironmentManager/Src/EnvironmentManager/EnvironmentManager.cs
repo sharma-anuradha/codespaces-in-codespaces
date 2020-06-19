@@ -1385,7 +1385,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(subscription));
 
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_list",
+                $"{LogBaseName}_list_by_subscription",
                 async (childLogger) =>
                 {
                     return await CloudEnvironmentRepository.GetAllEnvironmentsInSubscriptionAsync(subscription.Id, logger.NewChildLogger());
