@@ -31,13 +31,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <summary>
         /// Gets or sets the service bus resouce group name.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull)]
+        [JsonProperty(Required = Required.Default)]
         public string ServiceBusResourceGroupName { get; set; }
 
         /// <summary>
         /// Gets or sets the the service bus namespace name.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull)]
+        [JsonProperty(Required = Required.Default)]
         public string ServiceBusNamespaceName { get; set; }
 
         /// <summary>
