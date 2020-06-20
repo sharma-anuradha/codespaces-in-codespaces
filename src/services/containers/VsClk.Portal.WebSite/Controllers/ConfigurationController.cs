@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +31,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 { "environment", this.env.EnvironmentName.ToLower()},
             };
 
-            var domain = string.Empty;
             var portForwardingServiceEnabled = appSettings.PortForwardingServiceEnabled == "true";
             configuration.Add("portForwardingServiceEnabled", portForwardingServiceEnabled);
             switch (HttpContext.GetPartner())
@@ -42,19 +39,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     var portForwardingDomainTemplate = appSettings.GitHubPortForwardingDomainTemplate;
                     configuration.Add("portForwardingDomainTemplate", portForwardingDomainTemplate);
                     configuration.Add("enableEnvironmentPortForwarding", appSettings.GitHubportForwardingEnableEnvironmentEndpoints == "true");
-                    domain = String.Format(appSettings.PortForwardingDomainTemplate, string.Empty);
                     break;
                 case Partners.VSOnline:
                     configuration.Add("portForwardingDomainTemplate", appSettings.PortForwardingDomainTemplate);
                     configuration.Add("enableEnvironmentPortForwarding", appSettings.PortForwardingEnableEnvironmentEndpoints == "true");
-                    domain = appSettings.Domain;
-                    //setting PFS cookie for Codespaces only as github still needs more improvment, need to set it for both after issues are fixed.
+
+                    // Setting PFS cookie for Codespaces only as github still needs more improvement, need to set it for both after issues are fixed.
                     if (portForwardingServiceEnabled)
                     {
                         CookieOptions option = new CookieOptions
                         {
                             Path = "/",
-                            Domain = domain
+                            Domain = string.Format(appSettings.PortForwardingDomainTemplate, string.Empty),
+                            SameSite = SameSiteMode.None,
                         };
                         Response.Cookies.Append(Constants.PFSCookieName, Constants.PFSCookieValue, option);
                     }

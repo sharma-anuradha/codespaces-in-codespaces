@@ -191,6 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
                 (EnvironmentSessionDetails headers, null, PartialEnvironmentSessionDetails host) when string.Equals(headers.EnvironmentId, host.EnvironmentId) => headers,
                 (EnvironmentSessionDetails headers, null, null) => headers,
                 (null, PartialEnvironmentSessionDetails host, null) => host,
+                (null, PartialEnvironmentSessionDetails host, PartialEnvironmentSessionDetails _) => host,
                 (null, null, PartialEnvironmentSessionDetails host) => host,
                 (WorkspaceSessionDetails headers, WorkspaceSessionDetails host, null) when string.Equals(headers.WorkspaceId, host.WorkspaceId, StringComparison.InvariantCultureIgnoreCase) && headers.Port == host.Port => headers,
                 (WorkspaceSessionDetails headers, null, WorkspaceSessionDetails host) when string.Equals(headers.WorkspaceId, host.WorkspaceId, StringComparison.InvariantCultureIgnoreCase) && headers.Port == host.Port => headers,
