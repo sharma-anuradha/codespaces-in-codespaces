@@ -94,13 +94,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
+            // Add environment id and resource ids to logger
+            LogResource(operationInput, logger);
+
             if (IsInvalidOrFailedState(record, operationInput))
             {
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = $"FailedEnvironmentStartState record in invalid state '{record.Value.State}'" };
             }
-
-            // Add environment id and resource ids to logger
-            LogResource(operationInput, logger);
 
             // Run operation
             switch (operationInput.CurrentState)
@@ -177,7 +177,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 .FluentAddBaseValue("StorageResourceReady", operationInput.StorageResource?.IsReady)
                 .FluentAddBaseValue("OSDiskResourceId", operationInput.OSDiskResource?.ResourceId)
                 .FluentAddBaseValue("OSDisResourceReady", operationInput.OSDiskResource?.IsReady)
-                .AddBaseEnvironmentId(operationInput.EnvironmentId);
+                .AddBaseEnvironmentId(operationInput.EnvironmentId)
+                .FluentAddBaseValue(nameof(operationInput.CurrentState), operationInput.CurrentState);
         }
 
         private static bool IsInvalidOrFailedState(EnvironmentRecordRef record, StartEnvironmentContinuationInput operationInput)
@@ -494,6 +495,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidCreateWorkspace" };
             }
 
+            // Update state from queued
+            var newState = operationInput.CreateNew ? CloudEnvironmentState.Provisioning : CloudEnvironmentState.Starting;
             var didUpdate = await UpdateRecordAsync(
                     operationInput,
                     record,
@@ -502,14 +505,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // assign connection
                         environment.Connection = connection;
 
-                        // Update state to be failed
                         await EnvironmentStateManager.SetEnvironmentStateAsync(
                             environment,
-                            CloudEnvironmentState.Provisioning,
+                            newState,
                             CloudEnvironmentStateUpdateTriggers.CreateEnvironment,
                             string.Empty,
                             null,
                             logger.NewChildLogger());
+
                         return true;
                     },
                     logger);
