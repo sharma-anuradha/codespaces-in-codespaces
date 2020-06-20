@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             {
                 foreach (var item in await File.ReadAllLinesAsync(ListFile))
                 {
-                    var settings = new DeveloperPersonalStampSettings(true, item.Trim());
+                    var settings = new DeveloperPersonalStampSettings(true, item.Trim(), false);
                     var resourceNameBuilder = new ResourceNameBuilder(settings);
                     await CleanUpAsync(resourceNameBuilder, azureSubscriptionCatalog, stdout, stderr);
                 }
@@ -135,11 +135,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             }
             else if (!string.IsNullOrWhiteSpace(Alias))
             {
-                developerPersonalStampSettings = new DeveloperPersonalStampSettings(true, Alias);
+                developerPersonalStampSettings = new DeveloperPersonalStampSettings(true, Alias, false);
             }
             else
             {
-                developerPersonalStampSettings = new DeveloperPersonalStampSettings(true, System.Environment.UserName);
+                developerPersonalStampSettings = new DeveloperPersonalStampSettings(true, System.Environment.UserName, false);
             }
 
             var builder = new ResourceNameBuilder(developerPersonalStampSettings);

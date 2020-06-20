@@ -316,6 +316,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        public async Task<(string, string, string)> GetApplicationKeyAndSecretsAsync()
+        {
+            var sp = ServicePrincipal;
+            var azureAppId = sp.ClientId;
+            var azureAppKey = await sp.GetClientSecretAsync();
+            var azureTenant = sp.TenantId;
+
+            return (azureAppId, azureAppKey, azureTenant);
+        }
+
+        /// <inheritdoc/>
         void IDisposable.Dispose()
         {
             var storageManagementClient = StorageManagementClient;

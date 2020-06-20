@@ -68,10 +68,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             services.AddSingleton(portForwardingSettings);
 
             // Add front-end/back-end/port-forwarding common services -- secrets, service principal, control-plane resources.
-            ConfigureCommonServices(services, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
 
             // Adding developer personal stamp settings and resource name builder.
-            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias);
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias, AppSettings.DeveloperKusto);
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 

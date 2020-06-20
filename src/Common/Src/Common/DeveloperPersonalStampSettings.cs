@@ -14,10 +14,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="enable">True to enable developer personal stamp.</param>
         /// <param name="alias">Unique user identifier.</param>
-        public DeveloperPersonalStampSettings(bool enable, string alias)
+        /// <param name="enableKusto">Enable live streaming to developer kusto table.</param>
+        public DeveloperPersonalStampSettings(bool enable, string alias, bool enableKusto)
         {
             DeveloperStamp = enable;
             DeveloperAlias = alias;
+            EnableKusto = enableKusto;
         }
 
         /// <summary>
@@ -29,5 +31,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Gets the unique identifier for developer for developer stamps.
         /// </summary>
         public string DeveloperAlias { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether developer kusto streaming should be enabled.
+        /// </summary>
+        public bool EnableKusto { get; }
     }
 }

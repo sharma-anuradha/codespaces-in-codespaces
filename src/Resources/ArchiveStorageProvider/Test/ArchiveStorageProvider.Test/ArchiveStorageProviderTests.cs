@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Tes
             var azureClientFactory = new Mock<IAzureClientFactory>().Object;
             var metricsProvider = new Mock<IMetricsProvider>().Object;
             var resourceNameBuilder = new Mock<IResourceNameBuilder>().Object;
-            var personalStampSettings = new DeveloperPersonalStampSettings(false, null);
+            var personalStampSettings = new DeveloperPersonalStampSettings(false, null, false);
 
             var defaultLogValues = new Mock<LogValueSet>().Object;
             var diagnosticsLoggerFactory = new Mock<IDiagnosticsLoggerFactory>().Object;
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Tes
             var azureClientFactory = new Mock<IAzureClientFactory>().Object;
             var metricsProvider = new Mock<IMetricsProvider>().Object;
             var resourceNameBuilder = new Mock<IResourceNameBuilder>().Object;
-            var personalStampSettings = new DeveloperPersonalStampSettings(false, null);
+            var personalStampSettings = new DeveloperPersonalStampSettings(false, null, false);
             var diagnosticsLoggerFactory = new Mock<IDiagnosticsLoggerFactory>().Object;
             var defaultLogValues = new Mock<LogValueSet>().Object;
 

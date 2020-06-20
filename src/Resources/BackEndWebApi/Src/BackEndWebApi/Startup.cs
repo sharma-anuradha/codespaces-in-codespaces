@@ -102,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             }
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
-            ConfigureCommonServices(services, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
 
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();
@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             });
 
             // Adding developer personal stamp settings and resource name builder.
-            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias);
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias, AppSettings.DeveloperKusto);
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 

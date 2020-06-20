@@ -7,13 +7,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
-    <ProjectReference Include="..\Common.Developer\Common.Developer.csproj" />
-    <ProjectReference Include="..\Common.Metrics\Common.Metrics.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Azure.Kusto.Ingest" Version="$(KustoPackageVersion)" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="$(AspNetCoreDllVersions)" />   
     <PackageReference Include="Microsoft.VsSaaS.AspNetCore.Diagnostics" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>

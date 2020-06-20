@@ -103,5 +103,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>
         /// <returns>A tuple of the account name and the account key.</returns>
         Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation);
+
+        /// <summary>
+        /// Gets the application id, secret and tenant.
+        /// </summary>
+        /// <returns>Secrets for connecting.</returns>
+        Task<(string, string, string)> GetApplicationKeyAndSecretsAsync();
     }
 }

@@ -24,6 +24,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repositor
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampLogger;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Newtonsoft.Json;
@@ -204,9 +205,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// Add various DI services common to all VSO services.
         /// </summary>
         /// <param name="services">The service collection.</param>
+        /// <param name="kustoStreamLogging">Kusto stream logging for dev stamps..</param>
         /// <param name="loggingBaseValues">The common logging base values.</param>
-        protected void ConfigureCommonServices(IServiceCollection services, out LoggingBaseValues loggingBaseValues)
+        protected void ConfigureCommonServices(IServiceCollection services, bool kustoStreamLogging, out LoggingBaseValues loggingBaseValues)
         {
+            if (kustoStreamLogging)
+            {
+                services.AddSingleton<IDiagnosticsLoggerFactory, DeveloperStampDiagnosticsLoggerFactory>();
+            }
+
             var productInfo = new ProductInfoHeaderValue(
                 ServiceName, Assembly.GetExecutingAssembly().GetName().Version.ToString());
             services.AddSingleton(productInfo);
@@ -276,6 +283,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Enable common Standard Out to Logs support.
             if (AppSettings.RedirectStandardOutToLogsDirectory)
             {
+                if (kustoStreamLogging)
+                {
+                    throw new InvalidOperationException("Only enable DeveloperKusto or RedirectStandardOutToLogsDirectory");
+                }
+
                 string assemblyFolder = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
                 var directory = Path.Combine(assemblyFolder, $"..\\..\\..\\logs\\{Assembly.GetEntryAssembly().GetName().Name}");
                 var logDirectory = Path.GetFullPath(directory);

@@ -80,6 +80,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return baseName;
         }
 
+        /// <inheritdoc/>
+        public string GetDeveloperStampKustoTableName(string baseName)
+        {
+            if (DeveloperPersonalStampSettings.DeveloperStamp)
+            {
+                return $"{GetUserName()}Events";
+            }
+
+            throw new InvalidOperationException("Available only in a devstamp.");
+        }
+
         private string CreateResourceName(string baseName)
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)
@@ -102,9 +113,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 userName = DeveloperPersonalStampSettings.DeveloperAlias;
             }
 
-            if (string.IsNullOrWhiteSpace(userName) || userName.Equals("vsonline", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(userName)
+                || userName.Equals("vsonline", StringComparison.OrdinalIgnoreCase)
+                || userName.Equals("root", StringComparison.OrdinalIgnoreCase)
+                || userName.Equals("codespaces", StringComparison.OrdinalIgnoreCase)
+                || userName.Equals("Administrator", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Username is not valid or is set to vsonline user.");
+                throw new InvalidOperationException("Username is not valid or is set to vsonline or an invalid user.");
             }
 
             return userName.ToLowerInvariant();

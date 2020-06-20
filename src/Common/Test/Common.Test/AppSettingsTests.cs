@@ -434,7 +434,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             {
                 ControlPlaneSettings = appSettings.ControlPlaneSettings,
             };
-            var devStampSettings = new DeveloperPersonalStampSettings(false, null);
+            var devStampSettings = new DeveloperPersonalStampSettings(false, null, false);
             var resourceNameBuilder = new ResourceNameBuilder(devStampSettings);
             var controlPlaneInfo = new ControlPlaneInfo(Options.Create(controlPlaneOptions), currentLocationProvider.Object, resourceNameBuilder);
             return controlPlaneInfo;

@@ -46,6 +46,7 @@
     <AzureStoragePackageVersion>11.0.0</AzureStoragePackageVersion>
     <AzureServiceBusPackageVersion>4.1.1</AzureServiceBusPackageVersion>
     <FluentAssertionsVersion>5.4.1</FluentAssertionsVersion>
+    <KustoPackageVersion>8.1.2</KustoPackageVersion>
     <MicroBuildCoreVersion>0.3.0</MicroBuildCoreVersion>
     <MicrosoftIdentityModelTokensPackageVersion>5.6.0</MicrosoftIdentityModelTokensPackageVersion>
     <MicrosoftNETTestSdkVersion>15.8.0</MicrosoftNETTestSdkVersion>

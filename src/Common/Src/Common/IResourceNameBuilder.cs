@@ -50,5 +50,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="baseName">Base name of the storage account.</param>
         /// <returns>Storage account name..</returns>
         string GetArchiveStorageAccountName(string baseName);
+
+        /// <summary>
+        /// Creates name for kusto table in a developer stamp.
+        /// </summary>
+        /// <param name="baseName">Base name of the kusto table.</param>
+        /// <returns>Kusto table name.</returns>
+        string GetDeveloperStampKustoTableName(string baseName);
     }
 }

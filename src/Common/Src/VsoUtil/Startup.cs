@@ -68,14 +68,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             }
 
             // Adding developer personal stamp settings and resource name builder.
-            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp && HostingEnvironment.IsDevelopment(), AppSettings.DeveloperAlias);
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp && HostingEnvironment.IsDevelopment(), AppSettings.DeveloperAlias, false);
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
             services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
             ConfigureSecretsProvider(services);
-            ConfigureCommonServices(services, out var _);
+            ConfigureCommonServices(services, false, out var _);
 
             // Add stamp database access
             services.AddDocumentDbClientProvider(options =>

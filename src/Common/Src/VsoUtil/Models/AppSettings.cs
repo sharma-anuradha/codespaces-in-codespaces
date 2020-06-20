@@ -29,6 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
 
         public bool DeveloperPersonalStamp { get; set; } = true;
 
+        public bool DeveloperKusto { get; set; } = false;
+
         public bool RedirectStandardOutToLogsDirectory { get; set; } = false;
 
         public bool GenerateLocalHostNameFromNgrok { get; set; } = false;

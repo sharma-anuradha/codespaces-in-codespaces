@@ -80,6 +80,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public bool DeveloperPersonalStamp { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets a value indicating whether developer kusto table should be used.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public bool DeveloperKusto { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets a value indicating whether to set the local hostname from Ngrok for development.
         /// </summary>
         [JsonProperty(Required = Required.Default)]

@@ -4,6 +4,7 @@
     <ProjectReference Include="Auth\Auth.csproj" />
     <ProjectReference Include="Common.AspNetCore\Common.AspNetCore.csproj" />
     <ProjectReference Include="Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="Common.Developer\Common.Developer.csproj" />
     <ProjectReference Include="Common.Metrics\Common.Metrics.csproj" />
     <ProjectReference Include="Common\Common.csproj" />
     <ProjectReference Include="HttpContracts\HttpContracts.csproj" />
