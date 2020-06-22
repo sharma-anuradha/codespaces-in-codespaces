@@ -151,7 +151,7 @@ export class AuthServiceGithub {
         const { ownerUsername, workspaceId } = this.repoInfo;
 
         const url = new URL(
-            `/workspaces/${ownerUsername}/${workspaceId}/token`,
+            `/vscs_internal/user/${ownerUsername}/codespaces/${workspaceId}/token`,
             getGitHubApiEndpoint()
         );
         const cascadeToken = await fetch(url.toString(), {

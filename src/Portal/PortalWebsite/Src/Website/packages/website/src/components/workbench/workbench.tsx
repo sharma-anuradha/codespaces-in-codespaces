@@ -57,7 +57,7 @@ const getWorkspaceUrl = (defaultUrl: URL) => {
     }
 
     const url = new URL(
-        `https://github.com/workspaces/${result.ownerUsername}/${result.workspaceId}`
+        `https://github.com/codespaces/${result.ownerUsername}/${result.workspaceId}`
     );
 
     return url;

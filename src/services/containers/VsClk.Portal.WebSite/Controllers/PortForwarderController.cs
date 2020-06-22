@@ -230,7 +230,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             var redirectUriBuilder = new UriBuilder(GitHubUtils.IsGithubTLD(returnUrl)
-                ? "https://github.com/workspaces/auth"
+                ? "https://github.com/codespaces/auth"
                 : $"{AppSettings.PortalEndpoint}/port-forwarding-sign-in"
             );
 

@@ -168,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
-            Assert.Equal("/workspaces/auth/92617f60-2f2c-4986-85a0-ce95ceb3a658", redirectUri.AbsolutePath);
+            Assert.Equal("/codespaces/auth/92617f60-2f2c-4986-85a0-ce95ceb3a658", redirectUri.AbsolutePath);
 
             var queryString = HttpUtility.ParseQueryString(redirectUri.Query);
 
@@ -187,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
-            Assert.Equal("/workspaces/auth/92617f60-2f2c-4986-85a0-ce95ceb3a658", redirectUri.AbsolutePath);
+            Assert.Equal("/codespaces/auth/92617f60-2f2c-4986-85a0-ce95ceb3a658", redirectUri.AbsolutePath);
 
             var queryString = HttpUtility.ParseQueryString(redirectUri.Query);
 
@@ -225,7 +225,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var redirectUri = new Uri(result.Url);
 
             Assert.Equal("github.com", redirectUri.Host);
-            Assert.Equal("/workspaces/auth/92617f60-2f2c-4986-85a0-ce95ceb3a658", redirectUri.AbsolutePath);
+            Assert.Equal("/codespaces/auth/92617f60-2f2c-4986-85a0-ce95ceb3a658", redirectUri.AbsolutePath);
 
             var queryString = HttpUtility.ParseQueryString(redirectUri.Query);
 
