@@ -509,7 +509,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
             {
                 var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
-                logger.AddSubscriptionId(planInfo.Subscription);
+                logger.AddSubscriptionId(planDetails.Plan.Subscription);
                 logger.AddReason(message);
                 return new ForbidResult();
             }
