@@ -6,17 +6,15 @@ port-forwarding-web-api:
   ingress:
     hosts:
       - '*.app.online.visualstudio.com'
-      - '*.app.online.core.vsengsaas.visualstudio.com'
-      - '*.app.eastus.online.visualstudio.com'
-      - '*.app.westeurope.online.visualstudio.com'
-      - '*.app.westus2.online.visualstudio.com'
-      - '*.app.southeastasia.online.visualstudio.com'
+      - '*.apps.workspaces.githubusercontent.com'
+      - '*.apps.codespaces.githubusercontent.com'
     tls:
       - hosts:
-        - '*.app.online.visualstudio.com'
-        - '*.app.online.core.vsengsaas.visualstudio.com'
-        - '*.app.eastus.online.visualstudio.com'
-        - '*.app.westeurope.online.visualstudio.com'
-        - '*.app.westus2.online.visualstudio.com'
-        - '*.app.southeastasia.online.visualstudio.com'
+          - '*.app.online.visualstudio.com'
         secretName: ssl-cert
+      - hosts:
+          - '*.apps.workspaces.githubusercontent.com'
+        secretName: ssl-cert-github-pf
+      - hosts:
+          - '*.apps.codespaces.githubusercontent.com'
+        secretName: ssl-cert-github-cs-pf

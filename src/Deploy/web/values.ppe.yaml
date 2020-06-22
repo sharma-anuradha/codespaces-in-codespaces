@@ -6,11 +6,15 @@ port-forwarding-web-api:
   ingress:
     hosts:
       - '*.app.online-ppe.core.vsengsaas.visualstudio.com'
-      - '*.app.westus2-ppe-rel-online.core.vsengsaas.visualstudio.com'
-      - '*.app.southeastasia-ppe-rel-online.core.vsengsaas.visualstudio.com'
+      - '*.apps.ppe.workspaces.githubusercontent.com'
+      - '*.apps.ppe.codespaces.githubusercontent.com'
     tls:
       - hosts:
-        - '*.app.online-ppe.core.vsengsaas.visualstudio.com'
-        - '*.app.westus2-ppe-rel-online.core.vsengsaas.visualstudio.com'
-        - '*.app.southeastasia-ppe-rel-online.core.vsengsaas.visualstudio.com'
+          - '*.app.online-ppe.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
+      - hosts:
+          - '*.apps.ppe.workspaces.githubusercontent.com'
+        secretName: ssl-cert-github-pf
+      - hosts:
+          - '*.apps.ppe.codespaces.githubusercontent.com'
+        secretName: ssl-cert-github-cs-pf

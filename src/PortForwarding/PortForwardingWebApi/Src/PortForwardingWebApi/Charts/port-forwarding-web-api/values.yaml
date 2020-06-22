@@ -10,7 +10,7 @@ appSettings:
 
 pods:
   minReplicaCount: 3
-  agentMinReplicaCount: 1
+  agentMinReplicaCount: 5
   maxReplicaCount: 10
   minReadySeconds: 1
   progressDeadlineSeconds: 300

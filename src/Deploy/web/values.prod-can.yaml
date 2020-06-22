@@ -6,7 +6,15 @@ port-forwarding-web-api:
   ingress:
     hosts:
       - '*.app.canary.online.visualstudio.com'
+      - '*.apps.workspaces.githubusercontent.com'
+      - '*.apps.codespaces.githubusercontent.com'
     tls:
       - hosts:
-        - '*.app.canary.online.visualstudio.com'
+          - '*.app.canary.online.visualstudio.com'
         secretName: ssl-cert
+      - hosts:
+          - '*.apps.workspaces.githubusercontent.com'
+        secretName: ssl-cert-github-pf
+      - hosts:
+          - '*.apps.codespaces.githubusercontent.com'
+        secretName: ssl-cert-github-cs-pf
