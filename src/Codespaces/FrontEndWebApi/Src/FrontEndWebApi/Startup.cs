@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
@@ -80,8 +81,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 });
 
             // Configuration
+            var logger = new DefaultLoggerFactory().New();
             var appSettings = ConfigureAppSettings(services);
             var frontEndAppSettings = appSettings.FrontEnd;
+            var mdmMetricSettings = frontEndAppSettings.MdmMetricSettings;
+            var mdmMetricClient = new MdmMetricClient(mdmMetricSettings.GenevaSvc, mdmMetricSettings.Port, IsRunningInAzure(), logger);
+
+            // Enabling metrics publication, only if its turned on at service level.
+            if (mdmMetricSettings.Enable)
+            {
+                mdmMetricClient.StartPublishingMetrics();
+            }
+
+            // To handle the exceptions.
+            RegisterUnhandledExceptionHandler(mdmMetricClient, logger);
+
+            // Adding it as singleton so that we can access this in the attribute filter for emitting metrics.
+            services.AddSingleton(mdmMetricClient);
+            services.AddSingleton(mdmMetricSettings);
             services.AddSingleton(frontEndAppSettings);
             services.AddSingleton<ISkuUtils, SkuUtils>();
 
@@ -376,7 +393,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
-
             var isProduction = env.IsProduction();
 
             // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
@@ -451,6 +467,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             });
 
             Warmup(app);
+        }
+
+        private static void RegisterUnhandledExceptionHandler(IMdmMetricClient mdmMetricClient, IDiagnosticsLogger logger)
+        {
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
+            {
+                // Stop metric publication gracefully and emit the remaining metrics via MDM.
+                mdmMetricClient.StopPublishingMetrics();
+
+                // In future we may take a heap dump of it here.
+                logger.LogCritical($"Process terminating: {e.IsTerminating}\n {e.ExceptionObject.ToString()}");
+            };
         }
 
         private class EnumSchemaFilter : ISchemaFilter

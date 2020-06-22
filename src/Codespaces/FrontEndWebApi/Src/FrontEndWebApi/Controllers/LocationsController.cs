@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Table;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -88,8 +89,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [AllowAnonymous]
         [ProducesResponseType(typeof(LocationsResult), StatusCodes.Status200OK)]
         [HttpOperationalScope("get_current")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public IActionResult GetCurrent(
-            [FromServices]IDiagnosticsLogger logger)
+            [FromServices] IDiagnosticsLogger logger)
         {
             var allLocations = ControlPlaneInfo.GetAllDataPlaneLocations().ToArray();
             var result = new LocationsResult
@@ -122,10 +124,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("get")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> GetAsync(
-            [FromRoute]string location,
+            [FromRoute] string location,
             [FromQuery] string planId,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromServices] IDiagnosticsLogger logger)
         {
             if (!Enum.TryParse<AzureLocation>(location, ignoreCase: true, out var azureLocation))
             {

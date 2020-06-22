@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -26,6 +27,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
@@ -140,6 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("get")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> GetAsync(
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
@@ -174,6 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpOperationalScope("list")]
         [Audit(AuditEventCategory.ResourceManagement, targetResourceName: "User")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> ListAsync(
             [FromQuery] string name,
             [FromQuery] string planId,
@@ -240,6 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("shutdown")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> SuspendAsync(
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
@@ -292,6 +297,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status503ServiceUnavailable)]
         [HttpOperationalScope("start")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> ResumeAsync(
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
@@ -372,6 +378,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status503ServiceUnavailable)]
         [HttpOperationalScope("create")]
         [Audit(AuditEventCategory.ResourceManagement)]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> CreateAsync(
             [FromBody] CreateCloudEnvironmentBody createEnvironmentInput,
             [FromServices] IDiagnosticsLogger logger)
@@ -576,6 +583,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("delete")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> DeleteAsync(
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
@@ -625,6 +633,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("update")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> UpdateAsync(
             [FromRoute] string environmentId,
             [FromBody] EnvironmentRegistrationCallbackBody callbackBody,
@@ -688,6 +697,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("update_settings")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> UpdateSettingsAsync(
             [FromRoute] string environmentId,
             [FromBody] UpdateCloudEnvironmentBody updateEnvironmentInput,
@@ -741,6 +751,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("available_updates")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> GetAvailableSettingsUpdatesAsync(
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
@@ -823,6 +834,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("update_MRU_folders")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> UpdateRecentFoldersListAsync(
             [FromRoute] string environmentId,
             [FromBody] CloudEnvironmentFolderBody folderPathInput,
@@ -873,6 +885,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("heartbeat_tokens")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> GenerateHeartBeatTokenAsync(
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)

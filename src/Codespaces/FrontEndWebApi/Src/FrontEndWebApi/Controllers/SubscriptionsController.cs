@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -21,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
@@ -93,6 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateValidateAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanCreateValidateAsync(
             string subscriptionId,
             string resourceGroup,
@@ -186,6 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateAsync))]
         [HttpPut("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanCreateAsync(
             string subscriptionId,
             string resourceGroup,
@@ -280,6 +284,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>Returns a Http status code and message.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateCompleteAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanCreateCompleteAsync(
             string subscriptionId,
             string resourceGroup,
@@ -308,6 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>Returns a Http status code and message.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteValidateAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanDeleteValidateAsync(
             string subscriptionId,
             string resourceGroup,
@@ -404,6 +410,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListByResourceGroupAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/resourceReadBegin")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanListByResourceGroupAsync(
             string subscriptionId,
             string resourceGroup,
@@ -446,6 +453,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>Returns an Http status code and a list of VSO SkuPlan objects filtering by subscriptionID.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListBySubscriptionAsync))]
         [HttpPost("{subscriptionId}/providers/{providerNamespace}/{resourceType}/resourceReadBegin")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanListBySubscriptionAsync(
             string subscriptionId,
             string providerNamespace,
@@ -488,6 +496,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanGetAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadBegin")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanGetAsync(
             string subscriptionId,
             string resourceGroup,
@@ -544,6 +553,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchValidateAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchValidate")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanPatchValidateAsync(
             string subscriptionId,
             string resourceGroup,
@@ -613,6 +623,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchCompletedAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchCompleted")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanPatchCompletedAsync(
             string subscriptionId,
             string resourceGroup,
@@ -681,6 +692,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllEnvironments")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> PlanReadEnvironmentsAsync(
             string subscriptionId,
             string resourceGroup,
@@ -741,6 +753,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeEnvironments")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> PlanWriteEnvironmentsAsync(
             string subscriptionId,
             string resourceGroup,
@@ -801,6 +814,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllEnvironments")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> PlanDeleteEnvironmentsAsync(
             string subscriptionId,
             string resourceGroup,
@@ -859,6 +873,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>A delegates list response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadDelegatesAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readDelegates")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanReadDelegatesAsync(
             string subscriptionId,
             string resourceGroup,
@@ -887,6 +902,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteDelegatesAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeDelegates")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> PlanWriteDelegatesAsync(
             string subscriptionId,
             string resourceGroup,
@@ -971,6 +987,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteDelegatesAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteDelegates")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> PlanDeleteDelegatesAsync(
             string subscriptionId,
             string resourceGroup,
@@ -996,6 +1013,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="rpSubscriptionNotification">JSON body request.</param>
         /// <returns>IActionResult.</returns>
         [HttpPut("{subscriptionId}/providers/{providerNamespace}/{resourceType}/SubscriptionLifeCycleNotification")]
+        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public Task<IActionResult> OnSubscriptionLifeCycleNotification(
             string subscriptionId,
             string providerNamespace,
