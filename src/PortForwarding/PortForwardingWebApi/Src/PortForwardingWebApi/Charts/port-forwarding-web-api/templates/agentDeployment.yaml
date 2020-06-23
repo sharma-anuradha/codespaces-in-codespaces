@@ -46,6 +46,10 @@ spec:
               value: {{ .Values.serviceBus.namespace }}
             - name: VSCS_AppSettings__ControlPlaneSettings__Stamps__WestUs2__ServiceBusResourceGroupName
               value: {{ .Values.serviceBus.resourceGroup }}
+            - name: VSCS_AppSettings__ControlPlaneSettings__Stamps__WestEurope__ServiceBusNamespaceName
+              value: {{ .Values.serviceBus.namespace }}
+            - name: VSCS_AppSettings__ControlPlaneSettings__Stamps__WestEurope__ServiceBusResourceGroupName
+              value: {{ .Values.serviceBus.resourceGroup }}
           {{- end }}
           {{- range .Values.appSettings }}
             - name: {{ . }}

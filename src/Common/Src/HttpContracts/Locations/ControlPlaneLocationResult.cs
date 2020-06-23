@@ -13,12 +13,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts
     /// </summary>
     public class ControlPlaneLocationResult
     {
+        /// <summary>
+        /// Gets or sets current azure location.
+        /// </summary>
         [JsonProperty(
             Required = Required.Always,
             PropertyName = "location")]
         [JsonConverter(typeof(StringEnumConverter))]
         public AzureLocation Location { get; set; }
 
+        /// <summary>
+        /// Gets or sets the service dns hostname.
+        /// </summary>
         [JsonProperty(
             Required = Required.Always,
             PropertyName = "dnsHostName")]

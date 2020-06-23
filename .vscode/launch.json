@@ -6,7 +6,10 @@
     "compounds": [
         {
             "name": "Frontend+Backend API Launch",
-            "configurations": [ "BackEndWebApi Launch", "FrontEndWebApi Launch" ]
+            "configurations": [
+                "BackEndWebApi Launch",
+                "FrontEndWebApi Launch"
+            ]
         }
     ],
     "configurations": [
@@ -61,9 +64,6 @@
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
             }
         },
         {
@@ -71,7 +71,6 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "buildServices",
-            // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/debug/VsClk.EnvReg.WebApi/Microsoft.VsCloudKernel.Services.VsClk.EnvReg.WebApi.dll",
             "args": [],
             "cwd": "${workspaceFolder}/src/services/containers/VsClk.EnvReg.WebApi",

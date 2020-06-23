@@ -25,3 +25,9 @@ wget -q https://raw.githubusercontent.com/microsoft/artifacts-credprovider/maste
 chmod +x installcredprovider.sh
 ./installcredprovider.sh
 rm installcredprovider.sh
+
+# Install terraform
+wget -q https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_amd64.zip -O terraform.zip
+sudo unzip -o terraform -d /usr/local/bin/
+sudo chmod +x /usr/local/bin/terraform
+rm terraform.zip

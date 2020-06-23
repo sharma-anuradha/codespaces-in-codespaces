@@ -54,11 +54,19 @@ pfingress:
       location /authenticate-port-forwarder {
         proxy_pass_request_body on;
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+
+        proxy_buffer_size          128k;
+        proxy_buffers              4 256k;
+        proxy_busy_buffers_size    256k;
       }
       location /authenticate-codespace {
         proxy_pass_request_body on;
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
         proxy_set_header Host $http_host;
+
+        proxy_buffer_size          128k;
+        proxy_buffers              4 256k;
+        proxy_busy_buffers_size    256k;
       }
       location /logout-port-forwarder {
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';

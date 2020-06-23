@@ -1,0 +1,100 @@
+# Common override values for charts deployed to vsclk-online-dev-ci
+
+image:
+  repositoryUrl: vsclkonlinedev.azurecr.io
+
+ingress:
+  hosts:
+    - online.dev.core.vsengsaas.visualstudio.com
+    - "*.workspaces-dev.github.com"
+    - "*.codespaces-dev.github.com"
+    - "*.dev.github.dev"
+    - vsclk-online-dev-ci-tm.trafficmanager.net
+  tls:
+    - hosts:
+        - online.dev.core.vsengsaas.visualstudio.com
+      secretName: ssl-cert
+    - hosts:
+        - "*.workspaces-dev.github.com"
+      secretName: ssl-cert-github-ws
+    - hosts:
+        - "*.codespaces-dev.github.com"
+      secretName: ssl-cert-github-cs
+    - hosts:
+        - "*.dev.github.dev"
+      secretName: ssl-cert-github-dot-dev
+
+githubAuthEndpoint:
+  hosts:
+    - "auth.apps.dev.workspaces.githubusercontent.com"
+    - "auth.apps.dev.codespaces.githubusercontent.com"
+  tls:
+    - hosts:
+        - "*.apps.dev.workspaces.githubusercontent.com"
+      secretName: ssl-cert-github-pf
+    - hosts:
+        - "*.apps.dev.codespaces.githubusercontent.com"
+      secretName: ssl-cert-github-cs-pf
+
+pfingress:
+  hosts:
+    - "*.app.online.dev.core.vsengsaas.visualstudio.com"
+    - "*.apps.dev.workspaces.githubusercontent.com"
+    - "*.apps.dev.codespaces.githubusercontent.com"
+  tls:
+    - hosts:
+        - "*.app.online.dev.core.vsengsaas.visualstudio.com"
+      secretName: ssl-cert
+    - hosts:
+        - "*.apps.dev.workspaces.githubusercontent.com"
+      secretName: ssl-cert-github-pf
+    - hosts:
+        - "*.apps.dev.codespaces.githubusercontent.com"
+      secretName: ssl-cert-github-cs-pf
+      
+portForwardingHosts:
+  - hosts:
+      - "{0}.app.online.dev.core.vsengsaas.visualstudio.com"
+    certificateSecretName: ssl-cert
+  - hosts:
+      - "{0}.apps.dev.workspaces.githubusercontent.com"
+    certificateSecretName: ssl-cert-github-pf
+  - hosts:
+      - "{0}.apps.dev.codespaces.githubusercontent.com"
+    certificateSecretName: ssl-cert-github-cs-pf
+
+authentication:
+  audiences: "https://management.core.windows.net/,9db1d849-f699-4cfb-8160-64bed3335c72,aebc6443-996d-45c2-90f0-388ff96faa56,872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
+
+config:
+  aspNetEnv: Development
+  authRedirectUrl: https://online.dev.core.vsengsaas.visualstudio.com
+  keyVaultName: vsclk-online-dev-kv
+  clusterDefaultHost: online.dev.core.vsengsaas.visualstudio.com
+  portalEndpoint: https://online.dev.core.vsengsaas.visualstudio.com
+  environmentRegistrationEndpoint: https://online.dev.core.vsengsaas.visualstudio.com/api/v1/environments
+  apiEndpoint: https://online.dev.core.vsengsaas.visualstudio.com/api/v1
+  liveShareEndpoint: https://ppe.liveshare.vsengsaas.visualstudio.com
+  liveShareWebExtensionEndpoint: https://vslsdev.blob.core.windows.net/webextension
+  richNavWebExtensionEndpoint: https://intellinavstgdev.blob.core.windows.net/webextension
+  githubClientId: fe42cbbb45cdcb17a106
+  githubNativeClientId: Iv1.faf5804e51bc0d8f
+  azDevClientId: B4074F41-EC85-4D4E-A3CA-4458F1A904CC
+  vsSaaSTokenIssuer: https://ppe.liveshare.vsengsaas.visualstudio.com/
+  vsSaaSCertificateSecretName: vsls-ppe-auth-cert-primary
+  portForwardingDomainTemplate: "{0}.app.online.dev.core.vsengsaas.visualstudio.com"
+  gitHubPortForwardingDomainTemplate: "{0}.apps.dev.workspaces.githubusercontent.com"
+  portForwardingEnableEnvironmentEndpoints: "true"
+  gitHubportForwardingEnableEnvironmentEndpoints: "true"
+  portForwardingServiceEnabled: "true"
+
+azure-secrets:
+  # vsclk-core-dev
+  subscriptionId-dev: "86642df6-843e-4610-a956-fdd497102261"
+  # vsclk-core-ppe
+  subscriptionId-ppe: "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24"
+  # vsclk-core-prod
+  subscriptionId-prod: "979523fb-a19c-4bb0-a8ee-cef29597b0a4"
+  keyVaultName-dev: vsclk-online-dev-kv
+  keyVaultName-ppe: vsclk-online-ppe-kv
+  keyVaultName-prod: vsclk-online-prod-kv

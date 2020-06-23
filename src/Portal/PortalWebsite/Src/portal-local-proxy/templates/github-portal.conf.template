@@ -12,7 +12,7 @@ server {
     ssl_certificate /certificates/dev-github-cert.crt;
     ssl_certificate_key /certificates/dev-github-cert.rsa;
 
-    set $target 'http://host.docker.internal:${PORTAL_PORT}';
+    set $target '${PORTAL_ORIGIN}';
 
     proxy_buffering "on";
 

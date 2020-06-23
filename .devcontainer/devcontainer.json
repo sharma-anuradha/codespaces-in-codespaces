@@ -1,6 +1,10 @@
 {
     "extensions": [
-        "ms-vscode.csharp"
+        "hashicorp.terraform",
+        "ms-vscode.csharp",
+        "ms-vscode.azurecli",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-azuretools.vscode-docker"
     ],
     "postCreateCommand": ".devcontainer/initenv.sh"
 }

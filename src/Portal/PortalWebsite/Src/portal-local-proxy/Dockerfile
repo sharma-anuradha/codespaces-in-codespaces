@@ -24,8 +24,9 @@ RUN openssl pkcs12 -in ./local-github-dev.pfx -nocerts -nodes -out local-github-
 FROM nginx
 
 EXPOSE 443
-ENV PORTAL_PORT 5000
-ENV PORT_FORWARDING_PORT 5000
+
+ENV PORTAL_ORIGIN http://host.docker.internal:5000
+ENV PORT_FORWARDING_ORIGIN http://host.docker.internal:5000
 
 COPY --from=certificates /certificates/* /certificates/
 

@@ -12,8 +12,47 @@
             "problemMatcher": "$msCompile",
             "group": {
                 "kind": "build",
-                "isDefault": true
             }
-        }
+        },
+        {
+            "label": "pfs:publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "--no-restore",
+                "/m",
+                "/v:m",
+                "/p:BuildFrontendBackend=false",
+                "/p:BuildOtherServices=false",
+                "/p:BuildPortal=false",
+                "/p:BuildPortForwarding=true",
+                "/p:BuildTokenService=false",
+                "${workspaceFolder}/src/dirs.proj",
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+            }
+        },
+        {
+            "type": "docker-build",
+            "label": "pfs:docker-build:debug",
+            "dependsOn": [
+                "pfs:publish"
+            ],
+            "dockerBuild": {
+                "tag": "port-forwarding-web-api:debug",
+                "dockerfile": "${workspaceFolder}/bin/Debug/PortForwardingWebApi/Dockerfile.debug",
+                "context": "${workspaceFolder}/bin/Debug/PortForwardingWebApi",
+                "pull": true
+            },
+            "netCore": {
+                "appProject": "${workspaceFolder}/src/VSOnline/PortForwardingAgent/PortForwardingAgent.csproj"
+            },
+            "group": {
+                "kind": "build",
+            }
+        },
     ]
 }

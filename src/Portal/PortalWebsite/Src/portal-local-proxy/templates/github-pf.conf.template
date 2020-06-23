@@ -12,7 +12,7 @@ server {
     ssl_certificate /certificates/dev-github-pf-cert.crt;
     ssl_certificate_key /certificates/dev-github-pf-cert.rsa;
     
-    set $target 'http://host.docker.internal:${PORT_FORWARDING_PORT}';
+    set $target '${PORT_FORWARDING_ORIGIN}';
 
     proxy_buffering "on";
 
@@ -62,7 +62,7 @@ server {
     ssl_certificate /certificates/dev-github-codespaces-pf-cert.crt;
     ssl_certificate_key /certificates/dev-github-codespaces-pf-cert.rsa;
     
-    set $target 'http://host.docker.internal:${PORT_FORWARDING_PORT}';
+    set $target '${PORT_FORWARDING_ORIGIN}';
 
     proxy_buffering "on";
 
@@ -105,4 +105,3 @@ server {
         proxy_set_header X-Original-Forwarded-For $http_true;
     }
 }
-

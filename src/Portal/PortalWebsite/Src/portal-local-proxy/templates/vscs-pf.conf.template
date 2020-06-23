@@ -12,7 +12,7 @@ server {
     ssl_certificate /certificates/dev-cert.crt;
     ssl_certificate_key /certificates/dev-cert.rsa;
     
-    set $target 'http://host.docker.internal:${PORT_FORWARDING_PORT}';
+    set $target '${PORT_FORWARDING_ORIGIN}';
 
     proxy_buffering "on";
 

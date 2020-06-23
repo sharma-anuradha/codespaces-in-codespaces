@@ -1,0 +1,29 @@
+# Config for port-forwarding
+port-forwarding-web-api:
+  pods:
+    minReplicaCount: 1
+    agentMinReplicaCount: 1
+    livenessProbeDelaySeconds: 15
+    livenessProbeDelayTimeoutSeconds: 3600
+  serviceBus:
+    overrideDev: true
+  config:
+    aspNetEnv: Development
+    overrideAppSettingsJson: false
+  portForwardingAgent:
+    enabled: true
+  ingress:
+    hosts:
+      - '*.app.online.dev.core.vsengsaas.visualstudio.com'
+      - '*.apps.dev.workspaces.githubusercontent.com'
+      - '*.apps.dev.codespaces.githubusercontent.com'
+    tls:
+      - hosts:
+          - '*.app.online.dev.core.vsengsaas.visualstudio.com'
+        secretName: ssl-cert
+      - hosts:
+          - '*.apps.dev.workspaces.githubusercontent.com'
+        secretName: ssl-cert-github-pf
+      - hosts:
+          - '*.apps.dev.codespaces.githubusercontent.com'
+        secretName: ssl-cert-github-cs-pf

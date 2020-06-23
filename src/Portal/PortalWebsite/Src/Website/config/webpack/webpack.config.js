@@ -227,15 +227,6 @@ module.exports = [
                 disableDotRule: true,
             },
             progress: true,
-            proxy: {
-                '/api/v1/**': {
-                    target: 'https://westus2-ci-online.dev.core.vsengsaas.visualstudio.com',
-                    logLevel: 'debug',
-                    secure: false,
-                    changeOrigin: true,
-                    ws: true,
-                },
-            },
         },
         stats: 'errors-only',
         performance: {

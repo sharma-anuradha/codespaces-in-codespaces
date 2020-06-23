@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginx-ingress-controller
+  labels:
+    k8s-app: nginx-ingress-controller
+    {{ template "labelvalues" . }}
+spec:
+  replicas: {{ required "Value ingress.replicaCount not specified" .Values.ingress.replicaCount }}
+  template:
+    metadata:
+      labels:
+        k8s-app: nginx-ingress-controller
+      annotations:
+        prometheus.io/port: '10254'
+        prometheus.io/scrape: 'true'
+    spec:
+      serviceAccountName: nginx-ingress-serviceaccount
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsUser: 101
+      containers:
+      - image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.ingressControllerName not specified" .Values.image.ingressControllerName }}:{{ required "Value image.ingressControllerTag not specified" .Values.image.ingressControllerTag }}'
+        name: nginx-ingress-controller
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        args:
+        - /nginx-ingress-controller
+        - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
+        - --watch-namespace=$(POD_NAMESPACE)
+        - --configmap=$(POD_NAMESPACE)/nginx-ingress-controller-configmap

@@ -1,0 +1,10 @@
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.2-alpine3.10
+ARG source
+WORKDIR /app
+COPY ${source:-publish} .
+
+# Debug Stuff
+RUN apk add --no-cache procps
+RUN wget https://aka.ms/getvsdbgsh -O - 2>/dev/null | /bin/sh /dev/stdin -v latest -l /vsdbg
+
+ENTRYPOINT ["dotnet", "Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.dll"]

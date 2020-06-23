@@ -350,3 +350,9 @@ templates/app.secrets.yaml
 /src/Resources/ComputeVirtualMachineProvider/Test/ComputeVirtualMachineProvider.Test/.vscode/tasks.json
 
 /tools/kustolive/env
+
+/build/port-forwarding/.terraform/
+/build/port-forwarding/terraform.tfstate
+/build/port-forwarding/terraform.tfstate.backup
+
+dev-stamp.env
