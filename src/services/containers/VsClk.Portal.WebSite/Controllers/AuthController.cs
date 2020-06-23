@@ -200,6 +200,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 partner = HttpContext.GetPartner();
             }
 
+            if (AppSettings.PortForwardingServiceEnabled == "true" && partner == Partners.VSOnline)
+            {
+                Response.Cookies.Append(Constants.PFSCookieName, Constants.PFSCookieValue);
+            }
+
             string host = partner switch
             {
                 Partners.GitHub => string.Format(AppSettings.GitHubPortForwardingDomainTemplate, $"{environmentId}-{port}"),
