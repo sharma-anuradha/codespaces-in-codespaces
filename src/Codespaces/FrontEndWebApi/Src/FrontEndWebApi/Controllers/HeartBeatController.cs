@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ThrottlePerUserHigh(nameof(HeartBeatController), nameof(ProcessHeartBeatAsync))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeatBody heartBeat)
         {
             var logger = HttpContext.GetLogger();

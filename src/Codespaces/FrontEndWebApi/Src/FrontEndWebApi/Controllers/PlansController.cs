@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("get")]
-        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> GetAsync(
             [FromRoute]string subscriptionId,
             [FromRoute]string resourceGroupName,
@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(PlanResult[]), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpOperationalScope("list_byowner")]
-        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> ListByOwnerAsync(
             [FromServices]IDiagnosticsLogger logger)
         {

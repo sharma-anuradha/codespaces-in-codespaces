@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ThrottlePerUserHigh(nameof(AgentTelemetryController), nameof(ProcessTelemetryAsync))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [MdmMetric(enable: true, name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public IActionResult ProcessTelemetryAsync([FromBody] IEnumerable<TelemetryData> telemetryDataCollection)
         {
             var logger = HttpContext.GetLogger();
