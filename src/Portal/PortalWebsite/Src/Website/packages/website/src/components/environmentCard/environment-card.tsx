@@ -581,7 +581,8 @@ const suspendTimeoutToDisplayName = (timeoutInMinutes: number = 0, translationFu
         return injectMessageParameters(translationFunc('afterMinutes'), timeoutInMinutes);
     } else {
         const timeoutInHours = timeoutInMinutes / 60;
-        return injectMessageParameters(translationFunc('afterHours'), timeoutInHours);
+        const message = translationFunc(timeoutInHours === 1 ? 'afterHour' : 'afterHours');
+        return injectMessageParameters(message, timeoutInHours);
     }
 };
 

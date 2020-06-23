@@ -314,6 +314,7 @@ function autoShutdownOptions(translationFunc: TFunction): IDropdownOption[] {
     return [
         { key: 5, text: injectMessageParameters(translationFunc('autoShutdownMinutes'), '5') },
         { key: 30, text: injectMessageParameters(translationFunc('autoShutdownMinutes'), '30') },
+        { key: 60, text: injectMessageParameters(translationFunc('autoShutdownHour'), '1') },
         { key: 120, text: injectMessageParameters(translationFunc('autoShutdownHours'), '2') },
     ]
 }
