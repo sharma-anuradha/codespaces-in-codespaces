@@ -31,10 +31,12 @@ export class GitCredentialService extends GitCredentialServiceBase {
 
                 return await getGitHubAccessToken();
             }
-            case SupportedGitService.AzureDevOps:
+            case SupportedGitService.AzureDevOps: {
                 return await getAzDevAccessToken();
-            default:
+            }
+            default: {
                 return null;
+            }
         }
     }
 }

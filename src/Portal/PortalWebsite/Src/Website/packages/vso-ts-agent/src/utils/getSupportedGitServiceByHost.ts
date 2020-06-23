@@ -1,4 +1,4 @@
-import { SupportedGitService } from "../interfaces/SupportedGitService";
+import { SupportedGitService } from '../interfaces/SupportedGitService';
 
 export function getSupportedGitServiceByHost(host: string | undefined): SupportedGitService {
     if (!host) {
@@ -10,8 +10,12 @@ export function getSupportedGitServiceByHost(host: string | undefined): Supporte
     }
 
     if (host.endsWith(SupportedGitService.AzureDevOps) ||
-        (host.endsWith(".visualstudio.com") && host !== "online.visualstudio.com")) {
+        (host.endsWith('.visualstudio.com') && host !== 'online.visualstudio.com')) {
         return SupportedGitService.AzureDevOps;
+    }
+
+    if (host.endsWith('.github.ngrok.io')) {
+        return SupportedGitService.GitHub;
     }
 
     switch (host) {
