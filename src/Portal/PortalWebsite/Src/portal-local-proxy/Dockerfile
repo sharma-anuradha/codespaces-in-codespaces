@@ -27,6 +27,7 @@ EXPOSE 443
 
 ENV PORTAL_ORIGIN http://host.docker.internal:5000
 ENV PORT_FORWARDING_ORIGIN http://host.docker.internal:5000
+ENV API_ORIGIN http://vsclk-online-dev-ci-tm.trafficmanager.net
 
 COPY --from=certificates /certificates/* /certificates/
 

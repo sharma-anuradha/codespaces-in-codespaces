@@ -89,6 +89,10 @@ yarn start
 
 9. Open https://online.dev.core.vsengsaas.visualstudio.com in the browser. You should see a 🚧 in the top bar if the portal is running locally.
 
+## Pointing Local Portal to Your Service Devstamp
+
+Set `API_ORIGIN` variable in `src/Portal/PortalWebsite/Src/dev-local.env` to your NGrok URL. When you start the portal after that, the local NGinx will route API calls to your devstamp instead of dev.
+
 ## Tip & Tricks
 
 When looking at debug logs in chrome, you can exclude the common & browser files from stack traces by marking them as library code.

@@ -61,7 +61,7 @@ server {
         set $best_http_host $http_host;
         set $pass_port $pass_server_port;
 
-        proxy_pass http://vsclk-online-dev-ci-tm.trafficmanager.net;
+        proxy_pass ${API_ORIGIN};
 
         proxy_cookie_domain off;
         proxy_cookie_path off;
