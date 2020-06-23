@@ -1424,21 +1424,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     childLogger.FluentAddValue("ComputeResourceId", computeIdToken);
 
+                    // Change environment state to shutdown if it is not already in shutdown state.
                     var shutdownState = CloudEnvironmentState.Shutdown;
+                    if (cloudEnvironment.State != shutdownState)
+                    {
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, null, logger);
 
-                    await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, shutdownState, CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment, null, null, logger);
+                        await childLogger.RetryOperationScopeAsync(
+                                    $"{LogBaseName}_cleanup_compute_record_update",
+                                    async (retryLogger) =>
+                                    {
+                                        cloudEnvironment = await CloudEnvironmentRepository.GetAsync(cloudEnvironment.Id, logger.NewChildLogger());
+                                        cloudEnvironment.State = shutdownState;
+                                        cloudEnvironment.Compute = null;
 
-                    await childLogger.RetryOperationScopeAsync(
-                                $"{LogBaseName}_cleanup_compute_record_update",
-                                async (retryLogger) =>
-                                {
-                                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(cloudEnvironment.Id, logger.NewChildLogger());
-                                    cloudEnvironment.State = shutdownState;
-                                    cloudEnvironment.Compute = null;
-
-                                    // Update the database state.
-                                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
-                                });
+                                        // Update the database state.
+                                        cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                                    });
+                    }
 
                     // Delete the allocated resources.
                     if (computeIdToken != default)
