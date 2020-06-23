@@ -14,10 +14,6 @@ export function getSupportedGitServiceByHost(host: string | undefined): Supporte
         return SupportedGitService.AzureDevOps;
     }
 
-    if (host.endsWith('.github.ngrok.io')) {
-        return SupportedGitService.GitHub;
-    }
-
     switch (host) {
         case SupportedGitService.GitHub:
             return SupportedGitService.GitHub;

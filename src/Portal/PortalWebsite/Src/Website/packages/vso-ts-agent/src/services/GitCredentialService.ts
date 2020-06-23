@@ -40,7 +40,10 @@ export class GitCredentialService {
         if (fillRequest.protocol === 'https' || fillRequest.protocol === 'http') {
             trace.verbose('Resolving ' + fillRequest.host + ' credential.');
 
-            const token = await this.getTokenByHost(getSupportedGitServiceByHost(fillRequest.host));
+            const { host } = fillRequest;
+
+            const service = getSupportedGitServiceByHost(host);
+            const token = await this.getTokenByHost(service, host);
 
             if (token) {
                 trace.verbose('Filled credential.', maybePii(fillRequest));
@@ -54,7 +57,7 @@ export class GitCredentialService {
         return input;
     }
 
-    public async getTokenByHost(supportedGitService: SupportedGitService): Promise<string | null> {
+    public async getTokenByHost(supportedGitService: SupportedGitService, host?: string): Promise<string | null> {
         return null;
     }
 }
