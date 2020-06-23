@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
@@ -307,16 +308,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         {
             try
             {
-                var vmAgentQueueMessage = new QueueMessage
-                {
-                    Command = "ShutdownEnvironment",
-                    Id = input.EnvironmentId,
-                };
-
                 await QueueProvider.PushMessageAsync(
                     input.AzureVmLocation,
                     VirtualMachineResourceNames.GetInputQueueName(input.AzureResourceInfo.Name),
-                    vmAgentQueueMessage,
+                    input.GenerateShutdownEnvironmentPayload(),
                     logger);
 
                 return (OperationState.Succeeded, 0);

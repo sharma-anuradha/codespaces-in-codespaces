@@ -226,9 +226,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
         /// <param name="input">Vm input.</param>
         /// <param name="logger">Logger.</param>
         /// <returns>Task.</returns>
-        protected abstract Task PreCreateTaskAsync(
+        protected virtual async Task PreCreateTaskAsync(
             VirtualMachineProviderCreateInput input,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger)
+        {
+            if (input.Options is VirtualMachineResumeOptions resumeOptions)
+            {
+                if (!resumeOptions.HardBoot)
+                {
+                    // For pre-existing OS disk, just need to refresh the vmtoken so that vm can start talking to frontend.
+                    var queueComponent = input.CustomComponents.Single(x => x.ComponentType == ResourceType.InputQueue);
+                    await QueueProvider.ClearQueueAsync(queueComponent.AzureResourceInfo, logger);
+
+                    // Post the new vm token.
+                    var queueMessage = input.GenerateRefreshVMPayload();
+                    await QueueProvider.PushMessageAsync(queueComponent.AzureResourceInfo, queueMessage, logger.NewChildLogger());
+                }
+            }
+        }
 
         private string GetVmTemplate(string templateName)
         {
