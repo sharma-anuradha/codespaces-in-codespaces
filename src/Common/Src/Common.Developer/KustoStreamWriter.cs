@@ -3,12 +3,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Kusto.Cloud.Platform.Utils;
 using Kusto.Data;
 using Kusto.Data.Common;
@@ -34,8 +36,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
 
         private const string KustoTableMapPrefix = "JsonTableMap";
 
-        private readonly object lockObject = new object();
-
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoStreamWriter"/> class.
         /// </summary>
@@ -46,6 +46,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
             TableName = resourceNameBuilder.GetDeveloperStampKustoTableName(KustoTableBaseName);
             ControlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             TableMapName = $"{KustoTableMapPrefix}-{Process.GetCurrentProcess().Id}-{DateTime.Now.Ticks}";
+
+            Task.Run(() => ProcessLogs());
         }
 
         /// <inheritdoc/>
@@ -61,42 +63,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
 
         private List<ColumnMapping> ColumnMappings { get; set; } = new List<ColumnMapping>();
 
+        private ConcurrentQueue<string> LogPayloadQueue { get; set; } = new ConcurrentQueue<string>();
+
         /// <inheritdoc/>
         public override void WriteLine(string text)
         {
-            var task = ControlPlaneAzureResourceAccessor.GetApplicationKeyAndSecretsAsync();
-            (string clientId, string key, string tenant) = task.GetAwaiter().GetResult();
-
-            if (IngestionProperties == default)
-            {
-                lock (lockObject)
-                {
-                    Initialize(clientId, key, tenant);
-                }
-            }
-
-            var (updateNeeded, payloadItemKeys) = IsColumnUpdateNeeded(text);
-            if (updateNeeded)
-            {
-                lock (lockObject)
-                {
-                    UpdateColumnMapping(clientId, key, tenant, payloadItemKeys);
-                }
-            }
-
-            var connectionBuilder = new KustoConnectionStringBuilder(KustoIngestUri).WithAadApplicationKeyAuthentication(clientId, key, tenant);
-
-            using (var kustoIngestClient = KustoIngestFactory.CreateQueuedIngestClient(connectionBuilder))
-            using (var memoryStream = new MemoryStream())
-            using (var streamWriter = new StreamWriter(memoryStream))
-            {
-                streamWriter.Write(text);
-                streamWriter.Flush();
-                memoryStream.Seek(0, SeekOrigin.Begin);
-
-                // Post ingestion message
-                kustoIngestClient.IngestFromStream(memoryStream, IngestionProperties);
-            }
+            LogPayloadQueue.Enqueue(text);
         }
 
         private static List<ColumnSchema> GetDefaultColumns()
@@ -111,6 +83,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
                 new ColumnSchema("FluentdIngestTimestamp", "System.DateTime"),
                 new ColumnSchema("PreciseTimeStamp", "System.DateTime"),
             };
+        }
+
+        private void ProcessLogs()
+        {
+            var task = ControlPlaneAzureResourceAccessor.GetApplicationKeyAndSecretsAsync();
+            (string clientId, string key, string tenant) = task.GetAwaiter().GetResult();
+
+            Initialize(clientId, key, tenant);
+            var connectionBuilder = new KustoConnectionStringBuilder(KustoIngestUri).WithAadApplicationKeyAuthentication(clientId, key, tenant);
+
+            using (var kustoIngestClient = KustoIngestFactory.CreateQueuedIngestClient(connectionBuilder))
+            {
+                while (true)
+                {
+                    var itemDequeued = LogPayloadQueue.TryDequeue(out string text);
+                    if (itemDequeued)
+                    {
+                        var (updateNeeded, payloadItemKeys) = IsColumnUpdateNeeded(text);
+                        if (updateNeeded)
+                        {
+                            UpdateColumnMapping(clientId, key, tenant, payloadItemKeys);
+                        }
+
+                        using (var memoryStream = new MemoryStream())
+                        using (var streamWriter = new StreamWriter(memoryStream))
+                        {
+                            streamWriter.Write(text);
+                            streamWriter.Flush();
+                            memoryStream.Seek(0, SeekOrigin.Begin);
+
+                            // Post ingestion message
+                            kustoIngestClient.IngestFromStream(memoryStream, IngestionProperties);
+                        }
+                    }
+                    else
+                    {
+                        Task.Delay(500).Wait();
+                    }
+                }
+            }
         }
 
         private (bool, string[]) IsColumnUpdateNeeded(string text)
