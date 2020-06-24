@@ -1,3 +1,9 @@
 {
-    "omnisharp.defaultLaunchSolution": "${workspaceFolder}/src/Ide/CloudEnvironmentsServices.sln"
+    "omnisharp.defaultLaunchSolution": "${workspaceFolder}/src/Ide/CloudEnvironmentsServices.sln",
+    "terraform.languageServer": {
+        "external": false,
+        "args": [
+            "serve",
+        ],
+    }
 }

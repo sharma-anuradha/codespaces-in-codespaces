@@ -4,10 +4,11 @@
     // List of extensions which should be recommended for users of this workspace.
     "recommendations": [
         "hashicorp.terraform",
-        "ms-vscode.csharp",
+        "ms-dotnettools.csharp",
         "ms-vscode.azurecli",
         "ms-kubernetes-tools.vscode-kubernetes-tools",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "ms-azuretools.vscode-azureterraform"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
     "unwantedRecommendations": []
