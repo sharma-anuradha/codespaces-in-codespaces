@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [AllowAnonymous]
         [ProducesResponseType(typeof(LocationsResult), StatusCodes.Status200OK)]
         [HttpOperationalScope("get_current")]
-        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public IActionResult GetCurrent(
             [FromServices] IDiagnosticsLogger logger)
         {
@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [HttpOperationalScope("get")]
-        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> GetAsync(
             [FromRoute] string location,
             [FromQuery] string planId,

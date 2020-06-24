@@ -4,9 +4,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -36,7 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public IActionResult Get()
         {
             if (HealthProvider.IsHealthy)

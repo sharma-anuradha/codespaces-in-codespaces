@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(typeof(AgentResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpOperationalScope("get_latest")]
-        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> GetLatestAsync(
             [FromRoute] string family,
             [FromServices]IDiagnosticsLogger logger)

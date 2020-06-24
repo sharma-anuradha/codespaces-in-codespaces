@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -20,7 +19,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
@@ -70,7 +68,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ThrottlePerUserHigh(nameof(HeartBeatController), nameof(ProcessHeartBeatAsync))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNameSpace)]
         public async Task<IActionResult> ProcessHeartBeatAsync([FromBody] HeartBeatBody heartBeat)
         {
             var logger = HttpContext.GetLogger();

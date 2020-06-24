@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants
         /// <summary>
         /// Constant for the codespacesHealth namespace.
         /// </summary>
-        public const string CodespacesHealthNameSpace = "CodespacesHealth";
+        public const string CodespacesHealthNamespace = "CodespacesHealth";
 
         /// <summary>
         /// Constant for the latency of control plane.
