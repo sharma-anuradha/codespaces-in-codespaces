@@ -47,8 +47,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         // This method gets called by the runtime. Use this method to add services to the container.
         public virtual void ConfigureServices(IServiceCollection services)
         {
-            IDiagnosticsLogger logger = new JsonStdoutLogger(new LogValueSet());
-            services.AddSingleton<IDiagnosticsLogger>(logger);
+            services.AddTransient(serviceProvider =>
+            {
+                var loggerFactory = serviceProvider.GetService<IDiagnosticsLoggerFactory>();
+                var logValueSet = serviceProvider.GetService<LogValueSet>();
+                return loggerFactory.New(logValueSet);
+            });
 
             services.AddDistributedMemoryCache();
 
