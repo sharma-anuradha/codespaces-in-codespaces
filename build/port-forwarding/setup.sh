@@ -15,6 +15,9 @@ set -o pipefail
 
 source $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../common/helpers.sh
 
+# Set the subscription for resolving remote state properly
+az account set --sub vsclk-core-dev
+
 user_alias=""
 pfs_tag=""
 pfa_tag=""
@@ -69,15 +72,36 @@ function main () {
         pfa_tag="$(az acr repository show-tags --name vsclkonlinedev --repository port-forwarding-agent --orderby time_desc --query "[?starts_with(@, '1')]|[0]" | sed s/\"//g)"
     fi
 
-
     if [ -z "$portal_tag" ]
     then
         echo "Searching for latest vsclk.portal.website tag"
         portal_tag="$(az acr repository show-tags --name vsclkonlinedev --repository vsclk.portal.website --orderby time_desc --query "[?starts_with(@, '0')]|[0]" | sed s/\"//g)"
     fi
 
+    if [ -f "terraform.tfstate" ]; then
+        execute "mv terraform.tfstate bak.terraform.tfstate"
+    fi
+
     execute "terraform init"
+
+    if terraform workspace list | grep $user_alias > /dev/null; then
+        execute "terraform workspace select $user_alias"
+    else
+        if [ -f "bak.terraform.tfstate" ]; then
+            execute "terraform workspace new -state=bak.terraform.tfstate $user_alias"
+        else
+            execute "terraform workspace new $user_alias"
+        fi
+
+        execute "terraform init"
+    fi
+
     execute "terraform apply -var 'alias=$user_alias' -var 'pfs_tag=$pfs_tag' -var 'pfa_tag=$pfa_tag' -var 'portal_tag=$portal_tag' -auto-approve"
+
+    if [ -f "bak.terraform.tfstate" ]; then
+        execute "mkdir -p $HOME/CEDev"
+        execute "mv bak.terraform.tfstate $HOME/CEDev/$user_alias.terraform.tfstate"
+    fi
 }
 
 main

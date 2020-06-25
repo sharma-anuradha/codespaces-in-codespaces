@@ -30,6 +30,17 @@ variable "subscription" {
   default = "86642df6-843e-4610-a956-fdd497102261"
 }
 
+terraform {
+  backend "azurerm" {
+    # Cannot use variables for backends
+    subscription_id       = "86642df6-843e-4610-a956-fdd497102261"
+    resource_group_name   = "pf-dev-stamp-common"
+    storage_account_name  = "pftsstate"
+    container_name        = "tfstate"
+    key                   = "terraform.tfstate"
+  }
+}
+
 provider "azurerm" {
   version         = "~> 2.14"
   subscription_id = var.subscription

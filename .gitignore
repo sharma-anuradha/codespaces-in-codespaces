@@ -353,6 +353,8 @@ templates/app.secrets.yaml
 
 /build/port-forwarding/.terraform/
 /build/port-forwarding/terraform.tfstate
+/build/port-forwarding/bak.terraform.tfstate
 /build/port-forwarding/terraform.tfstate.backup
 
 dev-stamp.env
+

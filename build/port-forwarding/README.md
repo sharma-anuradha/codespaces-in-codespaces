@@ -4,6 +4,10 @@ Files in this folder take care of developer stamp setup for port forwarding.
 
 tl;dr version
 
+Good way to run this setup is from a [new Codespace](https://online.visualstudio.com/environments/new?repo=https%3A%2F%2Fdevdiv.visualstudio.com%2FDefaultCollection%2FOnlineServices%2F_git%2Fvsclk-core&name=pfs-vsclk-core) (yes, it's a deeplink that will help you create one).
+
+> When done, don't forget to download your `src/Portal/PortalWebsite/Src/dev-stamp.env` file to point your local nginx to the right place.
+
 Prerequisities
 1. Azure CLI - [How to install](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
 1. Terraform CLI - [How to install](https://learn.hashicorp.com/terraform/getting-started/install)
