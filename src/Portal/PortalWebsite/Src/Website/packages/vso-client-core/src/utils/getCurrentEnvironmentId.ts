@@ -54,3 +54,11 @@ export const getCurrentEnvironmentId = () => {
 
     return trimmedId;
 };
+
+export const tryGetCurrentEnvironmentId = () => {
+    try {
+        return getCurrentEnvironmentId();
+    } catch {
+        return undefined;
+    }
+};

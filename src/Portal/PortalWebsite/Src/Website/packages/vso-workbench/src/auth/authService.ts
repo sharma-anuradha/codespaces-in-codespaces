@@ -7,6 +7,8 @@ import {
     debounceInterval,
     timeConstants,
     getCurrentEnvironmentId,
+    tryGetCurrentEnvironmentId,
+    PARTNER_INFO_KEYCHAIN_KEY,
 } from 'vso-client-core';
 
 import {
@@ -34,7 +36,8 @@ export class AuthService {
     }
 
     public getPartnerInfo = async () => {
-        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
+        const codespaceId = tryGetCurrentEnvironmentId() || PARTNER_INFO_KEYCHAIN_KEY;
+        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(codespaceId);
 
         if (!partnerInfo) {
             return null;
@@ -44,7 +47,7 @@ export class AuthService {
     };
 
     public getCachedGithubToken = async (): Promise<string | null> => {
-        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
+        const partnerInfo = await this.getPartnerInfo();
 
         if (!partnerInfo) {
             return null;
@@ -62,7 +65,7 @@ export class AuthService {
     };
 
     public getCachedCodespaceToken = async (): Promise<string | null> => {
-        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
+        const partnerInfo = await this.getPartnerInfo();
 
         if (!partnerInfo) {
             return null;
@@ -76,7 +79,7 @@ export class AuthService {
     };
 
     public getCachedToken = async (): Promise<string | null> => {
-        const partnerInfo = await partnerAuthInfo.getCachedPartnerInfo(getCurrentEnvironmentId());
+        const partnerInfo = await this.getPartnerInfo();
         if (!partnerInfo) {
             throw new AuthenticationError('Cannot get the partner info.');
         }
@@ -103,13 +106,29 @@ export class AuthService {
             throw new FatalPlatformRedirectionError('Cannot get login redirection URL.');
         }
 
-        redirectUrl.searchParams.append('environmentId', getCurrentEnvironmentId());
+        const codespaceId =
+            partnerInfo && 'codespaceId' in partnerInfo
+                ? partnerInfo.codespaceId
+                : tryGetCurrentEnvironmentId();
+
+        if (codespaceId) {
+            /**
+             * For legacy reasons we have to support the old `environmentId` name,
+             * the query param is only used by Saleforce at the moment.
+             */
+            redirectUrl.searchParams.append('environmentId', codespaceId);
+            redirectUrl.searchParams.append('codespaceId', codespaceId);
+        }
+
+        redirectUrl.searchParams.append('url', location.href);
 
         location.href = redirectUrl.toString();
     };
 
     public signOut = async () => {
-        await partnerAuthInfo.removePartnerInfo(getCurrentEnvironmentId());
+        const codespaceId = tryGetCurrentEnvironmentId() || PARTNER_INFO_KEYCHAIN_KEY;
+
+        await partnerAuthInfo.removePartnerInfo(codespaceId);
 
         if (this.keepUserAuthenticated) {
             this.keepUserAuthenticated.stop();

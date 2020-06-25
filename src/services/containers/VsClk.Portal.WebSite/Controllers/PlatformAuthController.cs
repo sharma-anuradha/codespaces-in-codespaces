@@ -177,7 +177,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             [JsonProperty("codespaceId")]
             public string CodespaceId { get; set; }
-            
+
             [JsonProperty("codespaceToken")]
             public string CodespaceToken { get; set; }
 
@@ -196,7 +196,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         [Consumes("application/x-www-form-urlencoded")]
         public IActionResult PlatformAuthentication(
             [FromForm] string partnerInfo,
-            [FromForm] string codespaceToken
+            [FromForm] string codespaceToken,
+            [FromForm] string cascadeToken
         )
         {
             if (string.IsNullOrWhiteSpace(partnerInfo))
@@ -205,7 +206,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             var partnerInfoData = JsonConvert.DeserializeObject<PartnerInfo>(partnerInfo);
-            partnerInfoData.CodespaceToken = codespaceToken;
+            var formCodespacesToken = cascadeToken ?? codespaceToken;
+
+            if (formCodespacesToken != partnerInfoData.CodespaceToken)
+            {
+                return BadRequest("Codespaces token in request body and in the partner info payload do not match.");
+            }
 
             if (string.IsNullOrWhiteSpace(partnerInfoData.ManagementPortalUrl))
             {

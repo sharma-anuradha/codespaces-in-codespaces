@@ -5,7 +5,10 @@ import { localStorageKeychain } from '../keychain/localstorageKeychain';
 import { createTrace } from '../utils/createTrace';
 import { IKeychainKey } from '../interfaces/IKeychainKey';
 import { IPartnerInfo } from '../interfaces/IPartnerInfo';
-import { validatePartnerInfoPostmessage, KNOWN_PARTNERS } from '../postMessageChannel/validatePartnerInfo';
+import {
+    validatePartnerInfoPostmessage,
+    KNOWN_PARTNERS,
+} from '../postMessageChannel/validatePartnerInfo';
 import { PARTNER_INFO_KEYCHAIN_KEY } from '../constants';
 import { VSCodespacesPlatformInfoGeneral } from 'vs-codespaces-authorization';
 
@@ -20,20 +23,20 @@ const validatePartnerInfo = (partnerInfo: IPartnerInfo | VSCodespacesPlatformInf
         if (!info.codespaceToken) {
             throw new Error('No `codespaceToken` set.');
         }
-    
+
         if (!info.managementPortalUrl) {
             throw new Error('No `managementPortalUrl` set.');
         }
-    
+
         if (!info.codespaceId) {
             throw new Error('No `codespaceId` set.');
         }
-    
+
         if (!KNOWN_PARTNERS.includes(info.partnerName)) {
             throw new Error(`Unknown partner "${info.partnerName}".`);
         }
     }
-}
+};
 
 export class AuthService {
     private keys: IKeychainKey[] = [];
@@ -45,10 +48,8 @@ export class AuthService {
     };
 
     public getPartnerInfoToken = (info: IPartnerInfo | VSCodespacesPlatformInfoGeneral) => {
-        const token = 'codespaceToken' in info
-            ? info.codespaceToken
-            : info.token;
-        
+        const token = 'codespaceToken' in info ? info.codespaceToken : info.token;
+
         return token;
     };
 
@@ -65,9 +66,7 @@ export class AuthService {
 
         setKeychainKeys(keys);
 
-        const codespaceId = 'codespaceId' in info
-            ? info.codespaceId
-            : info.environmentId;
+        const codespaceId = 'codespaceId' in info ? info.codespaceId : info.environmentId;
 
         const key = this.getKeychainPartnerInfoKey(codespaceId);
         await localStorageKeychain.set(key, JSON.stringify(info));
@@ -93,7 +92,9 @@ export class AuthService {
         return keys;
     };
 
-    public getCachedPartnerInfo = async (environmentId: string): Promise<IPartnerInfo | VSCodespacesPlatformInfoGeneral | null> => {
+    public getCachedPartnerInfo = async (
+        environmentId: string
+    ): Promise<IPartnerInfo | VSCodespacesPlatformInfoGeneral | null> => {
         if (!this.keys.length) {
             const keys = await this.getKeychainKeys();
             if (!keys) {
@@ -114,12 +115,15 @@ export class AuthService {
         return crossDomainPartnerInfo;
     };
 
-    private async getInfoForKey(key: typeof PARTNER_INFO_KEYCHAIN_KEY): Promise<VSCodespacesPlatformInfoGeneral | null>;
+    private async getInfoForKey(
+        key: typeof PARTNER_INFO_KEYCHAIN_KEY
+    ): Promise<VSCodespacesPlatformInfoGeneral | null>;
     private async getInfoForKey(key: string): Promise<IPartnerInfo | null>;
     private async getInfoForKey(key: any) {
-        const keychainKey = (key === PARTNER_INFO_KEYCHAIN_KEY)
-            ? PARTNER_INFO_KEYCHAIN_KEY
-            : this.getKeychainPartnerInfoKey(key);
+        const keychainKey =
+        key === PARTNER_INFO_KEYCHAIN_KEY
+                ? PARTNER_INFO_KEYCHAIN_KEY
+                : this.getKeychainPartnerInfoKey(key);
 
         const infoString: string | undefined = await localStorageKeychain.get(keychainKey);
 
@@ -135,9 +139,9 @@ export class AuthService {
         } catch (e) {
             trace.error(e.message, e.stack);
         }
-        
+
         return null;
-    };
-};
+    }
+}
 
 export const authService = new AuthService();
