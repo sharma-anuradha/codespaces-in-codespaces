@@ -301,15 +301,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns(new UserIdSet("mock-profile-id"));
             moq.Setup(obj => obj.BearerToken)
                 .Returns("mock-bearer-token");
-            moq.Setup(obj => obj.Profile)
+            moq.Setup(obj => obj.GetProfileAsync())
                 .Returns(() =>
                 {
-                    return new UserProfile.Profile
+                    return Task.FromResult (new UserProfile.Profile
                     {
                         ProviderId = MockUserProviderId,
                         Programs = programs,
                         Email = email
-                    };
+                    });
                 });
             moq.Setup(obj => obj.Identity)
                 .Returns(identity ?? new VsoClaimsIdentity(null, null, null, new ClaimsIdentity()));

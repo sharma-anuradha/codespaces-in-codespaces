@@ -209,14 +209,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Returns(new UserIdSet("mock-profile-id"));
             moq.Setup(obj => obj.BearerToken)
                 .Returns("mock-bearer-token");
-            moq.Setup(obj => obj.Profile)
+            moq.Setup(obj => obj.GetProfileAsync())
                 .Returns(() =>
                 {
-                    return new Profile
+                    return Task.FromResult(new Profile
                     {
                         ProviderId = "mock-provider-id",
                         Programs = programs
-                    };
+                    });
                 });
             moq.Setup(obj => obj.Identity)
                 .Returns(identity);

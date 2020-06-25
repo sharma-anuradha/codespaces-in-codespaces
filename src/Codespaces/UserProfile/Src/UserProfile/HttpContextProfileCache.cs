@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
@@ -25,20 +27,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         private IHttpContextAccessor ContextAccessor { get; }
 
         /// <inheritdoc/>
-        public void SetProfile(Profile profile)
+        public void SetProfile(string profileId, Lazy<Task<Profile>> lazyProfile)
         {
-            Requires.NotNull(profile, nameof(profile));
-            ContextAccessor.HttpContext.Items[BuildKey(profile.Id)] = profile;
+            Requires.NotNull(lazyProfile, nameof(lazyProfile));
+            ContextAccessor.HttpContext.Items[BuildKey(profileId)] = lazyProfile;
         }
 
         /// <inheritdoc/>
-        public Profile GetProfile(string profileId)
+        public async Task<Profile> GetProfileAsync(string profileId)
         {
             var result = default(Profile);
 
             if (!string.IsNullOrEmpty(profileId))
             {
-                result = ContextAccessor.HttpContext.Items[BuildKey(profileId)] as Profile;
+                var lazyProfile = ContextAccessor.HttpContext.Items[BuildKey(profileId)] as Lazy<Task<Profile>>;
+                return await lazyProfile.Value;
             }
 
             return result;

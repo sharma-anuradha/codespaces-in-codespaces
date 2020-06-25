@@ -2,6 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Threading.Tasks;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 {
     /// <summary>
@@ -14,12 +17,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// </summary>
         /// <param name="profileId">The profile id.</param>
         /// <returns>Returns a <see cref="Profile"/> or null.</returns>
-        Profile GetProfile(string profileId);
+        Task<Profile> GetProfileAsync(string profileId);
 
         /// <summary>
         /// Gets a profile.
         /// </summary>
-        /// <param name="profile">The profile object.</param>
-        void SetProfile(Profile profile);
+        /// <param name="profileId">The profile ID.</param>
+        /// <param name="lazyProfile">The lazy profile object.</param>
+        void SetProfile(string profileId, Lazy<Task<Profile>> lazyProfile);
     }
 }

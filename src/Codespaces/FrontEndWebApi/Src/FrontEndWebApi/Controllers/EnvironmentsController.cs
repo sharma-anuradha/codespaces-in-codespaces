@@ -333,7 +333,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var subnetId = planDetails.Properties?.VnetProperties?.SubnetId;
             environment.SubnetResourceId = subnetId;
 
-            var startEnvParams = GetStartCloudEnvironmentParameters();
+            var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
             var planInfo = VsoPlanInfo.TryParse(environment.PlanId);
             var subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
 
@@ -449,7 +449,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var planId = CurrentUserProvider.Identity.AuthorizedPlan;
             var planInfo = VsoPlanInfo.TryParse(planId);
-            var currentUserProfile = CurrentUserProvider?.Profile;
+            var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
             var currentUserIdSet = CurrentUserProvider?.CurrentUserIdSet;
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
 
@@ -525,7 +525,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var createCloudEnvironmentResult = default(CloudEnvironmentServiceResult);
             try
             {
-                var startEnvParams = GetStartCloudEnvironmentParameters();
+                var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
 
                 cloudEnvironment.OwnerId = currentUserIdSet.PreferredUserId;
 
@@ -793,9 +793,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var planInfo = VsoPlanInfo.TryParse(plan);
                 var visibleSkus = new List<ICloudEnvironmentSku>();
 
+                var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
                 foreach (var sku in availableUpdates.AllowedSkus)
                 {
-                    var isVisible = await SkuUtils.IsVisible(sku, planInfo, CurrentUserProvider.Profile);
+                    var isVisible = await SkuUtils.IsVisible(sku, planInfo, currentUserProfile);
                     if (isVisible)
                     {
                         visibleSkus.Add(sku);
@@ -1053,7 +1054,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return true;
         }
 
-        private StartCloudEnvironmentParameters GetStartCloudEnvironmentParameters()
+        private async Task<StartCloudEnvironmentParameters> GetStartCloudEnvironmentParametersAsync()
         {
             var currentStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(CurrentLocationProvider.CurrentLocation);
 
@@ -1069,9 +1070,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var serviceUri = ServiceUriBuilder.GetServiceUri(requestUri, currentStamp);
             var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, currentStamp).ToString();
 
+            var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
             return new StartCloudEnvironmentParameters
             {
-                UserProfile = CurrentUserProvider.Profile,
+                UserProfile = currentUserProfile,
                 FrontEndServiceUri = serviceUri,
                 ConnectionServiceUri = new Uri(FrontEndAppSettings.VSLiveShareApiEndpoint, UriKind.Absolute),
                 CallbackUriFormat = callbackUriFormat,

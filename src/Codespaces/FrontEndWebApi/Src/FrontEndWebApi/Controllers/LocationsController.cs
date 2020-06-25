@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -31,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     /// </summary>
     [ApiController]
     [Route(ServiceConstants.ApiV1Route)]
+    [FriendlyExceptionFilter]
     [LoggingBaseName("locations_controller")]
     [Authorize(AuthenticationSchemes = JwtBearerUtility.UserAuthenticationSchemes)]
     public class LocationsController : ControllerBase
@@ -172,9 +174,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 planInfo = VsoPlanInfo.TryParse(planId);
             }
 
+            var currentUserProfile = await CurrentUserProvider.GetProfileAsync();
             foreach (var sku in skusFilteredByLocation)
             {
-                var isEnabled = await SkuUtils.IsVisible(sku, planInfo, CurrentUserProvider.Profile);
+                var isEnabled = await SkuUtils.IsVisible(sku, planInfo, currentUserProfile);
                 if (isEnabled)
                 {
                     skus.Add(sku);

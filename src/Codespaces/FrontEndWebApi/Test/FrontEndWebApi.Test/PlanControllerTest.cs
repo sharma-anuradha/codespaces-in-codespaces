@@ -105,14 +105,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.BearerToken)
                 .Returns("mock-bearer-token");
             moq
-                .Setup(obj => obj.Profile)
+                .Setup(obj => obj.GetProfileAsync())
                 .Returns(() =>
                 {
-                    return new UserProfile.Profile
+                    return Task.FromResult (new UserProfile.Profile
                     {
                         ProviderId = "mock-provider-id",
                         Programs = programs
-                    };
+                    });
                 });
 
             return moq.Object;

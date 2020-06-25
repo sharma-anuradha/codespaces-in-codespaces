@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
@@ -25,12 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// </summary>
         /// <returns>Vso Claims Identity.</returns>
         VsoClaimsIdentity Identity { get; }
-
-        /// <summary>
-        /// Gets the current users's profile.
-        /// </summary>
-        /// <returns>The <see cref="UserProfile.Profile"/> instance.</returns>
-        Profile Profile { get; }
 
         /// <summary>
         /// Gets the current user canonical user id.
@@ -62,8 +58,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// <summary>
         /// Sets the current user's profile.
         /// </summary>
-        /// <param name="profile">The <see cref="UserProfile.Profile"/> instance.</param>
-        void SetProfile(Profile profile);
+        /// <param name="lazyProfile">The <see cref="UserProfile.Profile"/> instance.</param>
+        /// <param name="profileId">The profile ID.</param>
+        /// <param name="profileProviderId">The profile provider ID.</param>
+        void SetProfile(Lazy<Task<Profile>> lazyProfile, string profileId, string profileProviderId);
+
+        /// <summary>
+        /// Gets the current users's profile.
+        /// </summary>
+        /// <returns>The <see cref="UserProfile.Profile"/> instance.</returns>
+        Task<Profile> GetProfileAsync();
 
         /// <summary>
         /// Set the user  id values.

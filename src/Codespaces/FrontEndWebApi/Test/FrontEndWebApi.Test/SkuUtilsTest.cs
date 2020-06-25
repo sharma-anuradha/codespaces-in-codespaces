@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 1);
             var planId = "/subscriptions/8def34ce-053c-43ba-8501-37599fb7f010/resourceGroups/cloudEnvironments/providers/Microsoft.VSOnline/plans/samanoha-dev-stamp-plan";
             var planInfo = VsoPlanInfo.TryParse(planId);
-            var profile = userProvider.Profile;
+            var profile = await userProvider.GetProfileAsync();
 
             // with no Sku info.
             var actionResult = await skuUtils.IsVisible(null, planInfo, profile);

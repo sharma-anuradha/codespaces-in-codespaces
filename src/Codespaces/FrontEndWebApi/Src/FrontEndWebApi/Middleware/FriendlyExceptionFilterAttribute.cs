@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
@@ -77,6 +78,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
 
                 case UnauthorizedAccessException _:
                     context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                    break;
+
+                case IdentityValidationException _:
+                    context.Result = new StatusCodeResult(StatusCodes.Status401Unauthorized);
                     break;
             }
         }

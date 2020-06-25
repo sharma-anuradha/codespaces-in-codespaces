@@ -96,30 +96,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var vsoClaimsIdentity = new VsoClaimsIdentity(identity);
             var newClaimsPrincipal = new ClaimsPrincipal(vsoClaimsIdentity);
 
-            // Change the current user
-            // CurrentUserProvider.SetPrincipal(vsoClaimsPrincipal);
-
-            // Handle the Live Share profile. We always do this for now.
-            // In the future, we can eliminate calls to profile during authentication,
-            // after we no longer use profile id or provider id, but only canonical user id.
-            var profile = await GetProfileAsync(httpContext, jwtToken, logger);
-            CurrentUserProvider.SetProfile(profile);
+            // Live Share profile is lazy loaded. We only fetch it if we need it.
+            var lazyProfile = GetProfile(httpContext, jwtToken, logger);
 
             // Get the mapping between canonical user id and profile id and save it for the current user context.
-            var map = await GetUserIdentityMap(identity, profile, logger);
+            var map = await GetUserIdentityMapAsync(identity, lazyProfile, logger);
             CurrentUserProvider.SetUserIds(map.Id, new UserIdSet(
                 map.CanonicalUserId, map.ProfileId, map.ProfileProviderId, map.LinkedUserIds));
+
+            // Live Share profile is lazy loaded. We only fetch it if we need it.
+            CurrentUserProvider.SetProfile(lazyProfile, map.ProfileId, map.ProfileProviderId);
 
             // Always set the current user id to the cannoncal user id if we have one.
             var currentUserId = map.CanonicalUserId ?? map.ProfileId;
             httpContext.SetCurrentUserId(currentUserId);
 
-            DebugWriteIdentityInfo(identity);
-
+            await DebugWriteIdentityInfoAsync(identity);
             return newClaimsPrincipal;
         }
 
-        private async Task<IIdentityMapEntity> GetUserIdentityMap(ClaimsIdentity identity, Profile profile, IDiagnosticsLogger logger)
+        private async Task<IIdentityMapEntity> GetUserIdentityMapAsync(ClaimsIdentity identity, Lazy<Task<Profile>> lazyProfile, IDiagnosticsLogger logger)
         {
             var useCanonicalUserId = identity.SupportsCanonicalUserId();
             var isMsa = identity.IsMsaIdentity();
@@ -137,6 +133,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 var updateCanonicalUserId = default(string);
                 var updateProfileId = default(string);
                 var updateProfileProviderId = default(string);
+
+                Profile profile = null;
+                if (useProfile && (map.ProfileId == null || map.ProfileProviderId == null))
+                {
+                    profile = await lazyProfile.Value;
+                }
 
                 // The profile id values are backwards compatible when we're not in "canonical" mode.
                 // Live Share may not return the same profile for old/compatible and new audience tokens.
@@ -162,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             return map;
         }
 
-        private async Task<Profile> GetProfileAsync(HttpContext httpContext, JwtSecurityToken jwtToken, IDiagnosticsLogger logger)
+        private Lazy<Task<Profile>> GetProfile(HttpContext httpContext, JwtSecurityToken jwtToken, IDiagnosticsLogger logger)
         {
             Profile Fail(string message)
             {
@@ -171,40 +173,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 throw new IdentityValidationException(message);
             }
 
-            // JWT Bearer provides the token, Cookie does not.
-            // The bearer token must be set in order to read the user profile.
-            // Note that this bearer token is encrypted and Live Share must be able to decrypt it.
-            if (jwtToken != null)
+            return new Lazy<Task<Profile>>(async () =>
             {
-                var bearerToken = jwtToken.RawData;
-
-                if (string.IsNullOrEmpty(bearerToken))
+                // JWT Bearer provides the token, Cookie does not.
+                // The bearer token must be set in order to read the user profile.
+                // Note that this bearer token is encrypted and Live Share must be able to decrypt it.
+                if (jwtToken != null)
                 {
-                    return Fail("No JWT bearer token");
+                    var bearerToken = jwtToken.RawData;
+
+                    if (string.IsNullOrEmpty(bearerToken))
+                    {
+                        return Fail("No JWT bearer token");
+                    }
+
+                    CurrentUserProvider.SetBearerToken(jwtToken.RawData);
                 }
 
-                CurrentUserProvider.SetBearerToken(jwtToken.RawData);
-            }
+                Profile profile;
+                try
+                {
+                    profile = await ProfileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
+                }
+                catch (Exception ex)
+                {
+                    return Fail($"Could not get Live Share profile: {ex.Message}");
+                }
 
-            Profile profile;
-            try
-            {
-                profile = await ProfileRepository.GetCurrentUserProfileAsync(logger.NewChildLogger());
-            }
-            catch (Exception ex)
-            {
-                return Fail($"Could not get Live Share profile: {ex.Message}");
-            }
+                if (profile is null)
+                {
+                    return Fail("Could not get Live Share profile.");
+                }
 
-            if (profile is null)
-            {
-                return Fail("Could not get Live Share profile.");
-            }
-
-            return profile;
+                return profile;
+            });
         }
 
-        private void DebugWriteIdentityInfo(ClaimsIdentity identity)
+        private async Task DebugWriteIdentityInfoAsync(ClaimsIdentity identity)
         {
             // Emit token diagnostics in Development mode.
             // This emits PII to k8s logs, but these will not get picked up by the fluentd
@@ -238,12 +243,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 var httpContext_GetCurrentUserEmail = httpContext.GetCurrentUserEmail();
                 var httpContext_GetCurrentUserDisplayName = httpContext.GetCurrentUserDisplayName();
                 var httpContext_GetCurrentUserPreferredUserName = httpContext.GetCurrentUserPreferredUserName();
-                var currentUserProvider = CurrentUserProvider;
-                var currentUserProvider_GetProfile_Id = currentUserProvider.Profile?.Id;
-                var currentUserProvider_GetProfile_ProviderId = currentUserProvider.Profile?.ProviderId;
-                var currentUserProvider_GetProfile_Name = currentUserProvider.Profile?.Name;
-                var currentUserProvider_GetProfile_Email = currentUserProvider.Profile?.Email;
-                var currentUserProvider_GetProfile_UserName = currentUserProvider.Profile?.UserName;
+                var profile = await CurrentUserProvider.GetProfileAsync();
+                var currentUserProvider_GetProfile_Id = profile?.Id;
+                var currentUserProvider_GetProfile_ProviderId = profile?.ProviderId;
+                var currentUserProvider_GetProfile_Name = profile?.Name;
+                var currentUserProvider_GetProfile_Email = profile?.Email;
+                var currentUserProvider_GetProfile_UserName = profile?.UserName;
                 var identity_GetClientAppId = identity.GetClientAppid();
                 var identity_GetAltSecId = identity.GetAltSecId();
                 var identity_GetPuid = identity.GetPuid();

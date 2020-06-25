@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -246,6 +247,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         public class MockCurrentUserProvider : ICurrentUserProvider
         {
+            private Profile Profile;
+
             public string BearerToken { get; set; }
 
             public string CanonicalUserId { get; set; }
@@ -253,8 +256,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             public UserIdSet CurrentUserIdSet { get; set; }
 
             public string IdMapKey { get; set; }
-
-            public Profile Profile { get; set; }
 
             public ClaimsPrincipal Principal { get; set; }
 
@@ -273,9 +274,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Principal = principal;
             }
 
-            public void SetProfile(Profile profile)
+            public Task<Profile> GetProfileAsync()
             {
-                Profile = profile;
+                return Task.FromResult(Profile);
+            }
+
+            public void SetProfile(Lazy<Task<Profile>> profile, string profileId, string profileProviderId)
+            {
+                Profile = profile.Value.Result;
             }
 
             public void SetUserIds(string idMapKey, UserIdSet userIdSet)

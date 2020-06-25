@@ -4,6 +4,7 @@
 
 using System;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -55,16 +56,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <inheritdoc/>
-        public Profile Profile
-        {
-            get
-            {
-                var profileId = ContextAccessor?.HttpContext.GetCurrentUserProfileId();
-                return !string.IsNullOrEmpty(profileId) ? ProfileCache.GetProfile(profileId) : null;
-            }
-        }
-
-        /// <inheritdoc/>
         public string CanonicalUserId
         {
             get { return ContextAccessor?.HttpContext?.GetCurrentUserCanonicalUserId(); }
@@ -93,12 +84,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <inheritdoc/>
-        public void SetProfile(Profile profile)
+        public async Task<Profile> GetProfileAsync()
+        {
+            var profileId = ContextAccessor?.HttpContext.GetCurrentUserProfileId();
+
+            if (!string.IsNullOrEmpty(profileId))
+            {
+                return await ProfileCache.GetProfileAsync(profileId);
+            }
+
+            return null;
+        }
+
+        /// <inheritdoc/>
+        public void SetProfile(Lazy<Task<Profile>> profile, string profileId, string profileProviderId)
         {
             Requires.NotNull(profile, nameof(profile));
-            ProfileCache.SetProfile(profile);
-            ContextAccessor.HttpContext.SetCurrentUserProfileId(profile.Id);
-            ContextAccessor.HttpContext.SetCurrentUserProfileProviderId(profile.ProviderId);
+            ProfileCache.SetProfile(profileId, profile);
+            ContextAccessor.HttpContext.SetCurrentUserProfileId(profileId);
+            ContextAccessor.HttpContext.SetCurrentUserProfileProviderId(profileProviderId);
         }
 
         /// <inheritdoc/>
