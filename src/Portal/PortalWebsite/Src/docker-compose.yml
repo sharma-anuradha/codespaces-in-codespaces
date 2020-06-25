@@ -2,7 +2,10 @@ version: '3'
 services:
   dns:
     container_name: portal-local-dns-server
-    build: portal-local-dns
+    build:
+      context: portal-local-dns
+      args:
+        - CONFIGS_DIR
     image: vscs-web-dns
     ports:
       - "53:53/udp"

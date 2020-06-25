@@ -1,6 +1,7 @@
 FROM coredns/coredns:latest
 
+ARG CONFIGS_DIR
 WORKDIR /dns-config
-ADD ./* ./
+ADD ${CONFIGS_DIR:-.}/* ./
 
 ENTRYPOINT [ "/coredns" ]

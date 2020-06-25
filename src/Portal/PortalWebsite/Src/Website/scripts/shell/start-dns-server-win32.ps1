@@ -1,9 +1,12 @@
 $OLD_CONTAINER_NAME="vscs-local-dns-server"
 $CONTAINER_NAME="portal-local-dns-server"
 
+Write-Output ""
+Write-Output "* Querying Docker.."
+
 docker info | out-null
 if (!$?) {
-    Write-Output "** Docker is not running, please start docker deamon first."
+    Write-Output "! Docker is not running, please start docker deamon first."
     exit 1
 }
 
@@ -17,7 +20,13 @@ docker rm $OLD_CONTAINER_NAME 2>&1>$null
 
 Write-Output "* Starting the DNS server docker container.."
 
-docker-compose --env-file ../dev-local.env up -d --build
+# WSL has a different IP
+$isWsl = $PSCommandPath.StartsWith('\\wsl$\')
+if ($isWsl) {
+    wsl -e ./wsl2-docker-compose.sh
+} else {
+    docker-compose --env-file ../dev-local.env up -d --build
+}
 
 if (!$?) {
     Write-Output "! Could not start the DNS server docker container, terminating.."
