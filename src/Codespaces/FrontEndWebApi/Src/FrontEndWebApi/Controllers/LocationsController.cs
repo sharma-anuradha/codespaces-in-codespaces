@@ -208,7 +208,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             // Applying the default plan SKU. The default SKU of the plan will be the first one in the
             // list so that clients could show it as default.
-            var defaultPlanSku = vsoPlan?.Properties?.DefaultEnvironmentSku;
+            var defaultPlanSku = vsoPlan?.Properties?.DefaultCodespaceSku ?? vsoPlan?.Properties?.DefaultEnvironmentSku;
             if (!string.IsNullOrEmpty(defaultPlanSku))
             {
                 var defaultSku = orderedSkus.FirstOrDefault(sku => sku.SkuName == defaultPlanSku);

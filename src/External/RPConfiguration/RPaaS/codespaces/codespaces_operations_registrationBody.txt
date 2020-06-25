@@ -1,0 +1,41 @@
+{
+    "Contents": [
+        {
+            "Name": "Microsoft.Codespaces/plans/read",
+            "Display": {
+                "Provider": "Microsoft.Codespaces",
+                "Resource": "plans",
+                "Operation": "Gets/Lists plan resources",
+                "Description": "Reads plans"
+            }
+        },
+        {
+            "Name": "Microsoft.Codespaces/plans/write",
+            "Display": {
+                "Provider": "Microsoft.Codespaces",
+                "Resource": "plans",
+                "Operation": "Creates/updates plan resources",
+                "Description": "Writes plans"
+            }
+        },
+        {
+            "Name": "Microsoft.Codespaces/plans/delete",
+            "Display": {
+                "Provider": "Microsoft.Codespaces",
+                "Resource": "plans",
+                "Operation": "Deletes plan resource",
+                "Description": "Deletes plans"
+            }
+        },
+        {
+            "Name": "Microsoft.Codespaces/RegisteredSubscriptions/read",
+            "IsDataAction": false,
+            "Display": {
+                "Provider": "Microsoft.Codespaces",
+                "Resource": "RegisteredSubscriptions",
+                "Operation": "Gets/Lists registered subscriptions",
+                "Description": "Reads registered subscriptions"
+            }
+        }
+    ]
+}

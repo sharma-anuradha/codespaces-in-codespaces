@@ -219,6 +219,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var controller = CreateTestController(planManager: planManager);
 
             var result = await controller.PlanGetAsync(
+                plan.Plan.Subscription, plan.Plan.ResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, plan.Plan.Name, ToPlanResource(plan));
+
+            var jsonResult = result as JsonResult;
+            Assert.NotNull(jsonResult);
+
+            var resultResource = jsonResult.Value as PlanResource;
+            Assert.NotNull(resultResource);
+            Assert.Equal(plan.Plan.ResourceId, resultResource.Id);
+        }
+
+        [Fact]
+        public async Task VerifyCodespacesPlanGetAsync()
+        {
+            var plan = MockCodespacePlan();
+            var planManager = MockPlanManager(new List<VsoPlan> { plan });
+
+            var controller = CreateTestController(planManager: planManager);
+
+            var result = await controller.PlanGetAsync(
                 plan.Plan.Subscription, plan.Plan.ResourceGroup, RPNamespace, PlanResourceTypeName, plan.Plan.Name, ToPlanResource(plan));
 
             var jsonResult = result as JsonResult;
@@ -439,6 +458,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     ResourceGroup = resourceGroup,
                     Name = name,
                     Location = location,
+                },
+                UserId = userId,
+            };
+        }
+
+        private VsoPlan MockCodespacePlan
+        (
+            string subscription = MockSubscriptionId,
+            string resourceGroup = MockResourceGroup,
+            string name = MockPlanName,
+            string userId = null,
+            AzureLocation location = AzureLocation.WestUs2
+        )
+        {
+            return new VsoPlan
+            {
+                Plan = new VsoPlanInfo
+                {
+                    Subscription = subscription,
+                    ResourceGroup = resourceGroup,
+                    Name = name,
+                    Location = location,
+                    ProviderNamespace = "Microsoft.Codespaces"
                 },
                 UserId = userId,
             };

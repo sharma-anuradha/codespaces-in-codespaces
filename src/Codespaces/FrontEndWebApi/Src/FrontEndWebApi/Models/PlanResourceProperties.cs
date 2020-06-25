@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string DefaultEnvironmentSku { get; set; }
 
         /// <summary>
+        /// Gets or sets the codespace sku name under the plan.
+        /// </summary>
+        public string DefaultCodespaceSku { get; set; }
+
+        /// <summary>
         /// Gets or sets the vnet properties to create environments in this plan.
         /// </summary>
         public VnetProperties VnetProperties { get; set; }

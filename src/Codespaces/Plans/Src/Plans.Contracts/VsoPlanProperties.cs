@@ -25,6 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public string DefaultEnvironmentSku { get; set; }
 
         /// <summary>
+        /// Gets or sets the default sku name to use for creating cloudspaces in this plan.
+        /// </summary>
+        public string DefaultCodespaceSku { get; set; }
+
+        /// <summary>
         /// Gets or sets the vnet properties to create environments in this plan.
         /// </summary>
         public VsoVnetProperties VnetProperties { get; set; }
@@ -42,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             return other != null &&
                 other.DefaultAutoSuspendDelayMinutes == DefaultAutoSuspendDelayMinutes &&
                 other.DefaultEnvironmentSku == DefaultEnvironmentSku &&
+                other.DefaultCodespaceSku == DefaultCodespaceSku &&
                 other.VnetProperties == VnetProperties;
         }
 
@@ -54,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <returns>Hash code derived from each of the plan settings properties.</returns>
         public override int GetHashCode() => DefaultAutoSuspendDelayMinutes.GetHashCode() ^
                                                 (DefaultEnvironmentSku?.GetHashCode() ?? 0) ^
+                                                (DefaultCodespaceSku?.GetHashCode() ?? 0) ^
                                                 (VnetProperties?.GetHashCode() ?? 0);
     }
 }

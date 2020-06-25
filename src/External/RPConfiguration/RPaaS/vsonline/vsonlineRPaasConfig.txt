@@ -1,0 +1,28 @@
+{
+"properties": 
+{
+"providerType":"Internal", 
+"management":{
+"manifestOwners": [
+         "VSEngSaaS-PlatformServiceAdministrator"
+        ],
+"incidentRoutingService": "Azure Resource Manager", 
+  "incidentRoutingTeam": "Azure Resource Manager", 
+  "incidentContactEmail": "VSAnywhereDevTeam@microsoft.com" 
+},
+"ProviderAuthentication": {
+            "AllowedAudiences": [ "https://management.core.windows.net/" ]
+        },
+"enableTenantLinkedNotification": false, "regionality": "global",
+"capabilities": [
+        {
+            "quotaId": "CSP_2015-05-01",
+            "effect": "Allow"
+        },
+        {
+            "quotaId": "CSP_MG_2017-12-01",
+            "effect": "Allow"
+        }
+    ]},
+"location": "WestUs2","tags": 
+{"department": "DevDiv"}}

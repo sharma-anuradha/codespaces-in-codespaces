@@ -1,0 +1,69 @@
+{
+  "properties": {
+    "name": "operations",
+    "routingType": "ProxyOnly, Tenant",
+    "allowedUnauthorizedActions": [
+      "Microsoft.VSOnline/operations/read"
+    ],
+    "regionality": "Global",
+    "endpoints": [
+      {
+        "apiVersions": [
+          "2020-06-16"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2020-06-16-alpha"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2020-06-16-beta"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      },
+      {
+        "apiVersions": [
+          "2020-06-16-privatepreview"
+        ],
+        "locations": [
+          ""
+        ],
+        "extensions": [],
+        "timeout": "PT2M"
+      }           
+    ],
+    "swaggerSpecifications": [
+      {
+        "apiVersions": [
+          "2020-06-16",
+          "2020-06-16-alpha",
+          "2020-06-16-beta",
+          "2020-06-16-privatepreview"
+        ],
+        "swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSDev/specification/codespaces/resource-manager/Microsoft.Codespaces/"
+      }
+    ]
+  },
+  "name": "operations",
+  "provisioningState": "NotSpecified",
+  "location": "WestUs2",
+  "tags": {
+    "department": "DevDiv"
+  }
+}

@@ -321,7 +321,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         }
 
         [Fact]
-        public async Task PlanProperties_PatchTest()
+        public async Task PlanProperties_PatchTest_EnvSkuProp()
         {
             var subscription = new Subscription();
             var createResult = await planManager.CreateAsync(new VsoPlan
@@ -329,7 +329,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                 Plan = new VsoPlanInfo
                 {
                     Location = AzureLocation.WestUs2,
-                    Name = nameof(PlanProperties_PatchTest),
+                    Name = nameof(PlanProperties_PatchTest_EnvSkuProp),
                     ResourceGroup = "resourceGroup",
                     Subscription = "subscription",
                 }
@@ -372,6 +372,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         }
 
         [Fact]
+        public async Task PlanProperties_PatchTest_CodeSkuProp()
+        {
+            var subscription = new Subscription();
+            var createResult = await planManager.CreateAsync(new VsoPlan
+            {
+                Plan = new VsoPlanInfo
+                {
+                    Location = AzureLocation.WestUs2,
+                    Name = nameof(PlanProperties_PatchTest_CodeSkuProp),
+                    ResourceGroup = "resourceGroup",
+                    Subscription = "subscription",
+                }
+            }, subscription, logger);
+
+            Assert.NotNull(createResult.VsoPlan);
+
+            var vsoPlan = createResult.VsoPlan;
+
+            // Null properties are valid.
+            Assert.True(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            var planProperties = new VsoPlanProperties
+            {
+                DefaultAutoSuspendDelayMinutes = 15,
+                DefaultCodespaceSku = "unknownsku"
+            };
+
+            // Unknown sku names are invalid.
+            vsoPlan.Properties = planProperties;
+            Assert.False(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            // Known sku names are valid.
+            vsoPlan.Properties.DefaultCodespaceSku = premiumLinuxSkuName;
+            Assert.True(await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger));
+
+            Assert.True(await planManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger));
+
+            // Update succeeds.
+            var updateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+            Assert.NotNull(updateResult.VsoPlan);
+            Assert.Equal(planProperties, updateResult.VsoPlan.Properties);
+
+            // Updating a deleted plan fails.
+            vsoPlan = await planManager.DeleteAsync(vsoPlan, logger);
+            Assert.True(vsoPlan.IsDeleted);
+            var deletedUpdateResult = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+            Assert.Null(deletedUpdateResult.VsoPlan);
+            Assert.Equal(ErrorCodes.PlanDoesNotExist, deletedUpdateResult.ErrorCode);
+        }
+        [Fact]
         public async Task PlanProperties_PatchVnetPropertyTest()
         {
             var subscription = new Subscription();
@@ -381,7 +431,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
                 Plan = new VsoPlanInfo
                 {
                     Location = AzureLocation.WestUs2,
-                    Name = nameof(PlanProperties_PatchTest),
+                    Name = nameof(PlanProperties_PatchVnetPropertyTest),
                     ResourceGroup = "resourceGroup",
                     Subscription = "subscription",
                 }
@@ -394,7 +444,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             var planProperties = new VsoPlanProperties
             {
                 DefaultAutoSuspendDelayMinutes = 15,
-                DefaultEnvironmentSku = premiumLinuxSkuName,
+                DefaultCodespaceSku = premiumLinuxSkuName,
             };
 
             // Null properties are valid.

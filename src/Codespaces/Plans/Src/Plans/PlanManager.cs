@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Sources;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -335,9 +336,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return true;
             }
 
-            if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
+            var defaultSku = vsoPlan.Properties.DefaultCodespaceSku ?? vsoPlan.Properties.DefaultEnvironmentSku;
+            if (!string.IsNullOrWhiteSpace(defaultSku))
             {
-                if (!skuCatalog.CloudEnvironmentSkus.TryGetValue(vsoPlan.Properties.DefaultEnvironmentSku, out var environmentSku))
+                if (!skuCatalog.CloudEnvironmentSkus.TryGetValue(defaultSku, out var environmentSku))
                 {
                     logger.LogErrorWithDetail("plan_property_validate_error", "Environment sku not supported.");
                     return false;
@@ -400,9 +402,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                     currentVsoPlan.Properties = new VsoPlanProperties();
                 }
 
-                if (!string.IsNullOrWhiteSpace(vsoPlan.Properties.DefaultEnvironmentSku))
+                var defaultSku = vsoPlan.Properties.DefaultCodespaceSku ?? vsoPlan.Properties.DefaultEnvironmentSku;
+                if (!string.IsNullOrWhiteSpace(defaultSku))
                 {
-                    currentVsoPlan.Properties.DefaultEnvironmentSku = vsoPlan.Properties.DefaultEnvironmentSku;
+                    currentVsoPlan.Properties.DefaultCodespaceSku = defaultSku;
                 }
 
                 if (vsoPlan.Properties.DefaultAutoSuspendDelayMinutes.HasValue &&

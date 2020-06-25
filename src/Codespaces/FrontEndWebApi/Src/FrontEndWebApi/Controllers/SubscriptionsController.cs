@@ -158,6 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
+                        ProviderNamespace = providerNamespace,
                     };
 
                     var vsoPlan = mapper.Map<VsoPlan>(resource);
@@ -229,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         },
                         Properties = new VsoPlanProperties
                         {
-                            DefaultEnvironmentSku = resource.Properties?.DefaultEnvironmentSku,
+                            DefaultCodespaceSku = resource.Properties?.DefaultCodespaceSku ?? resource.Properties?.DefaultEnvironmentSku,
                             VnetProperties = resource.Properties.VnetProperties.BuildVsoVnetProperty(),
                         },
                         Partner = partner,
@@ -338,6 +339,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
+                        ProviderNamespace = providerNamespace,
                     };
 
                     logger.AddVsoPlanInfo(planInfo);
@@ -523,6 +525,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
+                        ProviderNamespace = providerNamespace,
                     };
 
                     var plan = await planManager.GetAsync(planInfo, logger);
@@ -579,6 +582,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
+                        ProviderNamespace = providerNamespace,
                     };
 
                     var vsoPlan = mapper.Map<VsoPlan>(resource);
@@ -649,6 +653,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         Name = resourceName,
                         ResourceGroup = resourceGroup,
                         Subscription = subscriptionId,
+                        ProviderNamespace = providerNamespace,
                     };
 
                     var vsoPlan = mapper.Map<VsoPlan>(resource);
@@ -692,6 +697,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllEnvironments")]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllCodespaces")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> PlanReadEnvironmentsAsync(
             string subscriptionId,
@@ -753,6 +759,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeEnvironments")]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeCodespaces")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> PlanWriteEnvironmentsAsync(
             string subscriptionId,
@@ -814,6 +821,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteEnvironmentsAsync))]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllEnvironments")]
+        [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllCodespaces")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneRpLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> PlanDeleteEnvironmentsAsync(
             string subscriptionId,
