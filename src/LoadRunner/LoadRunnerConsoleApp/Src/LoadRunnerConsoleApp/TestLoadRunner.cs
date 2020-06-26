@@ -1,4 +1,4 @@
-﻿// <copyright file="TestRunner.cs" company="Microsoft">
+﻿// <copyright file="TestLoadRunner.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -21,17 +21,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
     /// <summary>
     /// Core test runner.
     /// </summary>
-    public class TestRunner
+    public class TestLoadRunner
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TestRunner"/> class.
+        /// Initializes a new instance of the <see cref="TestLoadRunner"/> class.
         /// </summary>
         /// <param name="appSettings">Target app settings.</param>
         /// <param name="environementsRepository">Target environements repository.</param>
         /// <param name="resourcePoolSettingsRepository">Target resource pool settings repository.</param>
         /// <param name="resourcePoolStateSnapshotRepository">Target resource pool state snapshot repository.</param>
         /// <param name="taskHelper">Target task helper.</param>
-        public TestRunner(
+        public TestLoadRunner(
             AppSettings appSettings,
             IEnvironementsRepository environementsRepository,
             IResourcePoolSettingsRepository resourcePoolSettingsRepository,

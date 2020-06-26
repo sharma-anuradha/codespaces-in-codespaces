@@ -30,12 +30,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public CosmosDbResourcePoolStateSnapshotRepository(
-                IOptions<DocumentDbCollectionOptions> options,
+                IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
-            : base(PromoteToOptionSnapshot(options.Value), clientProvider, healthProvider, loggerFactory, defaultLogValues)
+            : base(options, clientProvider, healthProvider, loggerFactory, defaultLogValues)
         {
         }
 

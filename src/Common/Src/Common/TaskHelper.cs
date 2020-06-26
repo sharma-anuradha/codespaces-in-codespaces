@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -201,7 +202,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // When debugging, just run one at a time
             concurrentLimit = Math.Max(concurrentLimit, 1);
-            concurrentLimit = Debugger.IsAttached ? 1 : concurrentLimit;
+
+            // concurrentLimit = Debugger.IsAttached ? 1 : concurrentLimit;
 
             // Log the main task
             return logger.OperationScopeAsync(
@@ -375,84 +377,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
            int concurrentLimit,
            int successDelay)
         {
-            var semaphoreThrottleWait = new Stopwatch();
-            var semaphore = new SemaphoreSlim(concurrentLimit, concurrentLimit);
-            var results = new List<TaskCompletionSource<Exception>>();
+            var semaphore = new SemaphoreSlim(concurrentLimit);
+            var completion = new TaskCompletionSource<object>();
+            var exceptions = new ConcurrentBag<Exception>();
+            var completed = false;
             var index = 0;
 
-            // Run through each item in the list
             foreach (var item in list)
             {
-                // Task tracking
-                var localCompletion = new TaskCompletionSource<Exception>();
-                results.Add(localCompletion);
+                // Pause till we have a slot
+                var semaphoreWait = Stopwatch.StartNew();
+                await semaphore.WaitAsync();
+                semaphoreWait.Stop();
 
-                // Spawn work to take place in the background, this allows for the
-                // concurrent worker limit to be achived, otherwise we would only
-                // be running one at time.
-                RunBackground(
+                // Run action
+                _ = logger.OperationScopeAsync(
                     "task_helper_run_background_enumerable_item",
-                    async (itemLogger) =>
+                    (childLogger) =>
                     {
-                        itemLogger.FluentAddBaseValue("TaskItemRunId", Guid.NewGuid())
-                            .FluentAddValue("IterateItemIndex", index)
+                        childLogger.FluentAddBaseValue("TaskItemRunId", Guid.NewGuid())
+                            .FluentAddValue("IterateItemIndex", index++)
                             .FluentAddValue("LockConcurrentLimit", concurrentLimit)
-                            .FluentAddValue("LockConcurrentSemaphoreCount", semaphore.CurrentCount);
+                            .FluentAddValue("LockConcurrentSemaphoreCount", semaphore.CurrentCount)
+                            .FluentAddDuration("LockConcurrentSemaphore", semaphoreWait);
 
-                        // Wait for worker space to free up
-                        var semaphoreWait = Stopwatch.StartNew();
-                        await semaphore.WaitAsync();
-                        itemLogger.FluentAddDuration("LockConcurrentSemaphore", semaphoreWait);
+                        return RunEnumerableItemCoreAsync(
+                            name, item, callback, childLogger, obtainLease, successDelay);
+                    })
+                    .ContinueWith(t =>
+                    {
+                        // Release reserved slot
+                        semaphore.Release();
 
-                        try
+                        // Store exceptions
+                        if (t.Exception != null)
                         {
-                            // Core task execution
-                            await RunEnumerableItemCoreAsync(
-                                name, item, callback, itemLogger, obtainLease, successDelay);
+                            exceptions.Add(t.Exception);
 
-                            // Track completion
-                            localCompletion.SetResult(null);
+                            errItemCallback?.Invoke(item, t.Exception, logger.NewChildLogger());
                         }
-                        catch (Exception e)
+
+                        // Release completion
+                        if (Volatile.Read(ref completed) && semaphore.CurrentCount == concurrentLimit)
                         {
-                            // Track completion
-                            localCompletion.SetResult(e);
-
-                            throw;
+                            completion.SetResult(null);
                         }
-                        finally
-                        {
-                            // Release worker space
-                            semaphore.Release();
-                        }
-                    },
-                    logger);
-
-                // Throttle the amount of tasks being generated
-                if (index % 10 == 0)
-                {
-                    semaphoreThrottleWait.Start();
-                    await Task.WhenAll(results.Select(x => x.Task));
-                    semaphoreThrottleWait.Stop();
-
-                    logger.FluentAddDuration("IterateSemaphoreThrottleWait", semaphoreThrottleWait);
-                }
-
-                index++;
+                    });
             }
 
-            // Exception handling
-            var exceptions = (await Task.WhenAll(results.Select(x => x.Task)))
-                .Where(x => x != null);
+            // Trigger release
+            Volatile.Write(ref completed, true);
+            await completion.Task;
 
             logger.FluentAddValue("IterateItemCount", index)
-                .FluentAddValue("IterateExceptionCount", exceptions.Count())
-                .FluentAddDuration("IterateSemaphoreThrottleWait", semaphoreThrottleWait);
+                .FluentAddValue("IterateExceptionCount", exceptions.Count());
 
-            // Throw aggregate exception
-            if (exceptions.Any())
+            // Throw if we had exceptions
+            if (exceptions.Count > 0)
             {
-                throw new AggregateException("Run Background Enumerable items threw excpetions", exceptions);
+                throw new AggregateException(exceptions);
             }
         }
 

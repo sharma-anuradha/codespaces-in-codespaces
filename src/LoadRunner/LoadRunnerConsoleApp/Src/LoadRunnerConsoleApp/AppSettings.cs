@@ -55,6 +55,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
         public bool DeveloperPersonalStamp { get; set; }
 
         /// <summary>
+        /// Gets or sets the unique identifier for developer for developer stamps.
+        /// </summary>
+        public string DeveloperAlias { get; set; }
+
+        /// <summary>
         /// Gets or sets the auth audience.
         /// </summary>
         public string AuthAudience { get; set; }

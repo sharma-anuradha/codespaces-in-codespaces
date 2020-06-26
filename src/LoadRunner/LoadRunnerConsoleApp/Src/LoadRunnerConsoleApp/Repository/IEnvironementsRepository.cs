@@ -31,6 +31,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         Task DeleteEnvironmentAsync(Guid id, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Get selected environement.
+        /// </summary>
+        /// <param name="id">Target id of environement to delete.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task<CloudEnvironmentResult> GetEnvironmentAsync(Guid id, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Shutdown selected environement.
+        /// </summary>
+        /// <param name="id">Target id of environement to delete.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task<CloudEnvironmentResult> ShutdownEnvironmentAsync(Guid id, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Resume selected environement.
+        /// </summary>
+        /// <param name="id">Target id of environement to delete.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        Task<CloudEnvironmentResult> ResumeEnvironmentAsync(Guid id, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Provisioned target environement.
         /// </summary>
         /// <param name="planId">Target plan id.</param>

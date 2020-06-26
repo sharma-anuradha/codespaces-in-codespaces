@@ -100,14 +100,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
 
             // Send the request
             HttpResponseMessage httpResponseMessage;
+            var resultBody = default(string);
             try
             {
                 httpResponseMessage = await HttpClientProvider.HttpClient.SendAsync(httpRequestMessage);
 
-                await httpResponseMessage.ThrowIfFailedAsync();
-
                 // Get the response body
-                var resultBody = default(string);
                 if (httpResponseMessage.StatusCode == HttpStatusCode.TemporaryRedirect)
                 {
                     // Fetch new location for the redirect
@@ -124,6 +122,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
                     // Fetch  content from request
                     resultBody = await httpResponseMessage.Content.ReadAsStringAsync();
                 }
+
+                await httpResponseMessage.ThrowIfFailedAsync();
 
                 logger?.TryAddDuration(duration);
                 logger?.LogInfo(GetType().FormatLogMessage(nameof(SendRawAsync)));

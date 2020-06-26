@@ -50,21 +50,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         }
 
         /// <inheritdoc/>
+        public async Task<CloudEnvironmentResult> GetEnvironmentAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            var requestUri = HttpContractEnvironements.GetGetEnvironmentUri(id);
+            var result = await SendAsync<string, CloudEnvironmentResult>(
+                HttpContractEnvironements.GetEnvironmentsMethod, requestUri, null, logger.WithValues(new LogValueSet()));
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<CloudEnvironmentResult> ShutdownEnvironmentAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            var requestUri = HttpContractEnvironements.GetShutdownEnvironmentUri(id);
+            var result = await SendAsync<string, CloudEnvironmentResult>(
+                HttpContractEnvironements.ShutdownEnvironmentsMethod, requestUri, null, logger.WithValues(new LogValueSet()));
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<CloudEnvironmentResult> ResumeEnvironmentAsync(Guid id, IDiagnosticsLogger logger)
+        {
+            var requestUri = HttpContractEnvironements.GetResumeEnvironmentUri(id);
+            var result = await SendAsync<string, CloudEnvironmentResult>(
+                HttpContractEnvironements.ResumeEnvironmentsMethod, requestUri, null, logger.WithValues(new LogValueSet()));
+            return result;
+        }
+
+        /// <inheritdoc/>
         public async Task<CloudEnvironmentResult> ProvisionEnvironmentAsync(
             string planId, string environmentName, string gitRepo, string location, string skuName, IDiagnosticsLogger logger)
         {
             var body = new CreateCloudEnvironmentBody()
             {
-                PlanId = planId,
+                Type = "cloudEnvironment",
                 FriendlyName = environmentName,
-                Location = location,
+                PlanId = planId,
                 SkuName = skuName,
                 Seed = new SeedInfoBody
                 {
                     SeedType = "git",
                     SeedMoniker = gitRepo,
                 },
-                Type = "cloudEnvironment",
+                AutoShutdownDelayMinutes = 30,
             };
 
             var requestUri = HttpContractEnvironements.GetCreateEnvironmentUri();

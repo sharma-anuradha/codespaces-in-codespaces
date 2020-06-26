@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
             collection.AddLoggingBaseValues(loggingBaseValues);
 
             // Adding developer personal stamp settings and resource name builder.
-            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(appSettings.DeveloperPersonalStamp);
+            var developerPersonalStampSettings = new DeveloperPersonalStampSettings(appSettings.DeveloperPersonalStamp, appSettings.DeveloperAlias);
             collection.AddSingleton(developerPersonalStampSettings);
             collection.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
@@ -100,13 +100,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp
             collection.AddSingleton<ITaskHelper, TaskHelper>();
 
             // Main test runner types
-            collection.AddSingleton<TestRunner>();
+            collection.AddSingleton<TestLoadRunner>();
+            collection.AddSingleton<TestArchiveRunner>();
 
             // Start running actual load test
             var serviceProvider = collection.BuildServiceProvider();
 
             // Runs test
-            var testRunner = serviceProvider.GetService<TestRunner>();
+            // var testRunner = serviceProvider.GetService<TestLoadRunner>();
+            var testRunner = serviceProvider.GetService<TestArchiveRunner>();
             var logger = serviceProvider.GetService<IDiagnosticsLogger>();
 
             await testRunner.RunAsync(logger);

@@ -33,6 +33,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         public static readonly HttpMethod CreateEnvironmentsMethod = HttpMethod.Post;
 
         /// <summary>
+        /// The shutdown environment http method.
+        /// </summary>
+        public static readonly HttpMethod ShutdownEnvironmentsMethod = HttpMethod.Post;
+
+        /// <summary>
+        /// The resume environment http method.
+        /// </summary>
+        public static readonly HttpMethod ResumeEnvironmentsMethod = HttpMethod.Post;
+
+        /// <summary>
         /// The list environments http method.
         /// </summary>
         public static readonly HttpMethod ListEnvironmentsMethod = HttpMethod.Get;
@@ -65,6 +75,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LoadRunnerConsoleApp.Repos
         /// <param name="environmentId">The environment id token.</param>
         /// <returns>Uri.</returns>
         public static string GetGetEnvironmentUri(Guid environmentId) => GetEnvironmentUri(environmentId);
+
+        /// <summary>
+        /// Get the get environment uri.
+        /// </summary>
+        /// <param name="environmentId">The environment id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetShutdownEnvironmentUri(Guid environmentId) => $"{GetEnvironmentUri(environmentId)}/shutdown";
+
+        /// <summary>
+        /// Get the get environment uri.
+        /// </summary>
+        /// <param name="environmentId">The environment id token.</param>
+        /// <returns>Uri.</returns>
+        public static string GetResumeEnvironmentUri(Guid environmentId) => $"{GetEnvironmentUri(environmentId)}/start";
 
         /// <summary>
         /// Get the deallocate uri.
