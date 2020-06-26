@@ -72,9 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationCoreAsync(EnvironmentStateTransitionInput input, CloudEnvironment environment, IDiagnosticsLogger logger)
         {
-            logger.FluentAddValue("EnvironmentTransitioningState", input.TargetState);
-            logger.FluentAddValue("EnvironmentActualState", environment.State);
-            logger.FluentAddValue("EnvironmentTransitionTimeout", input.TransitionTimeout);
+            logger.FluentAddBaseValue("EnvironmentTargetState", input.TargetState);
+            logger.FluentAddBaseValue("EnvironmentTransitionTimeout", input.TransitionTimeout);
 
             if (environment.State == input.TargetState)
             {
