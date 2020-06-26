@@ -199,7 +199,7 @@ class LogViewerCard extends React.Component<{
   renderFilters() {
     return this.card.options.filterList.map((n, index) => {
       return (
-        <FormGroup key={uuidv4()}>
+        <FormGroup key={index}>
           <div>
             <Label className="form-group-label-button">{n.name}</Label>
             <ButtonGroup className="toolbar-button">
@@ -209,7 +209,7 @@ class LogViewerCard extends React.Component<{
           <Input
             type="text"
             placeholder={n.placeHolder}
-            name={index}
+            name={`${index}.${index}`}
             value={n.value}
             onChange={(x) => this.updateFiltersProperty(x)}
           />

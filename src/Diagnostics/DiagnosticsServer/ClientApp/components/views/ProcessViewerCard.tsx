@@ -6,7 +6,6 @@ import { CardText, Table } from "reactstrap";
 import Actions from "../../actions";
 import { AppState, EventType } from "../../appState";
 import BaseCard from "./BaseCard";
-import { v4 as uuidv4 } from "uuid";
 
 @inject("hub")
 @inject("appState")
@@ -52,13 +51,13 @@ class ProcessViewerCard extends React.Component<{
     return this.items.length > 0 ? (
       <Table className="log-table">
         <thead>
-          {this.columns.map((n) => (
-            <th key={uuidv4()}>{n}</th>
+          {this.columns.map((n, index) => (
+            <th key={index}>{n}</th>
           ))}
         </thead>
         <tbody>
-          {this.items.map((n) => (
-            <tr key={uuidv4()} className="log-row">{this.renderRow(n)}</tr>
+          {this.items.map((n, index) => (
+            <tr key={index} className="log-row">{this.renderRow(n)}</tr>
           ))}
         </tbody>
       </Table>
