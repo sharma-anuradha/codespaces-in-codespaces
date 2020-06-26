@@ -6,19 +6,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -74,15 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             var logger = arg.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
-            // TODO: janraj, this is duplicated code - refactor and make it common across all auth builders.
             logger
-                .FluentAddValue("Scheme", arg.Scheme.Name)
-                .FluentAddValue("Audience", arg.Options.Audience)
-                .FluentAddValue("Authority", arg.Options.Authority)
-                .FluentAddValue("RequestUri", arg.Request.GetDisplayUrl())
-                .FluentAddValue("PrincipalIdentityName", arg.Principal?.Identity.Name)
-                .FluentAddValue("PrincipalIsAuthenticationType", arg.Principal?.Identity.AuthenticationType)
-                .FluentAddValue("PrincipalIsAuthenticated", arg.Principal?.Identity.IsAuthenticated.ToString())
+                .AddAuthenticationResultContext(arg)
                 .FluentAddValue("Exception", arg.Exception.Message)
                 .LogError("vmtoken_jwt_authentication_failed");
         }
@@ -93,6 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             // Locate needed services
             var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+
+            logger.AddAuthenticationResultContext(context);
 
             var jwtToken = context.SecurityToken as JwtSecurityToken;
             if (string.IsNullOrEmpty(jwtToken?.RawData))

@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -143,23 +144,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <summary>
         /// Method to be called in the event of failed authentication.
         /// </summary>
-        /// <param name="arg">failure context.</param>
+        /// <param name="context">failure context.</param>
         /// <returns>Task.</returns>
-        private static async Task AuthenticationFailedAsync(AuthenticationFailedContext arg)
+        private static async Task AuthenticationFailedAsync(AuthenticationFailedContext context)
         {
             await Task.CompletedTask;
 
-            var logger = arg.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+            var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
             logger
-                .FluentAddValue("Scheme", arg.Scheme.Name)
-                .FluentAddValue("Audience", arg.Options.Audience)
-                .FluentAddValue("Authority", arg.Options.Authority)
-                .FluentAddValue("RequestUri", arg.Request.GetDisplayUrl())
-                .FluentAddValue("PrincipalIdentityName", arg.Principal?.Identity.Name)
-                .FluentAddValue("PrincipalIsAuthenticationType", arg.Principal?.Identity.AuthenticationType)
-                .FluentAddValue("PrincipalIsAuthenticated", arg.Principal?.Identity.IsAuthenticated.ToString())
-                .FluentAddValue("Exception", arg.Exception.Message)
+                .AddAuthenticationResultContext(context)
+                .FluentAddValue("Exception", context.Exception.Message)
                 .LogInfo("jwt_authentication_failed");
         }
 
@@ -181,13 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
                 logger
-                    .FluentAddValue("Scheme", context.Scheme.Name)
-                    .FluentAddValue("Audience", context.Options.Audience)
-                    .FluentAddValue("Authority", context.Options.Authority)
-                    .FluentAddValue("RequestUri", context.Request.GetDisplayUrl())
-                    .FluentAddValue("PrincipalIdentityName", armServicePrincipal.Identity.Name)
-                    .FluentAddValue("PrincipalAuthenticationType", armServicePrincipal.Identity.AuthenticationType)
-                    .FluentAddValue("PrincipalIsAuthenticated", armServicePrincipal.Identity.IsAuthenticated.ToString())
+                    .AddAuthenticationResultContext(context)
                     .FluentAddValue("ArmAppId", appIdClaim);
 
                 context.Request.Headers.TryGetValue(RPaaSCorrelationIdHeaderName, out var rpaasCorrelationId);
@@ -235,7 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 context.Principal = armUserPrincipal;
 
                 var armUserIdentity = armUserPrincipal.Identities.First();
-                await SetCurrentUserIdentityAsync(context, armUserIdentity, logger);
+                await SetCurrentUserIdentityAsync(context, armUserIdentity, logger.NewChildLogger());
             };
         }
 
@@ -272,7 +261,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             var idMapRepository = httpContext.RequestServices.GetRequiredService<IIdentityMapRepository>();
             var tenantId = armUserIdentity.GetTenantId();
-            var idMap = await idMapRepository.GetByUserNameAsync(userName, tenantId, logger) ??
+            var idMap = await idMapRepository.GetByUserNameAsync(userName, tenantId, logger.NewChildLogger()) ??
                 new IdentityMapEntity(userName, tenantId);
 
             // Check for a codespace user token header (only valid for MSAs).
@@ -303,7 +292,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     var linkedIds = new List<string>(idMap.LinkedUserIds ?? Array.Empty<string>());
                     linkedIds.Add(codespaceUserId);
                     await idMapRepository.BackgroundUpdateIfChangedAsync(
-                        idMap, null, null, null, linkedIds.ToArray(), logger);
+                        idMap, null, null, null, linkedIds.ToArray(), logger.NewChildLogger());
                 }
             }
 
@@ -336,7 +325,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         {
             AddArmUserTenantIfNew(tenant);
 
-            return ArmUserJwtReader.ReadTokenPrincipal(token, logger);
+            return ArmUserJwtReader.ReadTokenPrincipal(token, logger.NewChildLogger());
         }
 
         private static void AddArmUserTenantIfNew(string tenant)

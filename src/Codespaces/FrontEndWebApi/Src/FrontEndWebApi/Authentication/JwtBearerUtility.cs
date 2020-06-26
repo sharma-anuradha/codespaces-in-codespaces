@@ -17,6 +17,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -111,15 +112,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <returns>Async task.</returns>
         internal static async Task TokenValidatedAsync(TokenValidatedContext context)
         {
+            var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+
+            logger.AddAuthenticationResultContext(context);
+
             try
             {
                 var validatedPrincipalHandler = context.HttpContext.RequestServices.GetService<IValidatedPrincipalIdentityHandler>();
-                var newPrincipal = await validatedPrincipalHandler.ValidatedPrincipalAsync(context.Principal, context.SecurityToken as JwtSecurityToken);
+                var newPrincipal = await validatedPrincipalHandler.ValidatedPrincipalAsync(context.Principal, context.SecurityToken as JwtSecurityToken, logger.NewChildLogger());
 
                 context.Principal = newPrincipal;
+                logger.LogInfo("jwt_authentication_success");
             }
             catch (Exception ex)
             {
+                logger.AddExceptionInfo(ex).LogError("jwt_authentication_error");
                 context.Fail(ex.Message);
             }
         }
@@ -132,13 +139,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         internal static async Task AuthenticationFailedAsync(AuthenticationFailedContext context)
         {
             await Task.CompletedTask;
-            var env = ApplicationServicesProvider.GetRequiredService<IWebHostEnvironment>();
-            if (env.IsDevelopment())
-            {
-                var httpContext = context.HttpContext;
-                var logger = httpContext.GetLogger();
-                logger?.AddExceptionInfo(context.Exception).LogWarning("jwt_authentication_failed");
-            }
+
+            var httpContext = context.HttpContext;
+            var logger = httpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+
+            // Only log a warning as other authentication schemes may still succeed
+            logger
+                .AddAuthenticationResultContext(context)
+                .AddExceptionInfo(context.Exception)
+                .LogWarning("jwt_authentication_failed");
         }
     }
 }

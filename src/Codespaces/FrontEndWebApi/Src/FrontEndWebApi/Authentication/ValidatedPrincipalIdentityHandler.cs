@@ -6,21 +6,17 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Principal;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using CommonAuthenticationConstants = Microsoft.VsSaaS.Common.Identity.AuthenticationConstants;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -36,24 +32,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <param name="currentUserProvider">The current user provider.</param>
         /// <param name="httpContextAccessor">The http context acessor.</param>
         /// <param name="hostingEnvironment">The aspnetcore hosting environment.</param>
-        /// <param name="diagnosticsLoggerFactory">The logger factory.</param>
-        /// <param name="logValues">The default log values.</param>
         public ValidatedPrincipalIdentityHandler(
             IIdentityMapRepository identityMapRepository,
             IProfileRepository profileRepository,
             ICurrentUserProvider currentUserProvider,
             IHttpContextAccessor httpContextAccessor,
-            IWebHostEnvironment hostingEnvironment,
-            IDiagnosticsLoggerFactory diagnosticsLoggerFactory,
-            LogValueSet logValues)
+            IWebHostEnvironment hostingEnvironment)
         {
             IdentityMapRepository = Requires.NotNull(identityMapRepository, nameof(identityMapRepository));
             ProfileRepository = Requires.NotNull(profileRepository, nameof(profileRepository));
             CurrentUserProvider = Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
             HostingEnvironment = Requires.NotNull(hostingEnvironment, nameof(hostingEnvironment));
             HttpContextAccessor = Requires.NotNull(httpContextAccessor, nameof(httpContextAccessor));
-            DiagnosticsLoggerFactory = Requires.NotNull(diagnosticsLoggerFactory, nameof(diagnosticsLoggerFactory));
-            LogValues = Requires.NotNull(logValues, nameof(logValues));
         }
 
         private IIdentityMapRepository IdentityMapRepository { get; }
@@ -66,18 +56,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private IWebHostEnvironment HostingEnvironment { get; }
 
-        private IDiagnosticsLoggerFactory DiagnosticsLoggerFactory { get; }
-
-        private LogValueSet LogValues { get; }
-
         /// <inheritdoc/>
-        public async Task<ClaimsPrincipal> ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken jwtToken)
+        public async Task<ClaimsPrincipal> ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken jwtToken, IDiagnosticsLogger logger)
         {
             Requires.NotNull(principal, nameof(principal));
 
             var identity = principal.Identities.First();
             var httpContext = HttpContextAccessor.HttpContext;
-            var logger = httpContext.GetLogger()?.NewChildLogger() ?? DiagnosticsLoggerFactory.New(LogValues);
 
             // Setup debug output if in debug
             if (System.Diagnostics.Debugger.IsAttached)

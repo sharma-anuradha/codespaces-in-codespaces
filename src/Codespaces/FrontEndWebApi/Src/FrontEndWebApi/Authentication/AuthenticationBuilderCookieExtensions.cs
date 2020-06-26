@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -51,6 +52,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private static async Task CookieValidatedPrincipalAsync(CookieValidatePrincipalContext context)
         {
             var httpContext = context.HttpContext;
+            var logger = httpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+
             var principal = context.Principal;
 
             // Use the same algorithm with Cookies as with JWT Bearer.
@@ -64,11 +67,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             try
             {
                 var validatedPrincipalIdentityHandler = httpContext.RequestServices.GetRequiredService<IValidatedPrincipalIdentityHandler>();
-                await validatedPrincipalIdentityHandler.ValidatedPrincipalAsync(principal, null);
+                await validatedPrincipalIdentityHandler.ValidatedPrincipalAsync(principal, null, logger);
             }
             catch (Exception ex)
             {
-                var logger = httpContext.GetLogger();
                 logger.LogException("cookie_authentication_error", ex);
                 context.RejectPrincipal();
             }

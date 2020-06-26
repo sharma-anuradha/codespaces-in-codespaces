@@ -53,9 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 MockProfileRepository(),
                 currentUser,
                 MockHttpContextAccessor(httpContext),
-                MockWebHostEnvironment(),
-                new DefaultLoggerFactory(),
-                new LogValueSet());
+                MockWebHostEnvironment());
 
             var testIdentity = testCase.TestIdentity;
 
@@ -70,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var principal = new ClaimsPrincipal();
             principal.AddIdentity(testIdentity);
 
-            var newPrincipal = await handler.ValidatedPrincipalAsync(principal, new JwtSecurityToken(DummyToken));
+            var newPrincipal = await handler.ValidatedPrincipalAsync(principal, new JwtSecurityToken(DummyToken), new DefaultLoggerFactory().New());
 
             Assert.IsType<VsoClaimsIdentity>(newPrincipal.Identity);
             var vsoIdentity = (VsoClaimsIdentity)newPrincipal.Identity;
