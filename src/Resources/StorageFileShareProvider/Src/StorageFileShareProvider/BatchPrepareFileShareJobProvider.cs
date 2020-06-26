@@ -12,9 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Abstractions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider

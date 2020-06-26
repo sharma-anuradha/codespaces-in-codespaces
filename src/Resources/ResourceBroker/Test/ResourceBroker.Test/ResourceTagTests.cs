@@ -1,8 +1,12 @@
-﻿using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
+﻿// <copyright file="ResourceTagTests.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test

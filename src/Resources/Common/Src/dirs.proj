@@ -2,8 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="Common\BackEnd.Common.csproj" />
-    <ProjectReference Include="Common.Abstractions\Common.Abstractions.csproj" />
-    <ProjectReference Include="Common.Models\Common.Models.csproj" />
+    <ProjectReference Include="Common.Contracts\Backend.Common.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

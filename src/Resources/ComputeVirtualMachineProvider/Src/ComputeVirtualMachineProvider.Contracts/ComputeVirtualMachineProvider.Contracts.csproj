@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common.Contracts\Backend.Common.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Contracts\StorageFileShareProvider.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

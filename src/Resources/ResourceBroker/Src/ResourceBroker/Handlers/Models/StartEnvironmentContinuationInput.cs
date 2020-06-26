@@ -4,7 +4,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {

@@ -3,8 +3,8 @@
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Abstractions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions
 {

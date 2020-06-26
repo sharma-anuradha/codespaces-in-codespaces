@@ -9,8 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
-    <ProjectReference Include="..\QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
     <ProjectReference Include="..\QueueProvider\QueueProvider.csproj" />
   </ItemGroup>
 

@@ -44,7 +44,6 @@
     <ProjectReference Include="..\..\..\PCFAgent\Src\PCFAgent\PCFAgent.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
-    <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Abstractions\SecretStoreManager.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager\SecretStoreManager.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions\Subscriptions.csproj" />

@@ -1,0 +1,19 @@
+﻿// <copyright file="DeleteInput.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
+
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
+{
+    /// <summary>
+    /// Model required for Deallocation input.
+    /// </summary>
+    public class DeleteInput
+    {
+        /// <summary>
+        /// Gets or sets a value indicating the target Resource Id.
+        /// </summary>
+        public Guid ResourceId { get; set; }
+    }
+}

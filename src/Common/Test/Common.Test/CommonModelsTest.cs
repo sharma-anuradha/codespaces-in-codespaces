@@ -1,6 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Models;
+﻿// <copyright file="CommonModelsTest.cs" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Xunit;
 

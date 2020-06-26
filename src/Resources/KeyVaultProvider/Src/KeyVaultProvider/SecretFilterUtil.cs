@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider
 {

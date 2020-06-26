@@ -12,11 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider.Contracts\KeyVaultProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider\QueueProvider.csproj" />
-    <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider.Models\ComputeVirtualMachineProvider.Models.csproj" />
-    <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider.Abstractions\ComputeVirtualMachineProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider.Contracts\ComputeVirtualMachineProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
-    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
+    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Contracts\StorageFileShareProvider.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

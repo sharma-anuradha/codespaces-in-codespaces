@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="ResourceAllocation\ResourceAllocation.csproj" />
-    <ProjectReference Include="ResourceAllocation.Abstractions\ResourceAllocation.Abstractions.csproj" />
     <ProjectReference Include="ResourceAllocation.Contracts\ResourceAllocation.Contracts.csproj" />
   </ItemGroup>
 

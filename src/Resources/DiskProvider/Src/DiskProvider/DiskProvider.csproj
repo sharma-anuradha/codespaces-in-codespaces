@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,10 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
-    <ProjectReference Include="..\DiskProvider.Abstractions\DiskProvider.Abstractions.csproj" />
-    <ProjectReference Include="..\DiskProvider.Models\DiskProvider.Models.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
+    <ProjectReference Include="..\DiskProvider.Contracts\DiskProvider.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

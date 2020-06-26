@@ -1,12 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
-    <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Contracts\ResourceBroker.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

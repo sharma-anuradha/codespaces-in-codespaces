@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Repositories
 {

@@ -17,10 +17,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
-using SecretType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretType;
+using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts.SecretScope;
+using SecretType = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts.SecretType;
 using SecretTypeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretType;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager

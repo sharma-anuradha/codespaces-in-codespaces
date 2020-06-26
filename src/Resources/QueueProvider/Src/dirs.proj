@@ -2,9 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="QueueProvider\QueueProvider.csproj" />
-    <ProjectReference Include="QueueProvider.Abstractions\QueueProvider.Abstractions.csproj" />
+    <ProjectReference Include="QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
     <ProjectReference Include="QueueProvider.Extensions\QueueProvider.Extensions.csproj" />
-    <ProjectReference Include="QueueProvider.Models\QueueProvider.Models.csproj" />
   </ItemGroup>
 
 </Project>

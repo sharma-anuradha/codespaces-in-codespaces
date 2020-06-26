@@ -5,8 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\Common.Abstractions\Common.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Src\Common.Models\Common.Models.csproj" />
     <ProjectReference Include="..\..\Src\Common\BackEnd.Common.csproj" />
   </ItemGroup>
 

@@ -9,8 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
-    <ProjectReference Include="..\NetworkInterfaceProvider.Abstractions\NetworkInterfaceProvider.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Common\Src\Common.Contracts\Backend.Common.Contracts.csproj" />
+    <ProjectReference Include="..\NetworkInterfaceProvider.Contracts\NetworkInterfaceProvider.Contracts.csproj" />
     <ProjectReference Include="..\NetworkInterfaceProvider\NetworkInterfaceProvider.csproj" />
   </ItemGroup>
 

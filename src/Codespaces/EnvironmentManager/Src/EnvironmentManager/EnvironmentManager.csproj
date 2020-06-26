@@ -11,18 +11,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.Metrics\Common.Metrics.csproj" />
-    <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\FrontEnd.Common\FrontEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\LiveShareAuthentication\Src\LiveShareAuthentication.Contracts\LiveShareAuthentication.Contracts.csproj" />
     <ProjectReference Include="..\..\..\LiveShareWorkspace\Src\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
-    <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation.Abstractions\ResourceAllocation.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation.Contracts\ResourceAllocation.Contracts.csproj" />
     <ProjectReference Include="..\..\..\ResourceAllocation\Src\ResourceAllocation\ResourceAllocation.csproj" />
-    <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Abstractions\SecretStoreManager.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Models\SecretStoreManager.Models.csproj" />
+    <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Contracts\SecretStoreManager.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />

@@ -34,7 +34,6 @@
       "..\\Codespaces\\UserProfile\\Src\\UserProfile.Contracts\\UserProfile.Contracts.csproj",
       "..\\Codespaces\\UserProfile\\Src\\UserProfile\\UserProfile.csproj",
       "..\\Codespaces\\ResourceAllocation\\Src\\ResourceAllocation\\ResourceAllocation.csproj",
-      "..\\Codespaces\\ResourceAllocation\\Src\\ResourceAllocation.Abstractions\\ResourceAllocation.Abstractions.csproj",
       "..\\Codespaces\\ResourceAllocation\\Src\\ResourceAllocation.Contracts\\ResourceAllocation.Contracts.csproj"
     ]
   }

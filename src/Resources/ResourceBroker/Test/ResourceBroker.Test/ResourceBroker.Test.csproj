@@ -6,8 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Src\ResourceBroker\ResourceBroker.csproj" />
-    <ProjectReference Include="..\..\Src\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Src\ResourceBroker.Models\ResourceBroker.Models.csproj" />
+    <ProjectReference Include="..\..\Src\ResourceBroker.Contracts\ResourceBroker.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

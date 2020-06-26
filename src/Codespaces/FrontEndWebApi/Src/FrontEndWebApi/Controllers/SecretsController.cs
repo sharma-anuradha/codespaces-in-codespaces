@@ -22,9 +22,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Models.SecretScope;
+using SecretScope = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts.SecretScope;
 using SecretScopeHttpContract = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretScope;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers

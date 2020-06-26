@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetworkInterfaceProvider.Abstractions\NetworkInterfaceProvider.Abstractions.csproj" />
-    <ProjectReference Include="..\NetworkInterfaceProvider.Models\NetworkInterfaceProvider.Models.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+    <ProjectReference Include="..\NetworkInterfaceProvider.Contracts\NetworkInterfaceProvider.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

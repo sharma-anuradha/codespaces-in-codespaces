@@ -13,10 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\StorageFileShareProvider.Abstractions\StorageFileShareProvider.Abstractions.csproj" />
-    <ProjectReference Include="..\..\Src\StorageFileShareProvider.Models\StorageFileShareProvider.Models.csproj" />
+    <ProjectReference Include="..\..\Src\StorageFileShareProvider.Contracts\StorageFileShareProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\Src\StorageFileShareProvider\StorageFileShareProvider.csproj" />
-    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

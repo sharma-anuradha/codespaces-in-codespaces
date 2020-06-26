@@ -2,9 +2,8 @@
 
   <ItemGroup>
     <ProjectReference Include="NetworkInterfaceProvider\NetworkInterfaceProvider.csproj" />
-    <ProjectReference Include="NetworkInterfaceProvider.Abstractions\NetworkInterfaceProvider.Abstractions.csproj" />
+    <ProjectReference Include="NetworkInterfaceProvider.Contracts\NetworkInterfaceProvider.Contracts.csproj" />
     <ProjectReference Include="NetworkInterfaceProvider.Extensions\NetworkInterfaceProvider.Extensions.csproj" />
-    <ProjectReference Include="NetworkInterfaceProvider.Models\NetworkInterfaceProvider.Models.csproj" />
   </ItemGroup>
 
 </Project>

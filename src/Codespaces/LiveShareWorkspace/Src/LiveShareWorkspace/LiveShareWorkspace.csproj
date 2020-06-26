@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\LiveShareWorkspace.Contracts\LiveShareWorkspace.Contracts.csproj" />

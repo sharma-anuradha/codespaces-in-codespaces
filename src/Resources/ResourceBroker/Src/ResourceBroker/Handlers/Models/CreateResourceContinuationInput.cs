@@ -3,7 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 

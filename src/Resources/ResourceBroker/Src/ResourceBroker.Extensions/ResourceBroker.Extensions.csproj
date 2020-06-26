@@ -9,8 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Src\Common.Models\Common.Models.csproj" />
-    <ProjectReference Include="..\ResourceBroker.Abstractions\ResourceBroker.Abstractions.csproj" />
+    <ProjectReference Include="..\ResourceBroker.Contracts\ResourceBroker.Contracts.csproj" />
     <ProjectReference Include="..\ResourceBroker\ResourceBroker.csproj" />
   </ItemGroup>
 
