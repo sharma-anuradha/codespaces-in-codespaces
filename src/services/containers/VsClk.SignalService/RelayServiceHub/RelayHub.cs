@@ -184,7 +184,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                 Id,
                 participantId,
                 properties,
-                changeType,
+                (int)changeType,
                 cancellationToken)));
         }
 

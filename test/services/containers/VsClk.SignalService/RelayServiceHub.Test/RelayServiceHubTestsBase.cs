@@ -202,7 +202,7 @@ namespace Microsoft.VsCloudKernel.SignalService.RelayServiceHubTests
             Assert.NotEmpty(connProxy);
             var args = connProxy[RelayHubMethods.MethodParticipantChanged];
             Assert.Equal(participantId, args[1]);
-            Assert.Equal(changeType, args[3]);
+            Assert.Equal(changeType, (ParticipantChangeType)((int)args[3]));
             return args[2] as Dictionary<string, object>;
         }
 

@@ -11,9 +11,7 @@ export class HubStream extends BaseStream {
         private readonly streamId: string,
         private readonly targetParticipant: string) {
         super();
-        const sequenceRelayDataHubProxy = new SequenceRelayDataHubProxy(
-            relayHubProxy,
-            (e) => e.type === this.streamId && e.fromParticipant.id === this.targetParticipant);
+        const sequenceRelayDataHubProxy = SequenceRelayDataHubProxy.createForTypeAndParticipant(relayHubProxy, this.streamId, targetParticipant);
 
         this.disposables.push(sequenceRelayDataHubProxy);
         this.disposables.push(sequenceRelayDataHubProxy.onReceiveData((e) => {

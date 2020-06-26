@@ -1,14 +1,21 @@
 
-import { IRelayHubProxy, SendOption, ParticipantChangeType, SequenceRelayDataHubProxy, RelayHubMessageProperties, IDisposable } from '@vs/vso-signalr-client-proxy';
+import { IRelayHubProxy, SendOption, ParticipantChangeType, RelayDataHubProxy, SequenceRelayDataHubProxy, RelayHubMessageProperties, IDisposable } from '@vs/vso-signalr-client-proxy';
 import { Event, Emitter, CancellationToken } from 'vscode-jsonrpc';
 import { SshChannel, SshRpcMessageStream }  from '@vs/vs-ssh';
 
 export function createSshRpcMessageStream(
     relayHubProxy: IRelayHubProxy,
     streamId: string,
-    targetParticipant: string): SshRpcMessageStream  {
+    targetParticipant: string,
+    closeOnError?: boolean,
+    relayDataHubProxy?: RelayDataHubProxy): SshRpcMessageStream  {
 
-    const sshChannel = <SshChannel>(<any>new SshRelayChannel(relayHubProxy,streamId,targetParticipant));
+    const sshChannel = <SshChannel>(<any>new SshRelayChannel(
+        relayHubProxy,
+        streamId,
+        targetParticipant,
+        relayDataHubProxy || SequenceRelayDataHubProxy.createForTypeAndParticipant(relayHubProxy, streamId, targetParticipant),
+        closeOnError));
     return new SshRpcMessageStream(sshChannel);
 }
 
@@ -30,13 +37,12 @@ class SshRelayChannel implements IDisposable {
     constructor(
         private readonly relayHubProxy: IRelayHubProxy,
         private readonly streamId: string,
-        private readonly targetParticipant: string) {
+        private readonly targetParticipant: string,
+        relayDataHubProxy: RelayDataHubProxy,
+        private readonly closeOnError?: boolean) {
         
-        const sequenceRelayDataHubProxy = new SequenceRelayDataHubProxy(
-            relayHubProxy,
-            (e) => e.type === this.streamId && e.fromParticipant.id === this.targetParticipant);
-        this.disposables.push(sequenceRelayDataHubProxy);
-        this.disposables.push(sequenceRelayDataHubProxy.onReceiveData((e) => {
+        this.disposables.push(relayDataHubProxy);
+        this.disposables.push(relayDataHubProxy.onReceiveData((e) => {
 
             this.dataReceivedEmitter.fire(Buffer.from(e.data));
 
@@ -45,18 +51,14 @@ class SshRelayChannel implements IDisposable {
 
         this.disposables.push(relayHubProxy.onParticipantChanged((e) => {
             if (e.changeType === ParticipantChangeType.Removed && e.participant.id === this.targetParticipant) {
-                this.fireClosed({
-                    error: new Error(`participant id:${e.participant.id} removed`)
-                });
+                this.fireError(new Error(`participant id:${e.participant.id} removed`));
             }
             
             return Promise.resolve();
         }));
 
         this.disposables.push(relayHubProxy.onDisconnected(async () => {
-            this.fireClosed({
-                error: new Error(`hub proxy disconnected`)
-            });
+            this.fireError(new Error(`hub proxy disconnected`));
 
             return Promise.resolve();
         }));
@@ -76,7 +78,18 @@ class SshRelayChannel implements IDisposable {
             RelayHubMessageProperties.createMessageSequence(++this.nextSequence));
     }
 
-    private fireClosed(e: ChannelClosedEventArgs) {
-        this.closedEmitter.fire(e);
+    public adjustWindow(messageLength: number): void {
+        // called by the SshRpcMessageReader class when data is received
+    }
+
+    private fireError(error: Error) {
+        // fire the error
+        this.closedEmitter.fire({
+            error
+        });
+        // enforce the rpc message reader/writer to close
+        if (this.closeOnError) {
+            this.closedEmitter.fire({});
+        }
     }
 }

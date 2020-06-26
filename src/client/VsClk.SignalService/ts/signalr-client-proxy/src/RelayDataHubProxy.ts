@@ -25,13 +25,13 @@ export class RelayDataHubProxy implements IRelayDataHubProxy, IDisposable {
         return this.receiveDataCallbacks.add(callback);
     }
 
-    protected processReceivedData(receivedData: IReceivedData): Promise<void> {
-        return this.fireReceivedData(receivedData);
-    }
-
-    protected async fireReceivedData(receivedData: IReceivedData): Promise<void> {
+    public async fireReceivedData(receivedData: IReceivedData): Promise<void> {
         for (const callback of this.receiveDataCallbacks.items) {
             await callback(receivedData);
         }        
+    }
+
+    protected processReceivedData(receivedData: IReceivedData): Promise<void> {
+        return this.fireReceivedData(receivedData);
     }
 }

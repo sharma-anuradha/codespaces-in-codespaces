@@ -18,6 +18,17 @@ export class SequenceRelayDataHubProxy extends RelayDataHubProxy {
         this.totalEvents = 0;
     }
 
+    public static createForTypeAndParticipant(
+        source: IRelayDataHubProxy,
+        dataType: string,
+        targetParticipant: string,
+        currentSequence?: number) {
+            return new SequenceRelayDataHubProxy(
+                source,
+                (e) => e.type === dataType && e.fromParticipant.id === targetParticipant,
+                currentSequence);
+    }
+
     public currentSequence: number;
 
     public totalEvents: number;

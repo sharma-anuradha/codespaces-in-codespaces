@@ -12,7 +12,7 @@
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],
-            "args": ["--service", "http://localhost:5000/signalrhub", "--id", "rodrigov", "--relayHub"],
+            "args": ["--service", "http://localhost:5000/signalrhub", "--id", "rodrigov", "--relayHub", "--messagePack"],
             "console": "integratedTerminal"
         }
     ]

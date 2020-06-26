@@ -16,7 +16,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@vs/vso-signalr-client-proxy": "link:../signalr-client-proxy",
-    "@vs/vs-ssh": "^2.2.1"
+    "@vs/vs-ssh": "^2.4.7"
   },
   "files": [
     "dist/**/*"
