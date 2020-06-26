@@ -120,5 +120,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The feature is disabled.
         /// </summary>
         FeatureDisabled = 21,
+
+        /// <summary>
+        /// The subscription cannot create plans or codespaces.
+        /// </summary>
+        SubscriptionCannotPerformAction = 22,
     }
 }
