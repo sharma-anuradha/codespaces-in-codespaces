@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
     /// <inheritdoc/>
     public class CurrentImageInfoProvider : ICurrentImageInfoProvider
     {
-        private const string LogBaseName = "currentImageInfoProvider";
+        private const string LogBaseName = "current_image_info_provider";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CurrentImageInfoProvider"/> class.
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
             IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_getImageName",
+                $"{LogBaseName}_get_image_name",
                 async (childLogger) =>
                 {
                     var key = GetConfigurationKey(imageFamilyType, imageFamilyName, "name");
@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration
             IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_getImageVersion",
+                $"{LogBaseName}_get_image_version",
                 (childLogger) =>
                 {
                     var key = GetConfigurationKey(imageFamilyType, imageFamilyName, "version");

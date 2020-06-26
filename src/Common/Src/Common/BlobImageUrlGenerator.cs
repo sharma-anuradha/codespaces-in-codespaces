@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
         private readonly IControlPlaneInfo controlPlaneInfo;
         private readonly ISkuCatalog skuCatalog;
+        private readonly IManagedCache cache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BlobImageUrlGenerator"/> class.
@@ -31,14 +32,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="controlPlaneAzureResourceAccessor">Azure resource accessor.</param>
         /// <param name="controlPlaneInfo">Control plane info.</param>
         /// <param name="skuCatalog">SKU Catalog.</param>
+        /// <param name="cache">The cache to store responses.</param>
         public BlobImageUrlGenerator(
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             IControlPlaneInfo controlPlaneInfo,
-            ISkuCatalog skuCatalog)
+            ISkuCatalog skuCatalog,
+            IManagedCache cache)
         {
             this.controlPlaneAzureResourceAccessor = controlPlaneAzureResourceAccessor;
             this.controlPlaneInfo = controlPlaneInfo;
             this.skuCatalog = skuCatalog;
+            this.cache = cache;
         }
 
         /// <inheritdoc/>
@@ -73,35 +77,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 async (childLogger) =>
                 {
                     string accountName, accountKey, containerName;
+                    CloudBlobContainer container;
+
                     switch (resourceType)
                     {
                         case ResourceType.ComputeVM:
-                            (accountName, accountKey) = await controlPlaneAzureResourceAccessor
-                                .GetStampStorageAccountForComputeVmAgentImagesAsync(location);
                             containerName = controlPlaneInfo.VirtualMachineAgentContainerName;
                             break;
                         case ResourceType.StorageFileShare:
-                            (accountName, accountKey) = await controlPlaneAzureResourceAccessor
-                                .GetStampStorageAccountForStorageImagesAsync(location);
                             containerName = controlPlaneInfo.FileShareTemplateContainerName;
                             break;
                         default:
                             throw new ArgumentException($"Unhandled ResourceType: {resourceType}");
                     }
 
-                    var blobStorageClientOptions = new BlobStorageClientOptions
+                    var containerCacheKey = GetCacheKey(location, resourceType, containerName);
+                    container = await cache.GetAsync<CloudBlobContainer>(containerCacheKey, logger);
+
+                    if (container == null)
                     {
-                        AccountName = accountName,
-                        AccountKey = accountKey,
-                    };
-                    var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+                        switch (resourceType)
+                        {
+                            case ResourceType.ComputeVM:
+                                (accountName, accountKey) = await controlPlaneAzureResourceAccessor
+                                    .GetStampStorageAccountForComputeVmAgentImagesAsync(location);
+                                break;
+                            case ResourceType.StorageFileShare:
+                                (accountName, accountKey) = await controlPlaneAzureResourceAccessor
+                                    .GetStampStorageAccountForStorageImagesAsync(location);
+                                break;
+                            default:
+                                throw new ArgumentException($"Unhandled ResourceType: {resourceType}");
+                        }
+
+                        var blobStorageClientOptions = new BlobStorageClientOptions
+                        {
+                            AccountName = accountName,
+                            AccountKey = accountKey,
+                        };
+
+                        var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
+                        container = blobClientProvider.GetCloudBlobContainer(containerName);
+                        await cache.SetAsync(containerCacheKey, container, TimeSpan.FromHours(24), logger);
+                    }
 
                     if (expiryTime == default)
                     {
                         expiryTime = TimeSpan.FromHours(4);
                     }
 
-                    var container = blobClientProvider.GetCloudBlobContainer(containerName);
                     var blob = container.GetBlobReference(imageName);
 
                     var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
@@ -112,6 +136,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     return blob.Uri + sas;
                 });
+        }
+
+        private string GetCacheKey(AzureLocation location, ResourceType resourceType, string resourceName)
+        {
+            return $"{nameof(BlobImageUrlGenerator)}:{location.ToString().ToLowerInvariant()}:{resourceType}:{resourceName}";
         }
     }
 }
