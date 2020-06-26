@@ -25,7 +25,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
 
         private DateTime currentLogFileDateTime;
         private string currentLogFile;
-        private string directory;
 
         private bool scanLog = false;
         private CancellationToken stoppingToken;
@@ -39,14 +38,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
         public FileLogScanner(IHubContext<LogHub> logHub, string directory, CancellationToken stoppingToken)
         {
             this.stoppingToken = stoppingToken;
-            string assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             fileSystemWatcher = new FileSystemWatcher(directory);
             fileSystemWatcher.EnableRaisingEvents = true;
             fileSystemWatcher.Created += FileSystemWatcher_Created;
             this.logHub = logHub;
-            this.directory = directory;
+            this.Directory = directory;
             ScanForChanges();
         }
+
+        /// <summary>
+        /// Gets the current directory being scanned.
+        /// </summary>
+        public string Directory { get; private set; }
 
         /// <summary>
         /// Execute the worker actions.
@@ -107,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
 
         private void ScanForChanges()
         {
-            Debug.WriteLine($"({this.directory}): Checking for files...");
+            Debug.WriteLine($"({this.Directory}): Checking for files...");
             var directoryInfo = new DirectoryInfo(fileSystemWatcher.Path);
             var logUpdated = false;
             foreach (var file in directoryInfo.EnumerateFiles().OrderBy(n => n.CreationTime))
@@ -120,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
                         currentLogFileDateTime = date;
                         currentLogFile = file.FullName;
                         logUpdated = true;
-                        Debug.WriteLine($"({this.directory}): log Found, {file.FullName}");
+                        Debug.WriteLine($"({this.Directory}): log Found, {file.FullName}");
                     }
                 }
                 catch (Exception ex)

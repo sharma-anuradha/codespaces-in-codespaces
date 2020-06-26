@@ -288,8 +288,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                     throw new InvalidOperationException("Only enable DeveloperKusto or RedirectStandardOutToLogsDirectory");
                 }
 
-                string assemblyFolder = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                var directory = Path.Combine(assemblyFolder, $"..\\..\\..\\logs\\{Assembly.GetEntryAssembly().GetName().Name}");
+                var assemblyFolder = new DirectoryInfo(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+                var directory = Path.Combine(assemblyFolder.Parent.Parent.Parent.FullName, "logs", $"{Assembly.GetEntryAssembly().GetName().Name}");
                 var logDirectory = Path.GetFullPath(directory);
                 var logFile = $"{DateTime.Now.ToString("s").Replace(":", ".")}.txt";
                 var logFileDirectory = Path.Combine(logDirectory, logFile);
