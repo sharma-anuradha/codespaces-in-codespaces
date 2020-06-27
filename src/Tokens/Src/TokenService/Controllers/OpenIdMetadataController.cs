@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             {
                 Issuer = issuerUri,
                 KeysEndpoint = serviceUri +
-                    $"certificates?issuer={HttpUtility.UrlEncode(issuerUri)}",
+                    $"api/v1/certificates?issuer={HttpUtility.UrlEncode(issuerUri)}",
                 ResponseTypesSupported = ResponseTypesSupported,
                 SubjectTypesSupported = SubjectTypesSupported,
                 TokenSigningAlgorithmsSupported = TokenSigningAlgorithmsSupported,

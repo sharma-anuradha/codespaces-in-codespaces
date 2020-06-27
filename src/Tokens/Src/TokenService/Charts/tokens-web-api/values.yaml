@@ -37,9 +37,11 @@ ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
   paths: 
     - /api/swagger
     - /api/v1/
+    - /[a-z-]+/\.well-known/openid-configuration
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

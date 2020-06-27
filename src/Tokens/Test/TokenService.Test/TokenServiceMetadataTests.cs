@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             Assert.NotNull(result);
             Assert.Equal("TestIssuer1", result.Issuer);
             Assert.Equal(
-                TokenService.ServiceUri.AbsoluteUri + "certificates?issuer=TestIssuer1",
+                TokenService.ServiceUri.AbsoluteUri + "api/v1/certificates?issuer=TestIssuer1",
                 result.KeysEndpoint);
         }
     }
