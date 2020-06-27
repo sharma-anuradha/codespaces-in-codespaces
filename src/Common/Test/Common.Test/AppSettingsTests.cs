@@ -21,9 +21,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         public static TheoryData<string, string> EnvironmentNames = new TheoryData<string, string>
         {
             // primary appsettings, override appsettings
-            { "dev-ci", null },
-            { "dev-ci", "dev-stg" },
-            { "dev-ci", "local" },
+            { "dev", null },
+            { "dev", "dev-ci" },
+            { "dev", "dev-stg" },
+            { "dev", "local" },
             { "ppe-rel", null },
             { "ppe-rel", "ppe-load" },
             { "prod-rel", null },

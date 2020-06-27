@@ -72,6 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true);
 
             var hasOverrideFile = TryGetOverrideAppSettingsJsonFile(out var overrideAppSettingsJsonFile);
+            var isDevelopment = hostingEnvironment.IsDevelopment();
 
             // Skipping environment appsettings file if override file is 'prod-can', so Stamps do not get merged
             if (!(hasOverrideFile && overrideAppSettingsJsonFile == "appsettings.prod-can.json"))
@@ -84,9 +85,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             {
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{overrideAppSettingsJsonFile}"), optional: false);
             }
+            else if (isDevelopment)
+            {
+                // Get the default override appsettings file as dev-ci to not break cenarios for development environment.
+                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.dev-ci.json"), optional: false);
+            }
 
             // Load the local file if not running in azure.
-            if (!IsRunningInAzure() && hostingEnvironment.IsDevelopment())
+            if (!IsRunningInAzure() && isDevelopment)
             {
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: true);
 
@@ -409,7 +415,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             if (HostingEnvironment.IsDevelopment())
             {
-                return "dev-ci";
+                return "dev";
             }
             else if (HostingEnvironment.IsStaging())
             {
