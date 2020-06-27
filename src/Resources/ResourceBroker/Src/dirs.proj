@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="ResourceBroker\ResourceBroker.csproj" />
     <ProjectReference Include="ResourceBroker.Contracts\ResourceBroker.Contracts.csproj" />
-    <ProjectReference Include="ResourceBroker.Extensions\ResourceBroker.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

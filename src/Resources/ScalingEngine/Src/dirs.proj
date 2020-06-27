@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="ScalingEngine\ScalingEngine.csproj" />
-    <ProjectReference Include="ScalingEngine.Extensions\ScalingEngine.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

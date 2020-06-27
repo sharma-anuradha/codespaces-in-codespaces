@@ -9,7 +9,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contr
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Tasks;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 {
     /// <summary>
     /// Extensions methods for <see cref="IServiceCollection"/> related to the system catalog.

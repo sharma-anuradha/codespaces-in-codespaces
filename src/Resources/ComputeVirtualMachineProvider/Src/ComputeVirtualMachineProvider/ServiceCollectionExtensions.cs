@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider
 {
     /// <summary>
     /// Extensions methods for <see cref="IServiceCollection"/> related to the system catalog.

@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="KeyVaultProvider\KeyVaultProvider.csproj" />
     <ProjectReference Include="KeyVaultProvider.Contracts\KeyVaultProvider.Contracts.csproj" />
-    <ProjectReference Include="KeyVaultProvider.Extensions\KeyVaultProvider.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

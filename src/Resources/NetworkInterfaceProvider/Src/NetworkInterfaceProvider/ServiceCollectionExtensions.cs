@@ -4,9 +4,9 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeNetworkInterfaceProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
 {
     /// <summary>
     /// Extensions methods for <see cref="IServiceCollection"/> related to the system catalog.
@@ -14,12 +14,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// <see cref="IServiceCollection"/> extensions for the Queue provider.
+        /// <see cref="IServiceCollection"/> extensions for the compute-virtual-machine provider.
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="mocksSettings">The mocks settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
-        public static IServiceCollection AddQueueProvider(
+        public static IServiceCollection AddNetworkInterfaceProvider(
             this IServiceCollection services,
             MocksSettings mocksSettings = null)
         {
@@ -31,8 +31,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Extensions
                 return services;
             }
 
-            services.AddSingleton<IQueueProvider, VirtualMachineQueueProvider>();
-
+            // Core services
+            services.AddSingleton<INetworkInterfaceDeploymentManager, NetworkInterfaceDeploymentManager>();
+            services.AddSingleton<INetworkInterfaceProvider, NetworkInterfaceProvider>();
             return services;
         }
     }

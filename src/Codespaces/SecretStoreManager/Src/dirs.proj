@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="SecretStoreManager\SecretStoreManager.csproj" />
     <ProjectReference Include="SecretStoreManager.Contracts\SecretStoreManager.Contracts.csproj" />
-    <ProjectReference Include="SecretStoreManager.Repositories\SecretStoreManager.Repositories.csproj" />
   </ItemGroup>
 
 </Project>

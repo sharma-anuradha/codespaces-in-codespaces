@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="NetworkInterfaceProvider\NetworkInterfaceProvider.csproj" />
     <ProjectReference Include="NetworkInterfaceProvider.Contracts\NetworkInterfaceProvider.Contracts.csproj" />
-    <ProjectReference Include="NetworkInterfaceProvider.Extensions\NetworkInterfaceProvider.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

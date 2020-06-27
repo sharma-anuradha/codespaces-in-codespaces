@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="EnvironmentManager\EnvironmentManager.csproj" />
     <ProjectReference Include="EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
-    <ProjectReference Include="EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
   </ItemGroup>
 
 </Project>

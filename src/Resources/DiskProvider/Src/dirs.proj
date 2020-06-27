@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="DiskProvider\DiskProvider.csproj" />
     <ProjectReference Include="DiskProvider.Contracts\DiskProvider.Contracts.csproj" />
-    <ProjectReference Include="DiskProvider.Extensions\DiskProvider.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

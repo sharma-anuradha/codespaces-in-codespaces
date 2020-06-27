@@ -4,9 +4,9 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider
 {
     /// <summary>
     /// Extensions methods for <see cref="IServiceCollection"/> related to the system catalog.
@@ -14,12 +14,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// <see cref="IServiceCollection"/> extensions for the disk provider.
+        /// <see cref="IServiceCollection"/> extensions for the Queue provider.
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="mocksSettings">The mocks settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
-        public static IServiceCollection AddDiskProvider(
+        public static IServiceCollection AddQueueProvider(
             this IServiceCollection services,
             MocksSettings mocksSettings = null)
         {
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions
                 return services;
             }
 
-            services.AddSingleton<IDiskProvider, DiskProvider>();
+            services.AddSingleton<IQueueProvider, VirtualMachineQueueProvider>();
 
             return services;
         }

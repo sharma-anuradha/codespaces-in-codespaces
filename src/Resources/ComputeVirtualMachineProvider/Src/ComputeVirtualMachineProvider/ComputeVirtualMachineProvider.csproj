@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider.Contracts\DiskProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\..\NetworkInterfaceProvider\Src\NetworkInterfaceProvider.Contracts\NetworkInterfaceProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider\QueueProvider.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Contracts\ComputeVirtualMachineProvider.Contracts.csproj" />
     <ProjectReference Include="..\ComputeVirtualMachineProvider.Contracts\ComputeVirtualMachineProvider.Contracts.csproj" />
 

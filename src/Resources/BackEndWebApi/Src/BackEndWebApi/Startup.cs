@@ -28,13 +28,14 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
-using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

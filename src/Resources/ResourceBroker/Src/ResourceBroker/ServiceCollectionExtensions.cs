@@ -20,7 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
     /// <summary>
     /// Extensions methods for <see cref="IServiceCollection"/> related to the system catalog.

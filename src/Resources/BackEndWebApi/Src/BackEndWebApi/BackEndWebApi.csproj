@@ -30,18 +30,16 @@
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\Capacity\Src\Capacity\Capacity.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
-    <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Extensions\ComputeVirtualMachineProvider.Extensions.csproj" />
-    <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider.Extensions\DiskProvider.Extensions.csproj" />
-    <ProjectReference Include="..\..\..\NetworkInterfaceProvider\Src\NetworkInterfaceProvider.Extensions\NetworkInterfaceProvider.Extensions.csproj" />
-    <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider.Extensions\KeyVaultProvider.Extensions.csproj" />
+    <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
+    <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider\DiskProvider.csproj" />
+    <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider\KeyVaultProvider.csproj" />
+    <ProjectReference Include="..\..\..\NetworkInterfaceProvider\Src\NetworkInterfaceProvider\NetworkInterfaceProvider.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Contracts\ResourceBroker.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Extensions\ResourceBroker.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />
-    <ProjectReference Include="..\..\..\ScalingEngine\Src\ScalingEngine.Extensions\ScalingEngine.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ScalingEngine\Src\ScalingEngine\ScalingEngine.csproj" />
-    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider.Extensions\StorageFileShareProvider.Extensions.csproj" />
     <ProjectReference Include="..\..\..\ArchiveStorageProvider\Src\ArchiveStorageProvider\ArchiveStorageProvider.csproj" />
     <ProjectReference Include="..\..\..\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\StorageFileShareProvider\Src\StorageFileShareProvider\StorageFileShareProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>

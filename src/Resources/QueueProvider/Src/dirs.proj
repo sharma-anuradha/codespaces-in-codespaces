@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="QueueProvider\QueueProvider.csproj" />
     <ProjectReference Include="QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
-    <ProjectReference Include="QueueProvider.Extensions\QueueProvider.Extensions.csproj" />
   </ItemGroup>
 
 </Project>
