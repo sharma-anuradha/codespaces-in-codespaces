@@ -16,7 +16,6 @@
     <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Plans\Src\Plans\Plans.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
-    <ProjectReference Include="..\..\Src\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager\EnvironmentManager.csproj" />
     <ProjectReference Include="..\..\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
   </ItemGroup>

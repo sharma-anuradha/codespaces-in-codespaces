@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Repository
 {
     /// <summary>
     /// User/Plan secrets store repository.

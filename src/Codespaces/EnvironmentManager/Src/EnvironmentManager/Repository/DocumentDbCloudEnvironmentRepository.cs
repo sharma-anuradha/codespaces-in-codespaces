@@ -16,7 +16,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
     /// <summary>
     /// A document repository of <see cref="CloudEnvironment"/>.

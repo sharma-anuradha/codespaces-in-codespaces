@@ -11,7 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
     /// <summary>
     /// A Cosmos DB container of <see cref="CloudEnvironment"/>.

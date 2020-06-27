@@ -22,7 +22,6 @@
     <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager.Contracts\SecretStoreManager.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
     <ProjectReference Include="..\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
-    <ProjectReference Include="..\EnvironmentManager.Repositories\EnvironmentManager.Repositories.csproj" />
   </ItemGroup>
 
 </Project>

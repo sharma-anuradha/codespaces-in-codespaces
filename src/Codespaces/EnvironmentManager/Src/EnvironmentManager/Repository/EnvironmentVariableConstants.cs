@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
     /// <summary>
     /// Environment variable constants.

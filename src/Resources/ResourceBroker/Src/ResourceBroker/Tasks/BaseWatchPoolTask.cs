@@ -148,3 +148,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
     }
 }
+
+
+/*
+
+
+
+    using (ClaimedDistributedLease.Obtain(
+                ResourceBrokerSettings.LeaseContainerName, $"pool_version_watch", claimSpan, logger))
+    {
+    }
+
+ */

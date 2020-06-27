@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories.Mocks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks
 {
     /// <summary>
     /// A mock cloud environment repository.

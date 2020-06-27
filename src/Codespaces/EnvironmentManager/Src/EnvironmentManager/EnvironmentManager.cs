@@ -18,7 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretMan
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;

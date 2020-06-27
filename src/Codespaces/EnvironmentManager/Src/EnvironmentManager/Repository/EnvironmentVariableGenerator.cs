@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 #pragma warning disable SA1402 // File may only contain a single type
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repositories
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
     /// <summary>
     /// The environment variable generator.

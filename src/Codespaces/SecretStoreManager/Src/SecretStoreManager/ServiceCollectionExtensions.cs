@@ -5,7 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Repositories;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Repository;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
 {
