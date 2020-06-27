@@ -18,6 +18,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Watches for Orphaned Azure Resource.
     /// </summary>
+    /// <remarks>
+    /// When making changes in this class take a look at \src\Codespaces\EnvironmentManager\Src\EnvironmentManager\Tasks\WatchOrphanedSystemEnvironmentsTask.cs.
+    /// </remarks>
     public class WatchOrphanedSystemResourceTask : IWatchOrphanedSystemResourceTask
     {
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
@@ -97,13 +100,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             logger.FluentAddBaseValue("TaskResourceIdShard", idShard);
 
-            var cutoffTime = DateTime.UtcNow.AddDays(-1);
+            var cutoffTime = DateTime.UtcNow.AddDays(-7);
 
             // Get record so we can tell if it exists
+            // Note: On the filter - we select records based on the filter below.
+            // We don't want to clean up resources which are early in the stage of creation in this worker. This can happen either it is assigned or not. Look at queued mode.
+            // If already assigned. Whether or not we have AzureResourceAlive doesn't matter, since it was already assigned, we want this cleaned up.
+            // If not assigned, but AzureResourceAlive wasn't updated in a while.
             return ResourceRepository.ForEachAsync(
-                x => x.KeepAlives != null
-                    && x.KeepAlives.AzureResourceAlive < cutoffTime
-                    && x.Id.StartsWith(idShard),
+                x => x.KeepAlives != default &&
+                     x.Id.StartsWith(idShard) &&
+                     x.Created < cutoffTime &&
+                     (x.Type == ResourceType.ComputeVM || x.Type == ResourceType.OSDisk || x.Type == ResourceType.StorageArchive || x.Type == ResourceType.StorageFileShare) &&
+                     ((x.IsAssigned && x.Assigned < cutoffTime && (x.KeepAlives.EnvironmentAlive == default || x.KeepAlives.EnvironmentAlive < cutoffTime)) ||
+                      (!x.IsAssigned && (x.KeepAlives.AzureResourceAlive == default || x.KeepAlives.AzureResourceAlive < cutoffTime))),
                 logger.NewChildLogger(),
                 (resource, innerLogger) =>
                 {
@@ -115,26 +125,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         async (childLogger)
                         =>
                         {
-                            // Capture consistency of keep alives
-                            var safeToDeleteResource = true;
-                            if (resource?.KeepAlives?.EnvironmentAlive != null)
-                            {
-                                safeToDeleteResource = !(resource.KeepAlives.EnvironmentAlive.Value > cutoffTime);
-                            }
-
-                            childLogger.FluentAddValue("ResourceCutoffTime", cutoffTime)
+                            childLogger
+                                .FluentAddValue("ResourceCutoffTime", cutoffTime)
+                                .FluentAddValue("ResourceIsAssigned", resource.IsAssigned)
+                                .FluentAddValue("ResourceAssigned", resource.Assigned)
                                 .FluentAddValue("ResourceEnvironmentAliveDate", resource.KeepAlives?.EnvironmentAlive)
                                 .FluentAddValue("ResourceAzureResourceAliveDate", resource.KeepAlives?.AzureResourceAlive)
-                                .FluentAddValue("ResourceSafeToDeleteResource", safeToDeleteResource);
+                                .FluentAddValue("ResourceCreatedDate", resource.Created);
 
-                            // Only remove if keep alives are consistent
-                            if (safeToDeleteResource)
-                            {
-                                // Trigger delete
-                                await childLogger.OperationScopeAsync(
-                                    $"{LogBaseName}_delete_record",
-                                    (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
-                            }
+                            // Trigger delete
+                            await childLogger.OperationScopeAsync(
+                                $"{LogBaseName}_delete_record",
+                                (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
 
                             // Pause to rate limit ourselves
                             await Task.Delay(QueryDelay);

@@ -162,7 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Offset to help distribute inital load of recurring tasks
             await Task.Delay(Random.Next(5000, 7500));
 
-            // Job: Watch Orphaned Azure Resources
+            // Job: Watch Orphaned System Resources
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
                 (childLogger) => WatchOrphanedSystemResourceTask.RunAsync(TimeSpan.FromHours(2), childLogger),

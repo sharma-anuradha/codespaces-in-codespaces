@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 (childLogger) => ContinuationTaskMessagePump.RunTryPopulateCacheAsync(childLogger),
                 TimeSpan.FromSeconds(10));
 
-            // Job: Watch Orphaned Azure Resources
+            // Job: Watch Orphaned System Resources
             TaskHelper.RunBackgroundLoop(
             $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
             (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),

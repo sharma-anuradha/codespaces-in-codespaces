@@ -13,12 +13,16 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 {
     /// <summary>
     /// Watch Orphaned System Environments Task.
     /// </summary>
+    /// <remarks>
+    /// When making changes in this class take a look at \src\Resources\ResourceBroker\Src\ResourceBroker\Tasks\WatchOrphanedSystemResourceTask.cs.
+    /// </remarks>
     public class WatchOrphanedSystemEnvironmentsTask : EnvironmentTaskBase, IWatchOrphanedSystemEnvironmentsTask
     {
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
@@ -91,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             return CloudEnvironmentRepository.ForEachAsync(
                 x => x.Id.StartsWith(idShard)
                     && x.Location == controlPlaneLocation // TODO: It needs to be updated to ControlPlaneLocation field, once data migration happens.
-                    && (x.Storage != null || x.Compute != null),
+                    && (x.Storage != null || x.Compute != null || x.OSDisk != null),
                 logger.NewChildLogger(),
                 (environment, innerLogger) =>
                 {
@@ -109,21 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                             childLogger.FluentAddValue("EnvironmentComputeRecordPresent", hasCompute);
                             if (hasCompute)
                             {
-                                try
-                                {
-                                    // Call backend to ensure exists
-                                    hasComputeResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
-                                        Guid.Parse(environment.Id),
-                                        environment.Compute.ResourceId,
-                                        childLogger.NewChildLogger());
-
-                                    // Update keep alive details
-                                    environment.Compute.KeepAlive.ResourceAlive = DateTime.UtcNow;
-                                }
-                                catch (HttpResponseStatusException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
-                                {
-                                    // Do nothing
-                                }
+                                hasComputeResource = await SendEnvironmentKeepAliveAsync(environment, environment.Compute, childLogger);
                             }
 
                             childLogger.FluentAddValue("EnvironmentComputeResourceRecordPresent", hasComputeResource);
@@ -134,26 +124,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                             childLogger.FluentAddValue("EnvironmentStorageRecordPresent", hasStorageRecord);
                             if (hasStorageRecord)
                             {
-                                try
-                                {
-                                    hasStorageResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
-                                        Guid.Parse(environment.Id),
-                                        environment.Storage.ResourceId,
-                                        childLogger.NewChildLogger());
-
-                                    // Update keep alive details
-                                    environment.Storage.KeepAlive.ResourceAlive = DateTime.UtcNow;
-                                }
-                                catch (HttpResponseStatusException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
-                                {
-                                    // Do nothing
-                                }
+                                hasStorageResource = await SendEnvironmentKeepAliveAsync(environment, environment.Storage, childLogger);
                             }
 
                             childLogger.FluentAddValue("EnvironmentStorageResourceRecordPresent", hasStorageResource);
 
+                            // Conduct check to see if the storage resource exist
+                            var hasOSDiskResource = false;
+                            var hasOSDiskRecord = environment.OSDisk != null;
+                            childLogger.FluentAddValue("EnvironmentOSDiskRecordPresent", hasOSDiskRecord);
+                            if (hasOSDiskRecord)
+                            {
+                                hasOSDiskResource = await SendEnvironmentKeepAliveAsync(environment, environment.OSDisk, childLogger);
+                            }
+
+                            childLogger.FluentAddValue("EnvironmentOSDiskResourceRecordPresent", hasOSDiskResource);
+
                             // Update db to push back keep alive details
-                            if (hasComputeResource || hasStorageResource)
+                            if (hasComputeResource || hasStorageResource || hasOSDiskResource)
                             {
                                 await CloudEnvironmentRepository.UpdateAsync(environment, childLogger.NewChildLogger());
                             }
@@ -163,6 +151,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         });
                 },
                 (_, __) => Task.Delay(QueryDelay));
+        }
+
+        private async Task<bool> SendEnvironmentKeepAliveAsync(CloudEnvironment environment, ResourceAllocationRecord allocationRecord, IDiagnosticsLogger logger)
+        {
+            var hasResource = false;
+            try
+            {
+                // Call backend to ensure exists
+                hasResource = await ResourceBrokerHttpClient.ProcessHeartbeatAsync(
+                    Guid.Parse(environment.Id),
+                    allocationRecord.ResourceId,
+                    logger.NewChildLogger());
+
+                // Update keep alive details
+                allocationRecord.KeepAlive.ResourceAlive = DateTime.UtcNow;
+            }
+            catch (HttpResponseStatusException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // Do nothing
+            }
+
+            return hasResource;
         }
     }
 }
