@@ -1,0 +1,293 @@
+{
+    "components": {
+        "core": {
+            "displayName": "Core",
+            "prefix": "core",
+            "dependsOn": [],
+            "subscriptions": [
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
+                    "plane": "ctl",
+                    "provisioned": {
+                        "vscs-core-dev-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-core-ppe-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-core-prod-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
+                    "plane": "ops",
+                    "provisioned": {
+                        "vscs-core-dev-ops": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-core-ppe-ops": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-core-prod-ops": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-monitoring",
+                    "plane": "ops",
+                    "provisioned": {
+                        "vscs-core-dev-ops-monitoring": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-core-ppe-ops-monitoring": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-core-prod-ops-monitoring": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                }
+            ]
+        },
+        "comm": {
+            "displayName": "Communications",
+            "prefix": "comm",
+            "dependsOn": [
+                "core"
+            ],
+            "subscriptions": [
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
+                    "plane": "ctl",
+                    "provisioned": {
+                        "vscs-comm-dev-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-ppe-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-prod-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
+                    "plane": "data",
+                    "provisioned": {
+                        "vscs-comm-dev-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-dev-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-dev-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-ppe-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-ppe-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-ppe-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-prod-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-prod-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-comm-prod-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                }
+            ]
+        },
+        "collab": {
+            "displayName": "Collaboration",
+            "prefix": "collab",
+            "dependsOn": [
+                "core",
+                "comm"
+            ],
+            "subscriptions": [
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
+                    "plane": "ctl",
+                    "provisioned": {
+                        "vscs-collab-dev-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-ppe-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-prod-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
+                    "plane": "data",
+                    "provisioned": {
+                        "vscs-collab-dev-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-dev-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-dev-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-ppe-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-ppe-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-ppe-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-prod-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-prod-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-collab-prod-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                }
+            ]
+        },
+        "cdsp": {
+            "displayName": "Codespaces",
+            "prefix": "cdsp",
+            "dependsOn": [
+                "core",
+                "collab"
+            ],
+            "subscriptions": [
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
+                    "plane": "ctl",
+                    "provisioned": {
+                        "vscs-cdsp-dev-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-ppe-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-prod-ctl": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-github",
+                    "plane": "ctl",
+                    "provisioned": {
+                        "vscs-cdsp-dev-ctl-github": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-ppe-ctl-github": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-prod-ctl-github": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-images",
+                    "plane": "data",
+                    "provisioned": {
+                        "vscs-cdsp-dev-data-images": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-ppe-data-images": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-prod-data-images": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
+                    "plane": "data",
+                    "provisioned": {
+                        "vscs-cdsp-dev-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-dev-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-dev-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-ppe-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-ppe-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-ppe-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-prod-data-ap": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-prod-data-eu": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-prod-data-us": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-compute-{geo}-{count}",
+                    "plane": "data",
+                    "env": "dev",
+                    "count": 1,
+                    "provisioned": {
+                        "vscs-cdsp-dev-data-compute-ap-001": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-dev-data-compute-eu-001": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-dev-data-compute-us-001": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                },
+                {
+                    "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-storage-{geo}-{count}",
+                    "plane": "data",
+                    "env": "dev",
+                    "count": 1,
+                    "provisioned": {
+                        "vscs-cdsp-dev-data-storage-ap-001": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-dev-data-storage-eu-001": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "vscs-cdsp-dev-data-storage-us-001": {
+                            "subscriptionId": "00000000-0000-0000-0000-000000000000"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
