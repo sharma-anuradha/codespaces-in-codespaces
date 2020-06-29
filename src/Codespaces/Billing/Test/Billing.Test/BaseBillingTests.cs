@@ -18,6 +18,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private readonly decimal premiumLinuxComputeUnitPerHr = 242;
         private readonly decimal standardLinuxStorageUnitPerHr = 2;
         private readonly decimal premiumLinuxStorageUnitPerHr = 3;
+        private readonly int standadLinuxStorageSizeInGB = 32;
+        private readonly int premiumLinuxStorageSizeInGB = 64;
 
         public static readonly string subscription = Guid.NewGuid().ToString();
         public static readonly string standardLinuxSkuName = "standardLinuxSku";
@@ -98,10 +100,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         protected Mock<ISkuCatalog> GetMockSKuCatalog()
         {
             var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
+            mockStandardLinux.Setup(sku => sku.StorageSizeInGB).Returns(standadLinuxStorageSizeInGB);
             mockStandardLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(standardLinuxComputeUnitPerHr);
             mockStandardLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(standardLinuxStorageUnitPerHr);
 
             var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
+            mockPremiumLinux.Setup(sku => sku.StorageSizeInGB).Returns(premiumLinuxStorageSizeInGB);
             mockPremiumLinux.Setup(sku => sku.ComputeVsoUnitsPerHour).Returns(premiumLinuxComputeUnitPerHr);
             mockPremiumLinux.Setup(sku => sku.StorageVsoUnitsPerHour).Returns(premiumLinuxStorageUnitPerHr);
 

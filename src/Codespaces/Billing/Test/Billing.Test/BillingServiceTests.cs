@@ -20,20 +20,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private readonly BillingService billingService;
         private static readonly string WestUs2MeterId = "5f3afa79-01ad-4d7e-b691-73feca4ea350";
 
+        private static readonly int StandardLinuxStorageSize = 32;
+        private static readonly int PremiumLinuxStorageSize = 64;
 
         // 5 hrs Available => 127 * 5 = 635
         private static readonly double BillableUnits = 635;
+        private static readonly double BillableSecondsActiveStandardLinuxSku = 5 * 60 * 60;
+
         // 3 hrs Available + 3hrs Shutdown => 127units * 3hrs + 2units * 2 hrs = 385
         private static readonly double BillableUnitsWithShutdown = 385;
+        private static readonly double BillableSecondsActiveStandardLinuxSkuWithShutdown = 3 * 60 * 60;
+        private static readonly double BillableSecondsInactiveStandardLinuxSkuWithShutdown = 2 * 60 * 60;
+
         // (3 hrs Available + 1hr Shutdown on Standard) + (2 hrs Shutdown + 4 hrs Available on Premium) => (127units * 3hrs + 2units * 1hr) + (3units * 2hrs + 245units * 4hrs) = 1369
         private static readonly double BillableUnitsWithSkuChange = 1369;
+        private static readonly double BillableSecondsActiveStandardLinuxSkuWithSkuChange = 3 * 60 * 60; // = 10800
+        private static readonly double BillableSecondsInactiveStandardLinuxSkuWithSkuChange = 1 * 60 * 60; // = 3600
+        private static readonly double BillableSecondsActivePremiumLinuxSkuWithSkuChange = 4 * 60 * 60; // = 14400
+        private static readonly double BillableSecondsInactivePremiumLinuxSkuWithSkuChange = 2 * 60 * 60; // = 7200
+
         // 5 hr Available for 2 environments => (127units * 5)*2 = 1270
         private static readonly double BillableUnitsMultiEnvironments = 1270;
+        //private static readonly double BillableSecondsActiveStandardLinuxSkuMultiEnvironments = 5 * 2 * 60 * 60;
+
         // 5 hrs Available, 5 hrs Shutdown => (127units * 5) + (2units *5) = 645
         private static readonly double BIllableUnitsNoNewEvents = 645;
+        //private static readonly double BillableSecondsActiveStandardLinuxSkuNoNewEvents = 5 * 60 * 60;
+        //private static readonly double BillableSecondsInactiveStandardLinuxSkuNoNewEvents = 5 * 60 * 60;
 
         // 5 hrs Shutdown => 2units * 5 = 10
         private static readonly double BillableUnitForShutdownEnvironment = 10;
+        private static readonly double BillableSecondsInactiveStandardLinuxSkuForShutdownEnvironment = 5 * 60 * 60;
 
         public static readonly IEnumerable<BillingEvent> BillingEventsInput = new List<BillingEvent>
         {
@@ -260,7 +277,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
-                            },
+                            }
                         }
                     },
                 },
@@ -290,7 +307,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             Usage = new Dictionary<string, double>
                             {
                                 { WestUs2MeterId, 0 },
-                            },
+                            }
                         }
                     },
                 },
@@ -349,6 +366,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 },
             }
         };
+
+        public static ResourceUsageDetail ComputeResourceUsage(
+            double standardLinuxSkuActive, double standardLinuxSkuInactive = 0,
+            double premiumLinuxSkuActive = 0, double premiumLinuxSkuInactive = 0)
+        {
+            var anyCompute = standardLinuxSkuActive > 0 || premiumLinuxSkuActive > 0;
+
+            var result = new ResourceUsageDetail()
+            {
+                Storage = new List<StorageUsageDetail>(),
+                Compute = !anyCompute ? default : new List<ComputeUsageDetail>(),
+            };
+
+            if (standardLinuxSkuActive != 0)
+            {
+                result.Compute.Add(new ComputeUsageDetail()
+                {
+                    Usage = standardLinuxSkuActive,
+                    Sku = standardLinuxSkuName
+                });
+            }
+
+            if (premiumLinuxSkuActive != 0)
+            {
+                result.Compute.Add(new ComputeUsageDetail()
+                {
+                    Usage = premiumLinuxSkuActive,
+                    Sku = premiumLinuxSkuName
+                });
+            }
+
+            if (standardLinuxSkuInactive != 0 || standardLinuxSkuActive != 0)
+            {
+                result.Storage.Add(new StorageUsageDetail()
+                {
+                    Usage = standardLinuxSkuInactive + standardLinuxSkuActive,
+                    Size = StandardLinuxStorageSize,
+                    Sku = standardLinuxSkuName
+                });
+            }
+
+            if (premiumLinuxSkuInactive != 0 || premiumLinuxSkuActive != 0)
+            {
+                result.Storage.Add(new StorageUsageDetail()
+                {
+                    Usage = premiumLinuxSkuInactive + premiumLinuxSkuActive,
+                    Size = PremiumLinuxStorageSize,
+                    Sku = premiumLinuxSkuName
+                });
+            }
+
+            return result;
+        }
+
         public static readonly BillingSummary BillingSummaryOutput = new BillingSummary
         {
             SubmissionState = BillingSubmissionState.None,
@@ -369,6 +440,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 {WestUs2MeterId, BillableUnits },
                             },
+                            ResourceUsage = ComputeResourceUsage(BillableSecondsActiveStandardLinuxSku)
                         }
                     },
                 },
@@ -396,6 +468,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 {WestUs2MeterId, BillableUnits },
                             },
+                            ResourceUsage = ComputeResourceUsage(BillableSecondsActiveStandardLinuxSku)
                         }
                     },
                     {
@@ -407,6 +480,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 {WestUs2MeterId, BillableUnits },
                             },
+                            ResourceUsage = ComputeResourceUsage(BillableSecondsActiveStandardLinuxSku)
                         }
                     },
                 },
@@ -417,7 +491,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             SubmissionState = BillingSubmissionState.None,
             Usage = new Dictionary<string, double>
             {
-                {WestUs2MeterId, BillableUnitsWithShutdown },
+                { WestUs2MeterId, BillableUnitsWithShutdown },
             },
             UsageDetail = new UsageDetail
             {
@@ -432,6 +506,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 {WestUs2MeterId, BillableUnitsWithShutdown },
                             },
+                            ResourceUsage = ComputeResourceUsage(
+                                BillableSecondsActiveStandardLinuxSkuWithShutdown,
+                                BillableSecondsInactiveStandardLinuxSkuWithShutdown
+                            )
                         }
                     },
                 },
@@ -457,6 +535,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 { WestUs2MeterId, BillableUnitsWithSkuChange },
                             },
+                            ResourceUsage = ComputeResourceUsage(
+                                BillableSecondsActiveStandardLinuxSkuWithSkuChange,
+                                BillableSecondsInactiveStandardLinuxSkuWithSkuChange,
+                                BillableSecondsActivePremiumLinuxSkuWithSkuChange,
+                                BillableSecondsInactivePremiumLinuxSkuWithSkuChange
+                            )
                         }
                     },
                 },
@@ -484,6 +568,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 { WestUs2MeterId, BillableUnits },
                             },
+                            ResourceUsage = ComputeResourceUsage(
+                                BillableSecondsActiveStandardLinuxSku)
                         }
                     },
                     {
@@ -495,6 +581,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                             {
                                 { WestUs2MeterId, BillableUnitForShutdownEnvironment },
                             },
+                            ResourceUsage = ComputeResourceUsage(0,
+                                BillableSecondsInactiveStandardLinuxSkuForShutdownEnvironment)
                         }
                     },
                 },
@@ -630,6 +718,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             // Environment usage details 
             Assert.Equal(expectedEnvironmentUsageDetail.Usage.First().Value, actualEnvironmentUsageDetail.Usage.First().Value, 2);
+
+            Assert.True(expectedEnvironmentUsageDetail.ResourceUsage.Equals(
+                actualEnvironmentUsageDetail.ResourceUsage)
+            );
+
+            Assert.Equal(expectedEnvironmentUsageDetail.EndState, actualEnvironmentUsageDetail.EndState);
+
+            // Environment usage details 
             Assert.Equal(expectedEnvironmentUsageDetail.EndState, actualEnvironmentUsageDetail.EndState);
         }
 

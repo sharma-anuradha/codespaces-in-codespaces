@@ -8,10 +8,13 @@ using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Details of the environment usage.
+    /// </summary>
     public class EnvironmentUsageDetail
     {
         /// <summary>
-        /// Environment name.
+        /// Gets or sets the environment name.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "name")]
         public string Name { get; set; }
@@ -39,6 +42,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "usage")]
         public IDictionary<string, double> Usage { get; set; }
+
+        /// <summary>
+        /// Gets or sets resource usage by Compute and Storage usage rolled up by active/inactive usage.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "resourceUsage")]
+        public ResourceUsageDetail ResourceUsage { get; set; }
 
         /// <summary>
         /// Gets or sets the Cloud Environments (VSLS) profile ID of the user of the environment.

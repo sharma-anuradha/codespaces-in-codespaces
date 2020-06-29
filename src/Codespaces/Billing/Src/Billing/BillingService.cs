@@ -26,6 +26,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public partial class BillingService : BillingServiceBase, IBillingService
     {
+        private const string Compute = "compute";
+        private const string Storage = "storage";
+
         private readonly IBillingEventManager billingEventManager;
         private readonly ISkuCatalog skuCatalog;
         private readonly IPlanManager planManager;
@@ -197,7 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             foreach (var environmentEvents in billingEventsPerEnvironment)
             {
                 var billableUnits = 0.0d;
-                var usageStateTimes = new Dictionary<string, double>();
+                var usageByState = new Dictionary<string, double>();
                 var seqEvents = environmentEvents.OrderBy(t => t.Time);
                 var environmentDetails = environmentEvents.First().Environment;
                 var slices = new List<BillingWindowSlice>();
@@ -253,6 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // We might not have any billable slices. If we don't, let's not do anything
                 if (slices.Any())
                 {
+                    var usageBySkuByState = new Dictionary<string, UsageDictionary>();
                     var (isError, errorState) = await CheckForErrors(plan, billSummaryEndTime, environmentDetails.Id, currState.EnvironmentState, childLogger);
 
                     CloudEnvironmentState finalEnvironmentStateOrError;
@@ -263,7 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // Aggregate the billable units for each slice created above.
                         foreach (var slice in slices)
                         {
-                            billableUnits += CalculateVsoUnitsByTimeAndSku(slice, usageStateTimes, childLogger);
+                            billableUnits += CalculateVsoUnitsByTimeAndSku(slice, usageBySkuByState, childLogger);
                         }
                     }
                     else
@@ -287,13 +291,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         Sku = currState.Sku,
                     };
 
+                    usageDetail.ResourceUsage = ReportResourceUsageDetails(usageBySkuByState, skuCatalog);
+
                     environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
                     totalBillable += billableUnits;
+                    RollupUsage(usageByState, usageBySkuByState);
                 }
 
-                // Telemeter the environment bill data
-                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageStateTimes, childLogger);
-                CopyEnvironmentStateTimesToShardStateTimes(usageStateTimes, shardUsageTimes);
+                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, childLogger);
+                CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
             }
 
             return new BillingSummary
@@ -411,7 +417,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var (allSlices, nextState) = await GenerateWindowSlices(end, endState, null, plan, childLogger);
 
                 var billableUnits = 0d;
-                var usageStateTimes = new Dictionary<string, double>();
+                var usageBySkuByState = new Dictionary<string, UsageDictionary>();
 
                 var (isError, errorState) = await CheckForErrors(plan, end, environment.Key, nextState.EnvironmentState, childLogger);
 
@@ -423,7 +429,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Aggregate the billable units for each slice created above.
                     foreach (var slice in allSlices)
                     {
-                        billableUnits += CalculateVsoUnitsByTimeAndSku(slice, usageStateTimes, childLogger.NewChildLogger());
+                        billableUnits += CalculateVsoUnitsByTimeAndSku(slice, usageBySkuByState, childLogger.NewChildLogger());
                     }
                 }
                 else
@@ -447,12 +453,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     Sku = environment.Value.Sku,
                 };
 
+                usageDetail.ResourceUsage = ReportResourceUsageDetails(usageBySkuByState, skuCatalog);
+
+                // rollup usage by sku into their respective states
+                var usageByState = usageBySkuByState
+                    .Select(o => new { state = o.Key, usage = o.Value.Sum(x => x.Value) })
+                    .ToDictionary(o => o.state, o => o.usage);
+
                 // Update Environment list, SkuPlan billable units, and User billable units
                 currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
 
                 // Telemeter the environment bill data
-                LogEnvironmentUsageDetails(end, region, envUsageDetail.Sku.Name, usageStateTimes, childLogger);
-                CopyEnvironmentStateTimesToShardStateTimes(usageStateTimes, shardUsageTimes);
+                LogEnvironmentUsageDetails(end, region, envUsageDetail.Sku.Name, usageByState, childLogger);
+                CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
 
                 if (currentSummary.Usage.ContainsKey(meterId))
                 {
@@ -501,6 +514,93 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                               .FluentAddValue("BillEndingTime", end.ToString())
                               .LogInfo("billing_aggregate_shard_summary");
                });
+        }
+
+        private static ResourceUsageDetail ReportResourceUsageDetails(
+            Dictionary<string, UsageDictionary> usageBySkuByState,
+            ISkuCatalog skuCatalog)
+        {
+            var active = nameof(BillingWindowBillingState.Active);
+
+            var activeResources = new[] { Compute, Storage };
+            var inactiveResources = new[] { Storage };
+
+            var skuUsageByResource =
+               (from usageBySkuForAState in usageBySkuByState // depivot by state
+                let state = usageBySkuForAState.Key
+                let usageBySku = usageBySkuForAState.Value
+                from usageForASku in usageBySku // depivot by sku
+                let sku = usageForASku.Key
+                let usage = usageForASku.Value
+                from resource in state == active ? activeResources : inactiveResources // unroll resource
+                let resourceSkuStateUsage = new
+                {
+                    State = state,
+                    Resource = resource,
+                    Sku = sku,
+                    Usage = usage,
+                }
+                group resourceSkuStateUsage by new
+                {
+                    resourceSkuStateUsage.Resource,
+                    resourceSkuStateUsage.Sku,
+                }
+                into usageBySkuResource
+                let sku = usageBySkuResource.Key.Sku
+                let size = skuCatalog.CloudEnvironmentSkus[sku].StorageSizeInGB // denormalize storage size
+                select new
+                {
+                    usageBySkuResource.Key.Resource,
+                    Sku = sku,
+                    Size = size,
+                    Usage = usageBySkuResource.Sum(x => x.Usage), // rollup (storage) by active/inactive
+                }).ToLookup(o => o.Resource); // pivot by resource
+
+            var storageList = skuUsageByResource[Storage].Select(skuUsage =>
+                new StorageUsageDetail()
+                {
+                    Sku = skuUsage.Sku,
+                    Usage = skuUsage.Usage,
+                    Size = skuUsage.Size,
+                }).ToList();
+
+            var computeList = skuUsageByResource[Compute].Select(skuUsage =>
+                new ComputeUsageDetail()
+                {
+                    Sku = skuUsage.Sku,
+                    Usage = skuUsage.Usage,
+                }).ToList();
+
+            if (computeList.Count == 0)
+            {
+                computeList = null;
+            }
+
+            return new ResourceUsageDetail()
+            {
+                Storage = storageList,
+                Compute = computeList,
+            };
+        }
+
+        private static void RollupUsage(UsageDictionary usageByState, Dictionary<string, UsageDictionary> usageBySkuByState)
+        {
+            // rollup usage for for sku's into their respective states
+            var usageByStateByAEnv =
+               (from usageBySkuByAState in usageBySkuByState // dict of dict => key/value pairs where {key = active|inactive, value = dict}
+                group usageBySkuByAState by usageBySkuByAState.Key into usageBySkuByAState // group pairs by acitve|inactive
+                let state = usageBySkuByAState.Key // active|inactive
+                let usageByASku = usageBySkuByAState.SelectMany(o => o.Value) // select the usageBySku dict of each pair and flatten to usage/sku key/value pairs
+                let usage = usageByASku.Select(o => o.Value) // ignore the key (sku) and select just the value (seconds)
+                select new { state, usage = usage.Sum() }) // sum the seconds per state
+                .ToDictionary(o => o.state, o => o.usage);
+
+            foreach (var pair in usageByStateByAEnv)
+            {
+                var key = pair.Key;
+                var value = pair.Value;
+                usageByState[key] = (usageByState.ContainsKey(key) ? usageByState[key] : 0) + value;
+            }
         }
 
         private static void CopyEnvironmentStateTimesToShardStateTimes(UsageDictionary environmentStateTimes, UsageDictionary shardUsageTimes)
@@ -824,35 +924,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// name, returning the billable unit for the given period of time.
         /// </summary>
         /// <param name="slice">the last active billing slice.</param>
-        /// <param name="environmentStateTimes">the per environment telemetered usage times.</param>
+        /// <param name="usageBySkuByState">the per environment sku telemetered usage times.</param>
         /// <returns>the total billable time.</returns>
-        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, IDictionary<string, double> environmentStateTimes, IDiagnosticsLogger logger)
+        private double CalculateVsoUnitsByTimeAndSku(BillingWindowSlice slice, Dictionary<string, UsageDictionary> usageBySkuByState, IDiagnosticsLogger logger)
         {
-            if (slice.OverrideState == BillingOverrideState.BillingEnabled)
+            // check if billing is disabled for this time slice
+            if (slice.OverrideState != BillingOverrideState.BillingEnabled)
             {
-                var vsoUnitsPerHour = GetVsoUnitsForSlice(slice, logger);
-                const decimal secondsPerHour = 3600m;
-                var vsoUnitsPerSecond = vsoUnitsPerHour / secondsPerHour;
-                var totalSeconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
-                var vsoUnits = totalSeconds * vsoUnitsPerSecond;
+                return 0;
+            }
 
-                // Add usage times to the per environment list
-                if (environmentStateTimes.ContainsKey(slice.BillingState.ToString()))
-                {
-                    environmentStateTimes[slice.BillingState.ToString()] += (double)totalSeconds;
-                }
-                else
-                {
-                    environmentStateTimes[slice.BillingState.ToString()] = (double)totalSeconds;
-                }
+            var unitsPerHour = GetVsoUnitsForSlice(slice, logger);
+            const decimal secondsPerHour = 3600m;
+            var unitsPerSecond = unitsPerHour / secondsPerHour;
+            var seconds = (decimal)slice.EndTime.Subtract(slice.StartTime).TotalSeconds;
+            var units = seconds * unitsPerSecond;
+            var state = slice.BillingState.ToString();
+            var sku = slice.Sku.Name;
 
-                return (double)vsoUnits;
+            if (!usageBySkuByState.ContainsKey(state))
+            {
+                usageBySkuByState[state] = new UsageDictionary();
+            }
+
+            var usageBySku = usageBySkuByState[state];
+            if (usageBySku.ContainsKey(sku))
+            {
+                usageBySku[sku] += (double)seconds;
             }
             else
             {
-                // Billing is disabled for this time slice
-                return 0;
+                usageBySku[sku] = (double)seconds;
             }
+
+            return (double)units;
         }
 
         /// <summary>
