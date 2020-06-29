@@ -1,7 +1,6 @@
 import React, { useCallback, SFC } from 'react';
 import { useSelector } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-import { withRouter } from 'react-router';
 
 import { Persona, PersonaSize } from 'office-ui-fabric-react/lib/Persona';
 import {
@@ -23,9 +22,11 @@ import { useActionContext } from '../../actions/middleware/useActionContext';
 import { useTranslation } from 'react-i18next';
 
 const getDevelopmentEmojiPrefix = () => {
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDevStamp = useSelector(
+        (state: ApplicationState) => state.configuration?.isDevStamp ?? false
+    );
 
-    if (!isDev) {
+    if (!isDevStamp) {
         return null;
     }
 

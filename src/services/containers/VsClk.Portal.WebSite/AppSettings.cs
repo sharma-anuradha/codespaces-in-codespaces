@@ -9,6 +9,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public bool IsLocal { get; set; }
         public bool IsTest { get; set; }
 
+        public bool IsDevStamp { get; set; }
+
         // Key Vault configuration
         public string KeyVaultName { get; set; }
 

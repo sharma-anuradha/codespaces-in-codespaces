@@ -13,6 +13,7 @@ export interface IConfiguration {
     readonly enableEnvironmentPortForwarding: boolean;
     readonly environmentsApiPath: string;
     readonly richNavWebExtensionEndpoint: string;
+    readonly isDevStamp: boolean;
 }
 
 export const defaultConfig: IConfiguration = {
@@ -26,6 +27,7 @@ export const defaultConfig: IConfiguration = {
     portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
     enableEnvironmentPortForwarding: false,
     environmentsApiPath: '/api/v1/environments',
+    isDevStamp: false,
 };
 
 export const configurationEndpoint = '/configuration';

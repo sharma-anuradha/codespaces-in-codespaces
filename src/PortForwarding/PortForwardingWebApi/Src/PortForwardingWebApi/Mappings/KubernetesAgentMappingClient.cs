@@ -29,6 +29,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         {
             ["kubernetes.io/ingress.class"] = "nginx",
             ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
+            ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin",
+            ["nginx.ingress.kubernetes.io/configuration-snippet"] = @"
+                set $new_cookie $http_cookie;
+
+                if ($new_cookie ~ ""(.*)(?:^|;)\s*use_vso_pfs=[^;]+(.*)"") {
+                    set $new_cookie $1$2;
+                }
+                if ($new_cookie ~ ""(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)"") {
+                    set $new_cookie $1$2;
+                }
+                if ($new_cookie ~ "";\s*(.+);?\s*"") {
+                    set $new_cookie $1;
+                }
+                
+                proxy_set_header Cookie $new_cookie;
+            ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '),
+            ["nginx.ingress.kubernetes.io/server-snippet"] = @"
+                location /signin {
+                    proxy_pass http://portal-vsclk-portal-website.default.svc.cluster.local;
+                }
+                location /authenticate-codespace {
+                    proxy_pass_request_body on;
+                    proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+                    proxy_set_header Host $http_host;
+
+                    proxy_buffer_size          128k;
+                    proxy_buffers              4 256k;
+                    proxy_busy_buffers_size    256k;
+                }
+            ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '), // We clean up indentation and normalize new lines for kubernetes use
         };
 
         /// <summary>

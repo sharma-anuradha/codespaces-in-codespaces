@@ -29,6 +29,10 @@ spec:
         ports:
         - containerPort: {{ .Values.service.internalPort }}
         env:
+        {{- if .Values.configuration.isDevStamp }}
+        - name: PORTAL_AppSettings__IsDevStamp
+          value: "true"
+        {{- end }}
         {{- range $index, $hosts := .Values.portForwardingHosts }}
         {{- range $hostIndex, $host := $hosts.hosts }}
         - name: PORTAL_AppSettings__PortForwardingHostsConfigs__{{ $index }}__Hosts__{{ $hostIndex }}

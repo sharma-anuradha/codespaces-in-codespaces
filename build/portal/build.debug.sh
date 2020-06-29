@@ -10,4 +10,4 @@ execute "dotnet publish --no-restore --configuration Debug /m /v:m /p:BuildFront
 
 execute "cp -R $REPO_ROOT/src/Portal/PortalWebsite/Src/Website/build bin/debug/VsClk.Portal.WebSite/publish/ClientApp"
 
-execute "docker build -t vsclk.portal.website:debug -f $REPO_ROOT/src/Portal/PortalWebsite/Src/Website/build bin/debug/VsClk.Portal.WebSite/publish/Dockerfile.debug $REPO_ROOT/src/Portal/PortalWebsite/Src/Website/build bin/debug/VsClk.Portal.WebSite/publish"
+execute "docker build -t vsclk.portal.website:debug -f $REPO_ROOT/bin/debug/VsClk.Portal.WebSite/publish/Dockerfile.debug $REPO_ROOT/bin/debug/VsClk.Portal.WebSite/publish"

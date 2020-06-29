@@ -82,7 +82,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
             else if (AppSettings.IsLocal)
             {
-                // When developing locally, there's no ngninx to set the headers.
+                // When developing locally, there's no nginx to set the headers.
                 (cascadeToken, _) = GetAuthToken(logger);
                 try
                 {
@@ -108,9 +108,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return ExceptionView(PortForwardingFailure.NotAuthenticated);
             }
 
-            if (Request.Headers.TryGetValue(PortForwardingHeaders.EnvironmentId, out var enironmentIdValues))
+            if (Request.Headers.TryGetValue(PortForwardingHeaders.EnvironmentId, out var environmentIdValues))
             {
-                environmentId = enironmentIdValues.SingleOrDefault();
+                environmentId = environmentIdValues.SingleOrDefault();
             }
 
             switch (path)

@@ -22,6 +22,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         public ActionResult Index()
         {
             var configuration = new Dictionary<string, object> {
+                { "isDevStamp", AppSettings.IsDevStamp },
                 { "apiEndpoint", AppSettings.ApiEndpoint },
                 { "environmentRegistrationEndpoint", AppSettings.EnvironmentRegistrationEndpoint },
                 { "liveShareEndpoint", AppSettings.LiveShareEndpoint },

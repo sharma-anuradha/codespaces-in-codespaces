@@ -363,6 +363,11 @@ resource "helm_release" "web" {
     name  = "port-forwarding-web-api.image.agentTag"
     value = var.pfa_tag
   }
+  
+  set {
+    name  = "port-forwarding-web-api.image.pullPolicy"
+    value = "Always"
+  }
 
   set {
     name  = "port-forwarding-web-api.serviceBus.overrideDev"
@@ -477,12 +482,22 @@ resource "helm_release" "portal" {
   }
 
   set {
+    name  = "image.pullPolicy"
+    value = "Always"
+  }
+
+  set {
     name  = "image.tag"
     value = var.portal_tag
   }
 
   set {
     name  = "pods.replicaCount"
+    value = 1
+  }
+
+  set {
+    name  = "configuration.isDevStamp"
     value = 1
   }
 }

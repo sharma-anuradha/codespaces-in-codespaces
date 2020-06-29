@@ -47,6 +47,19 @@ pfingress:
       error_page 302 = @handle_error;
     nginx.ingress.kubernetes.io/server-snippet: |
       location @handle_error {
+        set $new_cookie $http_cookie;
+
+        if ($new_cookie ~ "(.*)(?:^|;)\s*use_vso_pfs=[^;]+(.*)") {
+          set $new_cookie $1$2;
+        }
+        if ($new_cookie ~ "(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)") {
+          set $new_cookie $1$2;
+        }
+        if ($new_cookie ~ ";\s*(.+);?\s*") {
+          set $new_cookie $1;
+        }
+        
+        proxy_set_header Cookie $new_cookie;
         if ($upstream_http_location ~* "^https?:\/\/pf-(?<pf_session>[0-9a-f]{36}-\d{2,5})\.(?<subdomain>[^\/]+)(?<path>\/.*)$") {
           proxy_pass 'http://pf-$pf_session.$subdomain';
         }
@@ -119,3 +132,6 @@ appSettings:
   - PORTAL_AppSettings__GitHubPortForwardingDomainTemplate
   - PORTAL_AppSettings__PortForwardingEnableEnvironmentEndpoints
   - PORTAL_AppSettings__GitHubPortForwardingEnableEnvironmentEndpoints
+
+configuration:
+  isDevStamp: false
