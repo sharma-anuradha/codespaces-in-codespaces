@@ -151,30 +151,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private Lazy<Task<Profile>> GetProfile(HttpContext httpContext, JwtSecurityToken jwtToken, IDiagnosticsLogger logger)
         {
-            Profile Fail(string message)
+            void ThrowForFailure(string message)
             {
-                CurrentUserProvider.SetBearerToken(null);
                 logger.LogErrorWithDetail("validated_principal_get_profile_error", message);
                 throw new IdentityValidationException(message);
             }
 
-            return new Lazy<Task<Profile>>(async () =>
+            // JWT Bearer provides the token, Cookie does not.
+            // The bearer token must be set in order to read the user profile.
+            // Note that this bearer token is encrypted and Live Share must be able to decrypt it.
+            if (jwtToken != null)
             {
-                // JWT Bearer provides the token, Cookie does not.
-                // The bearer token must be set in order to read the user profile.
-                // Note that this bearer token is encrypted and Live Share must be able to decrypt it.
-                if (jwtToken != null)
+                var bearerToken = jwtToken.RawData;
+
+                if (string.IsNullOrEmpty(bearerToken))
                 {
-                    var bearerToken = jwtToken.RawData;
-
-                    if (string.IsNullOrEmpty(bearerToken))
-                    {
-                        return Fail("No JWT bearer token");
-                    }
-
-                    CurrentUserProvider.SetBearerToken(jwtToken.RawData);
+                    ThrowForFailure("No JWT bearer token");
                 }
 
+                CurrentUserProvider.SetBearerToken(jwtToken.RawData);
+            }
+
+            return new Lazy<Task<Profile>>(async () =>
+            {
                 Profile profile;
                 try
                 {
@@ -182,12 +181,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 }
                 catch (Exception ex)
                 {
-                    return Fail($"Could not get Live Share profile: {ex.Message}");
+                    ThrowForFailure($"Could not get Live Share profile: {ex.Message}");
                 }
 
                 if (profile is null)
                 {
-                    return Fail("Could not get Live Share profile.");
+                    ThrowForFailure("Could not get Live Share profile.");
                 }
 
                 return profile;
