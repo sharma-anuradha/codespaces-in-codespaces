@@ -18,10 +18,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants
         /// Constant for the latency of control plane.
         /// </summary>
         public const string ControlPlaneLatency = "controlPlaneLatency";
-
-        /// <summary>
-        /// Constant for the latency of control plane RP.
-        /// </summary>
-        public const string ControlPlaneRpLatency = "controlPlaneRpLatency";
     }
 }
