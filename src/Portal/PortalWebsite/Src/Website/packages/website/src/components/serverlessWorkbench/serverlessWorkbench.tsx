@@ -222,7 +222,7 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
 
     render() {
         return (
-            <div className='vsonline-workbench'>
+            <div className='vsonline-serverless-workbench'>
                 <div
                     id='workbench'
                     style={{ height: '100%' }}
