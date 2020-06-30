@@ -30,5 +30,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets a value indicating whether the agent should be updated.
         /// </summary>
         public bool UpdateAgent { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the OS disk record should be created if it doesn't exist already.
+        /// </summary>
+        public bool CreateOSDiskRecord { get; set; }
     }
 }

@@ -7,14 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Management.Batch.Fluent.Models;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
@@ -181,71 +176,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     Guid.NewGuid(), resourceSku.Type, resourceSku.Details, "ResourceAssignedReplace", taskLogger),
                 logger);
 
-            var osDiskResource = await CreateOSDiskRecord(resourceSku, logger.NewChildLogger());
-
-            var computeResourceTags = new Dictionary<string, string>
-            {
-                [ResourceTagName.ResourceComponentRecordIds] = osDiskResource.Id,
-            };
-
-            // Acquire OS disk information.
-            var diskResourceResult = await DiskProvider.AcquireOSDiskAsync(
-                new DiskProviderAcquireOSDiskInput()
-                {
-                    VirtualMachineResourceInfo = computeResource.AzureResourceInfo,
-                    AzureVmLocation = computeResource.Location.ToEnum<AzureLocation>(),
-                    OSDiskResourceTags = osDiskResource.GetResourceTags(reason),
-                    AdditionalComputeResourceTags = computeResourceTags,
-                },
-                logger.NewChildLogger());
-
+            var osDiskResource = await ResourceRepository.GetAsync(computeResource.GetComputeDetails().OSDiskRecordId, logger.NewChildLogger());
             await logger.RetryOperationScopeAsync(
-                    $"{LogBaseName}_osdisk_record_update",
-                    async (IDiagnosticsLogger innerLogger) =>
-                    {
-                        // Update disk azure resource info.
-                        osDiskResource.AzureResourceInfo = diskResourceResult.AzureResourceInfo;
+                            $"{LogBaseName}_osdisk_get_update",
+                            async (IDiagnosticsLogger innerLogger) =>
+                            {
+                                osDiskResource = await ResourceRepository.GetAsync(computeResource.GetComputeDetails().OSDiskRecordId, logger.NewChildLogger());
 
-                        // Copy queue info.
-                        osDiskResource = PreserveQueueAndCopyComponent(computeResource, osDiskResource);
+                                // Update core properties to indicate that its assigned
+                                osDiskResource.IsAssigned = true;
+                                osDiskResource.Assigned = DateTime.UtcNow;
 
-                        // Copy provisioning and ready status.
-                        osDiskResource.ProvisioningReason = computeResource.ProvisioningReason;
-                        osDiskResource.ProvisioningStatus = computeResource.ProvisioningStatus;
-                        osDiskResource.IsReady = computeResource.IsReady;
-                        osDiskResource.Ready = computeResource.Ready;
-
-                        osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
-                    });
-
-            // Update compute record with disk components
-            await logger.RetryOperationScopeAsync(
-                    $"{LogBaseName}_compute_record_update",
-                    async (IDiagnosticsLogger innerLogger) =>
-                    {
-                        computeResource = await ResourceRepository.GetAsync(computeResource.Id, innerLogger.NewChildLogger());
-
-                        computeResource.Components.Items[osDiskResource.Id] = new ResourceComponent(
-                                                                                    ResourceType.OSDisk,
-                                                                                    osDiskResource.AzureResourceInfo,
-                                                                                    osDiskResource.Id,
-                                                                                    preserve: true);
-
-                        var queueComponent = computeResource.Components.Items.Single(x => x.Value.ComponentType == ResourceType.InputQueue);
-                        queueComponent.Value.Preserve = true;
-
-                        computeResource = await ResourceRepository.UpdateAsync(computeResource, innerLogger.NewChildLogger());
-                    });
-
-            // Updates ComputeVM tags to include OS Disk record id.
-            await ComputeProvider.UpdateTagsAsync(
-               new VirtualMachineProviderUpdateTagsInput()
-               {
-                   VirtualMachineResourceInfo = computeResource.AzureResourceInfo,
-                   CustomComponents = computeResource.Components?.Items?.Values.ToList(),
-                   AdditionalComputeResourceTags = computeResourceTags,
-               },
-               logger.NewChildLogger());
+                                osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
+                            });
 
             return (computeResource, osDiskResource);
         }
@@ -307,7 +250,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             string reason,
             IDiagnosticsLogger logger)
         {
-            var osDiskResource = await CreateOSDiskRecord(resourceSku, logger.NewChildLogger());
+            var osDiskResource = await CreateOSDiskRecord(resourceSku.Details as ResourcePoolComputeDetails, logger.NewChildLogger());
             computeExtendedProperties.OSDiskResourceID = osDiskResource.Id;
 
             var computeResource = await ResourceContinuationOperations.QueueCreateAsync(
@@ -321,59 +264,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             return (computeResource, osDiskResource);
         }
 
-        private async Task<ResourceRecord> CreateOSDiskRecord(ResourcePool resourceSku, IDiagnosticsLogger logger)
+        private async Task<ResourceRecord> CreateOSDiskRecord(ResourcePoolComputeDetails details, IDiagnosticsLogger logger)
         {
-            var id = Guid.NewGuid();
-            var time = DateTime.UtcNow;
-            var type = ResourceType.OSDisk;
-            var location = resourceSku.Details.Location;
-            var skuName = "OSDisk";
-
-            // Core record
-            var resource = ResourceRecord.Build(id, time, type, location, skuName);
+            var resource = details.CreateOSDiskRecord();
             resource.IsAssigned = true;
-            resource.Assigned = time;
-            resource.IsReady = false;
-            resource.ProvisioningStatus = OperationState.InProgress;
-
-            // Copy over pool reference detail.
-            resource.PoolReference = new ResourcePoolDefinitionRecord
-            {
-                Code = resourceSku.Details.GetPoolDefinition(),
-                VersionCode = resourceSku.Details.GetPoolVersionDefinition(),
-                Dimensions = resourceSku.Details.GetPoolDimensions(),
-            };
+            resource.Assigned = DateTime.UtcNow;
 
             // Create the actual record
             resource = await ResourceRepository.CreateAsync(resource, logger.NewChildLogger());
             return resource;
-        }
-
-        private ResourceRecord PreserveQueueAndCopyComponent(ResourceRecord sourceRecord, ResourceRecord targetRecord)
-        {
-            var queueComponent = sourceRecord.Components?.Items.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue);
-
-            if (!queueComponent.Value.Value.Preserve)
-            {
-                queueComponent.Value.Value.Preserve = true;
-            }
-
-            if (targetRecord.Components == default)
-            {
-                targetRecord.Components = new ResourceComponentDetail();
-            }
-
-            if (targetRecord.Components.Items == default)
-            {
-                targetRecord.Components.Items = new Dictionary<string, ResourceComponent>();
-            }
-
-            if (queueComponent.HasValue)
-            {
-                targetRecord.Components.Items[queueComponent.Value.Key] = queueComponent.Value.Value;
-            }
-
-            return targetRecord;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourcePoolComputeDetails.cs" company="Microsoft">
+﻿// <copyright file="ResourcePoolOSDiskDetails.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,24 +9,21 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
 {
     /// <summary>
-    /// Compute details for scaling input.
+    /// OSDisk pool details.
     /// </summary>
-    public class ResourcePoolComputeDetails : ResourcePoolResourceDetails
+    public class ResourcePoolOSDiskDetails : ResourcePoolResourceDetails
     {
+        private const string ResourceType = "OSDisk";
+
         /// <summary>
         /// Gets or Sets the target OS.
         /// </summary>
         public ComputeOS OS { get; set; }
 
         /// <summary>
-        /// Gets or sets the sku family -- used for querying quotas.
+        /// Gets or sets the sku family.
         /// </summary>
         public string SkuFamily { get; set; }
-
-        /// <summary>
-        /// Gets or sets the number of cores -- used for querying quotas.
-        /// </summary>
-        public int Cores { get; set; }
 
         /// <summary>
         /// Gets or sets the target Compute Agent Image.
@@ -41,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <inheritdoc/>
         public override string GetPoolDefinition()
         {
-            return $"{SkuName}__{Location}__{ImageFamilyName}".GetDeterministicHashCode();
+            return $"{ResourceType}__{SkuName}__{Location}".GetDeterministicHashCode();
         }
 
         /// <inheritdoc/>

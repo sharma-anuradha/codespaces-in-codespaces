@@ -54,6 +54,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
 
+            var options = default(CreateComputeContinuationInputOptions);
+
+            if (type == ResourceType.ComputeVM &&
+                details is ResourcePoolComputeDetails computeDetails &&
+                computeDetails.OS == ComputeOS.Windows)
+            {
+                options = new CreateComputeContinuationInputOptions()
+                {
+                    CreateOSDiskRecord = true,
+                };
+            }
+
             var input = new CreateResourceContinuationInput()
             {
                 Type = type,
@@ -61,6 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 ResourceId = resourceId,
                 Reason = reason,
                 IsAssigned = false,
+                Options = options,
             };
             var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
 

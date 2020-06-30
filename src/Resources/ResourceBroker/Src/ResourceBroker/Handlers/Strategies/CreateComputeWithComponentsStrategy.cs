@@ -10,11 +10,13 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
@@ -34,17 +36,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="azureSubscriptionCatalog">Azure subscription catalog.</param>
         /// <param name="capacityManager">The capacity manager.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="diskProvider">Disk provider.</param>
+        /// <param name="computeProvider">Compute provider.</param>
         /// <param name="creationStrategies">Resource creation strategies.</param>
         public CreateComputeWithComponentsStrategy(
             IAzureSubscriptionCatalog azureSubscriptionCatalog,
             ICapacityManager capacityManager,
             IResourceRepository resourceRepository,
+            IDiskProvider diskProvider,
+            IComputeProvider computeProvider,
             IEnumerable<ICreateComponentStrategy> creationStrategies)
         {
             AzureSubscriptionCatalog = Requires.NotNull(azureSubscriptionCatalog, nameof(azureSubscriptionCatalog));
             CapacityManager = capacityManager;
             ResourceRepository = resourceRepository;
             CreationStrategies = creationStrategies;
+            DiskProvider = diskProvider;
+            ComputeProvider = computeProvider;
         }
 
         private string LogBaseName => "create_compute_with_component_strategy";
@@ -54,6 +62,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         private ICapacityManager CapacityManager { get; }
 
         private IResourceRepository ResourceRepository { get; }
+
+        private IDiskProvider DiskProvider { get; }
+
+        private IComputeProvider ComputeProvider { get; }
 
         private IEnumerable<ICreateComponentStrategy> CreationStrategies { get; }
 
@@ -289,10 +301,115 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                                await ResourceRepository.UpdateAsync(existingOSDisk, logger.NewChildLogger());
                            });
                     }
+                    else if (computeOption.CreateOSDiskRecord && input.ResourcePoolDetails is ResourcePoolComputeDetails resourcePoolComputeDetails)
+                    {
+                        // Windows hotpool.
+                        var osDiskResource = await CreateOSDiskRecord(resourcePoolComputeDetails, logger.NewChildLogger());
+                        var computeResource = resource.Value;
+                        var computeResourceTags = new Dictionary<string, string>
+                        {
+                            [ResourceTagName.ResourceComponentRecordIds] = osDiskResource.Id,
+                        };
+
+                        // Acquire OS disk information.
+                        var diskResourceResult = await DiskProvider.AcquireOSDiskAsync(
+                            new DiskProviderAcquireOSDiskInput()
+                            {
+                                VirtualMachineResourceInfo = computeResource.AzureResourceInfo,
+                                AzureVmLocation = computeResource.Location.ToEnum<AzureLocation>(),
+                                OSDiskResourceTags = osDiskResource.GetResourceTags(input.Reason),
+                                AdditionalComputeResourceTags = computeResourceTags,
+                            },
+                            logger.NewChildLogger());
+
+                        await logger.RetryOperationScopeAsync(
+                                $"{LogBaseName}_osdisk_record_update",
+                                async (IDiagnosticsLogger innerLogger) =>
+                                {
+                                    // Update disk azure resource info.
+                                    osDiskResource.AzureResourceInfo = diskResourceResult.AzureResourceInfo;
+
+                                    // Copy queue info.
+                                    osDiskResource = CloneQueueAndCopyComponent(computeResource, osDiskResource);
+
+                                    // Copy provisioning and ready status.
+                                    osDiskResource.ProvisioningReason = computeResource.ProvisioningReason;
+                                    osDiskResource.ProvisioningStatus = computeResource.ProvisioningStatus;
+                                    osDiskResource.IsReady = computeResource.IsReady;
+                                    osDiskResource.Ready = computeResource.Ready;
+
+                                    osDiskResource = await ResourceRepository.UpdateAsync(osDiskResource, logger.NewChildLogger());
+                                });
+
+                        // Update compute record with disk components
+                        await logger.RetryOperationScopeAsync(
+                                $"{LogBaseName}_compute_record_update",
+                                async (IDiagnosticsLogger innerLogger) =>
+                                {
+                                    computeResource = await ResourceRepository.GetAsync(computeResource.Id, innerLogger.NewChildLogger());
+
+                                    computeResource.Components.Items[osDiskResource.Id] = new ResourceComponent(
+                                                                                                ResourceType.OSDisk,
+                                                                                                osDiskResource.AzureResourceInfo,
+                                                                                                osDiskResource.Id,
+                                                                                                preserve: true);
+
+                                    var queueComponent = computeResource.Components.Items.Single(x => x.Value.ComponentType == ResourceType.InputQueue);
+                                    queueComponent.Value.Preserve = true;
+
+                                    computeResource = await ResourceRepository.UpdateAsync(computeResource, innerLogger.NewChildLogger());
+                                });
+
+                        // Updates ComputeVM tags to include OS Disk record id.
+                        await ComputeProvider.UpdateTagsAsync(
+                           new VirtualMachineProviderUpdateTagsInput()
+                           {
+                               VirtualMachineResourceInfo = computeResource.AzureResourceInfo,
+                               CustomComponents = computeResource.Components?.Items?.Values.ToList(),
+                               AdditionalComputeResourceTags = computeResourceTags,
+                           },
+                           logger.NewChildLogger());
+                    }
                 }
             }
 
             return resourceResult;
+        }
+
+        private async Task<ResourceRecord> CreateOSDiskRecord(ResourcePoolComputeDetails details, IDiagnosticsLogger logger)
+        {
+            var resource = details.CreateOSDiskRecord();
+
+            // Create the actual record
+            resource = await ResourceRepository.CreateAsync(resource, logger.NewChildLogger());
+            return resource;
+        }
+
+        private ResourceRecord CloneQueueAndCopyComponent(ResourceRecord sourceRecord, ResourceRecord targetRecord)
+        {
+            var queueComponent = sourceRecord.Components?.Items.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue);
+
+            if (!queueComponent.Value.Value.Preserve)
+            {
+                queueComponent.Value.Value.Preserve = true;
+            }
+
+            if (targetRecord.Components == default)
+            {
+                targetRecord.Components = new ResourceComponentDetail();
+            }
+
+            if (targetRecord.Components.Items == default)
+            {
+                targetRecord.Components.Items = new Dictionary<string, ResourceComponent>();
+            }
+
+            if (queueComponent.HasValue)
+            {
+                targetRecord.Components.Items[queueComponent.Value.Key] = queueComponent.Value.Value;
+            }
+
+            return targetRecord;
         }
 
         private async Task CreateQueueComponentIfNeededAsync(
