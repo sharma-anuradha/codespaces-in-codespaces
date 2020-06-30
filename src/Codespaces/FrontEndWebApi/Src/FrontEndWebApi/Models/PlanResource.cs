@@ -49,6 +49,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string Location { get; set; }
 
         /// <summary>
+        /// Gets or sets the managed identity properties.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "identity")]
+        public PlanResourceIdentity Identity { get; set; }
+
+        /// <summary>
         /// Gets or sets the tags.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "tags")]

@@ -82,6 +82,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public VsoPlanProperties Properties { get; set; }
 
         /// <summary>
+        /// Gets or sets the managed identity properties for this plan.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "managedIdentity")]
+        public VsoPlanIdentity ManagedIdentity { get; set; }
+
+        /// <summary>
         /// Gets or sets the external partner.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "partner")]

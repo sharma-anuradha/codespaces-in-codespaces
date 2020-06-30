@@ -271,6 +271,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var controller = CreateTestController(planManager: planManager);
 
+            var headers = new PlanResourceHeaders();
             var resource = ToPlanResource(MockVsoPlan(userId: null));
 
             var validateResult = await controller.PlanCreateValidateAsync(
@@ -278,7 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             AssertIsErrorResultWithMessage(validateResult, "ValidateResourceFailed");
 
             var createResult = await controller.PlanCreateAsync(
-                MockSubscriptionId, MockResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, MockPlanName, resource);
+                MockSubscriptionId, MockResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, MockPlanName, headers, resource);
             AssertIsErrorResultWithMessage(createResult, "CreateResourceFailed");
         }
 
@@ -291,6 +292,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var controller = CreateTestController(planManager: planManager);
 
             const string expectedUserId = "mock-user-id";
+            var headers = new PlanResourceHeaders();
             var resource = ToPlanResource(MockVsoPlan(userId: expectedUserId));
 
             var validateResult = await controller.PlanCreateValidateAsync(
@@ -298,7 +300,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.IsType<OkResult>(validateResult);
 
             var createResult = await controller.PlanCreateAsync(
-                MockSubscriptionId, MockResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, MockPlanName, resource);            
+                MockSubscriptionId, MockResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, MockPlanName, headers, resource);            
             Assert.IsType<JsonResult>(createResult);
 
             var createResultValue = (createResult as JsonResult).Value;
@@ -317,6 +319,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var controller = CreateTestController(planManager: planManager);
 
+            var headers = new PlanResourceHeaders();
             var resource = ToPlanResource(MockVsoPlan(userId: null));
 
             var validateResult = await controller.PlanCreateValidateAsync(
@@ -324,7 +327,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.IsType<OkResult>(validateResult);
 
             var createResult = await controller.PlanCreateAsync(
-                MockSubscriptionId, MockResourceGroup, RPNamespace, PlanResourceTypeName, MockPlanName, resource);
+                MockSubscriptionId, MockResourceGroup, RPNamespace, PlanResourceTypeName, MockPlanName, headers, resource);
             Assert.IsType<JsonResult>(createResult);
 
             var createResultValue = (createResult as JsonResult).Value;

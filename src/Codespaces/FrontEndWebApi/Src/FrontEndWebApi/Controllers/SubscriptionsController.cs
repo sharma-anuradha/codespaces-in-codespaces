@@ -186,6 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="headers">The headers from RPSaaS.</param>
         /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateAsync))]
@@ -197,6 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
+            [FromHeader] PlanResourceHeaders headers,
             [FromBody] PlanResource resource)
         {
             return HttpContext.HttpScopeAsync<IActionResult>(
@@ -235,6 +237,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         },
                         Partner = partner,
                     };
+
+                    // check for the existance of the principal ID specifically, as some of the other headers may always be present.
+                    if (headers.IdentityPrincipalId != null)
+                    {
+                        plan.ManagedIdentity = new VsoPlanIdentity
+                        {
+                            Type = resource.Identity?.Type,
+                            PrincipalId = headers.IdentityPrincipalId,
+                            IdentityUrl = headers.IdentityUrl,
+                            TenantId = headers.HomeTenantId ?? headers.ClientTenantId,
+                        };
+                    }
 
                     // UserId is required when creating single user plans, disallowed otherwise.
                     if (providerNamespace == VsoPlanInfo.VsoProviderNamespace)
@@ -536,6 +550,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     {
                         return CreateErrorResponse("GetResourceFailed", "Plan not found", HttpStatusCode.NotFound);
                     }
+
+                    PopulateManagedIdentityProperties(resource, plan);
 
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, resource);
@@ -1055,6 +1071,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("UpdateSubscriptionFailed")),
                 swallowException: true);
+        }
+
+        /// <summary>
+        /// Populates the identity section of the plan resource object to be returned.
+        /// </summary>
+        /// <param name="resource">The partially populated PlanResource.</param>
+        /// <param name="plan">The plan to retrieve the additional properties from.</param>
+        /// <remarks>
+        /// RPs must populate the identity section of the resource definition for PUT responses.
+        /// These properties must be returned on all subsequent GET requests on the resource.
+        /// The RP should not return the secret URL or clientId to ARM.
+        ///
+        /// Note: The principalId (or oid) is needed by the end user to create RBAC rules.
+        /// The RP is expected to store the oid as part of the resource content and return it in the response.
+        /// </remarks>
+        private static void PopulateManagedIdentityProperties(PlanResource resource, VsoPlan plan)
+        {
+            // populate managed identity, if it exists
+            if (plan.ManagedIdentity?.PrincipalId != null)
+            {
+                resource.Identity = new PlanResourceIdentity
+                {
+                    Type = plan.ManagedIdentity?.Type,
+                    PrincipalId = plan.ManagedIdentity?.PrincipalId,
+                    TenantId = plan.ManagedIdentity?.TenantId,
+                };
+            }
         }
 
         /// <summary>
