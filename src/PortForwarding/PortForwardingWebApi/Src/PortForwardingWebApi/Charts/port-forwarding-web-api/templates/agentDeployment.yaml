@@ -8,7 +8,7 @@ metadata:
   labels:
 {{ include "port-forwarding-agent.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.agentMinReplicaCount }}
+  replicas: {{ .Values.pods.agentMinReplicaCount }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "port-forwarding-agent.name" . }}
