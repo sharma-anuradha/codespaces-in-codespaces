@@ -10,6 +10,7 @@ import {
     IEnvironment,
     isHostedOnGithub,
     vsls,
+    EnvironmentStateInfo,
 } from 'vso-client-core';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 import {
@@ -41,6 +42,7 @@ import {
     isNotAvailable,
     isStarting,
     isCreating,
+    isInStableState,
 } from '../../utils/environmentUtils';
 
 import { credentialsProvider } from '../../providers/credentialsProvider';
@@ -88,6 +90,7 @@ export interface IWorkbenchState {
     connectError: string | null;
     connectRequested: boolean;
     isServerlessSplashScreenShown: boolean;
+    environmentState?: EnvironmentStateInfo;
 }
 
 export interface WorkbenchProps extends WithTranslation {
@@ -124,6 +127,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             connectError: null,
             connectRequested: false,
             isServerlessSplashScreenShown: false,
+            environmentState: props.environmentInfo?.state
         };
     }
 
@@ -262,6 +266,9 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
 
         if (!this.props.autoStart) {
+            if (!isInStableState(environmentInfo)) {
+                this.pollTransitioningState(environmentInfo);
+            }
             return;
         }
 
@@ -280,6 +287,23 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         } else if (isActivating(environmentInfo)) {
             this.pollForActivatingEnvironment(environmentInfo);
         }
+    }
+    
+    pollTransitioningState(codespaceInfo: ILocalEnvironment) {
+        if (this.interval) {
+            return;
+        }
+        this.interval = setInterval(async () => {
+            if (!codespaceInfo.id) {
+                // Should never be the case
+                throw new Error('Codespace id not found');
+            }
+            const environmentInfo = await this.props.getEnvironment(codespaceInfo.id);
+            if (environmentInfo && isInStableState(environmentInfo)) {
+                this.setState({ environmentState: environmentInfo.state });
+                this.cancelPolling();
+            }
+        }, 2000);
     }
 
     pollForActivatingEnvironment(environmentInfo: ILocalEnvironment) {
@@ -527,11 +551,13 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         } else {
             this.connectionAdapter =
                 this.connectionAdapter || new SplashCommunicationProvider(this.onCommandReceived);
-            return (
+            const environmentInfoWithState =
+                {...environmentInfo, state: this.state.environmentState || environmentInfo.state};
+            return(
                 <SplashScreenComponent
                     onRetry={this.handleClickToRetry}
                     onConnect={this.handleOnSplashScreenConnect}
-                    environment={environmentInfo}
+                    environment={environmentInfoWithState}
                     showPrompt={!this.props.autoStart}
                     connectError={this.state.connectError}
                 />
