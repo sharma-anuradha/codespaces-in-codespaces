@@ -110,8 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
             if (environmentIsRunning)
             {
-                // If current state is NOT Available, change status to Available (when Enviroment is fully running).
-                if (environment.State != CloudEnvironmentState.Available)
+                if (CanChangeStateToAvailable(environment))
                 {
                     return (CloudEnvironmentState.Available, null);
                 }
@@ -126,6 +125,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
             }
 
             return default;
+        }
+
+        private bool CanChangeStateToAvailable(CloudEnvironment environment)
+        {
+            return environment.State != CloudEnvironmentState.Archived &&
+                   environment.State != CloudEnvironmentState.Available &&
+                   environment.State != CloudEnvironmentState.Deleted &&
+                   environment.State != CloudEnvironmentState.Shutdown &&
+                   environment.State != CloudEnvironmentState.ShuttingDown;
         }
 
         private bool IsCloudEnvironmentRunning(EnvironmentData environmentData)
