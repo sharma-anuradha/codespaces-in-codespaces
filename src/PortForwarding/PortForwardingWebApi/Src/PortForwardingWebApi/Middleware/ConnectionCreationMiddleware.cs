@@ -142,6 +142,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 Query = context.Request.QueryString.ToString(),
             };
 
+            //wait for service to get ready for redirect
+            System.Threading.Thread.Sleep(3000);
+
             logger.AddValue("target_url", uriBuilder.Uri.ToString());
             logger.LogInfo("connection_creation_middleware_redirect");
             context.Response.Redirect(uriBuilder.Uri.ToString());
