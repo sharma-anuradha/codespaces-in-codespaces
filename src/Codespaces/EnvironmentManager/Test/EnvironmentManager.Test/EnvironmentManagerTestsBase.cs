@@ -74,6 +74,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Plan = testPlan,
         };
 
+        public Subscription Subscription = new Subscription
+        {
+            Id = testPlan.Subscription,
+            QuotaId = "testQuotaValue",
+            CurrentMaximumQuota = new Dictionary<string, int>
+            {
+                {"standardDSv3Family", 10 },
+                {"standardFSv2Family", 10 }
+            }
+        };
+
         public EnvironmentManagerTestsBase()
         {
             loggerFactory = new DefaultLoggerFactory();
@@ -85,7 +96,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 DefaultMaxPlansPerSubscription = defaultCount,
                 DefaultAutoSuspendDelayMinutesOptions = new int[] { 0, 5, 30, 120 },
             };
-            var environmentSettings = new EnvironmentManagerSettings() { DefaultMaxEnvironmentsPerPlan = defaultCount, DefaultComputeCheckEnabled = false };
+            var environmentSettings = new EnvironmentManagerSettings() 
+            { 
+                DefaultMaxEnvironmentsPerPlan = defaultCount, 
+                DefaultComputeCheckEnabled = false,
+            };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
             mockSystemConfiguration
@@ -107,12 +122,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var metricsLogger = new MockEnvironmentMetricsLogger();
 
             var skuMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
+            var skuWindowsMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
             skuMock.Setup((s) => s.ComputeOS).Returns(ComputeOS.Linux);
             skuMock.Setup(s => s.ComputeSkuCores).Returns(defaultCount);
             skuMock.Setup(s => s.ComputeSkuFamily).Returns("standardDSv3Family");
+            skuWindowsMock.Setup((s) => s.ComputeOS).Returns(ComputeOS.Windows);
+            skuWindowsMock.Setup(s => s.ComputeSkuCores).Returns(1);
+            skuWindowsMock.Setup(s => s.ComputeSkuFamily).Returns("standardFSv2Family");
             var skuDictionary = new Dictionary<string, ICloudEnvironmentSku>
             {
                 ["test"] = skuMock.Object,
+                ["windows"] = skuWindowsMock.Object,
             };
             var skuCatalogMock = new Mock<ISkuCatalog>(MockBehavior.Strict);
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
@@ -143,15 +163,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.resourceSelector);
         }
 
-        public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test")
+        public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test", string skuName = "test")
         {
+            
             var serviceResult = await environmentManager.CreateAsync(
                 new CloudEnvironment
                 {
                     FriendlyName = name,
                     Location = AzureLocation.WestUs2,
                     ControlPlaneLocation = AzureLocation.CentralUs,
-                    SkuName = "test",
+                    SkuName = skuName,
                     PlanId = testPlan.ResourceId,
                     OwnerId = testUserId
                 },
@@ -164,11 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     CallbackUriFormat = testCallbackUriFormat,
                 },
                 testPlan,
-                new Subscription()
-                {
-                    Id = testPlan.Subscription,
-                    QuotaId = "testQuotaValue",
-                },
+                Subscription,
                 this.logger);
 
             return serviceResult;

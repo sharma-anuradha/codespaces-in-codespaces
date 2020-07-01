@@ -63,6 +63,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         public bool DefaultComputeCheckEnabled { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the Windows OS compute quota check is enabled.
+        /// </summary>
+        public bool DefaultWindowsComputeCheckEnabled { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -173,6 +178,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:compute-check-enabled", logger, DefaultComputeCheckEnabled);
+        }
+
+        /// <summary>
+        /// Gets or sets the Windows Compute Check.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> WindowsComputeCheckEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:windows-compute-check-enabled", logger, DefaultWindowsComputeCheckEnabled);
         }
     }
 }

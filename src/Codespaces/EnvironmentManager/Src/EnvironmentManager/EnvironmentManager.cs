@@ -412,7 +412,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var countOfEnvironmentsInPlan = environmentsInPlan.Count();
                     var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, childLogger.NewChildLogger());
                     var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(childLogger.NewChildLogger());
-
                     if (!computeCheckEnabled && (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan))
                     {
                         childLogger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
@@ -502,8 +501,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     var sku = GetSku(cloudEnvironment);
                     var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, sku, childLogger);
-                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > subscription.CurrentMaximumQuota[sku.ComputeSkuFamily]))
+                    var currentMaxQuota = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
+                    var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(childLogger.NewChildLogger());
+                    if (sku.ComputeOS == ComputeOS.Windows)
                     {
+                        computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
+                    }
+
+                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > currentMaxQuota))
+                    {
+                        childLogger.AddValue("RequestedSku", sku.SkuName);
+                        childLogger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
+                        childLogger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
+                        childLogger.AddSubscriptionId(subscription.Id);
                         childLogger.LogError($"{LogBaseName}_create_exceed_compute_quota");
                         result.MessageCode = MessageCodes.ExceededQuota;
                         result.HttpStatusCode = StatusCodes.Status403Forbidden;
@@ -774,9 +784,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var sku = GetSku(cloudEnvironment);
                     var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, sku, childLogger);
                     var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(childLogger.NewChildLogger());
-
-                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > subscription.CurrentMaximumQuota[sku.ComputeSkuFamily]))
+                    var currentMaxQuota = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
+                    var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(childLogger.NewChildLogger());
+                    if (sku.ComputeOS == ComputeOS.Windows)
                     {
+                        computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
+                    }
+
+                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > currentMaxQuota))
+                    {
+                        childLogger.AddValue("RequestedSku", sku.SkuName);
+                        childLogger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
+                        childLogger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
+                        childLogger.AddSubscriptionId(subscription.Id);
                         childLogger.LogError($"{LogBaseName}_resume_exceed_compute_quota");
 
                         return new CloudEnvironmentServiceResult
