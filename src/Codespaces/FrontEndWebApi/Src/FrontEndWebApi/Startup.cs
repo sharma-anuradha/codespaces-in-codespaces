@@ -288,8 +288,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 },
                 null,
                 true,
-                JwtBearerUtility.AadAuthenticationScheme,
-                JwtBearerUtility.AadAuthenticationScheme)
+                defaultAuthenticationScheme: null, // This auth scheme will run for all requests regardless of if the Controller specifies it
+                jwtBearerAuthenticationScheme: JwtBearerUtility.AadAuthenticationScheme) // This auth scheme gets configured with JwtBearerUtility.ConfigureAadOptions above
                 .AddValidatedPrincipalIdentityHandler() // handle validated user principal
                 .AddIdentityMap();                      // map user IDs for the validated user principal
 
