@@ -717,6 +717,7 @@ export class CreateEnvironmentPanelView extends Component<
                 <Stack.Item>{useOnlyTrustworthyReposMessage}</Stack.Item>
                 <Stack.Item>
                     <PrimaryButton
+                        data-testid='Create Environment'
                         onClick={this.createEnvironment}
                         style={{ marginRight: '.8rem' }}
                         disabled={!this.isCurrentStateValid()}

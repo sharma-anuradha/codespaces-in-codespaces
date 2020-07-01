@@ -88,6 +88,7 @@ class EnvironmentsPanelView extends Component<EnvironmentsPanelProps> {
                             <PrimaryButton
                                 componentRef={this.createEnvironmentButtonRef}
                                 text={translation('createCodespace')}
+                                data-testid='Create Codespace'
                                 className='environments-panel__create-button'
                                 onClick={this.showCreateEnvPanel}
                                 onBlur={blurCreateEnvironmentButton}
