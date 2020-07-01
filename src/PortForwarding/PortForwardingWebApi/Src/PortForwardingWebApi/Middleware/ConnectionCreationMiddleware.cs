@@ -142,7 +142,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 Query = context.Request.QueryString.ToString(),
             };
 
-            //wait for service to get ready for redirect
+            // Wait for service to get ready for redirect
+            // TODO: remove after fixing this issue https://github.com/microsoft/vscs-planning/issues/230
             System.Threading.Thread.Sleep(3000);
 
             logger.AddValue("target_url", uriBuilder.Uri.ToString());
