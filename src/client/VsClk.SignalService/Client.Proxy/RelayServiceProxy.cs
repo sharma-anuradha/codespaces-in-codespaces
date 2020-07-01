@@ -93,7 +93,7 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
 
             AddHubHandler(hubProxy.On(
                 RelayHubMethods.MethodParticipantChanged,
-                new Type[] { typeof(string), typeof(string), typeof(Dictionary<string, object>), typeof(ParticipantChangeType) },
+                new Type[] { typeof(string), typeof(string), typeof(Dictionary<string, object>), typeof(int) },
                 (args) =>
             {
                 var hubId = (string)args[0];

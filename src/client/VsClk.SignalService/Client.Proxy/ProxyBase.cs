@@ -90,6 +90,10 @@ namespace Microsoft.VsCloudKernel.SignalService.Client
             {
                 return (T)argument;
             }
+            else if (argument.GetType() == typeof(int))
+            {
+                return (T)Enum.ToObject(typeof(T), argument);
+            }
             else
             {
                 if (Enum.TryParse<T>(argument.ToString(), out var value))
