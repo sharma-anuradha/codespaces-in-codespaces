@@ -137,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             {
                 await ResourceBrokerHttpClient.StatusAsync(environmentId, computeId, logger.NewChildLogger());
             }
-            catch (Exception ex) when (ex is HttpResponseStatusException httpResponseStatusException && httpResponseStatusException.StatusCode == System.Net.HttpStatusCode.NotFound)
+            catch (Exception ex) when (ex is RemoteInvocationException || (ex is HttpResponseStatusException httpResponseStatusException && httpResponseStatusException.StatusCode == System.Net.HttpStatusCode.NotFound))
             {
                 operationInput.CurrentState = ShutdownEnvironmentContinuationInputState.MarkShutdown;
                 return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
@@ -155,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             {
                 await ResourceBrokerHttpClient.DeleteAsync(environmentId, computeId, logger.NewChildLogger());
             }
-            catch (Exception ex) when (ex is HttpResponseStatusException httpResponseStatusException && httpResponseStatusException.StatusCode == System.Net.HttpStatusCode.NotFound)
+            catch (Exception ex) when (ex is RemoteInvocationException || (ex is HttpResponseStatusException httpResponseStatusException && httpResponseStatusException.StatusCode == System.Net.HttpStatusCode.NotFound))
             {
                 operationInput.CurrentState = ShutdownEnvironmentContinuationInputState.MarkShutdown;
                 return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
@@ -199,7 +199,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             {
                 computeStatus = await ResourceBrokerHttpClient.StatusAsync(environmentId, computeId, logger.NewChildLogger());
             }
-            catch (Exception ex) when (ex is HttpResponseStatusException httpResponseStatusException && httpResponseStatusException.StatusCode == System.Net.HttpStatusCode.NotFound)
+            catch (Exception ex) when (ex is RemoteInvocationException || (ex is HttpResponseStatusException httpResponseStatusException && httpResponseStatusException.StatusCode == System.Net.HttpStatusCode.NotFound))
             {
                 operationInput.CurrentState = ShutdownEnvironmentContinuationInputState.MarkShutdown;
                 return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
