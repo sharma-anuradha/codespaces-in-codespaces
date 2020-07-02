@@ -76,22 +76,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                         StorageType = StorageType.Linux,
                     };
 
-                    // The name of the Windows blob is implied by the name of the Linux blob.
-                    // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
-                    // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
-                    var windowsCopyItem = new StorageCopyItem()
-                    {
-                        SrcBlobUrl = await ImageUrlGenerator.ReadOnlyUrlByImageName(input.ResourcePoolDetails.Location, resource.Value.Type, $"{storageDetails.ImageName}.disk.vhdx", logger.NewChildLogger(), TimeSpan.FromDays(100)),
-                        StorageType = StorageType.Windows,
-                    };
-
                     result = new FileShareProviderCreateInput
                     {
                         AzureLocation = storageDetails.Location.ToString().ToLowerInvariant(),
                         AzureSkuName = storageDetails.SkuName,
                         AzureSubscription = resourceLocation.Subscription.SubscriptionId,
                         AzureResourceGroup = resourceLocation.ResourceGroup,
-                        StorageCopyItems = new[] { linuxCopyItem, windowsCopyItem },
+                        StorageCopyItems = new[] { linuxCopyItem },
                         ResourceTags = resourceTags,
                         StorageSizeInGb = storageDetails.SizeInGB,
                     };
