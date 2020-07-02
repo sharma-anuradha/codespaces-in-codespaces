@@ -147,11 +147,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Now filter on all the environment state changes. Find all that happened within the last billing summary and the desired end time.
                     var billingEvents = allEvents.Where(x => x.Time >= latestBillingSummary.PeriodEnd && x.Time < desiredBillEndTime && x.Args is BillingStateChange);
 
+                    // Gets all environment events. This is used for Error checking.
+                    var allEnvironmentEvents = await GetAllEnvironmentStateChanges(plan.Plan, desiredBillEndTime, childLogger);
+
                     // Using the above EnvironmentStateChange events and the previous BillingSummary create the current BillingSummary.
-                    var billingSummary = await CalculateBillingUnits(plan.Plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes, childLogger);
+                    var billingSummary = await CalculateBillingUnits(plan.Plan, billingEvents, (BillingSummary)latestBillingEventSummary.Args, desiredBillEndTime, region, shardUsageTimes, allEnvironmentEvents, childLogger);
 
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
-                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan.Plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, childLogger);
+                    var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan.Plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, allEnvironmentEvents, childLogger);
+
+                    // Checks for any missing environments in this summary that should be in it.
+                    CheckForMissingEnvironments(totalBillingSummary, start, allEnvironmentEvents, childLogger);
 
                     if (plan.IsDeleted)
                     {
@@ -180,6 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="billSummaryEndTime">the end time for the summary.</param>
         /// <param name="region">The region the bill is being calculated for.</param>
         /// <param name="shardUsageTimes">Aggregate dictionary for the total time being added to by this bill.</param>
+        /// <param name="allEnvironmentChangesForPlan">Gets all environment state changes for a particular plan. Used for error checking.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A new billing summary for this plan based on new state changes.</returns>
         public async Task<BillingSummary> CalculateBillingUnits(
@@ -189,6 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             DateTime billSummaryEndTime,
             AzureLocation region,
             Dictionary<string, double> shardUsageTimes,
+            IEnumerable<BillingEvent> allEnvironmentChangesForPlan,
             IDiagnosticsLogger logger)
         {
             var totalBillable = 0.0d;
@@ -257,7 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 if (slices.Any())
                 {
                     var usageBySkuByState = new Dictionary<string, UsageDictionary>();
-                    var (isError, errorState) = await CheckForErrors(plan, billSummaryEndTime, environmentDetails.Id, currState.EnvironmentState, childLogger);
+                    var (isError, errorState) = CheckForErrors(plan, billSummaryEndTime, environmentDetails.Id, currState.EnvironmentState, allEnvironmentChangesForPlan, childLogger);
 
                     CloudEnvironmentState finalEnvironmentStateOrError;
                     if (!isError)
@@ -329,6 +337,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="end">the end time for the bill.</param>
         /// <param name="region">The region the bill applies to.</param>
         /// <param name="shardUsageTimes">The aggregate usage time dictionary. Used to track how much time is being billed by this bill generation.</param>
+        /// <param name="allEventsForPlan">All environment state changes for a given plan.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>An updated billing Summary.</returns>
         public async Task<BillingSummary> CaculateBillingForEnvironmentsWithNoEvents(
@@ -338,6 +347,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             DateTime end,
             AzureLocation region,
             Dictionary<string, double> shardUsageTimes,
+            IEnumerable<BillingEvent> allEventsForPlan,
             IDiagnosticsLogger logger)
         {
             // Scenario: Environment has no billing Events in this billing period
@@ -347,7 +357,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // TODO: design for no billing summary in this time period
                 // We may want to widen our summary search
                 // No previous summary environments
-                logger.LogWarning("No BillingSummary found in the last 48 hours for the plan.");
+                logger.LogWarning("billing_no_prior_bill");
                 return currentSummary;
             }
 
@@ -419,7 +429,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var billableUnits = 0d;
                 var usageBySkuByState = new Dictionary<string, UsageDictionary>();
 
-                var (isError, errorState) = await CheckForErrors(plan, end, environment.Key, nextState.EnvironmentState, childLogger);
+                var (isError, errorState) = CheckForErrors(plan, end, environment.Key, nextState.EnvironmentState, allEventsForPlan, childLogger);
 
                 CloudEnvironmentState finalEnvironmentStateOrError;
                 if (!isError)
@@ -662,7 +672,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                   .LogInfo("billing_aggregate_environment_summary");
         }
 
-        private async Task<(bool isError, CloudEnvironmentState errorState)> CheckForErrors(VsoPlanInfo plan, DateTime end, string id, CloudEnvironmentState expectedState, IDiagnosticsLogger logger)
+        private void CheckForMissingEnvironments(BillingSummary billingSummary, DateTime start, IEnumerable<BillingEvent> allEnvironmentEvents, IDiagnosticsLogger childLogger)
+        {
+            // Get all the events that happened before the current billing cycle.
+            var allOlderEnvironmentEvents = allEnvironmentEvents.Where(x => x.Time < start);
+
+            // Group all events by their env id
+            var envsGroupedByEnvironments = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id);
+            foreach (var env in envsGroupedByEnvironments)
+            {
+                // Do we already have some sort of record of this environmnet. If so, do nothing.
+                if (billingSummary?.UsageDetail?.Environments != null && billingSummary.UsageDetail.Environments.ContainsKey(env.Key))
+                {
+                    continue;
+                }
+
+                var lastEnvEventChange = GetLastBillableEventStateChange(env);
+                if (lastEnvEventChange is null)
+                {
+                    // If we get this far, we could not find an appropriate billing event. Perhaps it never became available after this time range started. If so, do nothing.
+                    continue;
+                }
+
+                // We have the latest billable state. Let's make sure it's not already a deleted environment.
+                var lastState = ((BillingStateChange)lastEnvEventChange.Args).NewValue;
+                if (lastState == deletedEnvState)
+                {
+                    continue;
+                }
+
+                // Generate a fake entry for this billing summary so we do not lose sight of the environment.
+                var envUsageDetails = new EnvironmentUsageDetail
+                {
+                    EndState = lastState,
+                    Sku = lastEnvEventChange.Environment.Sku,
+                    Usage = new UsageDictionary(),
+                    Name = lastEnvEventChange.Environment.Name,
+                };
+
+                // Add the lost environnment to the summary for future tracking.
+                billingSummary.UsageDetail.Environments.Add(env.Key, envUsageDetails);
+            }
+        }
+
+        private (bool isError, CloudEnvironmentState errorState) CheckForErrors(VsoPlanInfo plan, DateTime end, string id, CloudEnvironmentState expectedState, IEnumerable<BillingEvent> allEventsForPlan, IDiagnosticsLogger logger)
         {
             // We're deleted already, we can trust that's a terminal state
             if (expectedState == CloudEnvironmentState.Deleted)
@@ -679,7 +732,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                    bev.Environment.Id == id &&
                                                    bev.Type == BillingEventTypes.EnvironmentStateChange;
 
-            var envEventsSinceStart = await billingEventManager.GetPlanEventsAsync(filter, logger.NewChildLogger());
+            var envEventsSinceStart = allEventsForPlan.Where(x => x.Environment.Id == id);
 
             if (envEventsSinceStart.Any())
             {
@@ -698,6 +751,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             // If we get this far, our we did not get any billing events. We should no longer be billing the customer and should investigate
             logger.LogError("billingworker_missing_events_for_environments");
             return (true, CloudEnvironmentState.Deleted);
+        }
+
+        private async Task<IEnumerable<BillingEvent>> GetAllEnvironmentStateChanges(VsoPlanInfo plan, DateTime end, IDiagnosticsLogger logger)
+        {
+            // We need a list of all environment state changes in this billing Plan.
+            Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
+                                                   bev.Time < end &&
+                                                   bev.Type == BillingEventTypes.EnvironmentStateChange;
+
+            var envEventsSinceStart = await billingEventManager.GetPlanEventsAsync(filter, logger.NewChildLogger());
+            return envEventsSinceStart;
         }
 
         private BillingEvent GetLastBillableEventStateChange(IEnumerable<BillingEvent> envEventsSinceStart)

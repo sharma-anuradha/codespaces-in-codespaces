@@ -4,6 +4,9 @@
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// Different billing event types.
+    /// </summary>
     public static class BillingEventTypes
     {
         /// <summary>
