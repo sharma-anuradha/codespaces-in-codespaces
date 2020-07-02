@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Moq;
-using System;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test

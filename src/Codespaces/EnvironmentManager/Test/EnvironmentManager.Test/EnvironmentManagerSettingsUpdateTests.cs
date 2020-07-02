@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -21,6 +22,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Moq;
 using Xunit;
@@ -32,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private static readonly IDiagnosticsLogger Logger = new DefaultLoggerFactory().New();
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_GetEnvironmentAvailableSettingsUpdates()
+        public async Task GetEnvironmentAvailableSettingsUpdates()
         {
             var sku1 = MockSku(skuName: "Sku1", skuTransitions: new[] { "Sku2" });
             var sku2 = MockSku(skuName: "Sku2");
@@ -58,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_UpdateEnironmentSettings()
+        public async Task UpdateEnironmentSettings()
         {
             var targetSku = MockSku(skuName: "TargetSku");
             var activeSku = MockSku(skuName: "ActiveSku", skuTransitions: new[] { targetSku.SkuName });
@@ -82,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
 
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.CloudEnvironment);
@@ -91,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_UpdateEnironmentSettings_NotFound()
+        public async Task UpdateEnironmentSettings_NotFound()
         {
             var environmentRepository = new Mock<ICloudEnvironmentRepository>();
             environmentRepository
@@ -104,11 +106,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository.Object);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateSettingsAsync(null, update, Logger));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateSettingsAsync(null, update, null, Logger));
         }
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_UpdateEnironmentSettings_NotShutdown()
+        public async Task UpdateEnironmentSettings_NotShutdown()
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
@@ -124,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -132,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_UpdateEnironmentSettings_InvalidAutoShutdown()
+        public async Task UpdateEnironmentSettings_InvalidAutoShutdown()
         {
             var sku = MockSku();
 
@@ -153,7 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -161,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_UpdateEnironmentSettings_SkuUpdateNotAllowed()
+        public async Task UpdateEnironmentSettings_SkuUpdateNotAllowed()
         {
             var sku = MockSku();
 
@@ -182,7 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -190,7 +192,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         [Fact]
-        public async Task EnvironmentSettingsUpdate_UpdateEnironmentSettings_InvalidSku()
+        public async Task UpdateEnironmentSettings_InvalidSku()
         {
             var targetSku = MockSku(skuName: "TargetSku");
             var activeSku = MockSku(skuName: "ActiveSku", skuTransitions: new[] { targetSku.SkuName });
@@ -212,22 +214,248 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
             Assert.Equal(MessageCodes.RequestedSkuIsInvalid, result.ValidationErrors.First());
         }
 
+        [Fact]
+        public async Task RenameEnvironment()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var environment = MockEnvironment(skuName: sku.SkuName);
+
+            environment = await environmentRepository.CreateAsync(environment, Logger);
+            environment.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                FriendlyName = "XYZ",
+            };
+
+            var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
+
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(update.FriendlyName, result.CloudEnvironment?.FriendlyName);
+        }
+
+        [Fact]
+        public async Task RenameEnvironment_Conflict()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var environment1 = MockEnvironment(id: "env1", name: "name1", skuName: sku.SkuName);
+            var environment2 = MockEnvironment(id: "env2", name: "name2", skuName: sku.SkuName);
+
+            environment1 = await environmentRepository.CreateAsync(environment1, Logger);
+            environment2 = await environmentRepository.CreateAsync(environment2, Logger);
+            environment1.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                FriendlyName = environment2.FriendlyName,
+            };
+
+            var manager = CreateManager(environmentRepository: environmentRepository, skuCatalog: skuCatalog);
+
+            var result = await manager.UpdateSettingsAsync(environment1, update, null, Logger);
+            Assert.False(result.IsSuccess);
+            Assert.Single(result.ValidationErrors);
+            Assert.Equal(MessageCodes.EnvironmentNameAlreadyExists, result.ValidationErrors.Single());
+        }
+
+        [Fact]
+        public async Task RenameEnvironment_Retry()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environment = MockEnvironment(skuName: sku.SkuName);
+            environment.State = CloudEnvironmentState.Shutdown;
+
+            var environmentRepository = new Mock<ICloudEnvironmentRepository>();
+            environmentRepository
+                .Setup(x => x.GetAsync(It.IsAny<DocumentDbKey>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(() => Task.FromResult(environment));
+
+            int attempt = 0;
+            environmentRepository
+                .Setup(x => x.UpdateAsync(It.IsAny<CloudEnvironment>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((CloudEnvironment cloudEnvironmentUpdate, IDiagnosticsLogger logger) =>
+                {
+                    if (++attempt < 2)
+                    {
+                        throw new Exception("Test retry exception.");
+                    }
+
+                    return Task.FromResult(cloudEnvironmentUpdate);
+                });
+
+            var update = new CloudEnvironmentUpdate
+            {
+                FriendlyName = "XYZ",
+            };
+
+            var manager = CreateManager(environmentRepository: environmentRepository.Object, skuCatalog: skuCatalog);
+
+            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(update.FriendlyName, result.CloudEnvironment?.FriendlyName);
+        }
+
+        [Fact]
+        public async Task MoveEnvironment()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var billingEventRepository = new MockBillingEventRepository();
+
+            var plan1 = MockPlan(name: "plan1");
+            var plan2 = MockPlan(name: "plan2");
+
+            var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.ResourceId);
+
+            environment = await environmentRepository.CreateAsync(environment, Logger);
+            environment.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                Plan = new VsoPlan { Plan = plan2 },
+            };
+
+            var manager = CreateManager(
+                environmentRepository: environmentRepository,
+                skuCatalog: skuCatalog,
+                billingEventRepository: billingEventRepository);
+
+            var subscription = new Subscription
+            {
+                Id = plan1.Subscription,
+            };
+            var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
+
+            Assert.Collection(
+                billingEventRepository.Values.OrderBy((e) => e.Time),
+                (BillingEvent event0) =>
+                {
+                    Assert.Equal(BillingEventTypes.EnvironmentStateChange, event0.Type);
+                    Assert.Equal(CloudEnvironmentState.Shutdown.ToString(),
+                        ((BillingStateChange)event0.Args).OldValue);
+                    Assert.Equal(CloudEnvironmentState.Moved.ToString(),
+                        ((BillingStateChange)event0.Args).NewValue);
+                },
+                (BillingEvent event1) =>
+                {
+                    Assert.Equal(BillingEventTypes.EnvironmentStateChange, event1.Type);
+                    Assert.Equal(CloudEnvironmentState.Moved.ToString(),
+                        ((BillingStateChange)event1.Args).OldValue);
+                    Assert.Equal(CloudEnvironmentState.Shutdown.ToString(),
+                        ((BillingStateChange)event1.Args).NewValue);
+                });
+        }
+
+        [Fact]
+        public async Task MoveEnvironment_Conflict()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var billingEventRepository = new MockBillingEventRepository();
+
+            var plan1 = MockPlan(name: "plan1");
+            var plan2 = MockPlan(name: "plan2");
+
+            var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1.ResourceId, skuName: sku.SkuName);
+            var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2.ResourceId, skuName: sku.SkuName);
+
+            environment1 = await environmentRepository.CreateAsync(environment1, Logger);
+            environment2 = await environmentRepository.CreateAsync(environment2, Logger);
+            environment1.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                FriendlyName = environment2.FriendlyName,
+                Plan = new VsoPlan { Plan = plan2 },
+            };
+
+            var manager = CreateManager(
+                environmentRepository: environmentRepository,
+                skuCatalog: skuCatalog,
+                billingEventRepository: billingEventRepository);
+
+            var subscription = new Subscription
+            {
+                Id = plan1.Subscription,
+            };
+            var result = await manager.UpdateSettingsAsync(environment1, update, subscription, Logger);
+            Assert.False(result.IsSuccess);
+            Assert.Single(result.ValidationErrors);
+            Assert.Equal(MessageCodes.EnvironmentNameAlreadyExists, result.ValidationErrors.Single());
+        }
+
+        [Fact]
+        public async Task MoveEnvironment_ExceededQuota()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var billingEventRepository = new MockBillingEventRepository();
+
+            var plan1 = MockPlan(name: "plan1");
+            var plan2 = MockPlan(name: "plan2");
+
+            var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1.ResourceId, skuName: sku.SkuName);
+            var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2.ResourceId, skuName: sku.SkuName);
+
+            environment1 = await environmentRepository.CreateAsync(environment1, Logger);
+            environment2 = await environmentRepository.CreateAsync(environment2, Logger);
+            environment1.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                Plan = new VsoPlan { Plan = plan2 },
+            };
+
+            // Configure max 1 env per plan so quota will be exceeded when moving.
+            var environmentSettings = new EnvironmentManagerSettings()
+            {
+                DefaultMaxEnvironmentsPerPlan = 1,
+            };
+
+            var manager = CreateManager(
+                environmentRepository: environmentRepository,
+                skuCatalog: skuCatalog,
+                billingEventRepository: billingEventRepository,
+                environmentSettings: environmentSettings);
+
+            var subscription = new Subscription
+            {
+                Id = plan1.Subscription,
+            };
+            var result = await manager.UpdateSettingsAsync(environment1, update, subscription, Logger);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(MessageCodes.ExceededQuota, result.ValidationErrors.Single());
+        }
+
         private EnvironmentManager CreateManager(
             ICloudEnvironmentRepository environmentRepository = null,
             ISkuCatalog skuCatalog = null,
+            IBillingEventRepository billingEventRepository = null,
+            EnvironmentManagerSettings environmentSettings = null,
             int[] autoShutdownDelayOptions = null)
         {
             var defaultCount = 20;
             var defaultAutoShutdownOptions = new[] { 0, 5, 30, 120 };
             var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = defaultCount };
-            var environmentSettings = new EnvironmentManagerSettings()
+            environmentSettings ??= new EnvironmentManagerSettings()
             {
                 DefaultMaxEnvironmentsPerPlan = defaultCount,
             };
@@ -242,7 +470,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             environmentRepository = environmentRepository ?? new MockCloudEnvironmentRepository();
             var planRepository = new MockPlanRepository();
-            var billingEventRepository = new MockBillingEventRepository();
+            billingEventRepository ??= new MockBillingEventRepository();
             var billingEventManager = new BillingEventManager(billingEventRepository, new MockBillingOverrideRepository());
             var workspaceRepository = new MockClientWorkspaceRepository();
             var tokenProvider = EnvironmentManagerTestsBase.MockTokenProvider();

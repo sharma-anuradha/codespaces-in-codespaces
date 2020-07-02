@@ -396,10 +396,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     CloudEnvironment env,
                     CloudEnvironmentUpdate updateParams,
+                    Subscription subscription,
                     IDiagnosticsLogger logger) =>
                 {
                     Assert.NotNull(updateParams);

@@ -1,10 +1,9 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test;
 using Xunit;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tests
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
     public class EnvironmentManagerBillingTests : EnvironmentManagerTestsBase
     {

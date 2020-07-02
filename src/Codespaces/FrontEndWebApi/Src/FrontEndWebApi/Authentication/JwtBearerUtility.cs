@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -102,6 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     };
                 })
                 .Services
+                .AddSingleton<ICascadeTokenReader>(new CascadeTokenReader(jwtReader))
                 .AddTokenSettingsToJwtReader(jwtReader, (authSettings) => authSettings.VsSaaSTokenSettings);
         }
 
@@ -148,6 +150,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 .AddAuthenticationResultContext(context)
                 .AddExceptionInfo(context.Exception)
                 .LogWarning("jwt_authentication_failed");
+        }
+
+        private class CascadeTokenReader : ICascadeTokenReader
+        {
+            private readonly IJwtReader jwtReader;
+
+            public CascadeTokenReader(IJwtReader jwtReader)
+            {
+                this.jwtReader = Requires.NotNull(jwtReader, nameof(jwtReader));
+            }
+
+            public ClaimsPrincipal ReadTokenPrincipal(string accessToken, IDiagnosticsLogger logger)
+                => this.jwtReader.ReadTokenPrincipal(accessToken, logger);
         }
     }
 }

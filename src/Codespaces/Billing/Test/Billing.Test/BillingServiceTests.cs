@@ -1439,7 +1439,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         [Fact]
-        public async Task BeginAccountCalculations_StateChangeInMiddleTheDeleted()
+        public async Task BeginAccountCalculations_StateChangeInMiddleThenDeleted()
         {
 
             var startTime = DateTime.UtcNow.AddHours(-4);
@@ -1498,6 +1498,162 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             };
             IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent, billEventAvailable, billEventDeleted };
             IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventAvailable, billEventDeleted };
+
+            await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
+        }
+
+        [Fact]
+        public async Task BeginAccountCalculations_ShutdownThenMoved()
+        {
+
+            var startTime = DateTime.UtcNow.AddHours(-4);
+            var lastSummaryEndTime = startTime.AddHours(2);
+            var endTime = startTime.AddHours(3);
+            var expectedUsage = 127d / 4 + 2d / 12; // 15 mins available time + 5 minutes shutdown time
+
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Created),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(30),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var billEventShutdown = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Shutdown),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(45),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var billEventMoved = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Shutdown),
+                    NewValue = nameof(CloudEnvironmentState.Moved),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(50),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var plan = new VsoPlan()
+            {
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
+            };
+
+            var lastBillingSummary = new BillingSummary()
+            {
+                PeriodEnd = lastSummaryEndTime,
+                PeriodStart = lastSummaryEndTime.AddHours(-1),
+            };
+            var lastSummaryEvent = new BillingEvent()
+            {
+                Plan = plan.Plan,
+                Args = lastBillingSummary,
+            };
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent, billEventAvailable, billEventShutdown, billEventMoved };
+            IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventAvailable, billEventShutdown, billEventMoved };
+
+            await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
+        }
+
+        [Fact]
+        public async Task BeginAccountCalculations_MovedThenAvailable()
+        {
+
+            var startTime = DateTime.UtcNow.AddHours(-4);
+            var lastSummaryEndTime = startTime.AddHours(2);
+            var endTime = startTime.AddHours(3);
+            var expectedUsage = 2d / 12 + 127d / 4; // 5 minutes shutdown time + 15 mins available time
+
+            var billEventMoved = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Moved),
+                    NewValue = nameof(CloudEnvironmentState.Shutdown),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(30),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var billEventAvailable = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Shutdown),
+                    NewValue = nameof(CloudEnvironmentState.Available),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(35),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var billEventDeleted = new BillingEvent
+            {
+                Id = Guid.NewGuid().ToString(),
+                Plan = testPlan,
+                Args = new BillingStateChange
+                {
+                    OldValue = nameof(CloudEnvironmentState.Available),
+                    NewValue = nameof(CloudEnvironmentState.Deleted),
+                },
+                Environment = testEnvironment,
+                Time = lastSummaryEndTime.AddMinutes(50),
+                Type = BillingEventTypes.EnvironmentStateChange
+            };
+
+            var plan = new VsoPlan()
+            {
+                Plan = new VsoPlanInfo()
+                {
+                    Name = "PlanName",
+                    Location = AzureLocation.WestUs2,
+                    ResourceGroup = "RG",
+                    Subscription = Guid.NewGuid().ToString(),
+                }
+            };
+
+            var lastBillingSummary = new BillingSummary()
+            {
+                PeriodEnd = lastSummaryEndTime,
+                PeriodStart = lastSummaryEndTime.AddHours(-1),
+            };
+            var lastSummaryEvent = new BillingEvent()
+            {
+                Plan = plan.Plan,
+                Args = lastBillingSummary,
+            };
+            IEnumerable<BillingEvent> allBillingEvents = new List<BillingEvent>() { lastSummaryEvent, billEventMoved, billEventAvailable, billEventDeleted };
+            IEnumerable<BillingEvent> oldBillingEvents = new List<BillingEvent>() { billEventMoved, billEventAvailable, billEventDeleted };
 
             await RunGenerateBillingSummaryTests(plan, allBillingEvents, oldBillingEvents, expectedUsage, startTime, lastSummaryEndTime, endTime);
         }

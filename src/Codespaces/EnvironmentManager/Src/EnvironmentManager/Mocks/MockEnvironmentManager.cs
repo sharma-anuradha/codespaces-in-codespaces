@@ -111,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentUpdate update, IDiagnosticsLogger logger)
+        public Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentUpdate update, Subscription subscription, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

@@ -125,5 +125,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The subscription cannot create plans or codespaces.
         /// </summary>
         SubscriptionCannotPerformAction = 22,
+
+        /// <summary>
+        /// An environment cannot be moved to a different location.
+        /// </summary>
+        InvalidLocationChange = 23,
     }
 }

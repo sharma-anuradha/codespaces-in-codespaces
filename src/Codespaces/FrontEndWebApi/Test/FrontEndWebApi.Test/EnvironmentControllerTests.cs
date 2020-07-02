@@ -24,11 +24,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
+using Microsoft.VsSaaS.Tokens;
 using Moq;
 using Xunit;
 
@@ -398,9 +400,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
                 {
                     Assert.Equal(updateRequest.SkuName, update.SkuName);
                     Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
@@ -445,9 +448,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
                 {
                     Assert.Equal(updateRequest.SkuName, update.SkuName);
                     Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
@@ -470,6 +474,150 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
                 Assert.Equal(expectedCode, actualCode);
             }
+        }
+
+        [Fact]
+        public async Task EnvironmentController_UpdatePlanAsync()
+        {
+            var plan1 = await MockUtil.GeneratePlan("plan1");
+            var plan2 = await MockUtil.GeneratePlan("plan2");
+            plan2.UserId = null;
+
+            var mockEnvironment1 = MockUtil.MockCloudEnvironment(planId: plan1.Plan.ResourceId);
+            var mockEnvironment2 = MockUtil.MockCloudEnvironment(planId: plan2.Plan.ResourceId);
+
+            var mockAccessToken = "mock-token";
+            var updateRequest = new UpdateCloudEnvironmentBody
+            {
+                PlanId = plan2.Plan.ResourceId,
+                PlanAccessToken = mockAccessToken,
+            };
+
+            var updateSettingsReponse = CloudEnvironmentUpdateResult.Success(mockEnvironment2);
+
+            var mockEnvironmentManager = new Mock<IEnvironmentManager>();
+
+            mockEnvironmentManager
+                .Setup(x => x.GetAndStateRefreshAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment1))
+                .Callback((string id, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment1.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.UpdateSettingsAsync(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<Subscription>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(updateSettingsReponse))
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
+                {
+                    Assert.NotNull(update.Plan);
+                });
+
+            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan2));
+
+            // These claims are returned for the mock access token, to grant access to plan2.
+            var planAccessClaims = new[]
+            {
+                new Claim(CustomClaims.PlanResourceId, plan2.Plan.ResourceId),
+                new Claim(CustomClaims.Scope, PlanAccessTokenScopes.WriteEnvironments),
+            };
+
+            var mockTokenReader = new Mock<ICascadeTokenReader>();
+            mockTokenReader
+                .Setup((x) => x.ReadTokenPrincipal(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(new ClaimsPrincipal(new ClaimsIdentity(planAccessClaims)))
+                .Callback((string token, IDiagnosticsLogger logger) =>
+                {
+                    Assert.Equal(mockAccessToken, token);
+                });
+
+            var environmentController = CreateTestEnvironmentsController(
+                environmentManager: mockEnvironmentManager.Object,
+                planManager: mockPlanManager,
+                accessTokenReader: mockTokenReader.Object);
+
+            var actionResult = await environmentController.UpdateSettingsAsync(
+                mockEnvironment1.Id, updateRequest, logger);
+            Assert.IsType<OkObjectResult>(actionResult);
+
+            var result = (actionResult as OkObjectResult).Value as CloudEnvironmentResult;
+
+            Assert.NotNull(result);
+            Assert.Equal(mockEnvironment1.Id, result.Id);
+            Assert.Equal(plan2.Plan.ResourceId, result.PlanId);
+        }
+
+        [Fact]
+        public async Task EnvironmentController_UpdatePlan_Forbidden()
+        {
+            var plan1 = await MockUtil.GeneratePlan("plan1");
+            var plan2 = await MockUtil.GeneratePlan("plan2");
+            plan2.UserId = null;
+
+            var mockEnvironment1 = MockUtil.MockCloudEnvironment(planId: plan1.Plan.ResourceId);
+            var mockEnvironment2 = MockUtil.MockCloudEnvironment(planId: plan2.Plan.ResourceId);
+
+            var mockAccessToken = "mock-token";
+            var updateRequest = new UpdateCloudEnvironmentBody
+            {
+                PlanId = plan2.Plan.ResourceId,
+                PlanAccessToken = mockAccessToken,
+            };
+
+            var updateSettingsReponse = CloudEnvironmentUpdateResult.Success(mockEnvironment2);
+
+            var mockEnvironmentManager = new Mock<IEnvironmentManager>();
+
+            mockEnvironmentManager
+                .Setup(x => x.GetAndStateRefreshAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(mockEnvironment1))
+                .Callback((string id, IDiagnosticsLogger log) =>
+                    Assert.Equal(mockEnvironment1.Id, id));
+
+            mockEnvironmentManager
+                .Setup(x => x.UpdateSettingsAsync(
+                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<CloudEnvironmentUpdate>(),
+                    It.IsAny<Subscription>(),
+                    It.IsAny<IDiagnosticsLogger>()))
+                .Returns(Task.FromResult(updateSettingsReponse))
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
+                {
+                    Assert.NotNull(update.Plan);
+                });
+
+            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan2));
+
+            // The claim of plan1 ID does NOT grant access to plan2.
+            var planAccessClaims = new[]
+            {
+                new Claim(CustomClaims.PlanResourceId, plan1.Plan.ResourceId),
+                new Claim(CustomClaims.Scope, PlanAccessTokenScopes.WriteEnvironments),
+            };
+
+            var mockTokenReader = new Mock<ICascadeTokenReader>();
+            mockTokenReader
+                .Setup((x) => x.ReadTokenPrincipal(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(new ClaimsPrincipal(new ClaimsIdentity(planAccessClaims)))
+                .Callback((string token, IDiagnosticsLogger logger) =>
+                {
+                    Assert.Equal(mockAccessToken, token);
+                });
+
+            var environmentController = CreateTestEnvironmentsController(
+                environmentManager: mockEnvironmentManager.Object,
+                planManager: mockPlanManager,
+                accessTokenReader: mockTokenReader.Object);
+
+            var actionResult = await environmentController.UpdateSettingsAsync(
+                mockEnvironment1.Id, updateRequest, logger);
+            Assert.IsType<ForbidResult>(actionResult);
         }
 
         [Fact]
@@ -583,13 +731,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         }
 
         internal static EnvironmentsController CreateTestEnvironmentsController(
-            ISkuCatalog skuCatalog = null, 
+            ISkuCatalog skuCatalog = null,
             ICurrentUserProvider currentUserProvider = null,
             IEnvironmentManager environmentManager = null,
             IPlanManager planManager = null,
             HttpContext httpContext = null,
             IServiceUriBuilder serviceUriBuilder = null,
-            ISkuUtils skuUtils = null)
+            ISkuUtils skuUtils = null,
+            ICascadeTokenReader accessTokenReader = null)
         {
             environmentManager ??= MockUtil.MockEnvironmentManager();
             planManager ??= MockUtil.MockPlanManager(() => MockUtil.GeneratePlan());
@@ -607,6 +756,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
             };
             var tokenProvider = new Mock<ITokenProvider>();
+            accessTokenReader ??= new Mock<ICascadeTokenReader>().Object;
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -621,7 +771,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 skuUtils,
                 tokenProvider.Object,
                 metrics,
-                subManager);
+                subManager,
+                accessTokenReader);
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();

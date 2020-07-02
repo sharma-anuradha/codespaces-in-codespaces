@@ -33,7 +33,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private readonly ISkuCatalog skuCatalog;
         private readonly IPlanManager planManager;
         private readonly string billingSummaryType = BillingEventTypes.BillingSummary;
-        private readonly string deletedEnvState = nameof(CloudEnvironmentState.Deleted);
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
 
         // TODO: move the meter Dictionary to AppSettings
@@ -410,9 +409,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                 var envUsageDetail = environment.Value;
 
-                if (envUsageDetail.EndState == deletedEnvState)
+                if (envUsageDetail.EndState == nameof(CloudEnvironmentState.Deleted) ||
+                    envUsageDetail.EndState == nameof(CloudEnvironmentState.Moved))
                 {
-                    // Environment state is Deleted so nothing new to bill.
+                    // Environment state is Deleted or Moved so nothing new to bill.
                     continue;
                 }
 
@@ -696,7 +696,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                 // We have the latest billable state. Let's make sure it's not already a deleted environment.
                 var lastState = ((BillingStateChange)lastEnvEventChange.Args).NewValue;
-                if (lastState == deletedEnvState)
+                if (lastState == nameof(CloudEnvironmentState.Deleted))
                 {
                     continue;
                 }
@@ -771,9 +771,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 var billingStateChange = (BillingStateChange)billEvent.Args;
                 var newValue = billingStateChange.NewValue;
-                if (newValue.Equals(CloudEnvironmentState.Available.ToString()) ||
-                    newValue.Equals(CloudEnvironmentState.Shutdown.ToString()) ||
-                    newValue.Equals(CloudEnvironmentState.Deleted.ToString()))
+                if (newValue.Equals(nameof(CloudEnvironmentState.Available)) ||
+                    newValue.Equals(nameof(CloudEnvironmentState.Shutdown)) ||
+                    newValue.Equals(nameof(CloudEnvironmentState.Moved)) ||
+                    newValue.Equals(nameof(CloudEnvironmentState.Deleted)))
                 {
                     lastState = billEvent;
                 }
@@ -918,6 +919,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // CloudEnvironmentState has gone from Available to Shutdown or Deleted
                         // in this BillingWindowSlice.
                         case CloudEnvironmentState.Shutdown:
+                        case CloudEnvironmentState.Moved:
                         case CloudEnvironmentState.Deleted:
                             nextSlice = new BillingWindowSlice()
                             {
@@ -939,6 +941,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // CloudEnvironmentState has gone from Shutdown to Available or Deleted
                         // in this BillingWindowSlice.
                         case CloudEnvironmentState.Available:
+                        case CloudEnvironmentState.Moved:
                         case CloudEnvironmentState.Deleted:
                         // Environment's state hasn't changed, but some other setting was updated so we still need to create a slice
                         case CloudEnvironmentState.Shutdown:
@@ -961,6 +964,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     switch (nextState.EnvironmentState)
                     {
                         case CloudEnvironmentState.Available:
+                        case CloudEnvironmentState.Shutdown:
                             nextSlice = new BillingWindowSlice
                             {
                                 // Setting StartTime = EndTime because this time slice should

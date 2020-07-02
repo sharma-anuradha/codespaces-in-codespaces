@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -392,9 +392,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var environmentsInPlan = await ListAsync(childLogger.NewChildLogger(), planId: cloudEnvironment.PlanId);
 
                     // Validate against existing environments.
-                    // TODO - when multiple users can access a plan, this should include an ownership check
-                    if (environmentsInPlan.Any(
-                        (env) => string.Equals(env.FriendlyName, cloudEnvironment.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
+                    if (!IsEnvironmentNameAvailable(cloudEnvironment.FriendlyName, environmentsInPlan))
                     {
                         result.MessageCode = MessageCodes.EnvironmentNameAlreadyExists;
                         result.HttpStatusCode = StatusCodes.Status409Conflict;
@@ -410,9 +408,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     var countOfEnvironmentsInPlan = environmentsInPlan.Count();
-                    var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(plan.Subscription, childLogger.NewChildLogger());
-                    var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(childLogger.NewChildLogger());
-                    if (!computeCheckEnabled && (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan))
+                    if (!(await CanEnvironmentFitInQuotaAsync(
+                        cloudEnvironment, subscription, plan, countOfEnvironmentsInPlan, childLogger)))
                     {
                         childLogger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
                         result.MessageCode = MessageCodes.ExceededQuota;
@@ -496,27 +493,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         result.MessageCode = MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid;
                         result.HttpStatusCode = StatusCodes.Status400BadRequest;
 
-                        return result;
-                    }
-
-                    var sku = GetSku(cloudEnvironment);
-                    var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, sku, childLogger);
-                    var currentMaxQuota = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
-                    var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(childLogger.NewChildLogger());
-                    if (sku.ComputeOS == ComputeOS.Windows)
-                    {
-                        computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
-                    }
-
-                    if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > currentMaxQuota))
-                    {
-                        childLogger.AddValue("RequestedSku", sku.SkuName);
-                        childLogger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
-                        childLogger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
-                        childLogger.AddSubscriptionId(subscription.Id);
-                        childLogger.LogError($"{LogBaseName}_create_exceed_compute_quota");
-                        result.MessageCode = MessageCodes.ExceededQuota;
-                        result.HttpStatusCode = StatusCodes.Status403Forbidden;
                         return result;
                     }
 
@@ -994,31 +970,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         {
                             // Conduct update to swapout archived storage for file storage
                             await childLogger.RetryOperationScopeAsync(
-                $"{LogBaseName}_resume_callback_update",
-                async (retryLogger) =>
-                {
-                    // Fetch record so that we aren't updating the reference passed in
-                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(
-        cloudEnvironment.Id, retryLogger.NewChildLogger());
+                                $"{LogBaseName}_resume_callback_update",
+                                async (retryLogger) =>
+                                {
+                                    // Fetch record so that we aren't updating the reference passed in
+                                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(
+                                        cloudEnvironment.Id, retryLogger.NewChildLogger());
 
-                    // Fetch resource details
-                    var storageDetails = await ResourceBrokerClient.StatusAsync(
-        Guid.Parse(cloudEnvironment.Id), storageResourceId, retryLogger.NewChildLogger());
+                                    // Fetch resource details
+                                    var storageDetails = await ResourceBrokerClient.StatusAsync(
+                                        Guid.Parse(cloudEnvironment.Id), storageResourceId, retryLogger.NewChildLogger());
 
-                    // Switch out storage reference
-                    cloudEnvironment.Storage = new ResourceAllocationRecord
-                    {
-                        ResourceId = storageResourceId,
-                        Location = storageDetails.Location,
-                        SkuName = storageDetails.SkuName,
-                        Type = storageDetails.Type,
-                        Created = DateTime.UtcNow,
-                    };
-                    cloudEnvironment.Transitions.Archiving.ResetStatus(true);
+                                    // Switch out storage reference
+                                    cloudEnvironment.Storage = new ResourceAllocationRecord
+                                    {
+                                        ResourceId = storageResourceId,
+                                        Location = storageDetails.Location,
+                                        SkuName = storageDetails.SkuName,
+                                        Type = storageDetails.Type,
+                                        Created = DateTime.UtcNow,
+                                    };
+                                    cloudEnvironment.Transitions.Archiving.ResetStatus(true);
 
-                    // Update record
-                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, retryLogger.NewChildLogger());
-                });
+                                    // Update record
+                                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, retryLogger.NewChildLogger());
+                                });
 
                             // Delete archive blob once its not needed any more
                             await ResourceBrokerClient.DeleteAsync(Guid.Parse(cloudEnvironment.Id), archiveStorageResourceId.Value, childLogger.NewChildLogger());
@@ -1154,6 +1130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
+            Subscription subscription,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
@@ -1168,43 +1145,74 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
                     childLogger.AddCloudEnvironmentUpdate(update);
 
-                    var allowedUpdates = await GetAvailableSettingsUpdatesAsync(cloudEnvironment, childLogger.NewChildLogger());
                     var validationErrors = new List<MessageCodes>();
+                    var transformActions = new List<Action<CloudEnvironment>>();
 
                     if (!cloudEnvironment.IsShutdown())
                     {
                         validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
                     }
-
-                    if (update.AutoShutdownDelayMinutes.HasValue)
+                    else
                     {
-                        if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null ||
-                            !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
+                        var allowedUpdates = await GetAvailableSettingsUpdatesAsync(cloudEnvironment, childLogger.NewChildLogger());
+
+                        // Call all of the update handlers. They each return either
+                        // a list of validation errors or an environment transform action.
+                        // Thne collect those results (where non-null) into the two lists.
+                        // The transform actions are not executed until after all validations.
+                        var updateResults = new[]
                         {
-                            validationErrors.Add(MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid);
-                        }
-                        else
+                            UpdateAutoShutdownDelaySetting(update, allowedUpdates),
+                            UpdateAllowedSkusSetting(update, allowedUpdates),
+                            await UpdatePlanIdAndNameSettingAsync(
+                                cloudEnvironment, update, subscription, childLogger),
+                        };
+                        foreach (var (messageCodes, transform) in updateResults)
                         {
-                            cloudEnvironment.AutoShutdownDelayMinutes = update.AutoShutdownDelayMinutes.Value;
+                            if (messageCodes != null)
+                            {
+                                validationErrors.AddRange(messageCodes);
+                            }
+
+                            if (transform != null)
+                            {
+                                transformActions.Add(transform);
+                            }
                         }
                     }
 
-                    if (!string.IsNullOrWhiteSpace(update.SkuName))
+                    var originalPlanId = cloudEnvironment.PlanId;
+
+                    if (!validationErrors.Any())
                     {
-                        if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
-                        {
-                            validationErrors.Add(MessageCodes.UnableToUpdateSku);
-                        }
-                        else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
-                        {
-                            validationErrors.Add(MessageCodes.RequestedSkuIsInvalid);
-                        }
-                        else
-                        {
-                            // TODO - this assumes that the SKU change can be applied automatically on environment start.
-                            // If the SKU change requires some other work then it should be applied here.
-                            cloudEnvironment.SkuName = update.SkuName;
-                        }
+                        await Retry.DoAsync(
+                            async (attempt) =>
+                            {
+                                if (attempt > 0)
+                                {
+                                    cloudEnvironment = await CloudEnvironmentRepository.GetAsync(
+                                        cloudEnvironment.Id, childLogger.NewChildLogger());
+
+                                    // Update in case a concurrent move request completed before this one.
+                                    originalPlanId = cloudEnvironment.PlanId;
+                                }
+
+                                if (!cloudEnvironment.IsShutdown())
+                                {
+                                    validationErrors.Add(MessageCodes.EnvironmentNotShutdown);
+                                    return;
+                                }
+
+                                // Apply all of the settings transform actions.
+                                transformActions.ForEach((t) => t(cloudEnvironment));
+
+                                cloudEnvironment.Updated = DateTime.UtcNow;
+
+                                // Write the update to the DB. This will fail if something else modified
+                                // the record since the current object was fetched; that's why there's retry.
+                                cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(
+                                    cloudEnvironment, childLogger.NewChildLogger());
+                            });
                     }
 
                     if (validationErrors.Any())
@@ -1214,12 +1222,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return CloudEnvironmentUpdateResult.Error(validationErrors);
                     }
 
-                    cloudEnvironment.Updated = DateTime.UtcNow;
+                    var currentState = cloudEnvironment.State;
+                    if (cloudEnvironment.PlanId != originalPlanId)
+                    {
+                        // The plan was changed by one of the transforms. Emit a special "Moved"
+                        // state-transition in the OLD plan. Another state-transition back to the
+                        // current state will be emitted for the NEW plan.
+                        var newPlanId = cloudEnvironment.PlanId;
+                        cloudEnvironment.PlanId = originalPlanId;
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(
+                            cloudEnvironment,
+                            CloudEnvironmentState.Moved,
+                            CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged,
+                            reason: null,
+                            isUserError: null,
+                            logger.NewChildLogger());
+                        cloudEnvironment.PlanId = newPlanId;
+                    }
 
                     await EnvironmentStateManager.SetEnvironmentStateAsync(
-                        cloudEnvironment, cloudEnvironment.State, CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged, null, null, childLogger.NewChildLogger());
-
-                    cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                        cloudEnvironment,
+                        currentState,
+                        CloudEnvironmentStateUpdateTriggers.EnvironmentSettingsChanged,
+                        reason: null,
+                        isUserError: null,
+                        childLogger.NewChildLogger());
 
                     return CloudEnvironmentUpdateResult.Success(cloudEnvironment);
                 },
@@ -1410,6 +1437,200 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     return await CloudEnvironmentRepository.GetAllEnvironmentsInSubscriptionAsync(subscription.Id, logger.NewChildLogger());
                 });
+        }
+
+        /// <summary>
+        /// Checks if a name matches the name of any existing environments in a plan.
+        /// </summary>
+        /// <returns>
+        /// Currently every name must be unique within the plan, even across multiple users.
+        /// </returns>
+        private static bool IsEnvironmentNameAvailable(
+            string name,
+            IEnumerable<CloudEnvironment> environmentsInPlan)
+        {
+            return !environmentsInPlan.Any(
+                (env) => string.Equals(env.FriendlyName, name, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        /// <summary>
+        /// Checks if subscription / plan quotas allow adding the environment.
+        /// </summary>
+        private async Task<bool> CanEnvironmentFitInQuotaAsync(
+            CloudEnvironment cloudEnvironment,
+            Subscription subscription,
+            VsoPlanInfo plan,
+            int currentEnvironmentsInPlan,
+            IDiagnosticsLogger logger)
+        {
+            var sku = GetSku(cloudEnvironment);
+            bool computeCheckEnabled = cloudEnvironment.Type != EnvironmentType.StaticEnvironment &&
+                await EnvironmentManagerSettings.ComputeCheckEnabled(logger.NewChildLogger());
+            if (sku.ComputeOS == ComputeOS.Windows)
+            {
+                var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(
+                    logger.NewChildLogger());
+                computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
+            }
+
+            if (computeCheckEnabled)
+            {
+                var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(
+                    subscription, sku, logger.NewChildLogger());
+                var subscriptionComputeMaximum = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
+                if (currentComputeUsed + sku.ComputeSkuCores > subscriptionComputeMaximum)
+                {
+                    var currentMaxQuota = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
+                    logger.AddValue("RequestedSku", sku.SkuName);
+                    logger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
+                    logger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
+                    logger.AddSubscriptionId(subscription.Id);
+                    logger.LogError($"{LogBaseName}_create_exceed_compute_quota");
+                    return false;
+                }
+            }
+            else
+            {
+                var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(
+                    plan.Subscription, logger.NewChildLogger());
+                if (currentEnvironmentsInPlan >= maxEnvironmentsForPlan)
+                {
+                    logger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Applies an AutoShutdownDelay setting change to an environment.
+        /// </summary>
+        /// <returns>Either a list of validation errors or a transform action to be applied later.</returns>
+        private (IEnumerable<MessageCodes>, Action<CloudEnvironment>) UpdateAutoShutdownDelaySetting(
+            CloudEnvironmentUpdate update,
+            CloudEnvironmentAvailableSettingsUpdates allowedUpdates)
+        {
+            if (update.AutoShutdownDelayMinutes.HasValue)
+            {
+                if (allowedUpdates.AllowedAutoShutdownDelayMinutes == null ||
+                    !allowedUpdates.AllowedAutoShutdownDelayMinutes.Contains(update.AutoShutdownDelayMinutes.Value))
+                {
+                    return (new[] { MessageCodes.RequestedAutoShutdownDelayMinutesIsInvalid }, null);
+                }
+                else
+                {
+                    return (null, (cloudEnvironment) =>
+                    {
+                        cloudEnvironment.AutoShutdownDelayMinutes = update.AutoShutdownDelayMinutes.Value;
+                    });
+                }
+            }
+
+            return (null, null);
+        }
+
+        /// <summary>
+        /// Applies a SKU setting change to an environment.
+        /// </summary>
+        /// <returns>Either a list of validation errors or a transform action to be applied later.</returns>
+        private (IEnumerable<MessageCodes>, Action<CloudEnvironment>) UpdateAllowedSkusSetting(
+            CloudEnvironmentUpdate update,
+            CloudEnvironmentAvailableSettingsUpdates allowedUpdates)
+        {
+            if (!string.IsNullOrWhiteSpace(update.SkuName))
+            {
+                if (allowedUpdates.AllowedSkus == null || !allowedUpdates.AllowedSkus.Any())
+                {
+                    return (new[] { MessageCodes.UnableToUpdateSku }, null);
+                }
+                else if (!allowedUpdates.AllowedSkus.Any((sku) => sku.SkuName == update.SkuName))
+                {
+                    return (new[] { MessageCodes.RequestedSkuIsInvalid }, null);
+                }
+                else
+                {
+                    return (null, (cloudEnvironment) =>
+                    {
+                        // TODO - this assumes that the SKU change can be applied automatically on environment start.
+                        // If the SKU change requires some other work then it should be applied here.
+                        cloudEnvironment.SkuName = update.SkuName;
+                    });
+                }
+            }
+
+            return (null, null);
+        }
+
+        /// <summary>
+        /// Applies name and/or plan changes to an environment.
+        /// </summary>
+        /// <returns>Either a list of validation errors or a transform action to be applied later.</returns>
+        private async Task<(IEnumerable<MessageCodes>, Action<CloudEnvironment>)> UpdatePlanIdAndNameSettingAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentUpdate update,
+            Subscription subscription,
+            IDiagnosticsLogger logger)
+        {
+            if (update.Plan != null && update.Plan.Plan.ResourceId != cloudEnvironment.PlanId)
+            {
+                Requires.NotNull(subscription, nameof(subscription));
+                var validationErrors = new List<MessageCodes>();
+
+                var destinationName = cloudEnvironment.FriendlyName;
+                var environmentsInPlan = await ListAsync(logger.NewChildLogger(), planId: update.Plan.Plan.ResourceId);
+
+                // Rename is handled specially when combined with moving, because the new name availability
+                // must be checked in the new plan instead of the current plan.
+                if (!string.IsNullOrWhiteSpace(update.FriendlyName) && update.FriendlyName != cloudEnvironment.FriendlyName)
+                {
+                    if (IsEnvironmentNameAvailable(update.FriendlyName, environmentsInPlan))
+                    {
+                        // The new name will be assigned to the cloudEnvironment after the Moved event.
+                        destinationName = update.FriendlyName;
+                    }
+                    else
+                    {
+                        validationErrors.Add(MessageCodes.EnvironmentNameAlreadyExists);
+                    }
+                }
+
+                if (update.Plan.Plan.Location != cloudEnvironment.Location)
+                {
+                    validationErrors.Add(MessageCodes.InvalidLocationChange);
+                }
+
+                if (!(await CanEnvironmentFitInQuotaAsync(
+                    cloudEnvironment, subscription, update.Plan.Plan, environmentsInPlan.Count(), logger)))
+                {
+                    validationErrors.Add(MessageCodes.ExceededQuota);
+                }
+
+                // The returned action will only be invoked if there are no validation errors.
+                return (validationErrors, (cloudEnvironment) =>
+                {
+                    cloudEnvironment.PlanId = update.Plan.Plan.ResourceId;
+                    cloudEnvironment.FriendlyName = destinationName;
+                });
+            }
+            else if (!string.IsNullOrWhiteSpace(update.FriendlyName) && update.FriendlyName != cloudEnvironment.FriendlyName)
+            {
+                var duplicateNamesInPlan = await ListAsync(
+                    logger.NewChildLogger(), cloudEnvironment.PlanId, update.FriendlyName);
+                if (!duplicateNamesInPlan.Any())
+                {
+                    return (null, (cloudEnvironment) =>
+                    {
+                        cloudEnvironment.FriendlyName = update.FriendlyName;
+                    });
+                }
+                else
+                {
+                    return (new[] { MessageCodes.EnvironmentNameAlreadyExists }, null);
+                }
+            }
+
+            return (null, null);
         }
 
         private async Task<CloudEnvironmentServiceResult> CleanupComputeAsync(

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
@@ -36,6 +38,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -72,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="tokenProvider">Token Provider.</param>
         /// <param name="metricsManager">The metrics manager.</param>
         /// <param name="subscriptionManager">The subscription manager.</param>
+        /// <param name="accessTokenReader">JWT reader configured for access tokens.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -85,7 +89,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ISkuUtils skuUtils,
             ITokenProvider tokenProvider,
             IMetricsManager metricsManager,
-            ISubscriptionManager subscriptionManager)
+            ISubscriptionManager subscriptionManager,
+            ICascadeTokenReader accessTokenReader)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -100,6 +105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             TokenProvider = Requires.NotNull(tokenProvider, nameof(tokenProvider));
             MetricsManager = Requires.NotNull(metricsManager, nameof(metricsManager));
             SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
+            AccessTokenReader = Requires.NotNull(accessTokenReader, nameof(accessTokenReader));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -127,6 +133,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IMetricsManager MetricsManager { get; }
 
         private ISubscriptionManager SubscriptionManager { get; }
+
+        private ICascadeTokenReader AccessTokenReader { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -369,7 +377,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <returns>An object result containing the <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpPost]
         [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(CreateAsync))]
-        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -410,7 +418,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             logger.AddVsoPlan(planDetails);
 
-            if (!AuthorizePlanAccess(planDetails, PlanAccessTokenScopes.WriteEnvironments, logger))
+            if (!AuthorizePlanAccess(planDetails, PlanAccessTokenScopes.WriteEnvironments, null, logger))
             {
                 return new ForbidResult();
             }
@@ -695,6 +703,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [HttpOperationalScope("update_settings")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
@@ -724,13 +733,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return RedirectToLocation(owningStamp);
             }
 
-            var updateRequest = Mapper.Map<CloudEnvironmentUpdate>(updateEnvironmentInput);
+            VsoPlan plan = null;
+            Subscription subscription = null;
+            if (!string.IsNullOrEmpty(updateEnvironmentInput.PlanId))
+            {
+                ValidationUtil.IsTrue(
+                    VsoPlanInfo.TryParse(updateEnvironmentInput.PlanId, out var planInfo),
+                    $"Invalid plan ID: {updateEnvironmentInput.PlanId}");
 
-            var result = await EnvironmentManager.UpdateSettingsAsync(environment, updateRequest, logger);
+                // Validate the plan exists (and lookup the plan details).
+                plan = await PlanManager.GetAsync(planInfo, logger);
+                ValidationUtil.IsTrue(
+                    plan != null, $"Plan {updateEnvironmentInput.PlanId} not found.");
+
+                VsoClaimsIdentity planAccessClaims = null;
+                var accessToken = updateEnvironmentInput.PlanAccessToken;
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    try
+                    {
+                        var principal = AccessTokenReader.ReadTokenPrincipal(accessToken, logger);
+                        planAccessClaims = new VsoClaimsIdentity(principal.Identities.Single());
+                    }
+                    catch (SecurityTokenException)
+                    {
+                        // The provided plan access token was not valid.
+                        // (Exception details were logged by the token reader.)
+                        return new UnauthorizedResult();
+                    }
+                }
+
+                // Check if the user has access to write to the new plan.
+                if (!AuthorizePlanAccess(
+                    plan, PlanAccessTokenScopes.WriteEnvironments, planAccessClaims, logger))
+                {
+                    return new ForbidResult();
+                }
+
+                subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
+                if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
+                {
+                    var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
+                    logger.AddSubscriptionId(planInfo.Subscription);
+                    logger.AddReason(message);
+                    return new ForbidResult();
+                }
+            }
+
+            var updateRequest = Mapper.Map<CloudEnvironmentUpdate>(updateEnvironmentInput);
+            updateRequest.Plan = plan;
+
+            var result = await EnvironmentManager.UpdateSettingsAsync(environment, updateRequest, subscription, logger);
 
             if (result.IsSuccess)
             {
                 return Ok(Mapper.Map<CloudEnvironmentResult>(result.CloudEnvironment));
+            }
+            else if (result.ValidationErrors?.Contains(MessageCodes.EnvironmentNameAlreadyExists) == true)
+            {
+                return Conflict(result.ValidationErrors);
             }
             else
             {
@@ -998,14 +1059,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="plan">Plan that the user is attempting to access.</param>
         /// <param name="requiredScope">Scope that the user must have, if they have a scoped
         /// access token.</param>
+        /// <param name="identity">The identity to check, or null to use the current user identity.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>True if the user is authorized, else false.</returns>
         private bool AuthorizePlanAccess(
             VsoPlan plan,
             string requiredScope,
+            VsoClaimsIdentity identity,
             IDiagnosticsLogger logger)
         {
-            var isPlanAuthorized = CurrentUserProvider.Identity.IsPlanAuthorized(plan.Plan.ResourceId);
+            identity ??= CurrentUserProvider.Identity;
+
+            var isPlanAuthorized = identity.IsPlanAuthorized(plan.Plan.ResourceId);
             if (isPlanAuthorized == false)
             {
                 // Users with explicit access to a different plan do not have access to this plan.
@@ -1013,14 +1078,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return false;
             }
 
-            if (CurrentUserProvider.Identity.IsEnvironmentAuthorized(null) == false)
+            if (identity.IsEnvironmentAuthorized(null) == false)
             {
                 // Users with explicit access to env(s) do not have access to the whole plan.
                 logger.LogWarning(UnauthorizedEnvironmentId);
                 return false;
             }
 
-            var isScopeAuthorized = CurrentUserProvider.Identity.IsScopeAuthorized(requiredScope);
+            var isScopeAuthorized = identity.IsScopeAuthorized(requiredScope);
             if (isScopeAuthorized == true)
             {
                 // The user has the explicit required scope.

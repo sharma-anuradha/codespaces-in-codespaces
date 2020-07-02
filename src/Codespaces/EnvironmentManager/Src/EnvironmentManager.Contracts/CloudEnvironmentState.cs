@@ -52,6 +52,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Deleted,
 
         /// <summary>
+        /// Environment is moved to/from another plan.
+        /// </summary>
+        /// <remarks>
+        /// This is not an actual state, but is used in billing events to record moves between plans.
+        /// </remarks>
+        Moved,
+
+        /// <summary>
         /// Environment is shutdown.
         /// </summary>
         Shutdown,

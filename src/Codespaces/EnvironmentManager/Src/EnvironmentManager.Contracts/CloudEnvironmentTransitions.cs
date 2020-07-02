@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public TransitionState Resuming { get; set; }
 
         /// <summary>
-        /// Gets or sets the resume environment transitions.
+        /// Gets or sets the shutdown environment transitions.
         /// </summary>
         [JsonProperty(PropertyName = "shutdownEnvironment")]
         public TransitionState ShuttingDown { get; set; }
