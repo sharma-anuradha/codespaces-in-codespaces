@@ -50,10 +50,6 @@ class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchSt
 
     render() {
         const { t: translation } = this.props;
-        // Enable this only for dev currently while we explore the idea.
-        if (!window.location.hostname.includes('online.dev')) {
-            return <PageNotFound />;
-        }
 
         if (this.state.loading) {
             return <Loader message={translation('loggingAzureDevOps')} translation={translation}></Loader>;
