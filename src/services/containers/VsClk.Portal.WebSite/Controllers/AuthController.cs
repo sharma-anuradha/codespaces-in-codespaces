@@ -74,6 +74,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             "auth.apps.dev.codespaces.githubusercontent.com",
             "auth.apps.ppe.codespaces.githubusercontent.com",
             "auth.apps.codespaces.githubusercontent.com")]
+        [Routing.AllowOrigin("https://github.com")]
         [Consumes("application/x-www-form-urlencoded")]
         public IActionResult AuthenticateWorkspaceAsync(
             [FromRoute] string environmentId,
@@ -127,6 +128,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         // TODO: add exception to authentication
         [HttpPost("~/authenticate-codespace/{environmentId}")]
         [Consumes("application/x-www-form-urlencoded")]
+        [Routing.AllowOrigin(
+            // GitHub
+            "https://auth.apps.dev.workspaces.githubusercontent.com",
+            "https://auth.apps.ppe.workspaces.githubusercontent.com",
+            "https://auth.apps.workspaces.githubusercontent.com",
+            "https://auth.apps.dev.codespaces.githubusercontent.com",
+            "https://auth.apps.ppe.codespaces.githubusercontent.com",
+            "https://auth.apps.codespaces.githubusercontent.com",
+            // VSCS
+            "https://online.dev.core.vsengsaas.visualstudio.com",
+            "https://online-ppe.core.vsengsaas.visualstudio.com",
+            "https://canary.online.visualstudio.com",
+            "https://online.visualstudio.com")]
         public async Task<IActionResult> AuthenticateCodespaceAsync(
             [FromRoute] string environmentId,
             [FromForm] string token,
