@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +9,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
-using System.Linq;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -69,6 +69,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         }
 
         [HttpPost("~/authenticate-workspace/{environmentId}")]
+        [Routing.HttpPost(
+            "~/authenticate-codespace/{environmentId}",
+            "auth.apps.dev.codespaces.githubusercontent.com",
+            "auth.apps.ppe.codespaces.githubusercontent.com",
+            "auth.apps.codespaces.githubusercontent.com")]
         [Consumes("application/x-www-form-urlencoded")]
         public IActionResult AuthenticateWorkspaceAsync(
             [FromRoute] string environmentId,
@@ -195,7 +200,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 GitHubUtils.IsGithubTLD(originalUrl))
             {
                 partner = Partners.GitHub;
-            } else
+            }
+            else
             {
                 partner = HttpContext.GetPartner();
             }

@@ -21,43 +21,16 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             HostEnvironment = hostEnvironment;
         }
 
-        public class HttpGetIfHostTLDAttribute : HttpGetAttribute, IActionConstraint
-        {
-            public string[] TLDs { get; set; }
-
-            public HttpGetIfHostTLDAttribute (string route, params string[] tlds): base(route) {
-                TLDs = tlds;
-            }
-
-            public bool Accept(ActionConstraintContext context)
-            {
-                var host = context.RouteContext.HttpContext.Request.Host.Host;
-
-                if (!string.IsNullOrEmpty(host))
-                {
-                    foreach(var tld in TLDs)
-                    {
-                        if (host.ToLower().EndsWith(tld.ToLower()))
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            }
-        }
-
 
         [HttpGet("~/codespace")]
         [HttpGet("~/workspace/{id}")]
-        [HttpGetIfHostTLD("~/", ".github.dev", ".codespaces.visualstudio.com")]
+        [Routing.HttpGet("~/", "*.github.dev", "*.codespaces.visualstudio.com")]
         public Task<ActionResult> Index() => FetchStaticAsset("workbench.html", "text/html");
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)
         {
             // Locally we don't produce the physical file, so we grab it from the portal itself.
-            // The portal runs on https://localhost:443 only right now, because of authentication.
+            // The portal runs on https://localhost:3030 only right now, because of authentication.
             if (AppSettings.IsLocal)
             {
                 var client = new HttpClient();
