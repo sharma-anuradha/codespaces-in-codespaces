@@ -1,0 +1,16 @@
+{
+    "$schema": "https://gallery.azure.com/schemas/2018-02-12/UIDefinition.json#",
+    "createDefinition": {
+        "createBlade": {
+            "name": "CreateBlade",
+            "extension": "Microsoft_Codespaces"
+        },
+        "startboardPart": {
+            "name": "ResourcePart",
+            "extension": "Microsoft_Codespaces"
+        },
+        "startboardPartKeyId": "id"
+    },
+    "initialData": {},
+    "options": {}
+}

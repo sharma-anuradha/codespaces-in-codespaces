@@ -1,0 +1,67 @@
+.ext-info-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px; /* This margin should match the margin on .ext-info-tile */
+    justify-content: center;
+}
+
+@media (min-width: 1200px) {
+    /* 
+     * Work around IE 11 flexbox bug by justifying content left on large screens
+     * https://github.com/philipwalton/flexbugs/issues/128
+     */
+    .ext-info-tiles {
+        justify-content: flex-start;
+    }
+}
+
+.ext-info-tile {
+    margin: 10px;
+    padding: 15px;
+    max-width: 400px;
+    display: flex;
+    flex: 1 1 200px;
+    border: 1px solid rgb(214, 214, 214);
+}
+.ext-info-tile__hyperlink-icon {
+    width: 1em;
+    height: 0.7em;
+    display: inline-block;
+}
+.ext-info-tile__icon {
+    flex: none;
+    width: 25px;
+    height: 25px;
+    margin: 5px 10px 0 0;
+}
+.ext-info-tile__title {
+    padding: 0;
+    margin: 0;
+    border: none;
+    font-size: 1.3em;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.ext-info-tile__description {
+    margin: 0 0 10px;
+}
+.ext-info-tile__link {
+    padding: 0;
+    border: none;
+    text-align: left;
+}
+.ext-info-tile__button,
+.ext-info-tile__link-button {
+    text-align: center;
+    padding: 0px 20px;
+    color: white;
+    border-radius: 3px;
+    border: none;
+    background: #0078d4;
+    height: 24px;
+}
+.ext-info-tile__link-button {
+    display: inline-block;
+    line-height: 24px;
+    text-decoration: none;
+}

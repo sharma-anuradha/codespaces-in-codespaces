@@ -1,25 +1,33 @@
 # For full annotated example, please visit
-#   https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki
+#   https://onebranch.visualstudio.com/Pipeline/_wiki/wikis/Pipeline.wiki?pageId=302
+
+workspace_options:                  # Metadata section
+  enable_legacy_networking: true    # Default is false. If false, only the Restore stage enables network connectivity to the user build container. 
+                                    # If true, all stages enable network connectivity to user build container.
 
 environment:
   host:
-    os: 'windows'
-    flavor: 'server'
-    version: '2016'
+    os: 'windows'                                                       
+    flavor: 'server'                                                    
+    version: '2016'                                                     
   runtime:
-    provider: 'appcontainer'
-    image: 'cdpxtest.azurecr.io/global/vse2017u5-external-win14393.1884:1.0'
-    source_mode: 'map'
+    provider: 'appcontainer'                                            
+    image: 'cdpxwin1809.azurecr.io/global/vse2019:latest' 
+    source_mode: 'map'                                                  
 
-package_sources:
-  npm:
-    config_files:
-      - include:
-        - 'src/**/*.npmrc'
-        - 'src\**\*.npmrc'
-        - 'src\\**\\*.npmrc'
-    feeds:                                     # Feeds to inject with credentials in generated .npmrc. Use this if you don't have .npmrc checked in and use a global or team wide configuration.
-      registry: https://registry.npmjs.org/    # This is the main registry.
+signing_options:
+  profile: 'internal_azure_service'
+  codesign_validation_glob_pattern: 'regex|.+(?:dll|exe|sys|ps1|ps1xml|psc1|psd1|cdxml|vbs|wsf)$'
+
+version:
+  name: 'PortalExtension'                                    
+  major: 1
+  minor: 0
+  tag: 'alpha'
+  system: 'patch'
+
+versioning:
+  commands:                                                             
 
 restore:
   commands:
@@ -31,32 +39,57 @@ restore:
       command: 'cdpx-restore.cmd'
 
 build:
-  commands:
-    - !!buildcommand
-      name: 'cdpx-build'
-      command: 'cdpx-build.cmd'
-      artifacts:
-        - from: 'bin\release'
-          to: 'binaries'
+  commands:                                                             
+    - !!buildcommand                                                    
+      name: 'Build PortalExtension'                                           
+      command: 'src/AzurePortal/build.cmd'                                           
+      artifacts:                                                        
+        - from: 'src/AzurePortal/src/Default/Extension/bin/Deployment'              
+          to: 'src/ServiceGroupRoot'
           include:
             - '**/*'
+          signing_options:      # Signing profile defaults can be overridden on the artifacts level
+            sign_inline: true   # Sign immediately after this build command so the next build command can package it!
+
+package:
+  commands:                                                             
 
 test:
-  commands:
-    - !!testcommand
-      name: 'cdpx-test'
-      command: 'cdpx-test.cmd'
-      testresults:
-       - from: 'bin\release\testresults'
-         title: 'Test Results'
-         type: 'vstest'
-         include:
-           - '*.trx'
-           - 'coverage\**\*.htm'
-           - 'coverage\**\*.csv'
-           - 'coverage\**\*.txt'
-       - from: 'src\services\containers\VsClk.Portal.WebSite\ClientApp'
-         title: 'Portal Test Results'
-         type: 'JUnit'
-         include:
-           - 'junit.xml'
+  commands:                                                             
+
+publish:
+  commands:                                                             
+
+user_cleanup:
+  commands:                                                             
+
+package_sources:
+  nuget:
+    feeds:
+      Nuget.Org: https://api.nuget.org/v3/index.json
+    config_files:                               
+      - include:                                
+        - 'src/AzurePortal/src/NuGet.config'
+
+static_analysis_options:
+  binskim_options:
+    files_to_scan:
+      - from: 'src\AzurePortal\src\Default\Extension\'
+        include:
+          - '**/*Validation*.dll'
+  fxcop_options:
+    files_to_scan:
+      - from: 'src\AzurePortal\src\Default\Extension\'
+        include:
+          - '**/*Validation*.dll'
+  # moderncop_options:
+  #   files_to_scan:
+  #     - exclude:
+  #       - 'src/SpringCloudPortalExt.UnitTests/**/*'  
+  policheck_options:
+    files_to_scan:
+      - exclude:
+        - 'src/AzurePortal/src/Default/Extension/node_modules/*'     #external packages
+        - 'src/AzurePortal/src/Default/Extension/ReactDefinitions/*' #portal generated
+        - 'src/AzurePortal/src/Default/Extension/Definitions/*'      #portal generated
+        - 'src/AzurePortal/src/Default/Extension/Output/typings/*'   #portal generated

@@ -24,7 +24,9 @@ if "%EX%" neq "0" (
 	exit /b %EX%
 )
 
-:: Restore working directory of user so this works fine in dev box.
+call cd "src\AzurePortal\src\Default\Extension"
+call dir
+nuget restore -PackagesDirectory "..\..\packages"
 popd
 
 echo.

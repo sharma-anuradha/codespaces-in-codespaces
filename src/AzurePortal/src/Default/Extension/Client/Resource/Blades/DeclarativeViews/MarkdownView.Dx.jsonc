@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../../Definitions/dx.schema.json#",
+  "stringSource": "Resources/MyStrings.resjson",
+  "view": {
+    "kind": "Markdown",
+    "export": true,
+    "properties": {
+      "content": {
+        "property":"markdownContent"
+      }
+    }
+  }
+} 

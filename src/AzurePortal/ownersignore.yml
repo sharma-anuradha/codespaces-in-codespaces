@@ -1,0 +1,16 @@
+exclusion_groups:
+  # exclude ibizaatm /src from OE checks for AzureUX-PortalFx SamplesExtension repo sync to AzureUx-SamplesExtension
+  - accounts:
+      - ibizaatm@microsoft.com
+    files:
+      - /src/**
+    unique_id: exclude_ibizaatm_src_templateext
+
+branch_groups:
+  - source_branches:
+    # sample source branch would be ibizaatm/5.0.302.100 i.e ibizaatm/<sdkversion>
+      - (?i)(ibizaatm)(.{1}(\d+\.?)*)
+    target_branches:
+      - master
+    exclusion_ids:
+      - exclude_ibizaatm_src_templateext

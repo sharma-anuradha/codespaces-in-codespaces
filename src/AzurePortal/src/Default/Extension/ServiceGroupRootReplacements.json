@@ -1,0 +1,28 @@
+{
+    "production": {
+        "ServiceGroupRootReplacementsVersion": 2,
+        "AzureSubscriptionId": "979523fb-a19c-4bb0-a8ee-cef29597b0a4",
+        "CertKeyVaultUri": "https://vsclk-core-dev-kv.vault.azure.net/secrets/local-code-github-com-ssl/c73f6042ccf44643a6245a2a2dd11940",
+        "StorageAccountCredentialsType": "AccountKey",
+        "TargetStorageCredentialsKeyVaultUri": "https://vsclk-core-dev-kv.vault.azure.net/secrets/azureportalextension-key/a1e83365bc5042f1a04aed89984ce285",
+        "TargetContainerName": "extension",
+        "ContactEmail": "wangjaso@microsoft.com",
+        "PortalExtensionName": "Microsoft_Codespaces",
+        "FriendlyNames": ["canary"],
+        "MonitorDuration": ["PT30M"],
+        "SkipSafeDeployment": "false"
+    },
+    "test": {
+        "ServiceGroupRootReplacementsVersion": 2,
+        "AzureSubscriptionId": "a3c9bfe3-6696-4b72-a51a-48d3f6e69a24",
+        "CertKeyVaultUri": "https://vsclk-core-dev-kv.vault.azure.net/secrets/local-code-github-com-ssl/c73f6042ccf44643a6245a2a2dd11940",
+        "StorageAccountCredentialsType": "AccountKey",
+        "TargetStorageCredentialsKeyVaultUri": "https://vsclk-core-dev-kv.vault.azure.net/secrets/azureportalextension-key/a1e83365bc5042f1a04aed89984ce285",
+        "TargetContainerName": "extension",
+        "ContactEmail": "wangjaso@microsoft.com",
+        "PortalExtensionName": "Microsoft_Codespaces",
+        "FriendlyNames": ["test"],
+        "MonitorDuration": ["PT30M"],
+        "SkipSafeDeployment": "true"
+    }
+}

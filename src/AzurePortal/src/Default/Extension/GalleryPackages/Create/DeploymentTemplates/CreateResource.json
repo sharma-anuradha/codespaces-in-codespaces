@@ -1,0 +1,21 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2019-07-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-07-01-preview",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.VSOnline/plans",
+            "properties": {}
+        }
+    ]
+}
