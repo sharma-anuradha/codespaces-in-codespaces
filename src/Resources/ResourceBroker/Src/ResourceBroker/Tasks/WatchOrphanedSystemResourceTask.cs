@@ -134,9 +134,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                                 .FluentAddValue("ResourceCreatedDate", resource.Created);
 
                             // Trigger delete
-                            await childLogger.OperationScopeAsync(
-                                $"{LogBaseName}_delete_record",
-                                (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
+                            // await childLogger.OperationScopeAsync(
+                            //     $"{LogBaseName}_delete_record",
+                            //     (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
+                            childLogger.LogError($"{LogBaseName}_orphaned_resource_detected");
 
                             // Pause to rate limit ourselves
                             await Task.Delay(QueryDelay);

@@ -4,7 +4,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
+using Microsoft.OData.Edm;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -107,6 +110,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         async (childLogger)
                         =>
                         {
+                            DateTime updateTime = DateTime.Now;
+
                             // Conduct check to see if the compute resource exist
                             var hasComputeResource = false;
                             var hasCompute = environment.Compute != null;
@@ -143,7 +148,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                             // Update db to push back keep alive details
                             if (hasComputeResource || hasStorageResource || hasOSDiskResource)
                             {
-                                await CloudEnvironmentRepository.UpdateAsync(environment, childLogger.NewChildLogger());
+                                var childLogger2 = childLogger.NewChildLogger();
+
+                                // The top level try/catch is to prevent a single exception from killing rest of the loop.
+                                try
+                                {
+                                    var updatedEnvironmentRecord = await Retry.DoAsync<CloudEnvironment>(
+                                    async (int attemptNumber) =>
+                                    {
+                                        childLogger2.AddAttempt(attemptNumber);
+
+                                        if (hasComputeResource)
+                                        {
+                                            environment.Compute.KeepAlive.ResourceAlive = updateTime;
+                                        }
+
+                                        if (hasStorageResource)
+                                        {
+                                            environment.Storage.KeepAlive.ResourceAlive = updateTime;
+                                        }
+
+                                        if (hasOSDiskResource)
+                                        {
+                                            environment.OSDisk.KeepAlive.ResourceAlive = updateTime;
+                                        }
+
+                                        environment = await CloudEnvironmentRepository.UpdateAsync(environment, childLogger2.NewChildLogger());
+                                        return environment;
+                                    },
+                                    async (attemptNumber, ex) =>
+                                    {
+                                        childLogger2.AddAttempt(attemptNumber);
+
+                                        if (ex is DocumentClientException dcex && dcex.StatusCode == HttpStatusCode.PreconditionFailed)
+                                        {
+                                            environment = await CloudEnvironmentRepository.GetAsync(environment.Id, childLogger2.NewChildLogger());
+                                        }
+                                    });
+                                }
+                                catch (Exception e)
+                                {
+                                    childLogger2.LogErrorWithDetail($"{LogBaseName}_update_record_failed", e.ToString());
+                                }
                             }
 
                             // Pause to rate limit ourselves
@@ -163,9 +209,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     Guid.Parse(environment.Id),
                     allocationRecord.ResourceId,
                     logger.NewChildLogger());
-
-                // Update keep alive details
-                allocationRecord.KeepAlive.ResourceAlive = DateTime.UtcNow;
             }
             catch (HttpResponseStatusException e) when (e.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
