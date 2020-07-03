@@ -890,14 +890,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Kick off start-compute before returning.
                     await StartComputeAsync(
-        cloudEnvironment,
-        computerResource.ResourceId,
-        osDiskResource?.ResourceId,
-        storageResource?.ResourceId,
-        archiveStorageResource?.ResourceId,
-        null,
-        startCloudEnvironmentParameters,
-        childLogger.NewChildLogger());
+                        cloudEnvironment,
+                        computerResource.ResourceId,
+                        osDiskResource?.ResourceId,
+                        storageResource?.ResourceId,
+                        archiveStorageResource?.ResourceId,
+                        null,
+                        startCloudEnvironmentParameters,
+                        childLogger.NewChildLogger());
 
                     // Kick off state transition monitoring.
                     try

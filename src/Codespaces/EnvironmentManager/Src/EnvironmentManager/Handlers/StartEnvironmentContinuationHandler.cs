@@ -157,6 +157,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string trigger,
             IDiagnosticsLogger logger)
         {
+            logger.LogError($"{LogBaseName}_failed");
+
             if (operationInput.CreateNew)
             {
                 return await CleanResourcesAsync(operationInput, record, trigger, logger.NewChildLogger());
@@ -382,7 +384,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         record,
                         (environment, innerLogger) =>
                         {
-                            // Update state to be failed
+                            // Update compute and disk resources
                             record.Value.Compute = computeResource;
                             if (hasOSDiskResource)
                             {
