@@ -5,8 +5,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Management.Monitor.Fluent.AutoscaleSetting.Definition;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -94,11 +92,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                                 .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
 
                             // Update environment to finalized state
-                            handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
-                                cloudEnvironment,
-                                Guid.Parse(storageResourceId),
-                                string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
-                                childLogger.NewChildLogger());
+                            // Call only if storageResourceId is a valid Guid.
+                            if (Guid.TryParse(storageResourceId, out var storageResourceIdGuid))
+                            {
+                                handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
+                                    cloudEnvironment,
+                                    storageResourceIdGuid,
+                                    string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
+                                    childLogger.NewChildLogger());
+                            }
                         }
                     }
                     else if (jobResultData.JobState == JobState.Failed)
