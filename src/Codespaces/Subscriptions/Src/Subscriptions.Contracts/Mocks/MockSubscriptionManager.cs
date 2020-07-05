@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
+        public Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger, string resourceProvider = null)
         {
             return Task.FromResult(new Subscription());
         }

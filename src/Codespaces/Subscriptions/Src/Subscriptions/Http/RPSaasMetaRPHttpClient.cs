@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
@@ -18,9 +19,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
     /// </summary>
     public class RPSaasMetaRPHttpClient : HttpClientBase<RPSaaSMetaRPOptions>, IRPSaaSMetaRPHttpClient
     {
-        private const string ResourceProvider = "Microsoft.VSOnline";
+        private const string VSOnlineResourceProvider = "Microsoft.VSOnline";
+        private const string CodespacesResourceProvider = "Microsoft.Codespaces";
         private const string SubscriptionId = "979523fb-a19c-4bb0-a8ee-cef29597b0a4";
-        private const string APIVersion = "2020-05-26-preview";
+
+        // TODO: move api versions to appsettings
+        private const string VSOnlineAPIVersion = "2020-05-26-preview";
+        private const string CodespacesAPIVersion = "2020-06-16";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RPSaasMetaRPHttpClient"/> class.
@@ -34,8 +39,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
         /// <inheritdoc />
         public async Task<RPRegisteredSubscriptionsRequest> GetSubscriptionDetailsAsync(Subscription subscription, IDiagnosticsLogger logger)
         {
-            // TODO: This all needs to be filled with a real sub, a real RPSaaS sub and the API version.
-            var rpSaaSResponse = await SendAsync<object, RPRegisteredSubscriptionsRequest>(HttpMethod.Get, $"subscriptions/{SubscriptionId}/providers/{ResourceProvider}/registeredSubscriptions/{subscription.Id}?api-version={APIVersion}", null, logger.NewChildLogger());
+            string resourceProvider;
+            string apiVersion;
+            if (subscription.ResourceProvider.Equals(VsoPlanInfo.CodespacesProviderNamespace))
+            {
+                apiVersion = CodespacesAPIVersion;
+                resourceProvider = CodespacesResourceProvider;
+            }
+            else
+            {
+                apiVersion = VSOnlineAPIVersion;
+                resourceProvider = VSOnlineResourceProvider;
+            }
+
+            var endpoint = $"subscriptions/{SubscriptionId}/providers/{resourceProvider}/registeredSubscriptions/{subscription.Id}?api-version={apiVersion}";
+            var rpSaaSResponse = await SendAsync<object, RPRegisteredSubscriptionsRequest>(HttpMethod.Get, endpoint, null, logger.NewChildLogger());
             return rpSaaSResponse;
         }
     }

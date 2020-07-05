@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http;
@@ -97,13 +98,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                }, swallowException: true);
         }
 
-        /// <summary>
-        /// Gets the subscription corresponding to the subscriptionID. Creates a new record if one does not exist.
-        /// </summary>
-        /// <param name="subscriptionId">the id of the subscription.</param>
-        /// <param name="logger">the logger.</param>
-        /// <returns>The subscription.</returns>
-        public async Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
+        /// <inheritdoc/>
+        public async Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger, string resourceProvider = null)
         {
             var subscription = await SubscriptionRepository.GetAsync(subscriptionId, logger.NewChildLogger());
 
@@ -115,6 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                     Id = subscriptionId,
                     QuotaId = "FreeTrial_2014-09-01",  // Default is the trial bucket
                     SubscriptionState = SubscriptionStateEnum.Registered,
+                    ResourceProvider = resourceProvider,
                 };
 
                 var details = await GetSubscriptionDetailsFromExternalSourceAsync(subscription, logger.NewChildLogger());
@@ -129,6 +126,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 }
 
                 // add the subscription to our repository as it's a new subscription.
+                subscription = await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger.NewChildLogger());
+            }
+
+            // update subscription record if using the new RP: Microsoft.Codespaces
+            if (!string.IsNullOrEmpty(resourceProvider) && subscription.ResourceProvider != VsoPlanInfo.CodespacesProviderNamespace)
+            {
+                subscription.ResourceProvider = VsoPlanInfo.CodespacesProviderNamespace;
                 subscription = await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger.NewChildLogger());
             }
 

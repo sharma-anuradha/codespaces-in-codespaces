@@ -51,8 +51,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// </summary>
         /// <param name="subscriptionId">The ID of the subscription.</param>
         /// <param name="logger">the logger.</param>
+        /// <param name="resourceProvider">the name of the resorce provider.</param>
         /// <returns>the subscription record.</returns>
-        Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger);
+        Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger, string resourceProvider = null);
 
         /// <summary>
         /// Updates the subscription state.

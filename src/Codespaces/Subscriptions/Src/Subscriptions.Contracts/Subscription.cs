@@ -66,6 +66,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         public IDictionary<string, int> MaximumComputeQuota { get; set; }
 
         /// <summary>
+        /// Gets or sets the Resource Provider this subscriptionState refers to.
+        /// If this property is missing we will assume Microsoft.VSOnline.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "resourceProvider")]
+        public string ResourceProvider { get; set; }
+
+        /// <summary>
         /// Gets or sets the maximum quota for this subscription. This is used as an override for defaults in the Db.
         /// </summary>
         [JsonIgnore]

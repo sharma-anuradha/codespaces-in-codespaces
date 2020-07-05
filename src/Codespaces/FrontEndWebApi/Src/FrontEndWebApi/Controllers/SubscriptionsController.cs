@@ -265,7 +265,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ValidationUtil.IsTrue(string.IsNullOrEmpty(resource.Properties?.UserId));
                     }
 
-                    var subscription = await this.subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
+                    var resourceProvider = providerNamespace.Equals(VsoPlanInfo.CodespacesProviderNamespace, StringComparison.InvariantCultureIgnoreCase) ? providerNamespace : null;
+                    var subscription = await this.subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger(), resourceProvider);
 
                     var result = await planManager.CreateAsync(plan, subscription, logger);
 

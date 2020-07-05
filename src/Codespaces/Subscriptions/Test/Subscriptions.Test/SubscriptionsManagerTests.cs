@@ -2,6 +2,7 @@
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Test;
@@ -157,6 +158,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             Assert.Equal("MyQuotaId",subscription.QuotaId);
         }
 
+        [Fact]
+        public async void SubscriptionRecordHasCodespacesRP()
+        {
+            var subscription = await AddSubscriptionsToRepoAsync(SubscriptionStateEnum.Registered);
+            var savedSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger);
+            Assert.Null(savedSubscription.ResourceProvider);
+
+            var updatedSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger, VsoPlanInfo.CodespacesProviderNamespace);
+            Assert.Equal(VsoPlanInfo.CodespacesProviderNamespace, updatedSubscription.ResourceProvider);
+        }
+
         private async Task<Subscription> AddSubscriptionsToRepoAsync(
                                             SubscriptionStateEnum state = default, 
                                             bool isBanned = default,
@@ -167,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
                 Id = Guid.NewGuid().ToString(),
                 SubscriptionState = state,
                 BannedReason = isBanned ? BannedReason.Other : default,
-                BanComplete = isBannedComplete
+                BanComplete = isBannedComplete,
             };
 
             return await subscriptionRepository.CreateAsync(subscription, logger);
