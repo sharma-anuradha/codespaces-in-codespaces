@@ -254,7 +254,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                         {
                             NextInput = operationInput,
                             Status = OperationState.InProgress,
-                            RetryAfter = TimeSpan.FromSeconds(5),
+                            RetryAfter = TimeSpan.FromSeconds(30),
                         };
                 }
             }
