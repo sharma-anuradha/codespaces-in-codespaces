@@ -723,15 +723,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 return (false, expectedState);
             }
 
-            // We need to check if the last state matches the expected billing state.
-            // Look back and see if our last billing state matches what we expect.
-            // If it is different, return an error and the expected state.
-            // Otherwise, we should continue with our expected state.
-            Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
-                                                   bev.Time < end &&
-                                                   bev.Environment.Id == id &&
-                                                   bev.Type == BillingEventTypes.EnvironmentStateChange;
-
             var envEventsSinceStart = allEventsForPlan.Where(x => x.Environment.Id == id);
 
             if (envEventsSinceStart.Any())
@@ -756,12 +747,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private async Task<IEnumerable<BillingEvent>> GetAllEnvironmentStateChanges(VsoPlanInfo plan, DateTime end, IDiagnosticsLogger logger)
         {
             // We need a list of all environment state changes in this billing Plan.
-            Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan == plan &&
+            Expression<Func<BillingEvent, bool>> filter = bev => bev.Plan.Subscription == plan.Subscription &&
+                                                   bev.Plan.ResourceGroup == plan.ResourceGroup &&
+                                                   bev.Plan.Name == plan.Name &&
                                                    bev.Time < end &&
                                                    bev.Type == BillingEventTypes.EnvironmentStateChange;
 
             var envEventsSinceStart = await billingEventManager.GetPlanEventsAsync(filter, logger.NewChildLogger());
-            return envEventsSinceStart;
+            var eventsFileteredByNamespace = envEventsSinceStart.Where(x => (x.Plan.ProviderNamespace ?? VsoPlanInfo.VsoProviderNamespace) == plan.ProviderNamespace);
+            return eventsFileteredByNamespace;
         }
 
         private BillingEvent GetLastBillableEventStateChange(IEnumerable<BillingEvent> envEventsSinceStart)
