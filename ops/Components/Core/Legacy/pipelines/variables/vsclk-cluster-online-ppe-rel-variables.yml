@@ -1,0 +1,49 @@
+# vsclk-cluster-online-ppe-rel-variables.yml
+
+variables:
+  - template: variables.yml
+  - name: serviceName
+    value: online
+  - name: serviceEnv
+    value: ppe
+  - name: serviceInstance
+    value: rel
+  - name: dnsNameSuffix
+    value: -${{ variables.serviceInstance }}
+  - name: githubWorkspacesSecretFormatValue
+    value: -${{ variables.serviceEnv }}
+  - name: githubCodespacesSecretFormatValue
+    value: ${{ variables.serviceEnv }}-
+  - name: githubDotDevSecretFormatValue
+    value: ${{ variables.serviceEnv }}-
+  - name: serviceSubscription
+    value: vsclk-core-ppe
+  - name: azureContainerRegistry
+    value: ${{ variables.servicePrefix }}${{ variables.serviceName }}${{ variables.serviceEnv }}.azurecr.io
+  - name: dnsName
+    value: ${{ variables.serviceName }}${{ variables.dnsNameSuffix }}.${{ variables.dnsBaseName }}
+  - name: serviceConnector
+    value: ${{ variables.servicePrefix }}-${{ variables.serviceName }}-${{ variables.serviceEnv }}-devops
+  - name: sslCertKeyvaultName
+    value: ${{ variables.serviceSubscription }}-kv
+  - name: sslCertSecrets
+    value: "\
+      ssl-cert:${{ variables.sslCertSecretNameCorePpe }},\
+      ssl-cert-github-pf:${{ format(variables.sslCertGitHubPfSecretNameFormat, variables.serviceEnv) }},\
+      ssl-cert-github-ws:${{ format(variables.sslCertGitHubWorkspacesSecretNameFormat, variables.githubWorkspacesSecretFormatValue) }},\
+      ssl-cert-github-cs-pf:${{ format(variables.sslCertGitHubCodespacesPfSecretNameFormat, variables.githubCodespacesSecretFormatValue) }},\
+      ssl-cert-github-cs:${{ format(variables.sslCertGitHubCodespacesSecretNameFormat, variables.githubCodespacesSecretFormatValue) }},\
+      ssl-cert-github-dot-dev:${{ format(variables.sslCertGitHubDotDevSecretNameFormat, variables.githubDotDevSecretFormatValue) }},\
+    "
+  - name: clusterVersion
+    value: ${{ variables.clusterVersionPpe }}
+  - name: clusterNodeCount
+    value: ${{ variables.onlineServiceNodeCountPpe }}
+  - name: signlrEnabled
+    value: false
+  - name: signlrCapacity
+    value: ${{ variables.signlrCapacityPpe }}
+  - name: signlrCapacitySecondary
+    value: ${{ variables.signlrCapacitySecondaryPpe }}
+  - name: portForwardingEnabled
+    value: true

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "value": "${SERVICE_ENVIRONMENT}"
+    },
+    "instance": {
+      "value": "${SERVICE_INSTANCE}"
+    },
+    "clusterServicePrincipalAppId": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/${SERVICE_SUBSCRIPTION}/resourceGroups/${SERVICE_KEYVAULT_RESOURCE_GROUP}/providers/Microsoft.KeyVault/vaults/${SERVICE_KEYVAULT_NAME}"
+        },
+        "secretName": "cluster-sp-appid"
+      }
+    },
+    "clusterServicePrincipalSecret": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/${SERVICE_SUBSCRIPTION}/resourceGroups/${SERVICE_KEYVAULT_RESOURCE_GROUP}/providers/Microsoft.KeyVault/vaults/${SERVICE_KEYVAULT_NAME}"
+        },
+        "secretName": "cluster-sp-password"
+      }
+    },
+    "clusterVersion": {
+      "value": "${SERVICE_CLUSTER_VERSION}"
+    },
+    "clusterNodeCount": {
+      "value": ${SERVICE_CLUSTER_NODE_COUNT}
+    },
+    "resourceNamePrefix": {
+      "value": "${SERVICE_PREFIX}"
+    },
+    "serviceName": {
+      "value": "${SERVICE_NAME}"
+    },
+    "stampName": {
+      "value": "${SERVICE_STAMP}"
+    }
+  }
+}

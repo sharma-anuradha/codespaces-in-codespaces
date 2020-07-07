@@ -1,0 +1,42 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      // standard codespaces service prefix
+      "value": "vscs"
+    },
+    "env": {
+      // test environment
+      "value": "test"
+    },
+    "location": {
+      // test home location
+      "value": "westus2"
+    },
+    "opsSpId": {
+      // vscs-core-test-ops-sp
+      "value": "17f88b58-7482-467b-ac25-3cb7e4464866"
+    },
+    "adminsGroup": {
+      // vsclk-core-admin-a98a
+      "value": "0433b29f-19b4-44cb-92a5-d30951ad2bf1"
+    },
+    "breakGlassGroup": {
+      // vsclk-core-breakglass-823b
+      "value": "86701306-e3cd-4b17-85a1-2956e25a2527"
+    },
+    "contributorsGroup": {
+      // vsclk-core-contributors-3a5d
+      "value": "76ed1206-72df-4116-8e6a-747439d31855"
+    },
+    "readersGroup": {
+      // vsclk-core-readers-fd84
+      "value": "6837c2b1-4f15-45e3-a9f5-9bfac0726a47"
+    },
+    "isNonProduction": {
+      // Use non-production access control for the temp
+      "value": true
+    }
+  }
+}

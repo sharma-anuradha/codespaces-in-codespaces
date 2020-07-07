@@ -1,0 +1,30 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-04-01/RegionAgnosticServiceModel.json",
+  "serviceMetadata": {
+    "serviceIdentifier": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
+    "serviceGroup": "Microsoft.Codespaces.Core",
+    "displayName": "Visual Studio Codespaces - Core",
+    "serviceSpecificationPath": "servicespec.json",
+    "environment": "test"
+  },
+  "subscriptionProvisioining": {
+    "rolloutParametersPath": "parameters\\subscription.rolloutparameters.json",
+    "roleAssignment": {
+      "armTemplatePath": "templates\\subscription.roleassignment.template.json",
+      "armParametersPath": "parameters\\subscription.roleassignment.parameters.json"
+    }
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "GROUPNAME",
+      "subscriptionKey": "vsclk-core-$env-$location", // not per location!
+      "executionConstraint": "OncePerRegion",
+      "azureResourceGroupName": "NAME-$rolloutInfra()-$location",
+      "serviceResourceDefinitions": [
+        {
+          "name": "SERVICE"
+        }
+      ]
+    }
+  ]
+}

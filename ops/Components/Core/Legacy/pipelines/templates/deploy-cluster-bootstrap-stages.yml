@@ -1,0 +1,176 @@
+# deploy-cluster-bootstrap-stages.yml
+
+parameters:
+  name: ''
+  displayName: ''
+  dependsOn: []
+  pool: ''
+  serviceSubscription: ''
+  servicePrefix: ''
+  serviceName: ''
+  serviceEnv: ''
+  serviceInstance: ''
+  serviceLocation: ''
+  dnsName: ''
+  teamGroupId: ''
+  sslCertKeyvaultName: ''
+  sslCertSecrets: ''
+  clusterVersion: ''
+  clusterNodeCount: ''
+  signlrEnabled: false
+  signlrCapacity: ''
+  signlrCapacitySecondary: ''
+  regions: []
+  portForwardingEnabled: false
+
+stages:
+  - stage: GenerateBootstrapScripts
+    variables:
+      environment: ${{ parameters.servicePrefix }}-${{ parameters.serviceName }}-${{ parameters.serviceEnv }}-${{ parameters.serviceInstance }}
+      displayName: Generate bootstrap scripts for ${{ variables.environment }}
+      artifactName: bootstrap-scripts
+    displayName: ${{ variables.displayName }}
+    dependsOn: ${{ parameters.dependsOn }}
+    jobs:
+    - job: GenerateBootstrapScripts_Job
+      pool:
+        name: ${{ parameters.pool }}
+      displayName: ${{ variables.displayName }} on ${{ parameters.pool }}
+      steps:
+      # BootstrapUSE
+      - ${{ if containsValue(parameters.regions, 'use') }}:
+        - template: deploy-cluster-generate-script-step.yml
+          parameters:
+            stage: bootstrap
+            serviceStamp: use
+            serviceStampLocation: eastus
+            serviceSubscription: ${{ parameters.serviceSubscription }}
+            servicePrefix: ${{ parameters.servicePrefix }}
+            serviceName: ${{ parameters.serviceName }}
+            serviceEnv: ${{ parameters.serviceEnv }}
+            serviceInstance: ${{ parameters.serviceInstance }}
+            serviceLocation: ${{ parameters.serviceLocation }}
+            regions: ${{ parameters.regions }}
+            dnsName: ${{ parameters.dnsName }}
+            clusterVersion: ${{ parameters.clusterVersion }}
+            clusterNodeCount: ${{ parameters.clusterNodeCount }}
+            teamGroupId: ${{ parameters.teamGroupId }}
+            sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+            sslCertSecrets: ${{ parameters.sslCertSecrets }}
+            signlrEnabled: ${{ parameters.signlrEnabled }}
+            signlrCapacity: ${{ parameters.signlrCapacity }}
+            signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+            portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+      # BootstrapUSW2
+      - ${{ if containsValue(parameters.regions, 'usw2') }}:
+        - template: deploy-cluster-generate-script-step.yml
+          parameters:
+            stage: bootstrap
+            serviceStamp: usw2
+            serviceStampLocation: westus2
+            serviceConnector: ${{ parameters.serviceConnector }}
+            serviceSubscription: ${{ parameters.serviceSubscription }}
+            servicePrefix: ${{ parameters.servicePrefix }}
+            serviceName: ${{ parameters.serviceName }}
+            serviceEnv: ${{ parameters.serviceEnv }}
+            serviceInstance: ${{ parameters.serviceInstance }}
+            serviceLocation: ${{ parameters.serviceLocation }}
+            regions: ${{ parameters.regions }}
+            dnsName: ${{ parameters.dnsName }}
+            clusterVersion: ${{ parameters.clusterVersion }}
+            clusterNodeCount: ${{ parameters.clusterNodeCount }}
+            teamGroupId: ${{ parameters.teamGroupId }}
+            sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+            sslCertSecrets: ${{ parameters.sslCertSecrets }}
+            signlrEnabled: ${{ parameters.signlrEnabled }}
+            signlrCapacity: ${{ parameters.signlrCapacity }}
+            signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+            portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+      # BootstrapEUW
+      - ${{ if containsValue(parameters.regions, 'euw') }}:
+        - template: deploy-cluster-generate-script-step.yml
+          parameters:
+            stage: bootstrap
+            serviceStamp: euw
+            serviceStampLocation: westeurope
+            serviceConnector: ${{ parameters.serviceConnector }}
+            serviceSubscription: ${{ parameters.serviceSubscription }}
+            servicePrefix: ${{ parameters.servicePrefix }}
+            serviceName: ${{ parameters.serviceName }}
+            serviceEnv: ${{ parameters.serviceEnv }}
+            serviceInstance: ${{ parameters.serviceInstance }}
+            serviceLocation: ${{ parameters.serviceLocation }}
+            regions: ${{ parameters.regions }}
+            dnsName: ${{ parameters.dnsName }}
+            clusterVersion: ${{ parameters.clusterVersion }}
+            clusterNodeCount: ${{ parameters.clusterNodeCount }}
+            teamGroupId: ${{ parameters.teamGroupId }}
+            sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+            sslCertSecrets: ${{ parameters.sslCertSecrets }}
+            signlrEnabled: ${{ parameters.signlrEnabled }}
+            signlrCapacity: ${{ parameters.signlrCapacity }}
+            signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+            portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+      # BootstrapASSE
+      - ${{ if containsValue(parameters.regions, 'asse') }}:
+        - template: deploy-cluster-generate-script-step.yml
+          parameters:
+            stage: bootstrap
+            serviceStamp: asse
+            serviceStampLocation: southeastasia
+            serviceConnector: ${{ parameters.serviceConnector }}
+            serviceSubscription: ${{ parameters.serviceSubscription }}
+            servicePrefix: ${{ parameters.servicePrefix }}
+            serviceName: ${{ parameters.serviceName }}
+            serviceEnv: ${{ parameters.serviceEnv }}
+            serviceInstance: ${{ parameters.serviceInstance }}
+            serviceLocation: ${{ parameters.serviceLocation }}
+            regions: ${{ parameters.regions }}
+            dnsName: ${{ parameters.dnsName }}
+            clusterVersion: ${{ parameters.clusterVersion }}
+            clusterNodeCount: ${{ parameters.clusterNodeCount }}
+            teamGroupId: ${{ parameters.teamGroupId }}
+            sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+            sslCertSecrets: ${{ parameters.sslCertSecrets }}
+            signlrEnabled: ${{ parameters.signlrEnabled }}
+            signlrCapacity: ${{ parameters.signlrCapacity }}
+            signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+            portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+      # BootstrapUSEC
+      - ${{ if containsValue(parameters.regions, 'usec') }}:
+        - template: deploy-cluster-generate-script-step.yml
+          parameters:
+            stage: bootstrap
+            serviceStamp: usec
+            serviceStampLocation: eastus2euap
+            serviceConnector: ${{ parameters.serviceConnector }}
+            serviceSubscription: ${{ parameters.serviceSubscription }}
+            servicePrefix: ${{ parameters.servicePrefix }}
+            serviceName: ${{ parameters.serviceName }}
+            serviceEnv: ${{ parameters.serviceEnv }}
+            serviceInstance: ${{ parameters.serviceInstance }}
+            serviceLocation: ${{ parameters.serviceLocation }}
+            regions: ${{ parameters.regions }}
+            dnsName: ${{ parameters.dnsName }}
+            clusterVersion: ${{ parameters.clusterVersion }}
+            clusterNodeCount: ${{ parameters.clusterNodeCount }}
+            teamGroupId: ${{ parameters.teamGroupId }}
+            sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+            sslCertSecrets: ${{ parameters.sslCertSecrets }}
+            signlrEnabled: ${{ parameters.signlrEnabled }}
+            signlrCapacity: ${{ parameters.signlrCapacity }}
+            signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+            portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+      # Copy source files to output directory
+      - task: CopyFiles@2
+        displayName: Copy source file files to output
+        inputs:
+          sourceFolder: $(Build.SourcesDirectory)/src
+          contents: '**'
+          targetFolder: $(Build.ArtifactStagingDirectory)
+      # Publish outputs
+      - task: PublishBuildArtifacts@1
+        displayName: Publish outputs to '${{ variables.artifactName }}' artifact
+        inputs:
+          pathToPublish: $(Build.ArtifactStagingDirectory)
+          artifactName: ${{ variables.artifactName }}

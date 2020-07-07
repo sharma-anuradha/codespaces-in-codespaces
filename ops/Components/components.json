@@ -1,4 +1,5 @@
 {
+    "globalPrefix": "vscs",
     "components": {
         "core": {
             "displayName": "Core",
@@ -167,9 +168,9 @@
                 }
             ]
         },
-        "cdsp": {
+        "code": {
             "displayName": "Codespaces",
-            "prefix": "cdsp",
+            "prefix": "code",
             "dependsOn": [
                 "core",
                 "collab"
@@ -179,13 +180,13 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
                     "plane": "ctl",
                     "provisioned": {
-                        "vscs-cdsp-dev-ctl": {
+                        "vscs-code-dev-ctl": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-ppe-ctl": {
+                        "vscs-code-ppe-ctl": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-prod-ctl": {
+                        "vscs-code-prod-ctl": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -194,13 +195,13 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-github",
                     "plane": "ctl",
                     "provisioned": {
-                        "vscs-cdsp-dev-ctl-github": {
+                        "vscs-code-dev-ctl-github": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-ppe-ctl-github": {
+                        "vscs-code-ppe-ctl-github": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-prod-ctl-github": {
+                        "vscs-code-prod-ctl-github": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -209,13 +210,13 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-images",
                     "plane": "data",
                     "provisioned": {
-                        "vscs-cdsp-dev-data-images": {
+                        "vscs-code-dev-data-images": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-ppe-data-images": {
+                        "vscs-code-ppe-data-images": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-prod-data-images": {
+                        "vscs-code-prod-data-images": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -224,31 +225,31 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
                     "plane": "data",
                     "provisioned": {
-                        "vscs-cdsp-dev-data-ap": {
+                        "vscs-code-dev-data-ap": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-dev-data-eu": {
+                        "vscs-code-dev-data-eu": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-dev-data-us": {
+                        "vscs-code-dev-data-us": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-ppe-data-ap": {
+                        "vscs-code-ppe-data-ap": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-ppe-data-eu": {
+                        "vscs-code-ppe-data-eu": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-ppe-data-us": {
+                        "vscs-code-ppe-data-us": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-prod-data-ap": {
+                        "vscs-code-prod-data-ap": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-prod-data-eu": {
+                        "vscs-code-prod-data-eu": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-prod-data-us": {
+                        "vscs-code-prod-data-us": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -259,13 +260,13 @@
                     "env": "dev",
                     "count": 1,
                     "provisioned": {
-                        "vscs-cdsp-dev-data-compute-ap-001": {
+                        "vscs-code-dev-data-compute-ap-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-dev-data-compute-eu-001": {
+                        "vscs-code-dev-data-compute-eu-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-dev-data-compute-us-001": {
+                        "vscs-code-dev-data-compute-us-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -276,13 +277,13 @@
                     "env": "dev",
                     "count": 1,
                     "provisioned": {
-                        "vscs-cdsp-dev-data-storage-ap-001": {
+                        "vscs-code-dev-data-storage-ap-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-dev-data-storage-eu-001": {
+                        "vscs-code-dev-data-storage-eu-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-cdsp-dev-data-storage-us-001": {
+                        "vscs-code-dev-data-storage-us-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }

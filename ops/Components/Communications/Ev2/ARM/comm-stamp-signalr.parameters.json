@@ -1,0 +1,27 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "value": "${SERVICE_ENVIRONMENT}"
+    },
+    "instance": {
+      "value": "${SERVICE_INSTANCE}"
+    },
+    "resourceNamePrefix": {
+      "value": "${SERVICE_PREFIX}"
+    },
+    "serviceName": {
+      "value": "${SERVICE_NAME}"
+    },
+    "stampName": {
+      "value": "${SERVICE_STAMP}"
+    },
+    "signalRCapacity": {
+      "value": ${SERVICE_SIGNLR_CAPACITY}
+    },
+    "signalRCapacitySecondary": {
+      "value": ${SERVICE_SIGNLR_CAPACITY_SEC}
+    }
+  }
+}

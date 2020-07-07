@@ -1,0 +1,51 @@
+# vsclk-cluster-online-prod-can-variables.yml
+
+variables:
+  - template: variables.yml
+  - name: serviceName
+    value: online
+  - name: serviceEnv
+    value: prod
+  - name: serviceInstance
+    value: can
+  - name: serviceLocation
+    value: eastus2euap
+  - name: dnsNameSuffix
+    value:
+  - name: githubWorkspacesSecretFormatValue
+    value:
+  - name: githubCodespacesSecretFormatValue
+    value:
+  - name: githubDotDevSecretFormatValue
+    value:
+  - name: serviceSubscription
+    value: vsclk-core-prod
+  - name: azureContainerRegistry
+    value: ${{ variables.servicePrefix }}${{ variables.serviceName }}${{ variables.serviceEnv }}.azurecr.io
+  - name: dnsName
+    value: ${{ variables.serviceName }}${{ variables.dnsNameSuffix }}.${{ variables.dnsBaseNameCanary }}
+  - name: serviceConnector
+    value: ${{ variables.servicePrefix }}-${{ variables.serviceName }}-${{ variables.serviceEnv }}-devops
+  - name: sslCertKeyvaultName
+    value: ${{ variables.serviceSubscription }}-kv
+  - name: sslCertSecrets
+    value: "\
+      ssl-cert:${{ variables.sslCertSecretNameCoreProdCan }},\
+      ssl-cert-github-pf:${{ format(variables.sslCertGitHubPfSecretNameFormat, variables.serviceEnv) }},\
+      ssl-cert-github-ws:${{ format(variables.sslCertGitHubWorkspacesSecretNameFormat, variables.githubWorkspacesSecretFormatValue) }},\
+      ssl-cert-github-cs-pf:${{ format(variables.sslCertGitHubCodespacesPfSecretNameFormat, variables.githubCodespacesSecretFormatValue) }},\
+      ssl-cert-github-cs:${{ format(variables.sslCertGitHubCodespacesSecretNameFormat, variables.githubCodespacesSecretFormatValue) }},\
+      ssl-cert-github-dot-dev:${{ format(variables.sslCertGitHubDotDevSecretNameFormat, variables.githubDotDevSecretFormatValue) }},\
+    "
+  - name: clusterVersion
+    value: ${{ variables.clusterVersionProd }}
+  - name: clusterNodeCount
+    value: ${{ variables.onlineServiceNodeCountProd }}
+  - name: signlrEnabled
+    value: false
+  - name: signlrCapacity
+    value: ${{ variables.signlrCapacityProd }}
+  - name: signlrCapacitySecondary
+    value: ${{ variables.signlrCapacitySecondaryProd }}
+  - name: portForwardingEnabled
+    value: true
