@@ -161,6 +161,12 @@
       <LastGenOutput>ClientResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <FilesToLocalize Include="Client\UiDef\**\Strings.resjson">
+      <OutputPath>Client\UiDef\%(RecursiveDir)</OutputPath>
+      <CopyOption>LangIDOnName</CopyOption>
+    </FilesToLocalize>
+  </ItemGroup>
   <PropertyGroup>
     <!-- default to v16.0 if it exsts else fallback to 15.0 -->
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == '' And Exists('$(MSBuildToolsPath)\..\..\Microsoft\VisualStudio\v16.0')">16.0</VisualStudioVersion>

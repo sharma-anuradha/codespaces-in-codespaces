@@ -249,7 +249,7 @@ function createEssentials(
 ): ResourceLayoutContract {
     const essentials = createDefaultResourceLayout(container, {
         resourceId: resourceId,
-        includeTags: true,
+        includeTags: false,
         expanded: ko.observable(true),
         additionalRight: additionaldata,
     });

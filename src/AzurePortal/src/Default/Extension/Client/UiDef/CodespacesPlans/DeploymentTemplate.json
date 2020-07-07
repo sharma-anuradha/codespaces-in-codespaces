@@ -1,0 +1,68 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2019-08-01-alpha/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string",
+            "metadata": {
+                "description": "The Codespace plan's name"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of the Codespace Plan resource"
+            }
+        },
+        "virtualNetwork": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+                "description": "The Virtual Network used with Codespace Plan resource"
+            }
+        }
+    },
+    "variables": {
+        "virtualNetworkResourceType": "Microsoft.Network/virtualNetworks/subnets",
+        "virtualNetworkName": "[if(not(empty(parameters('virtualNetwork'))), parameters('virtualNetwork').name, 'noVirtualNetwork')]",
+        "virtualNetworkAddressPrefixes": "[if(not(empty(parameters('virtualNetwork'))), parameters('virtualNetwork').addressPrefixes, json('[]'))]",
+        "virtualNetworkSubnetName": "[if(not(empty(parameters('virtualNetwork'))), parameters('virtualNetwork').subnets.subnet1.name, '')]",
+        "virtualNetworkSubnetAddressPrefix": "[if(not(empty(parameters('virtualNetwork'))), parameters('virtualNetwork').subnets.subnet1.addressPrefix, '')]",
+        "VirtualNetworkNewOrExisting": "[if(not(empty(parameters('virtualNetwork'))), parameters('virtualNetwork').newOrExisting, 'existing')]",
+        "vNetData": {
+            "vnetProperties": {
+                "SubnetId": "[if(not(empty(parameters('virtualNetwork'))), resourceId(variables('virtualNetworkResourceType'), variables('virtualNetworkName'), variables('virtualNetworkSubnetName')), json('{}'))]"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.VSOnline/plans",
+            "apiVersion": "2020-05-26-alpha",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [ "[variables('virtualNetworkName')]" ],
+            "properties": "[if(not(empty(parameters('virtualNetwork'))), variables('vNetData'), json('{}'))]"
+        },
+        {
+            "condition": "[equals(variables('VirtualNetworkNewOrExisting'),'new')]",
+            "type": "Microsoft.Network/VirtualNetworks",
+            "apiVersion": "2019-09-01",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('virtualNetworkAddressPrefixes')]"
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('virtualNetworkSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('virtualNetworkSubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

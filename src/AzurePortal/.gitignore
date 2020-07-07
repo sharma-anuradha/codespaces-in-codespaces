@@ -402,3 +402,4 @@ __pycache__/
 # Extension generated files
 src/Default/Extension/Client/ClientResources.d.ts
 src/Default/Extension/ReactDefinitions/
+src/Default/Extension/Client/UiDef/Codespaces/Strings.d.ts

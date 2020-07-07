@@ -1,0 +1,10 @@
+{
+  "basic_codespacePlanName_label": "Nombre del plan de Codespace",
+  "networking": "Red de trabajo",
+  "networking_addVirtualNetwork_label": "¿Agregar una Red Virtual?",
+  "networking_addVirtualNetwork_yes": "Sí",
+  "networking_addVirtualNetwork_no": "No",
+  "networking_virtualNetworkLabel": "Red Virtual",
+  "networking_subnetsLabel": "Subredes",
+  "networking_subnetLabel": "Subred"
+}

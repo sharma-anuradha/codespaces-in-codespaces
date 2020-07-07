@@ -2,15 +2,20 @@
     "$schema": "https://gallery.azure.com/schemas/2018-02-12/UIDefinition.json#",
     "createDefinition": {
         "createBlade": {
-            "name": "CreateBlade",
-            "extension": "Microsoft_Codespaces"
+            "name": "CreateUiDefinitionBlade",
+            "extension": "Microsoft_Azure_CreateUIDef"
         },
         "startboardPart": {
-            "name": "ResourcePart",
-            "extension": "Microsoft_Codespaces"
+            "name": "CreateUIDefinitionPart",
+            "extension": "Microsoft_Azure_CreateUIDef"
         },
         "startboardPartKeyId": "id"
     },
     "initialData": {},
-    "options": {}
+    "options": {
+        "createUiDef": {
+            "extensionName": "Microsoft_Codespaces",
+            "assetName": "CodespacesPlans"
+        }
+    }
 }

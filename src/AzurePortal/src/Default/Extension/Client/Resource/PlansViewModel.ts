@@ -107,9 +107,9 @@ export class PlansViewModel
                 //Activity Logs - on by default for ARM resources
                 //    enableSupportEventLogs: true,
                 //Tags - on by default for ARM resources
-                //    enableTags: true,
+                enableTags: false,
                 //Diagnose and solve problems - recommended to enable, must onboard, see https://aka.ms/portalfx/resourcemenu
-                enableSupportTroubleshootV2: true,
+                enableSupportTroubleshootV2: false,
                 //
                 //SETTINGS group
                 //Properties - recommended for all resources
@@ -121,19 +121,19 @@ export class PlansViewModel
                 //
                 //MONITORING group - these items all require onboarding and are recommended for all Azure resources
                 //Alerts
-                enableAlerts: true,
+                enableAlerts: false,
                 //Metrics
-                enableMetrics: true,
+                enableMetrics: false,
                 //Diagnostic settings
-                enableDiagnostics: true,
+                enableDiagnostics: false,
                 //Logs
                 //enableLogs - requires onboarding - - https://aka.ms/portalfx/resourcemenu
                 enableLogs: true,
                 //Advisor recommendations - requires onboarding - https://aka.ms/portalfx/resourcemenu
-                enableSupportResourceAdvisor: true,
+                enableSupportResourceAdvisor: false,
                 //SUPPORT + TROUBLESHOOTING group
                 //Resource health
-                enableSupportResourceHealth: true,
+                enableSupportResourceHealth: false,
                 //Create support request - on by default for all ARM resources
                 //  enableSupportHelpRequest: true
             },
