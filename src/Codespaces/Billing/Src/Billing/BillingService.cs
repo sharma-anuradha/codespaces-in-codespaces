@@ -155,9 +155,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
                     var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan.Plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, allEnvironmentEvents, childLogger);
 
-                    // Checks for any missing environments in this summary that should be in it.
-                    CheckForMissingEnvironments(totalBillingSummary, start, allEnvironmentEvents, childLogger);
-
                     if (plan.IsDeleted)
                     {
                         // If the Plan has been deleted, track this state so that during the next billing iterating, we can mark it as the final bill.
