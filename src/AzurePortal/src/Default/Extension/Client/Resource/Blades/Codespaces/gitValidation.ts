@@ -81,13 +81,17 @@ export function getValidationMessage(
     key: validationMessagesKeys,
     translationFunc: (key: string) => string
 ): Q.Promise<Validations.ValidationResult> {
+
     return Q({
-        valid: key === validationMessagesKeys.valid,
-        message: translationFunc(key.toString()),
+        valid: (key === validationMessagesKeys.valid),
+        message: translationFunc(key.toString())
     });
 }
 
-function queryGitService(url: string, bearerToken?: string): Q.Promise<boolean> {
+function queryGitService(
+    url: string,
+    bearerToken?: string
+): Q.Promise<boolean> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
     };

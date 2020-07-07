@@ -28,7 +28,8 @@ export interface CreateCodespaceBladeParameters {
     htmlTemplate:
         "<div class='msportalfx-docking'>" +
         "<div class='msportalfx-docking-body msportalfx-padding'>" +
-        "<div class='msportalfx-form' data-bind='pcControl: section'></div>" +
+        "<div class='msportalfx-form' data-bind='pcControl: basicsSection'></div>" +
+        "<div class='msportalfx-form' data-bind='pcControl: dotFilesSection'></div>" +
         '</div>' +
         "<div class='msportalfx-docking-footer msportalfx-padding'>" +
         "<div data-bind='pcControl: okButton' class='.ext-ok-button'></div>" +
@@ -53,12 +54,15 @@ export class CreateCodespaceBlade {
      * It will be populated for you by the framework before your onInitialize() function is called.
      *   https://aka.ms/portalfx/nopdl/context
      */
-    public readonly context: TemplateBlade.Context<CreateCodespaceBladeParameters>;
+    public readonly context: TemplateBlade.Context<
+        CreateCodespaceBladeParameters
+    >;
 
-    /**
-     * The section that hosts the controls.
-     */
-    public section: Section.Contract;
+    //The section that contains necessary codespace creation info
+    public basicsSection: Section.Contract;
+
+    //The section that contains dotfiles parameters
+    public dotFilesSection: Section.Contract;
 
     //Buttons at the bottom of the form
     public okButton: Button.Contract;
@@ -70,8 +74,6 @@ export class CreateCodespaceBlade {
      * Initializes the Blade
      */
     public onInitialize() {
-        trace('CreateCodespacesBlade', 'Initialize blade');
-
         const { parameters } = this.context;
         const planId = parameters.planId;
         this._codespacesManager = new HttpCodespacesManager(planId);
@@ -92,7 +94,11 @@ export class CreateCodespaceBlade {
     /**
      * Initializes the section
      */
-    private _initializeSection(location: string, skus: Sku[], autoSuspendDelays: number[]): void {
+    private _initializeSection(
+        location: string,
+        skus: Sku[],
+        autoSuspendDelays: number[]
+    ): void {
         const { container } = this.context;
 
         const nameTextBox = TextBox.create(container, {
@@ -101,7 +107,10 @@ export class CreateCodespaceBlade {
             validations: [
                 new Validations.Required('Name is required'),
                 new Validations.MaxLength(90, 'Name is too long'),
-                new Validations.RegExMatch('^[A-Za-z1-9_()-. ]+$', 'Name is invalid'),
+                new Validations.RegExMatch(
+                    '^[A-Za-z1-9_()-. ]+$',
+                    'Name is invalid'
+                ),
             ],
         });
 
@@ -115,9 +124,12 @@ export class CreateCodespaceBlade {
                     (url: string): Q.Promise<Validations.ValidationResult> => {
                         return Q(
                             validateGitUrl(url).then((validationMessageKey) => {
-                                return getValidationMessage(validationMessageKey, (s) => {
-                                    return s;
-                                });
+                                return getValidationMessage(
+                                    validationMessageKey,
+                                    (s) => {
+                                        return s;
+                                    }
+                                );
                             })
                         );
                     }
@@ -151,12 +163,81 @@ export class CreateCodespaceBlade {
             //validations: [new Validations.Required],
         });
 
-        this.section = Section.create(container, {
+        this.basicsSection = Section.create(container, {
             name: 'Create Codespace',
-            children: [nameTextBox, gitUrlTextBox, skuDropDown, autoShutdownDelayDropDown],
+            children: [
+                nameTextBox,
+                gitUrlTextBox,
+                skuDropDown,
+                autoShutdownDelayDropDown
+            ],
         });
 
-        this.context.form.configureAlertOnClose(ko.observable({ showAlert: false }));
+        //Dotfiles
+        const dotFilesRepoTextBox = TextBox.create(container, {
+            label: 'Dotfiles repository',
+            infoBalloonContent: 'Dotfiles repository',
+            value: '',
+            validations: [
+                new Validations.Custom(
+                    'Invalid Url',
+                    (url: string): Q.Promise<Validations.ValidationResult> => {
+                        return Q(
+                            validateGitUrl(url).then((validationMessageKey) => {
+                                return getValidationMessage(
+                                    validationMessageKey,
+                                    (s) => {
+                                        return s;
+                                    }
+                                );
+                            })
+                        );
+                    }
+                ),
+            ],
+        });
+
+        const dotFilesInstallCmdTextBox = TextBox.create(container, {
+            label: 'Dotfiles install command',
+            infoBalloonContent: 'Dotfiles install command',
+            placeHolderText: './install.sh'
+        });
+
+        const dotFilesTargetTextBox = TextBox.create(container, {
+            label: 'Dotfiles target path',
+            infoBalloonContent: 'Dotfiles target files',
+            placeHolderText: '~/dotfiles'
+        });
+
+        this.dotFilesSection = Section.create(container, {
+            name: 'Dotfiles',
+            children: [
+                dotFilesRepoTextBox,
+                dotFilesInstallCmdTextBox,
+                dotFilesTargetTextBox
+            ],
+        }),
+
+        //Footer
+        this.context.form.configureAlertOnClose(
+            ko.observable({ showAlert: false })
+        );
+
+        this.context.form.validationState.subscribe(
+            container,
+            (validationState) => {
+                if (validationState === Validations.ValidationState.Valid) {
+                    this.okButton.disabled(false);
+                }
+            }
+        );
+
+        nameTextBox.validationResults.subscribe(container,
+            () => {
+                gitUrlTextBox.triggerValidation();
+                dotFilesRepoTextBox.triggerValidation();
+            }
+        );
 
         this.okButton = Button.create(container, {
             text: 'Create',
@@ -177,26 +258,23 @@ export class CreateCodespaceBlade {
                         seed,
                         autoShutdownDelayMinutes: autoShutdownDelayDropDown.value.peek(),
                         location,
+                        personalization: {
+                            dotfilesRepository: dotFilesRepoTextBox.value.peek(),
+                            dotfilesInstallCommand: normalizeOptionalValue(dotFilesInstallCmdTextBox.value.peek()),
+                            dotfilesTargetPath: normalizeOptionalValue(dotFilesTargetTextBox.value.peek()) || '~/dotfiles'
+                        }
                     })
                     .then(() => {
                         this.context.container.closeCurrentBlade();
                     })
                     .catch((e) => {
                         // TODO tasogawa revisit this
-                        this.context.container.fail('Failed to create your codespace');
+                        this.context.container.fail(
+                            'Failed to create your codespace'
+                        );
                     });
             },
             disabled: true,
-        });
-
-        this.context.form.validationState.subscribe(container, (validationState) => {
-            if (validationState === Validations.ValidationState.Valid) {
-                this.okButton.disabled(false);
-            }
-        });
-
-        nameTextBox.validationResults.subscribe(container, () => {
-            gitUrlTextBox.triggerValidation();
         });
 
         this.cancelButton = Button.create(container, {
@@ -207,4 +285,14 @@ export class CreateCodespaceBlade {
             style: Button.Style.Secondary,
         });
     }
+}
+
+function normalizeOptionalValue(value: string): string | undefined {
+    value = value.trim();
+
+    if (!value) {
+        return undefined;
+    }
+
+    return value;
 }

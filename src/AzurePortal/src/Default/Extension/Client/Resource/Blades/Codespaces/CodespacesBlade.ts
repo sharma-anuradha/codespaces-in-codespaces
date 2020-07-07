@@ -72,7 +72,7 @@ export class CodespacesBlade {
         container.commandBar = Toolbar.create(container, {
             items: [createButton, suspendButton, deleteButton],
         });
-
+        
         return Q();
     }
 
