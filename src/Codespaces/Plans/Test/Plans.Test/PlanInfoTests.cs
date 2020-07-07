@@ -55,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
             Assert.Equal(Guid.Empty.ToString(), plan.Subscription);
             Assert.Equal("testRG", plan.ResourceGroup);
             Assert.Equal("testA", plan.Name);
+            Assert.Equal(VsoPlanInfo.CodespacesProviderNamespace, plan.ProviderNamespace);
         }
 
         [Fact]

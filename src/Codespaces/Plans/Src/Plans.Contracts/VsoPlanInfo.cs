@@ -148,6 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             {
                 Subscription = subscription,
                 ResourceGroup = resourceGroup,
+                ProviderNamespace = providerNamespace,
                 Name = name,
             };
             return true;
@@ -157,7 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// Attempts to parse an Azure resource ID into a `VsoPlanInfo` object.
         /// </summary>
         /// <param name="resourceId">String in the same form as the <see cref="ResourceId"/> property.</param>
-        /// <returns>VsoPlanInfo object.</returns>
+        /// <returns>VsoPlanInfo object, or null if parsing failed.</returns>
         /// <remarks>
         /// The resulting plan object does not include a location. That may be set separately.
         /// </remarks>
@@ -168,39 +169,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 return null;
             }
 
-            var parts = resourceId.Split('/');
-            var plan = new VsoPlanInfo();
-
-            if (parts.Length != 9 ||
-                parts[0].Length != 0 ||
-                parts[1] != Subscriptions ||
-                parts[3] != ResourceGroups ||
-                parts[5] != Providers ||
-                parts[7] != PlanResourceType)
+            if (!TryParse(resourceId, out VsoPlanInfo plan))
             {
                 return null;
             }
 
-            var subscription = parts[2];
-            var resourceGroup = parts[4];
-            var providerNamespace = parts[6];
-            var name = parts[8];
-
-            if (!subscription.IsValidSubscriptionId() ||
-                !resourceGroup.IsValidResourceGroupName() ||
-                !IsValidPlanName(name))
-            {
-                return null;
-            }
-
-            if (!TryParseProviderNamespace(ref providerNamespace))
-            {
-                return null;
-            }
-
-            plan.Subscription = subscription;
-            plan.ResourceGroup = resourceGroup;
-            plan.Name = name;
             return plan;
         }
 
