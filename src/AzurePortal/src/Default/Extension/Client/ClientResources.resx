@@ -269,10 +269,16 @@
     <value>Resource Title</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Create Codespace Subtitle</value>
+    <value>Create a new Codespace</value>
   </data>
   <data name="CreateCodespaceBladeTitle" xml:space="preserve">
     <value>Create Codespace</value>
+  </data>
+  <data name="EditCodespaceBladeSubtitle" xml:space="preserve">
+    <value>Update Codespace settings</value>
+  </data>
+  <data name="EditCodespaceBladeTitle" xml:space="preserve">
+    <value>Edit Codespace</value>
   </data>
     <data name="CodespacesBladeSubtitle" xml:space="preserve">
     <value>Codespaces</value>

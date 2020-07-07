@@ -411,6 +411,28 @@ namespace Microsoft.Portal.Extensions.ExtensionTemplate.Client
         }
 
         /// <summary>
+        ///   Looks up a localized string for Edit Codespace Subtitle.
+        /// </summary>
+        public static string EditCodespaceBladeSubtitle
+        {
+            get
+            {
+                return ResourceManager.GetString("EditCodespaceBladeSubtitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Edit Codespace Title.
+        /// </summary>
+        public static string EditCodespaceBladeTitle
+        {
+            get
+            {
+                return ResourceManager.GetString("EditCodespaceBladeTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Codespaces.
         /// </summary>
         public static string CodespacesBladeSubtitle

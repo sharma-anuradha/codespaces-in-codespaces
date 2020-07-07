@@ -76,13 +76,17 @@ export class CreateCodespaceBlade {
         const planId = parameters.planId;
         this._codespacesManager = new HttpCodespacesManager(planId);
 
-        return new HttpPlansManager().fetchPlan(planId).then((plan) =>
-            this._codespacesManager
+        return new HttpPlansManager().fetchPlan(planId).then((plan) => {
+            return this._codespacesManager
                 .fetchLocation(plan.location)
                 .then(({ skus, defaultAutoSuspendDelayMinutes }) => {
-                    this._initializeSection(plan.location, skus, defaultAutoSuspendDelayMinutes);
-                })
-        );
+                    return this._initializeSection(
+                        plan.location,
+                        skus,
+                        defaultAutoSuspendDelayMinutes
+                    );
+                });
+        });
     }
 
     /**

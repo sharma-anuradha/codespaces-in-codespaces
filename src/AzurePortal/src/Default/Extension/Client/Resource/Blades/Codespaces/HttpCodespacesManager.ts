@@ -78,6 +78,19 @@ export class HttpCodespacesManager implements CodespacesManager {
         );
     }
 
+    editCodespace(id: string, skuName: string, autoShutdownDelayMinutes: number): Q.Promise<void> {
+        return this.getHttpClient().then((client) =>
+            client.patch(
+                getCodespacesUri(`environments/${id}`),
+                JSON.stringify({
+                    id,
+                    skuName,
+                    autoShutdownDelayMinutes,
+                })
+            )
+        );
+    }
+
     private getHttpClient(): Q.Promise<HttpClient> {
         return this.tokenPromise.then((token) => new HttpClient().withToken(token));
     }

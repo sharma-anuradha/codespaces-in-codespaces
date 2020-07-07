@@ -89,6 +89,7 @@
     <None Include="Client\Resource\Blades\Codespaces\CodespacesBlade.ts" />
     <None Include="Client\Resource\Blades\Codespaces\CodespaceModels.ts" />
     <None Include="Client\Resource\Blades\Codespaces\CreateCodespaceBlade.ts" />
+    <None Include="Client\Resource\Blades\Codespaces\EditCodespaceBlade.ts" />
     <None Include="Client\Resource\Blades\Codespaces\CodespacesManager.ts" />
     <None Include="Client\Resource\Blades\Codespaces\HttpCodespacesManager.ts" />
     <None Include="Client\Resource\Blades\Overview\InfoTilesComponent\InfoTilesComponent.css" />

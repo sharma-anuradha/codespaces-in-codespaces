@@ -2,7 +2,7 @@ import * as ClientResources from 'ClientResources';
 import * as TemplateBlade from 'Fx/Composition/TemplateBlade';
 import * as Section from 'Fx/Controls/Section';
 import * as DataGrid from 'Fx/Controls/DataGrid';
-import { Codespace, isTransient } from './CodespaceModels';
+import { Codespace, isTransient, provisioningLower, shuttingDownLower, startingLower } from './CodespaceModels';
 import { getCodespacesConnectUri } from '../../../Shared/Endpoints';
 import { CodespacesManager } from './CodespacesManager';
 import { HttpCodespacesManager } from './HttpCodespacesManager';
@@ -156,8 +156,22 @@ export class CodespacesBlade {
                         Toolbar.ToolbarItems.createBasicButton(lifetime, {
                             label: 'Change settings',
                             icon: Images.Gear(),
+                            disabled:
+                                row.item.state.toLowerCase() === startingLower ||
+                                row.item.state.toLowerCase() === provisioningLower ||
+                                row.item.state.toLowerCase() === shuttingDownLower,
                             onClick: () => {
-                                // TODO: change settings
+                                this.context.container.openContextPane(
+                                    BladeReferences.forBlade('EditCodespaceBlade').createReference({
+                                        parameters: {
+                                            planId: this.context.parameters.planId,
+                                            codespaceId: row.id,
+                                        },
+                                        onClosed: () => {
+                                            codespacesGrid.refresh();
+                                        },
+                                    })
+                                );
                             },
                         }),
                     ];

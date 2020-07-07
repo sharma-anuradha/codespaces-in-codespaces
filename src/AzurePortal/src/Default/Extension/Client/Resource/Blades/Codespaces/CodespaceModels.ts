@@ -31,7 +31,7 @@ interface GitConfig {
 
 export class Location {
     skus: Sku[];
-    defaultAutoSuspendDelayMinutes: number[]; 
+    defaultAutoSuspendDelayMinutes: number[];
 }
 
 export class Sku {
@@ -40,8 +40,11 @@ export class Sku {
     os: string;
 }
 
+export const startingLower = 'starting';
 export const provisioningLower = 'provisioning';
 export const shuttingDownLower = 'shuttingdown';
+export const suspendedLower = 'suspended';
+export const shutdownLower = 'shutdown';
 export const availableLower = 'available';
 export function isTransient(codespace: Codespace): boolean {
     const stateLower = codespace.state.toLowerCase();
