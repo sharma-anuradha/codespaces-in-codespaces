@@ -754,7 +754,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                    bev.Type == BillingEventTypes.EnvironmentStateChange;
 
             var envEventsSinceStart = await billingEventManager.GetPlanEventsAsync(filter, logger.NewChildLogger());
-            var eventsFileteredByNamespace = envEventsSinceStart.Where(x => (x.Plan.ProviderNamespace ?? VsoPlanInfo.VsoProviderNamespace) == plan.ProviderNamespace);
+            var planNamespace = plan.ProviderNamespace ?? VsoPlanInfo.VsoProviderNamespace;
+            var eventsFileteredByNamespace = envEventsSinceStart.Where(x => (x.Plan.ProviderNamespace ?? VsoPlanInfo.VsoProviderNamespace) == planNamespace);
             return eventsFileteredByNamespace;
         }
 
