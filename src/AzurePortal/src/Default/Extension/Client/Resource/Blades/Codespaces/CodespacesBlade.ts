@@ -2,7 +2,7 @@ import * as ClientResources from 'ClientResources';
 import * as TemplateBlade from 'Fx/Composition/TemplateBlade';
 import * as Section from 'Fx/Controls/Section';
 import * as DataGrid from 'Fx/Controls/DataGrid';
-import { Codespace, provisioningLower } from './CodespaceModels';
+import { Codespace, isTransient } from './CodespaceModels';
 import { getCodespacesConnectUri } from '../../../Shared/Endpoints';
 import { CodespacesManager } from './CodespacesManager';
 import { HttpCodespacesManager } from './HttpCodespacesManager';
@@ -65,16 +65,9 @@ export class CodespacesBlade {
         const codespacesGrid = this._initializeCodespacesGrid();
         this.section.children.push(codespacesGrid);
 
-        const createButton = this._initializeCreateButton(codespacesGrid, codespacesGrid.refresh);
-        const suspendButton = this._initializeSuspendButton(
-            codespacesGrid.selection.selectedItems.peek(),
-            () => codespacesGrid.refresh()
-        );
-
-        const deleteButton = this._initializeDeleteButton(
-            codespacesGrid.selection.selectedItems.peek(),
-            () => codespacesGrid.refresh()
-        );
+        const createButton = this._initializeCreateButton(codespacesGrid);
+        const suspendButton = this._initializeSuspendButton(codespacesGrid);
+        const deleteButton = this._initializeDeleteButton(codespacesGrid);
 
         container.commandBar = Toolbar.create(container, {
             items: [createButton, suspendButton, deleteButton],
@@ -87,10 +80,10 @@ export class CodespacesBlade {
         const dataSource = () =>
             this._codespacesManager.fetchCodespaces().then((codespaces: Codespace[]) => {
                 codespaces
-                    .filter((codespace) => codespace.state.toLowerCase() === provisioningLower)
+                    .filter((codespace: Codespace) => isTransient(codespace))
                     .forEach(({ id }) =>
                         this._codespacesManager
-                            .pollForReadyCodespace(id)
+                            .pollTransitioningCodespace(id)
                             .then(() => codespacesGrid.refresh())
                     );
 
@@ -154,6 +147,13 @@ export class CodespacesBlade {
                             onClick: new ClickableLink(`vscode-insiders://${link}`),
                         }),
                         Toolbar.ToolbarItems.createBasicButton(lifetime, {
+                            label: 'Delete',
+                            icon: Images.Delete(),
+                            onClick: () => this._codespacesManager
+                                .deleteCodespace(row.item.id)
+                                .then(() => {codespacesGrid.refresh()}),
+                        }),
+                        Toolbar.ToolbarItems.createBasicButton(lifetime, {
                             label: 'Change settings',
                             icon: Images.Gear(),
                             onClick: () => {
@@ -170,8 +170,7 @@ export class CodespacesBlade {
     }
 
     private _initializeCreateButton(
-        codespacesGrid: DataGrid.Contract<Codespace>,
-        callback: () => Q.Promise<any>
+        codespacesGrid: DataGrid.Contract<Codespace>
     ): Toolbar.ToolbarItems.BasicButtonContract {
         return Toolbar.ToolbarItems.createBasicButton(this.context.container, {
             label: 'Create New',
@@ -192,35 +191,33 @@ export class CodespacesBlade {
     }
 
     private _initializeSuspendButton(
-        codespaces: Codespace[],
-        callback: () => Q.Promise<any>
+        codespacesGrid: DataGrid.Contract<Codespace>
     ): Toolbar.ToolbarItems.BasicButtonContract {
         return Toolbar.ToolbarItems.createBasicButton(this.context.container, {
             label: 'Suspend selected',
             icon: Images.Paused(),
             onClick: () => {
                 Q.all(
-                    codespaces.map((codespace) =>
+                    codespacesGrid.selection.selectedItems.peek().map((codespace) =>
                         this._codespacesManager.suspendCodespace(codespace.id)
                     )
-                ).then(() => callback());
+                ).then(() => codespacesGrid.refresh());
             },
         });
     }
 
     private _initializeDeleteButton(
-        codespaces: Codespace[],
-        callback: () => Q.Promise<any>
+        codespacesGrid: DataGrid.Contract<Codespace>
     ): Toolbar.ToolbarItems.BasicButtonContract {
         return Toolbar.ToolbarItems.createBasicButton(this.context.container, {
             label: 'Delete selected',
             icon: Images.Delete(),
             onClick: () => {
                 Q.all(
-                    codespaces.map((codespace) =>
+                    codespacesGrid.selection.selectedItems.peek().map((codespace) =>
                         this._codespacesManager.deleteCodespace(codespace.id)
                     )
-                ).then(() => callback());
+                ).then(() => codespacesGrid.refresh());
             },
         });
     }

@@ -1,5 +1,5 @@
 import { CodespacesManager } from './CodespacesManager';
-import { Codespace, Location, availableLower, provisioningLower } from './CodespaceModels';
+import { Codespace, Location, availableLower, provisioningLower, isTransient } from './CodespaceModels';
 import { HttpClient } from '../../../Shared/HttpClient';
 import { getCodespacesUri, getArmUri } from '../../../Shared/Endpoints';
 import { ajax } from 'Fx/Ajax';
@@ -50,23 +50,17 @@ export class HttpCodespacesManager implements CodespacesManager {
         );
     }
 
-    pollForReadyCodespace(id: string, useCache: boolean = true): Q.Promise<boolean> {
+    pollTransitioningCodespace(id: string, useCache: boolean = true): Q.Promise<boolean> {
         const cachedPromise = this.pollingPromises[id];
 
         if (useCache && cachedPromise && cachedPromise.isPending()) {
             return cachedPromise;
         }
 
-        const pollingPromise = this.fetchCodespace(id).then((codespace) => {
-            switch (codespace.state.toLowerCase()) {
-                case availableLower:
-                    return true;
-                case provisioningLower:
-                    return Q.delay(1000).then(() => this.pollForReadyCodespace(id, false));
-                default:
-                    return false;
-            }
-        });
+        const pollingPromise = this.fetchCodespace(id).then(
+            (codespace) => !isTransient(codespace) ||
+                Q.delay(1000).then(() => this.pollTransitioningCodespace(id, false))
+        );
 
         this.pollingPromises[id] = pollingPromise;
         return pollingPromise;

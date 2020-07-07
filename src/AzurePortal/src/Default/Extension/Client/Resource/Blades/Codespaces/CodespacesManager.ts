@@ -7,6 +7,6 @@ export interface CodespacesManager {
     fetchCodespaces(): Q.Promise<Codespace[]>;
     fetchCodespace(id: string): Q.Promise<Codespace>
     suspendCodespace(id: string): Q.Promise<void>;
-    pollForReadyCodespace(id: string): Q.Promise<boolean>;
+    pollTransitioningCodespace(id: string): Q.Promise<boolean>;
     deleteCodespace(id: string): Q.Promise<void>;
 }

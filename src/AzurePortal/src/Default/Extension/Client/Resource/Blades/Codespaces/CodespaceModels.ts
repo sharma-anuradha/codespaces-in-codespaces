@@ -41,4 +41,9 @@ export class Sku {
 }
 
 export const provisioningLower = 'provisioning';
+export const shuttingDownLower = 'shuttingdown';
 export const availableLower = 'available';
+export function isTransient(codespace: Codespace): boolean {
+    const stateLower = codespace.state.toLowerCase();
+    return stateLower === provisioningLower || stateLower === shuttingDownLower;
+}
