@@ -77,6 +77,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Configuration AppSettings
             var appSettings = ConfigureAppSettings(services);
 
+            // To handle the exceptions.
+            RegisterUnhandledExceptionHandler(new DefaultLoggerFactory().New());
+
             if (IsRunningInAzure() && AppSettings.DeveloperPersonalStamp)
             {
                 throw new InvalidOperationException("Cannot use DeveloperPersonalStamp outside of local development");
@@ -287,6 +290,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
         {
             Requires.NotNullOrEmpty(value, paramName);
             return value;
+        }
+
+        private static void RegisterUnhandledExceptionHandler(IDiagnosticsLogger logger)
+        {
+            AppDomain.CurrentDomain.UnhandledException += (object sender, UnhandledExceptionEventArgs e) =>
+            {
+                // In future we may take a heap dump of it here.
+                logger.LogCritical($"Process terminating: {e.IsTerminating}\n {e.ExceptionObject.ToString()}");
+            };
         }
     }
 }
