@@ -5,6 +5,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using k8s.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.VsSaaS.Diagnostics;
@@ -56,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
         }
-        
+
         [Fact]
         public async Task InvokeAsync_ValidConfiguration_HeaderDetails_SendMessage()
         {
@@ -68,6 +69,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             queueClientProvider
                 .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(queueClient.Object);
+
+            mappingClient
+                .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(MockKubernetesObjects.Endpoint);
 
             await middleware.InvokeAsync(
                 context,
@@ -86,9 +91,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             };
             Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
             Assert.Equal(
-                "https://pf-a68c43fa9e015e45e046c85d502ec5e4b774-8080.default.svc.cluster.local/test/path",
+                "https://0.0.0.0/test/path",
                 context.Response.Headers.GetValueOrDefault("Location"));
-            
+
             queueClient.Verify(c => c.SendAsync(It.Is<Message>(msg =>
                 msg.SessionId == connectionRequest.WorkspaceId &&
                 // Deserialize to string for readable assertion errors.
@@ -107,6 +112,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             queueClientProvider
                 .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(queueClient.Object);
+
+            mappingClient
+                .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(MockKubernetesObjects.Endpoint);
 
             await middleware.InvokeAsync(
                 context,
@@ -131,6 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(queueClient.Object);
 
+            mappingClient
+                .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(MockKubernetesObjects.Endpoint);
+
             await middleware.InvokeAsync(
                 context,
                 logger,
@@ -148,9 +161,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             };
             Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
             Assert.Equal(
-                "https://pf-a68c43fa9e015e45e046c85d502ec5e4b774-8080.default.svc.cluster.local/test/path",
+                "https://0.0.0.0/test/path",
                 context.Response.Headers.GetValueOrDefault("Location"));
-            
+
             queueClient.Verify(c => c.SendAsync(It.Is<Message>(msg =>
                 msg.SessionId == connectionRequest.WorkspaceId &&
                 // Deserialize to string for readable assertion errors.
@@ -169,11 +182,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             var mappingClient = new Mock<IAgentMappingClient>();
             mappingClient
-                .Setup(i => i.WaitForServiceAvailableAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(i => i.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .ThrowsAsync(new TaskCanceledException());
-            
+
             var context = CreateMockContext();
-            
+
             await middleware.InvokeAsync(
                 context,
                 logger,
@@ -181,7 +194,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 mappingClient.Object,
                 hostUtils,
                 MockPortForwardingAppSettings.Settings);
-            
+
             Assert.Equal(StatusCodes.Status504GatewayTimeout, context.Response.StatusCode);
         }
 
