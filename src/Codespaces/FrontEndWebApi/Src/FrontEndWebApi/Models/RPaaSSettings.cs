@@ -1,27 +1,27 @@
-﻿// <copyright file="RPSaaSSettings.cs" company="Microsoft">
+﻿// <copyright file="RPaaSSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
-    /// Config settings related to RPSaaS authentication.
+    /// Config settings related to RPaaS authentication.
     /// </summary>
-    public class RPSaaSSettings
+    public class RPaaSSettings
     {
         /// <summary>
-        /// Gets or sets the RPSaaS ApplicationID.
-        /// This appid claim will be present for all api calls coming from RPSaaS.
+        /// Gets or sets the RPaaS ApplicationID.
+        /// This appid claim will be present for all api calls coming from RPaaS.
         /// </summary>
         public string AppId { get; set; }
 
         /// <summary>
-        /// Gets or sets the Authority URL used to valided RPSaaS signing signature.
+        /// Gets or sets the Authority URL used to valided RPaaS signing signature.
         /// </summary>
         public string Authority { get; set; }
 
         /// <summary>
-        /// Gets or sets the Issuer hostname for the RPSaaS iss claim.
+        /// Gets or sets the Issuer hostname for the RPaaS iss claim.
         /// </summary>
         public string IssuerHostname { get; set; }
 

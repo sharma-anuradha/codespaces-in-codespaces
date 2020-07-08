@@ -82,9 +82,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string RedisConnectionString { get; set; }
 
         /// <summary>
-        /// Gets or sets the RP SaaS settings.
+        /// Gets or sets the RPaaS settings.
         /// </summary>
-        public RPSaaSSettings RPSaaSSettings { get; set; }
+        public RPaaSSettings RPaaSSettings { get; set; }
 
         /// <summary>
         /// Gets or sets the Environment Manager Settings.

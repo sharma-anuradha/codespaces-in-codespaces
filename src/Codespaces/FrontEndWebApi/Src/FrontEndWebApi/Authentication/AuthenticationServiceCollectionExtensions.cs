@@ -38,13 +38,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <param name="services">The service collection.</param>
         /// <param name="hostEnvironment">The aspnet host environment.</param>
         /// <param name="redisCacheOptions">The redis cache options.</param>
-        /// <param name="settings">The RPSaaS settings.</param>
+        /// <param name="settings">The RPaaS settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddCustomFrontEndAuthentication(
             this IServiceCollection services,
             IWebHostEnvironment hostEnvironment,
             RedisCacheOptions redisCacheOptions,
-            RPSaaSSettings settings)
+            RPaaSSettings settings)
         {
             Requires.NotNull(hostEnvironment, nameof(hostEnvironment));
             Requires.NotNull(redisCacheOptions, nameof(redisCacheOptions));
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             services
                 .AddAuthentication()
-                .AddRPSaaSJwtBearer(settings)
+                .AddRPaaSJwtBearer(settings)
                 .AddVMTokenJwtBearer()
                 .AddVsSaaSCookieBearer();
 

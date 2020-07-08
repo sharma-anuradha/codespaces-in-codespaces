@@ -211,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddSubscriptionsHttpProvider(
                  options =>
                  {
-                     options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSSettings.RegisteredSubscriptionsUrl, nameof(frontEndAppSettings.RPSaaSSettings.RegisteredSubscriptionsUrl));
+                     options.BaseAddress = ValidationUtil.IsRequired(frontEndAppSettings.RPaaSSettings.RegisteredSubscriptionsUrl, nameof(frontEndAppSettings.RPaaSSettings.RegisteredSubscriptionsUrl));
                  });
 
             // Add FirstPartyAppSettings
@@ -296,7 +296,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add user authentication using VSO (Cascade) tokens.
             services.AddAuthentication().AddVsoJwtBearerAuthentication();
 
-            // Add custom authentication (rpsaas, VM tokens) and VM token validator.
+            // Add custom authentication (rpaas, VM tokens) and VM token validator.
             services.AddCustomFrontEndAuthentication(
                 HostingEnvironment,
                 new RedisCacheOptions
@@ -304,7 +304,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     // TODO: make this required -- but it isn't configured yet.
                     RedisConnectionString = frontEndAppSettings.RedisConnectionString,
                 },
-                ValidationUtil.IsRequired(frontEndAppSettings.RPSaaSSettings, nameof(frontEndAppSettings.RPSaaSSettings)))
+                ValidationUtil.IsRequired(frontEndAppSettings.RPaaSSettings, nameof(frontEndAppSettings.RPaaSSettings)))
                 .AddCertificateCredentialCacheFactory();
 
             services.AddBlobStorageClientProvider<BlobStorageClientProvider>(options =>

@@ -1,4 +1,4 @@
-﻿// <copyright file="RPSaaSMetaRPHttpProvider.cs" company="Microsoft">
+﻿// <copyright file="RPaaSMetaRPHttpProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,12 +19,12 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
 {
     /// <inheritdoc/>
-    public class RPSaaSMetaRPHttpProvider<TOptions>
+    public class RPaaSMetaRPHttpProvider<TOptions>
         : IHttpClientProvider<TOptions>
         where TOptions : class, IHttpClientProviderOptions, new()
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RPSaaSMetaRPHttpProvider{TOptions}"/> class.
+        /// Initializes a new instance of the <see cref="RPaaSMetaRPHttpProvider{TOptions}"/> class.
         /// </summary>
         /// <param name="options">The options instance.</param>
         /// <param name="currentUserProvider">The current user provider.</param>
@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
         /// <param name="firstPartyAppSettings">First Party Add settings.</param>
         /// <param name="productInfo">Product info for the current service, to be added to.
         /// request headers.</param>
-        public RPSaaSMetaRPHttpProvider(
+        public RPaaSMetaRPHttpProvider(
             IOptions<TOptions> options,
             IKeyVaultSecretReader keyVaultSecretReader,
             IDiagnosticsLogger logger,

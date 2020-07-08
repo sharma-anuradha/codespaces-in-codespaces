@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         Task<bool> CanSubscriptionCreatePlansAndEnvironmentsAsync(Subscription subscriptionId, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Gets all the subscription details from RPSaaS for use in our system.
+        /// Gets all the subscription details from RPaaS for use in our system.
         /// </summary>
         /// <param name="subscription">the subscription ID we're looking for information on.</param>
         /// <param name="logger">the logger.</param>

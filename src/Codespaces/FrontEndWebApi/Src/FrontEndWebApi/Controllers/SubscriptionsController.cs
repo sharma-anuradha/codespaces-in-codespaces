@@ -36,10 +36,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
     /// <summary>
-    /// The VSO Plan api called by RPSaaS.
+    /// The VSO Plan api called by RPaaS.
     /// </summary>
     [ApiController]
-    [Authorize(AuthenticationSchemes = AuthenticationBuilderRPSaasExtensions.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = AuthenticationBuilderRPaasExtensions.AuthenticationScheme)]
     [FriendlyExceptionFilter]
     [Route(ServiceConstants.ApiV1Route)]
     [LoggingBaseName(LoggingBaseName)]
@@ -84,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
-        /// This method will be called by RPSaaS before they create the resource in their DB to validate inputs.
+        /// This method will be called by RPaaS before they create the resource in their DB to validate inputs.
         /// </summary>
         /// <param name="subscriptionId">The Azure subscription identifier.</param>
         /// <param name="resourceGroup">The Azure resource group.</param>
@@ -179,14 +179,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
-        /// This method will be called by RPSaaS Service before they create the resource in their DB.
+        /// This method will be called by RPaaS Service before they create the resource in their DB.
         /// </summary>
         /// <param name="subscriptionId">The Azure subscription identifier.</param>
         /// <param name="resourceGroup">The Azure resource group.</param>
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
-        /// <param name="headers">The headers from RPSaaS.</param>
+        /// <param name="headers">The headers from RPaaS.</param>
         /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateAsync))]
@@ -289,7 +289,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
-        /// This method will be called by RPSaaS Service after they create the resource in their DB.
+        /// This method will be called by RPaaS Service after they create the resource in their DB.
         /// This method could be used to start billing.
         /// </summary>
         /// <param name="subscriptionId">The Azure subscription identifier.</param>
@@ -319,7 +319,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         }
 
         /// <summary>
-        /// This method will be called by RPSaaS Service before they delete the resource in their DB.
+        /// This method will be called by RPaaS Service before they delete the resource in their DB.
         /// </summary>
         /// <param name="subscriptionId">The Azure subscription identifier.</param>
         /// <param name="resourceGroup">The Azure resource group.</param>
@@ -971,7 +971,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     }
 
                     DateTime? sourceArmTokenExpiration = null;
-                    if (HttpContext.Items.TryGetValue(AuthenticationBuilderRPSaasExtensions.SourceArmTokenClaims, out var value) &&
+                    if (HttpContext.Items.TryGetValue(AuthenticationBuilderRPaasExtensions.SourceArmTokenClaims, out var value) &&
                         value is ClaimsPrincipal sourceArmTokenClaims &&
                         int.TryParse(sourceArmTokenClaims.FindFirstValue(JwtRegisteredClaimNames.Exp), out var secSinceEpoch))
                     {
@@ -1171,7 +1171,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IEnumerable<PlanResource> resources, ICollection<VsoPlan> plans)
         {
             var userIdSet = this.currentUserProvider.CurrentUserIdSet;
-            var isMsa = AuthenticationBuilderRPSaasExtensions.IsArmMsaIdentity(
+            var isMsa = AuthenticationBuilderRPaasExtensions.IsArmMsaIdentity(
                 HttpContext.User?.Identities.FirstOrDefault());
             resources = resources.Select((resource) =>
             {

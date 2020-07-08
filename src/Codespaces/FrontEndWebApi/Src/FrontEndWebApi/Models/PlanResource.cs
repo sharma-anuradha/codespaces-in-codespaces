@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
-    /// JSON body properties from RPSaaS.
+    /// JSON body properties from RPaaS.
     /// </summary>
     public class PlanResource
     {

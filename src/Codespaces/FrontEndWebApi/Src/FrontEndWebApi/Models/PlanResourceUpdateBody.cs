@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
-    /// JSON body for updating plan resource properties from RPSaaS.
+    /// JSON body for updating plan resource properties from RPaaS.
     /// </summary>
     public class PlanResourceUpdateBody
     {

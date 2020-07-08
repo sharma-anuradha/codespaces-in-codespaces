@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             var mockQuotaCatalog = new Mock<IQuotaFamilyCatalog>();
             var subscriptionOfferManager = new SubscriptionOfferManager(mockSystemConfiguration.Object, mockQuotaCatalog.Object);
             var crossRegionActivator = new MockCrossRegionContinuationTaskActivator();
-            var httpClient = new Mock<IRPSaaSMetaRPHttpClient>();
+            var httpClient = new Mock<IRPaaSMetaRPHttpClient>();
             var skuCatalog = new Mock<ISkuCatalog>();
             var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
             mockStandardLinux.Setup(sku => sku.ComputeSkuFamily).Returns("standardDSv3Family");

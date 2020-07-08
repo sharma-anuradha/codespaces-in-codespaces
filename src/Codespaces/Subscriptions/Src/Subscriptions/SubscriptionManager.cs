@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// <param name="environmentManager">The environment manager.</param>
         /// <param name="subscriptionOfferManager">The subscription Offer manager.</param>
         /// <param name="crossRegionActivator">The CrossRegionContinuationTaskActivator.</param>
-        /// <param name="rpSaaSHttpProvider">HttpProvider for accessing RPSaas's registered subscriptions endpoint.</param>
+        /// <param name="rpaasHttpProvider">HttpProvider for accessing RPaas's registered subscriptions endpoint.</param>
         /// <param name="skuCatalog">the sku catalog.</param>
         public SubscriptionManager(
             SubscriptionManagerSettings options,
@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             IEnvironmentManager environmentManager,
             ISubscriptionOfferManager subscriptionOfferManager,
             ICrossRegionContinuationTaskActivator crossRegionActivator,
-            IRPSaaSMetaRPHttpClient rpSaaSHttpProvider,
+            IRPaaSMetaRPHttpClient rpaasHttpProvider,
             ISkuCatalog skuCatalog)
         {
             SubscriptionRepository = Requires.NotNull(subscriptionRepository, nameof(Susbscriptions.SubscriptionRepository));
@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             SubscriptionOfferManager = Requires.NotNull(subscriptionOfferManager, nameof(subscriptionOfferManager));
             CrossRegionActivator = Requires.NotNull(crossRegionActivator, nameof(crossRegionActivator));
-            RPSaaSHttpProvider = rpSaaSHttpProvider;
+            RPaaSHttpProvider = rpaasHttpProvider;
             skuFamilies = skuCatalog.CloudEnvironmentSkus.Select(x => x.Value.ComputeSkuFamily).Distinct();
         }
 
@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
 
         private ICrossRegionContinuationTaskActivator CrossRegionActivator { get; }
 
-        private IRPSaaSMetaRPHttpClient RPSaaSHttpProvider { get; }
+        private IRPaaSMetaRPHttpClient RPaaSHttpProvider { get; }
 
         /// <inheritdoc/>
         public async Task<Subscription> AddBannedSubscriptionAsync(string subscriptionId, BannedReason bannedReason, string byIdentity, IDiagnosticsLogger logger)
@@ -212,10 +212,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         public async Task<RPRegisteredSubscriptionsRequest> GetSubscriptionDetailsFromExternalSourceAsync(Subscription subscription, IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
-                $"{LoggingBaseName}_get_rpsaas_details",
+                $"{LoggingBaseName}_get_rpaas_details",
                 async (childLogger) =>
                 {
-                    return await RPSaaSHttpProvider.GetSubscriptionDetailsAsync(subscription, childLogger);
+                    return await RPaaSHttpProvider.GetSubscriptionDetailsAsync(subscription, childLogger);
                 }, swallowException: true);
         }
 

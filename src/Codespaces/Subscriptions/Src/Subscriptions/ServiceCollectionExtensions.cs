@@ -70,19 +70,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         }
 
         /// <summary>
-        /// Adds the <see cref="RPSaaSMetaRPHttpProvider{TOptions}"/>  to the service collection.
+        /// Adds the <see cref="RPaaSMetaRPHttpProvider{TOptions}"/>  to the service collection.
         /// </summary>
         /// <param name="services"> the service container.</param>
-        /// <param name="configureOptions">RpSaaS options.</param>
+        /// <param name="configureOptions">RPaaS options.</param>
         /// <returns>serive container.</returns>
         public static IServiceCollection AddSubscriptionsHttpProvider(
             this IServiceCollection services,
-            Action<RPSaaSMetaRPOptions> configureOptions)
+            Action<RPaaSMetaRPOptions> configureOptions)
         {
             services.Configure(configureOptions)
-                .AddSingleton<IHttpClientProvider<RPSaaSMetaRPOptions>,
-                    RPSaaSMetaRPHttpProvider<RPSaaSMetaRPOptions>>()
-                .AddSingleton<IRPSaaSMetaRPHttpClient, RPSaasMetaRPHttpClient>();
+                .AddSingleton<IHttpClientProvider<RPaaSMetaRPOptions>,
+                    RPaaSMetaRPHttpProvider<RPaaSMetaRPOptions>>()
+                .AddSingleton<IRPaaSMetaRPHttpClient, RPaasMetaRPHttpClient>();
             return services;
         }
     }

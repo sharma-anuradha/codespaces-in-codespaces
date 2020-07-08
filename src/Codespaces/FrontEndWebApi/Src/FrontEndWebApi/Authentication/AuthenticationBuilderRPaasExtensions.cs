@@ -1,4 +1,4 @@
-﻿// <copyright file="AuthenticationBuilderRPSaasExtensions.cs" company="Microsoft">
+﻿// <copyright file="AuthenticationBuilderRPaasExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -36,12 +36,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
     /// <summary>
     /// <see cref="AuthenticationBuilder"/> extensions.
     /// </summary>
-    public static class AuthenticationBuilderRPSaasExtensions
+    public static class AuthenticationBuilderRPaasExtensions
     {
         /// <summary>
         /// The authentication scheme for calls from RP-SaaS.
         /// </summary>
-        public const string AuthenticationScheme = "aadrpsaas";
+        public const string AuthenticationScheme = "aadrpaas";
 
         /// <summary>
         /// The key of HttpContext.Items which will provide the source ARM <see cref="ClaimsPrincipal"/>.
@@ -65,15 +65,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
         private static IJwtReader ArmUserJwtReader { get; set; } = null;
 
-        private static RPSaaSCertifcateCache ArmIssuerCredentialCache { get; set; } = null;
+        private static RPaaSCertifcateCache ArmIssuerCredentialCache { get; set; } = null;
 
         /// <summary>
-        /// Add RPSaaS specific Jwt Bearer.
+        /// Add RPaaS specific Jwt Bearer.
         /// </summary>
         /// <param name="builder">The application builder.</param>
-        /// <param name="settings">The RPSaaS settings.</param>
+        /// <param name="settings">The RPaaS settings.</param>
         /// <returns>the instance of builder.</returns>
-        public static AuthenticationBuilder AddRPSaaSJwtBearer(this AuthenticationBuilder builder, RPSaaSSettings settings)
+        public static AuthenticationBuilder AddRPaaSJwtBearer(this AuthenticationBuilder builder, RPaaSSettings settings)
         {
             builder
                 .AddJwtBearer(AuthenticationScheme, options =>
@@ -111,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 {
                     var logger = serviceProvider.GetRequiredService<IDiagnosticsLogger>();
 
-                    ArmIssuerCredentialCache = new RPSaaSCertifcateCache(settings.SignedUserTokenCertUrl, logger);
+                    ArmIssuerCredentialCache = new RPaaSCertifcateCache(settings.SignedUserTokenCertUrl, logger);
 
                     return ArmIssuerCredentialCache;
                 })
@@ -161,9 +161,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <summary>
         /// Builds the callback method to be used after security token is validated.
         /// </summary>
-        /// <param name="settings">The RP SaaS settings.</param>
+        /// <param name="settings">The RPaaS settings.</param>
         /// <returns>The callback.</returns>
-        private static Func<TokenValidatedContext, Task> BuildOnTokenValidated(RPSaaSSettings settings)
+        private static Func<TokenValidatedContext, Task> BuildOnTokenValidated(RPaaSSettings settings)
         {
             return async (context) =>
             {
@@ -220,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     return;
                 }
 
-                logger.LogInfo("jwt_aadrpsaas_success");
+                logger.LogInfo("jwt_aadrpaas_success");
                 context.Principal = armUserPrincipal;
 
                 var armUserIdentity = armUserPrincipal.Identities.First();
@@ -346,11 +346,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         }
 
         // Based on the docs here: https://armwiki.azurewebsites.net/authorization/AuthenticateBetweenARMandRP.html?q=certificate
-        private class RPSaaSCertifcateCache : JwtCertificateCredentialsHttpCache<RPSaaSCertifcateCache.ArmCertificateSet>
+        private class RPaaSCertifcateCache : JwtCertificateCredentialsHttpCache<RPaaSCertifcateCache.ArmCertificateSet>
         {
             private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(1);
 
-            public RPSaaSCertifcateCache(string uri, IDiagnosticsLogger logger)
+            public RPaaSCertifcateCache(string uri, IDiagnosticsLogger logger)
                 : base(new Uri(uri), logger)
             {
                 StartPeriodicRefresh(RefreshInterval);

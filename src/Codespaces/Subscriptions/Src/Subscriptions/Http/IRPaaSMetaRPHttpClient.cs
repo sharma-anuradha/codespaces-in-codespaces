@@ -1,4 +1,4 @@
-﻿// <copyright file="IRPSaaSMetaRPHttpClient.cs" company="Microsoft">
+﻿// <copyright file="IRPaaSMetaRPHttpClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,12 +10,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
 {
     /// <summary>
-    /// Interface for interacting with RPSaas's MetaRP.
+    /// Interface for interacting with RPaas's MetaRP.
     /// </summary>
-    public interface IRPSaaSMetaRPHttpClient
+    public interface IRPaaSMetaRPHttpClient
     {
         /// <summary>
-        /// Gets the RPSaaS MetaRP details about a specific subscription.
+        /// Gets the RPaaS MetaRP details about a specific subscription.
         /// </summary>
         /// <param name="subscription">The subscription the details are sought from.</param>
         /// <param name="logger">the logger.</param>

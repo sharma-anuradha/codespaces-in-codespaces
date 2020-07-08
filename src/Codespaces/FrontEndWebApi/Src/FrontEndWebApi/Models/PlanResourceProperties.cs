@@ -9,7 +9,7 @@ using Newtonsoft.Json.Serialization;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
-    /// Plan resource properties bag from RPSaaS.
+    /// Plan resource properties bag from RPaaS.
     /// </summary>
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class PlanResourceProperties

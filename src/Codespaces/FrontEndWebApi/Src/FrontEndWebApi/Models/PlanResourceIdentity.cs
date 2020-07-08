@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
-    /// Managed identity properties from RPSaaS.
+    /// Managed identity properties from RPaaS.
     /// </summary>
     public class PlanResourceIdentity
     {
@@ -22,13 +22,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         public string Type { get; set; }
 
         /// <summary>
-        /// Gets or sets the principal ID of the managed identity. Not stored by RPSaaS.
+        /// Gets or sets the principal ID of the managed identity. Not stored by RPaaS.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "principalId", NullValueHandling = NullValueHandling.Ignore)]
         public Guid? PrincipalId { get; set; }
 
         /// <summary>
-        /// Gets or sets the tenant ID of the managed identity. Not stored by RPSaaS.
+        /// Gets or sets the tenant ID of the managed identity. Not stored by RPaaS.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "tenantId", NullValueHandling = NullValueHandling.Ignore)]
         public Guid? TenantId { get; set; }

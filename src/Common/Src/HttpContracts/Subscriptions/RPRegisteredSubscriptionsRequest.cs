@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions
 {
     /// <summary>
-    /// Request contract for the RPSaaS RegisteredSubscriptions Endpoint.
+    /// Request contract for the RPaaS RegisteredSubscriptions Endpoint.
     /// </summary>
     public class RPRegisteredSubscriptionsRequest
     {

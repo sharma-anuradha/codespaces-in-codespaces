@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
 {
     /// <summary>
-    /// Custom headers passed by RPSaaS.
+    /// Custom headers passed by RPaaS.
     /// </summary>
     public class PlanResourceHeaders
     {

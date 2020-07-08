@@ -1,4 +1,4 @@
-﻿// <copyright file="RPSaaSMetaRPOptions.cs" company="Microsoft">
+﻿// <copyright file="RPaaSMetaRPOptions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,9 +7,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
 {
     /// <summary>
-    /// Options for the RP SaaS MetaRP.
+    /// Options for the RPaaS MetaRP.
     /// </summary>
-    public class RPSaaSMetaRPOptions
+    public class RPaaSMetaRPOptions
         : IHttpClientProviderOptions
     {
         /// <inheritdoc/>

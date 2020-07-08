@@ -1,4 +1,4 @@
-﻿// <copyright file="RPSaasMetaRPHttpClient.cs" company="Microsoft">
+﻿// <copyright file="RPaasMetaRPHttpClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,9 +15,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
 {
     /// <summary>
-    /// Used to interact with RPSaaS's MetaRP.
+    /// Used to interact with RPaaS's MetaRP.
     /// </summary>
-    public class RPSaasMetaRPHttpClient : HttpClientBase<RPSaaSMetaRPOptions>, IRPSaaSMetaRPHttpClient
+    public class RPaasMetaRPHttpClient : HttpClientBase<RPaaSMetaRPOptions>, IRPaaSMetaRPHttpClient
     {
         private const string VSOnlineResourceProvider = "Microsoft.VSOnline";
         private const string CodespacesResourceProvider = "Microsoft.Codespaces";
@@ -28,10 +28,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
         private const string CodespacesAPIVersion = "2020-06-16";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RPSaasMetaRPHttpClient"/> class.
+        /// Initializes a new instance of the <see cref="RPaasMetaRPHttpClient"/> class.
         /// </summary>
         /// <param name="httpClientProvider">the HTTP provider.</param>
-        public RPSaasMetaRPHttpClient(IHttpClientProvider<RPSaaSMetaRPOptions> httpClientProvider)
+        public RPaasMetaRPHttpClient(IHttpClientProvider<RPaaSMetaRPOptions> httpClientProvider)
             : base(httpClientProvider)
         {
         }
@@ -53,8 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
             }
 
             var endpoint = $"subscriptions/{SubscriptionId}/providers/{resourceProvider}/registeredSubscriptions/{subscription.Id}?api-version={apiVersion}";
-            var rpSaaSResponse = await SendAsync<object, RPRegisteredSubscriptionsRequest>(HttpMethod.Get, endpoint, null, logger.NewChildLogger());
-            return rpSaaSResponse;
+            var rpaasResponse = await SendAsync<object, RPRegisteredSubscriptionsRequest>(HttpMethod.Get, endpoint, null, logger.NewChildLogger());
+            return rpaasResponse;
         }
     }
 }

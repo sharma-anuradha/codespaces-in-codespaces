@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
 {
     /// <summary>
     /// Throttling for ARM requests, specifically for use in <see cref="SubscriptionsController"/>.
-    /// The user's id is generated from claims which are set by <see cref="AuthenticationBuilderRPSaasExtensions"/>.
+    /// The user's id is generated from claims which are set by <see cref="AuthenticationBuilderRPaasExtensions"/>.
     /// </summary>
     public class ArmThrottlePerUserAttribute : ThrottlePerUserAttribute
     {
