@@ -24,5 +24,4 @@
             "effect": "Allow"
         }
     ]},
-"location": "WestUs2","tags": 
-{"department": "DevDiv"}}
+}

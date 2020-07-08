@@ -1,8 +1,7 @@
 {
-"location":"eastus",
+"location":"westus2",
 "properties":{
+	"vnetProperties":{ "subnetId": "validSubnetResourceId"}
 },
-    "identity": {
-        "type": "systemAssigned"
-    }
+"identity":{ "type":"SystemAssigned" }
 }

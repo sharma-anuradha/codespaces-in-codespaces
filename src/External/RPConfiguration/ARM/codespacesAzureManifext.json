@@ -1,0 +1,325 @@
+{
+  "providerAuthorizations": [
+    {
+      "applicationId": "9bd5ab7f-4031-4045-ace9-6bebbad202f6",
+      "roleDefinitionId": "59cd8abb-1e79-437f-9a05-4bca235c4c35"
+    },
+    {
+      "applicationId": "48ef7923-268f-473d-bcf1-07f0997961f4",
+      "roleDefinitionId": "59cd8abb-1e79-437f-9a05-4bca235c4c35"
+    }
+  ],
+  "namespace": "Microsoft.Codespaces",
+  "providerVersion": "2.0",
+  "providerType": "Internal",
+  "requestHeaderOptions": {
+    "optInHeaders": "SignedUserToken"
+  },
+  "notificationOptions": "NotSpecified",
+  "resourceTypes": [
+    {
+      "name": "plans",
+      "routingType": "Default",
+      "authorizationActionMappings": [
+        {
+          "original": "Microsoft.Codespaces/plans/readAllCodespaces/action",
+          "desired": "Microsoft.Codespaces/plans/allCodespaces/read"
+        },
+        {
+          "original": "Microsoft.Codespaces/plans/writeCodespaces/action",
+          "desired": "Microsoft.Codespaces/plans/codespaces/write"
+        },
+        {
+          "original": "Microsoft.Codespaces/plans/deleteAllCodespaces/action",
+          "desired": "Microsoft.Codespaces/plans/allCodespaces/delete"
+        },
+        {
+          "original": "Microsoft.Codespaces/plans/readDelegates/action",
+          "desired": "Microsoft.Codespaces/plans/delegates/read"
+        },
+        {
+          "original": "Microsoft.Codespaces/plans/writeDelegates/action",
+          "desired": "Microsoft.Codespaces/plans/delegates/write"
+        },
+        {
+          "original": "Microsoft.Codespaces/plans/deleteDelegates/action",
+          "desired": "Microsoft.Codespaces/plans/delegates/delete"
+        }
+      ],
+      "linkedAccessChecks": [
+        {
+          "actionName": "Microsoft.Codespaces/plans/write",
+          "linkedProperty": "properties.vnetProperties.subnetId",
+          "linkedAction": "Microsoft.Network/virtualNetworks/subnets/join/action"
+        }
+      ],
+      "endpoints": [
+        {
+          "apiVersions": [
+            "2020-06-16"
+          ],
+          "endpointUri": "https://westeurope.metarp.azure.com/",
+          "locations": [
+            "West Europe"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16"
+          ],
+          "endpointUri": "https://eastus.metarp.azure.com/",
+          "locations": [
+            "East US"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16"
+          ],
+          "endpointUri": "https://westus2.metarp.azure.com/",
+          "locations": [
+            "West Us 2"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16"
+          ],
+          "endpointUri": "https://southeastasia.metarp.azure.com/",
+          "locations": [
+            "Southeast Asia"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://westeurope.metarp.azure.com/",
+          "locations": [
+            "West Europe"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://eastus.metarp.azure.com/",
+          "locations": [
+            "East US"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://westus2.metarp.azure.com/",
+          "locations": [
+            "West Us 2"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://southeastasia.metarp.azure.com/",
+          "locations": [
+            "Southeast Asia"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-beta"
+          ],
+          "endpointUri": "https://westeurope.metarp.azure.com/",
+          "locations": [
+            "West Europe"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-beta"
+          ],
+          "endpointUri": "https://eastus.metarp.azure.com/",
+          "locations": [
+            "East US"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-beta"
+          ],
+          "endpointUri": "https://westus2.metarp.azure.com/",
+          "locations": [
+            "West Us 2"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-beta"
+          ],
+          "endpointUri": "https://southeastasia.metarp.azure.com/",
+          "locations": [
+            "Southeast Asia"
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-privatepreview",
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://eastus2euap.metarp.azure.com/",
+          "locations": [
+            "East US 2 EUAP"
+          ],
+          "requiredFeatures": [
+            "Microsoft.Codespaces/CanaryUSEC"
+          ],
+          "timeout": "PT2M"
+        }
+      ],
+      "identityManagement": {
+        "type": "SystemAssigned"
+      }
+    },
+    {
+      "name": "operations",
+      "routingType": "ProxyOnly, Tenant",
+      "allowedUnauthorizedActions": [
+        "Microsoft.Codespaces/operations/read"
+      ],
+      "endpoints": [
+        {
+          "apiVersions": [
+            "2020-06-16"
+          ],
+          "endpointUri": "https://global.metarp.azure.com/",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://global.metarp.azure.com/",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-beta"
+          ],
+          "endpointUri": "https://global.metarp.azure.com/",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-privatepreview"
+          ],
+          "endpointUri": "https://global.metarp.azure.com/",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        }
+      ]
+    },
+    {
+      "name": "registeredSubscriptions",
+      "routingType": "ProxyOnly, Tenant",
+      "endpoints": [
+        {
+          "apiVersions": [
+            "2020-06-16"
+          ],
+          "endpointUri": "https://global.metarp.azure.com",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-privatepreview"
+          ],
+          "endpointUri": "https://global.metarp.azure.com",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-alpha"
+          ],
+          "endpointUri": "https://global.metarp.azure.com",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        },
+        {
+          "apiVersions": [
+            "2020-06-16-beta"
+          ],
+          "endpointUri": "https://global.metarp.azure.com",
+          "locations": [
+            ""
+          ],
+          "timeout": "PT2M"
+        }
+      ]
+    }
+  ],
+  "management": {
+    "manifestOwners": [
+      "VSEngSaaS-PlatformServiceAdministrator",
+      "SPARTA-PlatformServiceAdministrator"
+    ],
+    "incidentRoutingService": "Azure Resource Manager",
+    "incidentRoutingTeam": "Azure Resource Manager",
+    "incidentContactEmail": "VSAnywhereDevTeam@microsoft.com",
+    "resourceAccessPolicy": "NotSpecified"
+  },
+  "capabilities": [
+    {
+      "quotaId": "CSP_2015-05-01",
+      "effect": "Allow"
+    },
+    {
+      "quotaId": "CSP_MG_2017-12-01",
+      "effect": "Allow"
+    }
+  ],
+  "metadata": {
+    "onboardedVia": "ProviderHub",
+    "Microsoft.ManagedIdentity": {
+      "applicationId": "9bd5ab7f-4031-4045-ace9-6bebbad202f6"
+    }
+  },
+  "globalNotificationEndpoints": [
+    {
+      "enabled": true,
+      "endpointUri": "https://global.metarp.azure.com"
+    }
+  ],
+  "enableTenantLinkedNotification": false
+}
