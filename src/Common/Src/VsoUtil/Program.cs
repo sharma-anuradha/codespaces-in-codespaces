@@ -9,7 +9,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
     /// <summary>
-    /// The catalog command-line untility.
+    /// The catalog command-line utility.
     /// </summary>
     public static partial class Program
     {
@@ -29,6 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(ShowDbAccountInfoCommand),
                     typeof(CreatePortForwardingConnection),
                     typeof(PortForwardingConnectionEstablished),
+                    typeof(PortForwardingDrainQueues),
                     typeof(ShowSkusCommand),
                     typeof(ShowSubscriptionCommand),
                     typeof(ShowControlPlaneCommand),
@@ -46,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<ShowDbAccountInfoCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CreatePortForwardingConnection>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<PortForwardingConnectionEstablished>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<PortForwardingDrainQueues>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ShowSkusCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ShowSubscriptionCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ShowControlPlaneCommand>(command => command.Execute(Console.Out, Console.Error))
