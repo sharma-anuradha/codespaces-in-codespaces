@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using k8s.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 
@@ -44,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <param name="serviceName">Kubernetes service name.</param>
         /// <param name="logger">Target Logger.</param>
         /// <returns>Task.</returns>
-        Task WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger);
+        Task<V1Service> WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Wait until kubernetes service is available.
@@ -53,6 +54,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <param name="timeout">Timeout.</param>
         /// <param name="logger">Target Logger.</param>
         /// <returns>Task.</returns>
-        Task WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger);
+        Task<V1Service> WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Wait until kubernetes ingress is available.
+        /// </summary>
+        /// <param name="ingressName">Kubernetes ingress name.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        public Task<Extensionsv1beta1Ingress> WaitForIngressReadyAsync(string ingressName, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Wait until kubernetes ingress is available.
+        /// </summary>
+        /// <param name="ingressName">Kubernetes ingress name.</param>
+        /// <param name="timeout">Timeout.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        public Task<Extensionsv1beta1Ingress> WaitForIngressReadyAsync(string ingressName, TimeSpan timeout, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Wait until kubernetes endpoint is available.
+        /// </summary>
+        /// <param name="endpointName">Kubernetes ingress name.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        public Task<V1Endpoints> WaitForEndpointReadyAsync(string endpointName, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Wait until kubernetes endpoint is available.
+        /// </summary>
+        /// <param name="endpointName">Kubernetes ingress name.</param>
+        /// <param name="timeout">Timeout.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        public Task<V1Endpoints> WaitForEndpointReadyAsync(string endpointName, TimeSpan timeout, IDiagnosticsLogger logger);
     }
 }

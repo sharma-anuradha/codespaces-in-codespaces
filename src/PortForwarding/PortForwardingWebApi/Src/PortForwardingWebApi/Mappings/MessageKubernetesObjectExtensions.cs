@@ -29,6 +29,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         }
 
         /// <summary>
+        /// Converts the <see cref="ConnectionDetails"/> agent to the Kubernetes <see cref="V1ObjectReference"/>.
+        /// </summary>
+        /// <param name="connection">The connection reference for agent we'll be setting the endpoint to.</param>
+        /// <returns>The owner object.</returns>
+        public static V1ObjectReference ToObjectReference(this ConnectionDetails connection)
+        {
+            return new V1ObjectReference
+            {
+                ApiVersion = "v1",
+                Kind = "Pod",
+                Name = connection.AgentName,
+                Uid = connection.AgentUid,
+            };
+        }
+
+        /// <summary>
         /// Returns Kubernetes service name based on connection mapping.
         /// </summary>
         /// <param name="connection">Connection mapping.</param>

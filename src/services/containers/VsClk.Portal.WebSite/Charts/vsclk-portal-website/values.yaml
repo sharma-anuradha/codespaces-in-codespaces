@@ -60,8 +60,10 @@ pfingress:
         }
         
         proxy_set_header Cookie $new_cookie;
-        if ($upstream_http_location ~* "^https?:\/\/pf-(?<pf_session>[0-9a-f]{36}-\d{2,5})\.(?<subdomain>[^\/]+)(?<path>\/.*)$") {
-          proxy_pass 'http://pf-$pf_session.$subdomain';
+
+        proxy_connect_timeout 5s;
+        if ($upstream_http_location ~* "^https?:\/\/(?<pfa_service>[^\/]+)(?<path>\/.*)$") {
+          proxy_pass 'http://$pfa_service';
         }
       }
       location /authenticate-port-forwarder {

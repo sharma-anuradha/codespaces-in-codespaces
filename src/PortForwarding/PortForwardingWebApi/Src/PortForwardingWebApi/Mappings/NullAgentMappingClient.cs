@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using k8s.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 
@@ -31,15 +32,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         }
 
         /// <inheritdoc/>
-        public Task WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger)
+        public Task<V1Service> WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger)
         {
-            return Task.CompletedTask;
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
+        public Task<V1Service> WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
         {
-            return Task.CompletedTask;
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<Extensionsv1beta1Ingress> WaitForIngressReadyAsync(string serviceName, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<Extensionsv1beta1Ingress> WaitForIngressReadyAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<V1Endpoints> WaitForEndpointReadyAsync(string endpointName, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<V1Endpoints> WaitForEndpointReadyAsync(string endpointName, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
     }
 }

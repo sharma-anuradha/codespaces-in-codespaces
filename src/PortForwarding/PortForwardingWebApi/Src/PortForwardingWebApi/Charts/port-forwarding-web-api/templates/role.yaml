@@ -10,15 +10,17 @@ rules:
         - "pods"
     verbs:
         - "patch"
+        - "get"
         - "list"
   - apiGroups:
         - ""
     resources:
         - "services"
+        - "endpoints"
     verbs:
+        - "get"
         - "list"
         - "watch"
-        - "get"
         - "create"
   - apiGroups:
         - "extensions"
@@ -26,6 +28,8 @@ rules:
     resources:
         - "ingresses"
     verbs:
+        - "get"
         - "list"
+        - "watch"
         - "create"
 {{- end -}}

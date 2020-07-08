@@ -82,9 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
                 "established_connection_worker_process_connection_established",
                 async (childLogger) =>
                 {
+                    childLogger.FluentAddBaseValue("CorrelationId", message.CorrelationId);
                     await MessageHandler.ProcessSessionMessageAsync(message, childLogger, cancellationToken);
-
-                    await session.CloseAsync();
                 },
                 swallowException: true);
         }

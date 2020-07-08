@@ -83,8 +83,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 "kubernetes_register_agent",
                 async (childLogger) =>
                 {
-                    childLogger.AddValue("pod_name", registration.Name);
-                    childLogger.AddValue("pod_uid", registration.Uid);
+                    childLogger.AddValue("AgentName", registration.Name);
+                    childLogger.AddValue("AgentUid", registration.Uid);
 
                     var podList = await KubernetesClient.ListNamespacedPodAsync(DefaultNamespace, fieldSelector: $"metadata.name={registration.Name}");
                     var namedPod = podList.Items.SingleOrDefault();
@@ -116,94 +116,124 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
             logger
                 .FluentAddBaseValue("workspace_id", mapping.WorkspaceId)
                 .FluentAddBaseValue("source_port", mapping.SourcePort)
-                .FluentAddBaseValue("pod_name", mapping.AgentName)
-                .FluentAddBaseValue("pod_uid", mapping.AgentUid)
+                .FluentAddBaseValue("AgentName", mapping.AgentName)
+                .FluentAddBaseValue("AgentUid", mapping.AgentUid)
                 .FluentAddBaseValue("destination_port", mapping.DestinationPort);
 
-            await logger.OperationScopeAsync(
-                "kubernetes_create_agent_service",
-                async (childLogger) =>
-                {
-                    childLogger.AddValue("kubernetes_service_name", mapping.GetKubernetesServiceName());
-
-                    var service = new V1Service
+            await Task.WhenAll(
+                logger.OperationScopeAsync(
+                    "kubernetes_create_agent_endpoint",
+                    async (childLogger) =>
                     {
-                        ApiVersion = "v1",
-                        Kind = "Service",
-                        Metadata = new V1ObjectMeta
-                        {
-                            Name = mapping.GetKubernetesServiceName(),
-                            OwnerReferences = new List<V1OwnerReference> { mapping.ToOwnerReference() },
-                        },
-                        Spec = new V1ServiceSpec
-                        {
-                            Selector = new Dictionary<string, string>
-                            {
-                                [NameLabelKey] = mapping.AgentName,
-                                [UidLabelKey] = mapping.AgentUid,
-                            },
-                            Ports = new List<V1ServicePort>
-                            {
-                                new V1ServicePort { Port = MappingServicePort, TargetPort = mapping.DestinationPort },
-                            },
-                        },
-                    };
+                        childLogger.AddValue("kubernetes_endpoint_name", mapping.GetKubernetesServiceName());
 
-                    await KubernetesClient.CreateNamespacedServiceAsync(service, DefaultNamespace);
-                });
+                        var agentPod = await KubernetesClient.ReadNamespacedPodAsync(mapping.AgentName, DefaultNamespace);
 
-            await logger.OperationScopeAsync(
-                "kubernetes_create_agent_ingress",
-                async (childLogger) =>
-                {
-                    var rules = AppSettings.HostsConfigs
-                        .SelectMany(hostConf =>
+                        var endpoints = new V1Endpoints
                         {
-                            return hostConf.Hosts.Select(host => new Extensionsv1beta1IngressRule
+                            Metadata = new V1ObjectMeta
                             {
-                                Host = string.Format(host, mapping.GetPortForwardingSessionSubdomain()),
-                                Http = new Extensionsv1beta1HTTPIngressRuleValue
+                                Name = mapping.GetKubernetesServiceName(),
+                            },
+                            Subsets = new[]
+                            {
+                                new V1EndpointSubset
                                 {
-                                    Paths = new List<Extensionsv1beta1HTTPIngressPath>
-                                {
-                                    new Extensionsv1beta1HTTPIngressPath
+                                    Addresses = new[]
                                     {
-                                        Backend = new Extensionsv1beta1IngressBackend(mapping.GetKubernetesServiceName(), MappingServicePort),
-                                        Path = "/",
+                                        new V1EndpointAddress { Ip = agentPod.Status.PodIP, TargetRef = mapping.ToObjectReference() },
+                                    },
+                                    Ports = new[]
+                                    {
+                                        new V1EndpointPort(mapping.DestinationPort),
                                     },
                                 },
-                                },
-                            });
-                        })
-                        .ToList();
+                            },
+                        };
 
-                    var tls = AppSettings.HostsConfigs
-                        .Select(config => new Extensionsv1beta1IngressTLS
-                        {
-                            SecretName = config.CertificateSecretName,
-                            Hosts = config.Hosts.Select(h => string.Format(h, "*")).ToList(),
-                        })
-                        .ToList();
-
-                    var ingress = new Extensionsv1beta1Ingress
+                        await KubernetesClient.CreateNamespacedEndpointsAsync(endpoints, DefaultNamespace);
+                    },
+                    swallowException: true),
+                logger.OperationScopeAsync(
+                    "kubernetes_create_agent_service",
+                    async (childLogger) =>
                     {
-                        ApiVersion = "extensions/v1beta1",
-                        Kind = "Ingress",
-                        Metadata = new V1ObjectMeta
-                        {
-                            Name = mapping.GetKubernetesServiceName(),
-                            OwnerReferences = new List<V1OwnerReference> { mapping.ToOwnerReference() },
-                            Annotations = nginxIngressAnnotations,
-                        },
-                        Spec = new Extensionsv1beta1IngressSpec
-                        {
-                            Rules = rules,
-                            Tls = tls,
-                        },
-                    };
+                        childLogger.AddValue("kubernetes_service_name", mapping.GetKubernetesServiceName());
 
-                    await KubernetesClient.CreateNamespacedIngressAsync(ingress, DefaultNamespace);
-                });
+                        var service = new V1Service
+                        {
+                            ApiVersion = "v1",
+                            Kind = "Service",
+                            Metadata = new V1ObjectMeta
+                            {
+                                Name = mapping.GetKubernetesServiceName(),
+                                OwnerReferences = new List<V1OwnerReference> { mapping.ToOwnerReference() },
+                            },
+                            Spec = new V1ServiceSpec
+                            {
+                                Ports = new List<V1ServicePort>
+                                {
+                                    new V1ServicePort { Port = MappingServicePort, TargetPort = mapping.DestinationPort },
+                                },
+                            },
+                        };
+
+                        await KubernetesClient.CreateNamespacedServiceAsync(service, DefaultNamespace);
+                    },
+                    swallowException: true),
+                logger.OperationScopeAsync(
+                    "kubernetes_create_agent_ingress",
+                    async (childLogger) =>
+                    {
+                        var rules = AppSettings.HostsConfigs
+                            .SelectMany(hostConf =>
+                            {
+                                return hostConf.Hosts.Select(host => new Extensionsv1beta1IngressRule
+                                {
+                                    Host = string.Format(host, mapping.GetPortForwardingSessionSubdomain()),
+                                    Http = new Extensionsv1beta1HTTPIngressRuleValue
+                                    {
+                                        Paths = new List<Extensionsv1beta1HTTPIngressPath>
+                                    {
+                                        new Extensionsv1beta1HTTPIngressPath
+                                        {
+                                            Backend = new Extensionsv1beta1IngressBackend(mapping.GetKubernetesServiceName(), MappingServicePort),
+                                            Path = "/",
+                                        },
+                                    },
+                                    },
+                                });
+                            })
+                            .ToList();
+
+                        var tls = AppSettings.HostsConfigs
+                            .Select(config => new Extensionsv1beta1IngressTLS
+                            {
+                                SecretName = config.CertificateSecretName,
+                                Hosts = config.Hosts.Select(h => string.Format(h, "*")).ToList(),
+                            })
+                            .ToList();
+
+                        var ingress = new Extensionsv1beta1Ingress
+                        {
+                            ApiVersion = "extensions/v1beta1",
+                            Kind = "Ingress",
+                            Metadata = new V1ObjectMeta
+                            {
+                                Name = mapping.GetKubernetesServiceName(),
+                                OwnerReferences = new List<V1OwnerReference> { mapping.ToOwnerReference() },
+                                Annotations = nginxIngressAnnotations,
+                            },
+                            Spec = new Extensionsv1beta1IngressSpec
+                            {
+                                Rules = rules,
+                                Tls = tls,
+                            },
+                        };
+
+                        await KubernetesClient.CreateNamespacedIngressAsync(ingress, DefaultNamespace);
+                    },
+                    swallowException: true));
         }
 
         /// <inheritdoc/>
@@ -213,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 "kubernetes_register_agent",
                 async (childLogger) =>
                 {
-                    childLogger.AddValue("pod_name", agentName);
+                    childLogger.AddValue("AgentName", agentName);
 
                     var podList = await KubernetesClient.ListNamespacedPodAsync(DefaultNamespace, fieldSelector: $"metadata.name={agentName}");
                     var namedPod = podList.Items.SingleOrDefault();
@@ -232,21 +262,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         }
 
         /// <inheritdoc/>
-        public Task WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger)
+        public Task<V1Service> WaitForServiceAvailableAsync(string serviceName, IDiagnosticsLogger logger)
         {
             return WaitForServiceAvailableAsync(serviceName, TimeSpan.FromSeconds(30), logger);
         }
 
         /// <inheritdoc/>
-        public Task WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
+        public Task<V1Service> WaitForServiceAvailableAsync(string serviceName, TimeSpan timeout, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 "kubernetes_register_wait_for_service_added",
                 async (childLogger) =>
                 {
-                    childLogger.AddValue("service_name", serviceName);
+                    childLogger.AddValue("ServiceName", serviceName);
 
-                    var taskSource = new TaskCompletionSource<bool>();
+                    var taskSource = new TaskCompletionSource<V1Service>();
                     var cts = new CancellationTokenSource();
                     cts.CancelAfter(timeout);
 
@@ -267,24 +297,140 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
 
                     using (cts)
                     using (cancellationRegistration)
-                    using (service.Watch<V1Service, V1ServiceList>((eventType, pod) =>
+                    using (service.Watch<V1Service, V1ServiceList>((eventType, svc) =>
                     {
                         switch (eventType)
                         {
                             case WatchEventType.Added:
                             // We might need to modify the service in some cases instead of addding it.
                             case WatchEventType.Modified:
-                                taskSource.SetResult(true);
+                                taskSource.SetResult(svc);
                                 break;
 
                             default:
-                                childLogger.AddValue("event_type", eventType.ToString());
+                                childLogger.AddValue("EventType", eventType.ToString());
                                 childLogger.LogInfo($"service_watch_event");
                                 break;
                         }
                     }))
                     {
-                        await taskSource.Task;
+                        return await taskSource.Task;
+                    }
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<Extensionsv1beta1Ingress> WaitForIngressReadyAsync(string ingressName, IDiagnosticsLogger logger)
+        {
+            return WaitForIngressReadyAsync(ingressName, TimeSpan.FromSeconds(30), logger);
+        }
+
+        /// <inheritdoc/>
+        public Task<Extensionsv1beta1Ingress> WaitForIngressReadyAsync(string ingressName, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                "kubernetes_register_wait_for_ingress_ready",
+                async (childLogger) =>
+                {
+                    childLogger.AddValue("IngressName", ingressName);
+
+                    var taskSource = new TaskCompletionSource<Extensionsv1beta1Ingress>();
+                    var cts = new CancellationTokenSource();
+                    cts.CancelAfter(timeout);
+
+                    var cancellationRegistration = cts.Token.Register(() =>
+                    {
+                        taskSource.SetCanceled();
+                    });
+
+                    // ListNamespacedServiceWithHttpMessagesAsync ignores the cancellation token.
+                    // Passing the cancellation token in case it gets fixed in future versions.
+                    // https://github.com/kubernetes-client/csharp/issues/375
+                    var ingressHttpMessage = await KubernetesClient.ListNamespacedIngressWithHttpMessagesAsync(
+                        namespaceParameter: DefaultNamespace,
+                        fieldSelector: $"metadata.name={ingressName}",
+                        watch: true,
+                        timeoutSeconds: Convert.ToInt32(timeout.TotalSeconds),
+                        cancellationToken: cts.Token);
+
+                    using (cts)
+                    using (cancellationRegistration)
+                    using (ingressHttpMessage.Watch<Extensionsv1beta1Ingress, Extensionsv1beta1IngressList>((eventType, ing) =>
+                    {
+                        switch (eventType)
+                        {
+                            case WatchEventType.Added:
+                            // We might need to modify the service in some cases instead of addding it.
+                            case WatchEventType.Modified:
+                                taskSource.SetResult(ing);
+                                break;
+
+                            default:
+                                childLogger.AddValue("EventType", eventType.ToString());
+                                childLogger.LogInfo($"ingress_watch_event");
+                                break;
+                        }
+                    }))
+                    {
+                        return await taskSource.Task;
+                    }
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task<V1Endpoints> WaitForEndpointReadyAsync(string endpointName, IDiagnosticsLogger logger)
+        {
+            return WaitForEndpointReadyAsync(endpointName, TimeSpan.FromSeconds(30), logger);
+        }
+
+        /// <inheritdoc/>
+        public Task<V1Endpoints> WaitForEndpointReadyAsync(string endpointName, TimeSpan timeout, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                "kubernetes_register_wait_for_endpoint_ready",
+                async (childLogger) =>
+                {
+                    childLogger.AddValue("EndpointName", endpointName);
+
+                    var taskSource = new TaskCompletionSource<V1Endpoints>();
+                    var cts = new CancellationTokenSource();
+                    cts.CancelAfter(timeout);
+
+                    var cancellationRegistration = cts.Token.Register(() =>
+                    {
+                        taskSource.SetCanceled();
+                    });
+
+                    // ListNamespacedServiceWithHttpMessagesAsync ignores the cancellation token.
+                    // Passing the cancellation token in case it gets fixed in future versions.
+                    // https://github.com/kubernetes-client/csharp/issues/375
+                    var endpointHttpMessage = await KubernetesClient.ListNamespacedEndpointsWithHttpMessagesAsync(
+                        namespaceParameter: DefaultNamespace,
+                        fieldSelector: $"metadata.name={endpointName}",
+                        watch: true,
+                        timeoutSeconds: Convert.ToInt32(timeout.TotalSeconds),
+                        cancellationToken: cts.Token);
+
+                    using (cts)
+                    using (cancellationRegistration)
+                    using (endpointHttpMessage.Watch<V1Endpoints, V1EndpointsList>((eventType, endpoint) =>
+                    {
+                        switch (eventType)
+                        {
+                            case WatchEventType.Added:
+                            // We might need to modify the endpoint in some cases instead of addding it.
+                            case WatchEventType.Modified:
+                                taskSource.SetResult(endpoint);
+                                break;
+
+                            default:
+                                childLogger.AddValue("EventType", eventType.ToString());
+                                childLogger.LogInfo($"endpoint_watch_event");
+                                break;
+                        }
+                    }))
+                    {
+                        return await taskSource.Task;
                     }
                 });
         }

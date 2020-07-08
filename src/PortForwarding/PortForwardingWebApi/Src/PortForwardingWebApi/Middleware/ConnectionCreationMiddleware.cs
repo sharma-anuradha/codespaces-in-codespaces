@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
@@ -112,6 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, serializationOptions))
                     {
                         SessionId = connectionInfo.WorkspaceId,
+                        CorrelationId = context.GetCorrelationId(),
                     };
 
                     await client.SendAsync(message);
@@ -123,33 +125,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             // Having service creation and responding to requests separate allows us to respond to multiple requests, not just the first one.
             try
             {
-                await mappingClient.WaitForServiceAvailableAsync(connectionInfo.GetKubernetesServiceName(), logger);
+                var endpoint = await mappingClient.WaitForEndpointReadyAsync(connectionInfo.GetKubernetesServiceName(), logger);
+
+                var ip = endpoint.Subsets.First().Addresses.First().Ip;
+                var port = endpoint.Subsets.First().Ports.First().Port;
+
+                var uriBuilder = new UriBuilder(context.Request.Scheme, ip, port)
+                {
+                    Path = context.Request.Path,
+                    Query = context.Request.QueryString.ToString(),
+                };
+
+                logger.AddValue("target_url", uriBuilder.Uri.ToString());
+                logger.LogInfo("connection_creation_middleware_redirect");
+                context.Response.Redirect(uriBuilder.Uri.ToString());
+                await context.Response.CompleteAsync();
             }
             catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
             {
                 context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
+                logger.LogWarning("connection_creation_middleware_service_creation_timeout");
                 context.Response.Headers.Add("X-Powered-By", "Visual Studio Online");
                 await context.Response.CompleteAsync();
 
                 return;
             }
-
-            var uriBuilder = new UriBuilder(
-                context.Request.Scheme,
-                $"{connectionInfo.GetKubernetesServiceName()}.default.svc.cluster.local")
-            {
-                Path = context.Request.Path,
-                Query = context.Request.QueryString.ToString(),
-            };
-
-            // Wait for service to get ready for redirect
-            // TODO: remove after fixing this issue https://github.com/microsoft/vscs-planning/issues/230
-            System.Threading.Thread.Sleep(3000);
-
-            logger.AddValue("target_url", uriBuilder.Uri.ToString());
-            logger.LogInfo("connection_creation_middleware_redirect");
-            context.Response.Redirect(uriBuilder.Uri.ToString());
-            await context.Response.CompleteAsync();
         }
     }
 }

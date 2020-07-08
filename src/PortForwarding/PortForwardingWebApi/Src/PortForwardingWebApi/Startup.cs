@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
+using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Caching;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -128,6 +130,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.Use(async (httpContext, next) =>
+            {
+                if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
+                {
+                    var requestId = nginxRequestId.SingleOrDefault();
+                    if (requestId != default)
+                    {
+                        httpContext.TrySetRequestId(requestId);
+                    }
+                }
+
+                await next();
+            });
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
