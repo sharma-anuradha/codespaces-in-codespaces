@@ -115,7 +115,12 @@ class LogViewerCard extends React.Component<{
         continue;
       }
       const filters = filterOption.value.split(",");
-      if (filters.length > 0 && !filters.includes(item[filterOption.key])) {
+      const includeFilters = filters.filter(f => !f.startsWith('-'));
+      const excludeFilters = filters.filter(f => f.startsWith('-')).map(f => f.substr(1));
+      if (includeFilters.length > 0 && !includeFilters.includes(item[filterOption.key])) {
+        return false;
+      }
+      if (excludeFilters.length > 0 && excludeFilters.includes(item[filterOption.key])) {
         return false;
       }
     }
