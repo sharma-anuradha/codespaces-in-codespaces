@@ -49,5 +49,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
 
             return new MessageSender(connectionString, queueName);
         }
+
+        /// <inheritdoc/>
+        public async Task<ITopicClient> GetTopicClientAsync(string topicName, IDiagnosticsLogger logger)
+        {
+            var connectionString = await controlPlaneAzureResourceAccessor.GetStampServiceBusConnectionStringAsync(logger);
+
+            return new TopicClient(connectionString, topicName);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ISubscriptionClient> GetSubscriptionClientAsync(string topicName, string subscriptionName, IDiagnosticsLogger logger)
+        {
+            var connectionString = await controlPlaneAzureResourceAccessor.GetStampServiceBusConnectionStringAsync(logger);
+
+            return new SubscriptionClient(connectionString, topicName, subscriptionName);
+        }
     }
 }
