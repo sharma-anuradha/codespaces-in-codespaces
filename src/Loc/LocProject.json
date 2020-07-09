@@ -1,14 +1,34 @@
 {
     "Projects": [
-      {
-        "LanguageSet": "VS_Main_Languages",
-        "LocItems": [
-          {
-            "SourceFile": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\WebsiteStringResources.json",
-            "CopyOption": "LangIDOnName",
-            "OutputPath": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\"
-          }
-        ]
-      }
+        {
+            "LanguageSet": "VS_Main_Languages",
+            "LocItems": [
+                {
+                    "SourceFile": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\WebsiteStringResources.json",
+                    "CopyOption": "LangIDOnName",
+                    "OutputPath": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\"
+                }
+            ]
+        },
+        {
+            "LanguageSet": "Azure_Languages",
+            "LocItems": [
+                {
+                    "SourceFile": "src\\AzurePortal\\src\\Default\\Extension\\Client\\ClientResources.resx",
+                    "CopyOption": "LangIDOnName",
+                    "OutputPath": "src\\AzurePortal\\src\\Default\\Extension\\Client\\"
+                },
+                {
+                    "SourceFile": "src\\AzurePortal\\src\\Default\\Extension\\Client\\UiDef\\CodespacesPlans\\Strings.resjson",
+                    "CopyOption": "LangIDOnName",
+                    "OutputPath": "src\\AzurePortal\\src\\Default\\Extension\\Client\\UiDef\\CodespacesPlans\\"
+                },
+                {
+                    "SourceFile": "src\\AzurePortal\\src\\Default\\Extension\\GalleryPackages\\Create\\Strings\\resources.resjson",
+                    "CopyOption": "LangIDOnPath",
+                    "OutputPath": "src\\AzurePortal\\src\\Default\\Extension\\GalleryPackages\\Create\\Strings\\"
+                }
+            ]
+        }
     ]
-  }
+}
