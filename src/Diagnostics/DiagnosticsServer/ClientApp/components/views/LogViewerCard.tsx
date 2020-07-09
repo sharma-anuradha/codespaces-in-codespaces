@@ -1,5 +1,5 @@
 import { JsonItemModal } from "@Components/modals/JsonItemModal";
-import { faPause, faPlay, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faPause, faPlay, faTrash, faBan } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Hub from "hub";
 import { cloneDeep, uniq } from "lodash";
@@ -9,12 +9,12 @@ import React from "react";
 import {
   Badge,
   Button,
-  ButtonGroup, 
+  ButtonGroup,
   CardText,
   FormGroup,
-  Input, 
+  Input,
   Label,
-  PopoverBody, 
+  PopoverBody,
   Table,
   UncontrolledPopover
 } from "reactstrap";
@@ -77,7 +77,7 @@ class LogViewerCard extends React.Component<{
     document.getElementById(this.addFilterId).click();
     this.newFilter = new Filter();
     if (!filter.name) { filter.name = filter.key; }
-      this.card.options.filterList.push(filter);
+    this.card.options.filterList.push(filter);
 
     // TODO: Cheap hack since every item in filter list should be observed by
     // the options observable, but it's not...
@@ -151,7 +151,7 @@ class LogViewerCard extends React.Component<{
     const columnSetup = this.getColumns();
     return columnSetup.map((n) => {
       const realCol = n.trim();
-      if (!item[realCol]) { return <td/>; }
+      if (!item[realCol]) { return <td />; }
       switch (realCol) {
         case "level":
           return this.renderLevel(item.level);
@@ -177,6 +177,17 @@ class LogViewerCard extends React.Component<{
     );
   }
 
+  renderClearButton() {
+    return (
+      <Button size="sm" onClick={() => {
+        this.items = [];
+        this.totalNumber = 0;
+      }}>
+        <FontAwesomeIcon icon={faBan} />
+      </Button>
+    );
+  }
+
   renderTable() {
     const realItems = this.items.filter((n) => this.filterItem(n));
     const table =
@@ -196,8 +207,8 @@ class LogViewerCard extends React.Component<{
           </tbody>
         </Table>
       ) : (
-        this.renderEmptyContainer()
-      );
+          this.renderEmptyContainer()
+        );
     return table;
   }
 
@@ -305,7 +316,10 @@ class LogViewerCard extends React.Component<{
         <BaseCard
           layoutCard={this.props.layoutCard}
           settings={this.renderSettings()}
-          extraButtons={this.renderPlayPauseButton()}
+          extraButtons={[
+            this.renderPlayPauseButton(),
+            this.renderClearButton(),
+          ]}
           body={this.renderTable()}
           footer={<div>Total Number Logged: {this.totalNumber}</div>}
         />

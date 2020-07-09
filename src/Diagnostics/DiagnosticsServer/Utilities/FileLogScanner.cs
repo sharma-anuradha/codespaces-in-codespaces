@@ -3,15 +3,15 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using DiagnosticsServer.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilities
 {
@@ -20,28 +20,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
     /// </summary>
     public class FileLogScanner
     {
+        private const int BundleSize = 10;
+
         private readonly IHubContext<LogHub> logHub;
         private readonly FileSystemWatcher fileSystemWatcher;
+        private readonly CancellationToken stoppingToken;
+        private readonly ILogHubSubscriptions hubSubscriptions;
 
         private DateTime currentLogFileDateTime;
         private string currentLogFile;
-
-        private bool scanLog = false;
-        private CancellationToken stoppingToken;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileLogScanner"/> class.
         /// </summary>
         /// <param name="logHub">The Log Hub.</param>
+        /// <param name="hubSubscriptions">The hub subscriptions.</param>
         /// <param name="directory">Directory of the log file.</param>
         /// <param name="stoppingToken">The stopping token.</param>
-        public FileLogScanner(IHubContext<LogHub> logHub, string directory, CancellationToken stoppingToken)
+        public FileLogScanner(IHubContext<LogHub> logHub, ILogHubSubscriptions hubSubscriptions, string directory, CancellationToken stoppingToken)
         {
             this.stoppingToken = stoppingToken;
             fileSystemWatcher = new FileSystemWatcher(directory);
             fileSystemWatcher.EnableRaisingEvents = true;
             fileSystemWatcher.Created += FileSystemWatcher_Created;
             this.logHub = logHub;
+            this.hubSubscriptions = hubSubscriptions;
             this.Directory = directory;
             ScanForChanges();
         }
@@ -54,27 +57,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
         /// <summary>
         /// Execute the worker actions.
         /// </summary>
-        public void Execute()
+        /// <returns>A task which will never complete.</returns>
+        public async Task Execute()
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 if (!string.IsNullOrEmpty(currentLogFile) && File.Exists(currentLogFile))
                 {
-                    using (StreamReader reader = new StreamReader(new FileStream(currentLogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (FileStream stream = new FileStream(currentLogFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (StreamReader reader = new StreamReader(stream))
+                    using (this.hubSubscriptions.OnReloadLogs(() =>
                     {
-                        long lastMaxOffset = reader.BaseStream.Length;
-
-                        while (scanLog && !stoppingToken.IsCancellationRequested)
+                        reader.BaseStream.Seek(0, SeekOrigin.Begin);
+                        return Task.CompletedTask;
+                    }))
+                    {
+                        while (!stoppingToken.IsCancellationRequested)
                         {
                             Thread.Sleep(100);
 
-                            if (reader.BaseStream.Length == lastMaxOffset)
+                            if (stream.Name != currentLogFile)
+                            {
+                                Debug.WriteLine($"({this.Directory}): finished current log and new log detected, changing to monitor {Path.GetFileName(currentLogFile)}");
+                                break;
+                            }
+
+                            if (reader.EndOfStream)
                             {
                                 continue;
                             }
 
-                            reader.BaseStream.Seek(lastMaxOffset, SeekOrigin.Begin);
-
+                            List<string> bundle = new List<string>();
                             string line = string.Empty;
                             while ((line = reader.ReadLine()) != null)
                             {
@@ -83,16 +96,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
                                     var jsonLine = line.Trim();
                                     if (jsonLine.StartsWith("{") && jsonLine.EndsWith("}"))
                                     {
-                                        logHub.Clients.All.SendAsync($"newJsonLogEntry", line);
+                                        bundle.Add(jsonLine);
+                                    }
+
+                                    if (bundle.Count == BundleSize)
+                                    {
+                                        await logHub.Clients.All.SendAsync($"newJsonLogBundle", bundle);
+                                        bundle.Clear();
                                     }
                                 }
                                 catch (System.Exception)
                                 {
-                                    logHub.Clients.All.SendAsync($"newLogEntry", line);
+                                    await logHub.Clients.All.SendAsync($"newLogEntry", line);
                                 }
                             }
 
-                            lastMaxOffset = reader.BaseStream.Position;
+                            if (bundle.Count > 0)
+                            {
+                                await logHub.Clients.All.SendAsync($"newJsonLogBundle", bundle);
+                                bundle.Clear();
+                            }
                         }
                     }
                 }
@@ -104,7 +127,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
 
         private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
         {
-            scanLog = false;
             ScanForChanges();
         }
 
@@ -112,7 +134,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
         {
             Debug.WriteLine($"({this.Directory}): Checking for files...");
             var directoryInfo = new DirectoryInfo(fileSystemWatcher.Path);
-            var logUpdated = false;
             foreach (var file in directoryInfo.EnumerateFiles().OrderBy(n => n.CreationTime))
             {
                 try
@@ -122,7 +143,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
                     {
                         currentLogFileDateTime = date;
                         currentLogFile = file.FullName;
-                        logUpdated = true;
                         Debug.WriteLine($"({this.Directory}): log Found, {file.FullName}");
                     }
                 }
@@ -133,8 +153,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilitie
                     // Ignore exceptions.
                 }
             }
-
-            scanLog = logUpdated;
         }
     }
 }

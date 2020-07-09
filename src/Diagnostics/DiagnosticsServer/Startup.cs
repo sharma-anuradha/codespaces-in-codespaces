@@ -2,22 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System.IO;
-using System.Linq;
-using System.Reflection;
 using DiagnosticsServer.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.AspNetCore.SpaServices.Webpack;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
+using Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Utilities;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Workers;
 
 namespace DiagnosticsServer
@@ -37,6 +29,12 @@ namespace DiagnosticsServer
             services.AddControllersWithViews();
 
             services.AddSignalR();
+
+            var logHubMessageHandler = new LogHubMessageHandler();
+            services.AddSingleton<ILogHubEventSource>(logHubMessageHandler);
+            services.AddSingleton<ILogHubSubscriptions>(logHubMessageHandler);
+
+            services.AddSingleton<FileLogScannerFactory>();
 
             services.AddSingleton<FileLogWorker>();
 

@@ -8,13 +8,28 @@ export default class Hub {
 
     constructor() {
         this.connection = new signalR.HubConnectionBuilder()
-        .withUrl("/hub")
-        .build();
+            .withUrl("/hub")
+            .withAutomaticReconnect()
+            .build();
 
         if (this.connection.state === signalR.HubConnectionState.Disconnected) {
             // TODO: Add error handling popover to expose errors.
             this.connection.start().catch(err => console.error(err));
         }
+
+        this.connection.on(`newJsonLogBundle`, (response) => {
+            try {
+                response.forEach(
+                    (jsonLog) => {
+                        const log = JSON.parse(jsonLog);
+                        this.jsonHubCallbacks.map(n => n(log));
+                    }
+                );
+            } catch (error) {
+                // TODO: Add error handling popover to expose errors.
+                console.log(error);
+            }
+        });
 
         this.connection.on(`newJsonLogEntry`, (response) => {
             try {
@@ -24,7 +39,7 @@ export default class Hub {
                 // TODO: Add error handling popover to expose errors.
                 console.log(error);
             }
-        })
+        });
 
         this.connection.on(`newNgrokEvent`, (response) => {
             try {
@@ -33,7 +48,7 @@ export default class Hub {
                 // TODO: Add error handling popover to expose errors.
                 console.log(error);
             }
-        })
+        });
 
         this.connection.on(`processWorkerEvent`, (response) => {
             try {
@@ -42,7 +57,7 @@ export default class Hub {
                 // TODO: Add error handling popover to expose errors.
                 console.log(error);
             }
-        })
+        });
     }
 
     AddProcessHubCallback(callback: any) {
@@ -67,5 +82,9 @@ export default class Hub {
 
     RemoveJsonHubCallback(callback: any) {
         this.jsonHubCallbacks.splice(this.jsonHubCallbacks.indexOf(callback), 1);
+    }
+
+    SendReloadLogMessage() {
+        this.connection.invoke("reloadLogs").catch(e => console.error(e));
     }
 }

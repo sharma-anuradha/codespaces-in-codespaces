@@ -1,5 +1,5 @@
 import LogViewerCard from "@Components/views/LogViewerCard";
-import { faFileImport, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faFileImport, faPlus, faRedo } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cloneDeep } from "lodash";
 import { observable } from "mobx";
@@ -7,15 +7,16 @@ import { inject, observer } from "mobx-react";
 import React from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import {
-  Button, 
+  Button,
   ButtonGroup,
   FormGroup,
   Input,
-  PopoverBody, 
-  PopoverHeader, 
+  PopoverBody,
+  PopoverHeader,
   UncontrolledPopover
 } from "reactstrap";
 import { v4 as uuidv4 } from "uuid";
+import Hub from "hub";
 import Actions from "../../actions";
 import { AppState, CardType, DefaultSize, GridCard } from "../../appState";
 import BaseCard from "./BaseCard";
@@ -23,9 +24,13 @@ import IsNgrokRunningCard from "./IsNgrokRunningCard";
 import ProcessViewerCard from "./ProcessViewerCard";
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
+@inject("hub")
 @inject("appState")
 @observer
-class LogGrid extends React.Component<{ appState?: AppState }> {
+class LogGrid extends React.Component<{
+  appState?: AppState;
+  hub?: Hub;
+}> {
   @observable cardTemplates: GridCard[];
   @observable layouts: any;
   @observable selectedCardType: GridCard;
@@ -111,6 +116,10 @@ class LogGrid extends React.Component<{ appState?: AppState }> {
     }
   }
 
+  reloadLogs() {
+    this.props.hub.SendReloadLogMessage();
+  }
+
   renderImportCard() {
     return (
       <UncontrolledPopover
@@ -121,7 +130,7 @@ class LogGrid extends React.Component<{ appState?: AppState }> {
         <PopoverHeader className="text-header">Import Card</PopoverHeader>
         <PopoverBody>
           <FormGroup>
-            <Input type="textarea" name="text" onChange={(e) => {this.cardJsonImport = e.target.value}} value={this.cardJsonImport} />
+            <Input type="textarea" name="text" onChange={(e) => { this.cardJsonImport = e.target.value }} value={this.cardJsonImport} />
           </FormGroup>
           <FormGroup>
             <Button
@@ -188,6 +197,9 @@ class LogGrid extends React.Component<{ appState?: AppState }> {
           </Button>
           <Button id="import_card">
             <FontAwesomeIcon icon={faFileImport} />
+          </Button>
+          <Button id="reload_logs" onClick={() => this.reloadLogs()}>
+            <FontAwesomeIcon icon={faRedo} />
           </Button>
         </ButtonGroup>
         {this.renderAddNewCard()}

@@ -6,16 +6,16 @@ import { inject, observer } from "mobx-react";
 import React from "react";
 import {
   Button,
-  ButtonGroup, 
+  ButtonGroup,
   Card,
   CardBody,
-  CardFooter, 
+  CardFooter,
   CardHeader,
   FormGroup,
-  Input, 
-  Label, 
-  PopoverBody, 
-  PopoverHeader, 
+  Input,
+  Label,
+  PopoverBody,
+  PopoverHeader,
   UncontrolledPopover
 } from "reactstrap";
 import { v4 as uuidv4 } from "uuid";
@@ -27,7 +27,7 @@ class BaseCard extends React.Component<{
   layoutCard: any;
   appState?: AppState;
   settings?: any;
-  extraButtons?: any;
+  extraButtons?: any[];
   body?: any;
   footer?: any;
 }> {
@@ -66,7 +66,7 @@ class BaseCard extends React.Component<{
   renderExportButton() {
     return (
       <Button size="sm" onClick={() => this.showJson()} type="button">
-        <FontAwesomeIcon  icon={faFileExport} />
+        <FontAwesomeIcon icon={faFileExport} />
       </Button>
     );
   }
@@ -120,7 +120,7 @@ class BaseCard extends React.Component<{
             {this.card.name}
             <ButtonGroup className="toolbar-button">
               {this.renderDeleteButton()}
-              {this.props.extraButtons || <div />}
+              {(this.props.extraButtons || []).map(x => x)}
               {this.renderExportButton()}
               {this.renderSettingsButton()}
             </ButtonGroup>
