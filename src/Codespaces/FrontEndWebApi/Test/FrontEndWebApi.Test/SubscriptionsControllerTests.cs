@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -249,11 +250,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         }
 
         [Fact]
-        public async Task VerifyPlanGetAsync_NotFound()
+        public async Task VerifyPlanGetAsync_NotFound_NoUserToken()
         {
             var planManager = MockPlanManager();
+            var httpContext = MockHttpContext.Create();
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
 
-            var controller = CreateTestController(planManager: planManager);
+            // This is just to verify that the expected settings are going in - if it fails the test doesn't work
+            Assert.False(httpContext.User.Identity.IsAuthenticated);
+
+            var controller = CreateTestController(planManager: planManager, httpContext: httpContext);
+
+            var result = await controller.PlanGetAsync(
+                MockSubscriptionId, MockResourceGroup, RPNamespace, PlanResourceTypeName, MockPlanName, ToPlanResource(MockVsoPlan()));
+
+            var jsonResult = result as JsonResult;
+            Assert.NotNull(jsonResult);
+
+            Assert.Equal((int) HttpStatusCode.OK, jsonResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task VerifyPlanGetAsync_NotFound_WithUserToken()
+        {
+            var planManager = MockPlanManager();
+            var httpContext = MockHttpContext.Create();
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity("test"));
+
+            // This is just to verify that the expected settings are going in - if it fails the test doesn't work
+            Assert.True(httpContext.User.Identity.IsAuthenticated);
+
+            var controller = CreateTestController(planManager: planManager, httpContext: httpContext);
 
             var result = await controller.PlanGetAsync(
                 MockSubscriptionId, MockResourceGroup, RPNamespace, PlanResourceTypeName, MockPlanName, ToPlanResource(MockVsoPlan()));

@@ -11,10 +11,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
@@ -42,6 +41,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// The authentication scheme for calls from RP-SaaS.
         /// </summary>
         public const string AuthenticationScheme = "aadrpaas";
+
+        /// <summary>
+        /// The policy to require an authenticated ARM user identity.
+        /// </summary>
+        public const string RequireArmUserTokenPolicy = "RequireArmUserToken";
+
+        /// <summary>
+        /// The policy to attempt to get an authenticated ARM user identity.
+        /// </summary>
+        public const string OptionalArmUserTokenPolicy = "OptionalArmUserToken";
 
         /// <summary>
         /// The key of HttpContext.Items which will provide the source ARM <see cref="ClaimsPrincipal"/>.
@@ -107,6 +116,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     };
                 })
                 .Services
+                .AddAuthorization((options) =>
+                {
+                    options.AddPolicy(RequireArmUserTokenPolicy, (policy) => policy.Requirements.Add(new ArmUserTokenRequirement(true)));
+                    options.AddPolicy(OptionalArmUserTokenPolicy, (policy) => policy.Requirements.Add(new ArmUserTokenRequirement(false)));
+                })
+                .AddSingleton<IAuthorizationHandler, ArmUserTokenHandler>()
                 .AddSingleton<IAsyncWarmup>((serviceProvider) =>
                 {
                     var logger = serviceProvider.GetRequiredService<IDiagnosticsLogger>();
@@ -119,6 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 {
                     AadBearerOptions = options;
                 });
+
             return builder;
         }
 
@@ -170,7 +186,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 await Task.CompletedTask;
 
                 var armServicePrincipal = context.Principal;
-                var issuerClaim = armServicePrincipal.FindFirstValue("iss");
                 var appIdClaim = armServicePrincipal.FindFirstValue("appid");
 
                 var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
@@ -190,54 +205,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 }
 
                 context.HttpContext.Items[SourceArmTokenClaims] = armServicePrincipal;
-
-                ClaimsPrincipal armUserPrincipal;
-                var armUserToken = context.HttpContext.Request.Headers[ArmUserTokenHeaderName].FirstOrDefault();
-                if (string.IsNullOrWhiteSpace(armUserToken))
-                {
-                    logger.LogError("jwt_armuser_notprovided");
-                    context.Fail("ARM signed user token header not provided");
-                    return;
-                }
-
-                try
-                {
-                    armUserPrincipal = ValidateArmUserToken(armUserToken, issuerClaim, logger.NewChildLogger());
-                }
-                catch (Exception ex)
-                {
-                    logger.AddErrorDetail(ex.Message).LogError("jwt_armuser_notvalid");
-                    context.Fail("Failed to extract ClaimsPrincipal from ARM signed user token header: " + ex.Message);
-                    return;
-                }
-
-                // Update the current user to the calling user instead of the calling service.
-                if (!context.HttpContext.SetUserContextFromClaimsPrincipal(
-                    armUserPrincipal, isEmailClaimRequired: false, out string errorMessage))
-                {
-                    logger.AddErrorDetail(errorMessage).LogError("jwt_armuser_notvalid_claims");
-                    context.Fail(errorMessage);
-                    return;
-                }
-
-                logger.LogInfo("jwt_aadrpaas_success");
-                context.Principal = armUserPrincipal;
-
-                var armUserIdentity = armUserPrincipal.Identities.First();
-                await SetCurrentUserIdentityAsync(context, armUserIdentity, logger.NewChildLogger());
+                context.Success();
             };
         }
 
         /// <summary>
         /// Validates an additional user token that was supplied in a header for ID linking.
         /// </summary>
-        private static async Task SetCurrentUserIdentityAsync(
-            TokenValidatedContext context,
+        private static async Task<bool> TrySetCurrentUserIdentityAsync(
+            HttpContext httpContext,
             ClaimsIdentity armUserIdentity,
             IDiagnosticsLogger logger)
         {
-            var httpContext = context.HttpContext;
-
             var isMsa = IsArmMsaIdentity(armUserIdentity);
 
             var userName = armUserIdentity.GetUserEmail(isEmailClaimRequired: false);
@@ -248,15 +227,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                     // An additional token was provided for updating the id map,
                     // but id mapping isn't possible without an email claim.
                     logger.LogError("jwt_armuser_missing_email");
-                    context.Fail("Cannot update identity map due to missing email claim.");
+                    return false;
                 }
                 else
                 {
                     // Allow the request to proceed without any id mapping.
                     logger.LogWarning("jwt_armuser_missing_email");
+                    return true;
                 }
-
-                return;
             }
 
             var idMapRepository = httpContext.RequestServices.GetRequiredService<IIdentityMapRepository>();
@@ -278,8 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 catch (Exception ex)
                 {
                     logger.AddErrorDetail(ex.Message).LogError("jwt_user_notvalid");
-                    context.Fail("User token authentication failed: " + ex.Message);
-                    return;
+                    return false;
                 }
 
                 // Get the legacy user ID corresponding to this additional authenticated identity.
@@ -302,6 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var userIdSet = new UserIdSet(
                 idMap.CanonicalUserId, idMap.ProfileId, idMap.ProfileProviderId, idMap.LinkedUserIds);
             currentUserProvider.SetUserIds(idMap.Id, userIdSet);
+            return true;
         }
 
         private static async Task<ClaimsPrincipal> ValidateAadTokenAsync(string token, HttpContext httpContext)
@@ -384,6 +362,93 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 public DateTime NotAfter { get; set; }
 
                 public string Certificate { get; set; }
+            }
+        }
+
+        private class ArmUserTokenRequirement : IAuthorizationRequirement
+        {
+            public ArmUserTokenRequirement(bool isRequired)
+            {
+                this.IsRequired = isRequired;
+            }
+
+            public bool IsRequired { get; private set; }
+        }
+
+        private class ArmUserTokenHandler : AuthorizationHandler<ArmUserTokenRequirement>
+        {
+            private readonly IHttpContextAccessor contextAccessor;
+
+            public ArmUserTokenHandler(IHttpContextAccessor contextAccessor)
+            {
+                this.contextAccessor = contextAccessor;
+            }
+
+            protected override async Task HandleRequirementAsync(
+                AuthorizationHandlerContext context,
+                ArmUserTokenRequirement requirement)
+            {
+                var httpContext = this.contextAccessor.HttpContext;
+                var logger = httpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
+
+                var armServicePrincipal = httpContext.Items[SourceArmTokenClaims] as ClaimsPrincipal;
+                if (armServicePrincipal == null)
+                {
+                    // This means the above token validation either failed or did not run.  If it failed, the error should
+                    // already be logged.  If it didn't run at all then there is probably a mismatch of schemes and policies.
+                    logger.LogWarning("jwt_armuser_noarmprincipal");
+                    return;
+                }
+
+                var issuerClaim = armServicePrincipal.FindFirstValue("iss");
+
+                var armUserToken = httpContext.Request.Headers[ArmUserTokenHeaderName].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(armUserToken))
+                {
+                    if (!requirement.IsRequired)
+                    {
+                        // The User at this point will have the claims of the ARM Bearer token which aren't useful.
+                        // Note: in the Controller the User won't be null after this - instead it will just have no claims.
+                        httpContext.User = null;
+                        context.Succeed(requirement);
+                        return;
+                    }
+
+                    logger.LogError("jwt_armuser_notprovided");
+                    return;
+                }
+
+                ClaimsPrincipal armUserPrincipal;
+
+                try
+                {
+                    armUserPrincipal = ValidateArmUserToken(armUserToken, issuerClaim, logger.NewChildLogger());
+                }
+                catch (Exception ex)
+                {
+                    logger.AddErrorDetail(ex.Message).LogError("jwt_armuser_notvalid");
+                    return;
+                }
+
+                // Update the current user to the calling user instead of the calling service.
+                if (!httpContext.SetUserContextFromClaimsPrincipal(
+                    armUserPrincipal, isEmailClaimRequired: false, out string errorMessage))
+                {
+                    logger.AddErrorDetail(errorMessage).LogError("jwt_armuser_notvalid_claims");
+                    return;
+                }
+
+                logger.LogInfo("jwt_aadrpsaas_success");
+                httpContext.User = armUserPrincipal;
+
+                var armUserIdentity = armUserPrincipal.Identities.First();
+                if (!await TrySetCurrentUserIdentityAsync(httpContext, armUserIdentity, logger.NewChildLogger()))
+                {
+                    // Error is logged in TrySetCurrentUserIdentityAsync
+                    return;
+                }
+
+                context.Succeed(requirement);
             }
         }
     }

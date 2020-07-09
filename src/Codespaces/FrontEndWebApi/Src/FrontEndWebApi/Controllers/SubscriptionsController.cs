@@ -94,6 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns a Http status code and message object indication success or failure of the validation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateValidateAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationValidate")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanCreateValidateAsync(
@@ -190,6 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resource">The PlanResource payload.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPut("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanCreateAsync(
@@ -299,6 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanCreateCompleteAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceCreationCompleted")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanCreateCompleteAsync(
@@ -328,6 +331,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>Returns a Http status code and message.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteValidateAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceDeletionValidate")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanDeleteValidateAsync(
@@ -426,6 +430,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceList">The resources known to Azure.</param>
         /// <returns>Returns an Http status code and a VSOAccount object.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListByResourceGroupAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/resourceReadBegin")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanListByResourceGroupAsync(
@@ -469,6 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceList">The resources known to Azure.</param>
         /// <returns>Returns an Http status code and a list of VSO SkuPlan objects filtering by subscriptionID.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanListBySubscriptionAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/providers/{providerNamespace}/{resourceType}/resourceReadBegin")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanListBySubscriptionAsync(
@@ -512,6 +518,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resource">The resource from Azure.</param>
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanGetAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.OptionalArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourceReadBegin")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanGetAsync(
@@ -534,6 +541,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsRequired(resource);
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
+
+                    if (!HttpContext.User.Identity.IsAuthenticated)
+                    {
+                        // If a plan GET request ever returns a 404, RPaaS will spawn a background worker to check if
+                        // the plan should be delete from their cache by polling this endpoint without a user credential.
+                        // In this case we want to always return a 200 (plan exists) response to avoid mismatches in api-versions
+                        // causing plans to become unexpectedly deleted on the ARM side.
+                        logger.LogInfo($"plan_get_no_user_credential");
+                        return CreateResponse(HttpStatusCode.OK, resource);
+                    }
 
                     var planInfo = new VsoPlanInfo
                     {
@@ -572,6 +589,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resource">The plan resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the validation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchValidateAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchValidate")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanPatchValidateAsync(
@@ -643,6 +661,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resource">The plan settings resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchCompletedAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/resourcePatchCompleted")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanPatchCompletedAsync(
@@ -713,6 +732,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadEnvironmentsAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllEnvironments")]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readAllCodespaces")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
@@ -775,6 +795,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteEnvironmentsAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeEnvironments")]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeCodespaces")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
@@ -837,6 +858,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="expiration">The expiration of the returned token.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteEnvironmentsAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllEnvironments")]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteAllCodespaces")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
@@ -897,6 +919,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>A delegates list response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanReadDelegatesAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/readDelegates")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanReadDelegatesAsync(
@@ -926,6 +949,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="requestBody">The request body.</param>
         /// <returns>An access token response object, or an error object indicating failure.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanWriteDelegatesAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/writeDelegates")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> PlanWriteDelegatesAsync(
@@ -1011,6 +1035,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="resourceName">The Azure resource name.</param>
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanDeleteDelegatesAsync))]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.RequireArmUserTokenPolicy)]
         [HttpPost("{subscriptionId}/resourceGroups/{resourceGroup}/providers/{providerNamespace}/{resourceType}/{resourceName}/deleteDelegates")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> PlanDeleteDelegatesAsync(
@@ -1038,6 +1063,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="rpSubscriptionNotification">JSON body request.</param>
         /// <returns>IActionResult.</returns>
         [HttpPut("{subscriptionId}/providers/{providerNamespace}/{resourceType}/SubscriptionLifeCycleNotification")]
+        [Authorize(Policy = AuthenticationBuilderRPaasExtensions.OptionalArmUserTokenPolicy)]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public Task<IActionResult> OnSubscriptionLifeCycleNotification(
             string subscriptionId,
