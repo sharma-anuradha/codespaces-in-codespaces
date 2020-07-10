@@ -1,0 +1,478 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="htmlSiteMSDNAddress" xml:space="preserve">
+    <value>http://msdn.microsoft.com</value>
+  </data>
+  <data name="ResourceOverviewBladeSubtitle" xml:space="preserve">
+    <value>Resource Subtitle</value>
+    <comment>Subtitle for my blade.</comment>
+  </data>
+  <data name="QuickStartBladeSubtitle" xml:space="preserve">
+    <value>Quick Start Blade Subtitle</value>
+  </data>
+  <data name="QuickStartBladeTitle" xml:space="preserve">
+    <value>Quick Start Blade Title</value>
+  </data>
+  <data name="QuickStartDescription" xml:space="preserve">
+    <value>Quick Start Description</value>
+  </data>
+  <data name="QuickStartInfoListDesc1" xml:space="preserve">
+    <value>This section has an Icon and will open a new browser tab on click. These two factors are mutually exclusive as the first depends on if an iconUri is set and the second because section.selectable was populated. This description text is multiline.</value>
+  </data>
+  <data name="QuickStartInfoListDesc2" xml:space="preserve">
+    <value>PDL provides openBlades and links[] of the InfoListBladeLinkContract type will be opened in blades. The tile supports both blade links and hyperlinks in the same section. Numbers are used when iconUri is not set.</value>
+  </data>
+  <data name="QuickStartInfoListTitle1" xml:space="preserve">
+    <value>Icon &amp; Selectable</value>
+  </data>
+  <data name="QuickStartInfoListTitle2" xml:space="preserve">
+    <value>Section that opens blade</value>
+  </data>
+  <data name="QuickStartShortTitle" xml:space="preserve">
+    <value>Quick Start</value>
+  </data>
+  <data name="QuickStartTitle" xml:space="preserve">
+    <value>Quick Start</value>
+  </data>
+  <data name="PropertiesBladeTitle" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="SubscriptionId" xml:space="preserve">
+    <value>Subscription Id</value>
+  </data>
+  <data name="LoadingText" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="ResourceNameColumn" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ResourceLocationColumn" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="CodespacesNames_Plans_plural" xml:space="preserve">
+    <value>Codespaces Plans</value>
+  </data>
+  <data name="CodespacesNames_Plans_singular" xml:space="preserve">
+    <value>Codespaces Plan</value>
+  </data>
+  <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
+    <value>codespaces plans</value>
+  </data>
+  <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
+    <value>codespaces plan</value>
+  </data>
+  <data name="CreateBladeTitle" xml:space="preserve">
+    <value>Create Codespaces Plan</value>
+  </data>
+  <data name="CreateBladeSubtitle" xml:space="preserve">
+    <value>Codespaces Plans</value>
+  </data>
+  <data name="CreateBladeIntroduction" xml:space="preserve">
+    <value>Add a description of your service here to quickly introduce your service to customers. Also add a Learn More link that links to documentation or Azure's marketing site for your resource type.</value>
+  </data>
+  <data name="CreateBladeIntroductionLink" xml:space="preserve">
+    <value>https://azure.microsoft.com/</value>
+  </data>
+  <data name="ProjectDetails" xml:space="preserve">
+    <value>Project details</value>
+  </data>
+  <data name="ProjectDetailsDescription" xml:space="preserve">
+    <value>Select the subscription to manage deployed resources and costs. Use resource groups like folders to organize and manage all your resources.</value>
+  </data>
+  <data name="subscriptionDropDownInfoBalloon" xml:space="preserve">
+    <value>All resources in an Azure subscription are billed together.</value>
+  </data>
+  <data name="ResourceGroupDropDownInfoBalloon" xml:space="preserve">
+    <value>A resource group is a collection of resources that share the same lifecycle, permissions, and policies.</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="InstanceDetails" xml:space="preserve">
+    <value>Instance details</value>
+  </data>
+  <data name="Basics" xml:space="preserve">
+    <value>Basics</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="ResourceGroup" xml:space="preserve">
+    <value>Resource group</value>
+  </data>
+  <data name="Subscription" xml:space="preserve">
+    <value>Subscription</value>
+  </data>
+  <data name="ReviewAndCreate" xml:space="preserve">
+    <value>Review + create</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="CreateValidationSuccess" xml:space="preserve">
+    <value>Validation passed.</value>
+  </data>
+  <data name="CreateValidationError" xml:space="preserve">
+    <value>Validation failed. Required information is missing or not valid.</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="ExtensionName" xml:space="preserve">
+    <value>AzurePortalExtension2</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="TextPropertyLabel" xml:space="preserve">
+    <value>Text Property Label</value>
+  </data>
+  <data name="LinkPropertyLabel" xml:space="preserve">
+    <value>Link Property Label</value>
+  </data>
+  <data name="MicrosoftUri" xml:space="preserve">
+    <value>www.microsoft.com</value>
+  </data>
+  <data name="AssetPropertyNames_Resource_ResourceGroup" xml:space="preserve">
+    <value>Resource group</value>
+  </data>
+  <data name="AssetPropertyNames_CloudService_Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="MonitoringLensTitle" xml:space="preserve">
+    <value>Monitoring</value>
+  </data>
+  <data name="ResourceOverviewBladeTitle" xml:space="preserve">
+    <value>Resource Title</value>
+  </data>
+  <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
+    <value>Create a new Codespace</value>
+  </data>
+  <data name="CreateCodespaceBladeTitle" xml:space="preserve">
+    <value>Create Codespace</value>
+  </data>
+  <data name="EditCodespaceBladeSubtitle" xml:space="preserve">
+    <value>Update Codespace settings</value>
+  </data>
+  <data name="EditCodespaceBladeTitle" xml:space="preserve">
+    <value>Edit Codespace</value>
+  </data>
+  <data name="CodespacesBladeSubtitle" xml:space="preserve">
+    <value>Codespaces</value>
+  </data>
+  <data name="CodepsacesBladeTitle" xml:space="preserve">
+    <value>My Codespaces</value>
+  </data>
+  <data name="ResourcePartSubtitle" xml:space="preserve">
+    <value>Resource part subtitle</value>
+  </data>
+  <data name="ResourcePartTitle" xml:space="preserve">
+    <value>Resource part title</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="PropertyLabel" xml:space="preserve">
+    <value>Property label</value>
+  </data>
+  <data name="PropertyValue" xml:space="preserve">
+    <value>Property value</value>
+  </data>
+  <data name="PropertyWithHyperlink" xml:space="preserve">
+    <value>Property with hyperlink</value>
+  </data>
+  <data name="Codespaces_description" xml:space="preserve">
+    <value>Consistent experiences across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+  </data>
+  <data name="Codespaces_keywords" xml:space="preserve">
+    <value>UX UI design patterns sample extension ibiza consistency</value>
+  </data>
+  <data name="Codespaces_link1Title" xml:space="preserve">
+    <value>Get consistent</value>
+  </data>
+  <data name="Codespaces_link2Title" xml:space="preserve">
+    <value>Learn more</value>
+  </data>
+  <data name="Codespaces_link1Uri" xml:space="preserve">
+    <value>http://www.bing.com</value>
+  </data>
+  <data name="Codespaces_link2Uri" xml:space="preserve">
+    <value>http://www.bing.com</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="ResourceCommand" xml:space="preserve">
+    <value>Command1</value>
+  </data>
+  <data name="Item1" xml:space="preserve">
+    <value>Codespaces</value>
+  </data>
+  <data name="Item1Keywords" xml:space="preserve">
+    <value>one keyword1</value>
+  </data>
+  <data name="Item2" xml:space="preserve">
+    <value>Item2</value>
+  </data>
+  <data name="Item2Keywords" xml:space="preserve">
+    <value>two keyword2</value>
+  </data>
+  <data name="Keys" xml:space="preserve">
+    <value>Keys</value>
+  </data>
+  <data name="KeysKeywords" xml:space="preserve">
+    <value>connection string</value>
+  </data>
+  <data name="Codespaces" xml:space="preserve">
+    <value>Codespaces</value>
+  </data>
+  <data name="Overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="OverviewKeywords" xml:space="preserve">
+    <value>Summary Home</value>
+  </data>
+  <data name="Overview_Description" xml:space="preserve">
+    <value>VS Codespace plans provides managed, on-demand development.</value>
+  </data>
+  <data name="Overview_CodespacePlanNameLabel" xml:space="preserve">
+    <value>VS Codespace plan name</value>
+  </data>
+  <data name="Overview_CodespacesLabel" xml:space="preserve">
+    <value>VS Codespaces</value>
+  </data>
+  <data name="Overview_VirtualNetworkLabel" xml:space="preserve">
+    <value>Virtual network/subnet</value>
+  </data>
+  <data name="InfoTile1_Description" xml:space="preserve">
+    <value>This is an info tile</value>
+  </data>
+  <data name="InfoTile1_Title" xml:space="preserve">
+    <value>Info Tile</value>
+  </data>
+  <data name="Monitoring_ChartTitle" xml:space="preserve">
+    <value>Chart title</value>
+  </data>
+  <data name="Monitoring_OneDay" xml:space="preserve">
+    <value>1 day</value>
+  </data>
+  <data name="Monitoring_OneHour" xml:space="preserve">
+    <value>1 hour</value>
+  </data>
+  <data name="Monitoring_SevenDays" xml:space="preserve">
+    <value>7 days</value>
+  </data>
+  <data name="Monitoring_ShowDataForLast" xml:space="preserve">
+    <value>Show data for last</value>
+  </data>
+  <data name="Monitoring_SixHours" xml:space="preserve">
+    <value>6 hours</value>
+  </data>
+  <data name="Monitoring_ThirtyDays" xml:space="preserve">
+    <value>30 days</value>
+  </data>
+  <data name="Monitoring_Title" xml:space="preserve">
+    <value>Monitoring title</value>
+  </data>
+  <data name="Monitoring_TwelveHours" xml:space="preserve">
+    <value>12 hours</value>
+  </data>
+  <data name="LearnMore" xml:space="preserve">
+    <value>Learn more</value>
+  </data>
+  <data name="Tile_AddCodespaceTitle" xml:space="preserve">
+    <value>Add a Codespace</value>
+  </data>
+  <data name="Tile_AddCodespaceDescription" xml:space="preserve">
+    <value>Create, build, deploy, and manage powerful web, mobile, and API apps for employees or customers using a single back-end.</value>
+  </data>
+  <data name="Tile_AddCodespaceLinkTitle" xml:space="preserve">
+    <value>Add a Codespace</value>
+  </data>
+  <data name="Tile_ConfigureVirtualNetworksTitle" xml:space="preserve">
+    <value>Configure Virtual Networks</value>
+  </data>
+  <data name="Tile_ConfigureVirtualNetworksDescription" xml:space="preserve">
+    <value>Azure Virtual Network (VNet) is the fundamental building block for your private network in Azure. VNet enables many types of Azure resources to securely communicate with each other.</value>
+  </data>
+  <data name="Tile_ConfigureVirtualNetworksLinkTitle" xml:space="preserve">
+    <value>Configure Virtual Network</value>
+  </data>
+  <data name="Tile_ChangeCodespaceConfigurationTitle" xml:space="preserve">
+    <value>Change Codespace configuration </value>
+  </data>
+  <data name="Tile_ChangeCodespaceConfigurationDescription" xml:space="preserve">
+    <value>App Service Adivsor provides insights for improving app experience on the App Service platform. Recommendations are sorted by freshness, priority and impact.</value>
+  </data>
+  <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
+    <value>Open Codespaces in Visual Studio</value>
+  </data>
+  <data name="Tile_ConsistencyDescription" xml:space="preserve">
+    <value>Following patterns across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+  </data>
+  <data name="Tile_ConsistencyTitle" xml:space="preserve">
+    <value>Azure portal design patterns</value>
+  </data>
+  <data name="esentialsAdditionalRightLink1Title" xml:space="preserve">
+    <value>Hyperlink title</value>
+  </data>
+  <data name="Tile_ContextPaneDescription" xml:space="preserve">
+    <value>To avoid jarring context switches, toolbar buttons and links within pages should open blades using the openContextPane method.</value>
+  </data>
+  <data name="Tile_ContextPaneLinkTitle" xml:space="preserve">
+    <value>Open blade in context pane - Keys</value>
+  </data>
+  <data name="Tile_ContextPaneTitle" xml:space="preserve">
+    <value>Open blade in context pane</value>
+  </data>
+  <data name="Tile_MenuDescription" xml:space="preserve">
+    <value>Links within pages and toolbar buttons should re-use existing menu items by using the switchItem method</value>
+  </data>
+  <data name="Tile_MenuLinkTitle" xml:space="preserve">
+    <value>Open Item1</value>
+  </data>
+  <data name="Tile_MenuTitle" xml:space="preserve">
+    <value>Select menu item</value>
+  </data>
+  <data name="DeleteConfirmation" xml:space="preserve">
+    <value>Are you sure you want to delete this resource?</value>
+  </data>
+  <data name="KeyPrimaryKeyLabel" xml:space="preserve">
+    <value>Primary key</value>
+  </data>
+  <data name="KeySecondaryKeyLabel" xml:space="preserve">
+    <value>Secondary key</value>
+  </data>
+  <data name="DxMenuItem" xml:space="preserve">
+    <value>Declarative View</value>
+  </data>
+  <data name="DxMenuGroup" xml:space="preserve">
+    <value>DxMenuGroup</value>
+  </data>
+  <data name="DxKeywords" xml:space="preserve">
+    <value>dx declarative started</value>
+  </data>
+</root>
