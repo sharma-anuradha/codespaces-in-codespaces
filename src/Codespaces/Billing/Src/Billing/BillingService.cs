@@ -155,6 +155,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // Append to the current BillingSummary any environments that did not have billing events during this period, but were present in the previous BillingSummary.
                     var totalBillingSummary = await CaculateBillingForEnvironmentsWithNoEvents(plan.Plan, billingSummary, latestBillingEventSummary, desiredBillEndTime, region, shardUsageTimes, allEnvironmentEvents, childLogger);
 
+                    // Checks for any missing environments in this summary that should be in it.
+                    CheckForMissingEnvironments(totalBillingSummary, desiredBillEndTime, allEnvironmentEvents, childLogger);
+
                     if (plan.IsDeleted)
                     {
                         // If the Plan has been deleted, track this state so that during the next billing iterating, we can mark it as the final bill.
@@ -669,10 +672,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                   .LogInfo("billing_aggregate_environment_summary");
         }
 
-        private void CheckForMissingEnvironments(BillingSummary billingSummary, DateTime start, IEnumerable<BillingEvent> allEnvironmentEvents, IDiagnosticsLogger childLogger)
+        private void CheckForMissingEnvironments(BillingSummary billingSummary, DateTime end, IEnumerable<BillingEvent> allEnvironmentEvents, IDiagnosticsLogger childLogger)
         {
             // Get all the events that happened before the current billing cycle.
-            var allOlderEnvironmentEvents = allEnvironmentEvents.Where(x => x.Time < start);
+            var allOlderEnvironmentEvents = allEnvironmentEvents.Where(x => x.Time < end);
 
             // Group all events by their env id
             var envsGroupedByEnvironments = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id);
@@ -759,10 +762,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private BillingEvent GetLastBillableEventStateChange(IEnumerable<BillingEvent> envEventsSinceStart)
         {
             BillingEvent lastState = null;
-            foreach (var billEvent in envEventsSinceStart)
+            foreach (var billEvent in envEventsSinceStart.OrderBy(x => x.Time))
             {
                 var billingStateChange = (BillingStateChange)billEvent.Args;
                 var newValue = billingStateChange.NewValue;
+
+                if (newValue.Equals(nameof(CloudEnvironmentState.Deleted)))
+                {
+                    return billEvent; // The environment was deleted. We are done and shouldn't consider other states. Deleted is the terminal state.
+                }
+
                 if (newValue.Equals(nameof(CloudEnvironmentState.Available)) ||
                     newValue.Equals(nameof(CloudEnvironmentState.Shutdown)) ||
                     newValue.Equals(nameof(CloudEnvironmentState.Moved)) ||
