@@ -1,4 +1,4 @@
-export const KNOWN_PARTNERS = ['github', 'salesforce'];
+export const KNOWN_PARTNERS = ['github', 'salesforce', 'azureportal'];
 
 export const validatePartnerInfoPostmessage = (info: any) => {
     const token =
