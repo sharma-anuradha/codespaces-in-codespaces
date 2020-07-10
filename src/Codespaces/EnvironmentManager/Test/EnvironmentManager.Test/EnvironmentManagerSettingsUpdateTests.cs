@@ -320,6 +320,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var plan2 = MockPlan(name: "plan2");
 
             var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.ResourceId);
+            var environmentOwnerId = environment.OwnerId;
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
             environment.State = CloudEnvironmentState.Shutdown;
@@ -341,6 +342,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
+            Assert.Equal(environmentOwnerId, environment.OwnerId);
 
             Assert.Collection(
                 billingEventRepository.Values.OrderBy((e) => e.Time),
@@ -360,6 +362,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     Assert.Equal(CloudEnvironmentState.Shutdown.ToString(),
                         ((BillingStateChange)event1.Args).NewValue);
                 });
+        }
+
+        [Fact]
+        public async Task MoveEnvironment_UpdateOwnerId()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var billingEventRepository = new MockBillingEventRepository();
+
+            var planRepository = new MockPlanRepository();
+            var plan1 = await planRepository.CreateAsync(new VsoPlan
+            {
+                Id = Guid.Empty.ToString(),
+                Plan = MockPlan(name: "plan1"),
+            }, Logger);
+            var plan2 = await planRepository.CreateAsync(new VsoPlan
+            {
+                Id = Guid.Empty.ToString().Replace('0', '1'),
+                Plan = MockPlan(name: "plan2"),
+            }, Logger);
+
+            var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.Plan.ResourceId);
+            environment.OwnerId = plan1.Id + "_" + Guid.Empty;
+
+            environment = await environmentRepository.CreateAsync(environment, Logger);
+            environment.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                Plan = plan2,
+            };
+
+            var manager = CreateManager(
+                environmentRepository: environmentRepository,
+                skuCatalog: skuCatalog,
+                planRepository: planRepository,
+                billingEventRepository: billingEventRepository);
+
+            var subscription = new Subscription
+            {
+                Id = plan1.Plan.Subscription,
+            };
+            var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
+            Assert.StartsWith(plan2.Id, environment.OwnerId);
         }
 
         [Fact]
@@ -448,13 +497,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private EnvironmentManager CreateManager(
             ICloudEnvironmentRepository environmentRepository = null,
             ISkuCatalog skuCatalog = null,
+            IPlanRepository planRepository = null,
             IBillingEventRepository billingEventRepository = null,
             EnvironmentManagerSettings environmentSettings = null,
             int[] autoShutdownDelayOptions = null)
         {
             var defaultCount = 20;
             var defaultAutoShutdownOptions = new[] { 0, 5, 30, 120 };
-            var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = defaultCount };
+            var planSettings = new PlanManagerSettings()
+            {
+                DefaultMaxPlansPerSubscription = defaultCount,
+                DefaultAutoSuspendDelayMinutesOptions = autoShutdownDelayOptions ?? defaultAutoShutdownOptions,
+            };
             environmentSettings ??= new EnvironmentManagerSettings()
             {
                 DefaultMaxEnvironmentsPerPlan = defaultCount,
@@ -469,7 +523,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             environmentSettings.Init(mockSystemConfiguration.Object);
 
             environmentRepository = environmentRepository ?? new MockCloudEnvironmentRepository();
-            var planRepository = new MockPlanRepository();
+            planRepository ??= new MockPlanRepository();
             billingEventRepository ??= new MockBillingEventRepository();
             var billingEventManager = new BillingEventManager(billingEventRepository, new MockBillingOverrideRepository());
             var workspaceRepository = new MockClientWorkspaceRepository();
@@ -489,6 +543,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
+            var planManager = new PlanManager(planRepository, planSettings, skuCatalog);
 
             return new EnvironmentManager(
                 environmentRepository,
@@ -498,10 +553,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentMonitor,
                 environmentContinuation,
                 environmentSettings,
-                new PlanManagerSettings
-                {
-                    DefaultAutoSuspendDelayMinutesOptions = autoShutdownDelayOptions ?? defaultAutoShutdownOptions,
-                },
+                planManager,
+                planSettings,
                 environmentStateManager,
                 environmentRepairWorkflows,
                 resourceAllocationManager,

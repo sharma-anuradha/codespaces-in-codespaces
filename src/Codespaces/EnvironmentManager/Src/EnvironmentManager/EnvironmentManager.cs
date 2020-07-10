@@ -45,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentMonitor">The environment monitor.</param>
         /// <param name="environmentContinuation">The environment continuation.</param>
         /// <param name="environmentManagerSettings">The environment manager settings.</param>
+        /// <param name="planManager">The plan manager.</param>
         /// <param name="planManagerSettings">The plan manager settings.</param>
         /// <param name="environmentStateManager">The environment state manager.</param>
         /// <param name="environmentRepairWorkflows">The environment repair workflows.</param>
@@ -60,6 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentMonitor environmentMonitor,
             IEnvironmentContinuationOperations environmentContinuation,
             EnvironmentManagerSettings environmentManagerSettings,
+            IPlanManager planManager,
             PlanManagerSettings planManagerSettings,
             IEnvironmentStateManager environmentStateManager,
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
@@ -77,6 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             EnvironmentContinuation = Requires.NotNull(environmentContinuation, nameof(environmentContinuation));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
+            PlanManager = Requires.NotNull(planManager, nameof(planManager));
             PlanManagerSettings = Requires.NotNull(planManagerSettings, nameof(PlanManagerSettings));
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
             ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
@@ -101,6 +104,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IEnvironmentContinuationOperations EnvironmentContinuation { get; }
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+
+        private IPlanManager PlanManager { get; }
 
         private PlanManagerSettings PlanManagerSettings { get; }
 
@@ -1606,9 +1611,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     validationErrors.Add(MessageCodes.ExceededQuota);
                 }
 
+                var currentPlanInfo = VsoPlanInfo.TryParse(cloudEnvironment.PlanId);
+                VsoPlan currentPlan = currentPlanInfo == null ? null :
+                    await PlanManager.GetAsync(currentPlanInfo, logger);
+
                 // The returned action will only be invoked if there are no validation errors.
-                return (validationErrors, (cloudEnvironment) =>
+                return (validationErrors, (CloudEnvironment cloudEnvironment) =>
                 {
+                    if (currentPlan != null &&
+                        cloudEnvironment.OwnerId.StartsWith(currentPlan.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // The owner ID uses a plan-level tenant. (It's a plan-scoped delegated identity.)
+                        // Update it to the new plan ID.
+                        logger.LogInfo($"{LogBaseName}_update_environment_ownerid");
+                        cloudEnvironment.OwnerId =
+                            update.Plan.Id + cloudEnvironment.OwnerId.Substring(currentPlan.Id.Length);
+                    }
+
                     cloudEnvironment.PlanId = update.Plan.Plan.ResourceId;
                     cloudEnvironment.FriendlyName = destinationName;
                 });

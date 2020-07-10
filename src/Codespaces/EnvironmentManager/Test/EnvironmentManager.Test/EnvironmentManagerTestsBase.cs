@@ -137,6 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var skuCatalogMock = new Mock<ISkuCatalog>(MockBehavior.Strict);
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
             this.skuCatalog = skuCatalogMock.Object;
+            var planManager = new PlanManager(this.planRepository, planSettings, this.skuCatalog);
             this.environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
             var serviceProvider = new Mock<IServiceProvider>().Object;
             this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository, serviceProvider) };
@@ -154,6 +155,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentMonitor,
                 environmentContinuationOperations.Object,
                 environmentSettings,
+                planManager,
                 planSettings,
                 this.environmentStateManager,
                 this.environmentRepairWorkflows,
