@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <inheritdoc/>
-        public override bool? IsScopeAuthorized(string scope)
+        public override bool? IsAnyScopeAuthorized(params string[] scopes)
         {
             return false;
         }

@@ -765,9 +765,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
+                    // TODO: Change to ReadCodespaces after the renamed scope is supported everywhere.
+                    var scopes = new[] { PlanAccessTokenScopes.ReadEnvironments };
+
                     var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
-                        new[] { PlanAccessTokenScopes.ReadEnvironments, },
+                        scopes,
                         (ClaimsIdentity)HttpContext.User.Identity,
                         expiration,
                         logger);
@@ -828,9 +831,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
+                    // TODO: Change to WriteCodespaces after the renamed scope is supported everywhere.
+                    var scopes = new[] { PlanAccessTokenScopes.WriteEnvironments };
+
                     var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
-                        new[] { PlanAccessTokenScopes.WriteEnvironments, },
+                        scopes,
                         (ClaimsIdentity)HttpContext.User.Identity,
                         expiration,
                         logger);
@@ -891,9 +897,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
+                    // TODO: Change to { ReadCodespaces, DeleteCodespaces } after the renamed scopes are supported everywhere.
+                    var scopes = new[] { PlanAccessTokenScopes.ReadEnvironments, PlanAccessTokenScopes.DeleteEnvironments };
+
                     var token = await tokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
-                        new[] { PlanAccessTokenScopes.ReadEnvironments, PlanAccessTokenScopes.DeleteEnvironments, },
+                        scopes,
                         (ClaimsIdentity)HttpContext.User.Identity,
                         expiration,
                         logger);

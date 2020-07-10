@@ -12,17 +12,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         /// <summary>
         /// A scope allowing the user to read all environments in a plan.
         /// </summary>
+        /// <remarks>
+        /// Equivalent to <see cref="ReadCodespaces" />, but supporting old terminology.
+        /// </remarks>
         public const string ReadEnvironments = "read:allenvironments";
 
         /// <summary>
         /// A scope allowing the user to perform CRUD operations on and connect to environments they own in a plan.
         /// </summary>
+        /// <remarks>
+        /// Equivalent to <see cref="WriteCodespaces" />, but supporting old terminology.
+        /// </remarks>
         public const string WriteEnvironments = "write:environments";
 
         /// <summary>
         /// A scope allowing the user to delete all environments in a plan.
         /// </summary>
+        /// <remarks>
+        /// Equivalent to <see cref="DeleteCodespaces" />, but supporting old terminology.
+        /// </remarks>
         public const string DeleteEnvironments = "delete:allenvironments";
+
+        /// <summary>
+        /// A scope allowing the user to read all codespaces in a plan.
+        /// </summary>
+        public const string ReadCodespaces = "read:allcodespacess";
+
+        /// <summary>
+        /// A scope allowing the user to perform CRUD operations on and connect to codespaces they own in a plan.
+        /// </summary>
+        public const string WriteCodespaces = "write:codespaces";
+
+        /// <summary>
+        /// A scope allowing the user to delete all codespaces in a plan.
+        /// </summary>
+        public const string DeleteCodespaces = "delete:allcodespaces";
 
         /// <summary>
         /// A scope allowing the user to share a Live Share session.
@@ -42,6 +66,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
             ReadEnvironments,
             WriteEnvironments,
             DeleteEnvironments,
+            ReadCodespaces,
+            WriteCodespaces,
+            DeleteCodespaces,
         };
 
         /// <summary>

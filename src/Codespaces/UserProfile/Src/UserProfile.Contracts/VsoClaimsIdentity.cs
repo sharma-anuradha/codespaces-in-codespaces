@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         public string[] AuthorizedEnvironments { get; private set; }
 
         /// <summary>
-        /// Checks if a plan is authorized for the current HTTP context.
+        /// Checks if a plan is authorized by the identity claims.
         /// </summary>
         /// <param name="plan">Fully-qualified plan resource ID that the user is
         /// attempting to access, or null if the user is querying across all plans.</param>
@@ -81,7 +81,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <summary>
-        /// Checks if an environment is specifically authorized for the current HTTP context.
+        /// Checks if an environment is specifically authorized by the identity claims.
         /// </summary>
         /// <param name="environmentId">ID of the environment the user is attempting to access,
         /// or null if the user is attempting a non-environment-scoped action.</param>
@@ -106,18 +106,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <summary>
-        /// Checks if a scope is authorized for the current HTTP context.
+        /// Checks if any of a list of scopes is authorized by the identity claims.
         /// </summary>
-        /// <param name="scope">Required scope.</param>
+        /// <param name="scopes">List of scopes, at least one of which is required.</param>
         /// <returns>
-        /// True if the scope is explicitly authorized,
+        /// True if at least one of the scopes is explicitly authorized,
         /// false if the current context is restricted to a different scope, or
         /// null if the current context is not restricted to a scope.</returns>
-        public virtual bool? IsScopeAuthorized(string scope)
+        public virtual bool? IsAnyScopeAuthorized(params string[] scopes)
         {
             var authorizedScopes = Scopes;
-            return authorizedScopes == null ? (bool?)null :
-                authorizedScopes.Contains(scope, StringComparer.OrdinalIgnoreCase);
+            return authorizedScopes == null ? (bool?)null : authorizedScopes.Any(
+                (scope) => scopes.Contains(scope, StringComparer.OrdinalIgnoreCase));
         }
 
         private void Initialize()

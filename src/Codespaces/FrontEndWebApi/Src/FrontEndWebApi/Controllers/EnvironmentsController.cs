@@ -161,8 +161,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(
-                environment, nonOwnerScope: PlanAccessTokenScopes.ReadEnvironments, logger))
+            var nonOwnerScopes = new[]
+            {
+                PlanAccessTokenScopes.ReadEnvironments,
+                PlanAccessTokenScopes.ReadCodespaces,
+            };
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes, logger))
             {
                 return new ForbidResult();
             }
@@ -204,13 +208,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             UserIdSet userIdSet;
-            if (CurrentUserProvider.Identity.IsScopeAuthorized(PlanAccessTokenScopes.ReadEnvironments) == true)
+            if (CurrentUserProvider.Identity.IsAnyScopeAuthorized(
+                PlanAccessTokenScopes.ReadEnvironments,
+                PlanAccessTokenScopes.ReadCodespaces) == true)
             {
                 // A user with this explicit scope is authorized to list
                 // all users' environments in the plan.
                 userIdSet = null;
             }
-            else if (CurrentUserProvider.Identity.IsScopeAuthorized(PlanAccessTokenScopes.WriteEnvironments) != false)
+            else if (CurrentUserProvider.Identity.IsAnyScopeAuthorized(
+                PlanAccessTokenScopes.WriteEnvironments,
+                PlanAccessTokenScopes.WriteCodespaces) != false)
             {
                 // A user with only write scope (or an unscoped token) is authorized only
                 // to list their own environments.
@@ -263,7 +271,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger))
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
             {
                 return new ForbidResult();
             }
@@ -316,7 +324,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger))
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
             {
                 return new ForbidResult();
             }
@@ -418,7 +426,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             logger.AddVsoPlan(planDetails);
 
-            if (!AuthorizePlanAccess(planDetails, PlanAccessTokenScopes.WriteEnvironments, null, logger))
+            var requiredScopes = new[]
+            {
+                PlanAccessTokenScopes.WriteEnvironments,
+                PlanAccessTokenScopes.WriteCodespaces,
+            };
+            if (!AuthorizePlanAccess(planDetails, requiredScopes, null, logger))
             {
                 return new ForbidResult();
             }
@@ -602,8 +615,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(
-                environment, nonOwnerScope: PlanAccessTokenScopes.DeleteEnvironments, logger))
+            var nonOwnerScopes = new[]
+            {
+                PlanAccessTokenScopes.DeleteEnvironments,
+                PlanAccessTokenScopes.DeleteCodespaces,
+            };
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes, logger))
             {
                 return new ForbidResult();
             }
@@ -721,7 +738,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger))
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
             {
                 return new ForbidResult();
             }
@@ -764,8 +781,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 }
 
                 // Check if the user has access to write to the new plan.
-                if (!AuthorizePlanAccess(
-                    plan, PlanAccessTokenScopes.WriteEnvironments, planAccessClaims, logger))
+                var requiredScopes = new[]
+                {
+                    PlanAccessTokenScopes.WriteEnvironments,
+                    PlanAccessTokenScopes.WriteCodespaces,
+                };
+                if (!AuthorizePlanAccess(plan, requiredScopes, planAccessClaims, logger))
                 {
                     return new ForbidResult();
                 }
@@ -823,7 +844,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger))
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
             {
                 return new ForbidResult();
             }
@@ -911,7 +932,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger))
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
             {
                 return new ForbidResult();
             }
@@ -958,7 +979,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return NotFound();
             }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScope: null, logger) ||
+            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger) ||
                 environment.Type != EnvironmentType.StaticEnvironment)
             {
                 return new ForbidResult();
@@ -1001,14 +1022,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Checks if the current user is authorized to access an environment.
         /// </summary>
         /// <param name="environment">Environment that the user is attempting to access.</param>
-        /// <param name="nonOwnerScope">Scope that the user is required to have IF they
-        /// do not have full owner-level access to the environment. Or null if only
+        /// <param name="nonOwnerScopes">The user is required to have at least one of these scopes
+        /// IF they do not have full owner-level access to the environment. Or null if only
         /// owners should be authorized.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>True if the user is authorized, else false.</returns>
         private bool AuthorizeEnvironmentAccess(
             CloudEnvironment environment,
-            string nonOwnerScope,
+            string[] nonOwnerScopes,
             IDiagnosticsLogger logger)
         {
             if (CurrentUserProvider.Identity.IsPlanAuthorized(environment.PlanId) == false)
@@ -1027,16 +1048,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var currentUserIdSet = CurrentUserProvider?.CurrentUserIdSet;
             if (currentUserIdSet.EqualsAny(environment.OwnerId) &&
-                CurrentUserProvider.Identity.IsScopeAuthorized(PlanAccessTokenScopes.WriteEnvironments) != false)
+                CurrentUserProvider.Identity.IsAnyScopeAuthorized(
+                    PlanAccessTokenScopes.WriteEnvironments,
+                    PlanAccessTokenScopes.WriteCodespaces) != false)
             {
                 // Users with write access to a plan (or an unscoped access token)
                 // have full access to their own environments in the plan.
                 return true;
             }
 
-            if (nonOwnerScope != null)
+            if (nonOwnerScopes != null)
             {
-                if (CurrentUserProvider.Identity.IsScopeAuthorized(nonOwnerScope) == true)
+                if (CurrentUserProvider.Identity.IsAnyScopeAuthorized(nonOwnerScopes) == true)
                 {
                     // Users with certain explicit scopes can have limited access
                     // to environments they don't own in the plan.
@@ -1057,14 +1080,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Checks if the current user is authorized to access a plan.
         /// </summary>
         /// <param name="plan">Plan that the user is attempting to access.</param>
-        /// <param name="requiredScope">Scope that the user must have, if they have a scoped
-        /// access token.</param>
+        /// <param name="requiredScopes">A user must have at least one of these scopes,
+        /// if they have a scoped access token.</param>
         /// <param name="identity">The identity to check, or null to use the current user identity.</param>
         /// <param name="logger">Diagnostic logger.</param>
         /// <returns>True if the user is authorized, else false.</returns>
         private bool AuthorizePlanAccess(
             VsoPlan plan,
-            string requiredScope,
+            string[] requiredScopes,
             VsoClaimsIdentity identity,
             IDiagnosticsLogger logger)
         {
@@ -1085,7 +1108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return false;
             }
 
-            var isScopeAuthorized = identity.IsScopeAuthorized(requiredScope);
+            var isScopeAuthorized = identity.IsAnyScopeAuthorized(requiredScopes);
             if (isScopeAuthorized == true)
             {
                 // The user has the explicit required scope.
