@@ -7,7 +7,7 @@
                     "SourceFile": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\WebsiteStringResources.json",
                     "CopyOption": "LangIDOnName",
                     "OutputPath": "src\\Portal\\PortalWebsite\\Src\\Website\\packages\\website\\src\\loc\\resources\\",
-                    "LclFile": "src\\Loc\\{lang}\\WebsiteStringResources.json.lcl"
+                    "LclFile": "src\\Loc\\Loc\\{lang}\\WebsiteStringResources.json.lcl"
                 }
             ]
         },
