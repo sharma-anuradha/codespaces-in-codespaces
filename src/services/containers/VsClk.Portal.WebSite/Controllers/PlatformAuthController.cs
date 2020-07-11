@@ -79,93 +79,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             return PhysicalFile(asset, mediaType);
         }
-         
-        public class GitCredential
-        {
-            [JsonProperty("expiration")]
-            public double Expiration { get; set; }
-
-            [JsonProperty("path")]
-            public string Path { get; set; }
-
-            [JsonProperty("host")]
-            public string Host { get; set; }
-
-            [JsonProperty("token")]
-            public string Token { get; set; }
-        }
-
-        public class NativeAuthProviderAccount
-        {
-            [JsonProperty("Id")]
-            public string Id { get; set; }
-
-            [JsonProperty("displayName")]
-            public string DisplayName { get; set; }
-        }
-
-        public class NativeAuthProviderSession
-        {
-            [JsonProperty("type")]
-            public string Type { get; set; }
-
-            [JsonProperty("id")]
-            public string Id { get; set; }
-
-            [JsonProperty("scopes")]
-            public List<string> Scopes { get; set; }
-
-            [JsonProperty("accessToken")]
-            public string AccessToken { get; set; }
-
-            [JsonProperty("account")]
-            public NativeAuthProviderAccount Account { get; set; }
-        }
-
-        public class HomeIndicator
-        {
-            [JsonProperty("href")]
-            public string Href { get; set; }
-
-            [JsonProperty("title")]
-            public string Title { get; set; }
-
-            [JsonProperty("icon")]
-            public string Icon { get; set; }
-        }
-
-        public class VSCodeExtension
-        {
-            [JsonProperty("id")]
-            public string Id { get; set; }
-
-            [JsonProperty("kind")]
-            public string Kind { get; set; }
-        }
-
-        public class VSCodeSettings
-        {
-            [JsonProperty("homeIndicator")]
-            public HomeIndicator HomeIndicator { get; set; }
-
-            [JsonProperty("defaultSettings")]
-            public Dictionary<string, object> DefaultSettings { get; set; }
-
-            [JsonProperty("defaultExtensions")]
-            public List<VSCodeExtension> DefaultExtensions { get; set; }
-
-            [JsonProperty("enableSyncByDefault")]
-            public bool EnableSyncByDefault { get; set; }
-
-            [JsonProperty("authenticationSessionId")]
-            public string AuthenticationSessionId { get; set; }
-
-            [JsonProperty("defaultAuthSessions")]
-            public List<NativeAuthProviderSession> DefaultAuthSessions { get; set; }
-
-            [JsonProperty("vscodeChannel")]
-            public string VSCodeChannel { get; set; }
-        }
 
         public class PartnerInfo
         {
@@ -178,19 +91,23 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             [JsonProperty("codespaceId")]
             public string CodespaceId { get; set; }
 
-            [JsonProperty("codespaceToken")]
-            public string CodespaceToken { get; set; }
-
             [JsonProperty("cascadeToken")]
             public string CascadeToken { get; set; }
 
-            [JsonProperty("credentials")]
-            public List<GitCredential> Credentials { get; set; }
+            [JsonProperty("codespaceToken")]
+            public string CodespaceToken { get; set; }
 
             [JsonProperty("vscodeSettings")]
-            public VSCodeSettings VSCodeSettings { get; set; }
+            public object VSCodeSettings { get; set; }
+
+            [JsonProperty("featureFlags")]
+            public object FeatureFlags { get; set; }
+
+            [JsonProperty("favicon")]
+            public object Favicon { get; set; }
         }
 
+        [HttpPost("~/connect")]
         [HttpPost("~/platform-authentication")]
         [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.VsoBodyAuthenticationScheme)]
         [Consumes("application/x-www-form-urlencoded")]
@@ -208,6 +125,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var partnerInfoData = JsonConvert.DeserializeObject<PartnerInfo>(partnerInfo);
             var formCodespacesToken = cascadeToken ?? codespaceToken;
 
+            // TODO: validate against JSON schema instead
             if (formCodespacesToken != partnerInfoData.CodespaceToken)
             {
                 return BadRequest("Codespaces token in request body and in the partner info payload do not match.");

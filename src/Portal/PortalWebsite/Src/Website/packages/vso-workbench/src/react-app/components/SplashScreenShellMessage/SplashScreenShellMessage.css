@@ -9,6 +9,11 @@
     animation: vso-fadein .75s;
 }
 
+.vso-splash-screen__block--light-theme {
+  color: #2A2A2A;
+  font-weight: 500;
+}
+
 .vso-splash-screen__message {
     margin-bottom: 2rem;
 }

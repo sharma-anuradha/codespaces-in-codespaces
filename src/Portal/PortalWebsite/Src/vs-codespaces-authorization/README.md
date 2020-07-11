@@ -8,12 +8,6 @@ The `npm` module that makes life easier when dealing with the VS Codespaces plat
 
 ### Installation
 
-Yarn:
-```shell
-yarn add vs-codespaces-authorization
-```
-
-Npm:
 ```shell
 npm install vs-codespaces-authorization
 ```
@@ -39,54 +33,50 @@ await authorizePlatform(
 
 <details>
   <summary>Example for authorization payload data</summary>
-  
+
 ```json
 {
-  "partnerName": "github",
-  "managementPortalUrl": "https://github.com/codespaces",
-  "codespaceToken": "<codespace JWT>",
-  "credentials": [
-    {
-      "expiration": 10000000000000,
-      "token": "<github token>",
-      "host": "github.com",
-      "path": "/"
-    }
-  ],
-  "codespaceId": "<codespace guid>",
-  "vscodeSettings": {
-    "vscodeChannel": "insider",
-    "defaultSettings": {
-      "workbench.colorTheme": "GitHub Light",
-      "workbench.startupEditor": "welcomePageInEmptyWorkbench"
+    "partnerName": "github",
+    "managementPortalUrl": "https://github.com/codespaces",
+    "codespaceToken": "<codespaces JWT>",
+    "credentials": [{
+        "expiration": 10000000000000,
+        "token": "<github token>",
+        "host": "github.com",
+        "path": "/"
+    }],
+    "codespaceId": "<codespace guid>",
+    "featureFlags": {
+        "example-pfs-name": "not real feature flag",
+        "example-enable-pfs": true,
+        "example-multithreading": 5
     },
-    "defaultExtensions": [
-      {
-        "id": "GitHub.vscode-pull-request-github",
-        "kind": "workspace"
-      },
-      {
-        "id": "ms-vsliveshare.vsliveshare"
-      }
-    ],
-    "defaultAuthSessions": [
-      {
-        "type": "github",
-        "id": "a0446d79-9ec8-4373-ba94-df7bc46a9acf",
-        "accessToken": "<github token>",
-        "scopes": [
-          "read:user",
-          "user:email",
-          "repo"
-        ]
-      }
-    ]
-  }
+    "vscodeSettings": {
+        "vscodeChannel": "insider",
+        "loadingScreenThemeColor": "dark",
+        "defaultSettings": {
+           "workbench.colorTheme": "GitHub Light",
+           "workbench.startupEditor": "welcomePageInEmptyWorkbench"
+        },
+        "defaultExtensions": [{
+            "id": "GitHub.vscode-pull-request-github"
+        }, {
+            "id": "ms-vsliveshare.vsliveshare"
+        }],
+        "defaultAuthSessions": [{
+            "type": "github",
+            "id": "github-session-github-pr",
+            "accessToken": "<github token>",
+            "scopes": ["read:user", "user:email", "repo"]
+        }]
+    }
 }
 ```
 </details>
 
 ### Using Schemas
+
+Online playground: https://www.jsonschemavalidator.net/s/kGYLyowr
 
 The lastest JSON schema defined in `src/schemas/` and published at https://aka.ms/vscs-platform-json-schema.
 (The extended schema https://aka.ms/vscs-platform-json-schema-extended can be used internally).

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { EnvironmentStateInfo, randomString, IEnvironment } from 'vso-client-core';
+import { EnvironmentStateInfo, randomString, IEnvironment, IPartnerInfo } from 'vso-client-core';
 import { VSOSplashScreen } from '@vs/vso-splash-screen';
 import { BrowserSyncService, GitCredentialService } from 'vso-ts-agent';
 
@@ -14,9 +14,11 @@ import { CommunicationAdapter } from '../../../utils/splashScreen/communicationA
 import { SplashCommunicationProvider } from '../../../utils/splashScreen/SplashScreenCommunicationProvider';
 import { config } from '../../../config/config';
 import { authService } from '../../../auth/authService';
+import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 
-interface ISplashScreenState {
+interface ISplashScreenProps {
     environmentInfo: IEnvironment | null;
+    platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
     environmentState: TEnvironmentState;
     message?: string;
     startEnvironment: () => any;
@@ -31,7 +33,7 @@ const connectSplashScreen = async (environmentInfo: IEnvironment) => {
         config.liveShareApi,
         randomString(),
         BrowserSyncService,
-        GitCredentialService,
+        GitCredentialService
     );
 
     const token = await authService.getCachedCodespaceToken();
@@ -41,23 +43,45 @@ const connectSplashScreen = async (environmentInfo: IEnvironment) => {
     }
 
     await result.connect(environmentInfo.connection.sessionId, token);
-}
+};
 
-export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
-    props: ISplashScreenState
+const isLightThemeColor = (
+    platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null
+): boolean => {
+    if (!platformInfo) {
+        return true;
+    }
+
+    if ('vscodeSettings' in platformInfo) {
+        return (platformInfo.vscodeSettings as any).loadingScreenThemeColor === 'light';
+    }
+
+    return true;
+};
+
+export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
+    props: ISplashScreenProps
 ) => {
     const {
         environmentState,
         onSignIn,
         startEnvironment,
         message,
-        environmentInfo
+        environmentInfo,
+        platformInfo,
     } = props;
-    
+
+    const isLightTheme = isLightThemeColor(platformInfo);
+
     switch (environmentState) {
         case EnvironmentWorkspaceState.Unknown:
         case EnvironmentWorkspaceState.Initializing: {
-            return <SplashScreenMessage message='Getting things ready...' />;
+            return (
+                <SplashScreenMessage
+                    message='Getting things ready...'
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         case EnvironmentWorkspaceState.SignedOut: {
             const buttonProps: IButtonLinkProps = {
@@ -65,24 +89,50 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
                 onClick: onSignIn,
             };
             return (
-                <SplashScreenMessage message='Please sign in to proceed.' button={buttonProps} />
+                <SplashScreenMessage
+                    message='Please sign in to proceed.'
+                    button={buttonProps}
+                    isLightTheme={isLightTheme}
+                />
             );
         }
         case EnvironmentWorkspaceState.Error: {
-            return <SplashScreenMessage message={message || 'Codespace error.'} />;
+            return (
+                <SplashScreenMessage
+                    message={message || 'Codespace error.'}
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         case EnvironmentStateInfo.Starting: {
-            return <SplashScreenMessage message='Starting the codespace...' />;
+            return (
+                <SplashScreenMessage
+                    message='Starting the codespace...'
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         case EnvironmentStateInfo.Deleted: {
-            return <SplashScreenMessage message='The codespace has been deleted.' />;
+            return (
+                <SplashScreenMessage
+                    message='The codespace has been deleted.'
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         case EnvironmentStateInfo.Failed: {
-            return <SplashScreenMessage message='The codespace failed.' />;
+            return (
+                <SplashScreenMessage message='The codespace failed.' isLightTheme={isLightTheme} />
+            );
         }
         case EnvironmentStateInfo.Provisioning: {
             if (!environmentInfo) {
-                return <SplashScreenMessage message='Getting things ready...' />;
+                return (
+                    <SplashScreenMessage
+                        message='Getting things ready...'
+                        isLightTheme={isLightTheme}
+                    />
+                );
             }
 
             const connection = React.useMemo(() => {
@@ -94,21 +144,27 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
             }, []);
 
             return (
-                <SplashScreenShell isGithubSplashScreen={false}>
+                <SplashScreenShell isGithubSplashScreen={isLightTheme}>
                     <VSOSplashScreen connection={connection} />
                 </SplashScreenShell>
             );
         }
         case EnvironmentStateInfo.Available: {
-            return <SplashScreenMessage message='Connecting...' />;
+            return <SplashScreenMessage message='Connecting...' isLightTheme={isLightTheme} />;
         }
         case EnvironmentStateInfo.ShuttingDown: {
-            return <SplashScreenMessage message='The codespace is shutting down.' />;
+            return (
+                <SplashScreenMessage
+                    message='The codespace is shutting down.'
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         case EnvironmentStateInfo.Shutdown: {
             return (
                 <SplashScreenMessage
                     message='The codespace is shutdown.'
+                    isLightTheme={isLightTheme}
                     button={{
                         text: 'Connect',
                         onClick: startEnvironment,
@@ -117,10 +173,20 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenState> = (
             );
         }
         case EnvironmentStateInfo.Unavailable: {
-            return <SplashScreenMessage message='The codespace is not available.' />;
+            return (
+                <SplashScreenMessage
+                    message='The codespace is not available.'
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         default: {
-            return <SplashScreenMessage message='Unknown codespace state.' />;
+            return (
+                <SplashScreenMessage
+                    message='Unknown codespace state.'
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
     }
 };

@@ -5,50 +5,7 @@
     "title": "VS Codespaces Platform Info",
     "description": "The JSON schema to build/validate the Visual Studio Codespaces platform authorization payload.",
     "default": {},
-    "examples": [
-        {
-            "partnerName": "github",
-            "managementPortalUrl": "https://github.com/codespaces",
-            "codespaceToken": "<codespaces JWT>",
-            "credentials": [
-                {
-                    "expiration": 10000000000000,
-                    "token": "<github token>",
-                    "host": "github.com",
-                    "path": "/"
-                }
-            ],
-            "codespaceId": "<codespace guid>",
-            "vscodeSettings": {
-                "vscodeChannel": "insider",
-                "defaultSettings": {
-                    "workbench.colorTheme": "GitHub Light",
-                    "workbench.startupEditor": "welcomePageInEmptyWorkbench"
-                },
-                "defaultExtensions": [
-                    {
-                        "id": "GitHub.vscode-pull-request-github",
-                        "kind": "workspace"
-                    },
-                    {
-                        "id": "GitHub.vscode-pull-request-github"
-                    }
-                ],
-                "defaultAuthSessions": [
-                    {
-                        "type": "github",
-                        "id": "a0446d79-9ec8-4373-ba94-df7bc46a9acf",
-                        "accessToken": "<github token>",
-                        "scopes": [
-                            "read:user",
-                            "user:email",
-                            "repo"
-                        ]
-                    }
-                ]
-            }
-        }
-    ],
+    "examples": [],
     "required": [
         "partnerName",
         "managementPortalUrl",
@@ -178,43 +135,72 @@
                 "<codespace guid>"
             ]
         },
+        "featureFlags": {
+            "$id": "#/properties/featureFlags",
+            "type": "object",
+            "title": "The featureFlags schema",
+            "description": "A dictionary of codespace feature flags.",
+            "default": {},
+            "examples": [
+                {
+                    "example-pfs-name": "not real feature flags",
+                    "example-enable-pfs": true,
+                    "example-multi-threading": 5
+                }
+            ],
+            "required": [],
+            "properties": {},
+            "additionalProperties": true,
+            "uniqueItems": true,
+            "readOnly": true
+        },
+        "favicon": {
+            "$id": "#/properties/favicon",
+            "type": "object",
+            "title": "The favicon schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "stable": "https://foo.com/favicon.ico",
+                    "insider": "https://foo.com/favicon-insider.ico"
+                }
+            ],
+            "required": [
+                "stable",
+                "insider"
+            ],
+            "additionalProperties": true,
+            "properties": {
+                "stable": {
+                    "$id": "#/properties/favicon/properties/stable",
+                    "type": "string",
+                    "title": "The stable schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "https://foo.com/favicon.ico"
+                    ]
+                },
+                "insider": {
+                    "$id": "#/properties/favicon/properties/insider",
+                    "type": "string",
+                    "title": "The insider schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "https://foo.com/favicon-insider.ico"
+                    ]
+                }
+            }
+        },
         "vscodeSettings": {
             "$id": "#/properties/vscodeSettings",
             "type": "object",
             "title": "vscodeSettings",
             "description": "An explanation about the purpose of this instance.",
             "default": {},
-            "examples": [
-                {
-                    "vscodeChannel": "insider",
-                    "defaultSettings": {
-                        "aa": true,
-                        "bb": 2,
-                        "cc": "str",
-                        "dd": null
-                    },
-                    "defaultExtensions": [
-                        {
-                            "id": "GitHub.vscode-pull-request-github"
-                        },
-                        {
-                            "id": "GitHub.vscode-pull-request-github"
-                        }
-                    ],
-                    "defaultAuthSessions": [
-                        {
-                            "type": "github",
-                            "id": "github-session-github-pr",
-                            "accessToken": "<github token>",
-                            "scopes": [
-                                "read:user",
-                                "user:email",
-                                "repo"
-                            ]
-                        }
-                    ]
-                }
-            ],
+            "examples": [],
             "required": [],
             "additionalProperties": false,
             "properties": {
@@ -231,6 +217,21 @@
                     "examples": [
                         "stable",
                         "insider"
+                    ]
+                },
+                "loadingScreenThemeColor": {
+                    "$id": "#/properties/vscodeSettings/properties/loadingScreenThemeColor",
+                    "type": "string",
+                    "title": "loadingScreenThemeColor",
+                    "description": "The VSCode loading screen theme color.",
+                    "default": "light",
+                    "enum": [
+                        "light",
+                        "dark"
+                    ],
+                    "examples": [
+                        "light",
+                        "dark"
                     ]
                 },
                 "defaultSettings": {

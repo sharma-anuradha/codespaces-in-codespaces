@@ -1,15 +1,17 @@
 import * as React from 'react';
 
-import { EnvironmentStateInfo, wait, IEnvironment } from 'vso-client-core';
+import { EnvironmentStateInfo, wait, IEnvironment, IPartnerInfo } from 'vso-client-core';
 
 import { Workbench } from '../Workbench/Workbench';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
 import { Fragment } from 'react';
 import { SplashScreenState } from './SplashScreenState';
 import { telemetryMarks } from '../../../telemetry/telemetryMarks';
+import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 
 export interface IWorkbenchPageRenderProps {
     environmentInfo: IEnvironment | null;
+    platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
     environmentState: TEnvironmentState;
     message?: string;
     startEnvironment: () => any;
@@ -78,7 +80,7 @@ export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderPro
         if (this.state.isMounted) {
             return null;
         }
-        
-        return <SplashScreenState {...this.props} />;
+
+        return <SplashScreenState {...this.props} platformInfo={this.props.platformInfo} />;
     }
 }

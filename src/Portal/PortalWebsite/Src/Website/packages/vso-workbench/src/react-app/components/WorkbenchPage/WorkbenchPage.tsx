@@ -5,6 +5,7 @@ import {
     timeConstants,
     IEnvironment,
     setCurrentCodespaceId,
+    IPartnerInfo,
 } from 'vso-client-core';
 
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
@@ -18,6 +19,8 @@ import { authService } from '../../../auth/authService';
 import { sendTelemetry } from '../../../telemetry/sendTelemetry';
 import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
 import { vsoAPI } from '../../../api/vsoAPI';
+import { Interface } from 'readline';
+import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 
 const { SECOND_MS } = timeConstants;
 
@@ -28,7 +31,11 @@ export const isAutoStart = () => {
     return params.get('autoStart') !== 'false';
 };
 
-export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
+interface IWorkbenchPageProps {
+    platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
+}
+
+export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkbenchStateObject> {
     private interval: ReturnType<typeof setInterval> | undefined;
 
     constructor(props: any, state: TEnvironmentState) {
@@ -187,6 +194,7 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
     }
 
     public render() {
+        const { platformInfo } = this.props;
         const { value, message } = this.state;
 
         trace.info(`render state: ${value}`);
@@ -201,9 +209,14 @@ export class WorkbenchPage extends React.Component<{}, IWorkbenchStateObject> {
             this.stopPollEnvironment();
         }
 
+        if (!platformInfo) {
+            this.stopPollEnvironment();
+        }
+
         return (
             <WorkbenchPageRender
                 environmentInfo={this.environmentInfo}
+                platformInfo={platformInfo}
                 environmentState={value}
                 message={message}
                 startEnvironment={this.startCodespace}

@@ -15,6 +15,7 @@ describe('WorkbenchPageRender', () => {
             const component = renderer.create(
                 <WorkbenchPageRender
                     environmentInfo={null}
+                    platformInfo={null}
                     environmentState={state as EnvironmentStateInfo}
                     message={message}
                     startEnvironment={() => {}}
@@ -36,6 +37,7 @@ describe('WorkbenchPageRender', () => {
             const component = renderer.create(
                 <WorkbenchPageRender
                     environmentInfo={null}
+                    platformInfo={null}
                     environmentState={state as EnvironmentWorkspaceState}
                     message={message}
                     startEnvironment={() => {}}

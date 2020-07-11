@@ -103,6 +103,12 @@ export const checkTemporaryGitHubIFrameHandshake = async () => {
                             accessToken: info.githubToken,
                             scopes: ['read:user', 'user:email', 'repo'].sort(),
                         },
+                        {
+                            type: 'github',
+                            id: 'github-session-vs-codespaces',
+                            accessToken: info.githubToken,
+                            scopes: ['read:user', 'user:email', 'repo', 'di'].sort(),
+                        },
                     ],
                 },
             };

@@ -4,13 +4,15 @@ import * as ReactDom from 'react-dom';
 import { updateFavicon } from 'vso-client-core';
 
 import { telemetry } from './telemetry/telemetry';
-import App from './react-app/app';
 
-import { getVSCodeAssetPath } from './utils/getVSCodeAssetPath';
 import { checkTemporaryGitHubIFrameHandshake } from './utils/temp__checkGitHubIFrameHandshake';
 import { initAMDConfig } from './amdconfig';
+import { WorkbenchPage } from './react-app/components/WorkbenchPage/WorkbenchPage';
+import { authService } from './auth/authService';
 
-updateFavicon(getVSCodeAssetPath('favicon.ico'));
+import './react-app/style/index.css';
+import { getFaviconPath } from './utils/getFaviconPath';
+
 initAMDConfig();
 checkTemporaryGitHubIFrameHandshake();
 
@@ -21,4 +23,9 @@ if (!rootHtmlElement) {
     throw new Error('No workbench DOM element found.');
 }
 
-ReactDom.render(React.createElement(App), rootHtmlElement);
+(async () => {
+    const platformInfo = await authService.getPartnerInfo();
+    updateFavicon(getFaviconPath(platformInfo));
+
+    ReactDom.render(<WorkbenchPage platformInfo={platformInfo} />, rootHtmlElement);
+})();

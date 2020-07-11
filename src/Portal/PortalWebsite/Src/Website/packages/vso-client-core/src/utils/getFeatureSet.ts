@@ -11,8 +11,6 @@ export const getFeatureSet = (): FeatureSet => {
     const params = new URLSearchParams(location.search);
     const paramsFeatureSet = params.get('dogfoodChannel');
 
-    const vsoFeatureSet = window.localStorage.getItem(VSCS_FEATURESET_LOCALSTORAGE_KEY);
-
     let vscodeQuality = FeatureSet.Stable;
     if (paramsFeatureSet === FeatureSet.Insider) {
         vscodeQuality = FeatureSet.Insider;
@@ -25,7 +23,8 @@ export const getFeatureSet = (): FeatureSet => {
         // the query param should take precendence over the localstorage record
         return vscodeQuality;
     }
-    
+
+    const vsoFeatureSet = window.localStorage.getItem(VSCS_FEATURESET_LOCALSTORAGE_KEY);
     if (vsoFeatureSet === FeatureSet.Insider) {
         vscodeQuality = FeatureSet.Insider;
     }

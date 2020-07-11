@@ -23,7 +23,7 @@ const paths = {
         'src',
         'service-worker.ts'
     ),
-    workbench: path.join(rootFolder, 'packages', 'vso-workbench', 'src', 'app.ts'),
+    workbench: path.join(rootFolder, 'packages', 'vso-workbench', 'src', 'app.tsx'),
     web: path.join(rootFolder, 'packages', 'website', 'src', 'index.tsx'),
     platformAuth: path.join(rootFolder, 'packages', 'vso-platform-auth', 'src', 'index.ts'),
     platformAuthentication: path.join(

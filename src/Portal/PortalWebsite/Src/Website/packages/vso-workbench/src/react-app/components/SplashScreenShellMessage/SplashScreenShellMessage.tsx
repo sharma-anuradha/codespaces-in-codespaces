@@ -1,4 +1,7 @@
 import * as React from 'react';
+
+import classNames from 'classnames';
+
 import { ISplashScreenProps } from '../../../interfaces/ISplashScreenProps';
 
 import { Spinner } from '../Spinner/Spinner';
@@ -6,11 +9,12 @@ import { IButtonLinkProps, ButtonLink } from '../ButtonLink/ButtonLink';
 import { RenderSplashScreen } from '../SplashScreenShell/RenderSplashScreen';
 
 import './SplashScreenShellMessage.css'
-import { ConnectionAdapter } from '../SplashScreenShell/ConnectionAdapter';
+
 
 interface ISplashScreenMessageProps extends ISplashScreenProps {
     message: string;
     button?: IButtonLinkProps;
+    isLightTheme: boolean;
     isSpinner?: boolean;
     isSpinnerStopped?: boolean;
 }
@@ -40,9 +44,16 @@ export const MaybeButton: React.FunctionComponent<ISplashScreenMessageProps> = (
 };
 
 export const SplashScreenMessage: React.FunctionComponent<ISplashScreenMessageProps> = (props: ISplashScreenMessageProps) => {
+    const { isLightTheme } = props;
+
+    const mainClassName = classNames({
+        'vso-splash-screen__block': true,
+        'vso-splash-screen__block--light-theme': isLightTheme,
+    });
+
     return (
-        <RenderSplashScreen isOnVSCodespaces={true}>
-            <div className="vso-splash-screen__block">
+        <RenderSplashScreen isOnVSCodespaces={!props.isLightTheme}>
+            <div className={mainClassName}>
                 <div className="vso-splash-screen__message">
                     <MaybeSpinner {...props} /> { props.message }
                 </div>

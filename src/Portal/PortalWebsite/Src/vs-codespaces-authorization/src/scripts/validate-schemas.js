@@ -51,5 +51,5 @@ const baseSchemaInvalidValidationResult = v.validate(
 if (!baseSchemaInvalidValidationResult.throwError && !baseSchemaInvalidValidationResult.errors.length) {
     throw new Error('The base schema is too permisive and works for the extended sample.');
 } else {
-    console.log(`✔ Base schema is not valid for the extended sample.`);
+    console.log(`✔ Base schema cannot validate the extended sample.`);
 }

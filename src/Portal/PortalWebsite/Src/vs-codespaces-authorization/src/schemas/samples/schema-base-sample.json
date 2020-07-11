@@ -9,8 +9,14 @@
         "path": "/"
     }],
     "codespaceId": "<codespace guid>",
+    "featureFlags": {
+        "example-pfs-name": "not real feature flag",
+        "example-enable-pfs": true,
+        "example-multithreading": 5
+    },
     "vscodeSettings": {
         "vscodeChannel": "insider",
+        "loadingScreenThemeColor": "dark",
         "defaultSettings": {
            "workbench.colorTheme": "GitHub Light",
            "workbench.startupEditor": "welcomePageInEmptyWorkbench"

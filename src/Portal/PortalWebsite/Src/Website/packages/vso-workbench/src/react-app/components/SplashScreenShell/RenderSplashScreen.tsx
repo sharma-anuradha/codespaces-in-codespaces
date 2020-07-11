@@ -14,7 +14,7 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
     const mainClass = (props.isOnVSCodespaces)
         ? 'is-vs-codespaces'
         : '';
-    
+
     return (<div className='vso-splash-screen'>
         <div className={`container ${mainClass}`}>
             <SideBar isOnVSCodespaces={props.isOnVSCodespaces} />
