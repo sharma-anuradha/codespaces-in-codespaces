@@ -10,7 +10,8 @@
       - Append feed to local machine's .npmrc (%userprofile%\.npmrc) file
       - Run the auth helper commands
 
-*Note: on macOS since there are no helpers, make sure your `~/.npmrc` has all the "auth blocs" required. You should have one "`; begin/end auth token`" for each of the following packages:*
+*Note: on macOS since there are no helpers, make sure your `~/.npmrc` has all the "auth blocs" required. You can find the auth blocs after connecting to the NPM feed, under other. You will need a DevOps personal access token.  
+You should have one "`; begin/end auth token`" for each of the following packages:*
 ```
 //devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/:username=devdiv
 //devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/registry/:username=devdiv
@@ -18,6 +19,9 @@
 //devdiv.pkgs.visualstudio.com/_packaging/Cascade/npm/registry/:username=devdiv
 //devdiv.pkgs.visualstudio.com/DevDiv/_packaging/playwright/npm/registry/:username=devdiv
 ```
+🏥 To convert your personal access token to base64 you can run `echo -n 'myToken' | python -m base64`
+
+⚠️ It's possible you get 401 unauthorized access from time to time. If that happens try re-generating your personal access token and updating your `~/.npmrc`
 
 ### Required Software
 
