@@ -6,10 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.VisualStudio.Threading;
 using Microsoft.VsCloudKernel.SignalService;
 using Microsoft.VsCloudKernel.SignalService.Client;
 using Microsoft.VsCloudKernel.SignalService.Common;
@@ -31,6 +33,7 @@ namespace SignalService.Client.CLI
         private int jsonRpcCount = 1000;
         private bool traceHubData;
         private bool useSequenceProxy;
+        private int messageSizeInKilobytes = 32;
 
         public RelayStressApp(string serviceEndpointUri, bool traceHubData)
         {
@@ -132,6 +135,54 @@ namespace SignalService.Client.CLI
             {
                 Utils.ReadIntValue("Enter number of json-rpc calls:", ref this.jsonRpcCount);
                 await TestJsonRpcPerfAsync(this.jsonRpcCount);
+            }
+            else if (key == 'x')
+            {
+                Utils.ReadStringValue("Hub id:", ref this.currentHubId);
+                if (string.IsNullOrEmpty(this.currentHubId))
+                {
+                    Console.WriteLine("Please specify a non empty hub id");
+                    return;
+                }
+
+                Utils.ReadIntValue("Enter size in KB:", ref this.messageSizeInKilobytes);
+                var hubEndpoint = await CreateRelayHubEndpointAsync(this.currentHubId, CreateHubConnection());
+                try
+                {
+                    const string TypeMessageSize = "messageSize";
+
+                    var buffer = new byte[this.messageSizeInKilobytes * 1024];
+                    new Random().NextBytes(buffer);
+
+                    var receivedEvent = new AsyncAutoResetEvent();
+                    hubEndpoint.RelayHubProxy.ReceiveData += (s, e) =>
+                    {
+                        if (e.Type == TypeMessageSize)
+                        {
+                            if (e.Data.SequenceEqual(buffer))
+                            {
+                                Console.WriteLine("passed buffer verification!");
+                            }
+                            else
+                            {
+                                Console.Error.WriteLine("failed buffer verification!");
+                            }
+
+                            receivedEvent.Set();
+                        }
+                    };
+                    await hubEndpoint.RelayHubProxy.SendDataAsync(SendOption.None, null, TypeMessageSize, buffer, null, HubMethodOption.Invoke, DisposeToken);
+                    Console.WriteLine("Waiting to receive the message...");
+                    await receivedEvent.WaitAsync(DisposeToken);
+                }
+                catch (Exception err)
+                {
+                    Console.Error.WriteLine($"failed to send message with size:{this.messageSizeInKilobytes}. Err:{err}");
+                }
+                finally
+                {
+                    await hubEndpoint.DisposeAsync();
+                }
             }
         }
 

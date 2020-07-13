@@ -153,7 +153,11 @@ namespace Microsoft.VsCloudKernel.SignalService
 
             services.AddSingleton<RelayService>();
 
-            var signalRService = services.AddSignalR()
+            var signalRService = services.AddSignalR(hubOptions =>
+                {
+                    // define max received message to be 64KB
+                    hubOptions.MaximumReceiveMessageSize = 1024 * 64;
+                })
                 .AddNewtonsoftJsonProtocol()
                 .AddMessagePackProtocol((options) =>
                 {
