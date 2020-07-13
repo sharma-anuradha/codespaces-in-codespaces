@@ -30,7 +30,7 @@
   <!-- .Net Targets -->
   <PropertyGroup>
     <NetCoreAppTargetFramework>netcoreapp3.1</NetCoreAppTargetFramework>
-    <NetStandardTargetFramework>netstandard2.0</NetStandardTargetFramework>
+    <NetStandardTargetFramework>netstandard2.1</NetStandardTargetFramework>
   </PropertyGroup>
 
   <!-- NuGet Package Versions -->

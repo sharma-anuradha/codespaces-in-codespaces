@@ -26,12 +26,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="resourceNameBuilder">The resource name builder.</param>
         /// <param name="defaultLogValues">The default log values.</param>
+        /// <param name="queueIdCallback">Callback to evaulate for the queueId.</param>
         public StorageQueueCollectionBase(
             IStorageQueueClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             IResourceNameBuilder resourceNameBuilder,
-            LogValueSet defaultLogValues)
+            LogValueSet defaultLogValues,
+            Func<string> queueIdCallback = null)
         {
             Requires.NotNull(clientProvider, nameof(clientProvider));
             Requires.NotNull(healthProvider, nameof(healthProvider));
@@ -42,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Start initialization in the background.
             // Invoking GetClientAsync will ensure initialization is complete.
-            InitializeQueueTask = InitializeQueue(clientProvider, healthProvider, logger);
+            InitializeQueueTask = InitializeQueue(queueIdCallback != null ? queueIdCallback() : QueueId, clientProvider, healthProvider, logger);
         }
 
         /// <summary>
@@ -72,7 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return await InitializeQueueTask;
         }
 
-        private async Task<CloudQueue> InitializeQueue(
+        private static async Task<CloudQueue> InitializeQueue(
+            string queueId,
             IStorageQueueClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLogger logger)
@@ -80,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var initializationDuration = logger.StartDuration();
             try
             {
-                var client = await clientProvider.GetQueueAsync(QueueId);
+                var client = await clientProvider.GetQueueAsync(queueId);
 
                 logger.AddDuration(initializationDuration)
                     .LogInfo("queue_initialization_success");
