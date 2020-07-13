@@ -86,7 +86,6 @@
     <None Include="Client\Shared\HttpClient.ts" />
     <None Include="Client\TypeReferences.d.ts" />
     <None Include="Client\Resource\Blades\Keys\ResourceKeysBlade.ts" />
-    <None Include="Client\Resource\Blades\Codespaces\CodespacesBlade.ts" />
     <None Include="Client\Resource\Blades\Codespaces\CodespaceModels.ts" />
     <None Include="Client\Resource\Blades\Codespaces\CreateCodespaceBlade.ts" />
     <None Include="Client\Resource\Blades\Codespaces\EditCodespaceBlade.ts" />

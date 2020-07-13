@@ -1,8 +1,9 @@
 import * as ClientResources from 'ClientResources';
-import { batch } from 'Fx/Ajax';
-import { BladeReferences, PartReferences } from 'Fx/Composition';
+import { BladeReferences, PartReferences, ClickableLink } from 'Fx/Composition';
+import * as DataGrid from 'Fx/Controls/DataGrid';
 import * as TemplateBlade from 'Fx/Composition/TemplateBlade';
 import * as Dialog from 'Fx/Composition/Dialog';
+import * as Section from 'Fx/Controls/Section';
 import {
     createDefaultResourceLayout,
     ResourceLayoutContract,
@@ -17,7 +18,8 @@ import * as Toolbar from 'Fx/Controls/Toolbar';
 import Images = MsPortalFx.Base.Images;
 import { HttpPlansManager } from 'Resource/HttpPlansManager';
 import { HttpCodespacesManager } from 'Resource/Blades/Codespaces/HttpCodespacesManager';
-import { Codespace } from 'Resource/Blades/Codespaces/CodespaceModels';
+import { Codespace, provisioningLower, startingLower, shuttingDownLower } from 'Resource/Blades/Codespaces/CodespaceModels';
+import { getCodespacesConnectUri } from '../../../Shared/Endpoints';
 
 /**
  * Contract for parameters that will be passed to overview blade.
@@ -35,9 +37,14 @@ export interface Parameters {
 @TemplateBlade.Decorator({
     htmlTemplate:
         "<div data-bind='pcControl: essentialsViewModel'></div>" +
-        "<h3 class='ext-overview-title' data-bind='text: description'></h3>" +
         "<div class='msportalfx-padding'>" +
-        "<div data-bind='pcControl: infoTilesComponent.control'></div>" +
+        "<div data-bind='visible: hasNoCodespaces'>" +
+            "<h3 class='ext-overview-title' data-bind='text: description'></h3>" +
+            "<div data-bind='pcControl: infoTilesComponent.control'></div>" +
+        "</div>" +
+        "<div data-bind='visible: hasCodespaces'>" +  
+            "<div class='msportalfx-form' data-bind='pcControl: codespaceGridSection'></div>" +
+        "</div>" +
         '</div>',
     styleSheets: ['./ResourceOverviewBlade.css', './InfoTilesComponent/InfoTilesComponent.css'],
 })
@@ -45,8 +52,14 @@ export interface Parameters {
 export class ResourceOverviewBlade {
     private _codespacesManager: HttpCodespacesManager;
     private _codespacesCount = ko.observable<string>('0');
+    public hasCodespaces = ko.observable(true);
+    public hasNoCodespaces = ko.observable(false);
 
     public infoTilesComponent: InfoTilesComponent.Contract;
+
+    //public codespacesGrid: DataGrid.Contract<Codespace, any>;
+
+    public codespaceGridSection: Section.Contract;
 
     /**
      * The title of resource overview blade
@@ -75,42 +88,38 @@ export class ResourceOverviewBlade {
      */
     public readonly essentialsViewModel = ko.observable<ResourceLayoutContract>();
 
+    //noCodespaces = ko.observable(false);
+
     /**
      * Initializes everything you need to load the blade here.
      */
     public onInitialize() {
         trace('ResourceOverviewBlade', 'Initialize blade');
 
-        const id = this.context.parameters.id;
+        const { parameters } = this.context;
+        const id = parameters.id;
         this._codespacesManager = new HttpCodespacesManager(id);
 
         this.essentialsViewModel(
             createEssentials(this.context.container, id, this._additionalEssentialData())
         );
-        this.context.container.commandBar = createToolbar(this.context.container, id, this);
 
-        // Fill out the body of the page - should format be "createBody" function??
-        // Set the blade contents.  This code uses InfoTiles and Monitoring components
+        this.codespaceGridSection = Section.create(this.context.container);
+        
+        const codespacesGrid = this._initializeCodespacesGrid();
+        this.codespaceGridSection.children.push(codespacesGrid);
 
-        // InfoTilesComponent
-        const OpenCodespaceTile: InfoTilesComponent.InfoTile = this._createOpenCodespaceTile();
-        const ConfigureVirtualNetworksTile: InfoTilesComponent.InfoTile = this._createConfigureVirtualNetworksTile();
-        const ChangeCodespaceConfigurationTile: InfoTilesComponent.InfoTile = this._createChangeCodespaceConfigurationTile();
+        this.context.container.commandBar = createToolbar(this.context.container, id, codespacesGrid, this._codespacesManager);
 
-        // InfoTilesComponent
+        // InfoTilesComponent  
+        const OpenCodespaceTile: InfoTilesComponent.InfoTile = this._createOpenCodespaceTile(this.context.container, id, codespacesGrid,);
         this.infoTilesComponent = InfoTilesComponent.create(this.context.container, {
             infoTiles: [
                 OpenCodespaceTile,
-                ConfigureVirtualNetworksTile,
-                ChangeCodespaceConfigurationTile,
             ],
         });
 
         this.context.container.revealContent();
-
-        this._codespacesManager
-            .fetchCodespaces()
-            .then((codespaces: Codespace[]) => this._codespacesCount(codespaces.length.toString()));
 
         return new HttpPlansManager().fetchPlan(this.context.parameters.id).then((result) => {
             this.title(result.name);
@@ -154,16 +163,16 @@ export class ResourceOverviewBlade {
     /*
      * Tile that switches to Codespaces Blade.
      */
-    private _createOpenCodespaceTile(): InfoTilesComponent.InfoTile {
-        const switchToCodespacesBlade = () => {
-            this.context.menu.switchItem(ResourceMenuBladeIds.codespacesItem);
-        };
-
+    private _createOpenCodespaceTile(
+        container: TemplateBlade.Container,
+        planId: string,
+        codespacesGrid: DataGrid.Contract<Codespace>
+    ): InfoTilesComponent.InfoTile {
         return {
             title: {
                 text: ClientResources.Tile.addCodespaceTitle,
                 onClick: () => {
-                    switchToCodespacesBlade();
+                    openCreateBlade(container, planId, codespacesGrid);
                 },
             },
             description: ClientResources.Tile.addCodespaceDescription,
@@ -176,68 +185,117 @@ export class ResourceOverviewBlade {
                 {
                     text: ClientResources.Tile.addCodespaceLinkTitle,
                     onClick: () => {
-                        switchToCodespacesBlade();
+                        openCreateBlade(container, planId, codespacesGrid);
                     },
                 },
             ],
         };
     }
 
-    /*
-     * Tile that opens Virtual Network blade in a context pane
-     */
-    private _createConfigureVirtualNetworksTile(): InfoTilesComponent.InfoTile {
-        const openVirtualNetworkBlade = () => {
-            this.context.container.openContextPane(
-                BladeReferences.forBlade('ResourceKeysBlade').createReference({
-                    parameters: {
-                        id: this.context.parameters.id,
-                    },
-                })
-            );
-        };
+    private _initializeCodespacesGrid(): DataGrid.Contract<Codespace> {
+        const dataSource = () =>
+            this._codespacesManager.fetchCodespaces().then((codespaces: Codespace[]) => {
+                codespaces
+                    .filter((codespace) => codespace.state.toLowerCase() === provisioningLower)
+                    .forEach(({ id }) =>
+                        this._codespacesManager
+                            .pollTransitioningCodespace(id)
+                            .then(() => {
+                                codespacesGrid.refresh()
+                            })
+                    );
+                this._codespacesCount(codespaces.length.toString());
+                this.hasNoCodespaces(codespaces.length === 0);
+                this.hasCodespaces(codespaces.length > 0);
+                return codespaces.map((codespace) => ({ id: codespace.id, item: codespace }));
+            });
 
-        return {
-            title: {
-                text: ClientResources.Tile.configureVirtualNetworksTitle,
-                onClick: () => {
-                    openVirtualNetworkBlade();
+        const columns: DataGrid.ColumnDefinition<Codespace>[] = [
+            {
+                header: 'Name',
+                type: 'UriLink',
+                cell: {
+                    uriLink: (c) => ({
+                        text: c.friendlyName,
+                        uri: getCodespacesConnectUri(c.id),
+                    }),
                 },
             },
-            description: ClientResources.Tile.configureVirtualNetworksDescription,
-            icon: Images.Polychromatic.JourneyHub(),
-            links: [
-                {
-                    text: ClientResources.Tile.configureVirtualNetworksLinkTitle,
-                    onClick: () => {
-                        openVirtualNetworkBlade();
-                    },
+            {
+                header: 'ID',
+                type: 'Text',
+                cell: {
+                    text: (c) => c.id,
                 },
-            ],
-        };
-    }
-
-    /*
-     * Tile that opens Visual Studio Codespaces Enviroments external link.
-     */
-    private _createChangeCodespaceConfigurationTile(): InfoTilesComponent.InfoTile {
-        return {
-            title: {
-                text: ClientResources.Tile.changeCodespaceConfigurationTitle,
-                uri: Links.visualStudioCodespacesEnvironments,
             },
-            description: ClientResources.Tile.changeCodespaceConfigurationDescription,
-            icon: Images.Polychromatic.JourneyHub(),
-            links: [
-                {
-                    text: ClientResources.Tile.changeCodespaceConfigurationLinkTitle,
-                    uri: Links.visualStudioCodespacesEnvironments,
-                    useButtonDesign: true,
+            {
+                header: 'State',
+                type: 'Text',
+                cell: {
+                    text: (c) => c.state,
                 },
-            ],
-        };
+            },
+        ];
+
+        const codespacesGrid = DataGrid.create<Codespace>(this.context.container, {
+            ariaLabel: 'codespaces-grid',
+            columns,
+            dataSource,
+            noDataMessage: 'No Codespaces found for the plan',
+            selection: {
+                selectionMode: DataGrid.SelectionMode.Multiple,
+                canSelectAllItems: () => true,
+                canSelectItem: () => true,
+                canUnselectAllItems: () => true,
+                canUnselectItem: () => true,
+            },
+            contextMenu: {
+                maxButtonCommands: 5,
+                supplyMenuCommands: (lifetime, row) => {
+                    const link = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(
+                        row.id
+                    )}`;
+                    return [
+                        Toolbar.ToolbarItems.createBasicButton(lifetime, {
+                            label: 'Open in VS Code',
+                            icon: Images.Hyperlink(),
+                            onClick: new ClickableLink(`vscode://${link}`),
+                        }),
+                        Toolbar.ToolbarItems.createBasicButton(lifetime, {
+                            label: 'Open in VS Code Insiders',
+                            icon: Images.Hyperlink(),
+                            onClick: new ClickableLink(`vscode-insiders://${link}`),
+                        }),
+                        Toolbar.ToolbarItems.createBasicButton(lifetime, {
+                            label: 'Change settings',
+                            icon: Images.Gear(),
+                            disabled:
+                                row.item.state.toLowerCase() === startingLower ||
+                                row.item.state.toLowerCase() === provisioningLower ||
+                                row.item.state.toLowerCase() === shuttingDownLower,
+                            onClick: () => {
+                                this.context.container.openContextPane(
+                                    BladeReferences.forBlade('EditCodespaceBlade').createReference({
+                                        parameters: {
+                                            planId: this.context.parameters.id,
+                                            codespaceId: row.id,
+                                        },
+                                        onClosed: () => {
+                                            codespacesGrid.refresh();
+                                        },
+                                    })
+                                );
+                            },
+                        }),
+                    ];
+                },
+            },
+        });
+        codespacesGrid.refresh();
+
+        return codespacesGrid;
     }
-}
+}    
 
 /**
  * Creates an essentials view model.
@@ -256,48 +314,124 @@ function createEssentials(
     return essentials;
 }
 
-/**
- * Creates a toolbar/commandbar.
- */
 function createToolbar(
     container: TemplateBlade.Container,
-    resourceId: string,
-    ROBlade: ResourceOverviewBlade
+    planId: string,
+    codespacesGrid: DataGrid.Contract<Codespace>,
+    codespacesManager: HttpCodespacesManager
 ): Toolbar.Contract {
-    /* Use the built-in move button */
-    const commandMoveButton = Toolbar.ToolbarItems.createMoveResourceButton(container, {
-        resourceId: resourceId,
+    const commandRefreshButton = Toolbar.ToolbarItems.createBasicButton(container, {
+        label: ClientResources.refresh,
+        icon: Images.Refresh(),
+        onClick: () => {},
     });
 
-    /* Delete button should open a Yes/No dialg */
-    const commandDeleteButton = Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.delete,
-        /* Use built-in portal images for common commands */
+    const deletePlanButton = initializePlanDeleteButton(container);
+
+    const createButton = initializeCreateButton(container, planId, codespacesGrid);
+
+    const deleteCodespaceButton = initializeCodespaceDeleteButton(container, codespacesGrid, codespacesManager);
+
+    const suspendCodespaceButton = initializeSuspendButton(container, codespacesGrid, codespacesManager);
+
+    const feedbackButton = Toolbar.ToolbarItems.createBasicButton(container, {
+        label: ClientResources.feedback,
+        icon: Images.Feedback(),
+        onClick: () => {},
+    });
+
+    console.log(codespacesGrid.noData.peek());
+
+    const commandBar = Toolbar.create(container, {
+        items: [commandRefreshButton, deletePlanButton, createButton, deleteCodespaceButton, suspendCodespaceButton, feedbackButton],
+    });
+    return commandBar;
+}
+
+function initializePlanDeleteButton(
+    container: TemplateBlade.Container,
+):Toolbar.ToolbarItems.BasicButtonContract {
+    return Toolbar.ToolbarItems.createBasicButton(container, {
+        label: ClientResources.deletePlan,
         icon: Images.Delete(),
         onClick: () => {
             container.openDialog({
-                title: ClientResources.delete,
+                title: ClientResources.deletePlan,
                 content: ClientResources.deleteConfirmation,
                 buttons: Dialog.DialogButtons.YesNo,
                 telemetryName: 'DeleteMyResource',
                 onClosed: (result) => {
                     if (result.button === Dialog.DialogButton.Yes) {
-                        /* call your delete function here */
+                        /* TODO: call plan delete function here */
                     }
                 },
             });
         },
     });
+}
 
-    const commandRefreshButton = Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.refresh,
-        /* Images, use Flat Icons in toolbars */
-        icon: Images.Refresh(),
-        onClick: () => {},
+function initializeCreateButton(
+    container: TemplateBlade.Container,
+    planId: string,
+    codespacesGrid: DataGrid.Contract<Codespace>
+): Toolbar.ToolbarItems.BasicButtonContract {
+    return Toolbar.ToolbarItems.createBasicButton(container, {
+        label: ClientResources.addCodespace,
+        icon: Images.Add(),
+        onClick: () => openCreateBlade(container, planId, codespacesGrid),
     });
+}
 
-    const commandBar = Toolbar.create(container, {
-        items: [commandMoveButton, commandDeleteButton, commandRefreshButton],
+function openCreateBlade(
+    container: TemplateBlade.Container,
+    planId: string,
+    codespacesGrid: DataGrid.Contract<Codespace>
+) {
+    container.openContextPane(
+        BladeReferences.forBlade('CreateCodespaceBlade').createReference({
+            parameters: {
+                planId: planId
+            },
+            onClosed: () => {
+                codespacesGrid.refresh();
+            },
+        })
+    );
+}
+
+function initializeCodespaceDeleteButton(
+    container: TemplateBlade.Container,
+    codespacesGrid: DataGrid.Contract<Codespace>,
+    codespacesManager: HttpCodespacesManager,
+):Toolbar.ToolbarItems.BasicButtonContract {
+    return Toolbar.ToolbarItems.createBasicButton(container, {
+        label: ClientResources.deleteCodespace,
+        icon: Images.Delete(),
+        onClick: () => {
+            Q.all(
+                codespacesGrid.selection.selectedItems.peek().map((codespace) =>
+                    //TODO: Do we need a confirmation message before taking this action?????
+                    codespacesManager.deleteCodespace(codespace.id)
+                )
+            ).then(() => codespacesGrid.refresh());
+        }
     });
-    return commandBar;
+}
+
+function initializeSuspendButton(
+    container: TemplateBlade.Container,
+    codespacesGrid: DataGrid.Contract<Codespace>,
+    codespacesManager: HttpCodespacesManager
+): Toolbar.ToolbarItems.BasicButtonContract {
+    return Toolbar.ToolbarItems.createBasicButton(container, {
+        label: 'Suspend selected',
+        icon: Images.Paused(),
+        onClick: () => {
+            Q.all(
+                codespacesGrid.selection.selectedItems.peek().map((codespace) =>
+                    codespacesManager.suspendCodespace(codespace.id)
+                )
+            ).then(() => codespacesGrid.refresh());
+        },
+    });
 }

@@ -288,11 +288,10 @@ export class CreateCodespaceBlade {
 }
 
 function normalizeOptionalValue(value: string): string | undefined {
-    value = value.trim();
-
     if (!value) {
         return undefined;
     }
+    value = value.trim();
 
     return value;
 }

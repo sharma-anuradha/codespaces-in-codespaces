@@ -76,27 +76,6 @@ export class PlansViewModel
             },
         };
 
-        const codespacesItem: FxAssets.MenuItem = {
-            id: ResourceMenuBladeIds.codespacesItem, // menu item IDs must be unique, must not be localized, should not contain spaces and should be lowercase
-            displayText: ClientResources.item1,
-            enabled: ko.observable(true),
-            keywords: ClientResources.item1Keywords,
-            icon: Images.Polychromatic.ResourceDefault(),
-            supplyBladeReference: () => {
-                return BladeReferences.forBlade('CodespacesBlade').createReference({
-                    parameters: { planId: resourceInfo.resourceId },
-                });
-            },
-        };
-
-        // add my item to the built-in Settings group - use ManagementGroupId as Id
-        const settingsGroup: FxAssets.MenuGroup = {
-            // to add items to the built-in "SETTINGS" group - use ManagementGroupId
-            id: FxAssets.ManagementGroupId,
-            displayText: ClientResources.settings,
-            items: [codespacesItem],
-        };
-
         // Build the resource menu config.
         const menuConfig: FxAssets.ResourceMenuConfig = {
             //Overview  - designated by setting defaultid
@@ -137,7 +116,7 @@ export class PlansViewModel
                 //Create support request - on by default for all ARM resources
                 //  enableSupportHelpRequest: true
             },
-            groups: [settingsGroup],
+            groups: [],
             handledError: ko.observable(),
             fail: ko.observable(),
         };

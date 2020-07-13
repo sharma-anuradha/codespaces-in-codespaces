@@ -280,7 +280,7 @@
   <data name="EditCodespaceBladeTitle" xml:space="preserve">
     <value>Edit Codespace</value>
   </data>
-    <data name="CodespacesBladeSubtitle" xml:space="preserve">
+  <data name="CodespacesBladeSubtitle" xml:space="preserve">
     <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
@@ -292,8 +292,14 @@
   <data name="ResourcePartTitle" xml:space="preserve">
     <value>Resource part title</value>
   </data>
-  <data name="Delete" xml:space="preserve">
-    <value>Delete</value>
+  <data name="DeletePlan" xml:space="preserve">
+    <value>Delete Plan</value>
+  </data>
+  <data name="DeleteCodespace" xml:space="preserve">
+    <value>Delete Codespace</value>
+  </data>
+  <data name="addCodespace" xml:space="preserve">
+    <value>Add Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Property label</value>
@@ -474,5 +480,8 @@
   </data>
   <data name="DxKeywords" xml:space="preserve">
     <value>dx declarative started</value>
+  </data>
+  <data name="feedback" xml:space="preserve">
+    <value>Feedback</value>
   </data>
 </root>
