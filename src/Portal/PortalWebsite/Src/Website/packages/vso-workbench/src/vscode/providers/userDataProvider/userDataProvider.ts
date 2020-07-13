@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { detect } from 'detect-browser';
 
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 
@@ -23,6 +24,7 @@ import {
 } from '../../vscodeAssets/vscode';
 
 const FILE_IS_DIRECTORY_MSG = 'EntryIsADirectory';
+const info = detect();
 
 export class UserDataProvider implements IFileSystemProvider {
     readonly capabilities =
@@ -44,9 +46,14 @@ export class UserDataProvider implements IFileSystemProvider {
 
     public async initializeDBProvider() {
         try {
-            const storage = new IndexedDBFS();
-            await storage.initialize();
-            this.storageProvider = storage;
+            if (info && info.name === 'safari') {
+                // Workaroud for GitHub de-iframing issue on Safari: https://github.com/github/codespaces/issues/724
+                this.storageProvider = new InMemoryAsyncStorage();
+            } else {
+                const storage = new IndexedDBFS();
+                await storage.initialize();
+                this.storageProvider = storage;
+            }
         } catch {
             this.storageProvider = new InMemoryAsyncStorage();
         }
