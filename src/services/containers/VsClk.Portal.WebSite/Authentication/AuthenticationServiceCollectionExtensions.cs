@@ -140,7 +140,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 options =>
                 {
                     options.CompatibilityAudiences = new List<JwtBearerAuthenticationOptions2.Audience>
-                    { 
+                    {
                         #pragma warning disable CS0618 // Type or member is obsolete
                         JwtBearerAuthenticationOptions2.Audience.VisualStudioServicesApiDev,
                         #pragma warning restore CS0618 // Type or member is obsolete

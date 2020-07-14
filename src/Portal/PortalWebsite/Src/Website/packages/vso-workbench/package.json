@@ -56,7 +56,7 @@
     "jwt-decode": "^2.2.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "vs-codespaces-authorization": "^0.1.16",
+    "vs-codespaces-authorization": "^0.1.17",
     "vso-client-core": "1.0.0-local",
     "vso-service-worker": "1.0.0-local",
     "vso-service-worker-client": "1.0.0-local",

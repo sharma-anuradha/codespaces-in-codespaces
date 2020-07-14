@@ -9791,6 +9791,11 @@ vs-codespaces-authorization@^0.1.16:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.16.tgz#f7d9658d2180574cff12fc493375e6d995f9abcd"
   integrity sha1-99lljSGAV0z/EvxJM3Xm2ZX5q80=
 
+vs-codespaces-authorization@^0.1.17:
+  version "0.1.17"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.17.tgz#757af36daf49eeb52f880276350ca1a58b125c21"
+  integrity sha1-dXrzba9J7rUviAJ2NQyhpYsSXCE=
+
 vscode-jsonrpc@^4.0.0:
   version "4.0.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vscode-jsonrpc/-/vscode-jsonrpc-4.0.0.tgz#a7bf74ef3254d0a0c272fab15c82128e378b3be9"

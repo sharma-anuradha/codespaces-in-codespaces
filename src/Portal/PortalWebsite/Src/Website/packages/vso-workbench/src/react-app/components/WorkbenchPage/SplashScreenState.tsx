@@ -53,7 +53,10 @@ const isLightThemeColor = (
     }
 
     if ('vscodeSettings' in platformInfo) {
-        return (platformInfo.vscodeSettings as any).loadingScreenThemeColor === 'light';
+        const { vscodeSettings } = platformInfo;
+        const { loadingScreenThemeColor } = vscodeSettings;
+
+        return !loadingScreenThemeColor || (loadingScreenThemeColor === 'light');
     }
 
     return true;
