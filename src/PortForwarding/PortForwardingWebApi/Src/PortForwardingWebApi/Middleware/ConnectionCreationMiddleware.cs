@@ -4,10 +4,13 @@
 
 using System;
 using System.Linq;
+using System.Net.Mime;
 using System.Text.Json;
 using System.Threading.Tasks;
+using k8s.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -43,16 +46,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
         /// </summary>
         /// <param name="context">Request context.</param>
         /// <param name="logger">Target logger.</param>
-        /// <param name="queueClientProvider">Queue client provider.</param>
+        /// <param name="serviceBusClientProvider">Queue client provider.</param>
         /// <param name="mappingClient">The mappings client.</param>
+        /// <param name="hostEnvironment">The host environment.</param>
         /// <param name="hostUtils">The host utils.</param>
         /// <param name="appSettings">The service settings.</param>
         /// <returns>Task.</returns>
         public async Task InvokeAsync(
             HttpContext context,
             IDiagnosticsLogger logger,
-            IServiceBusQueueClientProvider queueClientProvider,
+            IServiceBusClientProvider serviceBusClientProvider,
             IAgentMappingClient mappingClient,
+            IHostEnvironment hostEnvironment,
             PortForwardingHostUtils hostUtils,
             PortForwardingAppSettings appSettings)
         {
@@ -108,15 +113,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 "connection_creation_middleware_send_create_new_message",
                 async (childLogger) =>
                 {
-                    var client = await queueClientProvider.GetQueueClientAsync(QueueNames.NewConnections, childLogger);
+                    var client = await serviceBusClientProvider.GetQueueClientAsync(QueueNames.NewConnections, childLogger);
 
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, serializationOptions))
                     {
                         SessionId = connectionInfo.WorkspaceId,
+                        ContentType = MediaTypeNames.Application.Json,
                         CorrelationId = context.GetCorrelationId(),
+                        ReplyTo = QueueNames.ConnectionErrors,
+                        ReplyToSessionId = context.GetCorrelationId(),
                     };
 
                     await client.SendAsync(message);
+                    await client.CloseAsync();
                 });
 
             // 3. Wait for the connection kubernetes service is available
@@ -125,31 +134,101 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             // Having service creation and responding to requests separate allows us to respond to multiple requests, not just the first one.
             try
             {
-                var endpoint = await mappingClient.WaitForEndpointReadyAsync(connectionInfo.GetKubernetesServiceName(), logger);
-
-                var ip = endpoint.Subsets.First().Addresses.First().Ip;
-                var port = endpoint.Subsets.First().Ports.First().Port;
-
-                var uriBuilder = new UriBuilder(context.Request.Scheme, ip, port)
+                var errorMessageTask = logger.OperationScopeAsync("connection_creation_middleware_subscribe_to_errors", async (childLogger) =>
                 {
-                    Path = context.Request.Path,
-                    Query = context.Request.QueryString.ToString(),
-                };
+                    var errorsSessionsClient = await serviceBusClientProvider.GetSessionClientAsync(QueueNames.ConnectionErrors, childLogger);
 
-                logger.AddValue("target_url", uriBuilder.Uri.ToString());
-                logger.LogInfo("connection_creation_middleware_redirect");
-                context.Response.Redirect(uriBuilder.Uri.ToString());
-                await context.Response.CompleteAsync();
+                    try
+                    {
+                        var session = await errorsSessionsClient.AcceptMessageSessionAsync(context.GetCorrelationId(), TimeSpan.FromSeconds(60));
+                        var message = await session.ReceiveAsync();
+                        if (message != default)
+                        {
+                            await session.CompleteAsync(GetLockToken(message));
+
+                            return JsonSerializer.Deserialize<ErrorMessage>(message.Body, serializationOptions);
+                        }
+
+                        return null;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                    finally
+                    {
+                        await errorsSessionsClient.CloseAsync();
+                    }
+                });
+
+                var endpointOrErrorTask = await Task.WhenAny(
+                     Wrap(mappingClient.WaitForEndpointReadyAsync(connectionInfo.GetKubernetesServiceName(), logger)),
+                     Wrap(errorMessageTask));
+
+                switch (await endpointOrErrorTask)
+                {
+                    case (V1Endpoints endpoint, null):
+                        var ip = endpoint.Subsets.First().Addresses.First().Ip;
+                        var port = endpoint.Subsets.First().Ports.First().Port;
+
+                        var uriBuilder = new UriBuilder(context.Request.Scheme, ip, port)
+                        {
+                            Path = context.Request.Path,
+                            Query = context.Request.QueryString.ToString(),
+                        };
+
+                        logger.AddValue("target_url", uriBuilder.Uri.ToString());
+                        logger.LogInfo("connection_creation_middleware_redirect");
+
+                        context.Response.Redirect(uriBuilder.Uri.ToString());
+                        await context.Response.CompleteAsync();
+
+                        break;
+                    case (null, ErrorMessage message):
+                        logger.LogErrorWithDetail("connection_creation_middleware_agent_error", message.Detail);
+
+                        if (hostEnvironment.IsDevelopment())
+                        {
+                            context.Response.ContentType = MediaTypeNames.Application.Json;
+                            await context.Response.WriteAsync(JsonSerializer.Serialize(message));
+                        }
+
+                        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                        await context.Response.CompleteAsync();
+
+                        break;
+
+                    default:
+                        throw new OperationCanceledException();
+                }
             }
             catch (Exception ex) when (ex is TaskCanceledException || ex is OperationCanceledException)
             {
                 context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
                 logger.LogWarning("connection_creation_middleware_service_creation_timeout");
-                context.Response.Headers.Add("X-Powered-By", "Visual Studio Online");
                 await context.Response.CompleteAsync();
 
                 return;
             }
+        }
+
+        private async Task<(V1Endpoints? Endpoint, ErrorMessage? Message)> Wrap(Task<V1Endpoints> endpointTask)
+        {
+            var res = await endpointTask;
+
+            return (res, default);
+        }
+
+        private async Task<(V1Endpoints? Endpoint, ErrorMessage? Message)> Wrap(Task<ErrorMessage?> endpointTask)
+        {
+            var res = await endpointTask;
+
+            return (default, res);
+        }
+
+        private string? GetLockToken(Message message)
+        {
+            return message.SystemProperties.IsLockTokenSet ? message.SystemProperties.LockToken : null;
         }
     }
 }

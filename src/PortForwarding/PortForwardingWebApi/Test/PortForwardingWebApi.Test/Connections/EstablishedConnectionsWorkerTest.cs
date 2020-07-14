@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task ExecuteAsync_Succeeds()
         {
-            var queueClientProvider = new Mock<IServiceBusQueueClientProvider>();
+            var queueClientProvider = new Mock<IServiceBusClientProvider>();
             var queueClient = new Mock<IQueueClient>();
             queueClientProvider
                 .Setup(provider => provider.GetQueueClientAsync(QueueNames.EstablishedConnections, It.IsAny<IDiagnosticsLogger>()))

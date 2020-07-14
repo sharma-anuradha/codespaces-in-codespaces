@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// Gets queue name for "connections-established" queue.
         /// </summary>
         public static string EstablishedConnections { get => "connections-established"; }
+
+        /// <summary>
+        /// Gets queue name for "connections-errors" queue.
+        /// </summary>
+        public static string ConnectionErrors { get => "connections-errors"; }
     }
 }

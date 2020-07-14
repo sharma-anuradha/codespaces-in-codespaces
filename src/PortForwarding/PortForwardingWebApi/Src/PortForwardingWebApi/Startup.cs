@@ -77,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
-            services.AddSingleton<IServiceBusQueueClientProvider, ServiceBusQueueClientProvider>();
+            services.AddSingleton<IServiceBusClientProvider, ServiceBusClientProvider>();
 
             services.AddSingleton<IManagedCache, InMemoryManagedCache>();
             services.AddSingleton<ISystemCatalog, NullSystemCatalog>();

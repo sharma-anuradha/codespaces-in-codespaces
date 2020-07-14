@@ -120,7 +120,7 @@ variable "requires_session" {
 }
 
 variable "default_message_ttl" {
-  default = "P14D"
+  default = "PT10M"
 }
 
 variable "duplicate_detection_history_time_window" {
@@ -154,6 +154,20 @@ resource "azurerm_servicebus_queue" "connections_new" {
 
 resource "azurerm_servicebus_queue" "connections_established" {
   name                = "connections-established"
+  resource_group_name = azurerm_resource_group.rg.name
+  namespace_name      = azurerm_servicebus_namespace.sb.name
+
+  lock_duration                           = var.lock_duration
+  requires_duplicate_detection            = var.requires_duplicate_detection
+  max_size_in_megabytes                   = var.max_size_in_megabytes
+  requires_session                        = var.requires_session
+  default_message_ttl                     = var.default_message_ttl
+  duplicate_detection_history_time_window = var.duplicate_detection_history_time_window
+  max_delivery_count                      = var.max_delivery_count
+}
+
+resource "azurerm_servicebus_queue" "connections_errors" {
+  name                = "connections-errors"
   resource_group_name = azurerm_resource_group.rg.name
   namespace_name      = azurerm_servicebus_namespace.sb.name
 

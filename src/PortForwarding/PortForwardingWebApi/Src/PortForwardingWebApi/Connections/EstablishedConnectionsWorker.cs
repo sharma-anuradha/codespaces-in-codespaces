@@ -27,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         /// <param name="hostApplicationLifetime">The host application lifetime object.</param>
         /// <param name="logger">The logger.</param>
         public EstablishedConnectionsWorker(
-            IServiceBusQueueClientProvider queueClientProvider,
+            IServiceBusClientProvider queueClientProvider,
             IConnectionEstablishedMessageHandler messageHandler,
             IHostApplicationLifetime hostApplicationLifetime,
             IDiagnosticsLogger logger)
@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
             Logger = Requires.NotNull(logger, nameof(logger));
         }
 
-        private IServiceBusQueueClientProvider QueueClientProvider { get; }
+        private IServiceBusClientProvider QueueClientProvider { get; }
 
         private IConnectionEstablishedMessageHandler MessageHandler { get; }
 

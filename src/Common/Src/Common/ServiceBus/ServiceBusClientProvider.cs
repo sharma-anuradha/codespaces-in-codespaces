@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceBusQueueClientProvider.cs" company="Microsoft">
+﻿// <copyright file="ServiceBusClientProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,15 +11,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
 {
     /// <inheritdoc/>
-    public class ServiceBusQueueClientProvider : IServiceBusQueueClientProvider
+    public class ServiceBusClientProvider : IServiceBusClientProvider
     {
         private readonly IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ServiceBusQueueClientProvider"/> class.
+        /// Initializes a new instance of the <see cref="ServiceBusClientProvider"/> class.
         /// </summary>
         /// <param name="controlPlaneAzureResourceAccessor">The control plane azure resource accessor.</param>
-        public ServiceBusQueueClientProvider(
+        public ServiceBusClientProvider(
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor)
         {
             Requires.NotNull(controlPlaneAzureResourceAccessor, nameof(controlPlaneAzureResourceAccessor));

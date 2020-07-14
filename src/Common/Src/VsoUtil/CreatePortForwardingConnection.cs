@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 
         private async Task ExecuteCommandAsync(IServiceProvider services, TextWriter stdout, TextWriter stderr)
         {
-            var queueClientProvider = services.GetService<IServiceBusQueueClientProvider>();
+            var queueClientProvider = services.GetService<IServiceBusClientProvider>();
             var loggerFactory = services.GetRequiredService<IDiagnosticsLoggerFactory>();
             var logger = loggerFactory.New();
             var client = await queueClientProvider.GetQueueClientAsync("connections-new", logger);

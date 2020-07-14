@@ -1,4 +1,4 @@
-﻿// <copyright file="IServiceBusQueueClientProvider.cs" company="Microsoft">
+﻿// <copyright file="IServiceBusClientProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
     /// <summary>
     /// An Azure Service Bus Queue client provider.
     /// </summary>
-    public interface IServiceBusQueueClientProvider
+    public interface IServiceBusClientProvider
     {
         /// <summary>
         /// Gets the queue client for service bus queue operations.
