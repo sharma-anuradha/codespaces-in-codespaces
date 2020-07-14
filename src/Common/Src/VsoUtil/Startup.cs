@@ -5,13 +5,8 @@
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Rest;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -20,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
@@ -75,6 +71,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
             ConfigureSecretsProvider(services);
             ConfigureCommonServices(services, false, out var _);
+
+            // Job Queue consumer telemetry
+            services.AddJobQueueConsumerTelemetrySummary();
 
             // Add stamp database access
             services.AddDocumentDbClientProvider(options =>

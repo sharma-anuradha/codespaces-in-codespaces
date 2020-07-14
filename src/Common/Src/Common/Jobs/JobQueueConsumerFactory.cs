@@ -2,6 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
@@ -14,6 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     {
         private readonly IQueueMessageProducerFactory queueMessageProducerFactory;
         private readonly IDiagnosticsLogger logger;
+        private readonly ConcurrentDictionary<string, JobQueueConsumer> jobQueueConsumers = new ConcurrentDictionary<string, JobQueueConsumer>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JobQueueConsumerFactory"/> class.
@@ -29,7 +33,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <inheritdoc/>
         public IJobQueueConsumer Create(string queueId)
         {
-            return new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId), this.logger);
+            var jobQueueConsumer = new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId), this.logger);
+            jobQueueConsumers[queueId] = jobQueueConsumer;
+            return jobQueueConsumer;
+        }
+
+        /// <inheritdoc/>
+        public Dictionary<string, Dictionary<string, IJobHandlerMetrics>> GetMetrics()
+        {
+            return this.jobQueueConsumers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetMetrics());
         }
     }
 }

@@ -12,7 +12,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     /// <summary>
     /// Job payload helpers.
     /// </summary>
-    internal static class JobPayloadHelpers
+    public static class JobPayloadHelpers
     {
         private const string TypeFieldName = "Type";
 
@@ -64,14 +64,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Register a job payload type to be later used when deserializing.
         /// </summary>
         /// <param name="jobPayloadType">The job payload type.</param>
-        public static void RegisterPayloadType(this Type jobPayloadType)
+        /// <returns>Name of the tag.</returns>
+        public static string RegisterPayloadType(this Type jobPayloadType)
         {
             Requires.NotNull(jobPayloadType, nameof(jobPayloadType));
 
-            GetTypeTag(jobPayloadType);
+            return GetTypeTag(jobPayloadType);
         }
 
-        private static string GetTypeTag(Type type)
+        /// <summary>
+        /// Return the type tag for a payload type.
+        /// </summary>
+        /// <param name="type">Type of the payload.</param>
+        /// <returns>Name of the tag.</returns>
+        public static string GetTypeTag(Type type)
         {
             return CachedTypes.GetOrAdd(type, (t) =>
             {

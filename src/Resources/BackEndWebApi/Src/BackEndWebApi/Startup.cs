@@ -30,6 +30,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
@@ -182,6 +183,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Capacity Manager
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);
+
+            // Job Queue consumer telemetry
+            services.AddJobQueueConsumerTelemetrySummary();
 
             // Add the certificate settings.
             services.AddSingleton(appSettings.AuthenticationSettings);

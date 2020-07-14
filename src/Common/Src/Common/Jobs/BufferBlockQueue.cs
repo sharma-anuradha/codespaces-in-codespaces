@@ -137,8 +137,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
         private async Task AddMessageAsync(QueueMessage queueMessage, CancellationToken cancellationToken)
         {
-            await BufferBlock.SendAsync(queueMessage, cancellationToken);
             QueueMessages[queueMessage.Id] = queueMessage;
+            await BufferBlock.SendAsync(queueMessage, cancellationToken);
         }
 
         private class QueueMessageAdapter : QueueMessage

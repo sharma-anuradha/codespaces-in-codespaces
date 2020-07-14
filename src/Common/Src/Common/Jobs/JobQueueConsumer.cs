@@ -3,9 +3,9 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Security.Policy;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +25,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         private readonly IDiagnosticsLogger logger;
         private readonly HashSet<Type> registeredPayloadTypes = new HashSet<Type>();
         private readonly object lockRegisteredPayloadTypes = new object();
+        private readonly Dictionary<string, JobHandlerMetrics> jobHandlerMetricsByTypeTag = new Dictionary<string, JobHandlerMetrics>();
+        private readonly object lockJobHandlerMetrics = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JobQueueConsumer"/> class.
@@ -52,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             where T : JobPayload
         {
             // register the payload type on the cache.
-            typeof(T).RegisterPayloadType();
+            var typeTag = typeof(T).RegisterPayloadType();
 
             // register on this job consumer
             lock (this.lockRegisteredPayloadTypes)
@@ -60,13 +62,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 this.registeredPayloadTypes.Add(typeof(T));
             }
 
+            ActionBlock<IJob> actionBlock = null;
+
             // We have to have a wrapper to work with IJob instead of T
-            Func<IJob, Task> actionWrapper = (job) =>
+            Func<IJob, Task> actionWrapper = async (job) =>
             {
                 var jobInstance = (Job)job;
                 var jobPayloadOptions = jobInstance.JobPayloadInfo.PayloadOptions;
 
-                return this.logger.OperationScopeAsync(
+                var failed = false;
+                var retries = 0;
+                var cancelled = false;
+
+                var start = Stopwatch.StartNew();
+                await this.logger.OperationScopeAsync(
                     "job_queue_consumer",
                     (childLogger) =>
                     {
@@ -78,11 +87,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                 cts.CancelAfter((int)jobPayloadOptions?.HandlerTimout.Value.TotalMilliseconds);
                             }
 
-                            return jobHandler.HandleJobAsync((IJob<T>)job, childLogger, cts.Token);
+                            using (cts.Token.Register(() =>
+                                {
+                                    cancelled = true;
+                                }))
+                            {
+                                return jobHandler.HandleJobAsync((IJob<T>)job, childLogger, cts.Token);
+                            }
                         }
                     },
                     errCallback: async (err, logger) =>
                     {
+                        failed = true;
                         try
                         {
                             ++jobInstance.JobPayloadInfo.Retries;
@@ -93,6 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             }
                             else
                             {
+                                ++retries;
                                 await jobInstance.UpdateContentAsync(DisposeToken);
                             }
                         }
@@ -101,13 +118,68 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         }
                     },
                     swallowException: true);
+
+                // update the job handler metrics
+                UpdateJobHandlerMetrics(typeTag, (jobHandlerMetrics) =>
+                {
+                    var inputCount = actionBlock.InputCount;
+
+                    if (inputCount < jobHandlerMetrics.MinInputCount)
+                    {
+                        jobHandlerMetrics.MinInputCount = inputCount;
+                    }
+
+                    if (inputCount > jobHandlerMetrics.MaxInputCount)
+                    {
+                        jobHandlerMetrics.MaxInputCount = inputCount;
+                    }
+
+                    jobHandlerMetrics.ProcessTime += start.Elapsed;
+                    ++jobHandlerMetrics.Processed;
+                    jobHandlerMetrics.Retries += retries;
+                    if (failed)
+                    {
+                        ++jobHandlerMetrics.Failures;
+                    }
+
+                    if (cancelled)
+                    {
+                        ++jobHandlerMetrics.Cancelled;
+                    }
+                });
             };
 
             // create the action block that executes the handler wrapper
-            var actionBlock = new ActionBlock<IJob>((job) => actionWrapper(job), dataflowBlockOptions);
+            actionBlock = new ActionBlock<IJob>((job) => actionWrapper(job), dataflowBlockOptions);
 
             // Link with Predicate - only if a job is of type T
             this.blockJobs.LinkTo(actionBlock, predicate: (job) => job is IJob<T>);
+        }
+
+        /// <inheritdoc/>
+        public Dictionary<string, IJobHandlerMetrics> GetMetrics()
+        {
+            lock (this.lockJobHandlerMetrics)
+            {
+                var results = this.jobHandlerMetricsByTypeTag.ToDictionary(kvp => kvp.Key, kvp => kvp.Value as IJobHandlerMetrics);
+                this.jobHandlerMetricsByTypeTag.Clear();
+                return results;
+            }
+        }
+
+        private void UpdateJobHandlerMetrics(string typeTag, Action<JobHandlerMetrics> updateCallback)
+        {
+            lock (this.lockJobHandlerMetrics)
+            {
+                JobHandlerMetrics jobHandlerMetrics;
+                if (!this.jobHandlerMetricsByTypeTag.TryGetValue(typeTag, out jobHandlerMetrics))
+                {
+                    jobHandlerMetrics = new JobHandlerMetrics();
+                    this.jobHandlerMetricsByTypeTag[typeTag] = jobHandlerMetrics;
+                }
+
+                updateCallback(jobHandlerMetrics);
+            }
         }
 
         private (JobPayloadInfo, JobPayload) CreateJobPayload(QueueMessage queueMessage)
@@ -189,6 +261,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             /// <inheritdoc/>
             public T Payload { get; }
+        }
+
+        private class JobHandlerMetrics : IJobHandlerMetrics
+        {
+            public int MinInputCount { get; set; }
+
+            public int MaxInputCount { get; set; }
+
+            public TimeSpan ProcessTime { get; set; }
+
+            public int Processed { get; set; }
+
+            public int Failures { get; set; }
+
+            public int Retries { get; set; }
+
+            public int Cancelled { get; set; }
         }
     }
 }

@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks.Dataflow;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
@@ -11,6 +13,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// </summary>
     public interface IJobQueueConsumerFactory
     {
+        /// <summary>
+        /// Retrieve the current job consumer metrics.
+        /// </summary>
+        /// <returns>Dictionary of metrics for each queue id.</returns>
+        Dictionary<string, Dictionary<string, IJobHandlerMetrics>> GetMetrics();
+
         /// <summary>
         /// Create a new instance of a job queue consumer.
         /// </summary>
@@ -25,6 +33,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public interface IJobQueueConsumer
     {
         /// <summary>
+        /// Return the current job handler metrics processed by this queue.
+        /// </summary>
+        /// <returns>A dictionary for each type of job taf type beign procesed.</returns>
+        Dictionary<string, IJobHandlerMetrics> GetMetrics();
+
+        /// <summary>
         /// Register a job handler to consume jobs.
         /// </summary>
         /// <typeparam name="T">Type of the payload.</typeparam>
@@ -32,5 +46,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="dataflowBlockOptions">TPL data flow options.</param>
         void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions)
             where T : JobPayload;
+    }
+
+    /// <summary>
+    /// Define job handler metrics.
+    /// </summary>
+    public interface IJobHandlerMetrics
+    {
+        /// <summary>
+        /// Gets the min input count on this queue.
+        /// </summary>
+        public int MinInputCount { get; }
+
+        /// <summary>
+        /// Gets the max input count on this queue.
+        /// </summary>
+        public int MaxInputCount { get; }
+
+        /// <summary>
+        /// Gets the accumulated job handler process time so far.
+        /// </summary>
+        public TimeSpan ProcessTime { get; }
+
+        /// <summary>
+        /// Gets the number of jobs processed so far.
+        /// </summary>
+        public int Processed { get; }
+
+        /// <summary>
+        /// Gets the number of failures.
+        /// </summary>
+        public int Failures { get; }
+
+        /// <summary>
+        /// Gets the number of retries.
+        /// </summary>
+        public int Retries { get; }
+
+        /// <summary>
+        /// Gets the number of cancellations.
+        /// </summary>
+        public int Cancelled { get; }
     }
 }
