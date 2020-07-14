@@ -1,4 +1,4 @@
-﻿// <copyright file="IAgentMappingClient.cs" company="Microsoft">
+// <copyright file="IAgentMappingClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -38,6 +38,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         /// <param name="logger">Target Logger.</param>
         /// <returns>Task.</returns>
         Task RemoveBusyAgentFromDeploymentAsync(string agentName, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Removes the agent completely.
+        /// </summary>
+        /// <param name="agentName">Agent name.</param>
+        /// <param name="logger">Target Logger.</param>
+        /// <returns>Task.</returns>
+        Task KillAgentAsync(string agentName, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Wait until kubernetes service is available.

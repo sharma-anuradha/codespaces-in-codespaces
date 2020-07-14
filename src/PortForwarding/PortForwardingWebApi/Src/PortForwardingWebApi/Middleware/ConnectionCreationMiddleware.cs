@@ -1,4 +1,4 @@
-﻿// <copyright file="ConnectionCreationMiddleware.cs" company="Microsoft">
+// <copyright file="ConnectionCreationMiddleware.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -186,6 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                         break;
                     case (null, ErrorMessage message):
                         logger.LogErrorWithDetail("connection_creation_middleware_agent_error", message.Detail);
+                        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
 
                         if (hostEnvironment.IsDevelopment())
                         {
@@ -193,11 +194,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                             await context.Response.WriteAsync(JsonSerializer.Serialize(message));
                         }
 
-                        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
                         await context.Response.CompleteAsync();
 
                         break;
-
                     default:
                         throw new OperationCanceledException();
                 }

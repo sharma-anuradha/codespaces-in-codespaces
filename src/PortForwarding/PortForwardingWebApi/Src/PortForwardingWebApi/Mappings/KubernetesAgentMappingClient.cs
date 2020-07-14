@@ -1,4 +1,4 @@
-﻿// <copyright file="KubernetesAgentMappingClient.cs" company="Microsoft">
+// <copyright file="KubernetesAgentMappingClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -252,12 +252,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                         throw new ArgumentException($"{nameof(agentName)} does not represent existing Pod in \"{DefaultNamespace}\" namespace.");
                     }
 
-                    var updatedLabels = new Dictionary<string, string>(namedPod.Metadata.Labels);
+                    var updatedLabels = namedPod.Metadata.Labels == default ? new Dictionary<string, string>() : new Dictionary<string, string>(namedPod.Metadata.Labels);
                     updatedLabels.Remove(DeploymentNameLabelKey);
                     var patch = new JsonPatchDocument<V1Pod>();
                     patch.Replace(p => p.Metadata.Labels, updatedLabels);
 
                     await KubernetesClient.PatchNamespacedPodAsync(new V1Patch(patch), agentName, DefaultNamespace);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task KillAgentAsync(string agentName, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                "kubernetes_kill_agent",
+                async (childLogger) =>
+                {
+                    childLogger.AddValue("AgentName", agentName);
+
+                    await KubernetesClient.DeleteNamespacedPodAsync(name: agentName, namespaceParameter: DefaultNamespace);
                 });
         }
 

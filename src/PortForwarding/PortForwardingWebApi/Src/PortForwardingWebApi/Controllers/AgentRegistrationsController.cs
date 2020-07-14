@@ -1,4 +1,4 @@
-﻿// <copyright file="AgentRegistrationsController.cs" company="Microsoft">
+// <copyright file="AgentRegistrationsController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -56,11 +56,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
         /// <param name="logger">Target logger.</param>
         /// <returns>Status code.</returns>
         [HttpDelete("{agentName}")]
+        [HttpDelete("{agentName}/labels")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpOperationalScope("remove_busy_agent")]
-        public async Task<IActionResult> DeleteAsync(string agentName, [FromServices] IDiagnosticsLogger logger)
+        public async Task<IActionResult> DeleteLabelsAsync(string agentName, [FromServices] IDiagnosticsLogger logger)
         {
             await AgentMappingClient.RemoveBusyAgentFromDeploymentAsync(agentName, logger);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Removes the port forwarding agent from available agents deployment.
+        /// </summary>
+        /// <param name="agentName">Agent to be removed.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Status code.</returns>
+        [HttpDelete("{agentName}/pod")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpOperationalScope("remove_busy_agent")]
+        public async Task<IActionResult> DeleteAgentAsync(string agentName, [FromServices] IDiagnosticsLogger logger)
+        {
+            await AgentMappingClient.KillAgentAsync(agentName, logger);
 
             return Ok();
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="NullAgentMappingClient.cs" company="Microsoft">
+// <copyright file="NullAgentMappingClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -27,6 +27,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
 
         /// <inheritdoc/>
         public Task RemoveBusyAgentFromDeploymentAsync(string agentName, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task KillAgentAsync(string agentName, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }
