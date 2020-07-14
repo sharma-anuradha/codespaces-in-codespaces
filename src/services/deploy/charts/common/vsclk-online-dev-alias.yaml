@@ -82,6 +82,7 @@ config:
   azDevClientId: B4074F41-EC85-4D4E-A3CA-4458F1A904CC
   vsSaaSTokenIssuer: https://ppe.liveshare.vsengsaas.visualstudio.com/
   vsSaaSCertificateSecretName: vsls-ppe-auth-cert-primary
+  vsSaaSTokenCertsEndpoint: https://sts-ppe.core.vsengsaas.visualstudio.com
   portForwardingDomainTemplate: "{0}.app.online.dev.core.vsengsaas.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.dev.codespaces.githubusercontent.com"
   portForwardingEnableEnvironmentEndpoints: "true"

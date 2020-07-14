@@ -41,7 +41,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string RichNavWebExtensionEndpoint { get; set; }
 
         public string PortalEndpoint { get; set; }
-        
+
         public string EnvironmentRegistrationEndpoint { get; set; }
         public string ApiEndpoint { get; set; }
         public string Domain { get; set; }
@@ -52,8 +52,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         // The app service principal that has access to reading the app key vault
         public string KeyVaultReaderServicePrincipalClientId { get; set; }
         public string KeyVaultReaderServicePrincipalClientSecret { get; set; }
-        public string VsSaaSTokenIssuer { get; set; }
         public string VsSaaSCertificateSecretName { get; set; }
+        public string VsSaaSTokenIssuer { get; set; }
+        public string VsSaaSTokenCertsEndpoint { get; set; }
 
         public IEnumerable<HostsConfig> PortForwardingHostsConfigs { get; set; }
         public string PortForwardingDomainTemplate { get; set; }

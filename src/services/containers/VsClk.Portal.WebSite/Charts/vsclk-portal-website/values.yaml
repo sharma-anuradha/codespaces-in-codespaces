@@ -128,6 +128,7 @@ appSettings:
   - PORTAL_AppSettings__AzDevAppClientId
   - PORTAL_AppSettings__AzDevAppClientSecret
   - PORTAL_AppSettings__VsSaaSTokenIssuer
+  - PORTAL_AppSettings__VsSaaSTokenCertsEndpoint
   - PORTAL_AppSettings__VsSaaSCertificateSecretName
   - PORTAL_AppSettings__PortForwardingDomainTemplate
   - PORTAL_AppSettings__PortForwardingServiceEnabled

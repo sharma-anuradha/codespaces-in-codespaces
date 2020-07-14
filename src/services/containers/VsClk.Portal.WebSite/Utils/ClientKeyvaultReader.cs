@@ -13,10 +13,21 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
     public class ClientKeyvaultReader
     {
         private static readonly string SecretName = "Config-ClientKeyvaultSigningKey";
+        private static readonly string LocalKeyId = "local-key-id";
+        private static readonly string LocalKeyValue = "MDAwMDAwMDAwMDAwMDAwMA==";
+
+        // set the local key for dev purposes
+        public static void SetLocalKeychainKeys()
+        {
+            RuntimeSecrets.KeychainHashId1 = LocalKeyId;
+            RuntimeSecrets.KeychainHashKey1 = LocalKeyValue;
+            RuntimeSecrets.KeychainHashExpiration1 = DateTime.Now.AddDays(1);
+
+            RuntimeSecrets.ResolveKeychainSettingsSignal();
+        }
 
         public static async Task GetKeyvaultKeys()
         {
-
             var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
             var keyvaultReader = ApplicationServicesProvider.GetRequiredService<IKeyVaultSecretReader>();
             var secrets = await keyvaultReader.GetSecretVersionsAsync(GetAppKeyVaultName(), SecretName, logger);
@@ -34,7 +45,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
         private static async Task WriteSecret(KeyVaultSecret secretVersion, int keyIndex)
         {
             var versionString = secretVersion.Identifier.Version;
-            
+
             var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
 
             var keyvaultReader = ApplicationServicesProvider.GetRequiredService<IKeyVaultSecretReader>();
@@ -69,7 +80,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
             const string KeyVaultFormat = "vsclk-online-{0}-kv";
             var env = ApplicationServicesProvider.GetRequiredService<IWebHostEnvironment>();
             var appsettings = ApplicationServicesProvider.GetRequiredService<AppSettings>();
-            
+
             if ((env.IsDevelopment()) || appsettings.IsLocal)
             {
                 return string.Format(KeyVaultFormat, "dev");

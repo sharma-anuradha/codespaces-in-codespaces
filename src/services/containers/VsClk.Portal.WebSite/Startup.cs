@@ -21,6 +21,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -160,8 +161,32 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             app.MapWhen(Not(IsPortForwardingRequest), ConfigurePortal);
             app.MapWhen(IsPortForwardingRequest, ConfigurePortForwarding);
 
-            ClientKeyvaultReader.GetKeyvaultKeys().Wait();
-            app.ApplicationServices.GetRequiredService<AsyncWarmupHelper>().RunAsync().Wait();
+            InitSecrets(app);
+        }
+
+        private void InitSecrets(IApplicationBuilder app)
+        {
+            if (AppSettings.IsLocal == true)
+            {
+                ClientKeyvaultReader.SetLocalKeychainKeys();
+
+                try
+                {
+                    app.ApplicationServices.GetRequiredService<AsyncWarmupHelper>().RunAsync().Wait();
+                }
+                catch (Exception e)
+                {
+                    if (!(e.InnerException is AdalServiceException))
+                    {
+                        throw e;
+                    }
+                }
+            }
+            else
+            {
+                ClientKeyvaultReader.GetKeyvaultKeys().Wait();
+                app.ApplicationServices.GetRequiredService<AsyncWarmupHelper>().RunAsync().Wait();
+            }
         }
 
         private bool IsPortForwardingRequest(HttpContext context)

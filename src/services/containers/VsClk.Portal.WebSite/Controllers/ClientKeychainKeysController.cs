@@ -24,10 +24,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         {
             [JsonProperty("key")]
             public string Key { get; set; }
-            
+
             [JsonProperty("id")]
             public string Id { get; set; }
-            
+
             [JsonProperty("expiresOn")]
             public long ExpiresOn { get; set; }
         }
@@ -45,7 +45,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var hasher = new HMACSHA256(keyBytes);
 
             Hashers.TryAdd(base64Secret, hasher);
- 
+
             return hasher;
         }
 
@@ -68,7 +68,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             if (string.IsNullOrEmpty(hashKey))
             {
-                return null;                                                            
+                return null;
             }
 
             var key = HmacSha256Digest(userId, hashKey);
@@ -147,13 +147,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 JsonConvert.SerializeObject(responsePayload)
             );
         }
-        
+
         [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.JwtBearerAuthenticationSchemes)]
         [HttpPost("~/keychain-keys")]
         public async Task<IActionResult> CreateKeychainKeysAsync ()
         {
             await RuntimeSecrets.WaitOnKeychainSettingsAsync();
-            
+
             if (string.IsNullOrEmpty(RuntimeSecrets.KeychainHashKey1)
                 || string.IsNullOrEmpty(RuntimeSecrets.KeychainHashId1)
                 || RuntimeSecrets.KeychainHashExpiration1 == null

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,16 +14,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.AspNetCore.Authentication;
 using Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
-using Microsoft.VsSaaS.Azure.KeyVault;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.TokenService.Client;
 using Microsoft.VsSaaS.Tokens;
 using Newtonsoft.Json;
 using StackExchange.Redis;
@@ -106,7 +106,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 options.Cookie.SameSite = (isSameSite) ? SameSiteMode.Lax : SameSiteMode.None;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
-                
+
                 options.Events.OnRedirectToLogin = ctx =>
                 {
                     var logger = ctx.HttpContext.GetLogger();
@@ -157,7 +157,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
 
         private static AuthenticationBuilder AddVsoAuthentication(
             this AuthenticationBuilder builder,
-            AppSettings appSettings, string scheme, bool isBody)
+            AppSettings appSettings,
+            string scheme,
+            bool isBody
+        )
         {
             var cascadeJwtReader = new JwtReader();
 
@@ -180,18 +183,21 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 .Services
                 .AddSingleton<IAsyncWarmup>((serviceProvider) =>
                 {
-                    var keyVaultReader = ApplicationServicesProvider.GetRequiredService<IKeyVaultSecretReader>();
                     var logger = ApplicationServicesProvider.GetRequiredService<IDiagnosticsLogger>();
 
-                    var certCache = new JwtCertificateCredentialsKeyVaultCache(
-                        keyVaultReader,
-                        ClientKeyvaultReader.GetAppKeyVaultName(),
-                        appSettings.VsSaaSCertificateSecretName,
+                    var httpClient = new HttpClient();
+                    httpClient.BaseAddress = new Uri(appSettings.VsSaaSTokenCertsEndpoint);
+
+                    var tokenClient = new TokenServiceClient(httpClient);
+                    var certCache = new TokenServiceCertificateCredentialsCache(
+                        tokenClient,
+                        appSettings.VsSaaSTokenIssuer,
                         logger);
-                    certCache.StartPeriodicRefresh(TimeSpan.FromDays(1));
+
+                    certCache.StartPeriodicRefresh(TimeSpan.FromHours(2));
 
                     cascadeJwtReader.AddIssuer(appSettings.VsSaaSTokenIssuer, certCache.ConvertToPublic());
-                    cascadeJwtReader.AddAudience(appSettings.VsSaaSTokenIssuer); // Same as issuer
+                    cascadeJwtReader.AddAudience(appSettings.VsSaaSTokenIssuer);
 
                     return certCache;
                 });
@@ -296,7 +302,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
         private static async Task ValidatedPrincipalAsync(ClaimsPrincipal principal, JwtSecurityToken token)
         {
             /*
-             TODO This code should get reconciled with src\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\Authentication\ValidatedPrincipalIdentityHandler.cs 
+             TODO This code should get reconciled with src\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\Authentication\ValidatedPrincipalIdentityHandler.cs
              if it is nececssary to deal with ambiguous MSA user identities.
              */
             await Task.CompletedTask;

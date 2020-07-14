@@ -81,6 +81,7 @@ config:
   azDevClientId: 282DE6CF-8729-4112-A472-CFB80960C5CD
   vsSaaSTokenIssuer: https://insiders.liveshare.vsengsaas.visualstudio.com/
   vsSaaSCertificateSecretName: vsls-prod-auth-cert-primary
+  vsSaaSTokenCertsEndpoint: https://sts.online.visualstudio.com
   portForwardingDomainTemplate: "{0}.app.canary.online.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.codespaces.githubusercontent.com"
   portForwardingEnableEnvironmentEndpoints: "true"
