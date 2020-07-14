@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 0.1.17 (2020-07-13)
+
+### Features
+
+- Add `featureFlags` top level property that allows to pass over a bag of arbitrary feature flags for the platform.
+- Add `vscodeSettings.loadingScreenThemeColor` property that allows to switch color of the loading screen to `light` or `dark`, the default is `light`.
+- [internal] Add `favicon` property to specify workbench page favicon, represents an object with `stable` and `insiders` properties that allow to set the favicon depending on the vscode channel.
+
 ### 0.1.16 (2020-06-17)
 
 ### Bug Fixes
