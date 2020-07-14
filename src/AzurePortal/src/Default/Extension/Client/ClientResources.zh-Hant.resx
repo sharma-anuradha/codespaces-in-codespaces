@@ -121,50 +121,50 @@
     <value>http://msdn.microsoft.com</value>
   </data>
   <data name="ResourceOverviewBladeSubtitle" xml:space="preserve">
-    <value>Resource Subtitle</value>
+    <value>資源子標題</value>
     <comment>Subtitle for my blade.</comment>
   </data>
   <data name="QuickStartBladeSubtitle" xml:space="preserve">
-    <value>Quick Start Blade Subtitle</value>
+    <value>快速入門刀鋒視窗子標題</value>
   </data>
   <data name="QuickStartBladeTitle" xml:space="preserve">
-    <value>Quick Start Blade Title</value>
+    <value>快速入門刀鋒視窗標題</value>
   </data>
   <data name="QuickStartDescription" xml:space="preserve">
-    <value>Quick Start Description</value>
+    <value>快速入門描述</value>
   </data>
   <data name="QuickStartInfoListDesc1" xml:space="preserve">
-    <value>This section has an Icon and will open a new browser tab on click. These two factors are mutually exclusive as the first depends on if an iconUri is set and the second because section.selectable was populated. This description text is multiline.</value>
+    <value>此區段會有「圖示」，並且會在按一下時開啟新的瀏覽器索引標籤。這兩個因素互斥，因為第一個取決於是否已設定 iconUri，第二個則因為已填入 section.selectable。此描述文字是多行的。</value>
   </data>
   <data name="QuickStartInfoListDesc2" xml:space="preserve">
-    <value>PDL provides openBlades and links[] of the InfoListBladeLinkContract type will be opened in blades. The tile supports both blade links and hyperlinks in the same section. Numbers are used when iconUri is not set.</value>
+    <value>PDL 提供 openBlades，並會在刀鋒視窗中開啟 InfoListBladeLinkContract 類型的 links[]。動態磚支援相同區段中的刀鋒視窗連結和超連結。未設定 iconUri 時，會使用數字。</value>
   </data>
   <data name="QuickStartInfoListTitle1" xml:space="preserve">
-    <value>Icon &amp; Selectable</value>
+    <value>圖示和可選取項目</value>
   </data>
   <data name="QuickStartInfoListTitle2" xml:space="preserve">
-    <value>Section that opens blade</value>
+    <value>開啟刀鋒視窗的區段</value>
   </data>
   <data name="QuickStartShortTitle" xml:space="preserve">
-    <value>Quick Start</value>
+    <value>快速啟動</value>
   </data>
   <data name="QuickStartTitle" xml:space="preserve">
-    <value>Quick Start</value>
+    <value>快速啟動</value>
   </data>
   <data name="PropertiesBladeTitle" xml:space="preserve">
-    <value>Properties</value>
+    <value>屬性</value>
   </data>
   <data name="SubscriptionId" xml:space="preserve">
-    <value>Subscription Id</value>
+    <value>訂閱識別碼</value>
   </data>
   <data name="LoadingText" xml:space="preserve">
-    <value>Loading...</value>
+    <value>正在載入...</value>
   </data>
   <data name="ResourceNameColumn" xml:space="preserve">
-    <value>Name</value>
+    <value>名稱</value>
   </data>
   <data name="ResourceLocationColumn" xml:space="preserve">
-    <value>Location</value>
+    <value>位置</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
     <value>Codespaces Plans</value>
@@ -194,79 +194,79 @@
     <value>Project details</value>
   </data>
   <data name="ProjectDetailsDescription" xml:space="preserve">
-    <value>Select the subscription to manage deployed resources and costs. Use resource groups like folders to organize and manage all your resources.</value>
+    <value>選取用以管理部署資源及成本的訂用帳戶。使用像資料夾這樣的資源群組來安排及管理您的所有資源。</value>
   </data>
   <data name="subscriptionDropDownInfoBalloon" xml:space="preserve">
-    <value>All resources in an Azure subscription are billed together.</value>
+    <value>Azure 訂用帳戶中的所有資源皆會一併計費。</value>
   </data>
   <data name="ResourceGroupDropDownInfoBalloon" xml:space="preserve">
-    <value>A resource group is a collection of resources that share the same lifecycle, permissions, and policies.</value>
+    <value>資源群組是資源的集合，其具有相同的生命週期、權限及原則。</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Name</value>
+    <value>名稱</value>
   </data>
   <data name="InstanceDetails" xml:space="preserve">
-    <value>Instance details</value>
+    <value>執行個體詳細資料</value>
   </data>
   <data name="Basics" xml:space="preserve">
-    <value>Basics</value>
+    <value>基本</value>
   </data>
   <data name="Tags" xml:space="preserve">
-    <value>Tags</value>
+    <value>標籤</value>
   </data>
   <data name="ResourceGroup" xml:space="preserve">
-    <value>Resource group</value>
+    <value>資源群組</value>
   </data>
   <data name="Subscription" xml:space="preserve">
-    <value>Subscription</value>
+    <value>訂用帳戶</value>
   </data>
   <data name="ReviewAndCreate" xml:space="preserve">
-    <value>Review + create</value>
+    <value>審核+建立</value>
   </data>
   <data name="Previous" xml:space="preserve">
-    <value>Previous</value>
+    <value>上一步</value>
   </data>
   <data name="Next" xml:space="preserve">
-    <value>Next</value>
+    <value>下一步</value>
   </data>
   <data name="CreateValidationSuccess" xml:space="preserve">
     <value>Validation passed.</value>
   </data>
   <data name="CreateValidationError" xml:space="preserve">
-    <value>Validation failed. Required information is missing or not valid.</value>
+    <value>驗證失敗。缺少必要資訊或其無效。</value>
   </data>
   <data name="Create" xml:space="preserve">
-    <value>Create</value>
+    <value>建立</value>
   </data>
   <data name="ExtensionName" xml:space="preserve">
     <value>AzurePortalExtension2</value>
   </data>
   <data name="Status" xml:space="preserve">
-    <value>Status</value>
+    <value>狀態</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Settings</value>
+    <value>設定</value>
   </data>
   <data name="TextPropertyLabel" xml:space="preserve">
-    <value>Text Property Label</value>
+    <value>文字屬性標籤</value>
   </data>
   <data name="LinkPropertyLabel" xml:space="preserve">
-    <value>Link Property Label</value>
+    <value>連結屬性標籤</value>
   </data>
   <data name="MicrosoftUri" xml:space="preserve">
     <value>www.microsoft.com</value>
   </data>
   <data name="AssetPropertyNames_Resource_ResourceGroup" xml:space="preserve">
-    <value>Resource group</value>
+    <value>資源群組</value>
   </data>
   <data name="AssetPropertyNames_CloudService_Location" xml:space="preserve">
-    <value>Location</value>
+    <value>位置</value>
   </data>
   <data name="MonitoringLensTitle" xml:space="preserve">
-    <value>Monitoring</value>
+    <value>監視</value>
   </data>
   <data name="ResourceOverviewBladeTitle" xml:space="preserve">
-    <value>Resource Title</value>
+    <value>資源標題</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
     <value>Create a new Codespace</value>
@@ -287,10 +287,10 @@
     <value>My Codespaces</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
-    <value>Resource part subtitle</value>
+    <value>資源組件副標題</value>
   </data>
   <data name="ResourcePartTitle" xml:space="preserve">
-    <value>Resource part title</value>
+    <value>資源組件標題</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
     <value>Delete Plan</value>
@@ -302,19 +302,19 @@
     <value>Add Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
-    <value>Property label</value>
+    <value>屬性標籤</value>
   </data>
   <data name="PropertyValue" xml:space="preserve">
-    <value>Property value</value>
+    <value>屬性值</value>
   </data>
   <data name="PropertyWithHyperlink" xml:space="preserve">
-    <value>Property with hyperlink</value>
+    <value>具有超連結的屬性</value>
   </data>
   <data name="Codespaces_description" xml:space="preserve">
-    <value>Consistent experiences across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+    <value>Azure 的一致體驗可讓使用者在 Azure 中利用一些常見且經過研究的設計模式。</value>
   </data>
   <data name="Codespaces_keywords" xml:space="preserve">
-    <value>UX UI design patterns sample extension ibiza consistency</value>
+    <value>UX UI 設計模式範例延伸模組 ibiza 一致性</value>
   </data>
   <data name="Codespaces_link1Title" xml:space="preserve">
     <value>Get consistent</value>
@@ -329,7 +329,7 @@
     <value>http://www.bing.com</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>Refresh</value>
+    <value>重新整理</value>
   </data>
   <data name="ResourceCommand" xml:space="preserve">
     <value>Command1</value>
@@ -338,28 +338,28 @@
     <value>Codespaces</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
-    <value>one keyword1</value>
+    <value>一個 keyword1</value>
   </data>
   <data name="Item2" xml:space="preserve">
     <value>Item2</value>
   </data>
   <data name="Item2Keywords" xml:space="preserve">
-    <value>two keyword2</value>
+    <value>兩個 keyword2</value>
   </data>
   <data name="Keys" xml:space="preserve">
-    <value>Keys</value>
+    <value>金鑰</value>
   </data>
   <data name="KeysKeywords" xml:space="preserve">
-    <value>connection string</value>
+    <value>連接字串</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
     <value>Codespaces</value>
   </data>
   <data name="Overview" xml:space="preserve">
-    <value>Overview</value>
+    <value>概觀</value>
   </data>
   <data name="OverviewKeywords" xml:space="preserve">
-    <value>Summary Home</value>
+    <value>摘要首頁</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
     <value>VS Codespace plans provides managed, on-demand development.</value>
@@ -374,40 +374,40 @@
     <value>Virtual network/subnet</value>
   </data>
   <data name="InfoTile1_Description" xml:space="preserve">
-    <value>This is an info tile</value>
+    <value>這是資訊並排顯示</value>
   </data>
   <data name="InfoTile1_Title" xml:space="preserve">
-    <value>Info Tile</value>
+    <value>資訊並排顯示</value>
   </data>
   <data name="Monitoring_ChartTitle" xml:space="preserve">
-    <value>Chart title</value>
+    <value>圖表標題</value>
   </data>
   <data name="Monitoring_OneDay" xml:space="preserve">
-    <value>1 day</value>
+    <value>1 天</value>
   </data>
   <data name="Monitoring_OneHour" xml:space="preserve">
-    <value>1 hour</value>
+    <value>1 小時</value>
   </data>
   <data name="Monitoring_SevenDays" xml:space="preserve">
-    <value>7 days</value>
+    <value>7 天</value>
   </data>
   <data name="Monitoring_ShowDataForLast" xml:space="preserve">
-    <value>Show data for last</value>
+    <value>顯示資料，始於過去</value>
   </data>
   <data name="Monitoring_SixHours" xml:space="preserve">
-    <value>6 hours</value>
+    <value>6 小時</value>
   </data>
   <data name="Monitoring_ThirtyDays" xml:space="preserve">
-    <value>30 days</value>
+    <value>30 天</value>
   </data>
   <data name="Monitoring_Title" xml:space="preserve">
-    <value>Monitoring title</value>
+    <value>監視標題</value>
   </data>
   <data name="Monitoring_TwelveHours" xml:space="preserve">
-    <value>12 hours</value>
+    <value>12 小時</value>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn more</value>
+    <value>深入了解</value>
   </data>
   <data name="Tile_AddCodespaceTitle" xml:space="preserve">
     <value>Add a Codespace</value>
@@ -437,40 +437,40 @@
     <value>Open Codespaces in Visual Studio</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
-    <value>Following patterns across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+    <value>以下是 Azure 通用的樣式，讓使用者可以在 Azure 中使用一些常見而且經過研究的設計樣式。</value>
   </data>
   <data name="Tile_ConsistencyTitle" xml:space="preserve">
-    <value>Azure portal design patterns</value>
+    <value>Azure 入口網站設計樣式</value>
   </data>
   <data name="esentialsAdditionalRightLink1Title" xml:space="preserve">
-    <value>Hyperlink title</value>
+    <value>超連結標題</value>
   </data>
   <data name="Tile_ContextPaneDescription" xml:space="preserve">
-    <value>To avoid jarring context switches, toolbar buttons and links within pages should open blades using the openContextPane method.</value>
+    <value>為避免造成內容改變，頁面中的工具列按鈕與連結，應使用 openCoNtextPane 方法開啟刀鋒視窗。</value>
   </data>
   <data name="Tile_ContextPaneLinkTitle" xml:space="preserve">
-    <value>Open blade in context pane - Keys</value>
+    <value>在內容窗格中開啟刀鋒視窗 - 按鍵</value>
   </data>
   <data name="Tile_ContextPaneTitle" xml:space="preserve">
-    <value>Open blade in context pane</value>
+    <value>在內容窗格中開啟刀鋒視窗</value>
   </data>
   <data name="Tile_MenuDescription" xml:space="preserve">
-    <value>Links within pages and toolbar buttons should re-use existing menu items by using the switchItem method</value>
+    <value>頁面中的連結與工具列按鈕，應使用 switchItem 方法重複使用現有的功能表項目</value>
   </data>
   <data name="Tile_MenuLinkTitle" xml:space="preserve">
-    <value>Open Item1</value>
+    <value>開啟 Item1</value>
   </data>
   <data name="Tile_MenuTitle" xml:space="preserve">
-    <value>Select menu item</value>
+    <value>選取功能表項目</value>
   </data>
   <data name="DeleteConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete this resource?</value>
+    <value>確定要刪除此資源嗎?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
-    <value>Primary key</value>
+    <value>主索引鍵</value>
   </data>
   <data name="KeySecondaryKeyLabel" xml:space="preserve">
-    <value>Secondary key</value>
+    <value>次索引鍵</value>
   </data>
   <data name="DxMenuItem" xml:space="preserve">
     <value>Declarative View</value>

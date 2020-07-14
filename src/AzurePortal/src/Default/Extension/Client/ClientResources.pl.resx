@@ -121,50 +121,50 @@
     <value>http://msdn.microsoft.com</value>
   </data>
   <data name="ResourceOverviewBladeSubtitle" xml:space="preserve">
-    <value>Resource Subtitle</value>
+    <value>Podtytuł zasobu</value>
     <comment>Subtitle for my blade.</comment>
   </data>
   <data name="QuickStartBladeSubtitle" xml:space="preserve">
-    <value>Quick Start Blade Subtitle</value>
+    <value>Podtytuł bloku Szybki start</value>
   </data>
   <data name="QuickStartBladeTitle" xml:space="preserve">
-    <value>Quick Start Blade Title</value>
+    <value>Tytuł bloku Szybki start</value>
   </data>
   <data name="QuickStartDescription" xml:space="preserve">
-    <value>Quick Start Description</value>
+    <value>Opis szybkiego startu</value>
   </data>
   <data name="QuickStartInfoListDesc1" xml:space="preserve">
-    <value>This section has an Icon and will open a new browser tab on click. These two factors are mutually exclusive as the first depends on if an iconUri is set and the second because section.selectable was populated. This description text is multiline.</value>
+    <value>Ta sekcja zawiera ikonę i po kliknięciu spowoduje otwarcie nowej karty przeglądarki. Te dwa czynniki wzajemnie się wykluczają, ponieważ pierwszy z nich zależy od tego, czy ustawiono wartość iconUri, a dla drugiego z nich wypełniono element section.selectable. Jest to wielowierszowy tekst opisu.</value>
   </data>
   <data name="QuickStartInfoListDesc2" xml:space="preserve">
-    <value>PDL provides openBlades and links[] of the InfoListBladeLinkContract type will be opened in blades. The tile supports both blade links and hyperlinks in the same section. Numbers are used when iconUri is not set.</value>
+    <value>Język PDL udostępnia elementy openBlade, a elementy links[] typu InfoListBladeLinkContract będą otwierane w blokach. Kafelek obsługuje linki i hiperlinki bloków w tej samej sekcji. Liczby są używane w sytuacji, gdy nie ustawiono wartości iconUri.</value>
   </data>
   <data name="QuickStartInfoListTitle1" xml:space="preserve">
-    <value>Icon &amp; Selectable</value>
+    <value>Ikona i elementy z możliwością wybierania</value>
   </data>
   <data name="QuickStartInfoListTitle2" xml:space="preserve">
-    <value>Section that opens blade</value>
+    <value>Sekcja powodująca otwarcie bloku</value>
   </data>
   <data name="QuickStartShortTitle" xml:space="preserve">
-    <value>Quick Start</value>
+    <value>Szybki start</value>
   </data>
   <data name="QuickStartTitle" xml:space="preserve">
-    <value>Quick Start</value>
+    <value>Szybki start</value>
   </data>
   <data name="PropertiesBladeTitle" xml:space="preserve">
-    <value>Properties</value>
+    <value>Właściwości</value>
   </data>
   <data name="SubscriptionId" xml:space="preserve">
-    <value>Subscription Id</value>
+    <value>Identyfikator subskrypcji</value>
   </data>
   <data name="LoadingText" xml:space="preserve">
-    <value>Loading...</value>
+    <value>Trwa ładowanie...</value>
   </data>
   <data name="ResourceNameColumn" xml:space="preserve">
-    <value>Name</value>
+    <value>Nazwa</value>
   </data>
   <data name="ResourceLocationColumn" xml:space="preserve">
-    <value>Location</value>
+    <value>Lokalizacja</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
     <value>Codespaces Plans</value>
@@ -194,79 +194,79 @@
     <value>Project details</value>
   </data>
   <data name="ProjectDetailsDescription" xml:space="preserve">
-    <value>Select the subscription to manage deployed resources and costs. Use resource groups like folders to organize and manage all your resources.</value>
+    <value>Wybierz subskrypcję, aby zarządzać wdrożonymi zasobami i kosztami. Użyj grup zasobów jak folderów, aby organizować wszystkie Twoje zasoby i zarządzać nimi.</value>
   </data>
   <data name="subscriptionDropDownInfoBalloon" xml:space="preserve">
-    <value>All resources in an Azure subscription are billed together.</value>
+    <value>Opłaty za wszystkie zasoby w subskrypcji platformy Azure są rozliczane razem.</value>
   </data>
   <data name="ResourceGroupDropDownInfoBalloon" xml:space="preserve">
-    <value>A resource group is a collection of resources that share the same lifecycle, permissions, and policies.</value>
+    <value>Grupa zasobów to kolekcja zasobów, które mają ten sam cykl życia, uprawnienia i zasady.</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Name</value>
+    <value>Nazwa</value>
   </data>
   <data name="InstanceDetails" xml:space="preserve">
-    <value>Instance details</value>
+    <value>Szczegóły wystąpienia</value>
   </data>
   <data name="Basics" xml:space="preserve">
-    <value>Basics</value>
+    <value>Podstawowe</value>
   </data>
   <data name="Tags" xml:space="preserve">
-    <value>Tags</value>
+    <value>Tagi</value>
   </data>
   <data name="ResourceGroup" xml:space="preserve">
-    <value>Resource group</value>
+    <value>Grupa zasobów</value>
   </data>
   <data name="Subscription" xml:space="preserve">
-    <value>Subscription</value>
+    <value>Subskrypcja</value>
   </data>
   <data name="ReviewAndCreate" xml:space="preserve">
-    <value>Review + create</value>
+    <value>Przejrzyj i utwórz</value>
   </data>
   <data name="Previous" xml:space="preserve">
-    <value>Previous</value>
+    <value>Wstecz</value>
   </data>
   <data name="Next" xml:space="preserve">
-    <value>Next</value>
+    <value>Dalej</value>
   </data>
   <data name="CreateValidationSuccess" xml:space="preserve">
     <value>Validation passed.</value>
   </data>
   <data name="CreateValidationError" xml:space="preserve">
-    <value>Validation failed. Required information is missing or not valid.</value>
+    <value>Weryfikowanie nie powiodło się. Brak wymaganych informacji lub są one nieprawidłowe.</value>
   </data>
   <data name="Create" xml:space="preserve">
-    <value>Create</value>
+    <value>Utwórz</value>
   </data>
   <data name="ExtensionName" xml:space="preserve">
     <value>AzurePortalExtension2</value>
   </data>
   <data name="Status" xml:space="preserve">
-    <value>Status</value>
+    <value>Stan</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Settings</value>
+    <value>Ustawienia</value>
   </data>
   <data name="TextPropertyLabel" xml:space="preserve">
-    <value>Text Property Label</value>
+    <value>Etykieta właściwości tekstu</value>
   </data>
   <data name="LinkPropertyLabel" xml:space="preserve">
-    <value>Link Property Label</value>
+    <value>Etykieta właściwości linku</value>
   </data>
   <data name="MicrosoftUri" xml:space="preserve">
     <value>www.microsoft.com</value>
   </data>
   <data name="AssetPropertyNames_Resource_ResourceGroup" xml:space="preserve">
-    <value>Resource group</value>
+    <value>Grupa zasobów</value>
   </data>
   <data name="AssetPropertyNames_CloudService_Location" xml:space="preserve">
-    <value>Location</value>
+    <value>Lokalizacja</value>
   </data>
   <data name="MonitoringLensTitle" xml:space="preserve">
-    <value>Monitoring</value>
+    <value>Monitorowanie</value>
   </data>
   <data name="ResourceOverviewBladeTitle" xml:space="preserve">
-    <value>Resource Title</value>
+    <value>Tytuł zasobu</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
     <value>Create a new Codespace</value>
@@ -287,10 +287,10 @@
     <value>My Codespaces</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
-    <value>Resource part subtitle</value>
+    <value>Podtytuł części zasobu</value>
   </data>
   <data name="ResourcePartTitle" xml:space="preserve">
-    <value>Resource part title</value>
+    <value>Tytuł części zasobu</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
     <value>Delete Plan</value>
@@ -302,19 +302,19 @@
     <value>Add Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
-    <value>Property label</value>
+    <value>Etykieta właściwości</value>
   </data>
   <data name="PropertyValue" xml:space="preserve">
-    <value>Property value</value>
+    <value>Wartość właściwości</value>
   </data>
   <data name="PropertyWithHyperlink" xml:space="preserve">
-    <value>Property with hyperlink</value>
+    <value>Właściwość z hiperlinkiem</value>
   </data>
   <data name="Codespaces_description" xml:space="preserve">
-    <value>Consistent experiences across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+    <value>Spójne środowisko w obrębie całej platformy Azure umożliwia użytkownikom korzystanie z kilku znanych i sprawdzonych wzorców projektowych na całej platformie Azure.</value>
   </data>
   <data name="Codespaces_keywords" xml:space="preserve">
-    <value>UX UI design patterns sample extension ibiza consistency</value>
+    <value>środowisko użytkownika interfejs użytkownika wzorce projektowe przykład rozszerzenie ibiza spójność</value>
   </data>
   <data name="Codespaces_link1Title" xml:space="preserve">
     <value>Get consistent</value>
@@ -329,37 +329,37 @@
     <value>http://www.bing.com</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>Refresh</value>
+    <value>Odśwież</value>
   </data>
   <data name="ResourceCommand" xml:space="preserve">
-    <value>Command1</value>
+    <value>Polecenie 1</value>
   </data>
   <data name="Item1" xml:space="preserve">
     <value>Codespaces</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
-    <value>one keyword1</value>
+    <value>jedno słowo kluczowe 1</value>
   </data>
   <data name="Item2" xml:space="preserve">
-    <value>Item2</value>
+    <value>Element 2</value>
   </data>
   <data name="Item2Keywords" xml:space="preserve">
-    <value>two keyword2</value>
+    <value>dwa słowa kluczowe 2</value>
   </data>
   <data name="Keys" xml:space="preserve">
-    <value>Keys</value>
+    <value>Klucze</value>
   </data>
   <data name="KeysKeywords" xml:space="preserve">
-    <value>connection string</value>
+    <value>parametry połączenia</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
     <value>Codespaces</value>
   </data>
   <data name="Overview" xml:space="preserve">
-    <value>Overview</value>
+    <value>Przegląd</value>
   </data>
   <data name="OverviewKeywords" xml:space="preserve">
-    <value>Summary Home</value>
+    <value>Strona główna podsumowania</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
     <value>VS Codespace plans provides managed, on-demand development.</value>
@@ -374,40 +374,40 @@
     <value>Virtual network/subnet</value>
   </data>
   <data name="InfoTile1_Description" xml:space="preserve">
-    <value>This is an info tile</value>
+    <value>To jest kafelek informacyjny</value>
   </data>
   <data name="InfoTile1_Title" xml:space="preserve">
-    <value>Info Tile</value>
+    <value>Kafelek informacyjny</value>
   </data>
   <data name="Monitoring_ChartTitle" xml:space="preserve">
-    <value>Chart title</value>
+    <value>Tytuł wykresu</value>
   </data>
   <data name="Monitoring_OneDay" xml:space="preserve">
-    <value>1 day</value>
+    <value>1 dzień</value>
   </data>
   <data name="Monitoring_OneHour" xml:space="preserve">
-    <value>1 hour</value>
+    <value>1 godzina</value>
   </data>
   <data name="Monitoring_SevenDays" xml:space="preserve">
-    <value>7 days</value>
+    <value>7 dni</value>
   </data>
   <data name="Monitoring_ShowDataForLast" xml:space="preserve">
-    <value>Show data for last</value>
+    <value>Pokaż dane dla ostatnich</value>
   </data>
   <data name="Monitoring_SixHours" xml:space="preserve">
-    <value>6 hours</value>
+    <value>6 godzin</value>
   </data>
   <data name="Monitoring_ThirtyDays" xml:space="preserve">
-    <value>30 days</value>
+    <value>30 dni</value>
   </data>
   <data name="Monitoring_Title" xml:space="preserve">
-    <value>Monitoring title</value>
+    <value>Tytuł monitorowania</value>
   </data>
   <data name="Monitoring_TwelveHours" xml:space="preserve">
-    <value>12 hours</value>
+    <value>12 godzin</value>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn more</value>
+    <value>Dowiedz się więcej</value>
   </data>
   <data name="Tile_AddCodespaceTitle" xml:space="preserve">
     <value>Add a Codespace</value>
@@ -437,40 +437,40 @@
     <value>Open Codespaces in Visual Studio</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
-    <value>Following patterns across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+    <value>Następujące wzorce w obrębie całej platformy Azure umożliwiają użytkownikom korzystanie z kilku znanych i sprawdzonych wzorców projektowych na całej platformie Azure.</value>
   </data>
   <data name="Tile_ConsistencyTitle" xml:space="preserve">
-    <value>Azure portal design patterns</value>
+    <value>Wzory projektów w witrynie Azure Portal</value>
   </data>
   <data name="esentialsAdditionalRightLink1Title" xml:space="preserve">
-    <value>Hyperlink title</value>
+    <value>Tytuł hiperlinku</value>
   </data>
   <data name="Tile_ContextPaneDescription" xml:space="preserve">
-    <value>To avoid jarring context switches, toolbar buttons and links within pages should open blades using the openContextPane method.</value>
+    <value>Aby uniknąć gwałtownych zmian kontekstu, przyciski paska narzędzi i linki na stronach powinny otwierać bloki za pomocą metody openContextPane.</value>
   </data>
   <data name="Tile_ContextPaneLinkTitle" xml:space="preserve">
-    <value>Open blade in context pane - Keys</value>
+    <value>Otwórz blok w okienku kontekstu — klucze</value>
   </data>
   <data name="Tile_ContextPaneTitle" xml:space="preserve">
-    <value>Open blade in context pane</value>
+    <value>Otwórz blok w okienku kontekstu</value>
   </data>
   <data name="Tile_MenuDescription" xml:space="preserve">
-    <value>Links within pages and toolbar buttons should re-use existing menu items by using the switchItem method</value>
+    <value>Linki w obrębie stron i przyciski paska narzędzi powinny ponownie używać istniejących elementów menu przy użyciu metody switchItem</value>
   </data>
   <data name="Tile_MenuLinkTitle" xml:space="preserve">
-    <value>Open Item1</value>
+    <value>Otwórz element 1</value>
   </data>
   <data name="Tile_MenuTitle" xml:space="preserve">
-    <value>Select menu item</value>
+    <value>Wybierz element menu</value>
   </data>
   <data name="DeleteConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete this resource?</value>
+    <value>Czy na pewno chcesz usunąć ten zasób?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
-    <value>Primary key</value>
+    <value>Klucz podstawowy</value>
   </data>
   <data name="KeySecondaryKeyLabel" xml:space="preserve">
-    <value>Secondary key</value>
+    <value>Klucz pomocniczy</value>
   </data>
   <data name="DxMenuItem" xml:space="preserve">
     <value>Declarative View</value>

@@ -121,50 +121,50 @@
     <value>http://msdn.microsoft.com</value>
   </data>
   <data name="ResourceOverviewBladeSubtitle" xml:space="preserve">
-    <value>Resource Subtitle</value>
+    <value>리소스 부제목</value>
     <comment>Subtitle for my blade.</comment>
   </data>
   <data name="QuickStartBladeSubtitle" xml:space="preserve">
-    <value>Quick Start Blade Subtitle</value>
+    <value>빠른 시작 블레이드 하위 제목</value>
   </data>
   <data name="QuickStartBladeTitle" xml:space="preserve">
-    <value>Quick Start Blade Title</value>
+    <value>빠른 시작 블레이드 제목</value>
   </data>
   <data name="QuickStartDescription" xml:space="preserve">
-    <value>Quick Start Description</value>
+    <value>빠른 시작 설명</value>
   </data>
   <data name="QuickStartInfoListDesc1" xml:space="preserve">
-    <value>This section has an Icon and will open a new browser tab on click. These two factors are mutually exclusive as the first depends on if an iconUri is set and the second because section.selectable was populated. This description text is multiline.</value>
+    <value>이 섹션에는 아이콘이 있으며 클릭하면 새 브라우저 탭이 열립니다. section.selectable이 채워져 있기 때문에 첫 번째 요소는 iconUri의 설정 여부와 두 번째 요소에 좌우되므로 이 두 요소는 함께 사용할 수 없습니다. 이 설명 텍스트는 여러 줄로 되어 있습니다.</value>
   </data>
   <data name="QuickStartInfoListDesc2" xml:space="preserve">
-    <value>PDL provides openBlades and links[] of the InfoListBladeLinkContract type will be opened in blades. The tile supports both blade links and hyperlinks in the same section. Numbers are used when iconUri is not set.</value>
+    <value>PDL은 openBlades를 제공하고 InfoListBladeLinkContract 형식의 links[]가 블레이드에서 열립니다. 타일은 동일한 섹션에서 블레이드 링크와 하이퍼링크를 모두 지원합니다. 숫자는 iconUri가 설정되지 않은 경우 사용됩니다.</value>
   </data>
   <data name="QuickStartInfoListTitle1" xml:space="preserve">
-    <value>Icon &amp; Selectable</value>
+    <value>아이콘 및 선택 가능</value>
   </data>
   <data name="QuickStartInfoListTitle2" xml:space="preserve">
-    <value>Section that opens blade</value>
+    <value>블레이드를 여는 섹션</value>
   </data>
   <data name="QuickStartShortTitle" xml:space="preserve">
-    <value>Quick Start</value>
+    <value>빠른 시작</value>
   </data>
   <data name="QuickStartTitle" xml:space="preserve">
-    <value>Quick Start</value>
+    <value>빠른 시작</value>
   </data>
   <data name="PropertiesBladeTitle" xml:space="preserve">
-    <value>Properties</value>
+    <value>속성</value>
   </data>
   <data name="SubscriptionId" xml:space="preserve">
-    <value>Subscription Id</value>
+    <value>구독 ID</value>
   </data>
   <data name="LoadingText" xml:space="preserve">
-    <value>Loading...</value>
+    <value>로드 중...</value>
   </data>
   <data name="ResourceNameColumn" xml:space="preserve">
-    <value>Name</value>
+    <value>이름</value>
   </data>
   <data name="ResourceLocationColumn" xml:space="preserve">
-    <value>Location</value>
+    <value>위치</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
     <value>Codespaces Plans</value>
@@ -194,79 +194,79 @@
     <value>Project details</value>
   </data>
   <data name="ProjectDetailsDescription" xml:space="preserve">
-    <value>Select the subscription to manage deployed resources and costs. Use resource groups like folders to organize and manage all your resources.</value>
+    <value>배포된 리소스와 비용을 관리할 구독을 선택합니다. 폴더 같은 리소스 그룹을 사용하여 모든 리소스를 정리 및 관리합니다.</value>
   </data>
   <data name="subscriptionDropDownInfoBalloon" xml:space="preserve">
-    <value>All resources in an Azure subscription are billed together.</value>
+    <value>Azure 구독의 모든 리소스가 함께 청구됩니다.</value>
   </data>
   <data name="ResourceGroupDropDownInfoBalloon" xml:space="preserve">
-    <value>A resource group is a collection of resources that share the same lifecycle, permissions, and policies.</value>
+    <value>리소스 그룹은 동일한 수명 주기, 권한 및 정책을 공유하는 리소스 컬렉션입니다.</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Name</value>
+    <value>이름</value>
   </data>
   <data name="InstanceDetails" xml:space="preserve">
-    <value>Instance details</value>
+    <value>인스턴스 세부 정보</value>
   </data>
   <data name="Basics" xml:space="preserve">
-    <value>Basics</value>
+    <value>기본</value>
   </data>
   <data name="Tags" xml:space="preserve">
-    <value>Tags</value>
+    <value>태그</value>
   </data>
   <data name="ResourceGroup" xml:space="preserve">
-    <value>Resource group</value>
+    <value>리소스 그룹</value>
   </data>
   <data name="Subscription" xml:space="preserve">
-    <value>Subscription</value>
+    <value>구독</value>
   </data>
   <data name="ReviewAndCreate" xml:space="preserve">
-    <value>Review + create</value>
+    <value>검토 + 만들기</value>
   </data>
   <data name="Previous" xml:space="preserve">
-    <value>Previous</value>
+    <value>이전</value>
   </data>
   <data name="Next" xml:space="preserve">
-    <value>Next</value>
+    <value>다음</value>
   </data>
   <data name="CreateValidationSuccess" xml:space="preserve">
     <value>Validation passed.</value>
   </data>
   <data name="CreateValidationError" xml:space="preserve">
-    <value>Validation failed. Required information is missing or not valid.</value>
+    <value>유효성 검사를 실패했습니다. 필수 정보가 누락되었거나 잘못되었습니다.</value>
   </data>
   <data name="Create" xml:space="preserve">
-    <value>Create</value>
+    <value>만들기</value>
   </data>
   <data name="ExtensionName" xml:space="preserve">
     <value>AzurePortalExtension2</value>
   </data>
   <data name="Status" xml:space="preserve">
-    <value>Status</value>
+    <value>상태</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Settings</value>
+    <value>설정</value>
   </data>
   <data name="TextPropertyLabel" xml:space="preserve">
-    <value>Text Property Label</value>
+    <value>텍스트 속성 레이블</value>
   </data>
   <data name="LinkPropertyLabel" xml:space="preserve">
-    <value>Link Property Label</value>
+    <value>링크 속성 레이블</value>
   </data>
   <data name="MicrosoftUri" xml:space="preserve">
     <value>www.microsoft.com</value>
   </data>
   <data name="AssetPropertyNames_Resource_ResourceGroup" xml:space="preserve">
-    <value>Resource group</value>
+    <value>리소스 그룹</value>
   </data>
   <data name="AssetPropertyNames_CloudService_Location" xml:space="preserve">
-    <value>Location</value>
+    <value>위치</value>
   </data>
   <data name="MonitoringLensTitle" xml:space="preserve">
-    <value>Monitoring</value>
+    <value>모니터링</value>
   </data>
   <data name="ResourceOverviewBladeTitle" xml:space="preserve">
-    <value>Resource Title</value>
+    <value>리소스 제목</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
     <value>Create a new Codespace</value>
@@ -287,10 +287,10 @@
     <value>My Codespaces</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
-    <value>Resource part subtitle</value>
+    <value>리소스 부분 부제</value>
   </data>
   <data name="ResourcePartTitle" xml:space="preserve">
-    <value>Resource part title</value>
+    <value>리소스 부분 제목</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
     <value>Delete Plan</value>
@@ -302,19 +302,19 @@
     <value>Add Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
-    <value>Property label</value>
+    <value>속성 레이블</value>
   </data>
   <data name="PropertyValue" xml:space="preserve">
-    <value>Property value</value>
+    <value>속성 값</value>
   </data>
   <data name="PropertyWithHyperlink" xml:space="preserve">
-    <value>Property with hyperlink</value>
+    <value>하이퍼링크가 있는 속성</value>
   </data>
   <data name="Codespaces_description" xml:space="preserve">
-    <value>Consistent experiences across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+    <value>Azure에서 일관된 사용 환경을 구축하면 사용자가 Azure 전체에서 잘 알려지고 조사된 몇 가지 디자인 패턴을 활용할 수 있습니다.</value>
   </data>
   <data name="Codespaces_keywords" xml:space="preserve">
-    <value>UX UI design patterns sample extension ibiza consistency</value>
+    <value>UX UI 디자인 패턴 샘플 확장 ibiza 일관성</value>
   </data>
   <data name="Codespaces_link1Title" xml:space="preserve">
     <value>Get consistent</value>
@@ -329,7 +329,7 @@
     <value>http://www.bing.com</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>Refresh</value>
+    <value>새로 고침</value>
   </data>
   <data name="ResourceCommand" xml:space="preserve">
     <value>Command1</value>
@@ -338,28 +338,28 @@
     <value>Codespaces</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
-    <value>one keyword1</value>
+    <value>keyword1 1개</value>
   </data>
   <data name="Item2" xml:space="preserve">
     <value>Item2</value>
   </data>
   <data name="Item2Keywords" xml:space="preserve">
-    <value>two keyword2</value>
+    <value>keyword2 두 개</value>
   </data>
   <data name="Keys" xml:space="preserve">
-    <value>Keys</value>
+    <value>키</value>
   </data>
   <data name="KeysKeywords" xml:space="preserve">
-    <value>connection string</value>
+    <value>연결 문자열</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
     <value>Codespaces</value>
   </data>
   <data name="Overview" xml:space="preserve">
-    <value>Overview</value>
+    <value>개요</value>
   </data>
   <data name="OverviewKeywords" xml:space="preserve">
-    <value>Summary Home</value>
+    <value>요약 홈</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
     <value>VS Codespace plans provides managed, on-demand development.</value>
@@ -374,40 +374,40 @@
     <value>Virtual network/subnet</value>
   </data>
   <data name="InfoTile1_Description" xml:space="preserve">
-    <value>This is an info tile</value>
+    <value>정보 타일임</value>
   </data>
   <data name="InfoTile1_Title" xml:space="preserve">
-    <value>Info Tile</value>
+    <value>정보 타일</value>
   </data>
   <data name="Monitoring_ChartTitle" xml:space="preserve">
-    <value>Chart title</value>
+    <value>차트 제목</value>
   </data>
   <data name="Monitoring_OneDay" xml:space="preserve">
-    <value>1 day</value>
+    <value>1일</value>
   </data>
   <data name="Monitoring_OneHour" xml:space="preserve">
-    <value>1 hour</value>
+    <value>1시간</value>
   </data>
   <data name="Monitoring_SevenDays" xml:space="preserve">
-    <value>7 days</value>
+    <value>7일</value>
   </data>
   <data name="Monitoring_ShowDataForLast" xml:space="preserve">
-    <value>Show data for last</value>
+    <value>다음 기간의 데이터 표시:</value>
   </data>
   <data name="Monitoring_SixHours" xml:space="preserve">
-    <value>6 hours</value>
+    <value>6시간</value>
   </data>
   <data name="Monitoring_ThirtyDays" xml:space="preserve">
-    <value>30 days</value>
+    <value>30일</value>
   </data>
   <data name="Monitoring_Title" xml:space="preserve">
-    <value>Monitoring title</value>
+    <value>모니터링 제목</value>
   </data>
   <data name="Monitoring_TwelveHours" xml:space="preserve">
-    <value>12 hours</value>
+    <value>12시간</value>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn more</value>
+    <value>자세한 정보</value>
   </data>
   <data name="Tile_AddCodespaceTitle" xml:space="preserve">
     <value>Add a Codespace</value>
@@ -437,40 +437,40 @@
     <value>Open Codespaces in Visual Studio</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
-    <value>Following patterns across Azure enable users to leverage a few well-known and researched design patterns throughout Azure.</value>
+    <value>Azure에서 패턴을 따르면 사용자가 Azure 전체에서 잘 알려지고 조사된 몇 가지 디자인 패턴을 활용할 수 있습니다.</value>
   </data>
   <data name="Tile_ConsistencyTitle" xml:space="preserve">
-    <value>Azure portal design patterns</value>
+    <value>Azure Portal 디자인 패턴</value>
   </data>
   <data name="esentialsAdditionalRightLink1Title" xml:space="preserve">
-    <value>Hyperlink title</value>
+    <value>하이퍼링크 제목</value>
   </data>
   <data name="Tile_ContextPaneDescription" xml:space="preserve">
-    <value>To avoid jarring context switches, toolbar buttons and links within pages should open blades using the openContextPane method.</value>
+    <value>컨텍스트 전환 충돌을 방지하려면 도구 모음 단추 및 페이지 내의 링크가 openContextPane 메서드를 사용해서 블레이드를 열어야 합니다.</value>
   </data>
   <data name="Tile_ContextPaneLinkTitle" xml:space="preserve">
-    <value>Open blade in context pane - Keys</value>
+    <value>컨텍스트 창에서 블레이드 열기 - 키</value>
   </data>
   <data name="Tile_ContextPaneTitle" xml:space="preserve">
-    <value>Open blade in context pane</value>
+    <value>컨텍스트 창에서 블레이드 열기</value>
   </data>
   <data name="Tile_MenuDescription" xml:space="preserve">
-    <value>Links within pages and toolbar buttons should re-use existing menu items by using the switchItem method</value>
+    <value>페이지 내의 링크 및 도구 모음 단추가 switchItem 메서드를 사용해서 기존 메뉴 항목을 재사용해야 합니다.</value>
   </data>
   <data name="Tile_MenuLinkTitle" xml:space="preserve">
-    <value>Open Item1</value>
+    <value>Item1 열기</value>
   </data>
   <data name="Tile_MenuTitle" xml:space="preserve">
-    <value>Select menu item</value>
+    <value>메뉴 항목 선택</value>
   </data>
   <data name="DeleteConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete this resource?</value>
+    <value>이 리소스를 삭제하시겠습니까?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
-    <value>Primary key</value>
+    <value>기본 키</value>
   </data>
   <data name="KeySecondaryKeyLabel" xml:space="preserve">
-    <value>Secondary key</value>
+    <value>보조 키</value>
   </data>
   <data name="DxMenuItem" xml:space="preserve">
     <value>Declarative View</value>
