@@ -5,7 +5,7 @@ This document lists the set of azure subscriptions used to run the [Visual Studi
 - [Subscription Provisioning Plan](#subscription-provisioning-plan)
 - [Tenants and Access Control](#tenants-and-access-control)
 - [List of Supported Regions](#list-of-supported-regions)
-- [List of Subscrptions](#list-of-subscriptions)
+- [List of Subscriptions](#list-of-subscriptions)
 
 ## Subscription Provisioning Plan
 
@@ -34,26 +34,42 @@ New subscriptions must be provisioned via [AIRS](https://aka.ms/airs) using the 
 
 ### Provisioning Non-Production Subscriptions
 
-- Select the AIRs registration that corresponds to your **@microsoft.com** identity.
-- Click the "Add Subscription" button and sign in with your **@microsoft.com** identity.
-- Select service [Visual Studio Codespaces](https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b)
-- Use PCCode `P74841`.
+- From [Air Approved Registrations](https://azuremsregistration.microsoft.com/MyApprovedRegistrations.aspx)
+  - Select the AIRs registration that corresponds to your **@microsoft.com** identity.
+  - Click the "Add Subscription" button and sign in with your **@microsoft.com** identity.
+- OR directly
+  - [Azure Sign Up MS-AZR-0015P](https://account.windowsazure.com/SignUp?offer=MS-AZR-0015P) and sign in with your **@microsoft.com** identity.
+- Service: [Visual Studio Codespaces](https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b)
+- Environment: "Non-Production"
+- Non-production eviction impact: "Standard Impact"
+- Usage information: set end-date to 10 years, estimate spend to $500.
+- Hosted on-behalf of customers: "No" for all non-production subscriptions
+- PC Code: `P74841`
 
 ### Provisioning Production Subscriptions
 
-- Select the AIRs registration that corresponds to your **@pme.gbl.msidentity.com** identity.
-- Click the "Add Subscription" button and sign in with your **@pme.gbl.msidentity.com** identity.
-- Select service [Visual Studio Codespaces](https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b)
-- Use PCCode `P10168064`.
+**NOTE: the instructions below down't work from SAW because https://airs.microsoft.com isn't accessible :(**
+
+- From [Air Approved Registrations](https://azuremsregistration.microsoft.com/MyApprovedRegistrations.aspx)
+  - Select the AIRs registration that corresponds to your **@pme.gbl.msidentity.com** identity.
+  - Click the "Add Subscription" button and sign in with your **@pme.gbl.msidentity.com** identity.
+- OR directly
+  - [Azure Sign Up MS-AZR-0015P](https://account.windowsazure.com/SignUp?offer=MS-AZR-0015P) and sign in with your **@pme.gbl.msidentity.com** identity.
+- Service: [Visual Studio Codespaces](https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b)
+- Environment: "Production"
+- Hosted on-behalf of customers: "Yes" for Data plane, otherwise "No"
+- PC Code: `P10168064`
 
 ### Onboarding a New Subscription
 
 After the subscription has been created, onboarded the subscription by following these steps.
 
-1. Update the [List of Subscrptions](#list-of-subscriptions) below. This will help your fellow engineers to find subscription IDs for JIT requests, since the PPE and PROD subscriptions are not visible by default in the portal.
+1. Update the [List of Subscriptions](#list-of-subscriptions) below. This will help your fellow engineers to find subscription IDs for JIT requests, since the PPE and PROD subscriptions are not visible by default in the portal.
 1. *TBD: Run the relevant ARM Subscription templates. This will set appropriate RBAC and ownership.*
 1. *TBD: Set the subscription administrator to an ALT_breakglass account.*
 1. *TBD: Add the subscription to the relevant appsettings.*.json file.*
+1. *TBD: Move the subscription to the appropriate component in [Service Tree](https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b).
+1. *TBD: Add -prod- subscdriptions to [Canary Onboarding](http://aka.ms/canaryintwhitelist).
 
 ## List of Supported Regions
 
@@ -106,7 +122,7 @@ Data plane subscriptions must be provisioned for all supported regions.
 | [vscs-comm-dev-data-uk-s-000]() | `TBD` | CORP | Communications | Dev | Data | SignalR |
 | [vscs-comm-dev-data-us-e-000]() | `TBD` | CORP | Communications | Dev | Data | SignalR |
 | [vscs-comm-dev-data-us-w2-000]() | `TBD` | CORP | Communications | Dev | Data | SignalR |
-| [vscs-core-dev-ctl ]() | `TBD` | CORP | Core | Dev | Control | Shared Core Cluster |
-| [vscs-core-dev-ops ]() | `TBD` | CORP | Core | Dev | DevOps | Shared DevOps |
-| [vscs-core-dev-ops-monitoring]() | `TBD` | CORP | Core | Dev | DevOps | Geneva CodespacesDev |
+| [vscs-core-dev-ctl ](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/4546508f-1ae3-4117-a658-3cff37c4cc5c) | `4546508f-1ae3-4117-a658-3cff37c4cc5c` | CORP | Core | Dev | Control | Shared Core Cluster |
+| [vscs-core-dev-ops ](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/03f9b555-3a9a-44c4-b410-a53acc2a32eb) | `03f9b555-3a9a-44c4-b410-a53acc2a32eb` | CORP | Core | Dev | DevOps | Shared DevOps |
+| [vscs-core-dev-ops-monitoring](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/c97073a5-23d2-4c41-9a78-63993e4762c5) | `c97073a5-23d2-4c41-9a78-63993e4762c5` | CORP | Core | Dev | DevOps | Geneva CodespacesDev |
 | [vscs-core-test](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/ebf675df-782e-47f7-a68d-b4c4696a28e2/overview) | `ebf675df-782e-47f7-a68d-b4c4696a28e2` | CORP | Core | Test | (any) | Development R & D |

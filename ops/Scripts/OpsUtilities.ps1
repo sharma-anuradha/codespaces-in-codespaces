@@ -83,12 +83,12 @@ function Get-AzureSubscriptionName(
     return $subscriptionName
   }
 
+  if ($DataType) {
+    $subscriptionName += "-$DataType"
+  }
+
   if ($Plane -eq "data") {
 
-    if ($DataType) {
-      $subscriptionName += "-$DataType"
-    }
-  
     if ($Geo -and $RegionCode) {
       Test-AzureGeography -Geo $Geo -Throw
       $subscriptionName += "-$Geo-$RegionCode"
@@ -100,7 +100,6 @@ function Get-AzureSubscriptionName(
     $countSuffix = "{0:d3}" -f $count
     $subscriptionName += "-$countSuffix"
   }
-
 
   $subscriptionName = $subscriptionName.ToLowerInvariant()
 
@@ -215,12 +214,51 @@ function Get-ServicePrincipal(
   [Parameter(Mandatory = $true)]
   [string]$Env,
   [Parameter(Mandatory = $true)]
-  [string]$Plane
+  [string]$Plane,
+  [switch]$Create
 ) {
   $servicePrincipalName = Get-AzureResourceName -Prefix $Prefix -Component $Component -Env $Env -Plane $Plane -TypeSuffix "sp"
-  Get-AzADServicePrincipal -DisplayName $servicePrincipalName
+  $sp = Get-AzADServicePrincipal -DisplayName $servicePrincipalName
+
+  if (!$sp) {
+
+    if ($Create) {
+      & az ad sp create-for-rbac --skip-assignment --name $servicePrincipalName
+      Assert-LastExitCodeSuccess -Message "az ad sp create-for-rbac failed"
+      $sp = Get-AzADServicePrincipal -DisplayName $servicePrincipalName
+ 
+      if (!$sp) {
+        throw "failed to create service principal $servicePrincipalName"
+      }  
+    }
+    else {
+      throw "could not find service principal $servicePrincipalName"
+    }
+  }
+
+  $sp
 }
 
+function Assert-SignedInUserIsOwner() {
+
+  $account = (Get-AzContext).Account
+  if ($account.Type -ne "User") {
+    throw "Signed-in account is not a User."
+  }
+
+  $owner = Get-AzRoleAssignment -SignInName $account.id | Where-Object -Property RoleDefinitionName -eq "Owner" | Select-Object -First 1
+  if (!$owner) {
+    throw "Signed-in user  is not an Owner."
+  }
+
+  $owner
+}
+
+function Assert-LastExitCodeSuccess([string]$Message) {
+  if ($LASTEXITCODE -ne 0) {
+    throw $Message
+  }
+}
 function Reset-AppCertificateCredential(
   [string]$appId,
   [string]$VaultName,
@@ -231,14 +269,25 @@ function Reset-AppCertificateCredential(
   $expiresUtc = $expires.ToString("u")
 
   # PowerShell doesn't have a commandlet for doing this :(
-  $subscriptionName = (Get-AzContext).Subscription.Name
-  & az account set --subscription $subscriptionName
-  if ($LASTEXITCODE -ne 0) {
-    throw "az account set failed"
-  }
-  
   & az ad app credential reset --id $appId --append --keyvault $vaultName --cert $certName --credential-description "${vaultName}:${certName}" --end-date $expiresUtc
-  if ($LASTEXITCODE -ne 0) {
-    throw "az ad app credential reset failed"
-  }
+  Assert-LastExitCodeSuccess -Message "az ad app credential reset failed"
+}
+
+function Select-AzureSubscription(
+  [string]$Prefix,
+  [Parameter(Mandatory = $true)]
+  [string]$Component,
+  [Parameter(Mandatory = $true)]
+  [string]$Env,
+  [Parameter(Mandatory = $true)]
+  [string]$Plane,
+  [string]$DataType,
+  [string]$Geo,
+  [string]$RegionCode,
+  [int]$Count) {
+  $subscriptionName = Get-AzureSubscriptionName -Prefix $Prefix -Component $Component -Env $Env -Plane $Plane -DataType $DataType -Geo $Geo -RegionCode $RegionCode -Count $Count
+  $sub = Select-AzSubscription -Subscription $subscriptionName
+  & az account set --subscription $subscriptionName | Out-Null
+  Assert-LastExitCodeSuccess -Message "az account set failed"
+  $sub
 }

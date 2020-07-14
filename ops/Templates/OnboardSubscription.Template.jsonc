@@ -1,0 +1,389 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "type": "string",
+      "maxLength": 4
+    },
+    "component": {
+      "type": "string",
+      "maxLength": 6
+    },
+    "env": {
+      "type": "string",
+      "allowedValues": [
+        "test",
+        "dev",
+        "ppe",
+        "prod"
+      ],
+      "maxLength": 4
+    },
+    "plane": {
+      "type": "string",
+      "allowedValues": [
+        "ops",
+        "ctl",
+        "data"
+      ],
+      "maxLength": 3
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westus2"
+    },
+    "opsSpId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "defaultValue": ""
+    },
+    "adminsGroup": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "defaultValue": ""
+    },
+    "breakGlassGroup": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36
+    },
+    "contributorsGroup": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "defaultValue": ""
+    },
+    "readersGroup": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "defaultValue": ""
+    },
+    "skipResources": {
+      "type": "bool"
+    }
+  },
+  "variables": {
+    // Constants / well-known values
+    "tenantId": "[subscription().tenantId]",
+    "serviceTreeId": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
+    "serviceTreeUrl": "https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b",
+    // Map parameters to variables
+    "prefix": "[parameters('prefix')]",
+    "env": "[parameters('env')]",
+    "component": "[parameters('component')]",
+    "plane": "[parameters('plane')]",
+    "isDataPlane": "[equals(variables('plane'),'data')]",
+    "location": "[parameters('location')]",
+    "opsSpId": "[if(variables('isDataPlane'),'',parameters('opsSpId'))]",
+    "adminsGroup": "[parameters('adminsGroup')]",
+    "contributorsGroup": "[parameters('contributorsGroup')]",
+    "breakGlassGroup": "[parameters('breakGlassGroup')]",
+    "readersGroup": "[parameters('readersGroup')]",
+    "skipResources": "[parameters('skipResources')]",
+    // Resource names
+    "baseName": "[concat(variables('prefix'),'-',variables('component'),'-',variables('env'),'-',variables('plane'))]",
+    "defaultResourceGroupName": "[variables('baseName')]",
+    "keyVaultExtension": "[if(equals(variables('baseName'),'vscs-core-test-ops'),'-kv2','-kv')]",
+    "keyVaultName": "[concat(variables('baseName'),variables('keyVaultExtension'))]",
+    "containerRegistryName": "[replace(concat(variables('baseName'),'-acr'),'-','')]",
+    // Key Vault Access Policies
+    "isProduction": "[or(equals(variables('env'),'prod'),equals(variables('env'),'ppe'))]",
+    "listOnlyPermissions": {
+      "keys": [
+        "List"
+      ],
+      "secrets": [
+        "List"
+      ],
+      "certificates": [
+        "List"
+      ]
+    },
+    "fullPermissions": {
+      "keys": [
+        "All"
+      ],
+      "secrets": [
+        "All"
+      ],
+      "certificates": [
+        "All"
+      ]
+    },
+    "adminAccessPolicyItem": {
+      "tenantId": "[variables('tenantId')]",
+      "objectId": "[variables('adminsGroup')]",
+      "permissions": "[variables('fullPermissions')]"
+    },
+    "breakGlassAccessPolicyItem": {
+      "tenantId": "[variables('tenantId')]",
+      "objectId": "[variables('breakGlassGroup')]",
+      "permissions": "[variables('fullPermissions')]"
+    },
+    "contributorsAccessPolicyItem": {
+      "tenantId": "[variables('tenantId')]",
+      "objectId": "[variables('contributorsGroup')]",
+      "permissions": "[variables('fullPermissions')]"
+    },
+    "readersAccessPolicyItem": {
+      "tenantId": "[variables('tenantId')]",
+      "objectId": "[variables('readersGroup')]",
+      "permissions": "[variables('listOnlyPermissions')]"
+    },
+    "opsSpAccessPolicyItem": {
+      "tenantId": "[variables('tenantId')]",
+      "objectId": "[variables('opsSpId')]",
+      "permissions": "[variables('fullPermissions')]"
+    },
+    "adminAccessPolicy": "[if(not(empty(variables('adminAccessPolicyItem').objectId)),createArray(variables('adminAccessPolicyItem')),createArray())]",
+    "breakGlassAccessPolicy": "[if(not(empty(variables('breakGlassAccessPolicyItem').objectId)),createArray(variables('breakGlassAccessPolicyItem')),createArray())]",
+    "contributorsAccessPolicy": "[if(not(empty(variables('contributorsAccessPolicyItem').objectId)),createArray(variables('contributorsAccessPolicyItem')),createArray())]",
+    "readersAccessPolicy": "[if(not(empty(variables('readersAccessPolicyItem').objectId)),createArray(variables('readersAccessPolicyItem')),createArray())]",
+    "opsSpAccessPolicy": "[if(not(empty(variables('opsSpAccessPolicyItem').objectId)),createArray(variables('opsSpAccessPolicyItem')),createArray())]",
+    "accessPolicies": "[concat(variables('adminAccessPolicy'),variables('breakGlassAccessPolicy'),variables('contributorsAccessPolicy'),variables('readersAccessPolicy'),variables('opsSpAccessPolicy'))]",
+    // Role definition ids
+    "acrPullRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+    "acrPushRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8311e382-0749-4cb8-b61a-304f252e45ec')]",
+    "azureServiceDeployContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','21d96096-b162-414a-8302-d8354f9d91b2')]",
+    "contributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+    "ownerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','8e3af657-a8ff-443c-a75c-2fe8c4bcb635')]",
+    "readerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions','acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+  },
+  "resources": [
+    // Tag the subscription with some useful stuff
+    {
+      "name": "default",
+      "type": "Microsoft.Resources/tags",
+      "apiVersion": "2020-06-01",
+      "properties": {
+        "tags": {
+          "prefix": "[variables('prefix')]",
+          "component": "[variables('component')]",
+          "env": "[variables('env')]",
+          "plane": "[variables('plane')]",
+          "serviceTreeId": "[variables('serviceTreeId')]",
+          "serviceTreeUrl": "[variables('serviceTreeUrl')]"
+        }
+      }
+    },
+    // Create the default resource group
+    {
+      "name": "[variables('defaultResourceGroupName')]",
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2020-06-01",
+      "location": "[variables('location')]"
+    },
+    // Assign Contributor to the Ops service principal
+    {
+      "condition": "[not(empty(variables('opsSpId')))]",
+      "name": "[guid(subscription().id,variables('opsSpId'),variables('contributorRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleId')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    // Assign "Azure Service Deploy Release Management Contributor" to the Ops service principal
+    // TODO: is this role assignment still required for Ev2?
+    {
+      "condition": "[not(empty(variables('opsSpId')))]",
+      "name": "[guid(subscription().id,variables('opsSpId'),variables('azureServiceDeployContributorRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('azureServiceDeployContributorRoleId')]",
+        "principalId": "[variables('opsSpId')]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    // Assign Reader to the team Readers group
+    {
+      "condition": "[not(empty(variables('readersGroup')))]",
+      "name": "[guid(subscription().id,variables('readersGroup'),variables('readerRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('readerRoleId')]",
+        "principalId": "[variables('readersGroup')]",
+        "principalType": "Group"
+      }
+    },
+    // Assign Owner to the team Admins group (non-prod only)
+    {
+      "condition": "[not(empty(variables('adminsGroup')))]",
+      "name": "[guid(subscription().id,variables('adminsGroup'),variables('ownerRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('ownerRoleId')]",
+        "principalId": "[variables('adminsGroup')]",
+        "principalType": "Group"
+      }
+    },
+    // Assign Reader to the team Contribututors group (non-prod only)
+    {
+      "condition": "[not(empty(variables('contributorsGroup')))]",
+      "name": "[guid(subscription().id,variables('contributorsGroup'),variables('contributorRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleId')]",
+        "principalId": "[variables('contributorsGroup')]",
+        "principalType": "Group"
+      }
+    },
+    // Assign Owner to the break-glass group
+    {
+      "condition": "[not(empty(variables('breakGlassGroup')))]",
+      "name": "[guid(subscription().id,variables('breakGlassGroup'),variables('ownerRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('ownerRoleId')]",
+        "principalId": "[variables('breakGlassGroup')]",
+        "principalType": "Group"
+      }
+    },
+    // Resources that go in the default resource group (except for data-plane).
+    // Key Vault, Container Registry.
+    {
+      "condition": "[not(variables('skipResources'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "defaultResourceGroupDeployment",
+      "resourceGroup": "[variables('defaultResourceGroupName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/resourceGroups/', variables('defaultResourceGroupName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2016-10-01",
+              "name": "[variables('keyVaultName')]",
+              "location": "[variables('location')]",
+              "properties": {
+                "sku": {
+                  "family": "A",
+                  "name": "Standard"
+                },
+                "tenantId": "[variables('tenantId')]",
+                "accessPolicies": "[variables('accessPolicies')]",
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "enableSoftDelete": false
+              }
+            },
+            {
+              "type": "Microsoft.ContainerRegistry/registries",
+              "name": "[variables('containerRegistryName')]",
+              "apiVersion": "2019-12-01-preview",
+              "location": "[variables('location')]",
+              "sku": {
+                "name": "Premium",
+                "tier": "Premium"
+              },
+              "properties": {
+                "adminUserEnabled": false,
+                "networkRuleSet": {
+                  "defaultAction": "Allow",
+                  "virtualNetworkRules": [],
+                  "ipRules": []
+                },
+                "policies": {
+                  "quarantinePolicy": {
+                    "status": "disabled"
+                  },
+                  "trustPolicy": {
+                    "type": "Notary",
+                    "status": "disabled"
+                  },
+                  "retentionPolicy": {
+                    "days": 7,
+                    "status": "disabled"
+                  }
+                },
+                "encryption": {
+                  "status": "disabled"
+                },
+                "dataEndpointEnabled": false,
+                "publicNetworkAccess": "Enabled"
+              }
+            },
+            // Assign AcrPull to the ops service principal
+            {
+              "condition": "[not(empty(variables('opsSpId')))]",
+              "name": "[guid(subscription().id,variables('opsSpId'),variables('acrPullRoleId'),variables('defaultResourceGroupName'))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-03-01-preview",
+              "properties": {
+                "roleDefinitionId": "[variables('acrPullRoleId')]",
+                "principalId": "[variables('opsSpId')]",
+                "principalType": "ServicePrincipal",
+                "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups/',variables('defaultResourceGroupName'))]"
+              }
+            },
+            // Assign AcrPush to the ops service principal
+            {
+              "condition": "[not(empty(variables('opsSpId')))]",
+              "name": "[guid(subscription().id,variables('opsSpId'),variables('acrPushRoleId'),variables('defaultResourceGroupName'))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-03-01-preview",
+              "properties": {
+                "roleDefinitionId": "[variables('acrPushRoleId')]",
+                "principalId": "[variables('opsSpId')]",
+                "principalType": "ServicePrincipal",
+                "scope": "[subscriptionResourceId('Microsoft.Resources/resourceGroups/',variables('defaultResourceGroupName'))]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "variables": {
+      "type": "object",
+      "value": {
+        "tenantId": "[variables('tenantId')]",
+        "prefix": "[variables('prefix')]",
+        "env": "[variables('env')]",
+        "component": "[variables('component')]",
+        "plane": "[variables('plane')]",
+        "isDataPlane": "[variables('isDataPlane')]",
+        "location": "[variables('location')]",
+        "opsSpId": "[variables('opsSpId')]",
+        "adminsGroup": "[variables('adminsGroup')]",
+        "contributorsGroup": "[variables('contributorsGroup')]",
+        "breakGlassGroup": "[variables('breakGlassGroup')]",
+        "readersGroup": "[variables('readersGroup')]",
+        "baseName": "[variables('baseName')]",
+        "defaultResourceGroupName": "[variables('defaultResourceGroupName')]",
+        "keyVaultName": "[variables('keyVaultName')]",
+        "containerRegistryName": "[variables('containerRegistryName')]",
+        "adminAccessPolicy": "[variables('adminAccessPolicy')]",
+        "breakGlassAccessPolicy": "[variables('breakGlassAccessPolicy')]",
+        "contributorsAccessPolicy": "[variables('contributorsAccessPolicy')]",
+        "readersAccessPolicy": "[variables('readersAccessPolicy')]",
+        "opsSpAccessPolicy": "[variables('opsSpAccessPolicy')]"
+      }
+    },
+    "resources": {
+      "type": "object",
+      "value": {
+        "defaultResourceGroup": "[subscriptionResourceId('Microsoft.Resources/resourceGroups/',variables('defaultResourceGroupName'))]"
+      }
+    }
+  }
+}

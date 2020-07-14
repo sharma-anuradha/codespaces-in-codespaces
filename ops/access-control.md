@@ -2,6 +2,8 @@
 
 Production and non-production sysrtms use two different systems for access control.
 
+In addition to these, there is also a doc on [Standard RBAC Roles](https://microsoft.sharepoint.com/teams/AzureSecurityCompliance/Security/SitePages/Standard%20RBAC%20Roles.aspx) that we might consider adopting.
+
 ## Access to PPE and PROD Subscriptions
 
 Production and pre-production subscriptions live in the PME tenant and are governed by PME security groups defined in [OneIdentity](https://oneidentity.core.windows.net). You must sign in using your PME identity and Yubi key to obtain access to these groups.

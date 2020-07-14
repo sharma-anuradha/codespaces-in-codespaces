@@ -11,7 +11,11 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Env,
     [Parameter(Mandatory = $true)]
-    [string]$Plane
+    [string]$Plane,
+    [string]$DataType,
+    [string]$Geo,
+    [string]$RegionCode,
+    [int]$Count
 )
 
 # Global error handling
@@ -33,7 +37,7 @@ if ($PSBoundParameters.ContainsKey('Verbose')) {
 }
 
 # Names
-$subscriptionName = Get-AzureSubscriptionName -Prefix $Prefix -Component $Component -Env $Env -Plane $Plane
+$subscriptionName = Get-AzureSubscriptionName -Prefix $Prefix -Component $Component -Env $Env -Plane $Plane -DataType $DataType -Geo $Geo -RegionCode $RegionCode -Count $Count
 $vaultName = Get-AzureResourceName -Prefix $Prefix -Component $Component -Env $Env -Plane $Plane -TypeSuffix "kv"
 # Temporary hack because the original key vault couldn't be deleted/purged.
 if ($vaultName -eq "vscs-core-test-ops-kv") {

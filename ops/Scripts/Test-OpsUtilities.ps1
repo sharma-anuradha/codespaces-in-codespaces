@@ -99,9 +99,14 @@ Test-Block -Expected "vscs-core-dev-ctl" -ScriptBlock {
   Get-AzureSubscriptionName -Component "Core" -Env "Dev" -Plane "Ctl"
 } | Out-Null
 
-Test-Block -Expected "vscs-core-dev-ops" -ScriptBlock {
+Test-Block -Expected "vscs-core-dev-ops-monitoring" -ScriptBlock {
   # Tests that additional parameters are ignored if not data plane
-  Get-AzureSubscriptionName -Component "Core" -Env "Dev" -Plane "ops" -DataType "Compute" -Geo "us" -RegionCode "e" -Count 99
+  Get-AzureSubscriptionName -Component "Core" -Env "Dev" -Plane "ops" -DataType "Monitoring" -Geo "us" -RegionCode "e" -Count 99
+} | Out-Null
+
+Test-Block -Expected "vscs-core-dev-ops-monitoring" -ScriptBlock {
+  # Tests that additional parameters are ignored if not data plane
+  Get-AzureSubscriptionName -Component "Core" -Env "Dev" -Plane "ops" -DataType "Monitoring"
 } | Out-Null
 
 Test-Block -Throws -ScriptBlock {
