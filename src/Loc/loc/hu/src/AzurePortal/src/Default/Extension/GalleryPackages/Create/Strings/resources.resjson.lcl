@@ -12,18 +12,27 @@
       <Item ItemId=";description" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[<p>Visual Studio Codespaces has a browser-based editor with support for Git repos, extensions, and a built-in command line interface so you can edit, run, and debug  your applications from any device.</p> <li>Cloud-hosted</li><li>Bring your own</li><li>Any language</li><li>Extension Marketplace</li>]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[<p>A Visual Studio Codespaces rendelkezik egy böngészőalapú szerkesztővel, amely támogatja a Git-adattárakat, és bővítményekkel és egy beépített parancssori felülettel rendelkezik, így bármilyen eszközön szerkesztheti és futtathatja az alkalmazásokat, és elvégezheti azok hibaelhárítását.</p> <li>Felhőalapú</li><li>Saját eszközök használata</li><li>Tetszőleges nyelv</li><li>Bővítménypiactér</li>]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";displayName" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plans]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Codespaces-csomagok]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";longSummary" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Whether you’re working on a long-term project, a  short-lived feature branch, or want to quickly review a pull request, Visual Studio Codespaces can help you be more productive by providing a fully configured development environment in minutes.]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Akár egy hosszú távú projekten, akár egy rövid életű funkcióágon dolgozik, vagy egy lekéréses kérelmet szeretne gyorsan ellenőrizni, a Visual Studio Codespaces szolgáltatással növelheti hatékonyságát, mivel az percek alatt biztosít egy teljes körűen konfigurált fejlesztői környezetet.]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -39,6 +48,9 @@
       <Item ItemId=";summary" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Cloud-hosted dev environments accessible from anywhere]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Bárhonnan elérhető felhőalapú fejlesztői környezetek]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
