@@ -114,7 +114,7 @@ export class CreateBlade {
                 initialLocationName: ko.observableArray<string>(),
                 subscriptionId: subscriptionId,
                 validations: [new Validations.Required()],
-                resourceTypes: ["Microsoft.VSOnline/plans"],
+                resourceTypes: ["Microsoft.Codespaces/plans"],
             }
         );
         //config#locationDropDown
@@ -343,7 +343,7 @@ export class CreateBlade {
         return JSON.stringify({
             $schema:
                 // "http://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
-                "http://schema.management.azure.com/schemas/2019-08-01-alpha/deploymentTemplate.json#",
+                "http://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
             contentVersion: "1.0.0.0",
             parameters: {
                 name: {
@@ -358,11 +358,11 @@ export class CreateBlade {
             },
             resources: [
                 {
-                    apiVersion: "2019-07-01-preview",
+                    apiVersion: "2020-05-26",
                     //apiVersion: "2019-07-01-alpha",
                     name: "[parameters('name')]",
                     location: "[parameters('location')]",
-                    type: "Microsoft.VSOnline/plans",
+                    type: "Microsoft.Codespaces/plans",
                     tags: "[parameters('tags')]",
                 },
             ],
@@ -378,7 +378,7 @@ export class CreateBlade {
         tags: ReadonlyStringMap<string>
     ): TemplateBlade.DoesProvisioning.DeployTemplateOptions {
         const galleryCreateOptions = this.context.provisioning.marketplaceItem;
-        const resourceIdFormattedString = `/subscriptions/${subscriptionId}/resourcegroups/${resourceGroupName}/providers/Microsoft.VSOnline/plans/${name}`;
+        const resourceIdFormattedString = `/subscriptions/${subscriptionId}/resourcegroups/${resourceGroupName}/providers/Microsoft.Codespaces/plans/${name}`;
         const deferred = Q.defer<
             MsPortalFx.Azure.ResourceManager.TemplateDeploymentOptions
         >();
@@ -395,7 +395,7 @@ export class CreateBlade {
             resourceGroupLocation: resourceGroupLocation,
             parameters: parameters,
             deploymentName: galleryCreateOptions.deploymentName + Date.now(),
-            resourceProviders: ["Microsoft.VSOnline"],
+            resourceProviders: ["Microsoft.Codespaces"],
             resourceId: resourceIdFormattedString,
             templateJson: this._getTemplateJson(),
         };

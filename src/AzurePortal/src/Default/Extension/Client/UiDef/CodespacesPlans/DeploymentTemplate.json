@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2019-08-01-alpha/deploymentTemplate.json#",
+    "$schema": "http://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "name": {
@@ -37,8 +37,8 @@
     },
     "resources": [
         {
-            "type": "Microsoft.VSOnline/plans",
-            "apiVersion": "2020-05-26-alpha",
+            "type": "Microsoft.Codespaces/plans",
+            "apiVersion": "2020-06-16",
             "name": "[parameters('name')]",
             "location": "[parameters('location')]",
             "dependsOn": [ "[variables('virtualNetworkName')]" ],

@@ -14,7 +14,7 @@ export class HttpCodespacesManager implements CodespacesManager {
         this.tokenPromise = ajax<{ accessToken: string }>({
             setAuthorizationHeader: true,
             type: 'POST',
-            uri: getArmUri(`${planId}/writeEnvironments`),
+            uri: getArmUri(`${planId}/writeCodespaces`),
         }).then(({ accessToken }) => accessToken);
     }
 

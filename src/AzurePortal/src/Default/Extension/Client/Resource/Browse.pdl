@@ -48,7 +48,7 @@
     <Browse Type="ResourceType" />
     <ResourceMenu ResourceProvidedBy="ProvidedByResourceMenu" UseStaticOverview="true" />
     <!-- <ResourceType ResourceTypeName="Microsoft.VSOnline/plans" ApiVersion="2019-07-01-preview" /> -->
-    <ResourceType ResourceTypeName="Microsoft.VSOnline/plans" ApiVersion="2019-07-01-alpha" />
+    <ResourceType ResourceTypeName="Microsoft.Codespaces/plans" ApiVersion="2020-06-16" />
   </AssetType>
   <ResourceMenuBladeRedirect FromBlade="ResourceOverviewBlade" />
 </Definition>

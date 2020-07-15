@@ -1,12 +1,12 @@
 {
     "enablePortalLogging": true,
-    "armApiVersion": "2019-07-01-preview",
+    "armApiVersion": "2020-06-16",
     "reflowReadyDefault": true,
     "trustedDomains": [
         "https://online.dev.core.vsengsaas.visualstudio.com/",
         "https://online-ppe.core.vsengsaas.visualstudio.com/",
         "https://online.visualstudio.com/"
     ],
-    "codespacesEndpoint": "https://online.visualstudio.com",
+    "codespacesEndpoint": "https://online.visualstudio.com/",
     "codespacesApiVersion": "v1"
 }
