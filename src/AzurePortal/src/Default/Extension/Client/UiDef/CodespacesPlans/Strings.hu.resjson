@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "Codespaces-csomag neve",
+  "networking": "Hálózatkezelés",
+  "networking_addVirtualNetwork_label": "Virtuális hálózat hozzáadása?",
+  "networking_addVirtualNetwork_yes": "Igen",
+  "networking_addVirtualNetwork_no": "Nem",
+  "networking_virtualNetworkLabel": "Virtuális hálózat",
+  "networking_subnetsLabel": "Alhálózatok",
+  "networking_subnetLabel": "Alhálózat"
 }

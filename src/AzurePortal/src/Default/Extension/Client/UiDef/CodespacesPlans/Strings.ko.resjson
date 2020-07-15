@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "코드 공간 플랜 이름",
+  "networking": "네트워킹",
+  "networking_addVirtualNetwork_label": "가상 네트워크를 추가하시겠습니까?",
+  "networking_addVirtualNetwork_yes": "예",
+  "networking_addVirtualNetwork_no": "아니요",
+  "networking_virtualNetworkLabel": "가상 네트워크",
+  "networking_subnetsLabel": "서브넷",
+  "networking_subnetLabel": "서브넷"
 }

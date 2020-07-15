@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "Имя плана пространства кода",
+  "networking": "Сеть",
+  "networking_addVirtualNetwork_label": "Добавить виртуальную сеть?",
+  "networking_addVirtualNetwork_yes": "Да",
+  "networking_addVirtualNetwork_no": "Нет",
+  "networking_virtualNetworkLabel": "Виртуальная сеть",
+  "networking_subnetsLabel": "Подсети",
+  "networking_subnetLabel": "Подсеть"
 }

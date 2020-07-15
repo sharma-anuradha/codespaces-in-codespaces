@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "Nom du plan Codespaces",
+  "networking": "Réseau",
+  "networking_addVirtualNetwork_label": "Ajouter un réseau virtuel ?",
+  "networking_addVirtualNetwork_yes": "Oui",
+  "networking_addVirtualNetwork_no": "Non",
+  "networking_virtualNetworkLabel": "Réseau virtuel",
+  "networking_subnetsLabel": "Sous-réseaux",
+  "networking_subnetLabel": "Sous-réseau"
 }

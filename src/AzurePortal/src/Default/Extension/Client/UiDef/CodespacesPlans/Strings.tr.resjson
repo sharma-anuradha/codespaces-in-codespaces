@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "Kod Alanı Planı Adı",
+  "networking": "Ağ",
+  "networking_addVirtualNetwork_label": "Sanal Ağ eklensin mi?",
+  "networking_addVirtualNetwork_yes": "Evet",
+  "networking_addVirtualNetwork_no": "Hayır",
+  "networking_virtualNetworkLabel": "Sanal Ağ",
+  "networking_subnetsLabel": "Alt ağlar",
+  "networking_subnetLabel": "Alt ağ"
 }

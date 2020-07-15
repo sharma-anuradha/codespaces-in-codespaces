@@ -167,25 +167,25 @@
     <value>Localização</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>Planos do Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>Codespaces Plan</value>
+    <value>Plano do Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>codespaces plans</value>
+    <value>planos do codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>codespaces plan</value>
+    <value>plano do codespaces</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>Create Codespaces Plan</value>
+    <value>Criar um Plano do Codespaces</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>Planos do Codespaces</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
-    <value>Add a description of your service here to quickly introduce your service to customers. Also add a Learn More link that links to documentation or Azure's marketing site for your resource type.</value>
+    <value>Adicione uma descrição do seu serviço aqui para apresentar rapidamente o serviço aos clientes. Adicione também uma ligação Saiba Mais que se liga à documentação ou ao site de marketing do Azure correspondente ao seu tipo de recurso.</value>
   </data>
   <data name="CreateBladeIntroductionLink" xml:space="preserve">
     <value>https://azure.microsoft.com/</value>
@@ -269,13 +269,13 @@
     <value>Título do Recurso</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Create a new Codespace</value>
+    <value>Criar um novo Codespace</value>
   </data>
   <data name="CreateCodespaceBladeTitle" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>Criar Codespace</value>
   </data>
   <data name="EditCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Update Codespace settings</value>
+    <value>Atualizar as definições do Codespace</value>
   </data>
   <data name="EditCodespaceBladeTitle" xml:space="preserve">
     <value>Editar Codespace</value>
@@ -284,7 +284,7 @@
     <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
-    <value>My Codespaces</value>
+    <value>Os Meus Codespaces</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
     <value>Subtítulo da parte do recurso</value>
@@ -317,10 +317,10 @@
     <value>Consistência ibiza de extensão de exemplo para padrões de design de UX/IU</value>
   </data>
   <data name="Codespaces_link1Title" xml:space="preserve">
-    <value>Get consistent</value>
+    <value>Garanta a consistência</value>
   </data>
   <data name="Codespaces_link2Title" xml:space="preserve">
-    <value>Learn more</value>
+    <value>Saiba mais</value>
   </data>
   <data name="Codespaces_link1Uri" xml:space="preserve">
     <value>http://www.bing.com</value>
@@ -362,10 +362,10 @@
     <value>Home Page de Resumos</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
-    <value>VS Codespace plans provides managed, on-demand development.</value>
+    <value>Os planos do VS Codespace oferecem desenvolvimento gerido e a pedido.</value>
   </data>
   <data name="Overview_CodespacePlanNameLabel" xml:space="preserve">
-    <value>VS Codespace plan name</value>
+    <value>Nome do plano do VS Codespace</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
     <value>VS Codespaces</value>
@@ -410,31 +410,31 @@
     <value>Mais informações</value>
   </data>
   <data name="Tile_AddCodespaceTitle" xml:space="preserve">
-    <value>Add a Codespace</value>
+    <value>Adicionar um Codespace</value>
   </data>
   <data name="Tile_AddCodespaceDescription" xml:space="preserve">
-    <value>Create, build, deploy, and manage powerful web, mobile, and API apps for employees or customers using a single back-end.</value>
+    <value>Crie, compile, implemente e faça a gestão de aplicações Web, móveis e API poderosas para funcionários ou clientes com um único back-end.</value>
   </data>
   <data name="Tile_AddCodespaceLinkTitle" xml:space="preserve">
-    <value>Add a Codespace</value>
+    <value>Adicionar um Codespace</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksTitle" xml:space="preserve">
-    <value>Configure Virtual Networks</value>
+    <value>Configurar as Redes Virtuais</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksDescription" xml:space="preserve">
-    <value>Azure Virtual Network (VNet) is the fundamental building block for your private network in Azure. VNet enables many types of Azure resources to securely communicate with each other.</value>
+    <value>A Rede Virtual (VNet) do Azure é a pedra basilar da sua rede privada no Azure. A VNet permite que muitos tipos de recursos do Azure comuniquem entre si com toda a segurança.</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksLinkTitle" xml:space="preserve">
-    <value>Configure Virtual Network</value>
+    <value>Configurar a Rede Virtual</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationTitle" xml:space="preserve">
-    <value>Change Codespace configuration </value>
+    <value>Alterar a configuração do Codespace </value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationDescription" xml:space="preserve">
-    <value>App Service Adivsor provides insights for improving app experience on the App Service platform. Recommendations are sorted by freshness, priority and impact.</value>
+    <value>O Assistente do Serviço de Aplicações fornece informações que permitem melhorar a experiência da aplicação na plataforma do Serviço de Aplicações. As recomendações são ordenadas por atualização, prioridade e impacto.</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>Open Codespaces in Visual Studio</value>
+    <value>Abrir o Codespaces no Visual Studio</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>Seguir padrões em todo o Azure permite aos utilizadores tirar partido de alguns padrões de estrutura bem conhecidos e analisados em todo o Azure.</value>
@@ -479,9 +479,9 @@
     <value>DxMenuGroup</value>
   </data>
   <data name="DxKeywords" xml:space="preserve">
-    <value>dx declarative started</value>
+    <value>dx declarativo iniciado</value>
   </data>
   <data name="feedback" xml:space="preserve">
-    <value>Feedback</value>
+    <value>Comentários</value>
   </data>
 </root>

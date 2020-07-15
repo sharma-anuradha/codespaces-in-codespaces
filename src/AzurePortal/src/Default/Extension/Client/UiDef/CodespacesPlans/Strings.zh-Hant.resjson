@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "程式碼空間方案名稱",
+  "networking": "網路",
+  "networking_addVirtualNetwork_label": "要新增虛擬網路嗎?",
+  "networking_addVirtualNetwork_yes": "是",
+  "networking_addVirtualNetwork_no": "否",
+  "networking_virtualNetworkLabel": "虛擬網路",
+  "networking_subnetsLabel": "子網路",
+  "networking_subnetLabel": "子網路"
 }

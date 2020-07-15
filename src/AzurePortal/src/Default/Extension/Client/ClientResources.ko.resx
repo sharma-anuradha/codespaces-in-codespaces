@@ -167,31 +167,31 @@
     <value>위치</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>코드 공간 플랜</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>Codespaces Plan</value>
+    <value>코드 공간 플랜</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>codespaces plans</value>
+    <value>코드 공간 플랜</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>codespaces plan</value>
+    <value>코드 공간 플랜</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>Create Codespaces Plan</value>
+    <value>코드 공간 플랜 만들기</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>코드 공간 플랜</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
-    <value>Add a description of your service here to quickly introduce your service to customers. Also add a Learn More link that links to documentation or Azure's marketing site for your resource type.</value>
+    <value>고객에게 서비스를 빠르게 소개하려면 여기에 서비스에 대한 설명을 추가하세요. 또한 리소스 종류의 설명서 또는 Azure 마케팅 사이트로 연결되는 자세한 정보 링크를 추가하세요.</value>
   </data>
   <data name="CreateBladeIntroductionLink" xml:space="preserve">
     <value>https://azure.microsoft.com/</value>
   </data>
   <data name="ProjectDetails" xml:space="preserve">
-    <value>Project details</value>
+    <value>프로젝트 세부 정보</value>
   </data>
   <data name="ProjectDetailsDescription" xml:space="preserve">
     <value>배포된 리소스와 비용을 관리할 구독을 선택합니다. 폴더 같은 리소스 그룹을 사용하여 모든 리소스를 정리 및 관리합니다.</value>
@@ -230,7 +230,7 @@
     <value>다음</value>
   </data>
   <data name="CreateValidationSuccess" xml:space="preserve">
-    <value>Validation passed.</value>
+    <value>유효성 검사를 통과했습니다.</value>
   </data>
   <data name="CreateValidationError" xml:space="preserve">
     <value>유효성 검사를 실패했습니다. 필수 정보가 누락되었거나 잘못되었습니다.</value>
@@ -269,22 +269,22 @@
     <value>리소스 제목</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Create a new Codespace</value>
+    <value>새 코드 공간 만들기</value>
   </data>
   <data name="CreateCodespaceBladeTitle" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>코드 공간 만들기</value>
   </data>
   <data name="EditCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Update Codespace settings</value>
+    <value>코드 공간 설정 업데이트</value>
   </data>
   <data name="EditCodespaceBladeTitle" xml:space="preserve">
-    <value>Edit Codespace</value>
+    <value>코드 공간 편집</value>
   </data>
   <data name="CodespacesBladeSubtitle" xml:space="preserve">
-    <value>Codespaces</value>
+    <value>코드 공간</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
-    <value>My Codespaces</value>
+    <value>내 코드 공간</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
     <value>리소스 부분 부제</value>
@@ -317,10 +317,10 @@
     <value>UX UI 디자인 패턴 샘플 확장 ibiza 일관성</value>
   </data>
   <data name="Codespaces_link1Title" xml:space="preserve">
-    <value>Get consistent</value>
+    <value>일관성 유지</value>
   </data>
   <data name="Codespaces_link2Title" xml:space="preserve">
-    <value>Learn more</value>
+    <value>자세한 정보</value>
   </data>
   <data name="Codespaces_link1Uri" xml:space="preserve">
     <value>http://www.bing.com</value>
@@ -335,7 +335,7 @@
     <value>Command1</value>
   </data>
   <data name="Item1" xml:space="preserve">
-    <value>Codespaces</value>
+    <value>코드 공간</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
     <value>keyword1 1개</value>
@@ -353,7 +353,7 @@
     <value>연결 문자열</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
-    <value>Codespaces</value>
+    <value>코드 공간</value>
   </data>
   <data name="Overview" xml:space="preserve">
     <value>개요</value>
@@ -362,16 +362,16 @@
     <value>요약 홈</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
-    <value>VS Codespace plans provides managed, on-demand development.</value>
+    <value>VS 코드 공간 플랜은 관리형 주문형 개발을 제공합니다.</value>
   </data>
   <data name="Overview_CodespacePlanNameLabel" xml:space="preserve">
-    <value>VS Codespace plan name</value>
+    <value>VS 코드 공간 플랜 이름</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
-    <value>VS Codespaces</value>
+    <value>VS 코드 공간</value>
   </data>
   <data name="Overview_VirtualNetworkLabel" xml:space="preserve">
-    <value>Virtual network/subnet</value>
+    <value>가상 네트워크/서브넷</value>
   </data>
   <data name="InfoTile1_Description" xml:space="preserve">
     <value>정보 타일임</value>
@@ -410,31 +410,31 @@
     <value>자세한 정보</value>
   </data>
   <data name="Tile_AddCodespaceTitle" xml:space="preserve">
-    <value>Add a Codespace</value>
+    <value>코드 공간 추가</value>
   </data>
   <data name="Tile_AddCodespaceDescription" xml:space="preserve">
-    <value>Create, build, deploy, and manage powerful web, mobile, and API apps for employees or customers using a single back-end.</value>
+    <value>단일 백 엔드를 사용하여 직원 또는 고객을 위한 강력한 웹, 모바일 및 API 앱을 생성, 빌드, 배포 및 관리합니다.</value>
   </data>
   <data name="Tile_AddCodespaceLinkTitle" xml:space="preserve">
-    <value>Add a Codespace</value>
+    <value>코드 공간 추가</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksTitle" xml:space="preserve">
-    <value>Configure Virtual Networks</value>
+    <value>가상 네트워크 구성</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksDescription" xml:space="preserve">
-    <value>Azure Virtual Network (VNet) is the fundamental building block for your private network in Azure. VNet enables many types of Azure resources to securely communicate with each other.</value>
+    <value>Azure VNet(Virtual Network)은 Azure에서 프라이빗 네트워크에 대한 기본 구성 요소입니다. VNet은 여러 종류의 Azure 리소스가 서로 안전하게 통신할 수 있게 해줍니다.</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksLinkTitle" xml:space="preserve">
-    <value>Configure Virtual Network</value>
+    <value>가상 네트워크 구성</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationTitle" xml:space="preserve">
-    <value>Change Codespace configuration </value>
+    <value>코드 공간 구성 변경 </value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationDescription" xml:space="preserve">
-    <value>App Service Adivsor provides insights for improving app experience on the App Service platform. Recommendations are sorted by freshness, priority and impact.</value>
+    <value>App Service Advisor는 App Service 플랫폼의 앱 환경을 개선하는 데 필요한 인사이트를 제공합니다. 권장 사항은 최신별, 우선 순위별, 영향별로 정렬됩니다.</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>Open Codespaces in Visual Studio</value>
+    <value>Visual Studio에서 코드 공간 열기</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>Azure에서 패턴을 따르면 사용자가 Azure 전체에서 잘 알려지고 조사된 몇 가지 디자인 패턴을 활용할 수 있습니다.</value>
@@ -473,15 +473,15 @@
     <value>보조 키</value>
   </data>
   <data name="DxMenuItem" xml:space="preserve">
-    <value>Declarative View</value>
+    <value>선언적 보기</value>
   </data>
   <data name="DxMenuGroup" xml:space="preserve">
     <value>DxMenuGroup</value>
   </data>
   <data name="DxKeywords" xml:space="preserve">
-    <value>dx declarative started</value>
+    <value>dx 선언적 시작됨</value>
   </data>
   <data name="feedback" xml:space="preserve">
-    <value>Feedback</value>
+    <value>피드백</value>
   </data>
 </root>

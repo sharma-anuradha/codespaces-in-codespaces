@@ -167,31 +167,31 @@
     <value>Konum</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>Codespaces Planları</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>Codespaces Plan</value>
+    <value>Codespaces Planı</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>codespaces plans</value>
+    <value>codespaces planları</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>codespaces plan</value>
+    <value>codespaces planı</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>Create Codespaces Plan</value>
+    <value>Codespaces Planı Oluştur</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>Codespaces Planları</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
-    <value>Add a description of your service here to quickly introduce your service to customers. Also add a Learn More link that links to documentation or Azure's marketing site for your resource type.</value>
+    <value>Hizmetinizi müşterilerinize hızlıca tanıtmak için hizmetinizin açıklamasını buraya ekleyin. Ayrıca, kaynak türü için belgelerin veya Azure'ın pazarlama sitesine yönelik bir Daha Fazla Bilgi bağlantısı ekleyin.</value>
   </data>
   <data name="CreateBladeIntroductionLink" xml:space="preserve">
     <value>https://azure.microsoft.com/</value>
   </data>
   <data name="ProjectDetails" xml:space="preserve">
-    <value>Project details</value>
+    <value>Proje ayrıntıları</value>
   </data>
   <data name="ProjectDetailsDescription" xml:space="preserve">
     <value>Dağıtılan kaynakları ve maliyetleri yönetmek için bir abonelik seçin. Tüm kaynakları düzenlemek ve yönetmek için klasörler gibi kaynak grupları kullanın.</value>
@@ -230,7 +230,7 @@
     <value>Sonraki</value>
   </data>
   <data name="CreateValidationSuccess" xml:space="preserve">
-    <value>Validation passed.</value>
+    <value>Doğrulama başarılı oldu.</value>
   </data>
   <data name="CreateValidationError" xml:space="preserve">
     <value>Doğrulama başarısız oldu. Gerekli bilgiler eksik veya geçerli değil.</value>
@@ -269,22 +269,22 @@
     <value>Kaynak Başlığı</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Create a new Codespace</value>
+    <value>Yeni bir Kod Alanı oluştur</value>
   </data>
   <data name="CreateCodespaceBladeTitle" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>Kod Alanı Oluştur</value>
   </data>
   <data name="EditCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Update Codespace settings</value>
+    <value>Kod Alanı ayarlarını güncelleştir</value>
   </data>
   <data name="EditCodespaceBladeTitle" xml:space="preserve">
-    <value>Edit Codespace</value>
+    <value>Kod Alanını Düzenle</value>
   </data>
   <data name="CodespacesBladeSubtitle" xml:space="preserve">
     <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
-    <value>My Codespaces</value>
+    <value>Kod Alanlarım</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
     <value>Kaynak bölümü alt başlığı</value>
@@ -317,10 +317,10 @@
     <value>UX UI tasarım desenleri örnek uzantısı ibiza tutarlılığı</value>
   </data>
   <data name="Codespaces_link1Title" xml:space="preserve">
-    <value>Get consistent</value>
+    <value>Tutarlılık sağlayın</value>
   </data>
   <data name="Codespaces_link2Title" xml:space="preserve">
-    <value>Learn more</value>
+    <value>Daha fazla bilgi</value>
   </data>
   <data name="Codespaces_link1Uri" xml:space="preserve">
     <value>http://www.bing.com</value>
@@ -362,16 +362,16 @@
     <value>Özet Ana Sayfası</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
-    <value>VS Codespace plans provides managed, on-demand development.</value>
+    <value>VS Kod Alanı planları yönetilen, isteğe bağlı geliştirme sağlar.</value>
   </data>
   <data name="Overview_CodespacePlanNameLabel" xml:space="preserve">
-    <value>VS Codespace plan name</value>
+    <value>VS Kod Alanı planı adı</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
     <value>VS Codespaces</value>
   </data>
   <data name="Overview_VirtualNetworkLabel" xml:space="preserve">
-    <value>Virtual network/subnet</value>
+    <value>Sanal ağ/alt ağ</value>
   </data>
   <data name="InfoTile1_Description" xml:space="preserve">
     <value>Bu bir bilgi kutucuğudur</value>
@@ -410,31 +410,31 @@
     <value>Daha fazla bilgi</value>
   </data>
   <data name="Tile_AddCodespaceTitle" xml:space="preserve">
-    <value>Add a Codespace</value>
+    <value>Kod Alanı Ekle</value>
   </data>
   <data name="Tile_AddCodespaceDescription" xml:space="preserve">
-    <value>Create, build, deploy, and manage powerful web, mobile, and API apps for employees or customers using a single back-end.</value>
+    <value>Tek bir arka uç kullanarak, çalışanlar veya müşteriler için güçlü web uygulamaları, mobil uygulamalar ve API uygulamaları oluşturun, derleyin, dağıtın ve yönetin.</value>
   </data>
   <data name="Tile_AddCodespaceLinkTitle" xml:space="preserve">
-    <value>Add a Codespace</value>
+    <value>Kod Alanı Ekle</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksTitle" xml:space="preserve">
-    <value>Configure Virtual Networks</value>
+    <value>Sanal Ağları Yapılandır</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksDescription" xml:space="preserve">
-    <value>Azure Virtual Network (VNet) is the fundamental building block for your private network in Azure. VNet enables many types of Azure resources to securely communicate with each other.</value>
+    <value>Azure Sanal Ağ (VNet), Azure'daki özel ağınız için temel yapı taşıdır. Sanal ağ, birçok Azure kaynağı türünün birbirleriyle güvenli bir şekilde iletişim kurmasını sağlar.</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksLinkTitle" xml:space="preserve">
-    <value>Configure Virtual Network</value>
+    <value>Sanal Ağı Yapılandır</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationTitle" xml:space="preserve">
-    <value>Change Codespace configuration </value>
+    <value>Kod Alanı yapılandırmasını değiştir </value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationDescription" xml:space="preserve">
-    <value>App Service Adivsor provides insights for improving app experience on the App Service platform. Recommendations are sorted by freshness, priority and impact.</value>
+    <value>App Service Danışmanı, App Service platformunda uygulama deneyimini iyileştirmeye yönelik bilgiler sağlar. Öneriler yenilik, öncelik ve etkiye göre sıralanır.</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>Open Codespaces in Visual Studio</value>
+    <value>Kod Alanlarını Visual Studio'da aç</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>Azure'daki desenleri takip etmek, kullanıcıların Azure üzerinde iyi bilinen ve araştırılmış tasarım desenlerinden yararlanmasına olanak sağlar.</value>
@@ -473,15 +473,15 @@
     <value>İkincil anahtar</value>
   </data>
   <data name="DxMenuItem" xml:space="preserve">
-    <value>Declarative View</value>
+    <value>Bildirime Dayalı Görünüm</value>
   </data>
   <data name="DxMenuGroup" xml:space="preserve">
     <value>DxMenuGroup</value>
   </data>
   <data name="DxKeywords" xml:space="preserve">
-    <value>dx declarative started</value>
+    <value>dx bildirimi başladı</value>
   </data>
   <data name="feedback" xml:space="preserve">
-    <value>Feedback</value>
+    <value>Geri bildirim</value>
   </data>
 </root>

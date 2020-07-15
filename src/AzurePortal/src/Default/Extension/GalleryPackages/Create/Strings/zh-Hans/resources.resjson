@@ -1,7 +1,7 @@
 {
-  "displayName": "Codespaces Plans",
+  "displayName": "Codespace 计划",
   "publisherDisplayName": "Microsoft",
-  "summary": "Cloud-hosted dev environments accessible from anywhere",
-  "longSummary": "Whether you’re working on a long-term project, a  short-lived feature branch, or want to quickly review a pull request, Visual Studio Codespaces can help you be more productive by providing a fully configured development environment in minutes.",
-  "description": "<p>Visual Studio Codespaces has a browser-based editor with support for Git repos, extensions, and a built-in command line interface so you can edit, run, and debug  your applications from any device.</p> <li>Cloud-hosted</li><li>Bring your own</li><li>Any language</li><li>Extension Marketplace</li>"
+  "summary": "可随处访问的云承载开发环境",
+  "longSummary": "无论是处理长期项目、短期功能分支，还是想要快速查看拉取请求，Visual Studio Codespaces 都可以通过在几分钟内提供完全配置的开发环境来帮助提高效率。",
+  "description": "<p>Visual Studio Codespaces 具有一个基于浏览器的编辑器，支持 Git 存储库、扩展和内置命令行界面，以便你可以从任何设备编辑、运行和调试应用程序。 </p> <li>云承载</li><li>自带</li><li>任何语言</li><li>扩展市场</li>"
 }

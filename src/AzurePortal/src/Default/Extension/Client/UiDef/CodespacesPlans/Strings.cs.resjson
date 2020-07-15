@@ -1,10 +1,10 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
-  "networking": "Networking",
-  "networking_addVirtualNetwork_label": "Add a Virtual Network?",
-  "networking_addVirtualNetwork_yes": "Yes",
-  "networking_addVirtualNetwork_no": "No",
-  "networking_virtualNetworkLabel": "Virtual Network",
-  "networking_subnetsLabel": "Subnets",
-  "networking_subnetLabel": "Subnet"
+  "basic_codespacePlanName_label": "Název plánu Codespaces",
+  "networking": "Sítě",
+  "networking_addVirtualNetwork_label": "Přidat virtuální síť?",
+  "networking_addVirtualNetwork_yes": "Ano",
+  "networking_addVirtualNetwork_no": "Ne",
+  "networking_virtualNetworkLabel": "Virtuální síť",
+  "networking_subnetsLabel": "Podsítě",
+  "networking_subnetLabel": "Podsíť"
 }

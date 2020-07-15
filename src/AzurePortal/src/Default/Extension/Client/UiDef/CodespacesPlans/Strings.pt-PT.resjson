@@ -1,5 +1,5 @@
 {
-  "basic_codespacePlanName_label": "Codespace Plan Name",
+  "basic_codespacePlanName_label": "Nome do Plano do Codespace",
   "networking": "Rede",
   "networking_addVirtualNetwork_label": "Adicionar uma Rede Virtual?",
   "networking_addVirtualNetwork_yes": "Sim",

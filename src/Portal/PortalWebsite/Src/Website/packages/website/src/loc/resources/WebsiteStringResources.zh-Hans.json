@@ -94,6 +94,7 @@
   "loadingAvailableSettings": "Loading available settings...",
   "loggingAzureDevOps": "Logging into Azure DevOps...",
   "loginPageSubtitle": "Cloud-powered dev environments accessible from anywhere",
+  "mock": "mock",
   "more": "More",
   "moreInfo": "More info...",
   "nameIsInvalid": "Invalid characters. The name can include alphanumeric, underscore, parentheses, hyphen, period and space.",

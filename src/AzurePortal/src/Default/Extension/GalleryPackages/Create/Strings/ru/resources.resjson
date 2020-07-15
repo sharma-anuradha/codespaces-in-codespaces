@@ -1,7 +1,7 @@
 {
-  "displayName": "Codespaces Plans",
+  "displayName": "Планы пространств кода",
   "publisherDisplayName": "Майкрософт",
-  "summary": "Cloud-hosted dev environments accessible from anywhere",
-  "longSummary": "Whether you’re working on a long-term project, a  short-lived feature branch, or want to quickly review a pull request, Visual Studio Codespaces can help you be more productive by providing a fully configured development environment in minutes.",
-  "description": "<p>Visual Studio Codespaces has a browser-based editor with support for Git repos, extensions, and a built-in command line interface so you can edit, run, and debug  your applications from any device.</p> <li>Cloud-hosted</li><li>Bring your own</li><li>Any language</li><li>Extension Marketplace</li>"
+  "summary": "Среды разработки с облачным размещением, доступные из любого места",
+  "longSummary": "Независимо от того, работаете ли вы над долгосрочным проектом, над кратковременной веткой компонентов или хотите быстро просмотреть запрос на вытягивание, Visual Studio Codespaces может помочь вам повысить продуктивность, предоставив полностью настроенную среду разработки за считаные минуты.",
+  "description": "<p>Visual Studio Codespaces содержит браузерный редактор, поддерживающий репозитории Git, расширения и встроенный интерфейс командной строки, позволяющий редактировать, запускать и отлаживать приложения на любом устройстве.</p><li>Облачное размещение</li><li>Использование собственного устройства</li><li>Любые языки</li><li>Магазин расширений</li>"
 }

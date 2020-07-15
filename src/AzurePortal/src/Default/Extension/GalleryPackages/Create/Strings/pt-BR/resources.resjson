@@ -1,7 +1,7 @@
 {
-  "displayName": "Codespaces Plans",
+  "displayName": "Planos dos Codespaces",
   "publisherDisplayName": "Microsoft",
-  "summary": "Cloud-hosted dev environments accessible from anywhere",
-  "longSummary": "Whether you’re working on a long-term project, a  short-lived feature branch, or want to quickly review a pull request, Visual Studio Codespaces can help you be more productive by providing a fully configured development environment in minutes.",
-  "description": "<p>Visual Studio Codespaces has a browser-based editor with support for Git repos, extensions, and a built-in command line interface so you can edit, run, and debug  your applications from any device.</p> <li>Cloud-hosted</li><li>Bring your own</li><li>Any language</li><li>Extension Marketplace</li>"
+  "summary": "Ambientes de desenvolvimento hospedados na nuvem acessíveis de qualquer lugar",
+  "longSummary": "Se você está trabalhando em um projeto de longo prazo, uma ramificação de recursos de vida curta ou deseja examinar rapidamente uma solicitação de pull, os Codespaces do Visual Studio podem ajudá-lo a ser mais produtivo, fornecendo um ambiente de desenvolvimento totalmente configurado em minutos.",
+  "description": "<p>Os Codespaces do Visual Studio tem um editor baseado em navegador com suporte para repositórios Git, extensões e uma interface de linha de comando interna para que você possa editar, executar e depurar os aplicativos de qualquer dispositivo.</p><li>Hospedado em nuvem</li><li>Traga seu próprio</li><li>Qualquer idioma</li><li>Marketplace de extensão</li>"
 }
