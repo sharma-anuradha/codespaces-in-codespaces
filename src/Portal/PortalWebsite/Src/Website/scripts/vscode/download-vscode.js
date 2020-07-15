@@ -4,6 +4,7 @@ const cp = require('child_process');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const url = require('url');
 const { promisify } = require('util');
 const tar = require('tar');
 
@@ -41,7 +42,7 @@ async function downloadVSCode(
 
         await ensureDir(targetFolderPath);
 
-        const archivePath = path.join(targetFolderPath, `${assetName}.tar.gz`);
+        const archivePath = path.join(targetFolderPath, path.basename(url.parse(downloadUrl).pathname));
 
         console.log('Downloading from url:', downloadUrl);
         await download(downloadUrl, archivePath);

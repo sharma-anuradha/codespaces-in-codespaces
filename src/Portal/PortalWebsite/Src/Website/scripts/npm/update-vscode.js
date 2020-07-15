@@ -1,21 +1,27 @@
 // @ts-check
 
 const fs = require('fs');
+const path = require('path');
 const { promisify } = require('util');
+const rimrafCallback = require('rimraf');
 
 const { getUpdateDetails } = require('../vscode/download-vscode');
 const { getVSCodeCommitFromPackage, downloadVSCodeAssets } = require('./utils');
 
-const { assetName, packageJsonPath, amdConfigPath } = require('./constants');
+const { assetName, packageJsonPath, amdConfigPath, vscodeServerAssetsTargetPath } = require('./constants');
 
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
+const rimraf = promisify(rimrafCallback);
 
 async function updateVSCodeAssets() {
     await Promise.all([
         updateVSCodeAssetsForQuality('insider'),
         updateVSCodeAssetsForQuality('stable'),
     ]);
+    
+    // since both the above operations are happening in parallel, deleting of server folder as part of above tasks can fail the other task
+    await rimraf(vscodeServerAssetsTargetPath);
 }
 
 /**
