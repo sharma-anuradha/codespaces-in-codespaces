@@ -13,7 +13,7 @@
   },
   "vscodeCommit": {
     "insider": "c828a5339bca7222fd8f56ab98361a98f736d185",
-    "stable": "d5e9aa0227e057a60c82568bf31c04730dc15dcd"
+    "stable": "485c41f9460bdb830c4da12c102daff275415b53"
   },
   "husky": {
     "hooks": {
