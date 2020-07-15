@@ -25,7 +25,7 @@ export async function tryOpeningUrl(
 
     const url = `ms-vsonline.vsonline/connect?environmentId=${encodeURIComponent(id)}&sessionPath=${
         connection.sessionPath
-    }&correlationId=${createUniqueId()}`;
+    }&correlationId=${createUniqueId()}&authScheme=aad`;
 
     await checkProtocol(`${protocol}://${url}`);
 }
