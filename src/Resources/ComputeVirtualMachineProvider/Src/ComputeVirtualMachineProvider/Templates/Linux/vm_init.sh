@@ -105,8 +105,8 @@ chmod o+rw $vsoSharedFolder
 setfacl -dR -m o::rw $vsoSharedFolder
 
 echo "Install vso agent ..."
-chmod +x install_vsoagent.sh uninstall_vsoagent.sh
-./install_vsoagent.sh
+chmod +x install_codespaces_agent.sh uninstall_codespaces_agent.sh
+./install_codespaces_agent.sh
 
 echo "Make copy of vso agent..."
 mkdir -p /.vsonline/vsoagent/mount
@@ -135,7 +135,7 @@ echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> /.vsonline/vsoagent
 
 echo "Start vso agent"
 # Switch to daemon process until service permission issue is fixed.
-bash -c 'nohup ./vso vmagent &>/dev/null & jobs -p %1'
+bash -c 'nohup ./codespaces vmagent &>/dev/null & jobs -p %1'
 
 echo "delete ssh public key"
 rm -f $SCRIPT_PARAM_VM_PUBLIC_KEY_PATH
