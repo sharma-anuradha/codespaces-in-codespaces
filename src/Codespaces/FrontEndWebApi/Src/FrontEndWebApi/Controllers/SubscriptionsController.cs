@@ -1,4 +1,4 @@
-﻿// <copyright file="SubscriptionsController.cs" company="Microsoft">
+// <copyright file="SubscriptionsController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics.Middleware;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -1012,10 +1013,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     }
 
                     var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
+                    var tenantId = this.currentUserProvider.Identity.GetTenantId();
 
                     var token = await tokenProvider.GenerateDelegatedVsSaaSTokenAsync(
                         plan,
                         partner,
+                        tenantId,
                         scopesArray,
                         requestBody.Identity,
                         sourceArmTokenExpiration,

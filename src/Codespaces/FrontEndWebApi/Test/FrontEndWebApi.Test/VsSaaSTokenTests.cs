@@ -23,6 +23,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
     {
         private const string DefaultProviderId = "vso";
 
+        private static readonly string TestTenantId = Guid.Empty.ToString();
+
         private static readonly VsoPlan TestPlan = new VsoPlan
         {
             Id = "mock-plan",
@@ -30,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             {
                 Subscription = Guid.NewGuid().ToString(),
                 ResourceGroup = "mock-resource-group",
+                ProviderNamespace = VsoPlanInfo.CodespacesProviderNamespace,
                 Name = "mock-name",
             },
         };
@@ -80,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Callback((JwtPayload payload, IDiagnosticsLogger logger) =>
                 {
                     AssertHasClaimWithValue(payload, CustomClaims.Provider, DefaultProviderId);
-                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestPlan.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestTenantId);
                     AssertHasClaimWithValue(payload, CustomClaims.OId, identity.Id);
                     AssertHasClaimWithValue(payload, CustomClaims.Username, identity.Username);
                     AssertHasClaimWithValue(payload, CustomClaims.DisplayName, identity.DisplayName);
@@ -92,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockProvider = MockTokenProvider(mockWriter.Object);
             var token = await mockProvider.GenerateDelegatedVsSaaSTokenAsync(
-                TestPlan, null, TestScopes, identity, null, null, null, TestLogger);
+                TestPlan, null, TestTenantId, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -109,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Callback((JwtPayload payload, IDiagnosticsLogger logger) =>
                 {
                     AssertHasClaimWithValue(payload, CustomClaims.Provider, DefaultProviderId);
-                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestPlan.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestTenantId);
                     AssertHasClaimWithValue(payload, CustomClaims.OId, identity.Id);
                     AssertHasClaimWithValue(payload, CustomClaims.Username, identity.Username);
                     AssertHasClaimWithValue(payload, CustomClaims.DisplayName, identity.DisplayName);
@@ -120,7 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockProvider = MockTokenProvider(mockWriter.Object);
             var token = await mockProvider.GenerateDelegatedVsSaaSTokenAsync(
-                TestPlan, null, TestScopes, identity, null, null, null, TestLogger);
+                TestPlan, null, TestTenantId, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -137,7 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Callback((JwtPayload payload, IDiagnosticsLogger logger) =>
                 {
                     AssertHasClaimWithValue(payload, CustomClaims.Provider, "github");
-                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestPlan.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestTenantId);
                     AssertHasClaimWithValue(payload, CustomClaims.OId, identity.Id);
                     AssertHasClaimWithValue(payload, CustomClaims.Username, identity.Username);
                     AssertHasClaimWithValue(payload, CustomClaims.DisplayName, identity.DisplayName);
@@ -148,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockProvider = MockTokenProvider(mockWriter.Object);
             var token = await mockProvider.GenerateDelegatedVsSaaSTokenAsync(
-                TestPlan, Partner.GitHub, TestScopes, identity, null, null, null, TestLogger);
+                TestPlan, Partner.GitHub, TestTenantId, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -165,7 +168,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Callback((JwtPayload payload, IDiagnosticsLogger logger) =>
                 {
                     AssertHasClaimWithValue(payload, CustomClaims.Provider, "github");
-                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestPlan.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestTenantId);
                     AssertHasClaimWithValue(payload, CustomClaims.OId, identity.Id);
                     AssertHasClaimWithValue(payload, CustomClaims.Username, identity.Username);
                     AssertHasClaimWithValue(payload, CustomClaims.DisplayName, identity.DisplayName);
@@ -176,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockProvider = MockTokenProvider(mockWriter.Object);
             var token = await mockProvider.GenerateDelegatedVsSaaSTokenAsync(
-                TestPlan, Partner.GitHub, TestScopes, identity, null, null, null, TestLogger);
+                TestPlan, Partner.GitHub, TestTenantId, TestScopes, identity, null, null, null, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }
@@ -199,7 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Callback((JwtPayload payload, IDiagnosticsLogger logger) =>
                 {
                     AssertHasClaimWithValue(payload, CustomClaims.Provider, "github");
-                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestPlan.Id);
+                    AssertHasClaimWithValue(payload, CustomClaims.TenantId, TestTenantId);
                     AssertHasClaimWithValue(payload, CustomClaims.OId, identity.Id);
                     AssertHasClaimWithValue(payload, CustomClaims.PlanResourceId, TestPlan.Plan.ResourceId);
                     AssertHasClaimWithValue(payload, CustomClaims.Scope, string.Join(" ", TestScopes));
@@ -208,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockProvider = MockTokenProvider(mockWriter.Object);
             var token = await mockProvider.GenerateDelegatedVsSaaSTokenAsync(
-                TestPlan, Partner.GitHub, TestScopes, identity, null, null, environmentIds, TestLogger);
+                TestPlan, Partner.GitHub, TestTenantId, TestScopes, identity, null, null, environmentIds, TestLogger);
 
             Assert.Equal(TestTokenValue, token);
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="TokenProviderExtensions.cs" company="Microsoft">
+// <copyright file="TokenProviderExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -78,6 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// <param name="provider">The token provider.</param>
         /// <param name="plan">The plan the token applies to.</param>
         /// <param name="partner">The partner requesting the token, if they are known.</param>
+        /// <param name="tenantId">Calling user (and subscription) tenant ID.</param>
         /// <param name="scopes">The scope claim of the token.</param>
         /// <param name="identity">The identity of the user the token is granted to.</param>
         /// <param name="armTokenExpiration">The expiration of the source ARM token.</param>
@@ -90,6 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
             this ITokenProvider provider,
             VsoPlan plan,
             Partner? partner,
+            string tenantId,
             string[] scopes,
             DelegateIdentity identity,
             DateTime? armTokenExpiration,
@@ -124,12 +126,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
                     environmentIds.Select((e) => new Claim(CustomClaims.Environments, e)));
             }
 
+            // The old VSO RP namespace used the plan ID as the tenant ID. Going forward, we use
+            // the calling user tenant ID, which must be the same as the subscription tenant ID.
+            var tid = (plan.Plan.ProviderNamespace == VsoPlanInfo.VsoProviderNamespace)
+                ? plan.Id : tenantId;
+
             return await GenerateVsSaaSTokenAsync(
                 provider,
                 plan,
                 scopes,
                 providerId,
-                plan.Id,
+                tid,
                 identity.Id,
                 identity.Username,
                 identity.DisplayName,
