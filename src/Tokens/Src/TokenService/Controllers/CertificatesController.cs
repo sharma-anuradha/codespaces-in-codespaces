@@ -95,8 +95,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 IsPrimary = isPrimary,
                 KeyId = certificate.Thumbprint,
                 Thumbprint = certificate.Thumbprint,
-                PublicCertificate = Convert.ToBase64String(
-                    certificate.Export(X509ContentType.Cert)),
+                PublicCertificate = new[]
+                {
+                    Convert.ToBase64String(certificate.Export(X509ContentType.Cert)),
+                },
             };
 
             var key = certificate.PublicKey.Key as RSA;

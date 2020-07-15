@@ -361,7 +361,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
             return result.Certificates
                 .OrderBy((c) => c.IsPrimary ? 0 : 1)
-                .Select((c) => new X509Certificate2(Convert.FromBase64String(c.PublicCertificate)));
+                .Select((c) => new X509Certificate2(
+                    Convert.FromBase64String(c.PublicCertificate?.First())));
         }
 
         private static MediaTypeFormatter[] CreateFormatters()

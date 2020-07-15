@@ -51,8 +51,12 @@ namespace Microsoft.VsSaaS.Services.TokenService.Contracts
         /// <summary>
         /// Gets or sets the base64-encoded public certificate bytes.
         /// </summary>
+        /// <remarks>
+        /// This is an array to accommodate a certificate chain. The first item in the array
+        /// is the certificate for token validation; the others can be used to verify the first.
+        /// </remarks>
         [JsonProperty("x5c", Required = Required.Always)]
-        public string PublicCertificate { get; set; } = null!;
+        public string[] PublicCertificate { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the RSA key modulus, in Base64urlUInt encoding.
