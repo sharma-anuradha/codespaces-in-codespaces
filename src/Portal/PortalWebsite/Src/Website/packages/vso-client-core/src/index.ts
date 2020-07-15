@@ -93,4 +93,8 @@ import { SECOND_MS, MINUTE_MS, HOUR_MS, DAY_MS } from './constants';
 export const timeConstants = { SECOND_MS, MINUTE_MS, HOUR_MS, DAY_MS };
 export { KNOWN_VSO_HOSTNAMES } from './constants';
 
-export { PARTNER_INFO_KEYCHAIN_KEY, VSCS_FEATURESET_LOCALSTORAGE_KEY } from './constants';
+export {
+    PARTNER_INFO_KEYCHAIN_KEY,
+    VSCS_FEATURESET_LOCALSTORAGE_KEY,
+    VSCS_LOADING_SCREEN_THEME_COLOR_LS_KEY,
+} from './constants';

@@ -2,7 +2,7 @@
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 1`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -12,7 +12,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -264,7 +264,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -317,7 +317,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 2`] = `
 Array [
   <div
-    className="vso-splash-screen"
+    className="vso-splash-screen is-logo"
   >
     <div
       className="container "
@@ -327,7 +327,7 @@ Array [
       >
         <svg
           aria-hidden="true"
-          className="logo"
+          className="logo vso-splash-screen-logo"
           height="26"
           version="1.1"
           viewBox="0 0 16 16"
@@ -579,7 +579,7 @@ Array [
       >
          
         <div
-          className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+          className="vso-splash-screen__block"
         >
           <div
             className="vso-splash-screen__message"
@@ -636,7 +636,7 @@ Array [
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 3`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -646,7 +646,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -898,7 +898,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -950,7 +950,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 4`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -960,7 +960,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -1212,7 +1212,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -1274,7 +1274,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 5`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -1284,7 +1284,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -1536,7 +1536,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -1588,7 +1588,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 6`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -1598,7 +1598,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -1850,7 +1850,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -1902,7 +1902,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 7`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -1912,7 +1912,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -2164,7 +2164,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -2216,7 +2216,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender environment states 8`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -2226,7 +2226,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -2478,7 +2478,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -2530,7 +2530,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 1`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -2540,7 +2540,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -2792,7 +2792,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -2854,7 +2854,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 2`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -2864,7 +2864,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -3116,7 +3116,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -3168,7 +3168,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 3`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -3178,7 +3178,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -3430,7 +3430,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"
@@ -3482,7 +3482,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
 
 exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 4`] = `
 <div
-  className="vso-splash-screen"
+  className="vso-splash-screen is-logo"
 >
   <div
     className="container "
@@ -3492,7 +3492,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
       <svg
         aria-hidden="true"
-        className="logo"
+        className="logo vso-splash-screen-logo"
         height="26"
         version="1.1"
         viewBox="0 0 16 16"
@@ -3744,7 +3744,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block vso-splash-screen__block--light-theme"
+        className="vso-splash-screen__block"
       >
         <div
           className="vso-splash-screen__message"

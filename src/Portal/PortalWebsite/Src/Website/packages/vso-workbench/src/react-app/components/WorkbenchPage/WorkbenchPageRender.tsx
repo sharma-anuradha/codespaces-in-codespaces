@@ -8,6 +8,7 @@ import { Fragment } from 'react';
 import { SplashScreenState } from './SplashScreenState';
 import { telemetryMarks } from '../../../telemetry/telemetryMarks';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
+import { removeDefaultSplashScreen } from './utils/removeDefaultSplashScreen';
 
 export interface IWorkbenchPageRenderProps {
     environmentInfo: IEnvironment | null;
@@ -42,6 +43,7 @@ export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderPro
          */
         setTimeout(() => {
             this.setState({ isMounted: true });
+            requestAnimationFrame(removeDefaultSplashScreen);
         }, 200);
     }
 
@@ -80,6 +82,8 @@ export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderPro
         if (this.state.isMounted) {
             return null;
         }
+
+        requestAnimationFrame(removeDefaultSplashScreen);
 
         return <SplashScreenState {...this.props} platformInfo={this.props.platformInfo} />;
     }

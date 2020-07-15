@@ -62,6 +62,7 @@ const isLightThemeColor = (
     return true;
 };
 
+
 export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
     props: ISplashScreenProps
 ) => {

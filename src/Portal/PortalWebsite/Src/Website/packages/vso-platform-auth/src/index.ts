@@ -1,5 +1,5 @@
 
-import { PostMessageChannel, authService, createTrace, isInIframe } from 'vso-client-core';
+import { PostMessageChannel, authService, createTrace, isInIframe, VSCS_LOADING_SCREEN_THEME_COLOR_LS_KEY } from 'vso-client-core';
 
 const trace = createTrace(`vso-platform-auth:auth-page`);
 
@@ -13,6 +13,7 @@ self.addEventListener('load', async () => {
         const info = await postMessageChannel.getRepoInfo();
 
         if (!('vscodeSettings' in info)) {
+            const loadingScreenThemeColor = 'dark';
             (info as any).vscodeSettings = {
                 // Salesforce defaults
                 defaultSettings: {
@@ -21,12 +22,14 @@ self.addEventListener('load', async () => {
                     'defaultExtensions': ['salesforce.codey-midnight'],
                 },
                 vscodeChannel: 'insider',
-                loadingScreenThemeColor: 'dark',
+                loadingScreenThemeColor,
                 productConfiguration: {
                     sendASmile: null
                 },
                 featureFlags: {}
             };
+
+            localStorage.setItem(VSCS_LOADING_SCREEN_THEME_COLOR_LS_KEY, loadingScreenThemeColor);
         }
 
         const result = await authService.storePartnerInfo(info);

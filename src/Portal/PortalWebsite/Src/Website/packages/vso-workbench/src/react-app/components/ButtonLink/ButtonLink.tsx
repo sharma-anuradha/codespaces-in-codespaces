@@ -7,8 +7,6 @@ export interface IButtonLinkProps {
     className?: string;
 }
 
-import './ButtonLink.css';
-
 export const ButtonLink: React.FunctionComponent<IButtonLinkProps> = (props: IButtonLinkProps) => {
     const { className = '', text, url, onClick } = props;
 

@@ -80,6 +80,33 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return PhysicalFile(asset, mediaType);
         }
 
+        public class VSCodeSettings
+        {
+            [JsonProperty("homeIndicator")]
+            public object HomeIndicator { get; set; }
+
+            [JsonProperty("defaultSettings")]
+            public Dictionary<string, object> DefaultSettings { get; set; }
+
+            [JsonProperty("defaultExtensions")]
+            public List<object> DefaultExtensions { get; set; }
+
+            [JsonProperty("enableSyncByDefault")]
+            public bool EnableSyncByDefault { get; set; }
+
+            [JsonProperty("authenticationSessionId")]
+            public string AuthenticationSessionId { get; set; }
+
+            [JsonProperty("defaultAuthSessions")]
+            public List<object> DefaultAuthSessions { get; set; }
+
+            [JsonProperty("vscodeChannel")]
+            public string VSCodeChannel { get; set; }
+
+            [JsonProperty("loadingScreenThemeColor")]
+            public string LoadingScreenThemeColor { get; set; }
+        }
+
         public class PartnerInfo
         {
             [JsonProperty("partnerName")]
@@ -98,7 +125,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public string CodespaceToken { get; set; }
 
             [JsonProperty("vscodeSettings")]
-            public object VSCodeSettings { get; set; }
+            public VSCodeSettings VSCodeSettings { get; set; }
 
             [JsonProperty("featureFlags")]
             public object FeatureFlags { get; set; }
@@ -107,6 +134,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public object Favicon { get; set; }
         }
 
+        [HttpPost("~/")]
         [HttpPost("~/connect")]
         [HttpPost("~/platform-authentication")]
         [Authorize(AuthenticationSchemes = AuthenticationServiceCollectionExtensions.VsoBodyAuthenticationScheme)]
@@ -151,6 +179,19 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             ViewData["partner-info"] = System.Convert.ToBase64String(data);
             ViewData["is-local"] = AppSettings.IsLocal;
+
+            // To make the loading screen transition seamless with our partners,
+            // we need to prerender the shimmer early to prevent any flickering
+            // the classnames below used to define the shimmer appearence class names
+            var themeColor = partnerInfoData.VSCodeSettings.LoadingScreenThemeColor ?? "light";
+
+            ViewData["shimmer-theme-color-class-name"] = (themeColor == "light")
+                ? "is-light-theme"
+                : "is-dark-theme";
+
+            ViewData["shimmer-logo-class-name"] = (HttpContext.Request.Host.Host.EndsWith("github.dev"))
+                ? "is-logo"
+                : "";
 
             return View();
         }
