@@ -114,7 +114,7 @@ export class CreatePlanPanelComponent extends Component<
 
         this.state = {
             subscriptionList: [],
-            newGroup: `vso-rg-${createUniqueId().substr(0, 7)}`,
+            newGroup: `vscs-rg-${createUniqueId().substr(0, 7)}`,
             resourceGroupList: [],
             locationsList: [],
             skuList: [],
@@ -230,7 +230,7 @@ export class CreatePlanPanelComponent extends Component<
                         />
 
                         {resourceGroupDescription}
-                        
+
                         {this.renderSkuSelector()}
 
                     </Collapsible>
@@ -551,16 +551,16 @@ export class CreatePlanPanelComponent extends Component<
     }
 
     private async getAvailableSkus(location: string) {
-        
+
         try {
-            
+
             const originalSelectedDefaultSku = this.state.selectedDefaultSku;
             this.setState({ isGettingSkuList: true, skuList: [], selectedDefaultSku: '' });
-        
+
             const locationInfo = await getLocation(location, undefined);
             const skus = locationInfo?.skus;
             const { t: translation } = this.props;
-            
+
             let skuListOptions: IDropdownOption[] = []
 
             if (skus && skus.length > 0) {
@@ -577,8 +577,8 @@ export class CreatePlanPanelComponent extends Component<
                 ariaLabel: `${SKU_PRICING_LABEL}, ${SKU_PRICING_URL}`,
             });
 
-            skuListOptions.unshift({   
-                key: noSkuSelectedKey, 
+            skuListOptions.unshift({
+                key: noSkuSelectedKey,
                 text: noSkuSelectedText,
             })
 
@@ -675,7 +675,7 @@ export class CreatePlanPanelComponent extends Component<
             return '';
         }
 
-        return `vso-plan-${this.state.selectedLocation.toLowerCase()}`;
+        return `vscs-plan-${this.state.selectedLocation.toLowerCase()}`;
     }
 
     private get planName() {
