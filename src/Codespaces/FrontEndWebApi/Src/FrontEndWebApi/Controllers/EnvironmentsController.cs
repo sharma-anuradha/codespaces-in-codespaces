@@ -309,6 +309,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpPost]
         [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(CreateAsync))]
         [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status307TemporaryRedirect)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
