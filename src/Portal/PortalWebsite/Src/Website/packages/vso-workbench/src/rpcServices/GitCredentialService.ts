@@ -12,7 +12,7 @@ export class GitCredentialService extends GitCredentialServiceBase {
     public async onRequest([input]: string[]) {
         const fillRequest = parseGitCredentialsFillInput(input);
 
-        const { host, path, protocol = '' } = fillRequest;
+        const { host, path = '/', protocol = '' } = fillRequest;
 
         if (!protocol.startsWith('http') || !host || !path) {
             trace.verbose('Not enough request attributes to respond', maybePii(fillRequest));
