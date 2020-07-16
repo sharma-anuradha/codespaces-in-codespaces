@@ -423,6 +423,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 }
             }
 
+            // the managed identity is always completely overwritten when the type is changed
+            string managedIdentityType = vsoPlan.ManagedIdentity?.Type;
+            if (!string.IsNullOrEmpty(managedIdentityType))
+            {
+                if (managedIdentityType.Equals("None", StringComparison.OrdinalIgnoreCase))
+                {
+                    // a value of none indicates that the managed identity has been explicitly removed from the resource
+                    currentVsoPlan.ManagedIdentity = null;
+                }
+                else
+                {
+                    currentVsoPlan.ManagedIdentity = vsoPlan.ManagedIdentity;
+                }
+            }
+
+            // the KeyVault settings are always completely overwritten when the key source is changed
+            string keySource = vsoPlan.Properties.Encryption?.KeySource;
+            if (!string.IsNullOrEmpty(keySource))
+            {
+                if (keySource.Equals("Microsoft.Codespaces", StringComparison.OrdinalIgnoreCase))
+                {
+                    // a value of "Microsoft.Codespaces" indicates that the plan is being set to Microsoft-managed keys, and encryption properties are cleared
+                    currentVsoPlan.Properties.Encryption = null;
+                }
+                else
+                {
+                    currentVsoPlan.Properties.Encryption = vsoPlan.Properties.Encryption;
+                }
+            }
+
             var updatedPlan = await planRepository.UpdateAsync(currentVsoPlan, logger);
             return new PlanManagerServiceResult
             {

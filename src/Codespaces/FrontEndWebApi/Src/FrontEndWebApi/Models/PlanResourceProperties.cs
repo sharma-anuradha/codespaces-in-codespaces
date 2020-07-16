@@ -38,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the vnet properties to create environments in this plan.
         /// </summary>
         public VnetProperties VnetProperties { get; set; }
+
+        /// <summary>
+        /// Gets or sets the encryption properties under the plan.
+        /// </summary>
+        public PlanResourceEncryptionProperties Encryption { get; set; }
     }
 }

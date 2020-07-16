@@ -34,6 +34,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         public VsoVnetProperties VnetProperties { get; set; }
 
+        /// <summary>
+        /// Gets or sets the encryption properties.
+        /// </summary>
+        public VsoPlanEncryptionProperties Encryption { get; set; }
+
         public static bool operator ==(VsoPlanProperties a, VsoPlanProperties b) =>
            a is null ? b is null : a.Equals(b);
 
@@ -48,7 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 other.DefaultAutoSuspendDelayMinutes == DefaultAutoSuspendDelayMinutes &&
                 other.DefaultEnvironmentSku == DefaultEnvironmentSku &&
                 other.DefaultCodespaceSku == DefaultCodespaceSku &&
-                other.VnetProperties == VnetProperties;
+                other.VnetProperties == VnetProperties &&
+                other.Encryption == Encryption;
         }
 
         /// <summary> Tests if this plan settings equals another plan settings.</summary>
@@ -61,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public override int GetHashCode() => DefaultAutoSuspendDelayMinutes.GetHashCode() ^
                                                 (DefaultEnvironmentSku?.GetHashCode() ?? 0) ^
                                                 (DefaultCodespaceSku?.GetHashCode() ?? 0) ^
-                                                (VnetProperties?.GetHashCode() ?? 0);
+                                                (VnetProperties?.GetHashCode() ?? 0) ^
+                                                (Encryption?.GetHashCode() ?? 0);
     }
 }

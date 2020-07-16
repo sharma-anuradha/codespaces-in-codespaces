@@ -5,12 +5,15 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
 {
     /// <summary>
     /// The managed identity associated with this plan.
     /// </summary>
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class VsoPlanIdentity
     {
         /// <summary>

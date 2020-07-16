@@ -204,7 +204,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromHeader] PlanResourceHeaders headers,
             [FromBody] PlanResource resource)
         {
-            return HttpContext.HttpScopeAsync<IActionResult>(
+            return HttpContext.HttpScopeAsync(
                 $"{LoggingBaseName}_plan_create",
                 async (logger) =>
                 {
@@ -237,21 +237,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         {
                             DefaultCodespaceSku = resource.Properties?.DefaultCodespaceSku ?? resource.Properties?.DefaultEnvironmentSku,
                             VnetProperties = resource.Properties.VnetProperties.BuildVsoVnetProperty(),
+                            Encryption = resource.Properties.Encryption.BuildVsoEncryptionProperty(),
                         },
+                        ManagedIdentity = resource.Identity.BuildManagedIdentity(headers),
                         Partner = partner,
                     };
-
-                    // check for the existance of the principal ID specifically, as some of the other headers may always be present.
-                    if (headers.IdentityPrincipalId != null)
-                    {
-                        plan.ManagedIdentity = new VsoPlanIdentity
-                        {
-                            Type = resource.Identity?.Type,
-                            PrincipalId = headers.IdentityPrincipalId,
-                            IdentityUrl = headers.IdentityUrl,
-                            TenantId = headers.HomeTenantId ?? headers.ClientTenantId,
-                        };
-                    }
 
                     // UserId is required when creating single user plans, disallowed otherwise.
                     if (providerNamespace == VsoPlanInfo.VsoProviderNamespace)
@@ -659,6 +649,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="providerNamespace">The Azure resource provider.</param>
         /// <param name="resourceType">The Azure resource type.</param>
         /// <param name="resourceName">The Azure resource name.</param>
+        /// <param name="headers">The headers from RPSaaS.</param>
         /// <param name="resource">The plan settings resource.</param>
         /// <returns>An Http status code and message object indication success or failure of the operation.</returns>
         [ArmThrottlePerUser(nameof(SubscriptionsController), nameof(PlanPatchCompletedAsync))]
@@ -671,6 +662,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             string providerNamespace,
             string resourceType,
             string resourceName,
+            [FromHeader] PlanResourceHeaders headers,
             [FromBody] PlanResourceUpdateBody resource)
         {
             return HttpContext.HttpScopeAsync<IActionResult>(
@@ -695,6 +687,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     var vsoPlan = mapper.Map<VsoPlan>(resource);
                     vsoPlan.Plan = planInfo;
+                    vsoPlan.ManagedIdentity = resource.Identity.BuildManagedIdentity(headers);
 
                     logger.AddVsoPlan(vsoPlan);
 
@@ -1127,7 +1120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// </remarks>
         private static void PopulateManagedIdentityProperties(PlanResource resource, VsoPlan plan)
         {
-            // populate managed identity, if it exists
+            // populate managed identity, from the plan rather than RPSaaS, if it exists
             if (plan.ManagedIdentity?.PrincipalId != null)
             {
                 resource.Identity = new PlanResourceIdentity
@@ -1224,6 +1217,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     resource.Properties = new PlanResourceProperties();
                 }
+
+                PopulateManagedIdentityProperties(resource, plan);
 
                 // Return the ownership status via the plan `userId` property. This is a *slight*
                 // abuse of that property, but the actual plan user ID can only be set at plan
