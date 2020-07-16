@@ -293,13 +293,13 @@
     <value>Заголовок части ресурсов</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>Удалить план</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Удалить пространство кода</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Добавить пространство кода</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Подпись свойства</value>

@@ -167,25 +167,25 @@
     <value>Località</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>Piani di Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>Codespaces Plan</value>
+    <value>Piano di Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>codespaces plans</value>
+    <value>piani di Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>codespaces plan</value>
+    <value>piano di Codespaces</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>Create Codespaces Plan</value>
+    <value>Crea piano di Codespaces</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>Codespaces Plans</value>
+    <value>Piani di Codespaces</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
-    <value>Add a description of your service here to quickly introduce your service to customers. Also add a Learn More link that links to documentation or Azure's marketing site for your resource type.</value>
+    <value>Aggiungere qui una descrizione del servizio per presentare rapidamente il servizio ai clienti. Aggiungere anche un collegamento Altre informazioni che consente di accedere alla documentazione o al sito di marketing di Azure per il tipo di risorsa.</value>
   </data>
   <data name="CreateBladeIntroductionLink" xml:space="preserve">
     <value>https://azure.microsoft.com/</value>
@@ -269,13 +269,13 @@
     <value>Titolo della risorsa</value>
   </data>
   <data name="CreateCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Create a new Codespace</value>
+    <value>Crea un nuovo codespace</value>
   </data>
   <data name="CreateCodespaceBladeTitle" xml:space="preserve">
     <value>Crea codespace</value>
   </data>
   <data name="EditCodespaceBladeSubtitle" xml:space="preserve">
-    <value>Update Codespace settings</value>
+    <value>Aggiorna impostazioni del codespace</value>
   </data>
   <data name="EditCodespaceBladeTitle" xml:space="preserve">
     <value>Modifica codespace</value>
@@ -284,7 +284,7 @@
     <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
-    <value>My Codespaces</value>
+    <value>Codespace personali</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
     <value>Sottotitolo parte risorsa</value>
@@ -293,13 +293,13 @@
     <value>Titolo parte risorsa</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>Elimina piano</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Elimina codespace</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Aggiungi codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Etichetta della proprietà</value>
@@ -362,10 +362,10 @@
     <value>Home page Riepilogo</value>
   </data>
   <data name="Overview_Description" xml:space="preserve">
-    <value>VS Codespace plans provides managed, on-demand development.</value>
+    <value>I piani di VS Codespace offrono sviluppo gestito su richiesta.</value>
   </data>
   <data name="Overview_CodespacePlanNameLabel" xml:space="preserve">
-    <value>VS Codespace plan name</value>
+    <value>Nome del piano di VS Codespaces</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
     <value>VS Codespaces</value>
@@ -413,7 +413,7 @@
     <value>Aggiungi un codespace</value>
   </data>
   <data name="Tile_AddCodespaceDescription" xml:space="preserve">
-    <value>Create, build, deploy, and manage powerful web, mobile, and API apps for employees or customers using a single back-end.</value>
+    <value>È possibile creare, compilare, distribuire e gestire potenti app per le API, app per dispositivi mobili e app Web per dipendenti o clienti usando un unico back-end.</value>
   </data>
   <data name="Tile_AddCodespaceLinkTitle" xml:space="preserve">
     <value>Aggiungi un codespace</value>
@@ -422,19 +422,19 @@
     <value>Configura reti virtuali</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksDescription" xml:space="preserve">
-    <value>Azure Virtual Network (VNet) is the fundamental building block for your private network in Azure. VNet enables many types of Azure resources to securely communicate with each other.</value>
+    <value>La rete virtuale di Azure è il blocco predefinito fondamentale per la rete privata in Azure. La rete virtuale consente a molti tipi di risorse di Azure di comunicare in modo sicuro tra loro.</value>
   </data>
   <data name="Tile_ConfigureVirtualNetworksLinkTitle" xml:space="preserve">
     <value>Configura rete virtuale</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationTitle" xml:space="preserve">
-    <value>Change Codespace configuration </value>
+    <value>Modifica la configurazione del codespace </value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationDescription" xml:space="preserve">
-    <value>App Service Adivsor provides insights for improving app experience on the App Service platform. Recommendations are sorted by freshness, priority and impact.</value>
+    <value>App Service Advisor fornisce dati analitici per migliorare l'esperienza dell'app nella piattaforma del servizio app. Le raccomandazioni sono ordinate in base ad aggiornamento, priorità e impatto.</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>Open Codespaces in Visual Studio</value>
+    <value>Apri codespace in Visual Studio</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>I criteri seguenti per Azure consentono agli utenti di sfruttare alcuni schemi progettuali noti e ottimizzati in Azure.</value>
@@ -479,7 +479,7 @@
     <value>DxMenuGroup</value>
   </data>
   <data name="DxKeywords" xml:space="preserve">
-    <value>dx declarative started</value>
+    <value>dx dichiarativo avviato</value>
   </data>
   <data name="feedback" xml:space="preserve">
     <value>Commenti e suggerimenti</value>

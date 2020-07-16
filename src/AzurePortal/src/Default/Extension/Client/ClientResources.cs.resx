@@ -293,13 +293,13 @@
     <value>Nadpis části prostředku</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>Odstranit plán</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Odstranit prostředí Codespaces</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Přidat prostředí Codespaces</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Popisek vlastnosti</value>

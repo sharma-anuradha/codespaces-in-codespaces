@@ -293,13 +293,13 @@
     <value>リソース部分のタイトル</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>計画の削除</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Codespace の削除</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Codespace の追加</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>プロパティ ラベル</value>

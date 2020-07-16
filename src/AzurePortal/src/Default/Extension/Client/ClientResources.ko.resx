@@ -293,13 +293,13 @@
     <value>리소스 부분 제목</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>플랜 삭제</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>코드 공간 삭제</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>코드 공간 추가</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>속성 레이블</value>

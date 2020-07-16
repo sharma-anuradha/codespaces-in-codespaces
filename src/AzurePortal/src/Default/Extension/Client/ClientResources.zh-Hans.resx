@@ -293,13 +293,13 @@
     <value>资源部件标题</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>删除计划</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>删除 Codespace</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>添加 Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>属性标签</value>

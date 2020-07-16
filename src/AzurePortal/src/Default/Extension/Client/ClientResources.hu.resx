@@ -293,13 +293,13 @@
     <value>Az erőforrások részének címe</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>Csomag törlése</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Codespaces-kódterület törlése</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Codespaces-kódterület hozzáadása</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Tulajdonságcímke</value>

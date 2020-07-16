@@ -293,13 +293,13 @@
     <value>Rubrik för resursdel</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>Ta bort plan</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Ta bort Codespace</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Lägg till Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Egenskapsetikett</value>

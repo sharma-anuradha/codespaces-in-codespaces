@@ -293,13 +293,13 @@
     <value>Titel für Ressourcenteil</value>
   </data>
   <data name="DeletePlan" xml:space="preserve">
-    <value>Delete Plan</value>
+    <value>Plan löschen</value>
   </data>
   <data name="DeleteCodespace" xml:space="preserve">
-    <value>Delete Codespace</value>
+    <value>Codespace löschen</value>
   </data>
   <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+    <value>Codespace hinzufügen</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Eigenschaftsbezeichnung</value>
