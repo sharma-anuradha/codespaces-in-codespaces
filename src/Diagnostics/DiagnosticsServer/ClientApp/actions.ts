@@ -96,7 +96,7 @@ export class Actions {
               placeHolder: "",
             },
           ],
-          columnSettings: "PoolDefinition,PoolSkuName,PoolLocation,PoolResourceType,PoolUnassignedCount,PoolIsEnabled,time",
+            columnSettings: "PoolSkuName,PoolResourceType,PoolIsReadyAtTargetCount,PoolIsAtTargetCount,PoolReadyUnassignedCount,PoolUnassignedCount,PoolIsEnabled,PoolTargetCount,time",
           groupBy: "PoolDefinition"
         },
         id: "",
