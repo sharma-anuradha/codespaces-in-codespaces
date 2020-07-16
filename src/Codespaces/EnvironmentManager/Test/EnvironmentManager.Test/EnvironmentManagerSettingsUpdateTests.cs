@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
@@ -250,8 +251,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
             var environmentRepository = new MockCloudEnvironmentRepository();
-            var environment1 = MockEnvironment(id: "env1", name: "name1", skuName: sku.SkuName);
-            var environment2 = MockEnvironment(id: "env2", name: "name2", skuName: sku.SkuName);
+            var environment1 = MockEnvironment(id: "env1", name: "name1", skuName: sku.SkuName, ownerId: "mock-profile-id");
+            var environment2 = MockEnvironment(id: "env2", name: "name2", skuName: sku.SkuName, ownerId: "mock-profile-id");
 
             environment1 = await environmentRepository.CreateAsync(environment1, Logger);
             environment2 = await environmentRepository.CreateAsync(environment2, Logger);
@@ -422,8 +423,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var plan1 = MockPlan(name: "plan1");
             var plan2 = MockPlan(name: "plan2");
 
-            var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1.ResourceId, skuName: sku.SkuName);
-            var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2.ResourceId, skuName: sku.SkuName);
+            var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1.ResourceId, skuName: sku.SkuName, ownerId: "mock-profile-id");
+            var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2.ResourceId, skuName: sku.SkuName, ownerId: "mock-profile-id");
 
             environment1 = await environmentRepository.CreateAsync(environment1, Logger);
             environment2 = await environmentRepository.CreateAsync(environment2, Logger);
@@ -527,19 +528,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             billingEventRepository ??= new MockBillingEventRepository();
             var billingEventManager = new BillingEventManager(billingEventRepository, new MockBillingOverrideRepository());
             var workspaceRepository = new MockClientWorkspaceRepository();
-            var tokenProvider = EnvironmentManagerTestsBase.MockTokenProvider();
+            var tokenProvider = MockUtil.MockTokenProvider();
             var resourceBroker = new MockResourceBrokerClient();
             var environmentMonitor = new MockEnvironmentMonitor();
             var metricsLogger = new MockEnvironmentMetricsLogger();
             var environmentContinuation = new Mock<IEnvironmentContinuationOperations>().Object;
-            var environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
+            var workspaceManager = new WorkspaceManager(workspaceRepository);
+            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, metricsLogger);
             var serviceProvider = new Mock<IServiceProvider>();
             var environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(environmentStateManager, resourceBroker, environmentRepository, serviceProvider.Object) };
             var resourceAllocationManager = new ResourceAllocationManager(resourceBroker);
-            var workspaceManager = new WorkspaceManager(workspaceRepository);
             var subscriptionManager = new MockSubscriptionManager();
-            var secretStoreManager = new Mock<ISecretStoreManager>().Object;
             var systemConfiguration = new Mock<ISystemConfiguration>().Object;
+            var environmentContinuationOperations = new Mock<IEnvironmentContinuationOperations>(MockBehavior.Loose);
+            var resourceStartManager = new Mock<IResourceStartManager>().Object;
+
+            var environmentGetAction = new Mock<IEnvironmentGetAction>().Object;
+            var environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
+            var environmentCreateAction = new Mock<IEnvironmentCreateAction>().Object;
+            var environmentListAction = new EnvironmentListAction(environmentRepository, MockUtil.MockCurrentLocationProvider(), MockUtil.MockCurrentUserProvider(), MockUtil.MockControlPlaneInfo());
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
@@ -548,19 +555,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             return new EnvironmentManager(
                 environmentRepository,
                 resourceBroker,
-                tokenProvider,
                 skuCatalog,
                 environmentMonitor,
-                environmentContinuation,
+                environmentContinuationOperations.Object,
                 environmentSettings,
                 planManager,
                 planSettings,
                 environmentStateManager,
                 environmentRepairWorkflows,
                 resourceAllocationManager,
+                resourceStartManager,
                 workspaceManager,
-                secretStoreManager,
-                resourceSelector);
+                environmentGetAction,
+                environmentListAction,
+                environmentUpdateStatusAction,
+                environmentCreateAction);
         }
 
         private static ICloudEnvironmentSku MockSku(

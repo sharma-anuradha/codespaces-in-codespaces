@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,7 +15,9 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication
@@ -75,10 +79,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 .LogError("vmtoken_jwt_authentication_failed");
         }
 
-        private static async Task TokenValidatedAsync(TokenValidatedContext context)
+        private static Task TokenValidatedAsync(TokenValidatedContext context)
         {
-            await Task.CompletedTask;
-
             // Locate needed services
             var logger = context.HttpContext.GetLogger() ?? new JsonStdoutLogger(new LogValueSet());
 
@@ -91,14 +93,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 context.Fail(BadTokenMessage);
             }
 
-            // TODO: janraj, make this a policy.
-            // JWT "sub" claim gets stored in User claims as type "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-            var sub = context.Principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value;
-            context.HttpContext.Items[VMResourceIdName] = sub;
+            return logger.OperationScopeAsync(
+                "vm_jwt_authorization",
+                (childLogger) =>
+                {
+                    var identity = context.Principal.Identities.First();
+                    var currentIdentityProvider = context.HttpContext.RequestServices.GetService<ICurrentIdentityProvider>();
 
-            // Subject of the JWT identifies the vm.
-            // Needed for per-vm throttling to work correctly through VS SaaS SDK.
-            context.HttpContext.SetCurrentUserId(sub);
+                    // Build principal and identity
+                    var vsoClaimsIdentity = new VsoClaimsIdentity(identity, true);
+                    var newClaimsPrincipal = new ClaimsPrincipal(vsoClaimsIdentity);
+
+                    // Apply new principal
+                    context.Principal = newClaimsPrincipal;
+
+                    // Subject of the JWT identifies the vm. Needed for per-vm throttling to work correctly through VS SaaS SDK.
+                    context.HttpContext.SetCurrentUserId(vsoClaimsIdentity.AuthorizedComputeId);
+
+                    return Task.CompletedTask;
+                });
         }
     }
 }

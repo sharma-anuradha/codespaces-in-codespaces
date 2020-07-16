@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\Common.AspNetCore\Common.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\..\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
     <ProjectReference Include="..\UserProfile.Contracts\UserProfile.Contracts.csproj" />
   </ItemGroup>
 

@@ -30,6 +30,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
+        public Task<CloudEnvironment> CreateAsync(
+            EnvironmentCreateDetails details,
+            StartCloudEnvironmentParameters startEnvironmentParams,
+            MetricsInfo metricsInfo,
+            IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<bool> DeleteAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
@@ -42,13 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironment> GetAndStateRefreshAsync(string environmentId, IDiagnosticsLogger logger)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public Task<CloudEnvironment> GetAsync(string environmentId, IDiagnosticsLogger logger)
+        public Task<CloudEnvironment> GetAsync(Guid environmentId, IDiagnosticsLogger logger)
         {
             return Task.FromResult(cloudEnvironment);
         }
@@ -60,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> ListAsync(IDiagnosticsLogger logger, string planId = null, string name = null, UserIdSet userIdSet = null)
+        public Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, string name, UserIdSet userIdSet, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -123,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironmentServiceResult> CreateAsync(CloudEnvironment environmentRegistration, CloudEnvironmentOptions options, StartCloudEnvironmentParameters startCloudEnvironmentParameters, VsoPlanInfo plan, Subscription subscription, IDiagnosticsLogger logger)
+        public Task<CloudEnvironment> UpdateStatusAsync(Guid cloudEnvironmentId, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

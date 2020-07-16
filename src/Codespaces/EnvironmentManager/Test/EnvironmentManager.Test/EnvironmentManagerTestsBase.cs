@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
+using AutoMapper;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
@@ -23,11 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Tokens;
 using Moq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
@@ -43,9 +36,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IResourceBrokerResourcesExtendedHttpContract resourceBroker;
         public readonly ITokenProvider tokenProvider;
         public readonly EnvironmentManager environmentManager;
-        public readonly ISubscriptionManager subscriptionManager;
-        private readonly ISecretStoreManager secretStoreManager;
-        private readonly ResourceSelectorFactory resourceSelector;
+        private readonly IResourceStartManager resourceStartManager;
+        private readonly IEnvironmentUpdateStatusAction environmentUpdateStatusAction;
         public readonly IDiagnosticsLoggerFactory loggerFactory;
         public readonly IDiagnosticsLogger logger;
         public readonly ISkuCatalog skuCatalog;
@@ -55,6 +47,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public readonly IEnvironmentMonitor environmentMonitor;
         public readonly IEnvironmentStateManager environmentStateManager;
         public readonly Mock<IEnvironmentContinuationOperations> environmentContinuationOperations = new Mock<IEnvironmentContinuationOperations>(MockBehavior.Loose);
+        private IEnvironmentAccessManager environmentAccessManager;
+        private IEnvironmentSubscriptionManager environmentSubscriptionManager;
+        private IMapper mapper;
         public const string testUserId = "test-user";
         public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
         public const string testAccessToken = "test-token";
@@ -81,7 +76,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             CurrentMaximumQuota = new Dictionary<string, int>
             {
                 {"standardDSv3Family", 10 },
-                {"standardFSv2Family", 10 }
+                {"standardFSv2Family", 10 },
+                {"computeSkuFamily", 10 },
             }
         };
 
@@ -96,9 +92,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 DefaultMaxPlansPerSubscription = defaultCount,
                 DefaultAutoSuspendDelayMinutesOptions = new int[] { 0, 5, 30, 120 },
             };
-            var environmentSettings = new EnvironmentManagerSettings() 
-            { 
-                DefaultMaxEnvironmentsPerPlan = defaultCount, 
+            var environmentSettings = new EnvironmentManagerSettings()
+            {
+                DefaultMaxEnvironmentsPerPlan = defaultCount,
                 DefaultComputeCheckEnabled = false,
             };
 
@@ -116,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.billingEventManager = new BillingEventManager(this.billingEventRepository,
                                                                 new MockBillingOverrideRepository());
             workspaceRepository = new MockClientWorkspaceRepository();
-            tokenProvider = MockTokenProvider();
+            tokenProvider = MockUtil.MockTokenProvider();
             resourceBroker = new MockResourceBrokerClient();
             this.environmentMonitor = new MockEnvironmentMonitor();
             var metricsLogger = new MockEnvironmentMetricsLogger();
@@ -138,20 +134,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
             this.skuCatalog = skuCatalogMock.Object;
             var planManager = new PlanManager(this.planRepository, planSettings, this.skuCatalog);
-            this.environmentStateManager = new EnvironmentStateManager(billingEventManager, metricsLogger);
+            this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
+            this.environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, metricsLogger);
             var serviceProvider = new Mock<IServiceProvider>().Object;
             this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository, serviceProvider) };
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
-            this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
-            this.subscriptionManager = new MockSubscriptionManager();
-            this.secretStoreManager = new Mock<ISecretStoreManager>().Object;
-            this.resourceSelector = new ResourceSelectorFactory(this.skuCatalog, new Mock<ISystemConfiguration>().Object);
+            this.resourceStartManager = new Mock<IResourceStartManager>().Object;
+            this.environmentAccessManager = new Mock<IEnvironmentAccessManager>().Object;
+            this.environmentSubscriptionManager = new EnvironmentSubscriptionManager(environmentRepository, skuCatalog);
+
+            this.environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<EnvironmentCreateDetails, CloudEnvironment>();
+            });
+            this.mapper = config.CreateMapper();
+
+            var environmentListAction = new EnvironmentListAction(
+               environmentRepository,
+               MockUtil.MockCurrentLocationProvider(),
+               MockUtil.MockCurrentUserProvider(),
+               MockUtil.MockControlPlaneInfo());
+
+            var environmentDeleteAction = new Mock<IEnvironmentDeleteAction>().Object;
+
+            var environmentCreateAction = new EnvironmentCreateAction(
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                environmentListAction,
+                environmentSettings,
+                new PlanManagerSettings { DefaultAutoSuspendDelayMinutesOptions = new int[] { 5, 30, 60, 120 } },
+                workspaceManager,
+                environmentMonitor,
+                environmentContinuationOperations.Object,
+                resourceAllocationManager,
+                resourceStartManager,
+                MockUtil.MockSubscriptionManager(),
+                MockUtil.MockResourceSelectorFactory(),
+                environmentSubscriptionManager,
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                environmentDeleteAction,
+                mapper);
+
+            var environmentGetAction = new EnvironmentGetAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager);
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
-                this.tokenProvider,
-                this.skuCatalog,
+                MockUtil.MockSkuCatalog(),
                 this.environmentMonitor,
                 environmentContinuationOperations.Object,
                 environmentSettings,
@@ -160,37 +203,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentStateManager,
                 this.environmentRepairWorkflows,
                 this.resourceAllocationManager,
+                this.resourceStartManager,
                 this.workspaceManager,
-                this.secretStoreManager,
-                this.resourceSelector);
+                environmentGetAction,
+                environmentListAction,
+                this.environmentUpdateStatusAction,
+                environmentCreateAction);
         }
 
-        public async Task<CloudEnvironmentServiceResult> CreateTestEnvironmentAsync(string name = "Test", string skuName = "test")
+        public async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test", string skuName = "testSkuName")
         {
-            
-            var serviceResult = await environmentManager.CreateAsync(
-                new CloudEnvironment
+
+            var cloudEnvironment = await environmentManager.CreateAsync(
+                new EnvironmentCreateDetails
                 {
                     FriendlyName = name,
-                    Location = AzureLocation.WestUs2,
-                    ControlPlaneLocation = AzureLocation.CentralUs,
                     SkuName = skuName,
                     PlanId = testPlan.ResourceId,
-                    OwnerId = testUserId
+                    AutoShutdownDelayMinutes = 30,
                 },
-                new CloudEnvironmentOptions(),
                 new StartCloudEnvironmentParameters
                 {
-                    UserProfile = MockProfile(),
+                    UserProfile = MockUtil.MockProfile(),
                     FrontEndServiceUri = testServiceUri,
                     ConnectionServiceUri = testServiceUri,
                     CallbackUriFormat = testCallbackUriFormat,
                 },
-                testPlan,
-                Subscription,
+                new MetricsInfo(),
                 this.logger);
 
-            return serviceResult;
+            return cloudEnvironment;
         }
 
         public async Task MakeTestEnvironmentAvailableAsync(CloudEnvironment testEnvironment)
@@ -206,70 +248,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     },
                 },
                 this.logger);
-        }
-
-
-        public static ITokenProvider MockTokenProvider()
-        {
-            var moq = new Mock<ITokenProvider>();
-
-            const string issuer = "test-issuer";
-            const string audience = "test-audience";
-
-            var key = new SymmetricSecurityKey(JwtTokenUtilities.GenerateKeyBytes(256));
-            key.KeyId = Guid.NewGuid().ToString();
-            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var jwtWriter = new JwtWriter();
-            jwtWriter.AddIssuer(issuer, signingCredentials);
-            jwtWriter.AddAudience(audience);
-
-            moq.Setup(obj => obj.IssueTokenAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<DateTime>(),
-                It.IsAny<IEnumerable<Claim>>(),
-                It.IsAny<IDiagnosticsLogger>()))
-                .Returns((
-                    string issuer,
-                    string audience,
-                    DateTime expires,
-                    IEnumerable<Claim> claims,
-                    IDiagnosticsLogger logger)
-                    => Task.FromResult(jwtWriter.WriteToken(
-                        logger, issuer, audience, expires, claims.ToArray())));
-
-            moq.Setup(obj => obj.Settings)
-                .Returns(() => new AuthenticationSettings
-                {
-                    VsSaaSTokenSettings = new TokenSettings
-                    {
-                        Issuer = issuer,
-                        Audience = audience,
-                    },
-                    ConnectionTokenSettings = new TokenSettings
-                    {
-                        Issuer = issuer,
-                        Audience = audience,
-                    },
-                });
-
-            return moq.Object;
-        }
-
-        public static Profile MockProfile(
-            string provider = "mock-provider",
-            string id = "mock-id",
-            Dictionary<string, object> programs = null,
-            string email = "someone@somewhere.com")
-        {
-            return new Profile
-            {
-                Provider = provider,
-                Id = id,
-                Programs = programs,
-                Email = email
-            };
         }
     }
 }

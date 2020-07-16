@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using static Microsoft.VsSaaS.Diagnostics.Extensions.DiagnosticsLoggerExtensions;
 
@@ -38,26 +39,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("frontend_heartbeat_controller")]
     public class HeartBeatController : ControllerBase
     {
-        private readonly IEnvironmentManager environmentManager;
-        private IEnumerable<IDataHandler> handlers;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="HeartBeatController"/> class.
         /// </summary>
         /// <param name="handlers">List of handlers to process the collected data from VSOAgent.</param>
         /// <param name="backendHeartBeatClient">Backend HeartBeat Client.</param>
         /// <param name="environmentManager">Environment Manager.</param>
+        /// <param name="currentUserProvider">Current user provider.</param>
         public HeartBeatController(
             IEnumerable<IDataHandler> handlers,
             IResourceHeartBeatHttpContract backendHeartBeatClient,
-            IEnvironmentManager environmentManager)
+            IEnvironmentManager environmentManager,
+            ICurrentUserProvider currentUserProvider)
         {
-            this.handlers = handlers;
+            Handlers = handlers;
             BackendHeartBeatClient = backendHeartBeatClient;
-            this.environmentManager = environmentManager;
+            EnvironmentManager = environmentManager;
+            CurrentUserProvider = currentUserProvider;
         }
 
+        private IEnumerable<IDataHandler> Handlers { get; }
+
         private IResourceHeartBeatHttpContract BackendHeartBeatClient { get; }
+
+        private IEnvironmentManager EnvironmentManager { get; }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
 
         /// <summary>
         /// Controller to recieve heartbeat messages from VSO Agents.
@@ -85,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidateHeartbeat(heartBeat);
                 if (!string.IsNullOrEmpty(environmentId))
                 {
-                    environment = await environmentManager.GetAsync(environmentId, logger);
+                    environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentId), logger);
                     shouldSendBackendTask = !(environment == null || environment.Type == EnvironmentType.StaticEnvironment);
                 }
             }
@@ -117,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                            foreach (var data in collectedData)
                            {
-                               var handler = handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
+                               var handler = Handlers.Where(h => h.CanProcess(data)).FirstOrDefault();
 
                                if (handler != null)
                                {
@@ -194,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return;
             }
 
-            await environmentManager.UpdateAsync(handlerContext.CloudEnvironment, handlerContext.CloudEnvironmentState, handlerContext.Trigger ?? CloudEnvironmentStateUpdateTriggers.Heartbeat, handlerContext.Reason ?? string.Empty, handlerContext.IsUserError, logger);
+            await EnvironmentManager.UpdateAsync(handlerContext.CloudEnvironment, handlerContext.CloudEnvironmentState, handlerContext.Trigger ?? CloudEnvironmentStateUpdateTriggers.Heartbeat, handlerContext.Reason ?? string.Empty, handlerContext.IsUserError, logger);
         }
 
         private IActionResult InternalServerError() => StatusCode(StatusCodes.Status500InternalServerError);
@@ -209,8 +216,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private void ValidateHeartbeat(HeartBeatBody heartbeat)
         {
-            ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "Heartbeat token has no resourceId");
-            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var tokenResourceId), $"Heartbeat token has invalid resourceId");
+            ValidationUtil.IsTrue(CurrentUserProvider.Identity.AuthorizedComputeId != null, "Heartbeat token has no resourceId");
+            ValidationUtil.IsTrue(Guid.TryParse(CurrentUserProvider.Identity.AuthorizedComputeId as string, out var tokenResourceId), $"Heartbeat token has invalid resourceId");
             ValidationUtil.IsTrue(heartbeat.ResourceId != default, $"Heartbeat received with empty resourceId in body, and token resourceId {tokenResourceId}");
             ValidationUtil.IsTrue(tokenResourceId == heartbeat.ResourceId, $"Heartbeat received with conflicting resourceId in body ({heartbeat.ResourceId}), and in token ({tokenResourceId})");
             if (!string.IsNullOrWhiteSpace(heartbeat.EnvironmentId))

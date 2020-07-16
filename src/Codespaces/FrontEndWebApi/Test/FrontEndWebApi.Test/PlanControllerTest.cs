@@ -108,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(obj => obj.GetProfileAsync())
                 .Returns(() =>
                 {
-                    return Task.FromResult (new UserProfile.Profile
+                    return Task.FromResult (new Profile
                     {
                         ProviderId = "mock-provider-id",
                         Programs = programs

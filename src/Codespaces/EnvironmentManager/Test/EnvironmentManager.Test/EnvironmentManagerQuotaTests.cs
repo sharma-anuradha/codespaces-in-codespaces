@@ -1,5 +1,6 @@
 ﻿using AutoMapper.Configuration.Conventions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.Azure.Management.Cdn.Fluent.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
@@ -21,23 +22,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             // 20 environments exist
             var listEnvironments = await this.environmentManager.ListAsync(
-                logger, planId: testPlan.ResourceId);
+                testPlan.ResourceId, null, null, logger);
 
             Assert.Equal(20, listEnvironments.Count());
 
             // 21st envrionment should not be created
-            var result = await CreateTestEnvironmentAsync("Test21");
-            Assert.Equal(MessageCodes.ExceededQuota, result.MessageCode);
-            Assert.Equal(StatusCodes.Status403Forbidden, result.HttpStatusCode);
+            var ex = await Assert.ThrowsAsync<ForbiddenException>(async () => await CreateTestEnvironmentAsync("Test21"));
+            Assert.Equal((int)MessageCodes.ExceededQuota, ex.MessageCode);
 
             // Delete 1 environment.
-            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete.CloudEnvironment, logger);
+            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete, logger);
             Assert.True(deleteResult);
 
             // User should be allowed to create environment.
             var canSaveResult = await CreateTestEnvironmentAsync($"Test-0");
-            Assert.Equal(StatusCodes.Status200OK, canSaveResult.HttpStatusCode);
-            Assert.NotNull(canSaveResult.CloudEnvironment);
+            Assert.NotNull(canSaveResult);
         }
 
         [Fact]
@@ -47,8 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             // Compute Core per SKU = 1
             await CreateEnvironmentsAsync(10, "Round1", "windows");
 
-            var listEnvironments = await this.environmentManager.ListAsync(
-               logger, planId: testPlan.ResourceId);
+            var listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, logger);
 
             // Subscription is at Max Compute Cores
             Assert.Equal(10, listEnvironments.Count());
@@ -56,10 +54,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             // Create 10 more cores
             await CreateEnvironmentsAsync(10, "Round2", "windows");
 
-            listEnvironments = await this.environmentManager.ListAsync(
-               logger, planId: testPlan.ResourceId);
+            listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, logger);
 
-            // Subscription is allowed to go over Default Max Copute cores
+            // Subscription is allowed to go over Default Max Compute cores
             Assert.Equal(20, listEnvironments.Count());
         }
 
@@ -68,21 +65,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             // Default Max Compute Quota = 10
             // Compute Core per SKU = 1
-            var result = await CreateTestEnvironmentAsync("Test0");
-            var environmentToResume = result.CloudEnvironment;
+            var environmentToResume = await CreateTestEnvironmentAsync("Test0", "windows");
             await this.environmentManager.ForceSuspendAsync(environmentToResume, logger);
 
-            await CreateEnvironmentsAsync(10, "windows");
+            await CreateEnvironmentsAsync(10, "windows", "windows");
 
-            var listEnvironments = await this.environmentManager.ListAsync(
-               logger, planId: testPlan.ResourceId);
+            var listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, logger);
 
             // Subscription is over Max Compute Cores
             Assert.Equal(11, listEnvironments.Count());
 
             var startEnvironmentParams = new StartCloudEnvironmentParameters
             {
-                UserProfile = MockProfile(),
+                UserProfile = MockUtil.MockProfile(),
                 ConnectionServiceUri = new Uri("http://localhost/"),
                 CallbackUriFormat = "http://localhost/{0}",
                 FrontEndServiceUri = new Uri("http://localhost/"),
@@ -97,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private async Task CreateEnvironmentsAsync(
             int numOfEnvironments,
             string namePrefix = "Test",
-            string skuName = "test")
+            string skuName = "testSkuName")
         {
             for (var i = 1; i <= numOfEnvironments; i++)
             {

@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchDeletedPlanEnvironmentsTask.cs" company="Microsoft">
+// <copyright file="WatchDeletedPlanEnvironmentsTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 {
@@ -35,6 +36,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="envManager">the environment manager needed to delete environments.</param>
         /// <param name="controlPlaneInfo"> The control plane info used to figure out locations to run from.</param>
+        /// <param name="currentIdentityProvider">Target identity provider.</param>
+        /// <param name="superuserIdentity">Target super user identity.</param>
         public WatchDeletedPlanEnvironmentsTask(
             IPlanRepository planRepository,
             EnvironmentManagerSettings environmentManagerSettings,
@@ -43,12 +46,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             IEnvironmentManager envManager,
-            IControlPlaneInfo controlPlaneInfo)
+            IControlPlaneInfo controlPlaneInfo,
+            ICurrentIdentityProvider currentIdentityProvider,
+            VsoSuperuserClaimsIdentity superuserIdentity)
              : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             PlanRepository = planRepository;
             EnvManager = envManager;
             ControlPlaneInfo = controlPlaneInfo;
+            CurrentIdentityProvider = currentIdentityProvider;
+            SuperuserIdentity = superuserIdentity;
         }
 
         private IPlanRepository PlanRepository { get; }
@@ -56,6 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private IEnvironmentManager EnvManager { get; }
 
         private IControlPlaneInfo ControlPlaneInfo { get; }
+
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchDeletedPlanEnvironmentsTask)}Lease");
 
@@ -68,17 +79,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 $"{LogBaseName}_run",
                 async (childLogger) =>
                 {
-                    var locations = ControlPlaneInfo.Stamp.DataPlaneLocations;
+                    using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
+                    {
+                        var locations = ControlPlaneInfo.Stamp.DataPlaneLocations;
 
-                    // Run through found plans in the background
-                    await TaskHelper.RunConcurrentEnumerableAsync(
-                        $"{LogBaseName}_run_unit_check",
-                        locations,
-                        (location, itemLogger) => CoreRunUnitAsync(location, itemLogger),
-                        childLogger.NewChildLogger(),
-                        (location, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{location}", claimSpan, itemLogger));
+                        // Run through found plans in the background
+                        await TaskHelper.RunConcurrentEnumerableAsync(
+                            $"{LogBaseName}_run_unit_check",
+                            locations,
+                            (location, itemLogger) => CoreRunUnitAsync(location, itemLogger),
+                            childLogger.NewChildLogger(),
+                            (location, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{location}", claimSpan, itemLogger));
 
-                    return !Disposed;
+                        return !Disposed;
+                    }
                 },
                 (e, childLogger) => Task.FromResult(!Disposed),
                 swallowException: true);
@@ -106,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     childLogger.AddVsoPlan(plan);
 
                     var environments = await EnvManager.ListAsync(
-                        childLogger.NewChildLogger(), planId: plan.Plan.ResourceId);
+                        plan.Plan.ResourceId, null, null, childLogger.NewChildLogger());
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
                     {

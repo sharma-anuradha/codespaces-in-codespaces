@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Xunit;
@@ -29,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             await planRepository.CreateAsync(testVsoPlan, logger);
 
-            var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
+            var testEnvironment = (await CreateTestEnvironmentAsync());
 
             Assert.Collection(
                 billingEventRepository.Values.OrderBy(item => item.Time),
@@ -43,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public async Task UpdateEnvironmentUpdatesBillingState()
         {
             await planRepository.CreateAsync(testVsoPlan, logger);
-            var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
+            var testEnvironment = (await CreateTestEnvironmentAsync());
             billingEventRepository.Clear();
 
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
@@ -58,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public async Task UnavailableEnvironmentUpdatesBillingState()
         {
             await planRepository.CreateAsync(testVsoPlan, logger);
-            var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
+            var testEnvironment = (await CreateTestEnvironmentAsync());
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
 
@@ -66,20 +67,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             workspaceRepository.MockGetStatus = (workspaceId) => null;
 
             // The GetEnvironment call should update the environment state when it discovers the missing connection.
-            var testEnvironment2 = await this.environmentManager.GetAndStateRefreshAsync(
-                testEnvironment.Id, this.logger);
+            await this.environmentManager.GetAsync(Guid.Parse(testEnvironment.Id), this.logger);
 
             Assert.Collection(
-                billingEventRepository.Values,
-                (billingEvent) => VerifyEnvironmentStateChange(
-                    testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.Unavailable));
+                 billingEventRepository.Values,
+                 (billingEvent) => VerifyEnvironmentStateChange(
+                     testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.Unavailable));
         }
 
         [Fact]
         public async Task DeleteEnvironmentUpdatesBillingState()
         {
             await planRepository.CreateAsync(testVsoPlan, logger);
-            var testEnvironment = (await CreateTestEnvironmentAsync()).CloudEnvironment;
+            var testEnvironment = (await CreateTestEnvironmentAsync());
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
 

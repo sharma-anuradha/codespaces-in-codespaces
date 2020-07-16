@@ -7,7 +7,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
     /// <summary>
     /// An interface for Sku Utils.
@@ -21,6 +21,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility
         /// <param name="planInfo">Plan info.</param>
         /// <param name="profile">User Profile info.</param>
         /// <returns>Boolean value.<see cref="Task"/> representing the asynchronous operation.</returns>
-        public Task<bool> IsVisible(ICloudEnvironmentSku sku, VsoPlanInfo planInfo, Profile profile);
+        Task<bool> IsVisible(ICloudEnvironmentSku sku, VsoPlanInfo planInfo, Profile profile);
     }
 }

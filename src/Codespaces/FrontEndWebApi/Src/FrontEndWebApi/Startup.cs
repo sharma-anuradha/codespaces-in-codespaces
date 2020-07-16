@@ -33,7 +33,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;

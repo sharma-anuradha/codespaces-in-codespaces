@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
@@ -116,6 +117,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
             services.AddSingleton<IEnvironmentContinuationOperations, EnvironmentContinuationOperations>();
+            services.AddSingleton<IResourceStartManager, ResourceStartManager>();
+            services.AddSingleton<IEnvironmentAccessManager, EnvironmentAccessManager>();
+            services.AddSingleton<IEnvironmentSubscriptionManager, EnvironmentSubscriptionManager>();
+
+            // The environment manager actions
+            services.AddSingleton<IEnvironmentCreateAction, EnvironmentCreateAction>();
+            services.AddSingleton<IEnvironmentGetAction, EnvironmentGetAction>();
+            services.AddSingleton<IEnvironmentUpdateStatusAction, EnvironmentUpdateStatusAction>();
+            services.AddSingleton<IEnvironmentListAction, EnvironmentListAction>();
+            services.AddSingleton<IEnvironmentDeleteAction, EnvironmentDeleteAction>();
 
             // The environment metrics
             services.AddSingleton<IEnvironmentMetricsManager, EnvironmentMetricsManager>();

@@ -6,16 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Bond;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
-using Microsoft.Extensions.Options;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
@@ -24,7 +18,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Settings;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
 {
@@ -43,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// <param name="options">The options.</param>
         /// <param name="subscriptionRepository">The  subscriptions repository.</param>
         /// <param name="systemConfiguration">The system configuration manager.</param>
-        /// <param name="environmentManager">The environment manager.</param>
+        /// <param name="environmentSubscriptionManager">The environment subscription manager.</param>
         /// <param name="subscriptionOfferManager">The subscription Offer manager.</param>
         /// <param name="crossRegionActivator">The CrossRegionContinuationTaskActivator.</param>
         /// <param name="rpaasHttpProvider">HttpProvider for accessing RPaas's registered subscriptions endpoint.</param>
@@ -52,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             SubscriptionManagerSettings options,
             ISubscriptionRepository subscriptionRepository,
             ISystemConfiguration systemConfiguration,
-            IEnvironmentManager environmentManager,
+            IEnvironmentSubscriptionManager environmentSubscriptionManager,
             ISubscriptionOfferManager subscriptionOfferManager,
             ICrossRegionContinuationTaskActivator crossRegionActivator,
             IRPaaSMetaRPHttpClient rpaasHttpProvider,
@@ -61,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             SubscriptionRepository = Requires.NotNull(subscriptionRepository, nameof(Susbscriptions.SubscriptionRepository));
             Settings = Requires.NotNull(options, nameof(options));
             SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
-            EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
+            EnvironmentSubscriptionManager = Requires.NotNull(environmentSubscriptionManager, nameof(environmentSubscriptionManager));
             SubscriptionOfferManager = Requires.NotNull(subscriptionOfferManager, nameof(subscriptionOfferManager));
             CrossRegionActivator = Requires.NotNull(crossRegionActivator, nameof(crossRegionActivator));
             RPaaSHttpProvider = rpaasHttpProvider;
@@ -74,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
 
         private ISystemConfiguration SystemConfiguration { get; }
 
-        private IEnvironmentManager EnvironmentManager { get; }
+        private IEnvironmentSubscriptionManager EnvironmentSubscriptionManager { get; }
 
         private ISubscriptionOfferManager SubscriptionOfferManager { get; }
 
@@ -276,7 +269,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_apply_warned_suspended_rules_to_resources",
                 async (childLogger) =>
                 {
-                    var environments = await EnvironmentManager.ListBySubscriptionAsync(subscription, logger.NewChildLogger());
+                    var environments = await EnvironmentSubscriptionManager.ListBySubscriptionAsync(subscription, logger.NewChildLogger());
                     environments.ToList().ForEach(async environment => await QueueEnvironmentForSuspension(environment, logger.NewChildLogger()));
                 }, swallowException: true);
         }
@@ -287,7 +280,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_apply_warned_deleted_rules_to_resources",
                 async (childLogger) =>
                 {
-                    var environments = await EnvironmentManager.ListBySubscriptionAsync(subscription, logger.NewChildLogger());
+                    var environments = await EnvironmentSubscriptionManager.ListBySubscriptionAsync(subscription, logger.NewChildLogger());
                     environments.ToList().ForEach(async environment => await QueueEnvironmentForDeletion(environment, logger.NewChildLogger()));
                 }, swallowException: true);
         }

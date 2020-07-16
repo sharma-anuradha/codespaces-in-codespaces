@@ -1,13 +1,12 @@
-﻿// <copyright file="VsoClaimsIdentity.cs" company="Microsoft">
+// <copyright file="VsoClaimsIdentity.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Linq;
 using System.Security.Claims;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Vso Claims Identity.
@@ -15,14 +14,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     public class VsoClaimsIdentity : ClaimsIdentity
     {
         /// <summary>
+        /// Error code for IsScopeAuthorized errors.
+        /// </summary>
+        public const string IsScopeAuthorizedErrorCode = "IsScopeAuthorizedError";
+
+        /// <summary>
+        /// Error code for IsEnvironmentAuthorized errors.
+        /// </summary>
+        public const string IsEnvironmentAuthorizedErrorCode = "IsEnvironmentAuthorizedError";
+
+        /// <summary>
+        /// Error code for IsPlanAuthorized errors.
+        /// </summary>
+        public const string IsPlanAuthorizedErrorCode = "IsPlanAuthorizedError";
+
+        private const string NameIdentifierClaimName = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="VsoClaimsIdentity"/> class.
         /// </summary>
         /// <param name="claimsIdentity">Target claims identity.</param>
+        /// <param name="hasComputeClaim">Target compute resourceId claim.</param>
         public VsoClaimsIdentity(
-            ClaimsIdentity claimsIdentity)
+            ClaimsIdentity claimsIdentity,
+            bool hasComputeClaim = false)
             : base(claimsIdentity)
         {
-            Initialize();
+            Initialize(hasComputeClaim);
         }
 
         /// <summary>
@@ -42,6 +60,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
             AuthorizedPlan = authorizedPlan;
             Scopes = scopes;
             AuthorizedEnvironments = authorizedEnvironments;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VsoClaimsIdentity"/> class.
+        /// </summary>
+        /// <param name="scopes">Target scope.</param>
+        /// <param name="claimsIdentity">Target claims identity.</param>
+        public VsoClaimsIdentity(string[] scopes, ClaimsIdentity claimsIdentity)
+            : this(null, scopes, null, claimsIdentity)
+        {
         }
 
         /// <summary>
@@ -66,6 +94,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         public string[] AuthorizedEnvironments { get; private set; }
 
         /// <summary>
+        /// Gets current authorized compute id.
+        /// </summary>
+        public string AuthorizedComputeId { get; private set; }
+
+        /// <summary>
         /// Checks if a plan is authorized by the identity claims.
         /// </summary>
         /// <param name="plan">Fully-qualified plan resource ID that the user is
@@ -81,7 +114,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <summary>
-        /// Checks if an environment is specifically authorized by the identity claims.
+        /// Checks if a compute is authorized for the context.
+        /// </summary>
+        /// <param name="environmentComputeId">Compute Id of the environment.</param>
+        /// <returns>
+        /// True if the compute is explicitly authorized,
+        /// false if the current context is restricted to a different compute, or
+        /// null if the current context is not restricted to any compute.</returns>
+        public virtual bool? IsComputeAuthorized(string environmentComputeId)
+        {
+            var authorizedComputeResourceId = AuthorizedComputeId;
+            return authorizedComputeResourceId == null ? (bool?)null : authorizedComputeResourceId == environmentComputeId;
+        }
+
+        /// <summary>
+        /// Checks if an environment is specifically authorized for the current HTTP context.
         /// </summary>
         /// <param name="environmentId">ID of the environment the user is attempting to access,
         /// or null if the user is attempting a non-environment-scoped action.</param>
@@ -106,6 +153,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         }
 
         /// <summary>
+        /// Checks to see if the user is superuser.
+        /// </summary>
+        /// <returns>False if user is not superuser, true if they are.</returns>
+        public virtual bool IsSuperuser()
+        {
+            return false;
+        }
+
+        /// <summary>
         /// Checks if any of a list of scopes is authorized by the identity claims.
         /// </summary>
         /// <param name="scopes">List of scopes, at least one of which is required.</param>
@@ -120,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
                 (scope) => scopes.Contains(scope, StringComparer.OrdinalIgnoreCase));
         }
 
-        private void Initialize()
+        private void Initialize(bool hasComputeClaim = false)
         {
             // Extract plan resource id
             AuthorizedPlan = FindFirst(CustomClaims.PlanResourceId)?.Value;
@@ -140,10 +196,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
 
                 // Extract environment id
                 AuthorizedEnvironments = Claims.Where((c) => c.Type == CustomClaims.Environments).Select((c) => c.Value).ToArray();
-                if (AuthorizedEnvironments.Length == 0)
+                if (!AuthorizedEnvironments.Any())
                 {
                     AuthorizedEnvironments = null;
                 }
+            }
+
+            // Extract compute resource id if present
+            if (hasComputeClaim)
+            {
+                AuthorizedComputeId = FindFirst(NameIdentifierClaimName)?.Value;
             }
         }
     }

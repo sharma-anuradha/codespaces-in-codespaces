@@ -123,7 +123,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 var validatedPrincipalHandler = context.HttpContext.RequestServices.GetService<IValidatedPrincipalIdentityHandler>();
                 var newPrincipal = await validatedPrincipalHandler.ValidatedPrincipalAsync(context.Principal, context.SecurityToken as JwtSecurityToken, logger.NewChildLogger());
 
+                // Apply new principal
                 context.Principal = newPrincipal;
+
                 logger.LogInfo("jwt_authentication_success");
             }
             catch (Exception ex)

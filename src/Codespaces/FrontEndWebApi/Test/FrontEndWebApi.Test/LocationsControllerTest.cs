@@ -12,12 +12,10 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
 using Xunit;
 

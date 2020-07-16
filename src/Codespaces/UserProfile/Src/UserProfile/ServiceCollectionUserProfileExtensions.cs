@@ -3,8 +3,12 @@
 // </copyright>
 
 using System;
+using System.Linq;
+using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
@@ -31,12 +35,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
                 .AddCurrentUserProvider()
                 .AddProfileCache()
                 .AddProfileRepository()
-                .AddProfileHttpClient(configureUserProfileOptions);
+                .AddProfileHttpClient(configureUserProfileOptions)
+                .AddIdentityContextAccessor();
         }
 
         private static IServiceCollection AddCurrentUserProvider(
             this IServiceCollection services)
-            => services.AddSingleton<ICurrentUserProvider, HttpContextCurrentUserProvider>();
+            => services.AddSingleton<HttpContextCurrentUserProvider>()
+                       .AddSingleton<ICurrentUserProvider>(x => x.GetRequiredService<HttpContextCurrentUserProvider>())
+                       .AddSingleton<ICurrentIdentityProvider>(x => x.GetRequiredService<HttpContextCurrentUserProvider>());
 
         private static IServiceCollection AddProfileCache(
             this IServiceCollection services)
@@ -53,5 +60,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
                 .Configure(configureOptions)
                 .AddSingleton<IHttpClientProvider<ProfileHttpClientProviderOptions>,
                     CurrentUserHttpClientProvider<ProfileHttpClientProviderOptions>>();
+
+        private static IServiceCollection AddIdentityContextAccessor(
+            this IServiceCollection services)
+            => services.AddSingleton<IIdentityContextAccessor, IdentityContextAccessor>()
+                       .AddSingleton(sp =>
+                                {
+                                    var claims = new Claim[] { new Claim("Name", "Superuser") };
+                                    var claimsIdentity = new ClaimsIdentity(claims);
+                                    var authorizedScopes = PlanAccessTokenScopes.ValidPlanScopes;
+
+                                    return new VsoSuperuserClaimsIdentity(authorizedScopes.ToArray(), claimsIdentity);
+                                });
     }
 }

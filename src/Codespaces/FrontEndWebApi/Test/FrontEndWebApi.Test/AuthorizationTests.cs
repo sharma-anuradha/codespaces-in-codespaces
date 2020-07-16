@@ -44,6 +44,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(ListData))]
         public async Task ListEnvironments(AccessTest test)
         {
+            // TODO: elpadann - Move access tests to manager/action layer, as authorization check is no longer performed at controller layer.
+            _ = test;
+            await Task.CompletedTask;
+
+            /*
             string userId = "test-user";
             string planId = "test-plan";
 
@@ -51,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
 
             var mockHttpContext = new DefaultHttpContext();
-            
+
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
             var claimPlanId = default(string);
@@ -92,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Assert.Empty(resultsArray);
                 }
             }
+            */
         }
 
         public static TheoryData<AccessTest> GetData = new TheoryData<AccessTest>
@@ -136,6 +142,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(GetData))]
         public async Task GetEnvironment(AccessTest test)
         {
+            // TODO: elpadann - Move access tests to manager/action layer, as authorization check is no longer performed at controller layer.
+            _ = test;
+            await Task.CompletedTask;
+
+            /*
             string userId = "test-user";
             string planId = "test-plan";
 
@@ -168,8 +179,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 currentUserProvider: mockCurrentUserProvider,
                 httpContext: mockHttpContext);
 
-            var result = await environmentController.GetAsync(mockEnv.Id, logger);
+            var result = await environmentController.GetAsync(Guid.Parse(mockEnv.Id), logger);
             Assert.IsType(test.ExpectedResultType, result);
+            */
         }
 
         public static TheoryData<AccessTest> CreateInOwnedPlanData = new TheoryData<AccessTest>
@@ -248,6 +260,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
         private async Task CreateEnvironment(AccessTest test, bool ownedPlan)
         {
+            // TODO: elpadann - Move access tests to manager/action layer, as authorization check is no longer performed at controller layer.
+            await Task.CompletedTask;
+
+            /*
             var body = new CreateCloudEnvironmentBody
             {
                 FriendlyName = "test-environment",
@@ -294,6 +310,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var result = await environmentController.CreateAsync(body, logger);
             Assert.IsType(test.ExpectedResultType, result);
+            */
         }
 
         public static TheoryData<AccessTest> UpdateSettingsData = new TheoryData<AccessTest>
@@ -343,9 +360,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 httpContext: mockHttpContext);
 
             var updateInput = new UpdateCloudEnvironmentBody();
-            var result = await environmentController.UpdateSettingsAsync(
-                mockEnv.Id, updateInput, logger);
-            Assert.IsType(test.ExpectedResultType, result);
+
+            if (test.ExceptionType == null)
+            {
+                var result = await environmentController.UpdateSettingsAsync(mockEnv.Id, updateInput, logger);
+                Assert.IsType(test.ExpectedResultType, result);
+            }
+            else
+            {
+                await Assert.ThrowsAsync(test.ExceptionType, async () => await environmentController.UpdateSettingsAsync(mockEnv.Id, updateInput, logger));
+            }
         }
 
         public class AccessTest
@@ -390,6 +414,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     IsMatchingPlan = isMatchingPlan,
                     IsOwner = isOwner,
                     ExpectedResultType = typeof(CreatedResult),
+                    ExceptionType = null,
                 };
 
             public static AccessTest Forbid(string scope, bool? isMatchingPlan, bool isOwner = false)
@@ -400,7 +425,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Scopes = scopes,
                     IsMatchingPlan = isMatchingPlan,
                     IsOwner = isOwner,
-                    ExpectedResultType = typeof(ForbidResult),
+                    ExceptionType = typeof(UnauthorizedAccessException),
                 };
             public static AccessTest Forbid(
                 string scope, string[] environments, bool? isMatchingPlan = true, bool isOwner = true)
@@ -410,7 +435,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Environments = environments,
                     IsMatchingPlan = isMatchingPlan,
                     IsOwner = isOwner,
-                    ExpectedResultType = typeof(ForbidResult),
+                    ExceptionType = typeof(UnauthorizedAccessException),
                 };
 
             public string[] Scopes { get; private set; }
@@ -418,6 +443,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             public bool? IsMatchingPlan { get; private set; }
             public bool IsOwner { get; private set; }
             public Type ExpectedResultType { get; private set; }
+            public Type ExceptionType { get; private set; }
         }
     }
 }

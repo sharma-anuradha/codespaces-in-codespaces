@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
     /// <summary>
     /// sku utility functions can be accessed here.

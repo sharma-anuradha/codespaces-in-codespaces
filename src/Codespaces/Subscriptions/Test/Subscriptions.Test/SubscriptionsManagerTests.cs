@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
@@ -43,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
                 .Returns(Task.FromResult(settingsManager.IsSubscriptionStateCheckEnabled));
 
             settingsManager.Init(mockSystemConfiguration.Object);
-            var mockEnvironmentManger = new MockEnvironmentManager();
+            var mockEnvironmentSubscriptionManger = new Mock<IEnvironmentSubscriptionManager>();
             subscriptionRepository = new MockSubscriptionRepository();
             var mockQuotaCatalog = new Mock<IQuotaFamilyCatalog>();
             var subscriptionOfferManager = new SubscriptionOfferManager(mockSystemConfiguration.Object, mockQuotaCatalog.Object);
@@ -64,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             subscriptionManager = new SubscriptionManager(settingsManager,
                                     subscriptionRepository,
                                     mockSystemConfiguration.Object,
-                                    mockEnvironmentManger,
+                                    mockEnvironmentSubscriptionManger.Object,
                                     subscriptionOfferManager,
                                     crossRegionActivator, 
                                     httpClient.Object,

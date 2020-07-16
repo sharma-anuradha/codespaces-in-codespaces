@@ -1,4 +1,4 @@
-﻿// <copyright file="DataAgent.cs" company="Microsoft">
+// <copyright file="DataAgent.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -122,10 +122,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
                         await command.CheckpointAsync(CommandStatus.Complete, totalAffectedEntitiesCount, exportedFileSizeDetails: exportDetails);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     await command.CheckpointAsync(CommandStatus.Failed, totalAffectedEntitiesCount, exportedFileSizeDetails: exportDetails);
-                    throw e;
+                    throw;
                 }
             });
         }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Moq;
 using Xunit;
 
@@ -16,14 +17,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentToDelete = await CreateTestEnvironmentAsync("ABC");
 
             // User should not be allowed to create environment.
-            var result = await CreateTestEnvironmentAsync("abc");
-            Assert.Equal(StatusCodes.Status409Conflict, result.HttpStatusCode);
-            Assert.Equal(environmentToDelete.CloudEnvironment.FriendlyName.ToLowerInvariant(), environmentToDelete.CloudEnvironment.FriendlyNameInLowerCase);
+            var ex = await Assert.ThrowsAsync<ConflictException>(async () => await CreateTestEnvironmentAsync("abc"));
+            Assert.Equal((int)MessageCodes.EnvironmentNameAlreadyExists, ex.MessageCode);
+            Assert.Equal(environmentToDelete.FriendlyName.ToLowerInvariant(), environmentToDelete.FriendlyNameInLowerCase);
 
             // Deleting environment after environment name validation.
-            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete.CloudEnvironment, logger);
+            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete, logger);
             Assert.True(deleteResult);
-
         }
 
         [Fact]
@@ -31,12 +31,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var result = await CreateTestEnvironmentAsync("ABC");
 
-            Assert.NotNull(result.CloudEnvironment.Connection);
-            Assert.Equal(testServiceUri.AbsoluteUri, result.CloudEnvironment.Connection.ConnectionServiceUri);
+            Assert.NotNull(result.Connection);
+            Assert.Equal(testServiceUri.AbsoluteUri, result.Connection.ConnectionServiceUri);
 
-            var environment2 = await this.environmentManager.GetAsync(result.CloudEnvironment.Id, logger);
+            var environment2 = await this.environmentManager.GetAsync(Guid.Parse(result.Id), logger);
             Assert.NotNull(environment2.Connection);
-            Assert.Equal(testServiceUri.AbsoluteUri, result.CloudEnvironment.Connection.ConnectionServiceUri);
+            Assert.Equal(testServiceUri.AbsoluteUri, result.Connection.ConnectionServiceUri);
         }
 
         [Theory]
@@ -47,17 +47,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public async Task ShutdownContinuation_NoExtraContinuations(Common.Continuation.OperationState operationState, bool called)
         {
             var result = await CreateTestEnvironmentAsync("ABC");
-            result.CloudEnvironment.OSDisk = new ResourceAllocation.ResourceAllocationRecord()
+            result.OSDisk = new ResourceAllocation.ResourceAllocationRecord()
             {
                 ResourceId = Guid.NewGuid(),
             };
 
-            result.CloudEnvironment.Transitions.ShuttingDown = new TransitionState()
+            result.Transitions.ShuttingDown = new TransitionState()
             {
                 Status = operationState,
             };
 
-            await this.environmentManager.SuspendCallbackAsync(result.CloudEnvironment, this.logger);
+            await this.environmentManager.SuspendCallbackAsync(result, this.logger);
             if (called)
             {
                 environmentContinuationOperations.Verify(x => x.ShutdownAsync(It.IsAny<System.Guid>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()), Times.Once);

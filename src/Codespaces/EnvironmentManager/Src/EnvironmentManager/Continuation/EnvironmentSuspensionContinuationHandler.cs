@@ -8,12 +8,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation
 {
     /// <summary>
-    /// Suspention environments handler.
+    /// Suspension environments handler.
     /// </summary>
     public class EnvironmentSuspensionContinuationHandler : IContinuationTaskMessageHandler
     {
@@ -26,9 +29,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// Initializes a new instance of the <see cref="EnvironmentSuspensionContinuationHandler"/> class.
         /// </summary>
         /// <param name="serviceProvider">Dependency Injection service provider.</param>
-        public EnvironmentSuspensionContinuationHandler(IServiceProvider serviceProvider)
+        /// <param name="currentIdentityProvider">Target identity provider.</param>
+        /// <param name="superuserIdentity">Target super user identity.</param>
+        public EnvironmentSuspensionContinuationHandler(IServiceProvider serviceProvider, ICurrentIdentityProvider currentIdentityProvider, VsoSuperuserClaimsIdentity superuserIdentity)
         {
             ServiceProvider = serviceProvider;
+            CurrentIdentityProvider = currentIdentityProvider;
+            SuperuserIdentity = superuserIdentity;
         }
 
         private IEnvironmentManager EnvironmentManager
@@ -38,6 +45,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         }
 
         private IServiceProvider ServiceProvider { get; }
+
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         /// <inheritdoc/>
         public bool CanHandle(ContinuationQueuePayload payload)
@@ -50,13 +61,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         {
             return await logger.OperationScopeAsync("handle_environment_suspension", async (childLogger) =>
             {
-                var environmentSuspensionInput = input as EnvironmentContinuationInput;
-
-                if (environmentSuspensionInput != null)
+                using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
                 {
-                    var environment = await EnvironmentManager.GetAsync(environmentSuspensionInput.EnvironmentId, logger.NewChildLogger());
-                    if (environment != null)
+                    var environmentSuspensionInput = input as EnvironmentContinuationInput;
+
+                    if (environmentSuspensionInput != null)
                     {
+                        CloudEnvironment environment;
+                        try
+                        {
+                            environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentSuspensionInput.EnvironmentId), logger.NewChildLogger());
+                        }
+                        catch (EntityNotFoundException)
+                        {
+                            // Not required to suspend as the environment is already deleted.
+                            return CreateFinalResult(OperationState.Succeeded);
+                        }
+
                         childLogger.AddCloudEnvironment(environment);
                         var isSuspended = await EnvironmentManager.SuspendAsync(environment, logger.NewChildLogger());
                         if (isSuspended.HttpStatusCode == StatusCodes.Status200OK)
@@ -66,8 +87,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
 
                         return CreateFinalResult(OperationState.Failed, "SuspensionFailed");
                     }
-
-                    return CreateFinalResult(OperationState.Succeeded);
                 }
 
                 return CreateFinalResult(OperationState.Failed, "InvalidInputType");

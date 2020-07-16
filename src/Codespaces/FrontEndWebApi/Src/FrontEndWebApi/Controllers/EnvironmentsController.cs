@@ -4,10 +4,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -32,13 +31,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Tokens;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -53,11 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {
         private const string LoggingBaseName = "environments_controller";
-        private const string UnauthorizedPlanId = "unauthorized_plan_id";
-        private const string UnauthorizedEnvironmentId = "unauthorized_environment_id";
-        private const string UnauthorizedPlanScope = "unauthorized_plan_scope";
-        private const string UnauthorizedPlanUser = "unauthorized_plan_user";
-        private const string UnauthorizedEnvironmentUser = "unauthorized_environment_user";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
@@ -76,6 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="metricsManager">The metrics manager.</param>
         /// <param name="subscriptionManager">The subscription manager.</param>
         /// <param name="accessTokenReader">JWT reader configured for access tokens.</param>
+        /// <param name="environmentAccessManager">The environment access manager.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -90,7 +83,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ITokenProvider tokenProvider,
             IMetricsManager metricsManager,
             ISubscriptionManager subscriptionManager,
-            ICascadeTokenReader accessTokenReader)
+            ICascadeTokenReader accessTokenReader,
+            IEnvironmentAccessManager environmentAccessManager)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -106,6 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             MetricsManager = Requires.NotNull(metricsManager, nameof(metricsManager));
             SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
             AccessTokenReader = Requires.NotNull(accessTokenReader, nameof(accessTokenReader));
+            EnvironmentAccessManager = Requires.NotNull(environmentAccessManager, nameof(environmentAccessManager));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -136,6 +131,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private ICascadeTokenReader AccessTokenReader { get; }
 
+        private IEnvironmentAccessManager EnvironmentAccessManager { get; }
+
         /// <summary>
         /// Get an environment by id.
         /// </summary>
@@ -152,26 +149,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> GetAsync(
-            [FromRoute] string environmentId,
+            [Required, FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
-
-            var nonOwnerScopes = new[]
-            {
-                PlanAccessTokenScopes.ReadEnvironments,
-                PlanAccessTokenScopes.ReadCodespaces,
-            };
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes, logger))
-            {
-                return new ForbidResult();
-            }
-
-            logger.AddCloudEnvironment(environment);
+            var environment = await EnvironmentManager.GetAsync(environmentId, logger);
 
             return Ok(Mapper.Map<CloudEnvironmentResult>(environment));
         }
@@ -195,53 +176,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromQuery] string planId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            // In the case of a authentication using a plan access token, infer the plan from the token if not set
-            planId ??= CurrentUserProvider.Identity.AuthorizedPlan;
-
             AuditAttribute.SetTargetResourceId(HttpContext, CurrentUserProvider?.CurrentUserIdSet?.PreferredUserId);
 
-            if (CurrentUserProvider.Identity.IsPlanAuthorized(planId) == false)
-            {
-                // Users with explicit access to a different plan do not have access to this plan.
-                logger.LogWarning(UnauthorizedPlanId);
-                return new ForbidResult();
-            }
-
-            UserIdSet userIdSet;
-            if (CurrentUserProvider.Identity.IsAnyScopeAuthorized(
-                PlanAccessTokenScopes.ReadEnvironments,
-                PlanAccessTokenScopes.ReadCodespaces) == true)
-            {
-                // A user with this explicit scope is authorized to list
-                // all users' environments in the plan.
-                userIdSet = null;
-            }
-            else if (CurrentUserProvider.Identity.IsAnyScopeAuthorized(
-                PlanAccessTokenScopes.WriteEnvironments,
-                PlanAccessTokenScopes.WriteCodespaces) != false)
-            {
-                // A user with only write scope (or an unscoped token) is authorized only
-                // to list their own environments.
-                userIdSet = CurrentUserProvider.CurrentUserIdSet;
-            }
-            else
-            {
-                logger.LogWarning(UnauthorizedPlanScope);
-                return new ForbidResult();
-            }
-
-            var environments = await EnvironmentManager.ListAsync(
-                logger.NewChildLogger(), planId, name, userIdSet);
-
-            var environmentIds = CurrentUserProvider.Identity.AuthorizedEnvironments;
-            if (environmentIds != null)
-            {
-                // The user has a token that limits access to specific environment(s).
-                environments = environments.Where((e) => environmentIds.Contains(e.Id));
-            }
-
-            var environmentsList = environments.ToList();
-            logger.FluentAddValue("Count", environmentsList.Count.ToString());
+            var environmentsList = await EnvironmentManager.ListAsync(planId, name, null, logger);
 
             return Ok(Mapper.Map<CloudEnvironmentResult[]>(environmentsList));
         }
@@ -266,15 +203,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
-            {
-                return new ForbidResult();
-            }
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
             // Reroute to correct location if needed
             var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
@@ -319,15 +249,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
-            {
-                return new ForbidResult();
-            }
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
             // Reroute to correct location if needed
             var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
@@ -399,195 +322,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromBody] CreateCloudEnvironmentBody createEnvironmentInput,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var envName = createEnvironmentInput.FriendlyName.Trim();
-            createEnvironmentInput.FriendlyName = envName;
-            ValidationUtil.IsRequired(createEnvironmentInput, nameof(createEnvironmentInput));
-            ValidationUtil.IsRequired(createEnvironmentInput.FriendlyName, nameof(createEnvironmentInput.FriendlyName));
-            ValidationUtil.IsRequired(createEnvironmentInput.Type, nameof(createEnvironmentInput.Type));
+            var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
 
-            // Regex pattern for naming, can include alphanumeric, space, underscore, parentheses, hyphen, period, and Unicode characters that match the allowed characters.
-            var regex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
-            ValidationUtil.IsTrue(regex.IsMatch(envName));
-
-            var cloudEnvironment = Mapper.Map<CreateCloudEnvironmentBody, CloudEnvironment>(createEnvironmentInput);
-            ValidationUtil.IsRequired(createEnvironmentInput.SkuName, nameof(createEnvironmentInput.SkuName));
-
-            cloudEnvironment.PlanId ??= CurrentUserProvider.Identity.AuthorizedPlan;
-            ValidationUtil.IsRequired(cloudEnvironment.PlanId, nameof(CloudEnvironment.PlanId));
-
-            // Validate that the specified plan ID is well-formed.
-            ValidationUtil.IsTrue(
-                VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out var plan),
-                $"Invalid plan ID: {cloudEnvironment.PlanId}");
-
-            // Validate the plan exists (and lookup the plan details).
-            var planDetails = await PlanManager.GetAsync(plan, logger);
-            ValidationUtil.IsTrue(planDetails != null, $"Plan {cloudEnvironment.PlanId} not found.");
-
-            logger.AddVsoPlan(planDetails);
-
-            var requiredScopes = new[]
-            {
-                PlanAccessTokenScopes.WriteEnvironments,
-                PlanAccessTokenScopes.WriteCodespaces,
-            };
-            if (!AuthorizePlanAccess(planDetails, requiredScopes, null, logger))
-            {
-                return new ForbidResult();
-            }
-
-            // Reroute to correct location if needed
-            try
-            {
-                var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(planDetails.Plan.Location);
-                if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
-                {
-                    return RedirectToLocation(owningStamp);
-                }
-            }
-            catch (NotSupportedException)
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested location is not supported: {planDetails.Plan.Location}";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            // Inherit the location and partner from the VSO plan.
-            cloudEnvironment.Location = planDetails.Plan.Location;
-            cloudEnvironment.Partner = planDetails.Partner;
-            cloudEnvironment.ControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
-
-            // Add VNet information to environment.
-            if (!await PlanManager.CheckFeatureFlagsAsync(planDetails, PlanFeatureFlag.VnetInjection, logger.NewChildLogger()))
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested vnet injection feature is disabled";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            var subnetId = planDetails.Properties?.VnetProperties?.SubnetId;
-            cloudEnvironment.SubnetResourceId = subnetId;
-
-            var planId = CurrentUserProvider.Identity.AuthorizedPlan;
-            var planInfo = VsoPlanInfo.TryParse(planId);
-            var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
-            var currentUserIdSet = CurrentUserProvider?.CurrentUserIdSet;
-            SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
-
-            // Validate the Sku is available
-            if (sku == null)
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not defined: {cloudEnvironment.SkuName}";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            var isSkuVisible = await SkuUtils.IsVisible(sku, planInfo, currentUserProfile);
-
-            // Validate the Sku is visible
-            if (!isSkuVisible)
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not visible: {cloudEnvironment.SkuName}";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            // Validate the Sku is enabled
-            if (!sku.Enabled)
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not available: {cloudEnvironment.SkuName}";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            // Validate the Sku location
-            if (!sku.SkuLocations.Contains(cloudEnvironment.Location))
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested SKU is not available in location: {cloudEnvironment.Location}";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            // Determine the cloud environment options
-            var cloudEnvironmentOptions = new CloudEnvironmentOptions();
-            if (createEnvironmentInput.ExperimentalFeatures != null)
-            {
-                cloudEnvironmentOptions.CustomContainers = createEnvironmentInput.ExperimentalFeatures.CustomContainers;
-                cloudEnvironmentOptions.NewTerminal = createEnvironmentInput.ExperimentalFeatures.NewTerminal;
-                cloudEnvironmentOptions.QueueResourceAllocation = createEnvironmentInput.ExperimentalFeatures.QueueResourceAllocation;
-            }
-
-            // Try to get the client's geo location and client user agent type for metrics and logging.
-            try
-            {
-                var metricsClientInfo = await MetricsManager.GetMetricsInfoForRequestAsync(Request.Headers, logger.NewChildLogger());
-                cloudEnvironment.CreationMetrics = new MetricsInfo
-                {
-                    IsoCountryCode = metricsClientInfo.IsoCountryCode,
-                    AzureGeography = metricsClientInfo.AzureGeography,
-                    VsoClientType = metricsClientInfo.VsoClientType,
-                };
-            }
-            catch
-            {
-                // Ignore metrics exceptions here. Do not fail to create an environment due to missing metrics info.
-            }
-
-            var subscription = await SubscriptionManager.GetSubscriptionAsync(planDetails.Plan.Subscription, logger.NewChildLogger());
-            if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
-            {
-                var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
-                logger.AddSubscriptionId(planDetails.Plan.Subscription);
-                logger.AddReason(message);
-                return StatusCode(StatusCodes.Status403Forbidden, MessageCodes.SubscriptionCannotPerformAction);
-            }
+            // Build metrics manager
+            var metricsInfo = await GetMetricsInfo(logger);
 
             // Create the environement
-            var createCloudEnvironmentResult = default(CloudEnvironmentServiceResult);
-            try
-            {
-                var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
+            var startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
 
-                cloudEnvironment.OwnerId = currentUserIdSet.PreferredUserId;
+            // Create environment
+            var cloudEnvironment = await EnvironmentManager.CreateAsync(
+                environmentCreateDetails, startEnvironmentParams, metricsInfo, logger.NewChildLogger());
 
-                createCloudEnvironmentResult = await EnvironmentManager.CreateAsync(
-                    cloudEnvironment,
-                    cloudEnvironmentOptions,
-                    startEnvParams,
-                    plan,
-                    subscription,
-                    logger.NewChildLogger());
-            }
-            catch (HttpResponseStatusException e)
-            {
-                // If it was a 503 from the backend we want to pass that one down
-                if (e.StatusCode == HttpStatusCode.ServiceUnavailable)
-                {
-                    if (e.RetryAfter.HasValue)
-                    {
-                        Response.Headers.Add("Retry-After", e.RetryAfter.Value.ToString());
-                    }
+            // Update audit id
+            AuditAttribute.SetTargetResourceId(HttpContext, cloudEnvironment.Id);
 
-                    return StatusCode(StatusCodes.Status503ServiceUnavailable);
-                }
-            }
-
-            if (createCloudEnvironmentResult.CloudEnvironment is null)
-            {
-                // TODO: 409 conflict might mean that the requested session id already exists
-                // Could mean that the friendly-name is in conflict, could mean anything!
-                // Couldn't be registered. Assume it already exists?
-                return StatusCode(createCloudEnvironmentResult.HttpStatusCode, createCloudEnvironmentResult.MessageCode);
-            }
-
+            // Workout 201 location
             var location = new UriBuilder(Request.GetDisplayUrl());
-            location.Path = location.Path.TrimEnd('/');
-            location.Path = $"{location.Path}/{createCloudEnvironmentResult.CloudEnvironment.Id}";
+            location.Path = $"{location.Path.TrimEnd('/')}/{cloudEnvironment.Id}";
 
-            logger.AddCloudEnvironment(createCloudEnvironmentResult.CloudEnvironment);
-            AuditAttribute.SetTargetResourceId(HttpContext, createCloudEnvironmentResult.CloudEnvironment.Id);
-
-            return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(createCloudEnvironmentResult.CloudEnvironment));
+            return Created(location.Uri, Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
         }
 
         /// <summary>
@@ -610,20 +364,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
             var nonOwnerScopes = new[]
             {
                 PlanAccessTokenScopes.DeleteEnvironments,
                 PlanAccessTokenScopes.DeleteCodespaces,
             };
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes, logger))
-            {
-                return new ForbidResult();
-            }
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes, logger);
 
             // Reroute to correct location if needed
             var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
@@ -670,10 +417,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(callbackBody?.Payload?.SessionPath, nameof(callbackBody.Payload.SessionPath));
 
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
             var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
             if (!currentUserIdSet.EqualsAny(environment.OwnerId))
@@ -733,15 +476,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(logger, nameof(logger));
 
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
-            {
-                return new ForbidResult();
-            }
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
             // Reroute to correct location if needed
             var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
@@ -786,10 +522,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     PlanAccessTokenScopes.WriteEnvironments,
                     PlanAccessTokenScopes.WriteCodespaces,
                 };
-                if (!AuthorizePlanAccess(plan, requiredScopes, planAccessClaims, logger))
-                {
-                    return new ForbidResult();
-                }
+                EnvironmentAccessManager.AuthorizePlanAccess(plan, requiredScopes, planAccessClaims, logger);
 
                 subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
                 if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
@@ -839,15 +572,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
-            {
-                return new ForbidResult();
-            }
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
             // Reroute to correct location if needed
             var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
@@ -927,15 +653,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(logger, nameof(logger));
 
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger))
-            {
-                return new ForbidResult();
-            }
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
             // Reroute to correct location if needed
             var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
@@ -974,13 +693,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
-            if (environment is null)
-            {
-                return NotFound();
-            }
 
-            if (!AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger) ||
-                environment.Type != EnvironmentType.StaticEnvironment)
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
+
+            if (environment.Type != EnvironmentType.StaticEnvironment)
             {
                 return new ForbidResult();
             }
@@ -1013,133 +729,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             logger.AddEnvironmentId(environmentId);
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
-            var environment = await EnvironmentManager.GetAndStateRefreshAsync(environmentId, logger);
+            var environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentId), logger);
 
             return environment;
         }
 
-        /// <summary>
-        /// Checks if the current user is authorized to access an environment.
-        /// </summary>
-        /// <param name="environment">Environment that the user is attempting to access.</param>
-        /// <param name="nonOwnerScopes">The user is required to have at least one of these scopes
-        /// IF they do not have full owner-level access to the environment. Or null if only
-        /// owners should be authorized.</param>
-        /// <param name="logger">Diagnostic logger.</param>
-        /// <returns>True if the user is authorized, else false.</returns>
-        private bool AuthorizeEnvironmentAccess(
-            CloudEnvironment environment,
-            string[] nonOwnerScopes,
-            IDiagnosticsLogger logger)
+        private async Task<MetricsInfo> GetMetricsInfo(IDiagnosticsLogger logger)
         {
-            if (CurrentUserProvider.Identity.IsPlanAuthorized(environment.PlanId) == false)
+            try
             {
-                // Users with explicit access to a different plan do not have access to this plan.
-                logger.LogWarning(UnauthorizedPlanId);
-                return false;
-            }
-
-            if (CurrentUserProvider.Identity.IsEnvironmentAuthorized(environment.Id) == false)
-            {
-                // Users with explicit access to different env(s) do not have access to this one.
-                logger.LogWarning(UnauthorizedEnvironmentId);
-                return false;
-            }
-
-            var currentUserIdSet = CurrentUserProvider?.CurrentUserIdSet;
-            if (currentUserIdSet.EqualsAny(environment.OwnerId) &&
-                CurrentUserProvider.Identity.IsAnyScopeAuthorized(
-                    PlanAccessTokenScopes.WriteEnvironments,
-                    PlanAccessTokenScopes.WriteCodespaces) != false)
-            {
-                // Users with write access to a plan (or an unscoped access token)
-                // have full access to their own environments in the plan.
-                return true;
-            }
-
-            if (nonOwnerScopes != null)
-            {
-                if (CurrentUserProvider.Identity.IsAnyScopeAuthorized(nonOwnerScopes) == true)
+                var metricsClientInfo = await MetricsManager.GetMetricsInfoForRequestAsync(Request.Headers, logger.NewChildLogger());
+                return new MetricsInfo
                 {
-                    // Users with certain explicit scopes can have limited access
-                    // to environments they don't own in the plan.
-                    return true;
-                }
-
-                logger.LogWarning(UnauthorizedPlanScope);
+                    IsoCountryCode = metricsClientInfo.IsoCountryCode,
+                    AzureGeography = metricsClientInfo.AzureGeography,
+                    VsoClientType = metricsClientInfo.VsoClientType,
+                };
             }
-            else
+            catch
             {
-                logger.LogWarning(UnauthorizedEnvironmentUser);
+                // Ignore metrics exceptions here. Do not fail to create an environment due to missing metrics info.
+                return null;
             }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the current user is authorized to access a plan.
-        /// </summary>
-        /// <param name="plan">Plan that the user is attempting to access.</param>
-        /// <param name="requiredScopes">A user must have at least one of these scopes,
-        /// if they have a scoped access token.</param>
-        /// <param name="identity">The identity to check, or null to use the current user identity.</param>
-        /// <param name="logger">Diagnostic logger.</param>
-        /// <returns>True if the user is authorized, else false.</returns>
-        private bool AuthorizePlanAccess(
-            VsoPlan plan,
-            string[] requiredScopes,
-            VsoClaimsIdentity identity,
-            IDiagnosticsLogger logger)
-        {
-            identity ??= CurrentUserProvider.Identity;
-
-            var isPlanAuthorized = identity.IsPlanAuthorized(plan.Plan.ResourceId);
-            if (isPlanAuthorized == false)
-            {
-                // Users with explicit access to a different plan do not have access to this plan.
-                logger.LogWarning(UnauthorizedPlanId);
-                return false;
-            }
-
-            if (identity.IsEnvironmentAuthorized(null) == false)
-            {
-                // Users with explicit access to env(s) do not have access to the whole plan.
-                logger.LogWarning(UnauthorizedEnvironmentId);
-                return false;
-            }
-
-            var isScopeAuthorized = identity.IsAnyScopeAuthorized(requiredScopes);
-            if (isScopeAuthorized == true)
-            {
-                // The user has the explicit required scope.
-                return true;
-            }
-            else if (isScopeAuthorized == false)
-            {
-                // Users with a scoped access token must have the required scope.
-                logger.LogWarning(UnauthorizedPlanScope);
-                return false;
-            }
-
-            if (plan.UserId != null)
-            {
-                // Users without a scoped access token must be the owner of the plan
-                // (if the plan has an owner).
-                var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
-                if (!currentUserIdSet.EqualsAny(plan.UserId))
-                {
-                    logger.LogWarning(UnauthorizedPlanUser);
-                    return false;
-                }
-            }
-            else if (isPlanAuthorized != true)
-            {
-                // Users must have explicit authorization for unowned plans.
-                logger.LogWarning(UnauthorizedPlanId);
-                return false;
-            }
-
-            return true;
         }
 
         private async Task<StartCloudEnvironmentParameters> GetStartCloudEnvironmentParametersAsync()

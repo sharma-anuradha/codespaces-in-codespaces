@@ -6,33 +6,30 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
 using Moq;
 using Xunit;
-using Profile = Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Profile;
+using Profile = Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.Profile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 {
     public static class MockUtil
     {
-        public static readonly string MockEnvironmentId = Guid.Empty.ToString().Replace('0', '1');
+        public static readonly string MockEnvironmentId = Guid.NewGuid().ToString();
         public const string MockServiceUri = "https://testhost/test-service-uri/";
         private const string MockCallbackUriFormat = "https://testhost/test-callback-uri/";
         private const string MockUserProviderId = "mock-provider-id";
@@ -94,6 +91,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         public static IMetricsManager MockMetricsManager()
         {
             var moq = new Mock<IMetricsManager>();
+
+            moq.Setup(x => x.GetMetricsInfoForRequestAsync(It.IsAny<IHeaderDictionary>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync((IHeaderDictionary hd, IDiagnosticsLogger logger) => new MetricsClientInfo(null, null));
+
             return moq.Object;
         }
 
@@ -105,11 +106,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return moq.Object;
         }
 
+        public static IEnvironmentAccessManager MockEnvironmentAccessManager()
+        {
+            var moq = new Mock<IEnvironmentAccessManager>();
+            moq.Setup(t => t.AuthorizeEnvironmentAccess(It.IsAny<CloudEnvironment>(), It.IsAny<string[]>(), It.IsAny<IDiagnosticsLogger>()));
+            moq.Setup(t => t.AuthorizePlanAccess(It.IsAny<VsoPlan>(), It.IsAny<string[]>(), It.IsAny<VsoClaimsIdentity>(), It.IsAny<IDiagnosticsLogger>()));
+            return moq.Object;
+        }
+
         public static ISkuUtils MockSkuUtils(bool value)
         {
             var moq = new Mock<ISkuUtils>();
             moq.Setup(x => x.IsVisible(It.IsAny<CloudEnvironmentSku>(), It.IsAny<VsoPlanInfo>(), It.IsAny<Profile>()))
-               .Returns((CloudEnvironmentSku sku, VsoPlanInfo planInfo, UserProfile.Profile profile) => Task.FromResult(value));
+               .Returns((CloudEnvironmentSku sku, VsoPlanInfo planInfo, Profile profile) => Task.FromResult(value));
             return moq.Object;
         }
 
@@ -304,7 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             moq.Setup(obj => obj.GetProfileAsync())
                 .Returns(() =>
                 {
-                    return Task.FromResult (new UserProfile.Profile
+                    return Task.FromResult(new Profile
                     {
                         ProviderId = MockUserProviderId,
                         Programs = programs,
@@ -323,15 +332,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             moq
                 .Setup(obj => obj.ListAsync(
-                    It.IsAny<IDiagnosticsLogger>(),
                     It.IsAny<string>(),
                     It.IsAny<string>(),
-                    It.IsAny<UserIdSet>()))
+                    It.IsAny<UserIdSet>(),
+                    It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
-                    IDiagnosticsLogger logger,
                     string planId,
                     string name,
-                    UserIdSet userIdSet) =>
+                    UserIdSet userIdSet,
+                    IDiagnosticsLogger logger) =>
                 {
                     var mockEnv = MockCloudEnvironment();
                     return new[] { mockEnv };
@@ -339,34 +348,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             moq
                 .Setup(obj => obj.CreateAsync(
-                    It.IsAny<CloudEnvironment>(),
-                    It.IsAny<CloudEnvironmentOptions>(),
+                    It.IsAny<EnvironmentCreateDetails>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
-                    It.IsAny<VsoPlanInfo>(),
-                    It.IsAny<Subscription>(),
+                    It.IsAny<MetricsInfo>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
-                    CloudEnvironment env,
-                    CloudEnvironmentOptions options,
+                    EnvironmentCreateDetails envCreateDetails,
                     StartCloudEnvironmentParameters startParams,
-                    VsoPlanInfo plan,
-                    Subscription subscription,
+                    MetricsInfo metricsInfo,
                     IDiagnosticsLogger logger) =>
                 {
                     Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
                     Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
 
-                    env.Connection = new EnvironmentManager.ConnectionInfo
+                    envCreateDetails.Connection = new ConnectionInfoBody
                     {
                         ConnectionServiceUri = startParams.ConnectionServiceUri.AbsoluteUri,
                     };
 
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = env,
-                        MessageCode = 0,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
+                    var env = MockMapper().Map<CloudEnvironment>(envCreateDetails);
+                    env.Location = AzureLocation.WestUs2;
+
+                    return env;
                 });
 
             moq
@@ -413,8 +416,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             if (environment != null)
             {
                 moq
-                    .Setup(obj => obj.GetAndStateRefreshAsync(
-                        It.Is<string>((id) => id == environment.Id),
+                    .Setup(obj => obj.GetAsync(
+                        It.Is<Guid>((id) => id.ToString() == environment.Id),
                         It.IsAny<IDiagnosticsLogger>()))
                     .Returns(Task.FromResult(environment));
             }

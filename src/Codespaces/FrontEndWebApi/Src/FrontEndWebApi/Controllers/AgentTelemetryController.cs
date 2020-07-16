@@ -17,6 +17,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.VsoAgent;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -31,6 +32,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     public class AgentTelemetryController : ControllerBase
     {
         private const string LogValueComputeResourceId = "ComputeResourceId";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AgentTelemetryController"/> class.
+        /// </summary>
+        /// <param name="currentUserProvider">The current user provider.</param>
+        public AgentTelemetryController(ICurrentUserProvider currentUserProvider)
+        {
+            CurrentUserProvider = currentUserProvider;
+        }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
 
         /// <summary>
         /// Controller to recieve telemetry collection from VSO Agents.
@@ -109,8 +121,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private Guid ValidateVmTokenAndGetResourceId()
         {
-            ValidationUtil.IsTrue(HttpContext.Items.ContainsKey(AuthenticationBuilderVMTokenExtensions.VMResourceIdName), "VsoAgent telemetry VMToken has invalid vmResourceId");
-            ValidationUtil.IsTrue(Guid.TryParse(HttpContext.Items[AuthenticationBuilderVMTokenExtensions.VMResourceIdName] as string, out var vmResourceId), "VsoAgent telemetry VMToken has invalid vmResourceId");
+            ValidationUtil.IsTrue(CurrentUserProvider.Identity.AuthorizedComputeId != null, "VsoAgent telemetry VMToken has invalid vmResourceId");
+            ValidationUtil.IsTrue(Guid.TryParse(CurrentUserProvider.Identity.AuthorizedComputeId as string, out var vmResourceId), "VsoAgent telemetry VMToken has invalid vmResourceId");
             ValidationUtil.IsTrue(vmResourceId != default, "VsoAgent telemetry VMToken has invalid vmResourceId");
 
             return vmResourceId;

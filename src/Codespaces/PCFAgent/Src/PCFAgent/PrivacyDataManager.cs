@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -29,14 +30,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// <param name="environmentManager">Environment manager.</param>
         /// <param name="identityMapRepository">The identity map repository.</param>
         /// <param name="crossRegionActivator">Cross-region continuatinuation task activator.</param>
+        /// <param name="superuserIdentity">Vso super user claims identity that has access to all environments and plans.</param>
+        /// <param name="currentIdentityProvider">Current identity provider.</param>
         public PrivacyDataManager(
             IEnvironmentManager environmentManager,
             IIdentityMapRepository identityMapRepository,
-            ICrossRegionContinuationTaskActivator crossRegionActivator)
+            ICrossRegionContinuationTaskActivator crossRegionActivator,
+            VsoSuperuserClaimsIdentity superuserIdentity,
+            ICurrentIdentityProvider currentIdentityProvider)
         {
             EnvironmentManager = environmentManager;
             IdentityMapRepository = identityMapRepository;
             CrossRegionActivator = crossRegionActivator;
+            SuperuserIdentity = superuserIdentity;
+            CurrentIdentityProvider = currentIdentityProvider;
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -44,6 +51,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         private IIdentityMapRepository IdentityMapRepository { get; }
 
         private ICrossRegionContinuationTaskActivator CrossRegionActivator { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
+
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 
         /// <inheritdoc/>
         public async Task<int> DeleteEnvironmentsAsync(IEnumerable<CloudEnvironment> environments, IDiagnosticsLogger logger)
@@ -90,43 +101,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> GetUserEnvironments(IEnumerable<UserIdSet> userIdSets, IDiagnosticsLogger logger)
         {
-            var allEnvironments = new List<CloudEnvironment>();
-            foreach (var userIdSet in userIdSets)
+            using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
             {
-                var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
-                var updatedUserIdSet = new UserIdSet(
-                    map?.CanonicalUserId ?? userIdSet.CanonicalUserId,
-                    map?.ProfileId ?? userIdSet.ProfileId,
-                    map?.ProfileProviderId ?? userIdSet.ProfileProviderId);
+                var allEnvironments = new List<CloudEnvironment>();
+                foreach (var userIdSet in userIdSets)
+                {
+                    var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
+                    var updatedUserIdSet = new UserIdSet(
+                        map?.CanonicalUserId ?? userIdSet.CanonicalUserId,
+                        map?.ProfileId ?? userIdSet.ProfileId,
+                        map?.ProfileProviderId ?? userIdSet.ProfileProviderId);
 
-                var environments = await EnvironmentManager.ListAsync(logger: logger.NewChildLogger(), userIdSet: updatedUserIdSet);
-                allEnvironments.AddRange(environments);
+                    var environments = await EnvironmentManager.ListAsync(null, null, updatedUserIdSet, logger.NewChildLogger());
+                    allEnvironments.AddRange(environments);
+                }
+
+                return allEnvironments;
             }
-
-            return allEnvironments;
         }
 
         /// <inheritdoc/>
         public async Task<(int, JObject)> PerformExportAsync(UserIdSet userIdSet, IDiagnosticsLogger logger)
         {
-            var affectedEntitiesCount = 0;
-            var exportObject = new JObject();
-            var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
-            if (map != null)
+            using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
             {
-                userIdSet = new UserIdSet(map.CanonicalUserId ?? userIdSet.CanonicalUserId, map.ProfileId ?? userIdSet.CanonicalUserId, map.ProfileProviderId ?? userIdSet.CanonicalUserId);
-                exportObject.Add("identityMap", CreateExport(map));
-                affectedEntitiesCount += 1;
-            }
+                var affectedEntitiesCount = 0;
+                var exportObject = new JObject();
+                var map = await IdentityMapRepository.GetByUserIdSetAsync(userIdSet, logger);
+                if (map != null)
+                {
+                    userIdSet = new UserIdSet(map.CanonicalUserId ?? userIdSet.CanonicalUserId, map.ProfileId ?? userIdSet.CanonicalUserId, map.ProfileProviderId ?? userIdSet.CanonicalUserId);
+                    exportObject.Add("identityMap", CreateExport(map));
+                    affectedEntitiesCount += 1;
+                }
 
-            var environments = await EnvironmentManager.ListAsync(logger: logger.NewChildLogger(), userIdSet: userIdSet);
-            if (environments.Any())
-            {
-                exportObject.Add("environments", CreateExport(environments));
-                affectedEntitiesCount += environments.Count();
-            }
+                var environments = await EnvironmentManager.ListAsync(null, null, userIdSet, logger.NewChildLogger());
+                if (environments.Any())
+                {
+                    exportObject.Add("environments", CreateExport(environments));
+                    affectedEntitiesCount += environments.Count();
+                }
 
-            return (affectedEntitiesCount, exportObject);
+                return (affectedEntitiesCount, exportObject);
+            }
         }
 
         private JToken CreateExport(object data)

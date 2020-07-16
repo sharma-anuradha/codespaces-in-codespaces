@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
 
         protected async Task<CloudEnvironment> GetCloudEnvironment()
         {
-            return await environmentManager.GetAsync(string.Empty, logger);
+            return await environmentManager.GetAsync(Guid.Empty, logger);
         }
 
         protected async Task<CollectedDataHandlerContext> GetHandlerContext()

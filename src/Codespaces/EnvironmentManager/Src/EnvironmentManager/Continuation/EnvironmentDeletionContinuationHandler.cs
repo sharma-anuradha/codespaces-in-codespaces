@@ -4,10 +4,12 @@
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation
 {
@@ -24,19 +26,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentDeletionContinuationHandler"/> class.
         /// </summary>
-        /// <param name="serviceProvider">Dependency Injection service provider.</param>
-        public EnvironmentDeletionContinuationHandler(IServiceProvider serviceProvider)
+        /// <param name="environmentDeleteAction">Target environment delete action.</param>
+        /// <param name="currentIdentityProvider">Target identity provider.</param>
+        /// <param name="superuserIdentity">Target super user identity.</param>
+        public EnvironmentDeletionContinuationHandler(
+            IEnvironmentDeleteAction environmentDeleteAction,
+            ICurrentIdentityProvider currentIdentityProvider,
+            VsoSuperuserClaimsIdentity superuserIdentity)
         {
-            ServiceProvider = serviceProvider;
+            EnvironmentDeleteAction = environmentDeleteAction;
+            CurrentIdentityProvider = currentIdentityProvider;
+            SuperuserIdentity = superuserIdentity;
         }
 
-        private IEnvironmentManager EnvironmentManager
-        {
-            // Workaround for circular dependency that prevents constructor injection of EnvironmentManager.
-            get { return ServiceProvider.GetRequiredService<IEnvironmentManager>(); }
-        }
+        private IEnvironmentDeleteAction EnvironmentDeleteAction { get; }
 
-        private IServiceProvider ServiceProvider { get; }
+        private ICurrentIdentityProvider CurrentIdentityProvider { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         /// <inheritdoc/>
         public bool CanHandle(ContinuationQueuePayload payload)
@@ -49,15 +56,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         {
             return await logger.OperationScopeAsync("handle_environment_deletion", async (childLogger) =>
             {
-                var environmentDeletionInput = input as EnvironmentContinuationInput;
-
-                if (environmentDeletionInput != null)
+                using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
                 {
-                    var environment = await EnvironmentManager.GetAsync(environmentDeletionInput.EnvironmentId, logger.NewChildLogger());
-                    if (environment != null)
+                    if (input is EnvironmentContinuationInput environmentDeletionInput)
                     {
-                        childLogger.AddCloudEnvironment(environment);
-                        var isDeleted = await EnvironmentManager.DeleteAsync(environment, logger.NewChildLogger());
+                        childLogger.AddEnvironmentId(environmentDeletionInput.EnvironmentId);
+                        var isDeleted = await EnvironmentDeleteAction.Run(environmentDeletionInput.EnvironmentId, logger.NewChildLogger());
                         if (isDeleted)
                         {
                             return CreateFinalResult(OperationState.Succeeded);
@@ -66,10 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                         return CreateFinalResult(OperationState.Failed, "DeletionFailed");
                     }
 
-                    return CreateFinalResult(OperationState.Succeeded);
+                    return CreateFinalResult(OperationState.Failed, "InvalidInputType");
                 }
-
-                return CreateFinalResult(OperationState.Failed, "InvalidInputType");
             });
         }
 

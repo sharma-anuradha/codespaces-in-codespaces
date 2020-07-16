@@ -11,23 +11,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
     /// <summary>
     /// Handlers user identity actions for the current context.
     /// </summary>
-    public interface ICurrentUserProvider
+    public interface ICurrentUserProvider : ICurrentIdentityProvider
     {
-        /// <summary>
-        /// Gets the current user's bearer token.
-        /// </summary>
-        /// <returns>The token value.</returns>
-        /// <remarks>
-        /// TODO: token for which API/Audience.
-        /// </remarks>
-        string BearerToken { get; }
-
-        /// <summary>
-        /// Gets the current identity.
-        /// </summary>
-        /// <returns>Vso Claims Identity.</returns>
-        VsoClaimsIdentity Identity { get; }
-
         /// <summary>
         /// Gets the current user canonical user id.
         /// </summary>
@@ -45,15 +30,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
         /// </summary>
         /// <returns>The id map key, of the form "{email}:{tenantId}".</returns>
         string IdMapKey { get; }
-
-        /// <summary>
-        /// Sets the current user's bearer token.
-        /// </summary>
-        /// <remarks>
-        /// TODO: token for which API/Audience.
-        /// </remarks>
-        /// <param name="token">The token value.</param>
-        void SetBearerToken(string token);
 
         /// <summary>
         /// Sets the current user's profile.

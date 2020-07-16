@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Represents a Live Share user profile.

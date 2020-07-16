@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -71,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         throw new NotSupportedException("Inputs not supported.");
                     }
 
-                    return await allocationHandler.AllocateAsync(environmentId, inputs, trigger, logger);
+                    return await allocationHandler.AllocateAsync(environmentId, inputs, trigger, childLogger.NewChildLogger());
                 });
         }
 

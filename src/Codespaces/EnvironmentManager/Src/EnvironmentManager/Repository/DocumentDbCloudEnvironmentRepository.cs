@@ -152,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                         OR c.transitions.archiving.status = @operationStateCancelled
                         OR (
                             (c.transitions.archiving.status = @operationStateInitialized
-                             OR c.transitions.archiving.status = @operationStateInProgress
+                                OR c.transitions.archiving.status = @operationStateInProgress
                             ) AND c.transitions.archiving.statusChanged <= @operationFailedTimeLimit
                         )
                     )",

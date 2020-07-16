@@ -363,8 +363,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     logger.AddVsoPlan(plan);
 
-                    var environments = await environmentManager.ListAsync(
-                        logger, planId: planInfo.ResourceId);
+                    var environments = await environmentManager.ListAsync(planInfo.ResourceId, null, null, logger);
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
                     {

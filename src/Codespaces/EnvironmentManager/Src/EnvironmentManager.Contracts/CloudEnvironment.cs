@@ -32,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public CloudEnvironment()
         {
             Transitions = new CloudEnvironmentTransitions();
+            Connection = new ConnectionInfo();
         }
 
         /// <summary>

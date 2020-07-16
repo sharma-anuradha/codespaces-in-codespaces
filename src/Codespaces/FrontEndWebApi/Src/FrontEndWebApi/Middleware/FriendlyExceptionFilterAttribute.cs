@@ -28,33 +28,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
             switch (context.Exception)
             {
                 case CodedException codedException:
-                    switch (codedException)
+                    context.Result = codedException switch
                     {
-                        case ConflictException _:
-                            context.Result = new ConflictObjectResult(codedException.MessageCode);
-                            break;
-
-                        case EntityNotFoundException _:
-                            context.Result = new NotFoundObjectResult(codedException.MessageCode);
-                            break;
-
-                        case ForbiddenException _:
-                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status403Forbidden };
-                            break;
-
-                        case ProcessingFailedException _:
-                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status500InternalServerError };
-                            break;
-
-                        case UnavailableException _:
-                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status503ServiceUnavailable };
-                            break;
-
-                        default:
-                            context.Result = new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status503ServiceUnavailable };
-                            break;
-                    }
-
+                        ConflictException ex => new ConflictObjectResult(ex.MessageCode),
+                        EntityNotFoundException ex => new NotFoundObjectResult(ex.MessageCode),
+                        ForbiddenException ex => new ObjectResult(ex.MessageCode) { StatusCode = StatusCodes.Status403Forbidden },
+                        ProcessingFailedException ex => new ObjectResult(ex.MessageCode) { StatusCode = StatusCodes.Status500InternalServerError },
+                        UnavailableException ex => new ObjectResult(ex.MessageCode) { StatusCode = StatusCodes.Status503ServiceUnavailable },
+                        _ => new ObjectResult(codedException.MessageCode) { StatusCode = StatusCodes.Status503ServiceUnavailable },
+                    };
                     break;
 
                 case RedirectToLocationException redirectToLocationException:
@@ -77,11 +59,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
                     break;
 
                 case UnauthorizedAccessException _:
-                    context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                    context.Result = new ForbidResult();
                     break;
 
                 case IdentityValidationException _:
-                    context.Result = new StatusCodeResult(StatusCodes.Status401Unauthorized);
+                    context.Result = new UnauthorizedResult();
                     break;
             }
         }

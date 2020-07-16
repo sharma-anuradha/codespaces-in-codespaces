@@ -1,4 +1,4 @@
-﻿// <copyright file="IEnvironmentManager.cs" company="Microsoft">
+// <copyright file="IEnvironmentManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -25,29 +24,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentId">The environment by id.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<CloudEnvironment> GetAsync(string environmentId, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Get an environment.
-        /// </summary>
-        /// <param name="environmentId">The environment id.</param>
-        /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>A task whose result is the <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> GetAndStateRefreshAsync(string environmentId, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> GetAsync(
+            Guid environmentId,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets all environments owned by the given user id.
         /// </summary>
-        /// <param name="logger">The diagnostics logger.</param>
         /// <param name="planId">Optional plan ResourceId to query for.</param>
         /// <param name="name">Optional environment FriendlyName to query for (case-insensitive).</param>
         /// <param name="userIdSet">The owner's user id set. Required unless plan ID is specified.</param>
+        /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
         Task<IEnumerable<CloudEnvironment>> ListAsync(
-            IDiagnosticsLogger logger,
-            string planId = null,
-            string name = null,
-            UserIdSet userIdSet = null);
+            string planId,
+            string name,
+            UserIdSet userIdSet,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Update Environment Status.
+        /// </summary>
+        /// <param name="cloudEnvironmentId">Cloud environment id.</param>
+        /// <param name="newState">New state, if the state needs to be updated.</param>
+        /// <param name="trigger">The trigger for the state change.</param>
+        /// <param name="reason">Reason for state change, if the state needs to be updated.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
+        Task<CloudEnvironment> UpdateStatusAsync(
+            Guid cloudEnvironmentId,
+            CloudEnvironmentState newState,
+            string trigger,
+            string reason,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update Environment.
@@ -59,7 +68,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="isUserError">Is failure because of user error.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> UpdateAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentState newState, string trigger, string reason, bool? isUserError, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> UpdateAsync(
+            CloudEnvironment cloudEnvironment,
+            CloudEnvironmentState newState,
+            string trigger,
+            string reason,
+            bool? isUserError,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Update the callback information for an existing environment.
@@ -68,24 +83,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="options">The new callback options.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the updated <see cref="CloudEnvironment"/>.</returns>
-        Task<CloudEnvironment> UpdateCallbackAsync(CloudEnvironment cloudEnvironment, EnvironmentRegistrationCallbackOptions options, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> UpdateCallbackAsync(
+            CloudEnvironment cloudEnvironment,
+            EnvironmentRegistrationCallbackOptions options,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Creates a new environment.
         /// </summary>
-        /// <param name="environmentRegistration">The environment registration data.</param>
-        /// <param name="options">The environment registration options.</param>
-        /// <param name="startCloudEnvironmentParameters">The parameters for starting compute.</param>
-        /// <param name="plan">The plan the environment will be created in.</param>
-        /// <param name="subscription">the subscription the environment is part of.</param>
-        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="details">Target details.</param>
+        /// <param name="startEnvironmentParams">Target start environment params.</param>
+        /// <param name="metricsInfo">Target metrics info.</param>
+        /// <param name="logger">Target logger.</param>
         /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironmentServiceResult> CreateAsync(
-            CloudEnvironment environmentRegistration,
-            CloudEnvironmentOptions options,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
-            VsoPlanInfo plan,
-            Subscription subscription,
+        Task<CloudEnvironment> CreateAsync(
+            EnvironmentCreateDetails details,
+            StartCloudEnvironmentParameters startEnvironmentParams,
+            MetricsInfo metricsInfo,
             IDiagnosticsLogger logger);
 
         /// <summary>

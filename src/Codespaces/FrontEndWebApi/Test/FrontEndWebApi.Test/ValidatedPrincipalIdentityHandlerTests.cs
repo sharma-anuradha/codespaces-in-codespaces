@@ -286,6 +286,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             {
                 CurrentUserIdSet = userIdSet;
             }
+
+            public IDisposable SetScopedIdentity(VsoClaimsIdentity identity, UserIdSet userIdSet = null)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

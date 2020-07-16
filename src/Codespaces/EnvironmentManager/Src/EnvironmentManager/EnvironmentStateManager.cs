@@ -23,15 +23,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentStateManager"/> class.
         /// </summary>
+        /// <param name="workspaceManager">Target workspace manager.</param>
+        /// <param name="cloudEnvironmentRepository">Target cloud environment repository.</param>
         /// <param name="billingEventManager">target billing manager.</param>
         /// <param name="environmentMetricsLogger">The metrics logger.</param>
         public EnvironmentStateManager(
+            IWorkspaceManager workspaceManager,
+            ICloudEnvironmentRepository cloudEnvironmentRepository,
             IBillingEventManager billingEventManager,
             IEnvironmentMetricsManager environmentMetricsLogger)
         {
+            WorkspaceManager = workspaceManager;
+            CloudEnvironmentRepository = cloudEnvironmentRepository;
             BillingEventManager = billingEventManager;
             EnvironmentMetricsLogger = environmentMetricsLogger;
         }
+
+        private IWorkspaceManager WorkspaceManager { get; }
+
+        private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
 
         private IBillingEventManager BillingEventManager { get; }
 
@@ -46,13 +56,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             bool? isUserError,
             IDiagnosticsLogger logger)
         {
+            // TODO: Need to switch over to be Entity Transition based.
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_set",
                 async (childLogger) =>
                 {
                     var oldState = cloudEnvironment.State;
                     var oldStateUpdated = cloudEnvironment.LastStateUpdated;
-
                     string failedStateReason = string.Empty;
                     if (newState == CloudEnvironmentState.Failed)
                     {
@@ -62,7 +72,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         }
                     }
 
-                    logger.FluentAddBaseValue("CloudEnvironmentOldState", oldState)
+                    // Setup telemetry properties
+                    logger.AddCloudEnvironment(cloudEnvironment)
+                        .FluentAddBaseValue("CloudEnvironmentOldState", oldState)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdated", oldStateUpdated)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason)
@@ -71,6 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         .FluentAddBaseValue("CloudEnvironmentNewUpdatedReason", reason)
                         .FluentAddBaseValue("CloudEnvironmentFailedStateReason", failedStateReason);
 
+                    // Get plan information
                     VsoPlanInfo plan;
                     if (cloudEnvironment.PlanId == default)
                     {
@@ -86,30 +99,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     else
                     {
                         Requires.Argument(
-                            VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan),
-                            nameof(cloudEnvironment.PlanId),
-                            "Invalid plan ID");
+                            VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan), nameof(cloudEnvironment.PlanId), "Invalid plan ID");
 
                         plan.Location = cloudEnvironment.Location;
                     }
 
+                    // Create billing event
                     var environment = new EnvironmentBillingInfo
                     {
                         Id = cloudEnvironment.Id,
                         Name = cloudEnvironment.FriendlyName,
                         Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
                     };
-
                     var stateChange = new BillingStateChange
                     {
                         OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
                         NewValue = newState.ToString(),
                     };
-
                     await BillingEventManager.CreateEventAsync(
                         plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
-                    var stateSnapshot = new CloudEnvironmentStateSnapshot(cloudEnvironment);
+                    // Mutates environment state
                     cloudEnvironment.State = newState;
                     cloudEnvironment.LastStateUpdateTrigger = trigger;
                     cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
@@ -120,12 +130,95 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironment.LastStateUpdateReason = reason;
                     }
 
-                    // Log to business metrics, post both current state and prior state.
+                    // Posts metrics event
+                    var stateSnapshot = new CloudEnvironmentStateSnapshot(oldState, oldStateUpdated);
                     EnvironmentMetricsLogger.PostEnvironmentEvent(cloudEnvironment, stateSnapshot, logger.NewChildLogger());
+                });
+        }
 
-                    // Log to operational telemetry
-                    logger.AddCloudEnvironment(cloudEnvironment)
-                        .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> NormalizeEnvironmentStateAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        {
+            // TODO: Need to switch over to be Entity Transition based.
+            // TODO: Remove once Anu's update tracking is in.
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_normalize",
+                async (childLogger) =>
+                {
+                    var originalState = cloudEnvironment.State;
+                    var newState = originalState;
+
+                    logger.FluentAddBaseValue("CloudEnvironmentOldState", originalState)
+                        .FluentAddValue("CloudEnvironmentOldStateUpdated", cloudEnvironment.LastStateUpdated)
+                        .FluentAddValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
+                        .FluentAddValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason);
+
+                    // Switch on target states
+                    switch (originalState)
+                    {
+                        // Remain in provisioning state until _callback is invoked.
+                        case CloudEnvironmentState.Provisioning:
+
+                            // Timeout if environment has stayed in provisioning state for more than an hour
+                            var timeInProvisioningStateInMin = (DateTime.UtcNow - cloudEnvironment.LastStateUpdated).TotalMinutes;
+                            var timeOverLimit = timeInProvisioningStateInMin > 60;
+
+                            logger.FluentAddBaseValue("CloudEnvironmentTimeInProvisioningStateInMin", timeInProvisioningStateInMin)
+                                .FluentAddBaseValue("CloudEnvironmentTimeOverLimit", timeOverLimit);
+
+                            if (timeOverLimit)
+                            {
+                                newState = CloudEnvironmentState.Failed;
+
+                                childLogger.NewChildLogger()
+                                    .LogErrorWithDetail($"{LogBaseName}_normalize_error", $"Marking environment creation failed with timeout. Time in provisioning state {timeInProvisioningStateInMin} minutes.");
+                            }
+
+                            break;
+
+                        // Swap between available and awaiting based on the workspace status
+                        case CloudEnvironmentState.Available:
+                        case CloudEnvironmentState.Awaiting:
+                            try
+                            {
+                                var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                                var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
+
+                                logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
+                                    .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
+                                    .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
+
+                                if (workspace == null)
+                                {
+                                    // In this case the workspace is deleted. There is no way of getting to an environment without it.
+                                    newState = CloudEnvironmentState.Unavailable;
+                                }
+                                else if (workspace.IsHostConnected.HasValue)
+                                {
+                                    newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                logger.NewChildLogger().LogWarning($"{LogBaseName}_normalize_checkworkspacestatus_warn", e);
+                            }
+
+                            break;
+                    }
+
+                    logger.FluentAddBaseValue("CloudEnvironmentNewState", newState);
+
+                    // Update the new state before returning.
+                    if (originalState != newState)
+                    {
+                        await SetEnvironmentStateAsync(cloudEnvironment, newState, CloudEnvironmentStateUpdateTriggers.GetEnvironment, null, null, childLogger.NewChildLogger());
+
+                        cloudEnvironment.Updated = DateTime.UtcNow;
+
+                        cloudEnvironment = await CloudEnvironmentRepository.UpdateAsync(cloudEnvironment, childLogger.NewChildLogger());
+                    }
+
+                    return cloudEnvironment;
                 });
         }
     }

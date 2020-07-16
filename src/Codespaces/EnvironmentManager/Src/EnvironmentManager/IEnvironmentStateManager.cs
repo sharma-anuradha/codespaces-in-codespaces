@@ -29,5 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
           string reason,
           bool? isUserError,
           IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Normalizes environment state if there are any inconsistencies.
+        /// </summary>
+        /// <param name="cloudEnvironment">Target cloud environement.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Updated cloud environment if there is any updates.</returns>
+        Task<CloudEnvironment> NormalizeEnvironmentStateAsync(
+          CloudEnvironment cloudEnvironment,
+          IDiagnosticsLogger logger);
     }
 }

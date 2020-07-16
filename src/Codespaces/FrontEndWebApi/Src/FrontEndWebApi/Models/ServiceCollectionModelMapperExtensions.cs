@@ -38,7 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
                         .ForMember(dest => dest.SkuDisplayName, opt => opt.MapFrom(new SkuDisplayNameMapper(skuCatalog)));
                     cfg.CreateMap<ConnectionInfo, ConnectionInfoBody>()
                         .ForMember(dest => dest.ConnectionServiceUri, opt => opt.NullSubstitute(frontEndAppSettings.VSLiveShareApiEndpoint));
-                    cfg.CreateMap<CreateCloudEnvironmentBody, CloudEnvironment>();
+                    cfg.CreateMap<CreateCloudEnvironmentBody, EnvironmentCreateDetails>();
+                    cfg.CreateMap<EnvironmentCreateDetails, CloudEnvironment>();
                     cfg.CreateMap<ConnectionInfoBody, ConnectionInfo>();
                     cfg.CreateMap<SeedInfoBody, SeedInfo>();
                     cfg.CreateMap<GitConfigOptionsBody, GitConfigOptions>();

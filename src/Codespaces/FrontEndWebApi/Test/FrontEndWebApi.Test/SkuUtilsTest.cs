@@ -1,5 +1,5 @@
 ﻿using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Utility;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;

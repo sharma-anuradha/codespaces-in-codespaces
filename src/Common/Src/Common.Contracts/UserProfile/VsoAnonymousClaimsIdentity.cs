@@ -2,12 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using System.Linq;
 using System.Security.Claims;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
     /// Vso Anonymous Claims Identity.
