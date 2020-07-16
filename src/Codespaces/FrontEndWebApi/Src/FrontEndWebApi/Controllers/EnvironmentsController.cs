@@ -281,7 +281,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
                 logger.AddSubscriptionId(planInfo.Subscription);
                 logger.AddReason(message);
-                return new ForbidResult();
+                return StatusCode(StatusCodes.Status403Forbidden, MessageCodes.SubscriptionCannotPerformAction);
             }
 
             var result = await EnvironmentManager.ResumeAsync(
@@ -530,7 +530,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
                     logger.AddSubscriptionId(planInfo.Subscription);
                     logger.AddReason(message);
-                    return new ForbidResult();
+                    return StatusCode(StatusCodes.Status403Forbidden, MessageCodes.SubscriptionCannotPerformAction);
                 }
             }
 
