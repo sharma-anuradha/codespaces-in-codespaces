@@ -1,4 +1,4 @@
-﻿// <copyright file="BackplaneManagerHostedService.cs" company="Microsoft">
+// <copyright file="BackplaneManagerHostedService.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,6 +20,10 @@ namespace Microsoft.VsCloudKernel.SignalService
     {
         private const string MethodProcessHealth = "ProcessHealth";
         private const string MethodServiceCounters = "ServiceCounters";
+
+        private const string ServiceMethodPerfScope = "service_method_perf";
+        private const string ServiceMethodPerfCountScope = "service_method_perf_count";
+        private const string ServiceMethodPerfAverageTimeScope = "service_method_perf_avg_time";
 
         private const int TimespanUpdateSecs = 5;
         private const int ProcessHealthUpdateSecs = 120;
@@ -113,25 +117,28 @@ namespace Microsoft.VsCloudKernel.SignalService
                 if (serviceCountersUpdateCounter.Next() && ServiceCounters != null)
                 {
                     var methodPerfCounters = ServiceCounters.GetPerfCounters();
-                    var perfScopes = new List<(string, object)>();
-                    perfScopes.Add((LoggerScopeHelpers.MethodScope, MethodServiceCounters));
                     foreach (var kvpSrvc in methodPerfCounters)
                     {
                         foreach (var kvpMethod in kvpSrvc.Value)
                         {
                             var scopeKey = kvpMethod.Key.Replace('-', '_');
-                            perfScopes.Add(($"{kvpSrvc.Key}_{scopeKey}_count", kvpMethod.Value.Item1));
+                            var perfScopes = new List<(string, object)>();
+                            perfScopes.Add((ServiceMethodPerfScope, $"{kvpSrvc.Key}_{scopeKey}"));
+
+                            perfScopes.Add((ServiceMethodPerfCountScope, kvpMethod.Value.Item1));
                             if (kvpMethod.Value.Item2 != TimeSpan.Zero)
                             {
-                                perfScopes.Add(($"{kvpSrvc.Key}_{scopeKey}_avgTime", ToAvgTime(kvpMethod.Value)));
+                                perfScopes.Add((ServiceMethodPerfAverageTimeScope, ToAvgTime(kvpMethod.Value)));
+                            }
+
+                            using (LoggerScopeHelpers.BeginScope(Logger, perfScopes.ToArray()))
+                            {
+                                Logger.LogInformation($"method:{kvpSrvc.Key}.{kvpMethod.Key} count:{kvpMethod.Value.Item1} total time:{kvpMethod.Value.Item2}");
                             }
                         }
                     }
 
-                    using (LoggerScopeHelpers.BeginScope(Logger, perfScopes.ToArray()))
-                    {
-                        Logger.LogInformation(methodPerfCounters.Count > 0 ? $"(Service:[method=events/min:ms]):{ToString(methodPerfCounters)}" : "n/a");
-                    }
+                    Logger.LogMethodScope(LogLevel.Information, methodPerfCounters.Count > 0 ? $"(Service:[method=events/min:ms]):{ToString(methodPerfCounters)}" : "n/a", MethodServiceCounters);
 
                     ServiceCounters.ResetCounters();
                 }
