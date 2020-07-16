@@ -11,6 +11,7 @@ import { Sku, Seed } from './CodespaceModels';
 import { HttpPlansManager } from '../../HttpPlansManager';
 import { trace } from '../../../Shared/Logger';
 import { validateGitUrl, getValidationMessage } from './gitValidation';
+import { normalizeGitUrl } from './gitUrlNormalization';
 
 /**
  * Contract for parameters that will be passed to Keys blade.
@@ -108,7 +109,7 @@ export class CreateCodespaceBlade {
                 new Validations.Required('Name is required'),
                 new Validations.MaxLength(90, 'Name is too long'),
                 new Validations.RegExMatch(
-                    '^[A-Za-z1-9_()-. ]+$',
+                    '^[A-Za-z0-9_()-. ]+$',
                     'Name is invalid'
                 ),
             ],
@@ -243,14 +244,13 @@ export class CreateCodespaceBlade {
             text: 'Create',
             onClick: () => {
                 //create Codespace
-                const gitUrl = gitUrlTextBox.value.peek();
+                const gitUrl = normalizeGitUrl(gitUrlTextBox.value.peek());
                 const seed: Seed = gitUrl
                     ? {
                           type: 'Git',
                           moniker: gitUrl,
                       }
                     : { type: '' };
-
                 this._codespacesManager
                     .createCodespace({
                         friendlyName: nameTextBox.value.peek(),
@@ -259,7 +259,7 @@ export class CreateCodespaceBlade {
                         autoShutdownDelayMinutes: autoShutdownDelayDropDown.value.peek(),
                         location,
                         personalization: {
-                            dotfilesRepository: dotFilesRepoTextBox.value.peek(),
+                            dotfilesRepository: normalizeGitUrl(dotFilesRepoTextBox.value.peek()),
                             dotfilesInstallCommand: normalizeOptionalValue(dotFilesInstallCmdTextBox.value.peek()),
                             dotfilesTargetPath: normalizeOptionalValue(dotFilesTargetTextBox.value.peek()) || '~/dotfiles'
                         }
