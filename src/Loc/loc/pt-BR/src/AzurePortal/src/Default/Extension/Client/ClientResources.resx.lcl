@@ -237,6 +237,9 @@
       <Item ItemId=";DeleteCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Delete Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Excluir o Espaço de Código]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -252,6 +255,9 @@
       <Item ItemId=";DeletePlan" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Delete Plan]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Excluir o Plano]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -436,7 +442,7 @@
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";MicrosoftUri" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
+        <Str Cat="Text" UsrLk="true">
           <Val><![CDATA[www.microsoft.com]]></Val>
         </Str>
         <Disp Icon="Str" />
@@ -1056,6 +1062,9 @@
       <Item ItemId=";addCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Add Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Adicionar um Espaço de Código]]></Val>
+          </Tgt>
         </Str>
         <Disp Icon="Str" />
       </Item>

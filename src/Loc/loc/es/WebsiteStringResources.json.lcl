@@ -864,6 +864,12 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[mock]]></Val>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";more" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[More]]></Val>
