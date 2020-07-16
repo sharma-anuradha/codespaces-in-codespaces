@@ -16,7 +16,9 @@ export const RenderSplashScreen: React.FunctionComponent<IRenderSplashScreenProp
     // currently only GitHub but depending on branding discussions,
     // we might expose the icon in the public API
     const mainClass = !isOnVSCodespaces ? 'is-logo' : '';
-    const containerClass = isOnVSCodespaces ? 'is-dark-theme' : '';
+    // `is-vs-codespaces` is the legacy class name that should be deprecated in favor or `is-dark-theme`
+    // currently used in the `vsonline-splash-screen` package
+    const containerClass = isOnVSCodespaces ? 'is-dark-theme is-vs-codespaces' : '';
 
     return (
         <div className={`vso-splash-screen ${mainClass}`}>
