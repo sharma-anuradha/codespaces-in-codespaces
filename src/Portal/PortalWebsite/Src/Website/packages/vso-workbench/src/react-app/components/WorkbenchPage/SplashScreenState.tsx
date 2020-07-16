@@ -2,7 +2,6 @@ import React from 'react';
 
 import { EnvironmentStateInfo, randomString, IEnvironment, IPartnerInfo } from 'vso-client-core';
 import { VSOSplashScreen } from '@vs/vso-splash-screen';
-import { BrowserSyncService, GitCredentialService } from 'vso-ts-agent';
 
 import { SplashScreenMessage } from '../SplashScreenShellMessage/SplashScreenShellMessage';
 import { IButtonLinkProps } from '../ButtonLink/ButtonLink';
@@ -15,6 +14,8 @@ import { SplashCommunicationProvider } from '../../../utils/splashScreen/SplashS
 import { config } from '../../../config/config';
 import { authService } from '../../../auth/authService';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
+import { GitCredentialService } from '../../../rpcServices/GitCredentialService';
+import { BrowserSyncService } from '../../../rpcServices/BrowserSyncService';
 
 interface ISplashScreenProps {
     environmentInfo: IEnvironment | null;

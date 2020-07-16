@@ -132,6 +132,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             [JsonProperty("favicon")]
             public object Favicon { get; set; }
+
+            [JsonProperty("credentials")]
+            public List<object> Credentials { get; set; }
         }
 
         [HttpPost("~/")]

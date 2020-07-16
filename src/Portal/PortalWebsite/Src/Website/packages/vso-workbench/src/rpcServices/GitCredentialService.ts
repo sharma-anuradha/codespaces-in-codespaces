@@ -22,7 +22,7 @@ export class GitCredentialService extends GitCredentialServiceBase {
         const result = await findGitCredential(host, path);
         if (result) {
             trace.verbose('Fulfilled git credentials request', maybePii(fillRequest));
-            return result;
+            return `username=${result}\npassword=x-oauth-basic\n`;
         }
 
         trace.verbose('Failed to fill credential.', maybePii(fillRequest));
