@@ -20,7 +20,6 @@ const nginxPath = path.resolve(root, '..', 'portal-local-proxy');
 
 const node_modules = path.join(root, 'node_modules');
 const vscodeAssetsTargetPathBase = path.join(root, 'vscode-downloads', 'workbench-page', assetName);
-const vscodeServerAssetsTargetPath = path.join(vscodeAssetsTargetPathBase, 'server');
 const packageJsonPath = path.join(root, 'packages', 'vso-workbench', 'package.json');
 const amdConfigPath = path.join(root, 'public', 'amdconfig.js');
 
@@ -35,7 +34,6 @@ module.exports = {
     root,
     node_modules,
     vscodeAssetsTargetPathBase,
-    vscodeServerAssetsTargetPath,
     assetName,
     packageJsonPath,
     amdConfigPath,

@@ -7,7 +7,7 @@ const { promisify } = require('util');
 
 const { downloadVSCode } = require('../vscode/download-vscode');
 const { getCurrentAssetsCommit } = require('../vscode/get-current-vscode-assets-version');
-const { vscodeAssetsTargetPathBase, vscodeServerAssetsTargetPath, assetName, packageJsonPath } = require('./constants');
+const { vscodeAssetsTargetPathBase, assetName, packageJsonPath } = require('./constants');
 const { ensureDir } = require('../vscode/fileUtils');
 
 const readFile = promisify(fs.readFile);
@@ -86,6 +86,7 @@ async function linkBuiltinStaticExtensions(quality) {
     /** TEMP: VS Code plans to include the extensions that can run in the browser as part of the web-standalone package.
      *  Until we get that we download the server package just to the extensions.
      */
+    const vscodeServerAssetsTargetPath = path.join(vscodeAssetsTargetPathBase, 'server');
     const requiredCommitId = await getVSCodeCommitFromPackage(quality);
     const version = getQualityCommitName(quality, requiredCommitId);
 
@@ -109,6 +110,8 @@ async function linkBuiltinStaticExtensions(quality) {
 
         await rename(builtinExtensionsPath, builtinExtensionsTargetPath);
     }
+
+    await rimraf(vscodeServerAssetsTargetPath);
 }
 
 module.exports = {

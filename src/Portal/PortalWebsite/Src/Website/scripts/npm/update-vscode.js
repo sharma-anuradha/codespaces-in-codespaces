@@ -15,13 +15,8 @@ const writeFile = promisify(fs.writeFile);
 const rimraf = promisify(rimrafCallback);
 
 async function updateVSCodeAssets() {
-    await Promise.all([
-        updateVSCodeAssetsForQuality('insider'),
-        updateVSCodeAssetsForQuality('stable'),
-    ]);
-    
-    // since both the above operations are happening in parallel, deleting of server folder as part of above tasks can fail the other task
-    await rimraf(vscodeServerAssetsTargetPath);
+    await updateVSCodeAssetsForQuality('insider');
+    await updateVSCodeAssetsForQuality('stable');
 }
 
 /**

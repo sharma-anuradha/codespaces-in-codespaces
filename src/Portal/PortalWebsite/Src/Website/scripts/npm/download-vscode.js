@@ -3,7 +3,7 @@ const { promisify } = require('util');
 const rimrafCallback = require('rimraf');
 
 const { downloadVSCodeAssets } = require('./utils');
-const { node_modules, vscodeServerAssetsTargetPath } = require('./constants');
+const { node_modules } = require('./constants');
 
 const rimraf = promisify(rimrafCallback);
 
@@ -12,6 +12,4 @@ const rimraf = promisify(rimrafCallback);
 
     await downloadVSCodeAssets('stable');
     await downloadVSCodeAssets('insider');
-
-    await rimraf(vscodeServerAssetsTargetPath);
 })();
