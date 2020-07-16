@@ -174,10 +174,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             EnvironmentAccessManager.AuthorizePlanAccess(input.Plan, requiredScopes, null, logger);
 
             // Core Validation
-            await ValidateInput(input, logger);
-            await ValidateEnvironment(input, logger);
-            await ValidateSubscriptionAndPlan(input, logger);
+            ValidateInput(input, logger);
             ValidateTargetLocation(input.Plan.Plan.Location, logger);
+            await ValidateEnvironmentAsync(input, logger);
+            await ValidateSubscriptionAndPlanAsync(input, logger);
 
             // Build Transition
             var cloudEnvironment = Mapper.Map<EnvironmentCreateDetails, CloudEnvironment>(input.Details);
@@ -247,7 +247,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             return isFullyHandled;
         }
 
-        private Task ValidateInput(
+        private void ValidateInput(
             EnvironmentCreateActionInput input, IDiagnosticsLogger logger)
         {
             // Base Validation
@@ -262,32 +262,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidationUtil.IsRequired(input.Details.PlanId, nameof(input.Details.PlanId));
             ValidationUtil.IsRequired(input.Details.Type, nameof(input.Details.Type));
             ValidationUtil.IsRequired(input.Details.SkuName, nameof(input.Details.SkuName));
-
-            return Task.CompletedTask;
         }
 
-        private async Task ValidateEnvironment(
+        private async Task ValidateEnvironmentAsync(
             EnvironmentCreateActionInput input, IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.Details.SkuName, out var sku);
 
             // Validate name
             input.Details.FriendlyName = input.Details.FriendlyName.Trim();
-            ValidationUtil.IsTrue(this.envNameRegex.IsMatch(input.Details.FriendlyName), "'FriendlyName' is not in a valid format");
+            ValidationUtil.IsTrue(this.envNameRegex.IsMatch(input.Details.FriendlyName), $"'{Truncate(input.Details.FriendlyName, 200)}' is not a valid FriendlyName.");
 
             // Validate sku details
-            ValidationUtil.IsTrue(sku != null, "'Sku' is not supported.");
+            ValidationUtil.IsTrue(sku != null, $"The requested SKU is not defined: {Truncate(input.Details.SkuName, 200)}");
             var profile = await CurrentUserProvider.GetProfileAsync();
             var isSkuVisible = await SkuUtils.IsVisible(sku, input.Plan.Plan, profile);
-            ValidationUtil.IsTrue(isSkuVisible && sku.Enabled, "'Sku' is not available.");
-            ValidationUtil.IsTrue(sku.SkuLocations.Contains(input.Plan.Plan.Location), "'Sku' is not available in target location.");
+            ValidationUtil.IsTrue(isSkuVisible, $"The requested SKU '{Truncate(input.Details.SkuName, 200)}' is not visible.");
+            ValidationUtil.IsTrue(sku.Enabled, $"The requested SKU '{Truncate(input.Details.SkuName, 200)}' is not available.");
+            ValidationUtil.IsTrue(sku.SkuLocations.Contains(input.Plan.Plan.Location), $"The requested SKU '{Truncate(input.Details.SkuName, 200)}' is not available in location: {input.Plan.Plan.Location}");
 
             // Validate VNet details
             var isVnetInjectionEnabled = await PlanManager.CheckFeatureFlagsAsync(input.Plan, PlanFeatureFlag.VnetInjection, logger.NewChildLogger());
-            ValidationUtil.IsTrue(isVnetInjectionEnabled, "The requested vnet injection feature is disabled");
+            ValidationUtil.IsTrue(isVnetInjectionEnabled, "The requested vnet injection feature is disabled.");
         }
 
-        private async Task ValidateSubscriptionAndPlan(
+        private async Task ValidateSubscriptionAndPlanAsync(
             EnvironmentCreateActionInput input, IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.Details.SkuName, out var sku);
@@ -338,10 +337,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Validate suspend timeout
             if (input.Details.Type != EnvironmentType.StaticEnvironment)
             {
-                var isValidTimeout = PlanManagerSettings
-                    .DefaultAutoSuspendDelayMinutesOptions
-                    .Contains(input.Details.AutoShutdownDelayMinutes);
-                ValidationUtil.IsTrue(isValidTimeout, "'AutoShutdownDelayMinutes' is not valid.");
+                var isValidTimeout = PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions.Contains(input.Details.AutoShutdownDelayMinutes);
+                ValidationUtil.IsTrue(isValidTimeout, $"'{input.Details.AutoShutdownDelayMinutes}' is not a valid AutoShutdownDelayMinutes. Valid options are:  {string.Join(',', PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions)}");
             }
         }
 
@@ -465,6 +462,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 logger.LogError($"{LogBaseName}_create_allocate_error");
                 throw new UnavailableException((int)MessageCodes.UnableToAllocateResources, ex.Message, ex);
             }
+        }
+
+        private string Truncate(string value, int maxChars)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            if (value.Length <= maxChars)
+            {
+                return value;
+            }
+
+            return $"{value.Substring(0, maxChars)}...";
         }
     }
 }
