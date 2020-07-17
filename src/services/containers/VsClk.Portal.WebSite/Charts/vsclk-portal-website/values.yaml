@@ -30,7 +30,7 @@ ingress:
 githubAuthEndpoint:
   enabled: true
   annotations: {}
-  path: /authenticate-workspace
+  path: /authenticate-codespace
 
 pfingress:
   enabled: true
