@@ -859,7 +859,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud-powered dev environments accessible from anywhere]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Environnements de développement cloud accessibles à partir de n'importe où]]></Val>
+            <Val><![CDATA[Environnements de développement optimisés cloud accessibles à partir de n'importe où]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1513,7 +1513,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud-powered dev environments accessible from anywhere]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Environnements de développement cloud accessibles à partir de n'importe où]]></Val>
+            <Val><![CDATA[Environnements de développement optimisés cloud accessibles à partir de n'importe où]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
