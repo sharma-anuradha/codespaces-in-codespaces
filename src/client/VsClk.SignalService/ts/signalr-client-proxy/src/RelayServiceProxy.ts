@@ -208,10 +208,12 @@ class RelayHubProxy implements IRelayHubProxy {
             sendOption,
             targetParticipantIds: targetParticipants || null,
             type,
-        };
+       };
 
         const sendHubDataParam = keysToPascal(sendHubData);
-        sendHubDataParam.messageProperties = properties;
+        // Note: we upper case the property to properly serialize into the expected signalR service
+        // contract entity.
+        sendHubDataParam.MessageProperties = properties;
 
         if (methodOption === HubMethodOption.Invoke) {
             return await this.relayServiceProxy.invoke<number>(HubMethods.SendDataHubEx, sendHubDataParam, dataArray);
