@@ -298,8 +298,11 @@
   <data name="DeleteCodespace" xml:space="preserve">
     <value>코드 공간 삭제</value>
   </data>
-  <data name="addCodespace" xml:space="preserve">
-    <value>코드 공간 추가</value>
+  <data name="CreateCodespace" xml:space="preserve">
+    <value>Create Codespace</value>
+  </data>
+  <data name="SuspendCodespace" xml:space="preserve">
+    <value>Suspend Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>속성 레이블</value>
