@@ -1,12 +1,12 @@
-$TTL 3600
+$TTL 5
 $ORIGIN local.github.dev.
 
-@ 3600 SOA dns.local.github.dev. vsonline. (
+@ 5 SOA dns.local.github.dev. vsonline. (
         20200427
         30m
         5m
         1h
-        5m
+        5
     )
 dns IN A 127.0.0.1
 * IN A 127.0.0.1

@@ -1,12 +1,12 @@
-$TTL 3600
+$TTL 5
 $ORIGIN apps.dev.workspaces.githubusercontent.com.
 
-@ 3600 SOA dns.apps.dev.workspaces.githubusercontent.com. vsonline. (
+@ 5 SOA dns.apps.dev.workspaces.githubusercontent.com. vsonline. (
         20200427
         30m
         5m
         1h
-        5m
+        5
     )
 dns IN A 127.0.0.1
 * IN A 127.0.0.1

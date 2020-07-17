@@ -1,12 +1,12 @@
-$TTL 3600
+$TTL 5
 $ORIGIN online.dev.core.vsengsaas.visualstudio.com.
 
-@ 3600 SOA dns.online.dev.core.vsengsaas.visualstudio.com. vsonline. (
+@ 5 SOA dns.online.dev.core.vsengsaas.visualstudio.com. vsonline. (
         20200427
         30m
         5m
         1h
-        5m
+        5
     )
 
 @ IN A 127.0.0.1

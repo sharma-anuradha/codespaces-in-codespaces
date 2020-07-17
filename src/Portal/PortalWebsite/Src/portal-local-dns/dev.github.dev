@@ -1,7 +1,7 @@
 $TTL 5
-$ORIGIN codespaces-dev.github.com.
+$ORIGIN dev.github.dev.
 
-@ 5 SOA dns.codespaces-dev.github.com. vsonline. (
+@ 5 SOA dns.dev.github.dev. vsonline. (
         20200427
         30m
         5m

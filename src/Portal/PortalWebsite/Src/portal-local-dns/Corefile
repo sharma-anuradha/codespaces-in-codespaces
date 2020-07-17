@@ -2,7 +2,14 @@ local.github.dev {
     log
     errors
 
-    file com.local.github.dev
+    file dev.github.local
+}
+
+dev.github.dev {
+    log
+    errors
+
+    file dev.github.dev
 }
 
 workspaces-dev.github.com {
