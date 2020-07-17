@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
@@ -267,7 +268,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult);
 
-            Assert.Equal((int) HttpStatusCode.OK, jsonResult.StatusCode);
+            Assert.Equal((int)HttpStatusCode.OK, jsonResult.StatusCode);
         }
 
         [Fact]
@@ -288,7 +289,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var jsonResult = result as JsonResult;
             Assert.NotNull(jsonResult);
 
-            Assert.Equal((int) HttpStatusCode.NotFound, jsonResult.StatusCode);
+            Assert.Equal((int)HttpStatusCode.NotFound, jsonResult.StatusCode);
         }
 
         [Fact]
@@ -327,7 +328,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.IsType<OkResult>(validateResult);
 
             var createResult = await controller.PlanCreateAsync(
-                MockSubscriptionId, MockResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, MockPlanName, headers, resource);            
+                MockSubscriptionId, MockResourceGroup, SingleUserRPNamespace, PlanResourceTypeName, MockPlanName, headers, resource);
             Assert.IsType<JsonResult>(createResult);
 
             var createResultValue = (createResult as JsonResult).Value;
@@ -392,6 +393,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var tokenProvider = new Mock<ITokenProvider>();
             var subscriptionManager = new Mock<ISubscriptionManager>();
             var currentUserProvider = new Mock<ICurrentUserProvider>();
+            var superUserIdentity = MockVsoSuperuserClaimsIdentity();
+
 
             var controller = new SubscriptionsController(
                 planManager,
@@ -400,7 +403,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 environmentManager,
                 configuration.Object,
                 subscriptionManager.Object,
-                currentUserProvider.Object);
+                currentUserProvider.Object,
+                superUserIdentity);
 
             var logger = new Mock<IDiagnosticsLogger>();
             // This is called inside HttpContext.HttpScopeAsync
@@ -417,6 +421,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return controller;
         }
 
+        private static VsoSuperuserClaimsIdentity MockVsoSuperuserClaimsIdentity()
+        {
+            var claims = new Claim[] { new Claim("Name", "Superuser") };
+            var claimsIdentity = new ClaimsIdentity(claims);
+            var authorizedScopes = PlanAccessTokenScopes.ValidPlanScopes;
+
+            return new VsoSuperuserClaimsIdentity(authorizedScopes.ToArray(), claimsIdentity);
+        }
+
         private static IPlanManager MockPlanManager
         (
             List<VsoPlan> knownPlans = null,
@@ -431,7 +444,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             mock.Setup(x => x.GetAsync(It.IsAny<VsoPlanInfo>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
                 .ReturnsAsync
                 (
-                    (VsoPlanInfo planInfo, IDiagnosticsLogger logger, bool includeDeleted) => 
+                    (VsoPlanInfo planInfo, IDiagnosticsLogger logger, bool includeDeleted) =>
                         knownPlans.FirstOrDefault((plan) => plan.Plan.ResourceId == planInfo.ResourceId)
                 );
 
@@ -448,7 +461,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                    (UserIdSet user, string ns, string sub, string resGroup, string name, IDiagnosticsLogger logger, bool includeDeleted) =>
                        knownPlans.Where
                        (
-                           (plan) => 
+                           (plan) =>
                                 (sub == null || plan.Plan.Subscription == sub) &&
                                 (resGroup == null || plan.Plan.ResourceGroup == resGroup) &&
                                 (name == null || plan.Plan.Name == name)
@@ -474,7 +487,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private static VsoPlan MockVsoPlan
         (
             string subscription = MockSubscriptionId,
-            string resourceGroup = MockResourceGroup, 
+            string resourceGroup = MockResourceGroup,
             string name = MockPlanName,
             string userId = null,
             AzureLocation location = AzureLocation.WestUs2
@@ -522,7 +535,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             {
                 Location = vsoPlan.Plan.Location.ToString(),
                 Id = vsoPlan.Plan.ResourceId,
-                Name = vsoPlan.Plan.Name,  
+                Name = vsoPlan.Plan.Name,
                 Properties = new PlanResourceProperties
                 {
                     UserId = vsoPlan.UserId,

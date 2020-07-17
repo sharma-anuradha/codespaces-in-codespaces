@@ -48,13 +48,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private const string LoggingBaseName = "subscriptions_controller";
         private const string PlanResourceType = "plans";
-        private readonly IPlanManager planManager;
-        private readonly IEnvironmentManager environmentManager;
-        private readonly ITokenProvider tokenProvider;
-        private readonly IMapper mapper;
-        private readonly ISystemConfiguration systemConfiguration;
-        private readonly ISubscriptionManager subscriptionManager;
-        private readonly ICurrentUserProvider currentUserProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
@@ -66,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="systemConfiguration">The ISystemConfiguration interface.</param>
         /// <param name="subscriptionManager">The ISubscriptionManager interface.</param>
         /// <param name="currentUserProvider">Current user provider.</param>
+        /// <param name="superuserIdentity">Super user identity.</param>
         public SubscriptionsController(
             IPlanManager planManager,
             ITokenProvider tokenProvider,
@@ -73,16 +67,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IEnvironmentManager environmentManager,
             ISystemConfiguration systemConfiguration,
             ISubscriptionManager subscriptionManager,
-            ICurrentUserProvider currentUserProvider)
+            ICurrentUserProvider currentUserProvider,
+            VsoSuperuserClaimsIdentity superuserIdentity)
         {
-            this.planManager = planManager;
-            this.tokenProvider = tokenProvider;
-            this.mapper = mapper;
-            this.environmentManager = environmentManager;
-            this.systemConfiguration = systemConfiguration;
-            this.subscriptionManager = subscriptionManager;
-            this.currentUserProvider = currentUserProvider;
+            PlanManager = planManager;
+            TokenProvider = tokenProvider;
+            Mapper = mapper;
+            EnvironmentManager = environmentManager;
+            SystemConfiguration = systemConfiguration;
+            SubscriptionManager = subscriptionManager;
+            CurrentUserProvider = currentUserProvider;
+            SuperuserIdentity = superuserIdentity;
         }
+
+        private IPlanManager PlanManager { get; }
+
+        private IEnvironmentManager EnvironmentManager { get; }
+
+        private ITokenProvider TokenProvider { get; }
+
+        private IMapper Mapper { get; }
+
+        private ISystemConfiguration SystemConfiguration { get; }
+
+        private ISubscriptionManager SubscriptionManager { get; }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         /// <summary>
         /// This method will be called by RPaaS before they create the resource in their DB to validate inputs.
@@ -149,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("ValidateResourceFailed");
                     }
 
-                    if (!await planManager.IsPlanCreationAllowedAsync(providerNamespace, subscriptionId, logger))
+                    if (!await PlanManager.IsPlanCreationAllowedAsync(providerNamespace, subscriptionId, logger))
                     {
                         logger.LogErrorWithDetail("plan_create_validate_error", "Plan creation is not allowed.");
                         return CreateErrorResponse("ValidateResourceFailed");
@@ -163,10 +175,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ProviderNamespace = providerNamespace,
                     };
 
-                    var vsoPlan = mapper.Map<VsoPlan>(resource);
+                    var vsoPlan = Mapper.Map<VsoPlan>(resource);
                     vsoPlan.Plan = plan;
 
-                    var arePropertiesValid = await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
+                    var arePropertiesValid = await PlanManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
                     if (!arePropertiesValid)
                     {
                         logger.LogErrorWithDetail("plan_create_validate_error", "Plan properties are not valid.");
@@ -208,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 $"{LoggingBaseName}_plan_create",
                 async (logger) =>
                 {
-                    var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
+                    var partner = await HttpContext.GetPartnerAsync(SystemConfiguration, logger);
 
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
@@ -259,9 +271,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     }
 
                     var resourceProvider = providerNamespace.Equals(VsoPlanInfo.CodespacesProviderNamespace, StringComparison.InvariantCultureIgnoreCase) ? providerNamespace : null;
-                    var subscription = await this.subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger(), resourceProvider);
+                    var subscription = await SubscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger(), resourceProvider);
 
-                    var result = await planManager.CreateAsync(plan, subscription, logger);
+                    var result = await PlanManager.CreateAsync(plan, subscription, logger);
 
                     logger.AddVsoPlan(plan);
 
@@ -354,7 +366,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     logger.AddVsoPlanInfo(planInfo);
 
-                    var plan = await planManager.GetAsync(planInfo, logger, includeDeleted: true);
+                    var plan = await PlanManager.GetAsync(planInfo, logger, includeDeleted: true);
 
                     if (plan == null)
                     {
@@ -363,39 +375,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     logger.AddVsoPlan(plan);
 
-                    var environments = await environmentManager.ListAsync(planInfo.ResourceId, null, null, logger);
-                    var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
-                    if (nonDeletedEnvironments.Any())
+                    using (CurrentUserProvider.SetScopedIdentity(SuperuserIdentity))
                     {
-                        foreach (var environment in nonDeletedEnvironments)
+                        var environments = await EnvironmentManager.ListAsync(planInfo.ResourceId, null, null, logger);
+                        var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
+                        if (nonDeletedEnvironments.Any())
                         {
-                            var childLogger = logger.NewChildLogger();
+                            foreach (var environment in nonDeletedEnvironments)
+                            {
+                                var childLogger = logger.NewChildLogger();
 
-                            _ = Task.Run(async () =>
-                                {
-                                    try
+                                _ = Task.Run(async () =>
                                     {
-                                        var result = await environmentManager.DeleteAsync(environment, childLogger);
-                                        if (!result)
+                                        try
                                         {
-                                            childLogger.AddCloudEnvironment(environment)
-                                              .LogError("plan_delete_environment_delete_error");
+                                            var result = await EnvironmentManager.DeleteAsync(environment, childLogger);
+                                            if (!result)
+                                            {
+                                                childLogger.AddCloudEnvironment(environment)
+                                                  .LogError("plan_delete_environment_delete_error");
+                                            }
                                         }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        childLogger.LogErrorWithDetail("plan_delete_environment_delete_error", ex.Message);
-                                    }
-                                });
-                        }
+                                        catch (Exception ex)
+                                        {
+                                            childLogger.LogErrorWithDetail("plan_delete_environment_delete_error", ex.Message);
+                                        }
+                                    });
+                            }
 
-                        logger.FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
-                            .LogInfo("plan_delete_environment_delete_success");
+                            logger.FluentAddValue("Count", $"{nonDeletedEnvironments.Count()}")
+                                .LogInfo("plan_delete_environment_delete_success");
+                        }
                     }
 
                     if (!plan.IsDeleted)
                     {
-                        plan = await planManager.DeleteAsync(plan, logger);
+                        plan = await PlanManager.DeleteAsync(plan, logger);
                         logger.LogInfo($"plan_delete_success");
                     }
                     else
@@ -442,7 +457,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var plans = await this.planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         userIdSet: null, providerNamespace, subscriptionId, resourceGroup, name: null, logger);
                     resourceList.Value = FilterPlanResources(resourceList.Value, plans.ToArray());
 
@@ -484,7 +499,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var plans = await planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         userIdSet: null, providerNamespace, subscriptionId, resourceGroup: null, name: null, logger);
                     resourceList.Value = FilterPlanResources(resourceList.Value, plans.ToArray());
 
@@ -550,7 +565,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ProviderNamespace = providerNamespace,
                     };
 
-                    var plan = await planManager.GetAsync(planInfo, logger);
+                    var plan = await PlanManager.GetAsync(planInfo, logger);
                     var plans = plan != null ? new[] { plan } : Array.Empty<VsoPlan>();
                     resource = FilterPlanResources(new[] { resource }, plans).FirstOrDefault();
 
@@ -610,11 +625,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ProviderNamespace = providerNamespace,
                     };
 
-                    var vsoPlan = mapper.Map<VsoPlan>(resource);
+                    var vsoPlan = Mapper.Map<VsoPlan>(resource);
                     vsoPlan.Plan = plan;
 
                     // Check if plan exists
-                    var plans = await planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
                     var currentPlan = plans.SingleOrDefault();
                     if (currentPlan == null)
@@ -623,7 +638,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PatchValidateResourceFailed");
                     }
 
-                    var arePropertiesValid = await planManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
+                    var arePropertiesValid = await PlanManager.ArePlanPropertiesValidAsync(vsoPlan, logger);
                     if (!arePropertiesValid)
                     {
                         logger.LogErrorWithDetail("plan_patch_failed", "Plan properties are not valid.");
@@ -684,18 +699,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         ProviderNamespace = providerNamespace,
                     };
 
-                    var vsoPlan = mapper.Map<VsoPlan>(resource);
+                    var vsoPlan = Mapper.Map<VsoPlan>(resource);
                     vsoPlan.Plan = planInfo;
                     vsoPlan.ManagedIdentity = resource.Identity.BuildManagedIdentity(headers);
 
                     logger.AddVsoPlan(vsoPlan);
 
-                    if (!await planManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger))
+                    if (!await PlanManager.ApplyPlanPropertiesChangesAsync(vsoPlan, logger))
                     {
                         logger.LogError($"plan_update_settings_error_{nameof(IPlanManager.ApplyPlanPropertiesChangesAsync)}");
                     }
 
-                    var response = await planManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
+                    var response = await PlanManager.UpdatePlanPropertiesAsync(vsoPlan, logger);
                     if (response.VsoPlan == null)
                     {
                         logger.LogError($"plan_update_settings_error_{response.ErrorCode}");
@@ -749,7 +764,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var plans = await planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
                     var plan = plans.SingleOrDefault();
@@ -761,7 +776,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // TODO: Change to ReadCodespaces after the renamed scope is supported everywhere.
                     var scopes = new[] { PlanAccessTokenScopes.ReadEnvironments };
 
-                    var token = await tokenProvider.GenerateVsSaaSTokenAsync(
+                    var token = await TokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         scopes,
                         (ClaimsIdentity)HttpContext.User.Identity,
@@ -773,7 +788,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         AccessToken = token,
                     };
 
-                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                    return new OkObjectResult(Mapper.Map<PlanAccessTokenResult>(response));
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
@@ -815,7 +830,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var plans = await planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
                     var plan = plans.SingleOrDefault();
@@ -827,7 +842,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // TODO: Change to WriteCodespaces after the renamed scope is supported everywhere.
                     var scopes = new[] { PlanAccessTokenScopes.WriteEnvironments };
 
-                    var token = await tokenProvider.GenerateVsSaaSTokenAsync(
+                    var token = await TokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         scopes,
                         (ClaimsIdentity)HttpContext.User.Identity,
@@ -839,7 +854,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         AccessToken = token,
                     };
 
-                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                    return new OkObjectResult(Mapper.Map<PlanAccessTokenResult>(response));
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
@@ -881,7 +896,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidationUtil.IsTrue(ResourceTypeIsValid(resourceType));
                     ValidationUtil.IsTrue(VsoPlanInfo.TryParseProviderNamespace(ref providerNamespace));
 
-                    var plans = await planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
                     var plan = plans.SingleOrDefault();
@@ -893,7 +908,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // TODO: Change to { ReadCodespaces, DeleteCodespaces } after the renamed scopes are supported everywhere.
                     var scopes = new[] { PlanAccessTokenScopes.ReadEnvironments, PlanAccessTokenScopes.DeleteEnvironments };
 
-                    var token = await tokenProvider.GenerateVsSaaSTokenAsync(
+                    var token = await TokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         scopes,
                         (ClaimsIdentity)HttpContext.User.Identity,
@@ -905,7 +920,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         AccessToken = token,
                     };
 
-                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                    return new OkObjectResult(Mapper.Map<PlanAccessTokenResult>(response));
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
@@ -978,7 +993,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     Requires.NotNull(requestBody.Identity, nameof(requestBody.Identity));
                     Requires.NotNull(requestBody.Scope, nameof(requestBody.Scope));
 
-                    var plans = await planManager.ListAsync(
+                    var plans = await PlanManager.ListAsync(
                         userIdSet: null, providerNamespace, subscriptionId, resourceGroup, resourceName, logger);
 
                     var plan = plans.SingleOrDefault();
@@ -1004,10 +1019,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         sourceArmTokenExpiration = DateTime.UnixEpoch.AddSeconds(secSinceEpoch);
                     }
 
-                    var partner = await HttpContext.GetPartnerAsync(systemConfiguration, logger);
-                    var tenantId = this.currentUserProvider.Identity.GetTenantId();
+                    var partner = await HttpContext.GetPartnerAsync(SystemConfiguration, logger);
+                    var tenantId = CurrentUserProvider.Identity.GetTenantId();
 
-                    var token = await tokenProvider.GenerateDelegatedVsSaaSTokenAsync(
+                    var token = await TokenProvider.GenerateDelegatedVsSaaSTokenAsync(
                         plan,
                         partner,
                         tenantId,
@@ -1023,7 +1038,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         AccessToken = token,
                     };
 
-                    return new OkObjectResult(mapper.Map<PlanAccessTokenResult>(response));
+                    return new OkObjectResult(Mapper.Map<PlanAccessTokenResult>(response));
                 },
                 (ex, logger) => Task.FromResult(CreateErrorResponse("GetTokenFailed", "GetTokenFailed", HttpStatusCode.InternalServerError)),
                 swallowException: true);
@@ -1094,9 +1109,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("InvalidSubscriptionState", "InvalidSubscriptionState", HttpStatusCode.BadRequest);
                     }
 
-                    var subscription = await subscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
+                    var subscription = await SubscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
 
-                    subscription = await subscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, logger);
+                    subscription = await SubscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, logger);
 
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 },
@@ -1200,7 +1215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IEnumerable<PlanResource> FilterPlanResources(
             IEnumerable<PlanResource> resources, ICollection<VsoPlan> plans)
         {
-            var userIdSet = this.currentUserProvider.CurrentUserIdSet;
+            var userIdSet = CurrentUserProvider.CurrentUserIdSet;
             var isMsa = AuthenticationBuilderRPaasExtensions.IsArmMsaIdentity(
                 HttpContext.User?.Identities.FirstOrDefault());
             resources = resources.Select((resource) =>
