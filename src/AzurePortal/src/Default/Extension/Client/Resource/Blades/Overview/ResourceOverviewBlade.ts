@@ -342,8 +342,10 @@ function createToolbar(
 
     console.log(codespacesGrid.noData.peek());
 
+    const seperator = Toolbar.ToolbarItems.createSeparator();
+
     const commandBar = Toolbar.create(container, {
-        items: [commandRefreshButton, deletePlanButton, createButton, deleteCodespaceButton, suspendCodespaceButton, feedbackButton],
+        items: [createButton, suspendCodespaceButton, deleteCodespaceButton, seperator, deletePlanButton, commandRefreshButton, seperator, feedbackButton],
     });
     return commandBar;
 }
@@ -376,7 +378,7 @@ function initializeCreateButton(
     codespacesGrid: DataGrid.Contract<Codespace>
 ): Toolbar.ToolbarItems.BasicButtonContract {
     return Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.addCodespace,
+        label: ClientResources.createCodespace,
         icon: Images.Add(),
         onClick: () => openCreateBlade(container, planId, codespacesGrid),
     });
@@ -424,7 +426,7 @@ function initializeSuspendButton(
     codespacesManager: HttpCodespacesManager
 ): Toolbar.ToolbarItems.BasicButtonContract {
     return Toolbar.ToolbarItems.createBasicButton(container, {
-        label: 'Suspend selected',
+        label: ClientResources.suspendCodespace,
         icon: Images.Paused(),
         onClick: () => {
             Q.all(

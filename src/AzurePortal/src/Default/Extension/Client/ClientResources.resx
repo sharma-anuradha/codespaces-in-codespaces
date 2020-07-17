@@ -298,8 +298,11 @@
   <data name="DeleteCodespace" xml:space="preserve">
     <value>Delete Codespace</value>
   </data>
-  <data name="addCodespace" xml:space="preserve">
-    <value>Add Codespace</value>
+  <data name="CreateCodespace" xml:space="preserve">
+    <value>Create Codespace</value>
+  </data>
+  <data name="SuspendCodespace" xml:space="preserve">
+    <value>Suspend Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Property label</value>
