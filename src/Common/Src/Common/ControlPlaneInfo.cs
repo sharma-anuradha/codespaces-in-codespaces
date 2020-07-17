@@ -131,12 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private static string NotNullOrWhiteSpace(string value, string propertyName)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new InvalidOperationException($"The property {nameof(Contracts.ControlPlaneSettings)}.{propertyName} is required.");
-            }
-
-            return value;
+           return CommonUtils.NotNullOrWhiteSpace(value, propertyName, nameof(Contracts.ControlPlaneSettings));
         }
 
         private void ValidateDataPlaneLocationsHaveSingleOwningControlPlane()

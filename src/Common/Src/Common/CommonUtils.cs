@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.IO;
 using System.Reflection;
 
@@ -25,6 +26,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             {
                 return reader.ReadToEnd();
             }
+        }
+
+        /// <summary>
+        /// Validate string value is not null or empty.
+        /// </summary>
+        /// <param name="value">value.</param>
+        /// <param name="propertyName">property name.</param>
+        /// <param name="className">class name.</param>
+        /// <returns>validated result.</returns>
+        public static string NotNullOrWhiteSpace(string value, string propertyName, string className)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new InvalidOperationException($"The property {nameof(className)}.{propertyName} is required.");
+            }
+
+            return value;
         }
     }
 }

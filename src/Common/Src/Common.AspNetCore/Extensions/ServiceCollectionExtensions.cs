@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         {
             services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
             services.AddSingleton<IAzureClientFPAFactory, AzureClientFPAFactory>();
+            services.AddSingleton<IFirstPartyCertificateReader, FirstPartyCertificateReader>();
             return services;
         }
 

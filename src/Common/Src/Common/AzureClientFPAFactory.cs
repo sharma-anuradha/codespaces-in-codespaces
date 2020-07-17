@@ -33,20 +33,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class AzureClientFPAFactory : AzureClientFactoryBase, IAzureClientFPAFactory
     {
+        private const string FirstPartyAppAuthority = "https://login.windows.net";
+
         private static readonly Regex TenantIdRegex =
             new Regex("authorization_uri=\"[a-z]*://[^/]*/([^\"]*)\"");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureClientFPAFactory"/> class.
         /// </summary>
-        /// <param name="subscriptionCatalog">The azure subscription catalog.</param>
-        /// <param name="keyVaultSecretReader">The key vault secret reader.</param>
-        public AzureClientFPAFactory(IKeyVaultSecretReader keyVaultSecretReader)
+        /// <param name="firstPartyAppSettings">first party app settings.</param>
+        /// <param name="firstPartyCertReader">first party certificate reader.</param>
+        public AzureClientFPAFactory(
+            FirstPartyAppSettings firstPartyAppSettings,
+            IFirstPartyCertificateReader firstPartyCertReader)
         {
-            KeyVaultSecretReader = Requires.NotNull(keyVaultSecretReader, nameof(keyVaultSecretReader));
+            FirstPartyAppSettings = Requires.NotNull(firstPartyAppSettings, nameof(firstPartyAppSettings));
+            FirstPartyCertificateReader = Requires.NotNull(firstPartyCertReader, nameof(firstPartyCertReader));
         }
 
-        private IKeyVaultSecretReader KeyVaultSecretReader { get; }
+        private FirstPartyAppSettings FirstPartyAppSettings { get; }
+
+        private IFirstPartyCertificateReader FirstPartyCertificateReader { get; }
 
         /// <inheritdoc/>
         public Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
@@ -116,22 +123,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private async Task<(string Secret, string TenantId)> GetFPAToken(Guid subscriptionId, IDiagnosticsLogger logger)
         {
-            var certs = await KeyVaultSecretReader.GetValidCertificatesAsync(
-                AuthenticationConstants.DefaultVisualStudioServicesApiAppIdKeyVaultName,
-                AuthenticationConstants.DefaultVisualStudioServicesApiAppIdKeyVaultCertificateName,
-                logger);
-            var selectedCert = certs.OrderByDescending((cert) => cert.ExpiresAt).FirstOrDefault();
+            var cert = await FirstPartyCertificateReader.GetApiFirstPartyAppCertificate(logger);
 
             var subTenantId = await GetTenantIdForSubscription(subscriptionId);
+            var certificate = new X509Certificate2(cert.RawBytes);
             var builder = ConfidentialClientApplicationBuilder
-                .Create(AuthenticationConstants.VisualStudioServicesApiAppId)
-                .WithAuthority("https://login.windows.net", subTenantId, true)
-                .WithCertificate(new X509Certificate2(selectedCert.RawBytes))
+                .Create(FirstPartyAppSettings.ApiFirstPartyAppId)
+                .WithAuthority(FirstPartyAppAuthority, subTenantId, true)
+                .WithCertificate(certificate)
                 .Build();
 
             var token = await builder
-                .AcquireTokenForClient(new[] { "https://management.core.windows.net/.default" })
-                .WithAuthority("https://login.windows.net", subTenantId, true)
+                .AcquireTokenForClient(new[] { FirstPartyAppSettings.Scope })
+                .WithAuthority(FirstPartyAppAuthority, subTenantId, true)
                 .WithSendX5C(true)
                 .ExecuteAsync();
 

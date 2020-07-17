@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
         /// </summary>
         /// <param name="options">The options instance.</param>
         /// <param name="currentUserProvider">The current user provider.</param>
-        /// <param name="keyVaultSecretReader">the key vault secret reader.</param>
+        /// <param name="firstPartyCertificateReader">the first party secret reader.</param>
         /// <param name="logger">The logger.</param>
         /// <param name="controlPlaneInfo">Control plane information used to get the KV.</param>
         /// <param name="firstPartyAppSettings">First Party Add settings.</param>
@@ -36,9 +36,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
         /// request headers.</param>
         public RPaaSMetaRPHttpProvider(
             IOptions<TOptions> options,
-            IKeyVaultSecretReader keyVaultSecretReader,
             IDiagnosticsLogger logger,
-            IControlPlaneInfo controlPlaneInfo,
+            IFirstPartyCertificateReader firstPartyCertificateReader,
             FirstPartyAppSettings firstPartyAppSettings,
             ProductInfoHeaderValue productInfo)
         {
@@ -47,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             Requires.NotNull(firstPartyAppSettings, nameof(firstPartyAppSettings));
 
             HttpMessageHandler httpHandlerChain = new HttpClientHandler();
-            httpHandlerChain = new FPAAccessTokenHandler(httpHandlerChain, keyVaultSecretReader, controlPlaneInfo, firstPartyAppSettings, logger);
+            httpHandlerChain = new FPAAccessTokenHandler(httpHandlerChain, firstPartyAppSettings, firstPartyCertificateReader, logger);
             httpHandlerChain = new ProductInfoHeaderHandler(httpHandlerChain, productInfo);
 
             HttpClient = new HttpClient(httpHandlerChain)

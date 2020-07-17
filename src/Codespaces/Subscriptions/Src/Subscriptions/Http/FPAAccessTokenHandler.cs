@@ -3,18 +3,13 @@
 // </copyright>
 
 using System;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
-using Microsoft.VsSaaS.Azure.KeyVault;
-using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
 {
@@ -29,29 +24,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
         /// Initializes a new instance of the <see cref="FPAAccessTokenHandler"/> class.
         /// </summary>
         /// <param name="innerHandler">The inner handler.</param>
-        /// <param name="keyVaultSecretReader">the keyvault secret reader.</param>
-        /// <param name="controlPlaneInfo">The control plane.</param>
         /// <param name="firstPartyAppSettings">The first party app settings.</param>
+        /// <param name="firstPartyCertReader">The first party certificate reader.</param>
         /// <param name="logger">the logger.</param>
         public FPAAccessTokenHandler(
             HttpMessageHandler innerHandler,
-            IKeyVaultSecretReader keyVaultSecretReader,
-            IControlPlaneInfo controlPlaneInfo,
             FirstPartyAppSettings firstPartyAppSettings,
+            IFirstPartyCertificateReader firstPartyCertReader,
             IDiagnosticsLogger logger)
             : base(innerHandler)
         {
-            KeyVaultSecretReader = Requires.NotNull(keyVaultSecretReader, nameof(keyVaultSecretReader));
-            ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             FirstPartyAppSettings = Requires.NotNull(firstPartyAppSettings, nameof(firstPartyAppSettings));
+            FirstPartyCertificateReader = Requires.NotNull(firstPartyCertReader, nameof(firstPartyCertReader));
             Logger = logger;
         }
 
-        private IKeyVaultSecretReader KeyVaultSecretReader { get; }
-
-        private IControlPlaneInfo ControlPlaneInfo { get; }
-
         private FirstPartyAppSettings FirstPartyAppSettings { get; }
+
+        private IFirstPartyCertificateReader FirstPartyCertificateReader { get; }
 
         private IDiagnosticsLogger Logger { get; }
 
@@ -80,18 +70,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             // re-get the cert every 4 hours to ensure we're using a current value.
             if (DateTime.UtcNow > LastCertificateUpdate.AddHours(4))
             {
-                LastCertificateUpdate = DateTime.UtcNow;
-                var certs = await KeyVaultSecretReader.GetValidCertificatesAsync(
-                    AuthenticationConstants.DefaultVisualStudioServicesApiAppIdKeyVaultName,
-                    AuthenticationConstants.DefaultVisualStudioServicesApiAppIdKeyVaultCertificateName,
-                    Logger);
-                var cert = certs.OrderByDescending((cert) => cert.ExpiresAt).FirstOrDefault();
+                var cert = await FirstPartyCertificateReader.GetApiFirstPartyAppCertificate(Logger);
 
                 ConfidentialClientApplication = ConfidentialClientApplicationBuilder
-                .Create(AuthenticationConstants.VisualStudioServicesApiAppId)
-                .WithAuthority(FirstPartyAppSettings.Authority, FirstPartyAppSettings.AuthorityTenantId, true)
-                .WithCertificate(new System.Security.Cryptography.X509Certificates.X509Certificate2(cert.RawBytes))
-                .Build();
+                 .Create(FirstPartyAppSettings.ApiFirstPartyAppId)
+                 .WithAuthority(FirstPartyAppSettings.Authority, FirstPartyAppSettings.AuthorityTenantId, true)
+                 .WithCertificate(new System.Security.Cryptography.X509Certificates.X509Certificate2(cert.RawBytes))
+                 .Build();
             }
 
             var token = await ConfidentialClientApplication

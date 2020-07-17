@@ -190,6 +190,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             // Add the certificate settings.
             services.AddSingleton(appSettings.AuthenticationSettings);
 
+            // Add FirstPartyAppSettings
+            services.AddSingleton(appSettings.FirstPartyAppSettings);
+
             // Auth/Token Providers
             services
                 .AddKeyVaultSecretReader(keyVaultSecretOptions =>
