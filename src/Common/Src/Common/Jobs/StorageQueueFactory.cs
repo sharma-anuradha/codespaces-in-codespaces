@@ -142,7 +142,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     {
                         var queue = await GetQueueAsync();
                         await queue.DeleteMessageAsync(QueueMessageAdapter.AsCloudQueueMessage(queueMessage), cancellationToken);
-                    });
+                    },
+                    swallowException: true);
             }
 
             /// <inheritdoc/>
@@ -161,7 +162,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             cloudMessage,
                             visibilityTimeout,
                             messageUpdateFields);
-                    });
+                    },
+                    swallowException: true);
             }
 
             private IDiagnosticsLogger CreateLogger() => this.loggerFactoryCallback();

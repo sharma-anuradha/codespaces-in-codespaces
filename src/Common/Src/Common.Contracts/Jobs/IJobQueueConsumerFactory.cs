@@ -1,4 +1,4 @@
-﻿// <copyright file="IJobQueueConsumerFactory.cs" company="Microsoft">
+// <copyright file="IJobQueueConsumerFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -44,7 +44,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <typeparam name="T">Type of the payload.</typeparam>
         /// <param name="jobHandler">The job handler instance.</param>
         /// <param name="dataflowBlockOptions">TPL data flow options.</param>
-        void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions)
+        /// <param name="jobHandlerOptions">Job handler options.</param>
+        void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions, JobHandlerOptions jobHandlerOptions = null)
             where T : JobPayload;
     }
 

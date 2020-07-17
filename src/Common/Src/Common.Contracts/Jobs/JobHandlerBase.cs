@@ -1,4 +1,4 @@
-﻿// <copyright file="JobHandlerBase.cs" company="Microsoft">
+// <copyright file="JobHandlerBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,10 +11,34 @@ using Microsoft.VsSaaS.Diagnostics;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
     /// <summary>
+    /// The non generic job payload base.
+    /// </summary>
+    public class JobHandlerBase
+    {
+        /// <summary>
+        /// Default dataflow block options.
+        /// </summary>
+        public static readonly ExecutionDataflowBlockOptions DefaultDataflowBlockOptions = new ExecutionDataflowBlockOptions()
+        {
+            MaxDegreeOfParallelism = Environment.ProcessorCount,
+        };
+
+        /// <summary>
+        /// Option for single processor.
+        /// </summary>
+        public static readonly ExecutionDataflowBlockOptions NoParallelismDataflowBlockOptions = new ExecutionDataflowBlockOptions()
+        {
+            MaxDegreeOfParallelism = 1,
+        };
+    }
+
+    /// <summary>
     /// JobHandler base class reference implementation.
     /// </summary>
     /// <typeparam name="T">Type of the payload.</typeparam>
-    public abstract class JobHandlerBase<T> : IJobHandler<T>, IJobHandlerOptions
+#pragma warning disable SA1402 // File may only contain a single type
+    public abstract class JobHandlerBase<T> : JobHandlerBase, IJobHandler<T>, IJobHandlerOptions
+#pragma warning restore SA1402 // File may only contain a single type
         where T : JobPayload
     {
         private static readonly TimeSpan DefaultJobWaiting = TimeSpan.FromSeconds(5);
@@ -25,16 +49,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Initializes a new instance of the <see cref="JobHandlerBase{T}"/> class.
         /// </summary>
         /// <param name="dataflowBlockOptions">Optional TPL data flow block options.</param>
-        protected JobHandlerBase(ExecutionDataflowBlockOptions dataflowBlockOptions = null)
+        /// <param name="options">Job handler options.</param>
+        protected JobHandlerBase(ExecutionDataflowBlockOptions dataflowBlockOptions = null, JobHandlerOptions options = null)
         {
-            DataflowBlockOptions = dataflowBlockOptions ?? new ExecutionDataflowBlockOptions()
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-            };
+            DataflowBlockOptions = dataflowBlockOptions ?? DefaultDataflowBlockOptions;
+            Options = options;
         }
 
         /// <inheritdoc/>
         public virtual ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
+
+        /// <inheritdoc/>
+        public JobHandlerOptions Options { get; }
 
         /// <inheritdoc/>
         public async Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)

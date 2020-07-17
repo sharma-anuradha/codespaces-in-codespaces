@@ -1,4 +1,4 @@
-﻿// <copyright file="JobHandlerPayloadBase.cs" company="Microsoft">
+// <copyright file="JobHandlerPayloadBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,8 +20,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Initializes a new instance of the <see cref="JobHandlerPayloadBase{T}"/> class.
         /// </summary>
         /// <param name="dataflowBlockOptions">Optional TPL data flow block options.</param>
-        protected JobHandlerPayloadBase(ExecutionDataflowBlockOptions dataflowBlockOptions = null)
-            : base(dataflowBlockOptions)
+        /// <param name="options">Job handler options.</param>
+        protected JobHandlerPayloadBase(ExecutionDataflowBlockOptions dataflowBlockOptions = null, JobHandlerOptions options = null)
+            : base(dataflowBlockOptions, options)
         {
         }
 

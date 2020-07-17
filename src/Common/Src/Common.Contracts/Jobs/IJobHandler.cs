@@ -1,4 +1,4 @@
-﻿// <copyright file="IJobHandler.cs" company="Microsoft">
+// <copyright file="IJobHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -42,5 +42,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the dataflow options.
         /// </summary>
         ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
+
+        /// <summary>
+        /// Gets the job handler options.
+        /// </summary>
+        JobHandlerOptions Options { get; }
     }
 }

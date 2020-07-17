@@ -1,4 +1,4 @@
-﻿// <copyright file="JobQueueConsumer.cs" company="Microsoft">
+// <copyright file="JobQueueConsumer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -46,11 +46,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             });
 
             queueMessageProducer.Messages.LinkTo(jobTransformerBlock);
-            jobTransformerBlock.LinkTo(blockJobs);
+            jobTransformerBlock.LinkTo(this.blockJobs);
+
+            // register default JobPayloadError handler
+            JobQueueConsumerHelpers.RegisterJobHandler<JobPayloadError>(this, async (job, logger, ct) =>
+            {
+                await job.DisposeAsync();
+            });
         }
 
         /// <inheritdoc/>
-        public void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions)
+        public void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions, JobHandlerOptions jobHandlerOptions = null)
             where T : JobPayload
         {
             // register the payload type on the cache.
@@ -70,6 +76,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 var jobInstance = (Job)job;
                 var jobPayloadOptions = jobInstance.JobPayloadInfo.PayloadOptions;
 
+                var handlerTimout = jobHandlerOptions != null ? jobHandlerOptions.HandlerTimout : jobPayloadOptions?.HandlerTimout;
+                var maxHandlerRetries = jobHandlerOptions != null ? jobHandlerOptions.MaxHandlerRetries : jobPayloadOptions?.MaxHandlerRetries;
+
                 var failed = false;
                 var retries = 0;
                 var cancelled = false;
@@ -82,9 +91,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         childLogger.FluentAddValue("jobId", job.Id);
                         using (var cts = CancellationTokenSource.CreateLinkedTokenSource(DisposeToken))
                         {
-                            if (jobPayloadOptions?.HandlerTimout.HasValue == true)
+                            if (handlerTimout.HasValue == true)
                             {
-                                cts.CancelAfter((int)jobPayloadOptions?.HandlerTimout.Value.TotalMilliseconds);
+                                cts.CancelAfter((int)handlerTimout.Value.TotalMilliseconds);
                             }
 
                             using (cts.Token.Register(() =>
@@ -102,8 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         try
                         {
                             ++jobInstance.JobPayloadInfo.Retries;
-                            if (jobPayloadOptions?.MaxHandlerRetries.HasValue == true &&
-                                jobInstance.JobPayloadInfo.Retries >= jobPayloadOptions?.MaxHandlerRetries.Value)
+                            if (maxHandlerRetries.HasValue == true &&
+                                jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries.Value)
                             {
                                 await jobInstance.DisposeAsync();
                             }
@@ -210,6 +219,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         {
             private readonly IQueue queue;
             private readonly QueueMessage message;
+            private bool disposed;
 
             public Job(IQueue queue, (QueueMessage, TimeSpan) messageInfo, JobPayloadInfo jobPayloadInfo)
             {
@@ -235,7 +245,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             public async ValueTask DisposeAsync()
             {
-                await this.queue.DeleteMessageAsync(this.message, default);
+                if (!this.disposed)
+                {
+                    this.disposed = true;
+                    await this.queue.DeleteMessageAsync(this.message, default);
+                }
             }
 
             public Task UpdateAsync(TimeSpan visibilityTimeout, CancellationToken cancellationToken)
@@ -245,7 +259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             public Task UpdateContentAsync(CancellationToken cancellationToken)
             {
-                message.Content = Encoding.UTF8.GetBytes(JobPayloadInfo.ToJson());
+                this.message.Content = Encoding.UTF8.GetBytes(JobPayloadInfo.ToJson());
                 return this.queue.UpdateMessageAsync(this.message, true, VisibilityTimeout, cancellationToken);
             }
         }
