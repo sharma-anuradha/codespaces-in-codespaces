@@ -7,7 +7,7 @@ import { WorkbenchPage } from '../../components/workbenchPage/workbenchPage';
 import { LiveShareWorkbench } from '../../components/liveShareWorkbench/liveShareWorkbench';
 import { GitHubWorkbench } from '../../components/gitHubWorkbench/gitHubWorkbench';
 import { GistWorkbench } from '../../components/gistWorkbench/gistWorkbench';
-import { AzDevWorkbench } from '../../components/azDevWorkbench/azDevWorkbench';
+import { AzureWorkbench } from '../../components/azureWorkbench/azureWorkbench';
 import { GitHubLogin } from '../../components/gitHubLogin/gitHubLogin';
 import { AzDevLogin } from '../../components/gitHubLogin/azDevLogin';
 import { BlogPost } from '../../BlogPost';
@@ -26,7 +26,7 @@ import {
     liveShareSessionPath,
     githubPath,
     gistPath,
-    azDevPath,
+    azurePath,
     loginCallbackPath,
     portForwardingSignIn,
 } from '../../routerPaths';
@@ -104,9 +104,9 @@ export const routes: IRoute[] = [
     },
     {
         authenticated: false,
-        path: azDevPath,
+        path: azurePath,
         exact: false,
-        component: AzDevWorkbench,
+        component: AzureWorkbench,
     },
     {
         authenticated: true,

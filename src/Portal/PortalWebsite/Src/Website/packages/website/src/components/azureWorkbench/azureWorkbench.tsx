@@ -20,7 +20,7 @@ type Params = {
     commitId: string;
 };
 
-export interface AzDevWorkbenchProps extends RouteComponentProps<Params>,  WithTranslation {
+export interface AzureWorkbenchProps extends RouteComponentProps<Params>,  WithTranslation {
     org: string;
     projectName: string;
     repoName: string;
@@ -29,12 +29,12 @@ export interface AzDevWorkbenchProps extends RouteComponentProps<Params>,  WithT
     richNavWebExtensionEndpoint: string;
 }
 
-export interface AzDevWorkbenchState {
+export interface AzureWorkbenchState {
     loading: boolean;
 }
 
-class AzDevWorkbenchView extends Component<AzDevWorkbenchProps, AzDevWorkbenchState> {
-    constructor(props: AzDevWorkbenchProps) {
+class AzureWorkbenchView extends Component<AzureWorkbenchProps, AzureWorkbenchState> {
+    constructor(props: AzureWorkbenchProps) {
         super(props);
 
         this.state = {
@@ -96,9 +96,9 @@ const getProps = (state: ApplicationState, props: { match: { params: Params }
 
 type MappedProperties = keyof ReturnType<typeof getProps>;
 type ExternalProps = Omit<
-    AzDevWorkbenchProps,
+    AzureWorkbenchProps,
     MappedProperties | keyof RouteComponentProps<Params> | keyof WithTranslation
 >;
 
-export const AzDevWorkbench: ComponentClass<ExternalProps> = 
-    withRouter(withTranslation()(connect(getProps)(AzDevWorkbenchView)));
+export const AzureWorkbench: ComponentClass<ExternalProps> = 
+    withRouter(withTranslation()(connect(getProps)(AzureWorkbenchView)));
