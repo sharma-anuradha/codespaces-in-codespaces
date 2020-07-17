@@ -82,14 +82,25 @@ static_analysis_options:
       - from: 'src\AzurePortal\src\Default\Extension\'
         include:
           - '**/*Validation*.dll'
-  # moderncop_options:
-  #   files_to_scan:
-  #     - exclude:
-  #       - 'src/SpringCloudPortalExt.UnitTests/**/*'  
+  moderncop_options:
+    disable_tool_scan: false
+    fail_on_error: true
+    files_to_scan:
+      - from: 'src\AzurePortal\src\Default\Extension\Client\'          
+        include:                         
+          - '**/*.ts'
   policheck_options:
     files_to_scan:
       - exclude:
-        - 'src/AzurePortal/src/Default/Extension/node_modules/*'     #external packages
-        - 'src/AzurePortal/src/Default/Extension/ReactDefinitions/*' #portal generated
-        - 'src/AzurePortal/src/Default/Extension/Definitions/*'      #portal generated
-        - 'src/AzurePortal/src/Default/Extension/Output/typings/*'   #portal generated
+        - 'src/AzurePortal/src/Default/Extension/Client/_extensions/*'
+        - 'src/AzurePortal/src/Default/Extension/Client/_generated/*'           
+        - 'src/AzurePortal/src/Default/Extension/Client/ReactViews/node_modules/*'
+        - 'src/AzurePortal/src/Default/Extension/Output/*'
+        - 'src/AzurePortal/src/Default/Extension/ReactDefinitions/*'
+        - 'src/AzurePortal/src/Default/Extension/node_modules/*'
+        - 'src/AzurePortal/src/Default/Extension/Definitions/*'
+        - 'src/AzurePortal/src/Default/Extension/GalleryPackages/*'
+        - 'src/Codespaces/*'
+        - 'src/Common/*'
+        - 'src/Loc/*'
+        - 'src/Portal/*'
