@@ -12,28 +12,19 @@ export const ServerlessSplashscreen: React.FC<IServerlessSplashscreenProps> = (
 ) => {
     const { environment } = props;
     const githubURL = new URL(environment.seed?.moniker);
-    let [org, repository] = githubURL.pathname.substr(1).split('/');
-    if (repository.endsWith('.git')) {
-        repository = repository.substr(0, repository.length - '.git'.length);
+    let [org, repository, type, ...rest] = githubURL.pathname.substr(1).split('/');
+
+    var branchOrCommit = 'HEAD';
+    if (type === 'commit' || type === 'tree') {
+        branchOrCommit = rest.join('/');
+    } else if (type === 'pull') {
+        // TODO: how to get commit id from PR
     }
+    const folderUri = `github://${branchOrCommit}/${org}/${repository}`;
 
-    const uriQueryObj = [
-        { key: 'environmentId', value: environment.id ?? '' },
-        { key: 'org', value: org },
-        { key: 'repoId', value: repository },
-    ];
-
-    const uriQueryString = uriQueryObj
-        .map((item) => encodeURIComponent(item.key) + '=' + encodeURIComponent(item.value))
-        .join('&');
-    const folderUri = `vscs-githubfs:/GitHubFS/?${uriQueryString}`;
-
-    const extensionUrls = [
-        'https://vscsextensionsdev.blob.core.windows.net/vsonline-fsprovider-extension',
-    ];
     return (
         <div>
-            <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} />
+            <ServerlessWorkbench folderUri={folderUri} />
         </div>
     );
 };

@@ -5,18 +5,22 @@ import {
     AADv2BrowserSyncStrategy as AADv2BrowserSyncStrategyWorkbench,
     LiveShareWebStrategy as LiveShareWebStrategyWorkbench,
     LiveShareGithubAuthStrategy as LiveShareGithubAuthStrategyWorkbench,
+    DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
 } from 'vso-workbench';
 
 import {
     localStorageKeychain,
     getCurrentEnvironmentId,
-    isHostedOnGithub} from 'vso-client-core';
+    isHostedOnGithub,
+    getVSCodeScheme
+} from 'vso-client-core';
 
 import { authService } from '../services/authService';
 import { getStoredGitHubToken, getGitHubAccessToken } from '../services/gitHubAuthenticationService';
 import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
 import { createCascadeTokenKey } from '../split/github/createCascadeTokenKey';
 import { GitHubStrategy } from './GitHubStrategy';
+import { SessionData } from 'vscode-web';
 
 class MsalAuthStrategy extends MsalAuthStrategyWorkbench {
     async getToken(service: string, account: string): Promise<string | null> {
@@ -90,14 +94,25 @@ class GistPadStrategy implements IAuthStrategy {
     }
 }
 
-/// todo: Remove this after migrating to Github Virtual FileSystem extension created by VSCode team
+/// Used by github-browser extension
 class GitHubStrategyForServerless implements IAuthStrategy {
     async canHandleService(service: string, account: string) {
-        return service === 'vscode-github' && account === 'accesstoken';
+        return (service === `${getVSCodeScheme()}-github.login` && account == 'account');
     }
-
     async getToken(service: string, account: string): Promise<string | null> {
-        return getGitHubAccessToken();
+        const token = await getStoredGitHubToken();
+        if (!token) {
+            return null;
+        }
+        const githubSessionRepo: SessionData = {
+            id: DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
+            accessToken: token,
+            scopes: ['repo'],
+        };
+        const githubSessions = JSON.stringify([
+            githubSessionRepo,
+        ]);
+        return githubSessions;
     }
 }
 

@@ -19,4 +19,6 @@ export const DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID = 'default-vso-github-vscode
 
 export const DEFAULT_MICROSFT_VSCODE_AUTH_PROVIDER_ID = 'default-vso-microsoft-vscode-auth-provider';
 
+export const DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID = 'default-vso-github-browser-auth-provider';
+
 export const DOGFOOD_CHANNEL_QUERY_PARAM_NAME = 'dogfoodChannel';

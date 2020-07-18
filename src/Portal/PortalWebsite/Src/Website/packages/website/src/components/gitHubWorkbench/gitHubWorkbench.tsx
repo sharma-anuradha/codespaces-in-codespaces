@@ -23,18 +23,24 @@ const CODETOUR_ENDPOINT = 'https://vscsextensionsdev.blob.core.windows.net/codet
 
 class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenchProps> {
     render() {
-        const extensionUrls = [this.props.richNavWebExtensionEndpoint, CODETOUR_ENDPOINT];
+        var extensionUrls: string[] = [CODETOUR_ENDPOINT];
+        var commitId = this.props.commitId ? this.props.commitId : 'HEAD';
+        var folderUri = `github://${commitId}/${this.props.org}/${this.props.repoId}`;
 
-        // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
-        const uriQueryObj = {
-            repoType: RepoType_QueryParam.GitHub,
-            org: this.props.org,
-            repoId: this.props.repoId,
-            commitId: this.props.commitId,
-            filePath: this.props.filePath,
-        };
-        const uriQueryString = JSON.stringify(uriQueryObj);
-        const folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
+        if (localStorage.getItem('vscs-showserverless') !== 'true') {
+            extensionUrls = [this.props.richNavWebExtensionEndpoint, CODETOUR_ENDPOINT];
+
+            // Repo Info to pass to Rich Code Nav should be stored in the workspace URI
+            const uriQueryObj = {
+                repoType: RepoType_QueryParam.GitHub,
+                org: this.props.org,
+                repoId: this.props.repoId,
+                commitId: this.props.commitId,
+                filePath: this.props.filePath,
+            };
+            const uriQueryString = JSON.stringify(uriQueryObj);
+            folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
+        }
 
         return <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} />;
     }

@@ -130,7 +130,7 @@ export async function validateGitRepository(
     } else if (gitServiceProvider === SupportedGitService.GitHub) {
         try {
             const isAccessible = await queryGitService(queryableUrl);
-            if (!isAccessible) {
+            if (!isAccessible || localStorage.getItem('vscs-showserverless') === 'true') {
                 return validationMessagesKeys.privateRepoNoAuth;
             } else {
                 return validationMessagesKeys.valid;
