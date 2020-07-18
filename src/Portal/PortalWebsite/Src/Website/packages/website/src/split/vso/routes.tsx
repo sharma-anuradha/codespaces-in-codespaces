@@ -103,7 +103,7 @@ export const routes: IRoute[] = [
         component: GistWorkbench,
     },
     {
-        authenticated: false,
+        authenticated: true,
         path: azurePath,
         exact: false,
         component: AzureWorkbench,
