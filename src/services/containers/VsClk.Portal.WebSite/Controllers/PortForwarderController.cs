@@ -208,15 +208,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return BadRequest();
             }
 
-            var isGithub = GitHubUtils.IsGithubTLD(returnUrl);
-
             if (sessionDetails is WorkspaceSessionDetails)
             {
-                if (!isGithub)
+                if (!GitHubUtils.IsGithubTLD(returnUrl))
                 {
                     var (_, error) = GetAuthToken(logger);
 
-                    return ExceptionView(error, returnUrl.ToString());
+                    return ExceptionView(error, returnUrl);
                 }
                 else
                 {
@@ -224,18 +222,23 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 }
             }
 
-            if (!(sessionDetails is PartialEnvironmentSessionDetails envDetails))
-            {
-                return BadRequest();
+            return Redirect(GetAuthRedirectUrl(returnUrl));
+        }
+
+        private string GetAuthRedirectUrl(Uri returnUrl)
+        {
+            if (!HostUtils.TryGetPortForwardingSessionDetails(returnUrl.Host, out var sessionDetails)) {
+                return null;
             }
 
             var redirectUriBuilder = new UriBuilder(GitHubUtils.IsGithubTLD(returnUrl)
                 ? "https://github.com/codespaces/auth"
-                : $"{AppSettings.PortalEndpoint}/port-forwarding-sign-in"
+                : $"{AppSettings.PortalEndpoint.TrimEnd('/')}/port-forwarding-sign-in"
             );
 
-            // TODO: ensure double / aren't a thing?
-            redirectUriBuilder.Path = $"{redirectUriBuilder.Path}/{envDetails.EnvironmentId}";
+            if (sessionDetails is PartialEnvironmentSessionDetails envDetails) {
+                redirectUriBuilder.Path = $"{redirectUriBuilder.Path}/{envDetails.EnvironmentId}";
+            }
 
             var queryBuilder = HttpUtility.ParseQueryString(string.Empty);
             if (returnUrl.AbsolutePath != "/")
@@ -251,29 +254,20 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             redirectUriBuilder.Query = queryBuilder.ToString();
 
-            return Redirect(redirectUriBuilder.Uri.ToString());
+            return redirectUriBuilder.Uri.ToString();
         }
 
         private ActionResult ExceptionView(PortForwardingFailure failureReason = PortForwardingFailure.Unknown)
         {
-            return ExceptionView(failureReason, Request.GetEncodedUrl());
+            return ExceptionView(failureReason, new Uri(Request.GetEncodedUrl()));
         }
 
-        private ActionResult ExceptionView(PortForwardingFailure failureReason, string redirectUrl)
+        private ActionResult ExceptionView(PortForwardingFailure failureReason, Uri redirectUrl)
         {
-            var redirectUriQuery = HttpUtility.ParseQueryString(string.Empty);
-            redirectUriQuery.Set("redirectUrl", redirectUrl);
-
-            var redirectUriBuilder = new UriBuilder(AppSettings.PortalEndpoint)
-            {
-                Path = "/login",
-                Query = redirectUriQuery.ToString(),
-            };
-
             var details = new PortForwardingErrorDetails
             {
                 FailureReason = failureReason,
-                RedirectUrl = redirectUriBuilder.Uri.ToString()
+                RedirectUrl = GetAuthRedirectUrl(redirectUrl),
             };
 
             var response = View("exception", details);
