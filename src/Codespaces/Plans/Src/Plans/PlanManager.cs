@@ -1,4 +1,4 @@
-﻿// <copyright file="PlanManager.cs" company="Microsoft">
+// <copyright file="PlanManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.SubscriptionBanned;
-
+                result.ErrorMessage = "The subscription attempting to create a plan has been disabled for this service.";
                 return result;
             }
 
@@ -69,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
+                result.ErrorMessage = "The subscription has exceeded it's quota for plan creation. Please delete or remove existing plans or contact Azure support to increase the plan quota.";
 
                 return result;
             }
@@ -79,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                 logger.LogErrorWithDetail("plan_create_error", $"Plan creation failed. Subscription is not in a Registered state.");
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.SubscriptionStateNotRegistered;
-
+                result.ErrorMessage = $"The subscription must be in a registered state in order to create a plan. This subscription is currently in a {Enum.GetName(typeof(SubscriptionStateEnum), subscription.SubscriptionState)} state. Please check the state of your Azure subscription.";
                 return result;
             }
 

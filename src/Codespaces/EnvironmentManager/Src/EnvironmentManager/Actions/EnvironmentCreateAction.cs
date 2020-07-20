@@ -309,7 +309,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             var countOfEnvironmentsInPlan = environmentsInPlan.Count();
             var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(input.Plan.Plan.Subscription, logger.NewChildLogger());
-            if (!computeCheckEnabled && countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
+            if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
             {
                 throw new ForbiddenException((int)MessageCodes.ExceededQuota);
             }
@@ -329,7 +329,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Check subscription quota
             var reachedComputeLimit = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
-            if (computeCheckEnabled && reachedComputeLimit)
+            if (reachedComputeLimit)
             {
                 throw new ForbiddenException((int)MessageCodes.ExceededQuota);
             }

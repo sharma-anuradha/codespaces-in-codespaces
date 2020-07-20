@@ -1,4 +1,4 @@
-﻿// <copyright file="PlanManagerServiceResult.cs" company="Microsoft">
+// <copyright file="PlanManagerServiceResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         /// Gets or sets the error code for the user/client.
         /// </summary>
         public ErrorCodes ErrorCode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the error message for the user/client.
+        /// </summary>
+        public string ErrorMessage { get; set; }
     }
 }

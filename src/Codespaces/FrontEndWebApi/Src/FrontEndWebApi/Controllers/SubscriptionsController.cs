@@ -48,6 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private const string LoggingBaseName = "subscriptions_controller";
         private const string PlanResourceType = "plans";
+        private const string PlanNotFoundErrorMessage = "The plan not found. Please contact Azure Support if you continue to experience this issue.";
+        private const string PlanCannotBeDeletedErrorMessage = "The plan could not be deleted. Please contact Azure Support if you continue to experience this issue.";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
@@ -280,7 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     if (result.VsoPlan == null)
                     {
                         logger.LogErrorWithDetail("plan_create_error", $"Plan creation failed with ErrorCode: {result.ErrorCode}");
-                        return CreateErrorResponse("ValidateResourceFailed");
+                        return CreateErrorResponse("ValidateResourceFailed", result.ErrorMessage);
                     }
 
                     // Clear the userId property so it will not be stored on the created ARM resource.
@@ -370,7 +372,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     if (plan == null)
                     {
-                        return CreateErrorResponse("ResourceDeleteFailed", "Plan not found");
+                        return CreateErrorResponse("ResourceDeleteFailed", PlanNotFoundErrorMessage);
                     }
 
                     logger.AddVsoPlan(plan);
@@ -421,7 +423,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format in case validation pass with empty body.
                     return Ok();
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("ResourceDeleteFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("ResourceDeleteFailed", PlanCannotBeDeletedErrorMessage)),
                 swallowException: true);
         }
 
@@ -508,7 +510,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     // Required response format.
                     return CreateResponse(HttpStatusCode.OK, resourceList);
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceListFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("GetResourceListFailed", $"An error occured while trying to retrieve the list of plans for subscription: {subscriptionId}.")),
                 swallowException: true);
         }
 

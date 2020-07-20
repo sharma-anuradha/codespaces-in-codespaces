@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentManager.cs" company="Microsoft">
+// <copyright file="EnvironmentManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -363,13 +363,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     var sku = GetSku(cloudEnvironment);
                     var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, sku, childLogger);
-                    var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(childLogger.NewChildLogger());
+                    var computeCheckEnabled = (sku.ComputeOS == ComputeOS.Windows) ? await EnvironmentManagerSettings.WindowsComputeCheckEnabled(childLogger.NewChildLogger()) : true;
                     var currentMaxQuota = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
-                    var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(childLogger.NewChildLogger());
-                    if (sku.ComputeOS == ComputeOS.Windows)
-                    {
-                        computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
-                    }
 
                     if (computeCheckEnabled && (currentComputeUsed + sku.ComputeSkuCores > currentMaxQuota))
                     {
