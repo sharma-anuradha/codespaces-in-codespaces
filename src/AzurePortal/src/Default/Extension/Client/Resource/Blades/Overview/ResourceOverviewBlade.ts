@@ -332,7 +332,9 @@ function createToolbar(
     const commandRefreshButton = Toolbar.ToolbarItems.createBasicButton(container, {
         label: ClientResources.refresh,
         icon: Images.Refresh(),
-        onClick: () => {},
+        onClick: () => {
+            codespacesGrid.refresh();
+        },
     });
 
     const deletePlanButton = initializePlanDeleteButton(container);
@@ -346,7 +348,7 @@ function createToolbar(
     const feedbackButton = Toolbar.ToolbarItems.createBasicButton(container, {
         label: ClientResources.feedback,
         icon: Images.Feedback(),
-        onClick: () => {},
+        onClick: new ClickableLink('https://aka.ms/vscs-ibiza-feedback'),
     });
 
     console.log(codespacesGrid.noData.peek());
