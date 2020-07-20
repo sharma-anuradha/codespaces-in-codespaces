@@ -19,7 +19,6 @@ import Images = MsPortalFx.Base.Images;
 import { HttpPlansManager } from 'Resource/HttpPlansManager';
 import { HttpCodespacesManager } from 'Resource/Blades/Codespaces/HttpCodespacesManager';
 import { Codespace, provisioningLower, startingLower, shuttingDownLower } from 'Resource/Blades/Codespaces/CodespaceModels';
-import { getCodespacesConnectUri } from '../../../Shared/Endpoints';
 
 /**
  * Contract for parameters that will be passed to overview blade.
@@ -213,11 +212,21 @@ export class ResourceOverviewBlade {
         const columns: DataGrid.ColumnDefinition<Codespace>[] = [
             {
                 header: 'Name',
-                type: 'UriLink',
+                type: 'BladeLink',
                 cell: {
-                    uriLink: (c) => ({
+                    bladeLink: (c) => ({
                         text: c.friendlyName,
-                        uri: getCodespacesConnectUri(c.id),
+                        bladeReference: BladeReferences.forBlade('Connect.ReactView').createReference({
+                            parameters: {
+                                planId: this.context.parameters.id,
+                                codespaceId: c.id,
+                                codespacesEndpoint: MsPortalFx.getEnvironmentValue("codespacesEndpoint"),
+                                armApiVersion: MsPortalFx.getEnvironmentValue("armApiVersion")
+                            },
+                            onClosed: () => {
+                                codespacesGrid.refresh();
+                            },
+                        }),
                     }),
                 },
             },

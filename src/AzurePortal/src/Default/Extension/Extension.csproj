@@ -48,7 +48,7 @@
     <!-- Configure csproj LocalHostingService dev server for F5 in visual studio to launch and sideload -->
     <StartAction>Program</StartAction>
     <StartProgram>$(COMSPEC)</StartProgram>
-    <StartArguments>/k npm install --no-optional &amp;&amp; node node_modules\%40microsoft\portalhostingservice\DevServer\DevServer.js -s &amp; pause &amp; exit</StartArguments>
+    <StartArguments>/k npm install --no-optional &amp;&amp; npm install Client\ReactViews &amp;&amp; node node_modules\%40microsoft\portalhostingservice\DevServer\DevServer.js -s &amp; pause &amp; exit</StartArguments>
     <StartWorkingDirectory>$(MSBuildThisFileDirectory)</StartWorkingDirectory>
     <HostingServiceCreateDeploymentArtifacts>false</HostingServiceCreateDeploymentArtifacts>
   </PropertyGroup>
@@ -81,6 +81,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="tsconfig.json" />
+    <Content Include="Client\ReactViews\tsconfig.json" />
     <None Include="Client\ClientResources.d.ts" />
     <None Include="Client\Shared\Endpoints.ts" />
     <None Include="Client\Shared\HttpClient.ts" />
@@ -103,6 +104,7 @@
     <None Include="Client\Resource\PlansViewModel.ts" />
     <None Include="Client\Resource\ResourcePart.ts" />
     <None Include="Client\Resource\PlanResource.ts" />
+    <None Include="Client\ReactViews\Connect.ReactView.tsx" />
     <None Include="Client\Shared\Icons.ts" />
     <Svg Include="Content\SVG\sample.svg" />
     <Svg Include="Content\SVG\engine.svg" />
@@ -183,6 +185,7 @@
       <ToolsTypeDefinitions Include="$(PackagesDir)\Microsoft.Portal.Tools.6.317.0.5\content\Definitions\**\*.d.ts" />
       <HubsPdeDeps Include="$(PackagesDir)\Microsoft.Portal.Extensions.Hubs.6.317.0.5\content\**\*" />
       <AADPdeDeps Include="$(PackagesDir)\Microsoft.Portal.Extensions.AAD.1.0.0.651\content\**\*" />
+      <ReactViewNodeModules Include="$(MSBuildThisFileDirectory)\Client\ReactViews\node_modules\**\*" />
     </ItemGroup>
     <Copy SkipUnchangedFiles="true" SourceFiles="@(ToolsTypeDefinitions)" DestinationFiles="@(ToolsTypeDefinitions->'$(MSBuildThisFileDirectory)\Definitions\%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SkipUnchangedFiles="true" SourceFiles="@(HubsPdeDeps)" DestinationFiles="@(HubsPdeDeps->'$(MSBuildThisFileDirectory)\%(RecursiveDir)%(Filename)%(Extension)')" />

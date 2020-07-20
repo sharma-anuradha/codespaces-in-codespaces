@@ -1,0 +1,10 @@
+{
+  "name": "codespacesextension-reactviews",
+  "version": "1.0.0",
+  "description": "Codespaces Extension React Views",
+  "author": "Microsoft",
+  "license": "ISC",
+  "dependencies": {
+    "@microsoft/azureportal-reactview": "^1.1.0"
+  }
+}

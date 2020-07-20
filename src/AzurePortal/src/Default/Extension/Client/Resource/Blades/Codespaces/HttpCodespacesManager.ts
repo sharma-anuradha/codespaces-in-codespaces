@@ -1,5 +1,5 @@
 import { CodespacesManager } from './CodespacesManager';
-import { Codespace, Location, availableLower, provisioningLower, isTransient } from './CodespaceModels';
+import { Codespace, Location, isTransient } from './CodespaceModels';
 import { HttpClient } from '../../../Shared/HttpClient';
 import { getCodespacesUri, getArmUri } from '../../../Shared/Endpoints';
 import { ajax } from 'Fx/Ajax';

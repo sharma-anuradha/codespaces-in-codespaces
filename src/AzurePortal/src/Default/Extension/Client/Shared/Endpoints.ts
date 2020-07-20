@@ -31,7 +31,3 @@ export function getArmUri(id: string): string {
 export function getCodespacesUri(path?: string): string {
     return constructUri(codespacesUriBuilder, path);
 }
-
-export function getCodespacesConnectUri(id: string): string {
-    return `${codespacesUriBuilder.getSchemeAndAuthority()}/environment/${id}`;
-}
