@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
@@ -18,10 +19,13 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -767,6 +771,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var metrics = MockUtil.MockMetricsManager();
             var subManager = MockUtil.MockSubscriptionManager();
             var environmentAccessManager = new EnvironmentAccessManager(currentUserProvider);
+            var environmentRepository = new MockCloudEnvironmentRepository();
+            var billingEventManager = new BillingEventManager(new MockBillingEventRepository(),
+                                                                new MockBillingOverrideRepository());
+            var workspaceManager = new WorkspaceManager(new MockClientWorkspaceRepository());
+            var metricsLogger = new MockEnvironmentMetricsLogger();
+            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, metricsLogger);
             var settings = new FrontEndAppSettings
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
@@ -789,7 +799,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 metrics,
                 subManager,
                 accessTokenReader,
-                environmentAccessManager);
+                environmentAccessManager,
+                environmentStateManager);
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();

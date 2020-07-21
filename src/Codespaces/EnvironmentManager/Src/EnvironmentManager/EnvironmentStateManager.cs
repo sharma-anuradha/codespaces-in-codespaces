@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentStateManager.cs" company="Microsoft">
+// <copyright file="EnvironmentStateManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -179,28 +179,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Swap between available and awaiting based on the workspace status
                         case CloudEnvironmentState.Available:
                         case CloudEnvironmentState.Awaiting:
-                            try
+                            var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                            var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
+
+                            logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
+                                .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
+                                .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
+
+                            if (workspace == null)
                             {
-                                var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                                var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
-
-                                logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
-                                    .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
-                                    .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
-
-                                if (workspace == null)
-                                {
-                                    // In this case the workspace is deleted. There is no way of getting to an environment without it.
-                                    newState = CloudEnvironmentState.Unavailable;
-                                }
-                                else if (workspace.IsHostConnected.HasValue)
-                                {
-                                    newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
-                                }
+                                // In this case the workspace is deleted. There is no way of getting to an environment without it.
+                                newState = CloudEnvironmentState.Unavailable;
                             }
-                            catch (Exception e)
+                            else if (workspace.IsHostConnected.HasValue)
                             {
-                                logger.NewChildLogger().LogWarning($"{LogBaseName}_normalize_checkworkspacestatus_warn", e);
+                                newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
                             }
 
                             break;

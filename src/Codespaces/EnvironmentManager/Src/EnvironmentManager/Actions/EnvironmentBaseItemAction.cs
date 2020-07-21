@@ -80,12 +80,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
                 // Validate location
                 ValidateTargetLocation(record.Value.Location, logger);
-
-                // Normalize state
-                // NOTE: Noping to remove this step in the future, don't love causing side effects on evry fetch
-                var environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(
-                    record.Value, logger.NewChildLogger());
-                record.ReplaceAndResetTransition(environment); // TODO: This is a temporary hack!!!!!!!! Need to switch code over to use transition
             }
 
             return record;

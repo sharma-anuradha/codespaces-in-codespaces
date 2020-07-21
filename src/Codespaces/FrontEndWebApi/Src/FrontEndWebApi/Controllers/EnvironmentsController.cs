@@ -69,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="subscriptionManager">The subscription manager.</param>
         /// <param name="accessTokenReader">JWT reader configured for access tokens.</param>
         /// <param name="environmentAccessManager">The environment access manager.</param>
+        /// <param name="environmentStateManager">The environment state manager.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -84,7 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             IMetricsManager metricsManager,
             ISubscriptionManager subscriptionManager,
             ICascadeTokenReader accessTokenReader,
-            IEnvironmentAccessManager environmentAccessManager)
+            IEnvironmentAccessManager environmentAccessManager,
+            IEnvironmentStateManager environmentStateManager)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -101,6 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
             AccessTokenReader = Requires.NotNull(accessTokenReader, nameof(accessTokenReader));
             EnvironmentAccessManager = Requires.NotNull(environmentAccessManager, nameof(environmentAccessManager));
+            EnvironmentStateManager = environmentStateManager;
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -133,6 +136,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private IEnvironmentAccessManager EnvironmentAccessManager { get; }
 
+        private IEnvironmentStateManager EnvironmentStateManager { get; }
+
         /// <summary>
         /// Get an environment by id.
         /// </summary>
@@ -153,6 +158,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await EnvironmentManager.GetAsync(environmentId, logger);
+
+            // Normalize state
+            environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, logger.NewChildLogger());
 
             return Ok(Mapper.Map<CloudEnvironmentResult>(environment));
         }
@@ -326,7 +334,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
 
             // Build metrics manager
-            var metricsInfo = await GetMetricsInfo(logger);
+            var metricsInfo = await GetMetricsInfoAsync(logger);
 
             // Create the environement
             var startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
@@ -732,10 +740,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentId), logger);
 
+            // Normalize state
+            environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, logger.NewChildLogger());
             return environment;
         }
 
-        private async Task<MetricsInfo> GetMetricsInfo(IDiagnosticsLogger logger)
+        private async Task<MetricsInfo> GetMetricsInfoAsync(IDiagnosticsLogger logger)
         {
             try
             {
