@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 result.VsoPlan = null;
                 result.ErrorCode = Contracts.ErrorCodes.ExceededQuota;
-                result.ErrorMessage = "The subscription has exceeded it's quota for plan creation. Please delete or remove existing plans or contact Azure support to increase the plan quota.";
+                result.ErrorMessage = "The subscription has exceeded its quota for plan creation. Please delete or remove existing plans or contact Azure support to increase the plan quota.";
 
                 return result;
             }

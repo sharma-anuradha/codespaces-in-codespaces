@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private const string LoggingBaseName = "subscriptions_controller";
         private const string PlanResourceType = "plans";
-        private const string PlanNotFoundErrorMessage = "The plan not found. Please contact Azure Support if you continue to experience this issue.";
+        private const string PlanNotFoundErrorMessage = "The plan could not be found. Please contact Azure Support if you continue to experience this issue.";
         private const string PlanCannotBeDeletedErrorMessage = "The plan could not be deleted. Please contact Azure Support if you continue to experience this issue.";
 
         /// <summary>
