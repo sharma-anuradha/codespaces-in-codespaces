@@ -257,6 +257,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await GetEnvironmentAsync(environmentId, logger);
+            logger.AddSkuName(environment?.SkuName);
 
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
