@@ -1,4 +1,4 @@
-﻿// <copyright file="DiagnosticsLoggerExtensions.cs" company="Microsoft">
+// <copyright file="DiagnosticsLoggerExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -178,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="skuName">The cloud environment SKU name.</param>
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddSkuName(this IDiagnosticsLogger logger, string skuName)
-            => logger.FluentAddValue(LogValueSkuName, skuName);
+            => logger.FluentAddBaseValue(LogValueSkuName, skuName);
 
         /// <summary>
         /// Add the environment state to the logger.

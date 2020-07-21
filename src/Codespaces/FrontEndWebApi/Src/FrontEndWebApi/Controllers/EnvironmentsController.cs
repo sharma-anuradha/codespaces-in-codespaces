@@ -332,6 +332,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
+            logger.AddSkuName(environmentCreateDetails.SkuName);
 
             // Build metrics manager
             var metricsInfo = await GetMetricsInfoAsync(logger);
