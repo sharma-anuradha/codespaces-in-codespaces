@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate_set",
@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                                 if (input.QueueCreateResource)
                                 {
                                     // Try to create resource for request.
-                                    assignResult = await TryQueueAsync(input, itemLogger);
+                                    assignResult = await TryQueueAsync(input, itemLogger, loggingProperties);
                                 }
                                 else
                                 {
@@ -176,7 +176,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                             // Only trigger pool refresh if its a pool resource
                             if (resourceSku != null && !resourceResult.Input.QueueCreateResource)
                             {
-                                // Trigger auto pool create to replace assigned item
+                                // Trigger auto pool create to replace assigned item. Pass any logging property that we want to log. Nothing as of now.
                                 TaskHelper.RunBackground(
                                     $"{LogBaseName}_run_create",
                                     (taskLogger) => ResourceContinuationOperations.CreateAsync(
@@ -190,7 +190,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                         return (IEnumerable<AllocateResult>)results;
                     }
 
-                    // Release each of the items that had been assigned so far
+                    // Release each of the items that had been assigned so far (if we couldn't have required number of resources i.e. isValid == false.
                     foreach (var resourceResult in resourceResults)
                     {
                         var input = resourceResult.Input;
@@ -220,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
         /// <inheritdoc/>
         public Task<AllocateResult> AllocateAsync(
-            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate",
@@ -231,7 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     if (input.QueueCreateResource)
                     {
                         // Try to create resource for request.
-                        assignResult = await TryQueueAsync(input, childLogger);
+                        assignResult = await TryQueueAsync(input, childLogger, loggingProperties);
                     }
                     else
                     {
@@ -308,14 +308,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
         private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryQueueAsync(
             AllocateInput input,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null)
         {
             // Map logical sku to resource sku
             var resourceSku = await ResourceScalingStore.MapLogicalSkuToResourceSku(input.SkuName, input.Type, input.Location);
 
             var resourceId = Guid.NewGuid();
             var resource = await ResourceContinuationOperations.QueueCreateAsync(
-            resourceId, input.Type, input.ExtendedProperties, resourceSku.Details, "ResourceQueueAllocate", logger.NewChildLogger());
+            resourceId, input.Type, input.ExtendedProperties, resourceSku.Details, "ResourceQueueAllocate", logger.NewChildLogger(), loggingProperties);
 
             return (Resource: resource, ResourceSku: resourceSku);
         }

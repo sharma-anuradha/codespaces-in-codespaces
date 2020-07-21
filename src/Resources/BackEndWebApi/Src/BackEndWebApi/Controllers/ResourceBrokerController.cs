@@ -6,15 +6,18 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 {
@@ -93,7 +96,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                var result = await ResourceBrokerHttp.AllocateAsync(environmentId, resourceRequests, logger.NewChildLogger());
+                var loggingProperties = new Dictionary<string, string>()
+                {
+                    [ResourceLoggingConstants.EnvironmentId] = environmentId.ToString(),
+                };
+
+                if (Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationId))
+                {
+                    loggingProperties.Add(HttpConstants.CorrelationIdHeader, correlationId.First());
+                }
+
+                var result = await ResourceBrokerHttp.AllocateAsync(environmentId, resourceRequests, logger.NewChildLogger(), loggingProperties);
                 return Ok(result);
             }
             catch (OutOfCapacityException e)
@@ -251,17 +264,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
         async Task<IEnumerable<AllocateResponseBody>> IResourceBrokerResourcesHttpContract.AllocateAsync(
             Guid environmentId,
             IEnumerable<AllocateRequestBody> resourceRequests,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
-            var resourceInput = new List<AllocateInput>();
+            var resourceInputs = new List<AllocateInput>();
             foreach (var resourceRequest in resourceRequests)
             {
                 var input = Mapper.Map<AllocateInput>(resourceRequest);
-                resourceInput.Add(input);
+                resourceInputs.Add(input);
             }
 
             var resourceResults = await ResourceBroker.AllocateAsync(
-                environmentId, resourceInput, "FrontEndService", logger.NewChildLogger());
+                environmentId, resourceInputs, "FrontEndService", logger.NewChildLogger(), loggingProperties);
 
             var resourceResponses = new List<AllocateResponseBody>();
             foreach (var resourceResult in resourceResults)

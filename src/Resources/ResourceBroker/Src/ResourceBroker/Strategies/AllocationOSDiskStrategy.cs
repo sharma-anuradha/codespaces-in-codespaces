@@ -84,7 +84,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             Guid environmentId,
             IEnumerable<AllocateInput> inputs,
             string trigger,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate_pair",
@@ -110,7 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                                 resourceSku,
                                 computeRequest.ExtendedProperties,
                                 trigger,
-                                logger.NewChildLogger());
+                                logger.NewChildLogger(),
+                                loggingProperties);
                         }
                         else
                         {
@@ -126,7 +128,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                                 resourceSku,
                                 trigger,
                                 computeRequest.ExtendedProperties,
-                                logger.NewChildLogger());
+                                logger.NewChildLogger(),
+                                loggingProperties);
                         }
                         else
                         {
@@ -145,7 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         }
 
         /// <inheritdoc/>
-        public Task<AllocateResult> AllocateAsync(Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger)
+        public Task<AllocateResult> AllocateAsync(Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties)
         {
             throw new NotSupportedException($"Allocation of a single resource type '{input.Type}' not supported.");
         }
@@ -197,7 +200,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             ResourcePool resourceSku,
             string reason,
             AllocateExtendedProperties extendedProperties,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
 
@@ -214,7 +218,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                 extendedProperties,
                 resourceSku.Details,
                 reason,
-                logger.NewChildLogger());
+                logger.NewChildLogger(),
+                loggingProperties);
 
             osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
 
@@ -248,7 +253,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             ResourcePool resourceSku,
             AllocateExtendedProperties computeExtendedProperties,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var osDiskResource = await CreateOSDiskRecord(resourceSku.Details as ResourcePoolComputeDetails, logger.NewChildLogger());
             computeExtendedProperties.OSDiskResourceID = osDiskResource.Id;
@@ -259,7 +265,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                 computeExtendedProperties,
                 resourceSku.Details,
                 reason,
-                logger.NewChildLogger());
+                logger.NewChildLogger(),
+                loggingProperties);
 
             return (computeResource, osDiskResource);
         }

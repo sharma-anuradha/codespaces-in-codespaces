@@ -21,9 +21,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="inputs">Target input manifest.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>An <see cref="AllocateResult"/> enumerable object.</returns>
         Task<IEnumerable<AllocateResult>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Allocate a compute or storage resource.
@@ -32,8 +33,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">The allocate input object.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>An <see cref="AllocateResult"/> object.</returns>
         Task<AllocateResult> AllocateAsync(
-            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
     }
 }

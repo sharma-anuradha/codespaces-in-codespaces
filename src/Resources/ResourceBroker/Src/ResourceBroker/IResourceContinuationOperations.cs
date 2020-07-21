@@ -29,13 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="details">Target details.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> CreateAsync(
             Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails details,
             string reason,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Starts environment by invoking the continution activator.
@@ -139,6 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="details">pool details.</param>
         /// <param name="reason">reason.</param>
         /// <param name="logger">logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>result.</returns>
         Task<ResourceRecord> QueueCreateAsync(
             Guid resourceId,
@@ -146,6 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             AllocateExtendedProperties extendedProperties,
             ResourcePoolResourceDetails details,
             string reason,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
     }
 }

@@ -50,9 +50,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ResourceType type,
             ResourcePoolResourceDetails details,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
-            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
+            var consolidatedloggerProperties = BuildLoggingProperties(resourceId, type, details, reason, loggingProperties);
 
             var options = default(CreateComputeContinuationInputOptions);
 
@@ -77,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
         /// <inheritdoc/>
@@ -87,9 +88,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             AllocateExtendedProperties extendedProperties,
             ResourcePoolResourceDetails details,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
-            var loggingProperties = BuildLoggingProperties(resourceId, type, details, reason);
+            var consolidatedloggerProperties = BuildLoggingProperties(resourceId, type, details, reason, loggingProperties);
+
             var options = (CreateResourceContinuationInputOptions)default;
             if (extendedProperties != default)
             {
@@ -113,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = CreateResourceContinuationHandlerV2.DefaultQueueTarget;
 
-            await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
             var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
 
             return resource;
@@ -253,9 +256,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid resourceId,
             ResourceType type,
             ResourcePoolResourceDetails details,
-            string reason)
+            string reason,
+            IDictionary<string, string> loggingProperties)
         {
-            return new Dictionary<string, string>()
+            var consolidatedloggerProperties = new Dictionary<string, string>()
                 {
                     { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
                     { ResourceLoggingPropertyConstants.OperationReason, reason },
@@ -267,6 +271,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     { ResourceLoggingPropertyConstants.PoolImageFamilyName, details.ImageFamilyName },
                     { ResourceLoggingPropertyConstants.PoolImageName, details.ImageName },
                 };
+
+            if (loggingProperties != null)
+            {
+                foreach (var property in loggingProperties)
+                {
+                    consolidatedloggerProperties[property.Key] = property.Value;
+                }
+            }
+
+            return consolidatedloggerProperties;
         }
 
         private async Task<IDictionary<string, string>> BuildLoggingProperties(

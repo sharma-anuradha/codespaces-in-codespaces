@@ -148,5 +148,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Cleanup Continuation Task Message Handler name.
         /// </summary>
         public const string ContinuationTaskMessageHandlerCleanup = "continuation_task_message_handler_cleanup";
+
+        /// <summary>
+        /// Environment id.
+        /// </summary>
+        public const string EnvironmentId = "EnvironmentId";
     }
 }

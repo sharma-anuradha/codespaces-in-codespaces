@@ -29,9 +29,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="environmentId">Environment id associated with the resource.</param>
         /// <param name="resources">The allocation input properties.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>The allocation result.</returns>
         Task<IEnumerable<AllocateResponseBody>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateRequestBody> resources, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<AllocateRequestBody> resources, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Delete a resource from the resource broker.

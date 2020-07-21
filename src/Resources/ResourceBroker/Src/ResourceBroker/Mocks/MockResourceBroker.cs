@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         private static readonly string MockResourceGroup = "MockResourceGroup";
 
         /// <inheritdoc/>
-        public Task<IEnumerable<AllocateResult>> AllocateAsync(Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger)
+        public Task<IEnumerable<AllocateResult>> AllocateAsync(Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties)
         {
             var now = DateTime.UtcNow;
             var results = new List<AllocateResult>();
@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<AllocateResult> AllocateAsync(Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger)
+        public Task<AllocateResult> AllocateAsync(Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties)
         {
             var now = DateTime.UtcNow;
             var resourceId = Guid.NewGuid();

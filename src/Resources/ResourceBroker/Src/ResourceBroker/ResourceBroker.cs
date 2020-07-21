@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
-            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<AllocateInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate_set",
@@ -72,13 +72,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         throw new NotSupportedException("Inputs not supported.");
                     }
 
-                    return await allocationHandler.AllocateAsync(environmentId, inputs, trigger, childLogger.NewChildLogger());
+                    return await allocationHandler.AllocateAsync(environmentId, inputs, trigger, childLogger.NewChildLogger(), loggingProperties);
                 });
         }
 
         /// <inheritdoc/>
         public Task<AllocateResult> AllocateAsync(
-            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, AllocateInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_allocate",
@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         throw new NotSupportedException("Inputs not supported.");
                     }
 
-                    return await allocationHandler.AllocateAsync(environmentId, input, trigger, logger);
+                    return await allocationHandler.AllocateAsync(environmentId, input, trigger, logger, loggingProperties);
                 });
         }
 
