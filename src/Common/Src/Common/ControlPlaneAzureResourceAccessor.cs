@@ -60,7 +60,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private string CurrentSubscriptionId { get; set; }
 
-        private (string, string) InstanceCosmosDbAccount { get; set; }
+        private (string, string) GlobalCosmosDbAccount { get; set; }
+
+        private (string, string) RegionalCosmosDbAccount { get; set; }
 
         private (string, string) StampCosmosDbAccount { get; set; }
 
@@ -147,17 +149,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<(string, string)> GetInstanceCosmosDbAccountAsync()
+        public async Task<(string, string)> GetGlobalCosmosDbAccountAsync()
         {
-            if (string.IsNullOrEmpty(InstanceCosmosDbAccount.Item1) ||
-                string.IsNullOrEmpty(InstanceCosmosDbAccount.Item2))
+            if (string.IsNullOrEmpty(GlobalCosmosDbAccount.Item1) ||
+                string.IsNullOrEmpty(GlobalCosmosDbAccount.Item2))
             {
-                InstanceCosmosDbAccount = await GetCosmosDbAccountAsync(
+                GlobalCosmosDbAccount = await GetCosmosDbAccountAsync(
                     ControlPlaneInfo.InstanceResourceGroupName,
-                    ControlPlaneInfo.InstanceCosmosDbAccountName);
+                    ControlPlaneInfo.GlobalCosmosDbAccountName);
             }
 
-            return InstanceCosmosDbAccount;
+            return GlobalCosmosDbAccount;
+        }
+
+        /// <inheritdoc/>
+        public async Task<(string, string)> GetRegionalCosmosDbAccountAsync()
+        {
+            if (string.IsNullOrEmpty(RegionalCosmosDbAccount.Item1) ||
+                string.IsNullOrEmpty(RegionalCosmosDbAccount.Item2))
+            {
+                RegionalCosmosDbAccount = await GetCosmosDbAccountAsync(
+                    ControlPlaneInfo.InstanceResourceGroupName,
+                    ControlPlaneInfo.RegionalCosmosDbAccountName);
+            }
+
+            return RegionalCosmosDbAccount;
         }
 
         /// <inheritdoc/>

@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 };
             }
 
-            var (instanceHostUrl, instanceAuthKey) = controlPlaneAzureResourceAccessor.GetInstanceCosmosDbAccountAsync().Result;
+            var (instanceHostUrl, instanceAuthKey) = controlPlaneAzureResourceAccessor.GetGlobalCosmosDbAccountAsync().Result;
             stdout.WriteLine("Instance CosmosDB");
             json.Serialize(stdout, await GetDbAccountInfo(instanceHostUrl, instanceAuthKey));
             stdout.WriteLine();

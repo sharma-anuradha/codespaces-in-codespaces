@@ -23,7 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
-        public Task<(string, string)> GetInstanceCosmosDbAccountAsync()
+        public Task<(string, string)> GetGlobalCosmosDbAccountAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<(string, string)> GetRegionalCosmosDbAccountAsync()
         {
             throw new NotImplementedException();
         }

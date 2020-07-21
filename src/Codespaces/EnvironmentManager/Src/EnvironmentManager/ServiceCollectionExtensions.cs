@@ -2,7 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -47,12 +50,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (useMockCloudEnvironmentRepository)
             {
                 services.AddSingleton<ICloudEnvironmentRepository, MockCloudEnvironmentRepository>();
+                services.AddSingleton<IRegionalCloudEnvironmentRepository, MockRegionalCloudEnvironmentRepository>();
                 services.AddSingleton<ICloudEnvironmentCosmosContainer, MockCloudEnvironmentCosmosContainer>();
                 services.AddSingleton<IContinuationJobQueueRepository, MockEnvironmentMonitorQueueRepository>();
             }
             else
             {
                 services.AddVsoDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<CloudEnvironment, IRegionalCloudEnvironmentRepository, RegionalCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
                 services.AddVsoCosmosContainer<CloudEnvironment, ICloudEnvironmentCosmosContainer, CloudEnvironmentCosmosContainer>(CloudEnvironmentCosmosContainer.ConfigureOptions);
                 services.AddSingleton<IContinuationJobQueueRepository, FrontendJobQueueRepository>();
                 services.AddSingleton<ICrossRegionContinuationJobQueueRepository, CrossRegionFrontendJobQueueRepository>();
@@ -141,6 +146,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds the default <see cref="RegionalDocumentDbClientProvider"/> to the service collection.
+        /// </summary>
+        /// <param name="services">The servcie collection.</param>
+        /// <param name="configureOptions">The configure options callback.</param>
+        /// <returns>The <paramref name="services"/> instance.</returns>
+        public static IServiceCollection AddRegionalDocumentDbClientProvider(
+            [ValidatedNotNull] this IServiceCollection services,
+            [ValidatedNotNull] Action<RegionalDocumentDbClientOptions> configureOptions)
+        {
+            Requires.NotNull(services, nameof(services));
+            Requires.NotNull(configureOptions, nameof(configureOptions));
+
+            services.Configure(configureOptions);
+            services.TryAddSingleton<IRegionalDocumentDbClientProvider, RegionalDocumentDbClientProvider>();
 
             return services;
         }

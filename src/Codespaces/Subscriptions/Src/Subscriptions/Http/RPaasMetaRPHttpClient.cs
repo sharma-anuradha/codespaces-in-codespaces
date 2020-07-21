@@ -1,4 +1,4 @@
-﻿// <copyright file="RPaasMetaRPHttpClient.cs" company="Microsoft">
+// <copyright file="RPaasMetaRPHttpClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http
         {
             string resourceProvider;
             string apiVersion;
-            if (subscription.ResourceProvider.Equals(VsoPlanInfo.CodespacesProviderNamespace))
+            if (subscription.ResourceProvider != null && subscription.ResourceProvider.Equals(VsoPlanInfo.CodespacesProviderNamespace))
             {
                 apiVersion = CodespacesAPIVersion;
                 resourceProvider = CodespacesResourceProvider;

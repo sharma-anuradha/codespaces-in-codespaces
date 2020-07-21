@@ -39,6 +39,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 throw new InvalidOperationException($"No stamp is defined for the control-plane location '{controlPlaneLocation}'.");
             }
 
+            RegionCode = ControlPlaneStampInfo.RegionCodes[controlPlaneLocation];
+
             var stampShortUniquePrefix = StampShortUniquePrefix;
             Stamp = new ControlPlaneStampInfo(this, controlPlaneLocation, stampShortUniquePrefix, stampSettings);
 
@@ -64,8 +66,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             $"{EnvironmentResourceGroupName}-{NotNullOrWhiteSpace(ControlPlaneSettings.InstanceName, nameof(ControlPlaneSettings.InstanceName))}";
 
         /// <inheritdoc/>
-        public string InstanceCosmosDbAccountName =>
+        public string GlobalCosmosDbAccountName =>
             $"{InstanceResourceGroupName}-db";
+
+        /// <inheritdoc/>
+        public string RegionalCosmosDbAccountName =>
+            $"{InstanceResourceGroupName}-{RegionCode}-regional-db";
 
         /// <inheritdoc/>
         public string InstanceMapsAccountName =>
@@ -87,6 +93,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public IReadOnlyDictionary<AzureLocation, IControlPlaneStampInfo> AllStamps { get; }
 
         private ControlPlaneSettings ControlPlaneSettings { get; }
+
+        private string RegionCode { get; }
 
         /// <summary>
         /// Gets the resource name builder.

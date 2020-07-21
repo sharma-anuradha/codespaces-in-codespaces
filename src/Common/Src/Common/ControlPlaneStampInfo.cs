@@ -85,10 +85,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string StampServiceBusNamespaceName =>
             ControlPlaneStampSettings.ServiceBusNamespaceName ?? $"{StampResourceGroupName}-service-bus";
 
+        /// <summary>
+        /// Gets the region code mapping for azure locations.
+        /// </summary>
         /// <remarks>
         /// This map will need to grow as we add new supported data-plane locations.
         /// </remarks>
-        private static Dictionary<AzureLocation, string> RegionCodes { get; } = new Dictionary<AzureLocation, string>
+        internal static Dictionary<AzureLocation, string> RegionCodes { get; } = new Dictionary<AzureLocation, string>
         {
             { AzureLocation.EastUs, "use" },
             { AzureLocation.SouthEastAsia, "asse" },

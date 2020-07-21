@@ -43,10 +43,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         List<string> GetStampOrigins();
 
         /// <summary>
-        /// Gets the instance-level cosmos db account.
+        /// Gets the global instance--level cosmos db account.
         /// </summary>
         /// <returns>A tuple of the account url and the account key.</returns>
-        Task<(string, string)> GetInstanceCosmosDbAccountAsync();
+        Task<(string, string)> GetGlobalCosmosDbAccountAsync();
+
+        /// <summary>
+        /// Gets the regional instance-level cosmos db account.
+        /// </summary>
+        /// <returns>A tuple of the account url and the account key.</returns>
+        Task<(string, string)> GetRegionalCosmosDbAccountAsync();
 
         /// <summary>
         /// Gets the stamp-level cosmos db account.
