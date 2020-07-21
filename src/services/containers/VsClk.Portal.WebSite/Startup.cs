@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,6 +29,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
     public class Startup
     {
         private static readonly TimeSpan CacheControl_YearValue = TimeSpan.FromDays(365);
+        private static readonly PathString[] ExcludedPortForwardingPaths = new PathString[]
+        {
+            PathString.FromUriComponent("/auth"),
+            PathString.FromUriComponent("/authenticate-workspace"),
+            PathString.FromUriComponent("/authenticate-codespace"),
+        };
 
         public Startup(IConfiguration configuration, IWebHostEnvironment hostEnvironment)
         {
@@ -115,7 +122,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseForwardedHeaders(new ForwardedHeadersOptions {
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
             });
 
@@ -191,6 +199,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         private bool IsPortForwardingRequest(HttpContext context)
         {
+            if (ExcludedPortForwardingPaths.Any(p => context.Request.Path.StartsWithSegments(p)))
+            {
+                return false;
+            }
+
             return PortForwardingRoutingHelper.IsPortForwardingRequest(context);
         }
 

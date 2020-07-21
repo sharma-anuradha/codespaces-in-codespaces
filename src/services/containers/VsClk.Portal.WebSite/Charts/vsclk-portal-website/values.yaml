@@ -30,18 +30,20 @@ ingress:
 githubAuthEndpoint:
   enabled: true
   annotations: {}
-  path: /authenticate-codespace
+  paths:
+    - /authenticate-workspace
+    - /authenticate-codespace
 
 pfingress:
   enabled: true
   annotations:
-    # Auth applies to both Portal and PFS as nginx config for the same host gets merged    
+    # Auth applies to both Portal and PFS as nginx config for the same host gets merged
     nginx.ingress.kubernetes.io/auth-url: "http://portal-vsclk-portal-website.default.svc.cluster.local/auth"
     nginx.ingress.kubernetes.io/auth-signin: "/signin"
     nginx.ingress.kubernetes.io/auth-cache-key: $remote_addr$http_x_vsonline_authentication$cookie_vso_pf
     nginx.ingress.kubernetes.io/auth-cache-duration: 200 1m
     nginx.ingress.kubernetes.io/auth-response-headers: X-VSOnline-Forwarding-Token,X-VSOnline-Forwarding-Port,X-VSOnline-Forwarding-WorkspaceId,X-VSOnline-Forwarding-EnvironmentId
-    # Server configurations from canary ingresses don't have effect, the annotations need to be applied to non-canary ingress rules.    
+    # Server configurations from canary ingresses don't have effect, the annotations need to be applied to non-canary ingress rules.
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_intercept_errors on;
       error_page 302 = @handle_error;
@@ -58,7 +60,7 @@ pfingress:
         if ($new_cookie ~ ";\s*(.+);?\s*") {
           set $new_cookie $1;
         }
-        
+
         proxy_set_header Cookie $new_cookie;
 
         proxy_connect_timeout 5s;

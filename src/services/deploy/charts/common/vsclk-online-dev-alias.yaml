@@ -3,6 +3,9 @@
 image:
   repositoryUrl: vsclkonlinedev.azurecr.io
 
+pods:
+  livenessProbePath:
+
 ingress:
   hosts:
     - online.dev.core.vsengsaas.visualstudio.com

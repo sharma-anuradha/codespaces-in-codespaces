@@ -74,7 +74,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             "auth.apps.dev.codespaces.githubusercontent.com",
             "auth.apps.ppe.codespaces.githubusercontent.com",
             "auth.apps.codespaces.githubusercontent.com")]
-        [Routing.AllowOrigin("https://github.com")]
+        [Routing.AllowReferer("https://github.com")]
         [Consumes("application/x-www-form-urlencoded")]
         public IActionResult AuthenticateWorkspaceAsync(
             [FromRoute] string environmentId,
@@ -128,7 +128,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         // TODO: add exception to authentication
         [HttpPost("~/authenticate-codespace/{environmentId}")]
         [Consumes("application/x-www-form-urlencoded")]
-        [Routing.AllowOrigin(
+        [Routing.AllowReferer(
             // GitHub
             "https://auth.apps.dev.workspaces.githubusercontent.com",
             "https://auth.apps.ppe.workspaces.githubusercontent.com",

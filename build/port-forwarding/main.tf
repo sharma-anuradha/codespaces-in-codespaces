@@ -377,7 +377,7 @@ resource "helm_release" "web" {
     name  = "port-forwarding-web-api.image.agentTag"
     value = var.pfa_tag
   }
-  
+
   set {
     name  = "port-forwarding-web-api.image.pullPolicy"
     value = "Always"
@@ -476,6 +476,7 @@ resource "kubernetes_secret" "portal_secrets" {
     "PORTAL_AppSettings__VsClkSignalRConnectionString"                   = data.azurerm_key_vault_secret.SignalRConnectionString.value
     "PORTAL_AppSettings__VsSaaSCertificateSecretName"                    = "vsls-ppe-auth-cert-primary"
     "PORTAL_AppSettings__VsSaaSTokenIssuer"                              = "https://ppe.liveshare.vsengsaas.visualstudio.com/"
+    "PORTAL_AppSettings__VsSaaSTokenCertsEndpoint"                       = "https://sts.dev.core.vsengsaas.visualstudio.com"
   }
 
   type = "Opaque"

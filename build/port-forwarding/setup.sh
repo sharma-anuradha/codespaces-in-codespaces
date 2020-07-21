@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# To run example 
-# 
+# To run example
+#
 #   ./setup.sh --alias pelisy --pfs-tag dev-pelisy-002 --portal-tag dev-pelisy-003 --pfa-tag dev-pelisy-003
-# 
+#
 
 # Stop script on NZEC
 set -e
@@ -63,7 +63,7 @@ function main () {
     if [ -z "$pfs_tag" ]
     then
         echo "Searching for latest port-forwarding-web-api tag"
-        pfs_tag="$(az acr repository show-tags --name vsclkonlinedev --repository port-forwarding-web-api --orderby time_desc --query "[?starts_with(@, '0')]|[0]" | sed s/\"//g)"
+        pfs_tag="$(az acr repository show-tags --name vsclkonlinedev --repository port-forwarding-web-api --orderby time_desc --query "[?starts_with(@, '1')]|[0]" | sed s/\"//g)"
     fi
 
     if [ -z "$pfa_tag" ]
