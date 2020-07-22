@@ -19,6 +19,8 @@ import Images = MsPortalFx.Base.Images;
 import { HttpPlansManager } from 'Resource/HttpPlansManager';
 import { HttpCodespacesManager } from 'Resource/Blades/Codespaces/HttpCodespacesManager';
 import { Codespace, provisioningLower, startingLower, shuttingDownLower } from 'Resource/Blades/Codespaces/CodespaceModels';
+import { CodespacesManager } from '../Codespaces/CodespacesManager';
+import { PlansManager } from 'Resource/PlansManager';
 
 /**
  * Contract for parameters that will be passed to overview blade.
@@ -49,14 +51,14 @@ export interface Parameters {
 })
 @TemplateBlade.Pinnable.Decorator()
 export class ResourceOverviewBlade {
-    private _codespacesManager: HttpCodespacesManager;
+    private _codespacesManager: CodespacesManager;
+    private _plansManager: PlansManager;
     private _codespacesCount = ko.observable<string>('0');
     public hasCodespaces = ko.observable(true);
     public hasNoCodespaces = ko.observable(false);
+    public _buttonsDisabled = ko.observable(true);
 
     public infoTilesComponent: InfoTilesComponent.Contract;
-
-    //public codespacesGrid: DataGrid.Contract<Codespace, any>;
 
     public codespaceGridSection: Section.Contract;
 
@@ -66,7 +68,7 @@ export class ResourceOverviewBlade {
     public readonly title = ko.observable<string>(ClientResources.resourceOverviewBladeTitle);
 
     /**
-     * The title of resource overview blade
+     * The subtitle of resource overview blade
      */
     public readonly subtitle = ClientResources.resourceOverviewBladeSubtitle;
 
@@ -87,8 +89,6 @@ export class ResourceOverviewBlade {
      */
     public readonly essentialsViewModel = ko.observable<ResourceLayoutContract>();
 
-    //noCodespaces = ko.observable(false);
-
     /**
      * Initializes everything you need to load the blade here.
      */
@@ -98,6 +98,7 @@ export class ResourceOverviewBlade {
         const { parameters } = this.context;
         const id = parameters.id;
         this._codespacesManager = new HttpCodespacesManager(id);
+        this._plansManager = new HttpPlansManager();
 
         this.essentialsViewModel(
             createEssentials(this.context.container, id, this._additionalEssentialData())
@@ -108,20 +109,18 @@ export class ResourceOverviewBlade {
         const codespacesGrid = this._initializeCodespacesGrid();
         this.codespaceGridSection.children.push(codespacesGrid);
 
-        this.context.container.commandBar = createToolbar(this.context.container, id, codespacesGrid, this._codespacesManager);
-
         // InfoTilesComponent  
-        const OpenCodespaceTile: InfoTilesComponent.InfoTile = this._createOpenCodespaceTile(this.context.container, id, codespacesGrid,);
+        const OpenCodespaceTile: InfoTilesComponent.InfoTile = this._createOpenCodespaceTile(this.context.container, id, codespacesGrid);
         this.infoTilesComponent = InfoTilesComponent.create(this.context.container, {
             infoTiles: [
                 OpenCodespaceTile,
             ],
         });
 
-        this.context.container.revealContent();
-
-        return new HttpPlansManager().fetchPlan(this.context.parameters.id).then((result) => {
+        return this._plansManager.fetchPlan(this.context.parameters.id).then((result) => {
             this.title(result.name);
+            this.context.container.commandBar = this._createToolbar(this.context.container, id, result.name, codespacesGrid, this._buttonsDisabled);
+            this.context.container.revealContent();
         });
     }
 
@@ -171,7 +170,7 @@ export class ResourceOverviewBlade {
             title: {
                 text: ClientResources.Tile.addCodespaceTitle,
                 onClick: () => {
-                    openCreateBlade(container, planId, codespacesGrid);
+                    this._openCreateBlade(container, planId, codespacesGrid);
                 },
             },
             description: ClientResources.Tile.addCodespaceDescription,
@@ -184,7 +183,7 @@ export class ResourceOverviewBlade {
                 {
                     text: ClientResources.Tile.addCodespaceLinkTitle,
                     onClick: () => {
-                        openCreateBlade(container, planId, codespacesGrid);
+                        this._openCreateBlade(container, planId, codespacesGrid);
                     },
                 },
             ],
@@ -304,6 +303,158 @@ export class ResourceOverviewBlade {
 
         return codespacesGrid;
     }
+
+    private _createToolbar(
+        container: TemplateBlade.Container,
+        planId: string,
+        planName: string,
+        codespacesGrid: DataGrid.Contract<Codespace>,
+        isDisabled: KnockoutObservable<boolean>
+    ): Toolbar.Contract {
+        const commandRefreshButton = Toolbar.ToolbarItems.createBasicButton(container, {
+            label: ClientResources.refresh,
+            icon: Images.Refresh(),
+            onClick: () => {},
+        });
+    
+        const deletePlanButton = this._initializePlanDeleteButton(container, codespacesGrid, planName, planId);
+    
+        const createButton = this._initializeCreateButton(container, planId, codespacesGrid);
+    
+    
+        const deleteCodespaceButton = this._initializeCodespaceDeleteButton(container, codespacesGrid, isDisabled);
+        const suspendCodespaceButton = this._initializeSuspendButton(container, codespacesGrid, isDisabled);
+    
+        const feedbackButton = Toolbar.ToolbarItems.createBasicButton(container, {
+            label: ClientResources.feedback,
+            icon: Images.Feedback(),
+            onClick: () => {},
+        });
+    
+        codespacesGrid.selection.selectedItems.subscribe(
+            container,
+            (items) => {
+                isDisabled(items.length === 0);
+            }
+        )
+    
+        const commandBar = Toolbar.create(container, {
+            items: [commandRefreshButton, deletePlanButton, createButton, deleteCodespaceButton, suspendCodespaceButton, feedbackButton],
+        });
+        return commandBar;
+    }
+    
+    private _initializePlanDeleteButton(
+        container: TemplateBlade.Container,
+        codespacesGrid: DataGrid.Contract<Codespace>,
+        planName: string,
+        planId: string,
+    ):Toolbar.ToolbarItems.BasicButtonContract {
+        return Toolbar.ToolbarItems.createBasicButton(container, {
+            label: ClientResources.deletePlan,
+            icon: Images.Delete(),
+            onClick: () => {
+                container.openDialog({
+                    title: ClientResources.deletePlan,
+                    content: ClientResources.deletePlanConfirmation.format(planName, codespacesGrid.rows.peek().length),
+                    buttons: Dialog.DialogButtons.YesNo,
+                    telemetryName: 'DeleteMyPlanResource',
+                    onClosed: (result) => {
+                        if (result.button === Dialog.DialogButton.Yes) {
+                            return this._plansManager.deletePlan(planId).then(() => {
+                                container.closeCurrentBlade();}
+                            );
+                        }
+                    },
+                });
+            },
+        });
+    }
+    
+    private _initializeCreateButton(
+        container: TemplateBlade.Container,
+        planId: string,
+        codespacesGrid: DataGrid.Contract<Codespace>
+    ): Toolbar.ToolbarItems.BasicButtonContract {
+        return Toolbar.ToolbarItems.createBasicButton(container, {
+            label: ClientResources.createCodespace,
+            icon: Images.Add(),
+            onClick: () => this._openCreateBlade(container, planId, codespacesGrid),
+        });
+    }
+    
+    private _openCreateBlade(
+        container: TemplateBlade.Container,
+        planId: string,
+        codespacesGrid: DataGrid.Contract<Codespace>
+    ) {
+        container.openContextPane(
+            BladeReferences.forBlade('CreateCodespaceBlade').createReference({
+                parameters: {
+                    planId: planId
+                },
+                onClosed: () => {
+                    codespacesGrid.refresh();
+                },
+            })
+        );
+    }
+    
+    private _initializeCodespaceDeleteButton(
+        container: TemplateBlade.Container,
+        codespacesGrid: DataGrid.Contract<Codespace>,
+        isDisabled: KnockoutObservable<boolean>
+    ):Toolbar.ToolbarItems.BasicButtonContract {
+        return Toolbar.ToolbarItems.createBasicButton(container, {
+            label: ClientResources.deleteCodespace,
+            icon: Images.Delete(),
+            disabled: isDisabled,
+            onClick: () => {
+                container.openDialog({
+                    title: ClientResources.deleteCodespace,
+                    content: ClientResources.deleteCodespaceConfirmation.format(this._getSelectedCodespaceNames(codespacesGrid)),
+                    buttons: Dialog.DialogButtons.YesNo,
+                    telemetryName: 'DeleteMyCodespace',
+                    onClosed: (result) => {
+                        if (result.button === Dialog.DialogButton.Yes) {
+                            Q.all(
+                                codespacesGrid.selection.selectedItems.peek().map((codespace) =>
+                                    this._codespacesManager.deleteCodespace(codespace.id)
+                                )
+                            ).then(() => codespacesGrid.refresh());
+                        }
+                    },
+                });
+            }
+        });
+    }
+    
+    private _initializeSuspendButton(
+        container: TemplateBlade.Container,
+        codespacesGrid: DataGrid.Contract<Codespace>,
+        isDisabled: KnockoutObservable<boolean>
+    ): Toolbar.ToolbarItems.BasicButtonContract {
+        return Toolbar.ToolbarItems.createBasicButton(container, {
+            label: 'Suspend selected',
+            icon: Images.Paused(),
+            disabled: isDisabled,
+            onClick: () => {
+                Q.all(
+                    codespacesGrid.selection.selectedItems.peek().map((codespace) =>
+                        this._codespacesManager.suspendCodespace(codespace.id)
+                    )
+                ).then(() => codespacesGrid.refresh());
+            },
+        });
+    }
+    
+    private _getSelectedCodespaceNames(
+        codespacesGrid: DataGrid.Contract<Codespace>
+    ): string {
+        return codespacesGrid.selection.selectedItems.peek().map((codespace) => {
+            return codespace.friendlyName;
+        }).join(", ");
+    }
 }    
 
 /**
@@ -321,130 +472,4 @@ function createEssentials(
         additionalRight: additionaldata,
     });
     return essentials;
-}
-
-function createToolbar(
-    container: TemplateBlade.Container,
-    planId: string,
-    codespacesGrid: DataGrid.Contract<Codespace>,
-    codespacesManager: HttpCodespacesManager
-): Toolbar.Contract {
-    const commandRefreshButton = Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.refresh,
-        icon: Images.Refresh(),
-        onClick: () => {
-            codespacesGrid.refresh();
-        },
-    });
-
-    const deletePlanButton = initializePlanDeleteButton(container);
-
-    const createButton = initializeCreateButton(container, planId, codespacesGrid);
-
-    const deleteCodespaceButton = initializeCodespaceDeleteButton(container, codespacesGrid, codespacesManager);
-
-    const suspendCodespaceButton = initializeSuspendButton(container, codespacesGrid, codespacesManager);
-
-    const feedbackButton = Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.feedback,
-        icon: Images.Feedback(),
-        onClick: new ClickableLink('https://aka.ms/vscs-ibiza-feedback'),
-    });
-
-    console.log(codespacesGrid.noData.peek());
-
-    const seperator = Toolbar.ToolbarItems.createSeparator();
-
-    const commandBar = Toolbar.create(container, {
-        items: [createButton, suspendCodespaceButton, deleteCodespaceButton, seperator, deletePlanButton, commandRefreshButton, seperator, feedbackButton],
-    });
-    return commandBar;
-}
-
-function initializePlanDeleteButton(
-    container: TemplateBlade.Container,
-):Toolbar.ToolbarItems.BasicButtonContract {
-    return Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.deletePlan,
-        icon: Images.Delete(),
-        onClick: () => {
-            container.openDialog({
-                title: ClientResources.deletePlan,
-                content: ClientResources.deleteConfirmation,
-                buttons: Dialog.DialogButtons.YesNo,
-                telemetryName: 'DeleteMyResource',
-                onClosed: (result) => {
-                    if (result.button === Dialog.DialogButton.Yes) {
-                        /* TODO: call plan delete function here */
-                    }
-                },
-            });
-        },
-    });
-}
-
-function initializeCreateButton(
-    container: TemplateBlade.Container,
-    planId: string,
-    codespacesGrid: DataGrid.Contract<Codespace>
-): Toolbar.ToolbarItems.BasicButtonContract {
-    return Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.createCodespace,
-        icon: Images.Add(),
-        onClick: () => openCreateBlade(container, planId, codespacesGrid),
-    });
-}
-
-function openCreateBlade(
-    container: TemplateBlade.Container,
-    planId: string,
-    codespacesGrid: DataGrid.Contract<Codespace>
-) {
-    container.openContextPane(
-        BladeReferences.forBlade('CreateCodespaceBlade').createReference({
-            parameters: {
-                planId: planId
-            },
-            onClosed: () => {
-                codespacesGrid.refresh();
-            },
-        })
-    );
-}
-
-function initializeCodespaceDeleteButton(
-    container: TemplateBlade.Container,
-    codespacesGrid: DataGrid.Contract<Codespace>,
-    codespacesManager: HttpCodespacesManager,
-):Toolbar.ToolbarItems.BasicButtonContract {
-    return Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.deleteCodespace,
-        icon: Images.Delete(),
-        onClick: () => {
-            Q.all(
-                codespacesGrid.selection.selectedItems.peek().map((codespace) =>
-                    //TODO: Do we need a confirmation message before taking this action?????
-                    codespacesManager.deleteCodespace(codespace.id)
-                )
-            ).then(() => codespacesGrid.refresh());
-        }
-    });
-}
-
-function initializeSuspendButton(
-    container: TemplateBlade.Container,
-    codespacesGrid: DataGrid.Contract<Codespace>,
-    codespacesManager: HttpCodespacesManager
-): Toolbar.ToolbarItems.BasicButtonContract {
-    return Toolbar.ToolbarItems.createBasicButton(container, {
-        label: ClientResources.suspendCodespace,
-        icon: Images.Paused(),
-        onClick: () => {
-            Q.all(
-                codespacesGrid.selection.selectedItems.peek().map((codespace) =>
-                    codespacesManager.suspendCodespace(codespace.id)
-                )
-            ).then(() => codespacesGrid.refresh());
-        },
-    });
 }

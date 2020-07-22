@@ -14,4 +14,11 @@ export class HttpPlansManager implements PlansManager {
         });
     }
 
+    deletePlan(id: string): Q.Promise<void> {
+        return batch<PlanResource>({
+            type: "DELETE",
+            uri: getArmUri(id),
+            setTelemetryHeader: "DeleteCodespacesPlanResource",
+        }).then(() => {});
+    }
 }
