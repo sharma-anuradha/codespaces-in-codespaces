@@ -299,21 +299,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 throw new ConflictException((int)MessageCodes.EnvironmentNameAlreadyExists);
             }
 
-            // Validate environment quota
-            var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(logger.NewChildLogger());
-            var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(logger.NewChildLogger());
-            if (sku.ComputeOS == ComputeOS.Windows)
-            {
-                computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
-            }
-
-            var countOfEnvironmentsInPlan = environmentsInPlan.Count();
-            var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(input.Plan.Plan.Subscription, logger.NewChildLogger());
-            if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
-            {
-                throw new ForbiddenException((int)MessageCodes.ExceededQuota);
-            }
-
             // Check invalid subscription
             var subscription = await SubscriptionManager.GetSubscriptionAsync(input.Plan.Plan.Subscription, logger.NewChildLogger());
             if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
@@ -327,11 +312,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 throw new ForbiddenException((int)MessageCodes.SubscriptionIsBanned);
             }
 
-            // Check subscription quota
-            var reachedComputeLimit = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
-            if (reachedComputeLimit)
+            var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(logger.NewChildLogger());
+            var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(logger.NewChildLogger());
+            if (sku.ComputeOS == ComputeOS.Windows)
             {
-                throw new ForbiddenException((int)MessageCodes.ExceededQuota);
+                computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
+            }
+
+            if (computeCheckEnabled)
+            {
+                // Check subscription quota
+                var reachedComputeLimit = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
+                if (reachedComputeLimit)
+                {
+                    throw new ForbiddenException((int)MessageCodes.ExceededQuota);
+                }
+            }
+            else
+            {
+                // Validate environment quota
+                var countOfEnvironmentsInPlan = environmentsInPlan.Count();
+                var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(input.Plan.Plan.Subscription, logger.NewChildLogger());
+                if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
+                {
+                    logger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
+                    throw new ForbiddenException((int)MessageCodes.ExceededQuota);
+                }
             }
 
             // Validate suspend timeout
