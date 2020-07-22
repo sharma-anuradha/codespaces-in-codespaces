@@ -125,6 +125,8 @@ appSettings:
   - PORTAL_AppSettings__GitHubAppClientSecret
   - PORTAL_AppSettings__GitHubNativeAppClientId
   - PORTAL_AppSettings__GitHubNativeAppClientSecret
+  - PORTAL_AppSettings__GitHubAzurePortalClientId
+  - PORTAL_AppSettings__GitHubAzurePortalClientSecret
   - PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientId
   - PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientSecret
   - PORTAL_AppSettings__AzDevAppClientId

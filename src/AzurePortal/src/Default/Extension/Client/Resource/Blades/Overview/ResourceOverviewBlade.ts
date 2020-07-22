@@ -1,5 +1,5 @@
 import * as ClientResources from 'ClientResources';
-import { BladeReferences, PartReferences, ClickableLink } from 'Fx/Composition';
+import { BladeReferences, PartReferences, ClickableLink, BladeClosedReason } from 'Fx/Composition';
 import * as DataGrid from 'Fx/Controls/DataGrid';
 import * as TemplateBlade from 'Fx/Composition/TemplateBlade';
 import * as Dialog from 'Fx/Composition/Dialog';
@@ -10,7 +10,7 @@ import {
     Item,
     MultiLineItem,
 } from 'Fx/Controls/Essentials';
-import { Links, ResourceMenuBladeIds } from '../../../Shared/Constants';
+import { Links, ResourceMenuBladeIds, encryptedGitAccessTokenKey } from '../../../Shared/Constants';
 import { trace } from '../../../Shared/Logger';
 import * as InfoTilesComponent from './InfoTilesComponent/InfoTilesComponent';
 import * as Toolbar from 'Fx/Controls/Toolbar';
@@ -18,9 +18,15 @@ import * as Toolbar from 'Fx/Controls/Toolbar';
 import Images = MsPortalFx.Base.Images;
 import { HttpPlansManager } from 'Resource/HttpPlansManager';
 import { HttpCodespacesManager } from 'Resource/Blades/Codespaces/HttpCodespacesManager';
-import { Codespace, provisioningLower, startingLower, shuttingDownLower } from 'Resource/Blades/Codespaces/CodespaceModels';
+import {
+    Codespace,
+    provisioningLower,
+    startingLower,
+    shuttingDownLower,
+} from 'Resource/Blades/Codespaces/CodespaceModels';
 import { CodespacesManager } from '../Codespaces/CodespacesManager';
 import { PlansManager } from 'Resource/PlansManager';
+import { DefaultIndexedDB } from '../../../Shared/indexedDBFS';
 
 /**
  * Contract for parameters that will be passed to overview blade.
@@ -40,12 +46,12 @@ export interface Parameters {
         "<div data-bind='pcControl: essentialsViewModel'></div>" +
         "<div class='msportalfx-padding'>" +
         "<div data-bind='visible: hasNoCodespaces'>" +
-            "<h3 class='ext-overview-title' data-bind='text: description'></h3>" +
-            "<div data-bind='pcControl: infoTilesComponent.control'></div>" +
-        "</div>" +
-        "<div data-bind='visible: hasCodespaces'>" +  
-            "<div class='msportalfx-form' data-bind='pcControl: codespaceGridSection'></div>" +
-        "</div>" +
+        "<h3 class='ext-overview-title' data-bind='text: description'></h3>" +
+        "<div data-bind='pcControl: infoTilesComponent.control'></div>" +
+        '</div>' +
+        "<div data-bind='visible: hasCodespaces'>" +
+        "<div class='msportalfx-form' data-bind='pcControl: codespaceGridSection'></div>" +
+        '</div>' +
         '</div>',
     styleSheets: ['./ResourceOverviewBlade.css', './InfoTilesComponent/InfoTilesComponent.css'],
 })
@@ -54,6 +60,7 @@ export class ResourceOverviewBlade {
     private _codespacesManager: CodespacesManager;
     private _plansManager: PlansManager;
     private _codespacesCount = ko.observable<string>('0');
+    private _encryptedGitAccessToken: string;
     public hasCodespaces = ko.observable(true);
     public hasNoCodespaces = ko.observable(false);
     public _buttonsDisabled = ko.observable(true);
@@ -105,22 +112,34 @@ export class ResourceOverviewBlade {
         );
 
         this.codespaceGridSection = Section.create(this.context.container);
-        
-        const codespacesGrid = this._initializeCodespacesGrid();
-        this.codespaceGridSection.children.push(codespacesGrid);
 
-        // InfoTilesComponent  
-        const OpenCodespaceTile: InfoTilesComponent.InfoTile = this._createOpenCodespaceTile(this.context.container, id, codespacesGrid);
-        this.infoTilesComponent = InfoTilesComponent.create(this.context.container, {
-            infoTiles: [
-                OpenCodespaceTile,
-            ],
-        });
+        return DefaultIndexedDB.getValue(encryptedGitAccessTokenKey).then((value) => {
+            this._encryptedGitAccessToken = value;
 
-        return this._plansManager.fetchPlan(this.context.parameters.id).then((result) => {
-            this.title(result.name);
-            this.context.container.commandBar = this._createToolbar(this.context.container, id, result.name, codespacesGrid, this._buttonsDisabled);
-            this.context.container.revealContent();
+            const codespacesGrid = this._initializeCodespacesGrid();
+            this.codespaceGridSection.children.push(codespacesGrid);
+
+            // InfoTilesComponent
+            const OpenCodespaceTile: InfoTilesComponent.InfoTile = this._createOpenCodespaceTile(
+                this.context.container,
+                id,
+                codespacesGrid
+            );
+            this.infoTilesComponent = InfoTilesComponent.create(this.context.container, {
+                infoTiles: [OpenCodespaceTile],
+            });
+
+            return this._plansManager.fetchPlan(this.context.parameters.id).then((result) => {
+                this.title(result.name);
+                this.context.container.commandBar = this._createToolbar(
+                    this.context.container,
+                    id,
+                    result.name,
+                    codespacesGrid,
+                    this._buttonsDisabled
+                );
+                this.context.container.revealContent();
+            });
         });
     }
 
@@ -196,11 +215,9 @@ export class ResourceOverviewBlade {
                 codespaces
                     .filter((codespace) => codespace.state.toLowerCase() === provisioningLower)
                     .forEach(({ id }) =>
-                        this._codespacesManager
-                            .pollTransitioningCodespace(id)
-                            .then(() => {
-                                codespacesGrid.refresh()
-                            })
+                        this._codespacesManager.pollTransitioningCodespace(id).then(() => {
+                            codespacesGrid.refresh();
+                        })
                     );
                 this._codespacesCount(codespaces.length.toString());
                 this.hasNoCodespaces(codespaces.length === 0);
@@ -215,12 +232,17 @@ export class ResourceOverviewBlade {
                 cell: {
                     bladeLink: (c) => ({
                         text: c.friendlyName,
-                        bladeReference: BladeReferences.forBlade('Connect.ReactView').createReference({
+                        bladeReference: BladeReferences.forBlade(
+                            'Connect.ReactView'
+                        ).createReference({
                             parameters: {
                                 planId: this.context.parameters.id,
                                 codespaceId: c.id,
-                                codespacesEndpoint: MsPortalFx.getEnvironmentValue("codespacesEndpoint"),
-                                armApiVersion: MsPortalFx.getEnvironmentValue("armApiVersion")
+                                codespacesEndpoint: MsPortalFx.getEnvironmentValue(
+                                    'codespacesEndpoint'
+                                ),
+                                armApiVersion: MsPortalFx.getEnvironmentValue('armApiVersion'),
+                                encryptedGitToken: this._encryptedGitAccessToken,
                             },
                             onClosed: () => {
                                 codespacesGrid.refresh();
@@ -316,61 +338,80 @@ export class ResourceOverviewBlade {
             icon: Images.Refresh(),
             onClick: () => {},
         });
-    
-        const deletePlanButton = this._initializePlanDeleteButton(container, codespacesGrid, planName, planId);
-    
+
+        const deletePlanButton = this._initializePlanDeleteButton(
+            container,
+            codespacesGrid,
+            planName,
+            planId
+        );
+
         const createButton = this._initializeCreateButton(container, planId, codespacesGrid);
-    
-    
-        const deleteCodespaceButton = this._initializeCodespaceDeleteButton(container, codespacesGrid, isDisabled);
-        const suspendCodespaceButton = this._initializeSuspendButton(container, codespacesGrid, isDisabled);
-    
+
+        const deleteCodespaceButton = this._initializeCodespaceDeleteButton(
+            container,
+            codespacesGrid,
+            isDisabled
+        );
+        const suspendCodespaceButton = this._initializeSuspendButton(
+            container,
+            codespacesGrid,
+            isDisabled
+        );
+
         const feedbackButton = Toolbar.ToolbarItems.createBasicButton(container, {
             label: ClientResources.feedback,
             icon: Images.Feedback(),
             onClick: () => {},
         });
-    
-        codespacesGrid.selection.selectedItems.subscribe(
-            container,
-            (items) => {
-                isDisabled(items.length === 0);
-            }
-        )
-    
+
+        codespacesGrid.selection.selectedItems.subscribe(container, (items) => {
+            isDisabled(items.length === 0);
+        });
+
         const commandBar = Toolbar.create(container, {
-            items: [commandRefreshButton, deletePlanButton, createButton, deleteCodespaceButton, suspendCodespaceButton, feedbackButton],
+            items: [
+                commandRefreshButton,
+                deletePlanButton,
+                createButton,
+                deleteCodespaceButton,
+                suspendCodespaceButton,
+                feedbackButton,
+            ],
         });
         return commandBar;
     }
-    
+
     private _initializePlanDeleteButton(
         container: TemplateBlade.Container,
         codespacesGrid: DataGrid.Contract<Codespace>,
         planName: string,
-        planId: string,
-    ):Toolbar.ToolbarItems.BasicButtonContract {
+        planId: string
+    ): Toolbar.ToolbarItems.BasicButtonContract {
         return Toolbar.ToolbarItems.createBasicButton(container, {
             label: ClientResources.deletePlan,
             icon: Images.Delete(),
             onClick: () => {
                 container.openDialog({
                     title: ClientResources.deletePlan,
-                    content: ClientResources.deletePlanConfirmation.format(planName, codespacesGrid.rows.peek().length),
+                    content: ClientResources.deletePlanConfirmation.format(
+                        planName,
+                        codespacesGrid.rows.peek().length
+                    ),
                     buttons: Dialog.DialogButtons.YesNo,
                     telemetryName: 'DeleteMyPlanResource',
                     onClosed: (result) => {
                         if (result.button === Dialog.DialogButton.Yes) {
                             return this._plansManager.deletePlan(planId).then(() => {
-                                container.closeCurrentBlade();}
-                            );
+                                container.closeCurrentBlade();
+                            });
                         }
                     },
                 });
             },
         });
     }
-    
+
     private _initializeCreateButton(
         container: TemplateBlade.Container,
         planId: string,
@@ -382,7 +423,7 @@ export class ResourceOverviewBlade {
             onClick: () => this._openCreateBlade(container, planId, codespacesGrid),
         });
     }
-    
+
     private _openCreateBlade(
         container: TemplateBlade.Container,
         planId: string,
@@ -391,20 +432,47 @@ export class ResourceOverviewBlade {
         container.openContextPane(
             BladeReferences.forBlade('CreateCodespaceBlade').createReference({
                 parameters: {
-                    planId: planId
+                    planId: planId,
                 },
-                onClosed: () => {
+                onClosed: async (reason, data) => {
                     codespacesGrid.refresh();
+
+                    if (reason === BladeClosedReason.ChildClosedSelf) {
+                        if (data) {
+                            const codespaceId = data.codespaceId;
+                            const encryptedToken = data.encryptedGitToken;
+                            this._encryptedGitAccessToken = encryptedToken;
+
+                            container.openBlade(
+                                BladeReferences.forBlade('Connect.ReactView').createReference({
+                                    parameters: {
+                                        planId: planId,
+                                        codespaceId: codespaceId,
+                                        codespacesEndpoint: MsPortalFx.getEnvironmentValue(
+                                            'codespacesEndpoint'
+                                        ),
+                                        armApiVersion: MsPortalFx.getEnvironmentValue(
+                                            'armApiVersion'
+                                        ),
+                                        encryptedGitToken: this._encryptedGitAccessToken,
+                                    },
+                                    onClosed: () => {
+                                        codespacesGrid.refresh();
+                                    },
+                                })
+                            );
+                        }
+                    }
                 },
             })
         );
     }
-    
+
     private _initializeCodespaceDeleteButton(
         container: TemplateBlade.Container,
         codespacesGrid: DataGrid.Contract<Codespace>,
         isDisabled: KnockoutObservable<boolean>
-    ):Toolbar.ToolbarItems.BasicButtonContract {
+    ): Toolbar.ToolbarItems.BasicButtonContract {
         return Toolbar.ToolbarItems.createBasicButton(container, {
             label: ClientResources.deleteCodespace,
             icon: Images.Delete(),
@@ -412,23 +480,27 @@ export class ResourceOverviewBlade {
             onClick: () => {
                 container.openDialog({
                     title: ClientResources.deleteCodespace,
-                    content: ClientResources.deleteCodespaceConfirmation.format(this._getSelectedCodespaceNames(codespacesGrid)),
+                    content: ClientResources.deleteCodespaceConfirmation.format(
+                        this._getSelectedCodespaceNames(codespacesGrid)
+                    ),
                     buttons: Dialog.DialogButtons.YesNo,
                     telemetryName: 'DeleteMyCodespace',
                     onClosed: (result) => {
                         if (result.button === Dialog.DialogButton.Yes) {
                             Q.all(
-                                codespacesGrid.selection.selectedItems.peek().map((codespace) =>
-                                    this._codespacesManager.deleteCodespace(codespace.id)
-                                )
+                                codespacesGrid.selection.selectedItems
+                                    .peek()
+                                    .map((codespace) =>
+                                        this._codespacesManager.deleteCodespace(codespace.id)
+                                    )
                             ).then(() => codespacesGrid.refresh());
                         }
                     },
                 });
-            }
+            },
         });
     }
-    
+
     private _initializeSuspendButton(
         container: TemplateBlade.Container,
         codespacesGrid: DataGrid.Contract<Codespace>,
@@ -440,22 +512,23 @@ export class ResourceOverviewBlade {
             disabled: isDisabled,
             onClick: () => {
                 Q.all(
-                    codespacesGrid.selection.selectedItems.peek().map((codespace) =>
-                        this._codespacesManager.suspendCodespace(codespace.id)
-                    )
+                    codespacesGrid.selection.selectedItems
+                        .peek()
+                        .map((codespace) => this._codespacesManager.suspendCodespace(codespace.id))
                 ).then(() => codespacesGrid.refresh());
             },
         });
     }
-    
-    private _getSelectedCodespaceNames(
-        codespacesGrid: DataGrid.Contract<Codespace>
-    ): string {
-        return codespacesGrid.selection.selectedItems.peek().map((codespace) => {
-            return codespace.friendlyName;
-        }).join(", ");
+
+    private _getSelectedCodespaceNames(codespacesGrid: DataGrid.Contract<Codespace>): string {
+        return codespacesGrid.selection.selectedItems
+            .peek()
+            .map((codespace) => {
+                return codespace.friendlyName;
+            })
+            .join(', ');
     }
-}    
+}
 
 /**
  * Creates an essentials view model.

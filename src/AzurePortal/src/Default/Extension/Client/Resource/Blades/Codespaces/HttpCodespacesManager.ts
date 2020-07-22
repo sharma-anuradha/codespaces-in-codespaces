@@ -7,7 +7,7 @@ import { ajax } from 'Fx/Ajax';
 export class HttpCodespacesManager implements CodespacesManager {
     private tokenPromise: Q.Promise<string>;
     private readonly planId: string;
-    private readonly pollingPromises: { [key: string]: Q.Promise<boolean>; } = {};
+    private readonly pollingPromises: { [key: string]: Q.Promise<boolean> } = {};
 
     constructor(planId: string) {
         this.planId = planId;
@@ -58,7 +58,8 @@ export class HttpCodespacesManager implements CodespacesManager {
         }
 
         const pollingPromise = this.fetchCodespace(id).then(
-            (codespace) => !isTransient(codespace) ||
+            (codespace) =>
+                !isTransient(codespace) ||
                 Q.delay(1000).then(() => this.pollTransitioningCodespace(id, false))
         );
 

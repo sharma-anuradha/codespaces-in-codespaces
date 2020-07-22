@@ -1,7 +1,9 @@
 import FxBase = MsPortalFx.Base;
 
-const codespacesBaseUri = MsPortalFx.getEnvironmentValue("codespacesEndpoint")
-const codespacesApiVersion = MsPortalFx.getEnvironmentValue("codespacesApiVersion");
+export const codespacesBaseUri = MsPortalFx.getEnvironmentValue('codespacesEndpoint');
+export const codespacesApiVersion = MsPortalFx.getEnvironmentValue('codespacesApiVersion');
+
+export const githubClientId = MsPortalFx.getEnvironmentValue('gitHubCodespacesAppClientId');
 
 const codespacesUriBuilder = new FxBase.UriBuilder(codespacesBaseUri);
 codespacesUriBuilder.setRelativePath(`api/${codespacesApiVersion}`);
@@ -16,14 +18,9 @@ function constructUri(uriBuilder: FxBase.UriBuilder, path?: string) {
 }
 
 export function getArmUri(id: string): string {
-    const uriBuilder = new FxBase.UriBuilder(
-        MsPortalFx.getEnvironmentValue("armEndpoint")
-    );
+    const uriBuilder = new FxBase.UriBuilder(MsPortalFx.getEnvironmentValue('armEndpoint'));
     uriBuilder.setRelativePath(id);
-    uriBuilder.query.setParameter(
-        "api-version",
-        MsPortalFx.getEnvironmentValue("armApiVersion")
-    );
+    uriBuilder.query.setParameter('api-version', MsPortalFx.getEnvironmentValue('armApiVersion'));
 
     return uriBuilder.toString();
 }

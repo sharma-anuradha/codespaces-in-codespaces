@@ -6,11 +6,18 @@ export class Codespace {
     planId: string;
     location: string;
     skuName: string;
+    skuDisplayName?: string;
     seed: Seed;
     personalization?: Personalization;
     autoShutdownDelayMinutes: number;
+    connection?: Conection;
+    hasUnpushedGitChanges?: boolean;
 }
 
+export class Conection {
+    serviceUri: string;
+    sessionId: string;
+}
 export class Seed {
     type: string;
     gitConfig?: GitConfig;

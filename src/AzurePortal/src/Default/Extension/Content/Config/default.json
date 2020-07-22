@@ -8,5 +8,6 @@
         "https://online.visualstudio.com/"
     ],
     "codespacesEndpoint": "https://online.visualstudio.com/",
-    "codespacesApiVersion": "v1"
+    "codespacesApiVersion": "v1",
+    "gitHubCodespacesAppClientId": "85b34cc4079b954b09fc"
 }

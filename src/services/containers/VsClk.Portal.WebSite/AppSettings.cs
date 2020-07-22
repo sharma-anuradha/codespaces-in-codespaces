@@ -29,6 +29,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
         public string GitHubNativeAppClientSecret { get; set; }
 
+        // GitHub azure portal configuration
+        public string GitHubAzurePortalClientId { get; set; }
+
+        public string GitHubAzurePortalClientSecret { get; set; }
+
         // AzureDevOps application configuration
         public string AzDevAppClientId { get; set; }
 

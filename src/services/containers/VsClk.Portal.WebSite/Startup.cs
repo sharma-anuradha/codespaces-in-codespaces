@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -66,6 +66,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
             services.AddSession(options => { });
 
+            services.AddCors();
+
             services.AddResponseCompression(options =>
             {
                 options.Providers.Add<BrotliCompressionProvider>();
@@ -122,6 +124,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseCors(options => options.WithOrigins("https://portal.azure.com", "https://df.onecloud.azure-test.net").AllowAnyHeader());
+
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost

@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Web;
 using System.Threading.Tasks;
 using System.Net.Http;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using System.Text.Json.Serialization;
+using Microsoft.Azure.Amqp.Framing;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -11,6 +15,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         private AppSettings AppSettings { get; set; }
         private GitHubClient GitHubClient { get; set; }
         private GitHubClient GitHubNativeClient { get; set; }
+        private GitHubClient GitHubAzurePortalClient { get; set; }
         private const string ClientFlowFeedbackEndpoint = "github/login";
         private const string ClientQueryParam = "vso-client";
         public const string GitHubRepoIdQueryParam = "repository_id";
@@ -20,6 +25,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             AppSettings = appSettings;
             GitHubClient = new GitHubClient(AppSettings.GitHubAppClientId, AppSettings.GitHubAppClientSecret);
             GitHubNativeClient = new GitHubClient(AppSettings.GitHubNativeAppClientId, AppSettings.GitHubNativeAppClientSecret);
+            GitHubAzurePortalClient = new GitHubClient(AppSettings.GitHubAzurePortalClientId, AppSettings.GitHubAzurePortalClientSecret);
         }
 
         [HttpGet("~/github-auth/")]
@@ -46,11 +52,13 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             var query = HttpUtility.ParseQueryString(string.Empty);
 
-            if (!string.IsNullOrEmpty(client)) {
+            if (!string.IsNullOrEmpty(client))
+            {
                 query.Add(ClientQueryParam, client);
             }
 
-            if (!string.IsNullOrEmpty(repoId)) {
+            if (!string.IsNullOrEmpty(repoId))
+            {
                 query.Add(GitHubRepoIdQueryParam, repoId);
             }
 
@@ -109,6 +117,67 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return Redirect(responseUriBuilder.Uri.ToString());
         }
 
+        [HttpGet("~/github-auth/azure-portal-access-token")]
+        public async Task<IActionResult> GetAzurePortalAccessTokenAsync(
+            [FromQuery(Name = "code")] string code,
+            [FromQuery(Name = "state")] string state
+        )
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return BadRequest();
+            }
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                return BadRequest();
+            }
+
+            var responseQuery = HttpUtility.ParseQueryString(string.Empty);
+            try
+            {
+                var tokenResponse = await GitHubAzurePortalClient.GetAccessTokenResponseAsync(state, code, string.Empty);
+
+                return Ok(tokenResponse);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPost("~/github-auth/encrypt-token")]
+        public IActionResult EncryptTokenAsync(
+            [FromBody] Token token
+        )
+        {
+            if (string.IsNullOrWhiteSpace(token.Value))
+            {
+                return BadRequest();
+            }
+
+            var utils = new CookieEncryptionUtils(AppSettings);
+            var iv = utils.BuildSecureHexString(32);
+            var encryptedTokenValue = AesEncryptor.EncryptStringToBytes_Aes(token.Value, AppSettings.AesKey, iv);
+            var encryptedToken = $"{iv}:{encryptedTokenValue}";
+            return Ok(encryptedToken);
+        }
+
+        [HttpPost("~/github-auth/decrypt-token")]
+        public IActionResult DecryptTokenAsync(
+            [FromBody] Token token
+        )
+        {
+            var tokenSplit = token.Value.Split(":");
+            if (tokenSplit.Length != 2)
+            {
+                return BadRequest();
+            }
+
+            var decryptedCookie = AesEncryptor.DecryptStringFromHex_Aes(tokenSplit[1], AppSettings.AesKey, tokenSplit[0]);
+
+            return Ok(decryptedCookie);
+        }
+
         private UriBuilder GetUriBuilder()
         {
             if (Request.Host.HasValue && Request.Host.Port.HasValue)
@@ -120,6 +189,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 return new UriBuilder(Request.Scheme, Request.Host.Host);
             }
         }
+    }
+
+    public class Token
+    {
+        [JsonPropertyName("value")]
+        public string Value { get; set; }
     }
 
     class GitHubClient

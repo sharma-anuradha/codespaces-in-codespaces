@@ -1,9 +1,9 @@
-import * as Az from "@microsoft/azureportal-reactview/Az";
-import * as React from "react";
-import { Fabric } from "@fluentui/react/lib/Fabric";
-import * as ReactView from "@microsoft/azureportal-reactview/ReactView";
-import * as Ajax from "@microsoft/azureportal-reactview/Ajax";
-import { versionId } from "@microsoft/azureportal-reactview/major-version/1";
+import * as Az from '@microsoft/azureportal-reactview/Az';
+import * as React from 'react';
+import { Fabric } from '@fluentui/react/lib/Fabric';
+import * as ReactView from '@microsoft/azureportal-reactview/ReactView';
+import * as Ajax from '@microsoft/azureportal-reactview/Ajax';
+import { versionId } from '@microsoft/azureportal-reactview/major-version/1';
 
 interface ComponentState {
     sessionId: string;
@@ -16,7 +16,8 @@ interface ConnectParams {
         codespaceId: string;
         codespacesEndpoint?: string;
         armApiVersion?: string;
-    }
+        encryptedGitToken?: string;
+    };
 }
 
 /**
@@ -31,8 +32,8 @@ interface ConnectParams {
 export class ModelFree extends React.Component<ConnectParams, ComponentState> {
     public constructor(props: ConnectParams) {
         super(props);
-        Az.setTitle("Opening Codespace...");
-        Az.getSessionId().then(sessionId => this.setState({ sessionId }));
+        Az.setTitle('Opening Codespace...');
+        Az.getSessionId().then((sessionId) => this.setState({ sessionId }));
         this.connectAndClose = this.connectAndClose.bind(this);
         this.closeBlade = this.closeBlade.bind(this);
     }
@@ -42,28 +43,45 @@ export class ModelFree extends React.Component<ConnectParams, ComponentState> {
             <Fabric>
                 <div>
                     <h2>Not seeing the Codespace open in a new tab?</h2>
-                    To prevent this from happening again, disable your pop-up blocker for this site.<br /><br />
+                    To prevent this from happening again, disable your pop-up blocker for this site.
+                    <br />
+                    <br />
                     <button onClick={this.connectAndClose}>Connect to Codespace</button>
                     <button onClick={this.closeBlade}>Cancel</button>
                 </div>
             </Fabric>
         );
     }
-    
+
     public componentDidMount() {
         this.connect();
-        setTimeout(() => this.closeBlade(), 20 * 1000)
+        setTimeout(() => this.closeBlade(), 20 * 1000);
     }
 
     private closeBlade() {
         Az.closeCurrentBlade();
     }
-    
+
     private connectAndClose() {
         this.connect().then(() => this.closeBlade());
     }
 
-    private connect() {
+    private async connect() {
+        let token: string;
+        if (this.props.parameters.encryptedGitToken) {
+            token = await Ajax.ajax({
+                type: 'POST',
+                crossDomain: true,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                uri: `${this.getCodespacesEndpoint()}github-auth/decrypt-token`,
+                data: JSON.stringify({
+                    value: this.props.parameters.encryptedGitToken,
+                }),
+            });
+        }
+
         return Ajax.ajax({
             setAuthorizationHeader: true,
             type: 'POST',
@@ -73,31 +91,38 @@ export class ModelFree extends React.Component<ConnectParams, ComponentState> {
             form.setAttribute('action', this.getCodespacesUri());
             form.setAttribute('method', 'POST');
             form.setAttribute('target', '_blank');
-    
+
             const partnerInfo = JSON.stringify({
                 partnerName: 'azureportal',
                 managementPortalUrl: 'https://portal.azure.com',
                 codespaceToken: accessToken,
                 codespaceId: this.props.parameters.codespaceId,
-                credentials: [],
-                vscodeSettings: {}
+                credentials: [
+                    {
+                        expiration: 10000000000000,
+                        token: token,
+                        host: 'github.com',
+                        path: '/',
+                    },
+                ],
+                vscodeSettings: {},
             });
-            
+
             // set the Codespace token
             const codespaceTokenInput = document.createElement('input');
             codespaceTokenInput.name = 'codespaceToken';
             codespaceTokenInput.value = accessToken;
-            
+
             // set the partner info
             const partnerInfoInput = document.createElement('input');
             partnerInfoInput.name = 'partnerInfo';
             partnerInfoInput.value = partnerInfo;
-    
+
             // append the form to the DOM
             form.appendChild(codespaceTokenInput);
             form.appendChild(partnerInfoInput);
             document.body.append(form);
-    
+
             // submit the form to initiate the top-level HTTP POST
             form.submit();
         });
@@ -108,11 +133,18 @@ export class ModelFree extends React.Component<ConnectParams, ComponentState> {
         return `https://management.azure.com${this.props.parameters.planId}/writeCodespaces?api-version=${apiVersion}`;
     }
 
-    private getCodespacesUri(): string {
-        var codespacesEndpoint = this.props.parameters.codespacesEndpoint || 'https://online.visualstudio.com/';
+    private getCodespacesEndpoint() {
+        var codespacesEndpoint =
+            this.props.parameters.codespacesEndpoint || 'https://online.visualstudio.com/';
         if (codespacesEndpoint.substring(codespacesEndpoint.length - 1) !== '/') {
             codespacesEndpoint += '/';
         }
-        return `${codespacesEndpoint}platform-authentication?redirect=workspace/${this.props.parameters.codespaceId}`;
+        return codespacesEndpoint;
+    }
+
+    private getCodespacesUri(): string {
+        return `${this.getCodespacesEndpoint()}platform-authentication?redirect=workspace/${
+            this.props.parameters.codespaceId
+        }`;
     }
 }

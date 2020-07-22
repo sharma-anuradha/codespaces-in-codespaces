@@ -1,25 +1,24 @@
-import ClientResources = require("ClientResources");
-import * as TemplateBlade from "Fx/Composition/TemplateBlade";
-import * as TabControl from "Fx/Controls/TabControl";
-import * as Section from "Fx/Controls/Section";
-import * as TextBlock from "Fx/Controls/TextBlock";
-import * as TextBox from "Fx/Controls/TextBox";
-import * as Validations from "Fx/Controls/Validations";
-import * as Button from "Fx/Controls/Button";
-import * as SubscriptionDropDown from "Fx/Controls/SubscriptionDropDown";
-import * as Summary from "Fx/Controls/Summary";
-import * as ResourceGroupDropDown from "Fx/Controls/ResourceGroupDropDown";
-import * as TagsByResource from "Fx/Controls/TagsByResource";
-import * as LocationDropDown from "Fx/Controls/LocationDropDown";
-import { ajax } from "Fx/Ajax";
+import ClientResources = require('ClientResources');
+import * as TemplateBlade from 'Fx/Composition/TemplateBlade';
+import * as TabControl from 'Fx/Controls/TabControl';
+import * as Section from 'Fx/Controls/Section';
+import * as TextBlock from 'Fx/Controls/TextBlock';
+import * as TextBox from 'Fx/Controls/TextBox';
+import * as Validations from 'Fx/Controls/Validations';
+import * as Button from 'Fx/Controls/Button';
+import * as SubscriptionDropDown from 'Fx/Controls/SubscriptionDropDown';
+import * as Summary from 'Fx/Controls/Summary';
+import * as ResourceGroupDropDown from 'Fx/Controls/ResourceGroupDropDown';
+import * as TagsByResource from 'Fx/Controls/TagsByResource';
+import * as LocationDropDown from 'Fx/Controls/LocationDropDown';
+import { ajax } from 'Fx/Ajax';
 
 @TemplateBlade.Decorator({
     htmlTemplate: `CreateBlade.html`,
 })
 @TemplateBlade.DoesProvisioning.Decorator()
 export class CreateBlade {
-    public context: TemplateBlade.Context<void> &
-        TemplateBlade.DoesProvisioning.Context;
+    public context: TemplateBlade.Context<void> & TemplateBlade.DoesProvisioning.Context;
 
     public title: string;
     public subtitle: string;
@@ -56,51 +55,34 @@ export class CreateBlade {
 
         // #region ProjectDetails
 
-        const projectDetailsDescription = TextBlock.create(
-            this.context.container,
-            {
-                text: ClientResources.projectDetailsDescription,
-            }
-        );
+        const projectDetailsDescription = TextBlock.create(this.context.container, {
+            text: ClientResources.projectDetailsDescription,
+        });
 
         //config#subscriptionDropDown
-        const subscriptionDropDown = SubscriptionDropDown.create(
-            this.context.container,
-            {
-                initialSubscriptionId: this.context.provisioning.initialValues
-                    .subscriptionIds,
-                validations: [new Validations.Required()],
-            }
-        );
+        const subscriptionDropDown = SubscriptionDropDown.create(this.context.container, {
+            initialSubscriptionId: this.context.provisioning.initialValues.subscriptionIds,
+            validations: [new Validations.Required()],
+        });
 
         const subscriptionId = ko.pureComputed(
-            () =>
-                subscriptionDropDown.value() &&
-                subscriptionDropDown.value().subscriptionId
+            () => subscriptionDropDown.value() && subscriptionDropDown.value().subscriptionId
         );
         //config#subscriptionDropDown
 
         //config#resourceGroupDropDown
-        const resourceGroupDropDown = ResourceGroupDropDown.create(
-            this.context.container,
-            {
-                subscriptionId: subscriptionId,
-                infoBalloonContent:
-                    ClientResources.resourceGroupDropDownInfoBalloon,
-                nested: true,
-                validations: [new Validations.Required()],
-            }
-        );
+        const resourceGroupDropDown = ResourceGroupDropDown.create(this.context.container, {
+            subscriptionId: subscriptionId,
+            infoBalloonContent: ClientResources.resourceGroupDropDownInfoBalloon,
+            nested: true,
+            validations: [new Validations.Required()],
+        });
         //config#resourceGroupDropDown
 
         const projectDetailsSection = Section.create(this.context.container, {
             name: ClientResources.projectDetails,
             smartAlignLabel: true,
-            children: [
-                projectDetailsDescription,
-                subscriptionDropDown,
-                resourceGroupDropDown,
-            ],
+            children: [projectDetailsDescription, subscriptionDropDown, resourceGroupDropDown],
         });
 
         // #endregion
@@ -108,15 +90,12 @@ export class CreateBlade {
         // #region VS Codespace plan details
 
         //config#locationDropDown
-        const locationDropDown = LocationDropDown.create(
-            this.context.container,
-            {
-                initialLocationName: ko.observableArray<string>(),
-                subscriptionId: subscriptionId,
-                validations: [new Validations.Required()],
-                resourceTypes: ["Microsoft.Codespaces/plans"],
-            }
-        );
+        const locationDropDown = LocationDropDown.create(this.context.container, {
+            initialLocationName: ko.observableArray<string>(),
+            subscriptionId: subscriptionId,
+            validations: [new Validations.Required()],
+            resourceTypes: ['Microsoft.Codespaces/plans'],
+        });
         //config#locationDropDown
 
         const nameTextBox = TextBox.create(this.context.container, {
@@ -136,11 +115,7 @@ export class CreateBlade {
         const basicsSection = Section.create(this.context.container, {
             name: ClientResources.basics,
             smartAlignLabel: true,
-            children: [
-                introductionSection,
-                projectDetailsSection,
-                instanceDetailsSection,
-            ],
+            children: [introductionSection, projectDetailsSection, instanceDetailsSection],
         });
 
         // #endregion
@@ -149,7 +124,7 @@ export class CreateBlade {
 
         const tagsResources: TagsByResource.TargetItem[] = [
             {
-                id: "1",
+                id: '1',
                 displayName: ClientResources.CodespacesNames.Plans.singular,
                 count: 1,
             },
@@ -217,7 +192,7 @@ export class CreateBlade {
 
         this.tabs = TabControl.create(this.context.container, {
             tabs: [basicsSection, tagsSection, reviewSection],
-            cssClass: "msportalfx-create-tab",
+            cssClass: 'msportalfx-create-tab',
             showRequiredStatusOnTabs: false,
             showValidationStatusOnTabs: true,
             smartAlignLabel: true,
@@ -230,8 +205,7 @@ export class CreateBlade {
                     this.tabs.activeTab(reviewSection);
                 } else {
                     const resourceGroupLocation =
-                        resourceGroupDropDown.value().mode ===
-                        ResourceGroupDropDown.Mode.CreateNew
+                        resourceGroupDropDown.value().mode === ResourceGroupDropDown.Mode.CreateNew
                             ? locationDropDown.value().name
                             : resourceGroupDropDown.value().value.location;
                     const name = nameTextBox.value();
@@ -286,16 +260,11 @@ export class CreateBlade {
         this.tabs.activeTab.subscribe(this.context.container, (tab) => {
             if (tab === basicsSection) {
                 this.createButton.text(ClientResources.reviewAndCreate);
-                this.nextButton.text(
-                    ClientResources.next + ": " + ClientResources.tags + " >"
-                );
+                this.nextButton.text(ClientResources.next + ': ' + ClientResources.tags + ' >');
             } else if (tab === tagsSection) {
                 this.createButton.text(ClientResources.reviewAndCreate);
                 this.nextButton.text(
-                    ClientResources.next +
-                        ": " +
-                        ClientResources.reviewAndCreate +
-                        " >"
+                    ClientResources.next + ': ' + ClientResources.reviewAndCreate + ' >'
                 );
             } else {
                 this.createButton.text(ClientResources.create);
@@ -310,23 +279,21 @@ export class CreateBlade {
         this.tabs.activeTab.subscribe(this.context.container, (tab) => {
             this.context.container.statusBar(undefined);
             if (tab === reviewSection) {
-                this.context.form
-                    .triggerValidation(false, true)
-                    .then((isValid) => {
-                        if (isValid) {
-                            this.context.container.statusBar({
-                                text: ClientResources.createValidationSuccess,
-                                state: TemplateBlade.ContentState.Complete,
-                            });
-                            this.createButton.disabled(false);
-                        } else {
-                            this.context.container.statusBar({
-                                text: ClientResources.createValidationError,
-                                state: TemplateBlade.ContentState.Error,
-                            });
-                            this.createButton.disabled(true);
-                        }
-                    });
+                this.context.form.triggerValidation(false, true).then((isValid) => {
+                    if (isValid) {
+                        this.context.container.statusBar({
+                            text: ClientResources.createValidationSuccess,
+                            state: TemplateBlade.ContentState.Complete,
+                        });
+                        this.createButton.disabled(false);
+                    } else {
+                        this.context.container.statusBar({
+                            text: ClientResources.createValidationError,
+                            state: TemplateBlade.ContentState.Error,
+                        });
+                        this.createButton.disabled(true);
+                    }
+                });
             } else {
                 this.createButton.disabled(false);
             }
@@ -343,26 +310,25 @@ export class CreateBlade {
         return JSON.stringify({
             $schema:
                 // "http://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
-                "http://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#",
-            contentVersion: "1.0.0.0",
+                'http://schema.management.azure.com/schemas/2019-08-01/deploymentTemplate.json#',
+            contentVersion: '1.0.0.0',
             parameters: {
                 name: {
-                    type: "string",
+                    type: 'string',
                 },
                 location: {
-                    type: "string",
+                    type: 'string',
                 },
                 tags: {
-                    type: "Object",
+                    type: 'Object',
                 },
             },
             resources: [
                 {
-                    apiVersion: "2020-05-26",
-                    //apiVersion: "2019-07-01-alpha",
+                    apiVersion: '2020-05-26',
                     name: "[parameters('name')]",
                     location: "[parameters('location')]",
-                    type: "Microsoft.Codespaces/plans",
+                    type: 'Microsoft.Codespaces/plans',
                     tags: "[parameters('tags')]",
                 },
             ],
@@ -379,9 +345,7 @@ export class CreateBlade {
     ): TemplateBlade.DoesProvisioning.DeployTemplateOptions {
         const galleryCreateOptions = this.context.provisioning.marketplaceItem;
         const resourceIdFormattedString = `/subscriptions/${subscriptionId}/resourcegroups/${resourceGroupName}/providers/Microsoft.Codespaces/plans/${name}`;
-        const deferred = Q.defer<
-            MsPortalFx.Azure.ResourceManager.TemplateDeploymentOptions
-        >();
+        const deferred = Q.defer<MsPortalFx.Azure.ResourceManager.TemplateDeploymentOptions>();
 
         const parameters = {
             name: name,
@@ -395,7 +359,7 @@ export class CreateBlade {
             resourceGroupLocation: resourceGroupLocation,
             parameters: parameters,
             deploymentName: galleryCreateOptions.deploymentName + Date.now(),
-            resourceProviders: ["Microsoft.Codespaces"],
+            resourceProviders: ['Microsoft.Codespaces'],
             resourceId: resourceIdFormattedString,
             templateJson: this._getTemplateJson(),
         };

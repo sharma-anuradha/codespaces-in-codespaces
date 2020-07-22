@@ -37,13 +37,17 @@ export function validateGitUrl(
         return Q(validationMessagesKeys.invalidGitUrl);
     }
     if (gitServiceProvider === SupportedGitService.GitHub && gitHubAccessToken) {
-        return queryGitService(queryableUrl, gitHubAccessToken).then((isAccessible) => {
-            if (!isAccessible) {
+        return queryGitService(queryableUrl, gitHubAccessToken)
+            .then((isAccessible) => {
+                if (!isAccessible) {
+                    return validationMessagesKeys.noAccess;
+                } else {
+                    return validationMessagesKeys.valid;
+                }
+            })
+            .catch(() => {
                 return validationMessagesKeys.noAccess;
-            } else {
-                return validationMessagesKeys.valid;
-            }
-        });
+            });
     } else if (gitServiceProvider === SupportedGitService.GitHub) {
         return queryGitService(queryableUrl)
             .then((isAccessible) => {
@@ -81,17 +85,13 @@ export function getValidationMessage(
     key: validationMessagesKeys,
     translationFunc: (key: string) => string
 ): Q.Promise<Validations.ValidationResult> {
-
     return Q({
-        valid: (key === validationMessagesKeys.valid),
-        message: translationFunc(key.toString())
+        valid: key === validationMessagesKeys.valid,
+        message: translationFunc(key.toString()),
     });
 }
 
-function queryGitService(
-    url: string,
-    bearerToken?: string
-): Q.Promise<boolean> {
+function queryGitService(url: string, bearerToken?: string): Q.Promise<boolean> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
     };
