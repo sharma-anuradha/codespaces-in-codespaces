@@ -466,8 +466,11 @@
   <data name="Tile_MenuTitle" xml:space="preserve">
     <value>Välj menyalternativ</value>
   </data>
-  <data name="DeleteConfirmation" xml:space="preserve">
-    <value>Vill du ta bort den här resursen?</value>
+  <data name="DeleteCodespaceConfirmation" xml:space="preserve">
+    <value>Are you sure you want to delete {0}?</value>
+  </data>
+  <data name="DeletePlanConfirmation" xml:space="preserve">
+    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>Primärnyckel</value>
