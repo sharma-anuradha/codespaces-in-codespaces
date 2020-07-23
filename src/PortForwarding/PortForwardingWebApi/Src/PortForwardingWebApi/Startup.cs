@@ -11,21 +11,29 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Caching;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 {
@@ -72,6 +80,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             // Add front-end/back-end/port-forwarding common services -- secrets, service principal, control-plane resources.
             ConfigureCommonServices(services, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
 
+            services.AddCors(options =>
+            {
+                var vssaasHeaders = new string[]
+                {
+                    HttpConstants.CorrelationIdHeader,
+                    HttpConstants.RequestIdHeader,
+                };
+
+                var currentOrigins = ControlPlaneAzureResourceAccessor.GetStampOrigins();
+
+                // GitHub endpoints that should have access to all VSO service instances (including prod)
+                currentOrigins.Add("https://github.com");
+
+                // local dev
+                currentOrigins.Add("https://github.localhost");
+                currentOrigins.Add("http://github.localhost");
+                currentOrigins.Add("https://garage.github.com");
+                currentOrigins.Add("https://*.review-lab.github.com");
+
+                // workspaces.github.com
+                currentOrigins.Add("https://*.workspaces.github.com");
+                currentOrigins.Add("https://*.workspaces-ppe.github.com");
+                currentOrigins.Add("https://*.workspaces-dev.github.com");
+
+                // codespaces.github.com
+                currentOrigins.Add("https://*.codespaces.github.com");
+                currentOrigins.Add("https://*.codespaces-ppe.github.com");
+                currentOrigins.Add("https://*.codespaces-dev.github.com");
+                currentOrigins.Add("https://portal.azure.com");
+                currentOrigins.Add("https://df.onecloud.azure-test.net");
+
+                // github.dev
+                currentOrigins.Add("https://*.github.dev");
+                currentOrigins.Add("https://*.ppe.github.dev");
+                currentOrigins.Add("https://*.dev.github.dev");
+                currentOrigins.Add("https://*.local.github.dev");
+
+                options.AddDefaultPolicy(
+                    builder => builder
+                        .WithOrigins(currentOrigins.ToArray())
+                        .AllowAnyHeader()
+                        .WithExposedHeaders(vssaasHeaders)
+                        .AllowAnyMethod()
+                        .SetIsOriginAllowedToAllowWildcardSubdomains());
+            });
+
             // Adding developer personal stamp settings and resource name builder.
             var developerPersonalStampSettings = new DeveloperPersonalStampSettings(AppSettings.DeveloperPersonalStamp, AppSettings.DeveloperAlias, AppSettings.DeveloperKusto);
             services.AddSingleton(developerPersonalStampSettings);
@@ -98,10 +152,48 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                 services.AddEstablishedConnectionsWorker();
             }
 
+            services
+                .AddUserProfile(
+                    options =>
+                    {
+                        options.BaseAddress = ValidationUtil.IsRequired(portForwardingSettings.VSLiveShareApiEndpoint, nameof(portForwardingSettings.VSLiveShareApiEndpoint));
+                    });
+
+            services.AddTransient<ForwardingBearerAuthMessageHandler>();
+            services.AddHttpCodespacesApiClient((options) =>
+            {
+                options.BaseAddress = $"https://{appSettings.ControlPlaneSettings.DnsHostName}";
+                options.ServiceName = ServiceName;
+                options.Version = typeof(Startup).Assembly.GetName().Version!.ToString();
+            }).AddHttpMessageHandler<ForwardingBearerAuthMessageHandler>();
+
             services.AddAgentMappingClient(portForwardingSettings, IsRunningInAzure());
             services.AddSingleton<IConnectionEstablishedMessageHandler, ConnectionEstablishedMessageHandler>();
+            services.AddSingleton<IValidatedPrincipalIdentityHandler, ValidatedPrincipalIdentityHandler>();
 
-            services.AddVsSaaSHosting(HostingEnvironment, loggingBaseValues);
+            // Add the certificate settings.
+            services.AddSingleton(appSettings.AuthenticationSettings);
+
+            services.AddCertificateCredentialCacheFactory();
+
+            // VS SaaS services with first party app JWT authentication.
+            services.AddVsSaaSHostingWithJwtBearerAuthentication2(
+                HostingEnvironment,
+                loggingBaseValues,
+                JwtBearerUtility.ConfigureAadOptions,
+                keyVaultSecretOptions =>
+                {
+                    var servicePrincipal = ApplicationServicesProvider.GetRequiredService<IServicePrincipal>();
+                    keyVaultSecretOptions.ServicePrincipalClientId = servicePrincipal.ClientId;
+                    keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetClientSecretAsync;
+                },
+                null,
+                true,
+                defaultAuthenticationScheme: null, // This auth scheme will run for all requests regardless of if the Controller specifies it
+                jwtBearerAuthenticationScheme: JwtBearerUtility.AadAuthenticationScheme); // This auth scheme gets configured with JwtBearerUtility.ConfigureAadOptions above
+
+            // Add user authentication using VSO (Cascade) tokens.
+            services.AddAuthentication().AddVsoJwtBearerAuthentication();
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
@@ -112,6 +204,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                     Description = ServiceConstants.ServiceDescription,
                     Version = ServiceConstants.CurrentApiVersion,
                 });
+
+                x.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description = "JWT auth token for the user. Example: eyJ2...",
+                });
+                x.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme()
+                        {
+                            Reference = new OpenApiReference()
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer",
+                            },
+                        },
+                        new string[0]
+                    },
+                });
+
+                x.SchemaFilter<EnumSchemaFilter>();
             });
         }
 
@@ -123,8 +239,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
-
-            var isProduction = env.IsProduction();
 
             if (env.IsDevelopment())
             {
@@ -145,9 +259,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                 await next();
             });
 
-            // Use VS SaaS middleware.
-            app.UseVsSaaS(!isProduction);
-
             app.MapWhen(Not<HttpContext>(PortForwardingRoutingHelper.IsPortForwardingRequest), HandleInternalRequests);
             app.MapWhen(PortForwardingRoutingHelper.IsPortForwardingRequest, HandleUserRequests);
 
@@ -161,12 +272,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 
         private void HandleUserRequests(IApplicationBuilder app)
         {
+            // Use VS SaaS middleware.
+            app.UseVsSaaS(!HostingEnvironment.IsProduction());
+
             app.UseConnectionCreation();
         }
 
         private void HandleInternalRequests(IApplicationBuilder app)
         {
+            app.UseCors();
+
             app.UseRouting();
+
+            // Use VS SaaS middleware.
+            app.UseVsSaaS(!HostingEnvironment.IsProduction());
 
             app.UseEndpoints(x =>
             {
@@ -201,6 +320,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
                 c.SwaggerEndpoint($"/api/{ServiceConstants.CurrentApiVersion}/swagger", ServiceConstants.EndpointName);
                 c.DisplayRequestDuration();
             });
+        }
+
+        private class EnumSchemaFilter : ISchemaFilter
+        {
+            public void Apply(OpenApiSchema model, SchemaFilterContext context)
+            {
+                if (context.Type.IsEnum)
+                {
+                    model.Enum.Clear();
+                    foreach (var value in Enum.GetValues(context.Type))
+                    {
+                        var displayString = $"{(int)value!} ({value.ToString()})";
+                        model.Enum.Add(new OpenApiString(displayString));
+                    }
+                }
+            }
         }
     }
 }

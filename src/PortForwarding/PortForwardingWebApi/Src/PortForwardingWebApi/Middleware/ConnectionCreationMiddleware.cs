@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 {
                     var client = await serviceBusClientProvider.GetQueueClientAsync(QueueNames.NewConnections, childLogger);
 
-                    var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, serializationOptions))
+                    var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, this.serializationOptions))
                     {
                         SessionId = connectionInfo.WorkspaceId,
                         ContentType = MediaTypeNames.Application.Json,
@@ -146,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                         {
                             await session.CompleteAsync(GetLockToken(message));
 
-                            return JsonSerializer.Deserialize<ErrorMessage>(message.Body, serializationOptions);
+                            return JsonSerializer.Deserialize<ErrorMessage>(message.Body, this.serializationOptions);
                         }
 
                         return null;

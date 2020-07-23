@@ -68,5 +68,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
         public string PortForwardingServiceEnabled { get; set; }
         public string PortForwardingEnableEnvironmentEndpoints { get; set; }
         public string GitHubportForwardingEnableEnvironmentEndpoints { get; set; }
+        public string PortForwardingManagementEndpoint { get; set; }
+        public string GitHubPortForwardingManagementEndpoint { get; set; }
     }
 }

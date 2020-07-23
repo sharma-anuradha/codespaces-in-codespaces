@@ -1,7 +1,7 @@
 # See https://www.nginx.com/blog/websocket-nginx
 map $http_upgrade $connection_upgrade {
     default          upgrade;
-    
+
     # See http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive
     ''               '';
 }
@@ -11,8 +11,6 @@ server {
     server_name *.app.online.dev.core.vsengsaas.visualstudio.com;
     ssl_certificate /certificates/dev-cert.crt;
     ssl_certificate_key /certificates/dev-cert.rsa;
-    
-    set $target '${PORT_FORWARDING_ORIGIN}';
 
     proxy_buffering "on";
 
@@ -27,30 +25,30 @@ server {
         set $best_http_host $http_host;
         set $pass_port $pass_server_port;
 
-        proxy_pass $target;
+        proxy_pass ${PORT_FORWARDING_ORIGIN};
 
         proxy_cookie_domain off;
         proxy_cookie_path off;
 
         proxy_set_header Host $best_http_host;
-        
+
         # Allow websocket connections
         proxy_set_header Upgrade $http_upgrade;
-        
+
         proxy_set_header Connection $connection_upgrade;
-        
+
         proxy_set_header X-Real-IP $remote_addr;
-        
+
         proxy_set_header X-Forwarded-For $remote_addr;
-        
+
         proxy_set_header X-Forwarded-Host $http_host;
         proxy_set_header X-Forwarded-Port $pass_port;
         proxy_set_header X-Forwarded-Proto $pass_access_scheme;
-        
+
         proxy_set_header X-Original-URI $request_uri;
-        
+
         proxy_set_header X-Scheme $pass_access_scheme;
-        
+
         # Pass the original X-Forwarded-For
         proxy_set_header X-Original-Forwarded-For $http_true;
     }

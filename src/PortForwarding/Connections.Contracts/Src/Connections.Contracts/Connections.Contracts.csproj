@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
     <IsPackable>true</IsPackable>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
 </Project>

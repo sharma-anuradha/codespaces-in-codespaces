@@ -12,6 +12,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// <summary>
         /// Gets message label for connection-established queue messages.
         /// </summary>
-        public static string ConnectionEstablished { get => "connection-established"; }
+        public static string ConnectionEstablished => "connection-established";
     }
 }

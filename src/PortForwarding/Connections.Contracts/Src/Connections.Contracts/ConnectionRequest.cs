@@ -1,4 +1,4 @@
-﻿// <copyright file="ConnectionRequest.cs" company="Microsoft">
+// <copyright file="ConnectionRequest.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,12 +12,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// <summary>
         /// Gets or sets LS Workspace ID.
         /// </summary>
-        public string WorkspaceId { get; set; }
+        public string WorkspaceId { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the environment id for the connection.
         /// </summary>
-        public string EnvironmentId { get; set; }
+        public string? EnvironmentId { get; set; }
 
         /// <summary>
         /// Gets or sets Source port.
@@ -27,11 +27,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// <summary>
         /// Gets or sets Cascade / Access token accepted by LS agent.
         /// </summary>
-        public string Token { get; set; }
+        public string Token { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the LiveShare API endpoint to be used.
         /// </summary>
-        public string VSLiveShareApiEndpoint { get; set; }
+        public string VSLiveShareApiEndpoint { get; set; } = default!;
     }
 }

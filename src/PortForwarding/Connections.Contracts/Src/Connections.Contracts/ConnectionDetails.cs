@@ -1,4 +1,4 @@
-﻿// <copyright file="ConnectionDetails.cs" company="Microsoft">
+// <copyright file="ConnectionDetails.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,12 +12,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// <summary>
         /// Gets or sets LS Workspace ID.
         /// </summary>
-        public string WorkspaceId { get; set; }
+        public string WorkspaceId { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets the environment id for the connection.
         /// </summary>
-        public string EnvironmentId { get; set; }
+        public string? EnvironmentId { get; set; }
 
         /// <summary>
         /// Gets or sets source port.
@@ -32,11 +32,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// <summary>
         /// Gets or sets agent name.
         /// </summary>
-        public string AgentName { get; set; }
+        public string AgentName { get; set; } = default!;
 
         /// <summary>
         /// Gets or sets agent Uid.
         /// </summary>
-        public string AgentUid { get; set; }
+        public string AgentUid { get; set; } = default!;
     }
 }

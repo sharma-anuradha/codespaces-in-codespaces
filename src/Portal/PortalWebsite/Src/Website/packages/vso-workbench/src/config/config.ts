@@ -10,7 +10,7 @@ export type TEnvironment = 'development' | 'local' | 'staging' | 'production';
 
 interface ILocationConfig {
     readonly current: string;
-    readonly available: Readonly<Array<string>>;
+    readonly available: ReadonlyArray<string>;
     readonly hostnames: Record<string, string>;
 }
 
@@ -22,14 +22,19 @@ interface IConfig {
 }
 
 export interface IConfiguration {
-    portalEndpoint: string;
-    apiEndpoint: string;
-    liveShareEndpoint: string;
-    liveShareWebExtensionEndpoint: string;
-    environment: TEnvironment;
-    portForwardingDomainTemplate: string;
-    enableEnvironmentPortForwarding: boolean;
-    portForwardingServiceEnabled: boolean;
+    readonly portalEndpoint: string;
+    readonly environmentRegistrationEndpoint: string;
+    readonly apiEndpoint: string;
+    readonly liveShareEndpoint: string;
+    readonly liveShareWebExtensionEndpoint: string;
+    readonly environment: TEnvironment;
+    readonly portForwardingDomainTemplate: string;
+    readonly portForwardingManagementEndpoint: string;
+    readonly enableEnvironmentPortForwarding: boolean;
+    readonly portForwardingServiceEnabled: boolean;
+    readonly environmentsApiPath: string;
+    readonly richNavWebExtensionEndpoint: string;
+    readonly isDevStamp: boolean;
 }
 
 const CONFIG: IConfig = {
@@ -48,6 +53,12 @@ const CONFIG: IConfig = {
         portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
         enableEnvironmentPortForwarding: false,
         portForwardingServiceEnabled: false,
+        environmentRegistrationEndpoint: 'https://online.visualstudio.com/api/v1/environments',
+        richNavWebExtensionEndpoint: 'https://intellinavstgprod.blob.core.windows.net/webextension',
+        portForwardingManagementEndpoint:
+            'https://management.apps.codespaces.githubusercontent.com/api/v1/PortForwardingConnections',
+        environmentsApiPath: '/api/v1/environments',
+        isDevStamp: false,
     },
     partnerConfigs: {
         github: {
@@ -160,6 +171,10 @@ class Config {
 
     get portForwardingDomainTemplate() {
         return CONFIG.portalConfig.portForwardingDomainTemplate;
+    }
+
+    get portForwardingManagementEndpoint() {
+        return CONFIG.portalConfig.portForwardingManagementEndpoint;
     }
 }
 

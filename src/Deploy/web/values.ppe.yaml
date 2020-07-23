@@ -18,3 +18,18 @@ port-forwarding-web-api:
       - hosts:
           - '*.apps.ppe.codespaces.githubusercontent.com'
         secretName: ssl-cert-github-cs-pf
+  managementIngress:
+    hosts:
+      - 'management.app.online-ppe.core.vsengsaas.visualstudio.com'
+      - 'management.apps.ppe.workspaces.githubusercontent.com'
+      - 'management.apps.ppe.codespaces.githubusercontent.com'
+    tls:
+      - hosts:
+          - '*.app.online-ppe.core.vsengsaas.visualstudio.com'
+        secretName: ssl-cert
+      - hosts:
+          - '*.apps.ppe.workspaces.githubusercontent.com'
+        secretName: ssl-cert-github-pf
+      - hosts:
+          - '*.apps.ppe.codespaces.githubusercontent.com'
+        secretName: ssl-cert-github-cs-pf

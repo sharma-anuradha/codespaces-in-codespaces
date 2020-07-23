@@ -16,8 +16,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
     /// </summary>
     public class PortForwardingHostUtils
     {
-        private const string EnvironmentIdRegex = "[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}";
-        private const string WorkspaceIdRegex = "[0-9A-Fa-f]{36}";
+        /// <summary>
+        /// The environment id regex.
+        /// </summary>
+        public const string EnvironmentIdRegex = "[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}";
+
+        /// <summary>
+        /// The liveshare id regex.
+        /// </summary>
+        public const string WorkspaceIdRegex = "[0-9A-Fa-f]{36}";
+
         private readonly string routingHostPartRegexAllowEnvironments = $"(?:(?<environmentId>{EnvironmentIdRegex})|(?<workspaceId>{WorkspaceIdRegex}))-(?<port>\\d{"{2,5}"})";
 
         /// <summary>
@@ -27,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         public PortForwardingHostUtils(IEnumerable<HostsConfig> hostsConfigs)
         {
             HostRegexes = hostsConfigs.SelectMany(
-                hostConf => hostConf.Hosts.Select(host => string.Format(host, routingHostPartRegexAllowEnvironments)));
+                hostConf => hostConf.Hosts.Select(host => string.Format(host, this.routingHostPartRegexAllowEnvironments)));
         }
 
         private IEnumerable<string> HostRegexes { get; }

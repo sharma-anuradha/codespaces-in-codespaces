@@ -1,4 +1,4 @@
-﻿// <copyright file="ForwardingBearerAuthMessageHandler.cs" company="Microsoft">
+// <copyright file="ForwardingBearerAuthMessageHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -16,6 +16,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
     {
         private const string AuthHeaderName = "Authorization";
         private const string AuthTokenPrefix = "Bearer ";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ForwardingBearerAuthMessageHandler"/> class.
+        /// </summary>
+        /// <param name="currentUserProvider">The current user provider.</param>
+        public ForwardingBearerAuthMessageHandler(ICurrentUserProvider currentUserProvider)
+        {
+            CurrentUserProvider = Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ForwardingBearerAuthMessageHandler"/> class.
@@ -38,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             CancellationToken cancellationToken)
         {
             var authToken = CurrentUserProvider?.BearerToken;
-            if (!string.IsNullOrEmpty(authToken))
+            if (!string.IsNullOrEmpty(authToken) && !request.Headers.Contains(AuthHeaderName))
             {
                 request.Headers.Add(AuthHeaderName, AuthTokenPrefix + authToken);
             }

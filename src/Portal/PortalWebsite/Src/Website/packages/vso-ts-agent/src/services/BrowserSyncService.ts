@@ -12,12 +12,16 @@ export enum BrowserConnectorMessages {
     GetLocalStorageValueResponse = 'VSO_BrowserSync_GetLocalStorageValue_Response',
 }
 
+export interface IForwardPortPayload {
+    port: number;
+}
+
 export class BrowserSyncService {
     public constructor(protected readonly sourceEventService: vsls.SourceEventService) {
         this.sourceEventService.onEvent((e) => {
             this.onSourceEvent(e);
         });
     }
-    
-    public async onSourceEvent(e: vsls.SourceEventArgs) {};
+
+    public async onSourceEvent(e: vsls.SourceEventArgs) {}
 }

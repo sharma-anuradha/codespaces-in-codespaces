@@ -134,9 +134,11 @@ appSettings:
   - PORTAL_AppSettings__VsSaaSTokenIssuer
   - PORTAL_AppSettings__VsSaaSTokenCertsEndpoint
   - PORTAL_AppSettings__VsSaaSCertificateSecretName
-  - PORTAL_AppSettings__PortForwardingDomainTemplate
   - PORTAL_AppSettings__PortForwardingServiceEnabled
+  - PORTAL_AppSettings__PortForwardingDomainTemplate
   - PORTAL_AppSettings__GitHubPortForwardingDomainTemplate
+  - PORTAL_AppSettings__PortForwardingManagementEndpoint
+  - PORTAL_AppSettings__GitHubPortForwardingManagementEndpoint
   - PORTAL_AppSettings__PortForwardingEnableEnvironmentEndpoints
   - PORTAL_AppSettings__GitHubPortForwardingEnableEnvironmentEndpoints
 

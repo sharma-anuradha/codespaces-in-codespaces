@@ -10,7 +10,9 @@ export interface IConfiguration {
     readonly liveShareWebExtensionEndpoint: string;
     readonly environment: TEnvironment;
     readonly portForwardingDomainTemplate: string;
+    readonly portForwardingManagementEndpoint: string;
     readonly enableEnvironmentPortForwarding: boolean;
+    readonly portForwardingServiceEnabled: boolean;
     readonly environmentsApiPath: string;
     readonly richNavWebExtensionEndpoint: string;
     readonly isDevStamp: boolean;
@@ -28,6 +30,9 @@ export const defaultConfig: IConfiguration = {
     enableEnvironmentPortForwarding: false,
     environmentsApiPath: '/api/v1/environments',
     isDevStamp: false,
+    portForwardingServiceEnabled: false,
+    portForwardingManagementEndpoint:
+        'https://management.app.online.visualstudio.com/api/v1/PortForwardingConnections',
 };
 
 export const configurationEndpoint = '/configuration';

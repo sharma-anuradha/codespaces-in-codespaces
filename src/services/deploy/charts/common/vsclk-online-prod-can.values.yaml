@@ -1,4 +1,4 @@
-﻿# Common override values for charts deployed to vsclk-online-dev-ci
+# Common override values for charts deployed to vsclk-online-dev-ci
 
 image:
   repositoryUrl: vsclkonlineprod.azurecr.io
@@ -84,6 +84,8 @@ config:
   vsSaaSTokenCertsEndpoint: https://sts.online.visualstudio.com
   portForwardingDomainTemplate: "{0}.app.canary.online.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.codespaces.githubusercontent.com"
+  portForwardingManagementEndpoint: "https://managementapp.canary.online.visualstudio.com/api/v1/PortForwardingConnections"
+  gitHubPortForwardingManagementEndpoint: "https://management.apps.codespaces.githubusercontent.com/api/v1/PortForwardingConnections"
   portForwardingEnableEnvironmentEndpoints: "true"
   gitHubportForwardingEnableEnvironmentEndpoints: "true"
   portForwardingServiceEnabled: "false"

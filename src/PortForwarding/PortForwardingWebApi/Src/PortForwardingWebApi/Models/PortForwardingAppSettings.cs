@@ -1,4 +1,4 @@
-﻿// <copyright file="PortForwardingAppSettings.cs" company="Microsoft">
+// <copyright file="PortForwardingAppSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -32,5 +32,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Model
         /// Gets or sets the LiveShare API endpoint to be used.
         /// </summary>
         public string VSLiveShareApiEndpoint { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets the redis cache connection string.
+        /// </summary>
+        public string RedisConnectionString { get; set; } = default!;
     }
 }

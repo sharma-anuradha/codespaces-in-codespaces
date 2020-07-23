@@ -86,6 +86,8 @@ config:
   vsSaaSTokenCertsEndpoint: https://sts.online.visualstudio.com
   portForwardingDomainTemplate: "{0}.app.online.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.codespaces.githubusercontent.com"
+  portForwardingManagementEndpoint: "https://management.app.online.visualstudio.com/api/v1/PortForwardingConnections"
+  gitHubPortForwardingManagementEndpoint: "https://management.apps.codespaces.githubusercontent.com/api/v1/PortForwardingConnections"
   portForwardingEnableEnvironmentEndpoints: "true"
   gitHubportForwardingEnableEnvironmentEndpoints: "true"
   portForwardingServiceEnabled: "false"

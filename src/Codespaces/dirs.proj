@@ -4,6 +4,7 @@
     <ProjectReference Include="Plans\dirs.proj" />
     <ProjectReference Include="BackEndWebApiClient\dirs.proj" />
     <ProjectReference Include="Billing\dirs.proj" />
+    <ProjectReference Include="CodespacesApiClient\CodespacesApiClient.csproj" />
     <ProjectReference Include="Common\dirs.proj" />
     <ProjectReference Include="EnvironmentManager\dirs.proj" />
     <ProjectReference Include="FrontEndWebApi\dirs.proj" />

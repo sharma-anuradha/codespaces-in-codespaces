@@ -197,7 +197,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                                     {
                                         new Extensionsv1beta1HTTPIngressPath
                                         {
-                                            Backend = new Extensionsv1beta1IngressBackend(mapping.GetKubernetesServiceName(), MappingServicePort),
+                                            Backend = new Extensionsv1beta1IngressBackend(
+                                                serviceName: mapping.GetKubernetesServiceName(),
+                                                servicePort: MappingServicePort),
                                             Path = "/",
                                         },
                                     },

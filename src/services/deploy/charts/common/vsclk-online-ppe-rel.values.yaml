@@ -35,7 +35,7 @@ githubAuthEndpoint:
     - hosts:
         - "*.apps.ppe.codespaces.githubusercontent.com"
       secretName: ssl-cert-github-cs-pf
-      
+
 pfingress:
   hosts:
     - "*.app.online-ppe.core.vsengsaas.visualstudio.com"
@@ -85,6 +85,8 @@ config:
   vsSaaSTokenCertsEndpoint: https://sts-ppe.core.vsengsaas.visualstudio.com
   portForwardingDomainTemplate: "{0}.app.online-ppe.core.vsengsaas.visualstudio.com"
   gitHubPortForwardingDomainTemplate: "{0}.apps.ppe.codespaces.githubusercontent.com"
+  portForwardingManagementEndpoint: "https://management.app.online-ppe.core.vsengsaas.visualstudio.com/api/v1/PortForwardingConnections"
+  gitHubPortForwardingManagementEndpoint: "https://management.apps.ppe.codespaces.githubusercontent.com/api/v1/PortForwardingConnections"
   portForwardingEnableEnvironmentEndpoints: "true"
   gitHubportForwardingEnableEnvironmentEndpoints: "true"
   portForwardingServiceEnabled: "false"

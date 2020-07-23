@@ -3,7 +3,11 @@ export { WorkspaceClient } from './WorkspaceClient';
 export { LiveShareWebClient } from './liveShareWebClient';
 export { SshChannelOpenner } from './sshChannelOpenner';
 
-export { BrowserSyncService, BrowserConnectorMessages } from './services/BrowserSyncService';
+export {
+    BrowserSyncService,
+    BrowserConnectorMessages,
+    IForwardPortPayload,
+} from './services/BrowserSyncService';
 export { GitCredentialService } from './services/GitCredentialService';
 
 export { GitCredentialsRequest } from './interfaces/GitCredentialsRequest';

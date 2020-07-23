@@ -18,3 +18,18 @@ port-forwarding-web-api:
         - '*.app.westeurope-ppe-load-online.core.vsengsaas.visualstudio.com'
         - '*.app.westus2-ppe-load-online.core.vsengsaas.visualstudio.com'
         secretName: ssl-cert
+  managementIngress:
+    hosts:
+      - 'management.app.ppe-load-online.core.vsengsaas.visualstudio.com'
+      - 'management.app.eastus-ppe-load-online.core.vsengsaas.visualstudio.com'
+      - 'management.app.southeastasia-ppe-load-online.core.vsengsaas.visualstudio.com'
+      - 'management.app.westeurope-ppe-load-online.core.vsengsaas.visualstudio.com'
+      - 'management.app.westus2-ppe-load-online.core.vsengsaas.visualstudio.com'
+    tls:
+      - hosts:
+        - '*.app.ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.eastus-ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.southeastasia-ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.westeurope-ppe-load-online.core.vsengsaas.visualstudio.com'
+        - '*.app.westus2-ppe-load-online.core.vsengsaas.visualstudio.com'
+        secretName: ssl-cert

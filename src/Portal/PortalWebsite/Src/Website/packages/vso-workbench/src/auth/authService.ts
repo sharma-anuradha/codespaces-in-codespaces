@@ -6,7 +6,6 @@ import {
     createTrace,
     debounceInterval,
     timeConstants,
-    getCurrentEnvironmentId,
     tryGetCurrentEnvironmentId,
     PARTNER_INFO_KEYCHAIN_KEY,
 } from 'vso-client-core';
@@ -114,7 +113,7 @@ export class AuthService {
         if (codespaceId) {
             /**
              * For legacy reasons we have to support the old `environmentId` name,
-             * the query param is only used by Saleforce at the moment.
+             * the query param is only used by Salesforce at the moment.
              */
             redirectUrl.searchParams.append('environmentId', codespaceId);
             redirectUrl.searchParams.append('codespaceId', codespaceId);

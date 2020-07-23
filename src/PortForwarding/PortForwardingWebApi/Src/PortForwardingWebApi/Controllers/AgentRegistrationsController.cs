@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpOperationalScope("post_agent_registration")]
-        public async Task<IActionResult> PostAsync(AgentRegistration registration, [FromServices]IDiagnosticsLogger logger)
+        public async Task<IActionResult> PostAsync(AgentRegistration registration, [FromServices] IDiagnosticsLogger logger)
         {
             await AgentMappingClient.RegisterAgentAsync(registration, logger);
 
@@ -55,7 +55,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
         /// <param name="agentName">Agent to be removed.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Status code.</returns>
-        [HttpDelete("{agentName}")]
         [HttpDelete("{agentName}/labels")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpOperationalScope("remove_busy_agent")]
@@ -74,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
         /// <returns>Status code.</returns>
         [HttpDelete("{agentName}/pod")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [HttpOperationalScope("remove_busy_agent")]
+        [HttpOperationalScope("remove_agent")]
         public async Task<IActionResult> DeleteAgentAsync(string agentName, [FromServices] IDiagnosticsLogger logger)
         {
             await AgentMappingClient.KillAgentAsync(agentName, logger);

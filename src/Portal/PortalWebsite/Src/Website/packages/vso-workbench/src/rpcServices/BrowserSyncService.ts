@@ -3,9 +3,11 @@ import { vsls, createTrace, getCurrentEnvironmentId } from 'vso-client-core';
 import {
     BrowserSyncService as BrowserSyncServiceBase,
     BrowserConnectorMessages,
+    IForwardPortPayload,
 } from 'vso-ts-agent';
 import { authService } from '../auth/authService';
 import { AuthenticationError } from '../errors/AuthenticationError';
+import { portForwardingManagementApi } from '../api/portForwardingManagementApi';
 
 export const trace = createTrace('BrowserSyncService');
 
@@ -40,6 +42,16 @@ export class BrowserSyncService extends BrowserSyncServiceBase {
             case BrowserConnectorMessages.SignOut: {
                 await goToManagementPortal(e.sourceId);
                 return;
+            }
+            case BrowserConnectorMessages.ForwardPort: {
+                const token = await authService.getCachedToken();
+                if (!token) {
+                    throw new AuthenticationError('No token found.');
+                }
+                const { port }: IForwardPortPayload = JSON.parse(e.jsonContent);
+                const codespaceId = getCurrentEnvironmentId();
+
+                await portForwardingManagementApi.warmupConnection(codespaceId, port, token);
             }
         }
     }

@@ -12,16 +12,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// <summary>
         /// Gets queue name for "connections-new" queue.
         /// </summary>
-        public static string NewConnections { get => "connections-new"; }
+        public static string NewConnections => "connections-new";
 
         /// <summary>
         /// Gets queue name for "connections-established" queue.
         /// </summary>
-        public static string EstablishedConnections { get => "connections-established"; }
+        public static string EstablishedConnections => "connections-established";
 
         /// <summary>
         /// Gets queue name for "connections-errors" queue.
         /// </summary>
-        public static string ConnectionErrors { get => "connections-errors"; }
+        public static string ConnectionErrors => "connections-errors";
     }
 }
