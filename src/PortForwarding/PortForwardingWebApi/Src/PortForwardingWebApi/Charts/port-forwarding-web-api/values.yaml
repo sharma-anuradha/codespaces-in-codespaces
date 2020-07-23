@@ -48,7 +48,7 @@ role:
   name: port-forwarding-agent-mapping-manager
 
 portForwardingAgent:
-  enabled: false
+  enabled: true
 
 service:
   type: ClusterIP

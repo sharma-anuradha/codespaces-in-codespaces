@@ -3,8 +3,6 @@ port-forwarding-web-api:
   config:
     aspNetEnv: Development
     overrideAppSettingsJson: false
-  portForwardingAgent:
-    enabled: true
   ingress:
     hosts:
       - '*.app.online.dev.core.vsengsaas.visualstudio.com'
