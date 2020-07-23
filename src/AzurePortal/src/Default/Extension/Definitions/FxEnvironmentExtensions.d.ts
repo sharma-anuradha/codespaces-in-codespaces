@@ -3,5 +3,5 @@ interface FxEnvironment {
     armApiVersion?: string;
     codespacesEndpoint?: string;
     codespacesApiVersion?: string;
-    gitHubCodespacesAppClientId: string;
+    gitHubAzurePortalClientId: string;
 }

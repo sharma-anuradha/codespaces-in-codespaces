@@ -3,7 +3,7 @@ import FxBase = MsPortalFx.Base;
 export const codespacesBaseUri = MsPortalFx.getEnvironmentValue('codespacesEndpoint');
 export const codespacesApiVersion = MsPortalFx.getEnvironmentValue('codespacesApiVersion');
 
-export const githubClientId = MsPortalFx.getEnvironmentValue('gitHubCodespacesAppClientId');
+export const githubClientId = MsPortalFx.getEnvironmentValue('gitHubAzurePortalClientId');
 
 const codespacesUriBuilder = new FxBase.UriBuilder(codespacesBaseUri);
 codespacesUriBuilder.setRelativePath(`api/${codespacesApiVersion}`);
