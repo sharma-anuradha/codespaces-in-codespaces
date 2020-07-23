@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             ConfigureCommonServices(services, false, out var _);
 
             // Job Queue consumer telemetry
-            services.AddJobQueueConsumerTelemetrySummary();
+            services.AddJobQueueTelemetrySummary();
 
             // Add stamp database access
             services.AddDocumentDbClientProvider(options =>

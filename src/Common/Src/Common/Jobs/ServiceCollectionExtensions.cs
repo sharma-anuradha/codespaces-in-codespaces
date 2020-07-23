@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,9 +17,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
-        public static IServiceCollection AddJobQueueConsumerTelemetrySummary(this IServiceCollection services)
+        public static IServiceCollection AddJobQueueTelemetrySummary(this IServiceCollection services)
         {
-            services.AddSingleton<IAsyncBackgroundWarmup, JobQueueConsumerFactoryTelemetry>();
+            services.AddSingleton<IAsyncBackgroundWarmup, JobQueueFactoryTelemetry>();
             return services;
         }
     }

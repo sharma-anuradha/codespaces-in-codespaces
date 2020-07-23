@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <param name="queueId">The job queue id.</param>
         /// <returns>Instance of anew job queue consumer.</returns>
-        IJobQueueConsumer Create(string queueId);
+        IJobQueueConsumer GetOrCreate(string queueId);
     }
 
     /// <summary>
@@ -70,6 +70,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         public TimeSpan ProcessTime { get; }
 
         /// <summary>
+        /// Gets all the job process times.
+        /// </summary>
+        public IReadOnlyCollection<TimeSpan> ProcessTimes { get; }
+
+        /// <summary>
         /// Gets the number of jobs processed so far.
         /// </summary>
         public int Processed { get; }
@@ -88,5 +93,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the number of cancellations.
         /// </summary>
         public int Cancelled { get; }
+
+        /// <summary>
+        /// Gets the number of expired jobs.
+        /// </summary>
+        public int Expired { get; }
     }
 }

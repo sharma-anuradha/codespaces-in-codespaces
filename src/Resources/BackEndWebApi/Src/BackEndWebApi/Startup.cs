@@ -185,7 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);
 
             // Job Queue consumer telemetry
-            services.AddJobQueueConsumerTelemetrySummary();
+            services.AddJobQueueTelemetrySummary();
 
             // Add the certificate settings.
             services.AddSingleton(appSettings.AuthenticationSettings);

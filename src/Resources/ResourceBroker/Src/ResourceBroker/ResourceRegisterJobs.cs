@@ -1,12 +1,15 @@
-﻿// <copyright file="ResourceRegisterJobs.cs" company="Microsoft">
+// <copyright file="ResourceRegisterJobs.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
 
@@ -21,11 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
         /// <param name="deleteResourceGroupDeploymentsTask">Task to delete resource group deployments.</param>
-        /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
-        /// <param name="watchPoolVersionTask">Target watch pool version job.</param>
+        /// <param name="watchPoolProducerTask">Target watch pool version job.</param>
         /// <param name="watchOrphanedPoolTask">Target watch orphaned pool job.</param>
-        /// <param name="watchPoolStateTask">Target watch pool state task.</param>
-        /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
         /// <param name="watchOrphanedVmAgentImagesTask">Target watch orphaned VM images/blobs job.</param>
         /// <param name="watchOrphanedStorageImagesTask">Target watch orphaned storage images/blobs job.</param>
@@ -34,13 +34,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
+        /// <param name="jobQueueConsumerFactory">The job consumer factory instance.</param>
+        /// <param name="jobHandlers">All the job handlers.</param>
+        /// <param name="systemConfiguration">The system configuration.</param>
+        /// <param name="watchPoolSizeJob">Target watch pool size job.</param>
+        /// <param name="watchPoolVersionTask">Target watch pool version job interface.</param>
+        /// <param name="watchPoolStateTask">Target watch pool state task.</param>
+        /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         public ResourceRegisterJobs(
             IDeleteResourceGroupDeploymentsTask deleteResourceGroupDeploymentsTask,
-            IWatchPoolSizeTask watchPoolSizeJob,
-            IWatchPoolVersionTask watchPoolVersionTask,
+            IWatchPoolProducerTask watchPoolProducerTask,
             IWatchOrphanedPoolTask watchOrphanedPoolTask,
-            IWatchPoolStateTask watchPoolStateTask,
-            IWatchFailedResourcesTask watchFailedResourcesTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
             WatchOrphanedVmAgentImagesTask watchOrphanedVmAgentImagesTask,
             WatchOrphanedStorageImagesTask watchOrphanedStorageImagesTask,
@@ -48,14 +52,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchOrphanedSystemResourceTask watchOrphanedSystemResourceTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
-            ITaskHelper taskHelper)
+            ITaskHelper taskHelper,
+            IJobQueueConsumerFactory jobQueueConsumerFactory,
+            IEnumerable<IJobHandler> jobHandlers,
+            ISystemConfiguration systemConfiguration,
+            IWatchPoolSizeTask watchPoolSizeJob,
+            IWatchPoolVersionTask watchPoolVersionTask,
+            IWatchPoolStateTask watchPoolStateTask,
+            IWatchFailedResourcesTask watchFailedResourcesTask)
         {
             DeleteResourceGroupDeploymentsTask = deleteResourceGroupDeploymentsTask;
-            WatchPoolSizeJob = watchPoolSizeJob;
-            WatchPoolVersionTask = watchPoolVersionTask;
+            WatchPoolProducerTask = watchPoolProducerTask;
             WatchOrphanedPoolTask = watchOrphanedPoolTask;
-            WatchPoolStateTask = watchPoolStateTask;
-            WatchFailedResourcesTask = watchFailedResourcesTask;
             WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
             WatchOrphanedVmAgentImagesTask = watchOrphanedVmAgentImagesTask;
             WatchOrphanedStorageImagesTask = watchOrphanedStorageImagesTask;
@@ -64,20 +72,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             TaskHelper = taskHelper;
+            JobQueueConsumerFactory = jobQueueConsumerFactory;
+            JobHandlers = jobHandlers;
+            SystemConfiguration = systemConfiguration;
             Random = new Random();
+
+            WatchPoolSizeJob = watchPoolSizeJob;
+            WatchPoolVersionTask = watchPoolVersionTask;
+            WatchOrphanedPoolTask = watchOrphanedPoolTask;
+            WatchPoolStateTask = watchPoolStateTask;
+            WatchFailedResourcesTask = watchFailedResourcesTask;
         }
 
         private IDeleteResourceGroupDeploymentsTask DeleteResourceGroupDeploymentsTask { get; }
 
-        private IWatchPoolSizeTask WatchPoolSizeJob { get; }
-
-        private IWatchPoolVersionTask WatchPoolVersionTask { get; }
+        private IWatchPoolProducerTask WatchPoolProducerTask { get; }
 
         private IWatchOrphanedPoolTask WatchOrphanedPoolTask { get; }
-
-        private IWatchPoolStateTask WatchPoolStateTask { get; }
-
-        private IWatchFailedResourcesTask WatchFailedResourcesTask { get; }
 
         private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
 
@@ -95,7 +106,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private ITaskHelper TaskHelper { get; }
 
+        private IJobQueueConsumerFactory JobQueueConsumerFactory { get; }
+
+        private IEnumerable<IJobHandler> JobHandlers { get; }
+
+        private ISystemConfiguration SystemConfiguration { get; }
+
         private Random Random { get; }
+
+        // Note: deprecated
+        private IWatchPoolSizeTask WatchPoolSizeJob { get; }
+
+        private IWatchPoolVersionTask WatchPoolVersionTask { get; }
+
+        private IWatchPoolStateTask WatchPoolStateTask { get; }
+
+        private IWatchFailedResourcesTask WatchFailedResourcesTask { get; }
 
         /// <inheritdoc/>
         public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
@@ -115,43 +141,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));
 
-            // Job: Watch Pool Size
-            var watchPoolSizeTaskTimeSpan = TimeSpan.FromMinutes(1);
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
-                (childLogger) => WatchPoolSizeJob.RunAsync(watchPoolSizeTaskTimeSpan, childLogger),
-                watchPoolSizeTaskTimeSpan);
+            if (await SystemConfiguration.GetValueAsync("featureflag:job-queues-enabled", logger, false))
+            {
+                // Register job handlers
+                JobQueueConsumerFactory
+                    .GetOrCreate(ResourceJobQueueConstants.GenericQueueName)
+                    .RegisterJobHandlers(JobHandlers);
 
-            // Offset to help distribute inital load of recuring tasks
-            await Task.Delay(Random.Next(5000, 7500));
+                // Job: Watch Pool producer
+                var watchPoolproducerTaskTimeSpan = TimeSpan.FromMinutes(1);
+                TaskHelper.RunBackgroundLoop(
+                    $"{ResourceLoggingConstants.WatchPoolProducerTask}_run",
+                    (childLogger) => WatchPoolProducerTask.RunAsync(watchPoolproducerTaskTimeSpan, childLogger),
+                    watchPoolproducerTaskTimeSpan);
+            }
+            else
+            {
+                // Job: Watch Pool Size
+                var watchPoolSizeTaskTimeSpan = TimeSpan.FromMinutes(1);
+                TaskHelper.RunBackgroundLoop(
+                    $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
+                    (childLogger) => WatchPoolSizeJob.RunAsync(watchPoolSizeTaskTimeSpan, childLogger),
+                    watchPoolSizeTaskTimeSpan);
 
-            // Job: Watch Pool Version
-            var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(1);
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
-                (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
-                watchPoolVersionTaskSpan);
+                // Offset to help distribute inital load of recuring tasks
+                await Task.Delay(Random.Next(5000, 7500));
 
-            // Offset to help distribute inital load of recuring tasks
-            await Task.Delay(Random.Next(5000, 7500));
+                // Job: Watch Pool Version
+                var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(1);
+                TaskHelper.RunBackgroundLoop(
+                    $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
+                    (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
+                    watchPoolVersionTaskSpan);
 
-            // Job: Watch Pool State
-            var watchPoolStateTaskSpan = TimeSpan.FromMinutes(1);
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
-                (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
-                watchPoolStateTaskSpan);
+                // Offset to help distribute inital load of recuring tasks
+                await Task.Delay(Random.Next(5000, 7500));
 
-            await Task.Delay(Random.Next(5000, 7500));
+                // Job: Watch Pool State
+                var watchPoolStateTaskSpan = TimeSpan.FromMinutes(1);
+                TaskHelper.RunBackgroundLoop(
+                    $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
+                    (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
+                    watchPoolStateTaskSpan);
 
-            // Job: Watch Failed Resources
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
-                (childLogger) => WatchFailedResourcesTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
-                TimeSpan.FromMinutes(5));
+                await Task.Delay(Random.Next(5000, 7500));
 
-            // Offset to help distribute inital load of recurring tasks
-            await Task.Delay(Random.Next(5000, 7500));
+                // Job: Watch Failed Resources
+                TaskHelper.RunBackgroundLoop(
+                    $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
+                    (childLogger) => WatchFailedResourcesTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
+                    TimeSpan.FromMinutes(5));
+
+                // Offset to help distribute inital load of recurring tasks
+                await Task.Delay(Random.Next(5000, 7500));
+            }
 
             // Job: Watch Orphaned Azure Resources
             TaskHelper.RunBackgroundLoop(

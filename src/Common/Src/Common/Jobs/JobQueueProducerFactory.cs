@@ -1,8 +1,10 @@
-﻿// <copyright file="JobQueueProducerFactory.cs" company="Microsoft">
+// <copyright file="JobQueueProducerFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
@@ -33,6 +35,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         {
             var queue = this.queueFactory.GetOrCreate(queueId);
             return this.jobQueueProducer.GetOrAdd(queueId, (id) => new JobQueueProducer(queue, this.logger));
+        }
+
+        /// <inheritdoc/>
+        public Dictionary<string, Dictionary<string, IJobQueueProducerMetrics>> GetMetrics()
+        {
+            return this.jobQueueProducer.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetMetrics());
         }
     }
 }

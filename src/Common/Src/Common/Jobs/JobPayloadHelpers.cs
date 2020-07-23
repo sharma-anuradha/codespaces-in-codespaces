@@ -1,4 +1,4 @@
-﻿// <copyright file="JobPayloadHelpers.cs" company="Microsoft">
+// <copyright file="JobPayloadHelpers.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -96,7 +96,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             var fieldInfo = type.GetField(TypeFieldName);
             if (fieldInfo == null)
             {
-                return GetTypeName(type);
+                var typeName = GetTypeName(type).Replace('<', '_');
+                typeName = typeName.Replace('>', '_');
+
+                // remove the last '_'
+                if (typeName.EndsWith('_'))
+                {
+                    typeName = typeName.Remove(typeName.Length - 1);
+                }
+
+                return typeName;
             }
 
             return fieldInfo.GetRawConstantValue().ToString();

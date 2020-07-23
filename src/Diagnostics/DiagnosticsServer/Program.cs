@@ -37,7 +37,7 @@ namespace DiagnosticsServer
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>()
-                        .UseUrls("http://0.0.0.0:59330");
+                        .UseUrls("http://localhost:59330", "http://0.0.0.0:59330");
                 });
     }
 }

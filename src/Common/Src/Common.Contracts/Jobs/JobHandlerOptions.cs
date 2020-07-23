@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <param name="maxHandlerRetries">Number of retries.</param>
         /// <returns>Job handler options instance.</returns>
-        public static JobHandlerOptions WithRetries(int maxHandlerRetries)
+        public static JobHandlerOptions WithValues(int maxHandlerRetries)
         {
             return new JobHandlerOptions() { MaxHandlerRetries = maxHandlerRetries };
         }

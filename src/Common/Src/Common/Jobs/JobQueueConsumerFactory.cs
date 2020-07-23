@@ -1,4 +1,4 @@
-﻿// <copyright file="JobQueueConsumerFactory.cs" company="Microsoft">
+// <copyright file="JobQueueConsumerFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -31,11 +31,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         }
 
         /// <inheritdoc/>
-        public IJobQueueConsumer Create(string queueId)
+        public IJobQueueConsumer GetOrCreate(string queueId)
         {
-            var jobQueueConsumer = new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId), this.logger);
-            jobQueueConsumers[queueId] = jobQueueConsumer;
-            return jobQueueConsumer;
+            return this.jobQueueConsumers.GetOrAdd(queueId, (id) => new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId), this.logger));
         }
 
         /// <inheritdoc/>

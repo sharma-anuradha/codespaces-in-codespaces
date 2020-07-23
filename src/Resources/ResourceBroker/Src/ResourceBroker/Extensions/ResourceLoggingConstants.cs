@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceLoggingConstants.cs" company="Microsoft">
+// <copyright file="ResourceLoggingConstants.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     /// <summary>
     /// Resource logging constants.
     /// </summary>
-    public class ResourceLoggingConstants
+    public static class ResourceLoggingConstants
     {
         /// <summary>
         /// Watch Orphaned Azure Resource Task.
@@ -45,34 +45,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string WatchContinuationTaskWorkerPool = "watch_continuation_task_worker_pool";
 
         /// <summary>
-        /// Watch Pool Size Task.
+        /// Watch Pool Producer Task.
         /// </summary>
-        public const string WatchPoolSizeTask = "watch_pool_size_task";
+        public const string WatchPoolProducerTask = "watch_pool_producer_task";
 
         /// <summary>
-        /// Watch pool size task.
+        /// Watch Pool Size Job handler.
         /// </summary>
-        public const string WatchPoolVersionTask = "watch_pool_version_task";
+        public const string WatchPoolSizeJobHandler = "watch_pool_size_job_handler";
 
         /// <summary>
-        /// Watch pool state task.
+        /// Watch pool size Job handler.
         /// </summary>
-        public const string WatchPoolStateTask = "watch_pool_state_task";
+        public const string WatchPoolVersionJobHandler = "watch_pool_version_job_handler";
 
         /// <summary>
-        /// Watch orphan pool task.
+        /// Watch pool state Job handler.
+        /// </summary>
+        public const string WatchPoolStateJobHandler = "watch_pool_state_job_handler";
+
+        /// <summary>
+        /// Watch Failed Resources Job handler.
+        /// </summary>
+        public const string WatchFailedResourcesJobHandler = "watch_failed_resources_job_handler";
+
+        /// <summary>
+        /// Watch orphan pool Task.
         /// </summary>
         public const string WatchOrphanedPoolTask = "watch_orphaned_pool_task";
-
-        /// <summary>
-        /// Watch pool state task.
-        /// </summary>
-        public const string WatchPoolSettingsTask = "watch_pool_settings_task";
-
-        /// <summary>
-        /// Watch Failed Resources Task.
-        /// </summary>
-        public const string WatchFailedResourcesTask = "watch_failed_resources_task";
 
         /// <summary>
         /// Watch Orphaned Azure Resource Task.
@@ -153,5 +153,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Environment id.
         /// </summary>
         public const string EnvironmentId = "EnvironmentId";
+
+// Deprecated
+
+        /// <summary>
+        /// Watch Pool Size Task.
+        /// </summary>
+        public const string WatchPoolSizeTask = "watch_pool_size_task";
+
+        /// <summary>
+        /// Watch pool size task.
+        /// </summary>
+        public const string WatchPoolVersionTask = "watch_pool_version_task";
+
+        /// <summary>
+        /// Watch pool state task.
+        /// </summary>
+        public const string WatchPoolStateTask = "watch_pool_state_task";
+
+        /// <summary>
+        /// Watch pool state task.
+        /// </summary>
+        public const string WatchPoolSettingsTask = "watch_pool_settings_task";
+
+        /// <summary>
+        /// Watch Failed Resources Task.
+        /// </summary>
+        public const string WatchFailedResourcesTask = "watch_failed_resources_task";
     }
 }

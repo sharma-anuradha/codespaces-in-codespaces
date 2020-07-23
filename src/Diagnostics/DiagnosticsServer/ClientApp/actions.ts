@@ -169,7 +169,75 @@ export class Actions {
           columnSettings: "level,msg",
         },
         id: "",
-      },
+        },
+        {
+            type: CardType.LogViewer,
+            name: "Job Producer",
+            description: "Shows the job consumers",
+            options: {
+                filterList: [
+                    {
+                        name: "Message",
+                        key: "msg",
+                        value: "job_queue_producer_complete",
+                        placeHolder: "",
+                    },
+                ],
+                columnSettings: "JobId,JobType,InitialVisibilityDelay,ExpireTimeout,time",
+            },
+            id: "",
+        },
+        {
+            type: CardType.LogViewer,
+            name: "Job Consumer",
+            description: "Shows the job consumers",
+            options: {
+                filterList: [
+                    {
+                        name: "Message complete",
+                        key: "msg",
+                        value: "job_queue_consumer_complete",
+                        placeHolder: "",
+                    },
+                ],
+                columnSettings: "JobId,JobType,JobDuration,JobQueueDuration,JobHandlerDuration,JobDidCancel,JobRetries,time",
+            },
+            id: "",
+        },
+        {
+            type: CardType.LogViewer,
+            name: "Job Producer Summary",
+            description: "Shows the job producer summary (x minute)",
+            options: {
+                filterList: [
+                    {
+                        name: "Message",
+                        key: "msg",
+                        value: "job_queue_factory_summary_item_complete",
+                        placeHolder: "",
+                    },
+                ],
+                columnSettings: "Queue,JobType,JobProcessedCount,JobFailuresCount,time",
+            },
+            id: "",
+        },
+        {
+            type: CardType.LogViewer,
+            name: "Job Consumer Summary",
+            description: "Shows the job consumer summary (x minute)",
+            options: {
+                filterList: [
+                    {
+                        name: "Message",
+                        key: "msg",
+                        value: "job_queue_consumer_summary_item_complete",
+                        placeHolder: "",
+                    },
+                ],
+                columnSettings: "Queue,JobType,JobQueueMinInputCount,JobQueueMaxInputCount,JobProcessedCount,JobAverageProcessTime,JobPercentile50Time,JobPercentile90Time,JobPercentile99Time,JobFailuresCount,JobRetriesCount,JobCancelledCount,JobExpiredCount,time",
+            },
+            id: "",
+        },
       {
         type: CardType.IsNgrokRunning,
         name: "Is Ngrok Running?",

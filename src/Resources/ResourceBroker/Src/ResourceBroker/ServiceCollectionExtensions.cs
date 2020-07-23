@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,6 +7,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Strategies;
@@ -69,6 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IContinuationTaskActivator, ContinuationTaskActivator>();
             services.AddTransient<IContinuationTaskWorker, ContinuationTaskWorker>();
 
+            // Job handlers
+            services.AddSingleton<IJobHandler, WatchPoolVersionJobHandler>();
+            services.AddSingleton<IJobHandler, WatchFailedResourcesJobHandler>();
+            services.AddSingleton<IJobHandler, WatchPoolSizeJobHandler>();
+            services.AddSingleton<IJobHandler, WatchPoolStateJobHandler>();
+
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
             services.AddSingleton<IAsyncBackgroundWarmup>(x => x.GetRequiredService<ResourceRegisterJobs>());
@@ -103,16 +110,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
             services.AddSingleton<IDeleteResourceGroupDeploymentsTask, DeleteResourceGroupDeploymentsTask>();
-            services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
-            services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
-            services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
+            services.AddSingleton<IWatchPoolProducerTask, WatchPoolProducerTask>();
             services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();
-            services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
             services.AddSingleton<WatchOrphanedVmAgentImagesTask>();
             services.AddSingleton<WatchOrphanedStorageImagesTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
+
+            // deprecated job handlers
+            services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
+            services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
+            services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
+            services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

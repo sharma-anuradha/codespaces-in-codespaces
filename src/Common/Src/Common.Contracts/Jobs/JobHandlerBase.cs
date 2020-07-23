@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -30,6 +31,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         {
             MaxDegreeOfParallelism = 1,
         };
+
+        /// <summary>
+        /// Create a dataflow execute options.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">Max degree of parallelism.</param>
+        /// <param name="boundedCapacity">Bound capacity.</param>
+        /// <param name="ensureOrdered">If ensure ordered.</param>
+        /// <returns>An execute dataflow block options.</returns>
+        public static ExecutionDataflowBlockOptions WithValues(
+            int? maxDegreeOfParallelism = null,
+            int? boundedCapacity = null,
+            bool? ensureOrdered = null)
+        {
+            var executionDataflowBlockOptions = new ExecutionDataflowBlockOptions();
+            if (maxDegreeOfParallelism.HasValue)
+            {
+                executionDataflowBlockOptions.MaxDegreeOfParallelism = maxDegreeOfParallelism.Value;
+            }
+
+            if (boundedCapacity.HasValue)
+            {
+                executionDataflowBlockOptions.BoundedCapacity = boundedCapacity.Value;
+            }
+
+            if (ensureOrdered.HasValue)
+            {
+                executionDataflowBlockOptions.EnsureOrdered = ensureOrdered.Value;
+            }
+
+            return executionDataflowBlockOptions;
+        }
     }
 
     /// <summary>
@@ -67,12 +99,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         {
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
+                int updateCount = 0;
                 var updateTask = Task.Run(async () =>
                 {
                     while (!cts.Token.IsCancellationRequested)
                     {
                         await Task.Delay(DefaultJobWaiting, cts.Token);
                         await job.UpdateAsync(DefaultJobUpdate, cts.Token);
+                        ++updateCount;
                     }
                 });
                 try
@@ -82,6 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 }
                 finally
                 {
+                    logger.FluentAddValue("UpdateCount", updateCount);
                     cts.Cancel();
                 }
             }

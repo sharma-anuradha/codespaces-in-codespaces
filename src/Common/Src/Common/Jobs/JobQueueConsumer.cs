@@ -82,35 +82,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 var failed = false;
                 var retries = 0;
                 var cancelled = false;
+                var expired = false;
 
                 var start = Stopwatch.StartNew();
                 await this.logger.OperationScopeAsync(
                     "job_queue_consumer",
-                    (childLogger) =>
+                    async (childLogger) =>
                     {
-                        childLogger.FluentAddValue("jobId", job.Id);
-                        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(DisposeToken))
-                        {
-                            if (handlerTimout.HasValue == true)
-                            {
-                                cts.CancelAfter((int)handlerTimout.Value.TotalMilliseconds);
-                            }
+                        var now = DateTime.UtcNow;
+                        childLogger.FluentAddValue(JobQueueLoggerConst.JobId, job.Id)
+                            .FluentAddValue(JobQueueLoggerConst.JobType, typeTag)
+                            .FluentAddValue(JobQueueLoggerConst.JobQueueDuration, now - job.Created);
 
-                            using (cts.Token.Register(() =>
-                                {
-                                    cancelled = true;
-                                }))
+                        if (jobPayloadOptions?.ExpireTimeout.HasValue == true &&
+                            now > job.Created.Add(jobPayloadOptions.ExpireTimeout.Value))
+                        {
+                            await jobInstance.DisposeAsync();
+                            childLogger.FluentAddValue(JobQueueLoggerConst.JobDidExpired, true);
+                            expired = true;
+                        }
+                        else
+                        {
+                            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(DisposeToken))
                             {
-                                return jobHandler.HandleJobAsync((IJob<T>)job, childLogger, cts.Token);
+                                if (handlerTimout.HasValue == true)
+                                {
+                                    cts.CancelAfter((int)handlerTimout.Value.TotalMilliseconds);
+                                }
+
+                                using (cts.Token.Register(() =>
+                                    {
+                                        cancelled = true;
+                                    }))
+                                {
+                                    await jobHandler.HandleJobAsync((IJob<T>)job, childLogger, cts.Token);
+                                    childLogger.FluentAddValue(JobQueueLoggerConst.JobHandlerDuration, start.Elapsed);
+                                    var jobDuration = DateTime.UtcNow - job.Created;
+                                    childLogger.FluentAddValue(JobQueueLoggerConst.JobDuration, jobDuration);
+                                }
                             }
                         }
                     },
                     errCallback: async (err, logger) =>
                     {
                         failed = true;
+                        logger.FluentAddValue(JobQueueLoggerConst.JobDidCancel, cancelled);
+
                         try
                         {
                             ++jobInstance.JobPayloadInfo.Retries;
+                            logger.FluentAddValue(JobQueueLoggerConst.JobRetries, jobInstance.JobPayloadInfo.Retries);
                             if (maxHandlerRetries.HasValue == true &&
                                 jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries.Value)
                             {
@@ -143,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         jobHandlerMetrics.MaxInputCount = inputCount;
                     }
 
-                    jobHandlerMetrics.ProcessTime += start.Elapsed;
+                    jobHandlerMetrics.AddProcessTime(start.Elapsed);
                     ++jobHandlerMetrics.Processed;
                     jobHandlerMetrics.Retries += retries;
                     if (failed)
@@ -154,6 +175,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     if (cancelled)
                     {
                         ++jobHandlerMetrics.Cancelled;
+                    }
+
+                    if (expired)
+                    {
+                        ++jobHandlerMetrics.Expired;
                     }
                 });
             };
@@ -279,11 +305,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
         private class JobHandlerMetrics : IJobHandlerMetrics
         {
+            private readonly List<TimeSpan> jobProcessTimes = new List<TimeSpan>();
+
             public int MinInputCount { get; set; }
 
             public int MaxInputCount { get; set; }
 
-            public TimeSpan ProcessTime { get; set; }
+            public TimeSpan ProcessTime { get; private set; }
 
             public int Processed { get; set; }
 
@@ -292,6 +320,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             public int Retries { get; set; }
 
             public int Cancelled { get; set; }
+
+            public int Expired { get; set; }
+
+            public IReadOnlyCollection<TimeSpan> ProcessTimes => this.jobProcessTimes;
+
+            public void AddProcessTime(TimeSpan timeSpan)
+            {
+                ProcessTime += timeSpan;
+                this.jobProcessTimes.Add(timeSpan);
+            }
         }
     }
 }
