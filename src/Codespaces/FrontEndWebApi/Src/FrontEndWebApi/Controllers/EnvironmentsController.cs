@@ -790,6 +790,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ConnectionServiceUri = new Uri(FrontEndAppSettings.VSLiveShareApiEndpoint, UriKind.Absolute),
                 CallbackUriFormat = callbackUriFormat,
                 UserAuthToken = CurrentUserProvider.BearerToken,
+                CurrentUserIdSet = CurrentUserProvider.CurrentUserIdSet,
             };
         }
     }

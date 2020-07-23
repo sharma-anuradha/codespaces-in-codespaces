@@ -1,4 +1,4 @@
-﻿// <copyright file="StartCloudEnvironmentParameters.cs" company="Microsoft">
+// <copyright file="StartCloudEnvironmentParameters.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -36,5 +36,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets the user token.
         /// </summary>
         public string UserAuthToken { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user id set.
+        /// </summary>
+        public UserIdSet CurrentUserIdSet { get; set; }
     }
 }

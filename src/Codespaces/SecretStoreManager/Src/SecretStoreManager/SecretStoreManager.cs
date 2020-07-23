@@ -1,4 +1,4 @@
-﻿// <copyright file="SecretStoreManager.cs" company="Microsoft">
+// <copyright file="SecretStoreManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

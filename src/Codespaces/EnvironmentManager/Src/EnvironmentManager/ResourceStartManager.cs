@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceStartManager.cs" company="Microsoft">
+// <copyright file="ResourceStartManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -16,6 +16,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using SecretFilterType = Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager.SecretFilterType;
 using SecretScopeModel = Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Contracts.SecretScope;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -34,16 +37,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="tokenProvider">Target token provider.</param>
         /// <param name="skuCatalog">Target sku catalog.</param>
         /// <param name="secretStoreManager">The secret store manager.</param>
+        /// <param name="currentUserProvider">The current user provider.</param>
+        /// <param name="superuserIdentity">The superuser Identity.</param>
         public ResourceStartManager(
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             ITokenProvider tokenProvider,
             ISkuCatalog skuCatalog,
-            ISecretStoreManager secretStoreManager)
+            ISecretStoreManager secretStoreManager,
+            ICurrentUserProvider currentUserProvider,
+            VsoSuperuserClaimsIdentity superuserIdentity)
         {
             ResourceBrokerClient = resourceBrokerHttpClient;
             TokenProvider = tokenProvider;
             SkuCatalog = skuCatalog;
             SecretStoreManager = secretStoreManager;
+            CurrentUserProvider = currentUserProvider;
+            SuperuserIdentity = superuserIdentity;
         }
 
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
@@ -53,6 +62,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ISkuCatalog SkuCatalog { get; }
 
         private ISecretStoreManager SecretStoreManager { get; }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
+
+        private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         /// <inheritdoc/>
         public async Task<bool> StartComputeAsync(
@@ -95,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         cloudEnvironmentOptions);
 
                     // Construct the data for secret filtering
-                    var filterSecrets = await ConstructFilterSecretsDataAsync(cloudEnvironment, logger.NewChildLogger());
+                    var filterSecrets = await ConstructFilterSecretsDataAsync(cloudEnvironment, startCloudEnvironmentParameters.CurrentUserIdSet, logger.NewChildLogger());
 
                     // Setup input requests
                     var resources = new List<StartRequestBody>
@@ -141,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 });
         }
 
-        private async Task<FilterSecretsBody> ConstructFilterSecretsDataAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        private async Task<FilterSecretsBody> ConstructFilterSecretsDataAsync(CloudEnvironment cloudEnvironment, UserIdSet userIdSet, IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
                 $"{LogBaseName}_construct_filter_secrets_data",
@@ -149,8 +162,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 {
                     var planId = Requires.NotNull(cloudEnvironment.PlanId, nameof(cloudEnvironment.PlanId));
                     var filterSecretsBody = default(FilterSecretsBody);
+                    var secretStores = Enumerable.Empty<SecretStore>();
 
-                    var secretStores = await SecretStoreManager.GetAllSecretStoresByPlanAsync(planId, logger);
+                    // If the call is coming from the queue, use the superuser's identity
+                    if (CurrentUserProvider.Identity is VsoAnonymousClaimsIdentity)
+                    {
+                        using (CurrentUserProvider.SetScopedIdentity(SuperuserIdentity, userIdSet))
+                        {
+                            secretStores = await SecretStoreManager.GetAllSecretStoresByPlanAsync(planId, logger);
+                        }
+                    }
+                    else
+                    {
+                        // Otherwise, use the user's identity
+                        secretStores = await SecretStoreManager.GetAllSecretStoresByPlanAsync(planId, logger);
+                    }
+
                     if (secretStores.Any())
                     {
                         var prioritizedSecretStoreResources = new List<PrioritizedSecretStoreResource>();

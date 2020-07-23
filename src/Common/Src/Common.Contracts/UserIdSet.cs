@@ -1,8 +1,9 @@
-﻿// <copyright file="UserIdSet.cs" company="Microsoft">
+// <copyright file="UserIdSet.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
@@ -19,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="profileProviderId">The profile provider id.</param>
         /// <param name="linkedUserIds">Optional array of linked user IDs. See
         /// <see cref="LinkedUserIds"/>.</param>
+        [JsonConstructor]
         public UserIdSet(
             string canonicalUserId,
             string profileId,
