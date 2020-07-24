@@ -187,6 +187,22 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             // we need to prerender the shimmer early to prevent any flickering
             // the classnames below used to define the shimmer appearence class names
             var themeColor = partnerInfoData.VSCodeSettings.LoadingScreenThemeColor ?? "light";
+            var paramsTheme = HttpContext.Request.Query["loadingScreenThemeColor"];
+
+            if (!string.IsNullOrWhiteSpace(paramsTheme)) 
+            {
+                switch (paramsTheme) {
+                    case "dark":
+                        themeColor = "dark";
+                        break;
+                    case "light":
+                        themeColor = "light";
+                        break;
+                    default:
+                        themeColor = partnerInfoData.VSCodeSettings.LoadingScreenThemeColor ?? "light";
+                        break;
+                }
+            } 
 
             ViewData["shimmer-theme-color-class-name"] = (themeColor == "light")
                 ? "is-light-theme"

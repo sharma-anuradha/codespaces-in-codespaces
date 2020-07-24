@@ -76,7 +76,25 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
         platformInfo,
     } = props;
 
-    const isLightTheme = isLightThemeColor(platformInfo);
+    const params = new URLSearchParams(location.search);
+    const themeParams = params.get('loadingScreenThemeColor');
+    let isLightTheme = undefined;
+
+    if (!themeParams) {
+        isLightTheme = isLightThemeColor(platformInfo);      
+    } else {
+        switch (themeParams) {
+            case 'dark':
+                isLightTheme = false;
+                break;
+            case 'light':
+                isLightTheme = true;
+                break;
+            default:
+                isLightTheme = isLightThemeColor(platformInfo);
+                break;
+        }
+    }
 
     switch (environmentState) {
         case EnvironmentWorkspaceState.Unknown:
