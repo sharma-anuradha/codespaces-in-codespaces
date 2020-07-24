@@ -39,7 +39,7 @@ pfingress:
   annotations:
     # Auth applies to both Portal and PFS as nginx config for the same host gets merged
     nginx.ingress.kubernetes.io/auth-url: "http://portal-vsclk-portal-website.default.svc.cluster.local/auth"
-    nginx.ingress.kubernetes.io/auth-signin: "/signin"
+    nginx.ingress.kubernetes.io/auth-signin: "/signin?cid=$request_id"
     nginx.ingress.kubernetes.io/auth-cache-key: $remote_addr$http_x_vsonline_authentication$cookie_vso_pf
     nginx.ingress.kubernetes.io/auth-cache-duration: 200 1m
     nginx.ingress.kubernetes.io/auth-response-headers: X-VSOnline-Forwarding-Token,X-VSOnline-Forwarding-Port,X-VSOnline-Forwarding-WorkspaceId,X-VSOnline-Forwarding-EnvironmentId
@@ -55,6 +55,9 @@ pfingress:
           set $new_cookie $1$2;
         }
         if ($new_cookie ~ "(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)") {
+          set $new_cookie $1$2;
+        }
+        if ($new_cookie ~ "(.*)(?:^|;)\s*VstsSession=[^;]+(.*)") {
           set $new_cookie $1$2;
         }
         if ($new_cookie ~ ";\s*(.+);?\s*") {
@@ -89,6 +92,13 @@ pfingress:
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
       }
       location /signin {
+        set $http_correlation_id $request_id;
+
+        if ($arg_cid) {
+          set $http_correlation_id $arg_cid;
+        }
+
+        proxy_set_header X-Request-ID $http_correlation_id;
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
       }
       location /favicon.ico {

@@ -89,3 +89,14 @@ There's a shell script to build Portal debug image in `build/portal/build.debug.
 1. (Optional) Authenticate docker to push to the Azure Container Registry (ACR) `az acr login --name vsclkonlinedev`.
 1. Push the image to the registry `docker push vsclkonlinedev.azurecr.io/vsclk.portal.website:dev-<alias>-<unique_id>`.
 1. Update your kubernetes cluster by either running the setup script with `--portal-tag dev-<alias>-<unique_id>` or talking to kubernetes directly `kubectl set image deployment/portal-vsclk-portal-website vsclk-portal-website=vsclkonlinedev.azurecr.io/vsclk.portal.website:dev-<alias>-<unique_id> --record`
+
+
+## Tips & Tricks
+
+In the output from the setup command you can see helm commands that you can use to safely run chart upgrades without having to go through the entire setup flow. It's significantly faster and suitable for iteration on the helm charts cause you can edit them, and run the command to update your cluster, without having to check with azure about state of all the resources.
+
+> The values that are dynamic and coming from parameters are added in a separate generated yaml file, so you don't have to specify them when running the helm chart manually.
+
+### Warning
+
+Editing original PFS charts will have no effect as the suggested scripts use the ones from bin/debug/Deploy folder, if you want them to take effect run dotnet build ../../src/Deploy before, and then the helm chart.

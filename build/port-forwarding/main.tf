@@ -544,9 +544,68 @@ resource "local_file" "env_file" {
   filename = "../../src/Portal/PortalWebsite/Src/dev-stamp.env"
 }
 
+resource "local_file" "chart_values_web" {
+  content = join("\n", [
+    "port-forwarding-web-api:",
+    "  image:",
+    "    repositoryUrl: ${var.pfs_registry}",
+    "    tag: ${var.pfs_tag}",
+    "    pullPolicy: Always",
+    "    agentTag: ${var.pfa_tag}",
+    "  serviceBus:",
+    "    overrideDev: true",
+    "    namespace: ${var.alias}sb",
+    "    resourceGroup: ${azurerm_resource_group.rg.name}",
+    ""
+  ])
+
+  filename = "../../src/Deploy/web/values.dev-generated.yaml"
+}
+
+resource "local_file" "chart_values_web_bin" {
+  content = join("\n", [
+    "port-forwarding-web-api:",
+    "  image:",
+    "    repositoryUrl: ${var.pfs_registry}",
+    "    tag: ${var.pfs_tag}",
+    "    pullPolicy: Always",
+    "    agentTag: ${var.pfa_tag}",
+    "  serviceBus:",
+    "    overrideDev: true",
+    "    namespace: ${var.alias}sb",
+    "    resourceGroup: ${azurerm_resource_group.rg.name}",
+    ""
+  ])
+
+  filename = "../../bin/debug/Deploy/web/values.dev-generated.yaml"
+}
+
+resource "local_file" "chart_values_portal" {
+  content = join("\n", [
+    "image:",
+    "  repositoryUrl: ${var.pfs_registry}",
+    "  tag: ${var.portal_tag}",
+    "  pullPolicy: Always",
+    "pods:",
+    "  replicaCount: 1",
+    "configuration:",
+    "  isDevStamp: 1",
+    ""
+  ])
+
+  filename = "../../src/services/deploy/charts/common/values.dev-generated.yaml"
+}
 
 output "custer_context_command" {
   value = "az aks get-credentials -n ${azurerm_kubernetes_cluster.cluster.name} -g ${azurerm_resource_group.rg.name} --sub ${var.subscription}"
+}
+
+output "update_web_chart" {
+  value = "helm upgrade web ../../bin/debug/Deploy/web -f ../../bin/debug/Deploy/web/values.dev-alias.yaml -f ../../bin/debug/Deploy/web/values.dev-generated.yaml"
+}
+
+output "update_portal_chart" {
+  value = "helm upgrade portal ../../src/services/containers/VsClk.Portal.WebSite/Charts/vsclk-portal-website -f ../../src/services/deploy/charts/common/vsclk-online-dev-alias.yaml -f ../../src/services/deploy/charts/common/values.dev-generated.yaml"
 }
 
 output "cluster_external_ip" {

@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
@@ -189,6 +190,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
                 "send_create_new_connection_message",
                 async (childLogger) =>
                 {
+                    childLogger.AddConnectionDetails(connectionInfo);
+
                     var client = await ServiceBusClientProvider.GetQueueClientAsync(QueueNames.NewConnections, childLogger);
 
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, this.serializationOptions))

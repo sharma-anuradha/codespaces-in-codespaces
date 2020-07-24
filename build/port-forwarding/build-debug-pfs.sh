@@ -16,4 +16,4 @@ set -o pipefail
 source $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../common/helpers.sh
 
 execute "dotnet publish --no-restore /m /v:m /p:BuildFrontendBackend=false /p:BuildPortForwarding=true /p:BuildPortal=false /p:BuildTokenService=false /p:BuildOtherServices=false $REPO_ROOT/dirs.proj"
-execute "docker build -f $REPO_ROOT/bin/Debug/PortForwardingWebApi/Dockerfile.debug $REPO_ROOT/bin/Debug/PortForwardingWebApi -t port-forwarding-web-api:debug"
+execute "docker build -f $REPO_ROOT/bin/debug/PortForwardingWebApi/Dockerfile.debug $REPO_ROOT/bin/debug/PortForwardingWebApi -t port-forwarding-web-api:debug"

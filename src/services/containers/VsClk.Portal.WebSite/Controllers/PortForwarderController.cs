@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
+using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
@@ -251,6 +252,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             queryBuilder.Add("port", sessionDetails.Port.ToString());
+            queryBuilder.Add("cid", HttpContext.GetCorrelationId());
 
             redirectUriBuilder.Query = queryBuilder.ToString();
 

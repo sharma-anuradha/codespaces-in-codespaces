@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections
@@ -41,6 +42,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
             CancellationToken cancellationToken)
         {
             var connection = JsonSerializer.Deserialize<ConnectionDetails>(message.Body, jsonSerializerOptions);
+
+            logger.AddConnectionDetails(connection);
 
             var registration = new AgentRegistration
             {

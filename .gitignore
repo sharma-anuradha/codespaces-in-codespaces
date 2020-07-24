@@ -357,4 +357,4 @@ templates/app.secrets.yaml
 /build/port-forwarding/terraform.tfstate.backup
 
 dev-stamp.env
-
+values.dev-generated.yaml

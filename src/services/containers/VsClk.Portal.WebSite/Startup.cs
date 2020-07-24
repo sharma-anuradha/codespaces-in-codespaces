@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.VsSaaS.AspNetCore.Http;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -141,6 +142,28 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 // Enable PII data in logs for Local
                 IdentityModelEventSource.ShowPII = true;
             }
+
+            app.Use(async (httpContext, next) =>
+            {
+                if (httpContext.Request.Query.TryGetValue("cid", out var requestCorrelationId))
+                {
+                    var correlationId = requestCorrelationId.SingleOrDefault();
+                    if (correlationId != default)
+                    {
+                        httpContext.TrySetRequestId(correlationId);
+                    }
+                }
+                else if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
+                {
+                    var requestId = nginxRequestId.SingleOrDefault();
+                    if (requestId != default)
+                    {
+                        httpContext.TrySetRequestId(requestId);
+                    }
+                }
+
+                await next();
+            });
 
             app.Use(async (context, next) =>
             {

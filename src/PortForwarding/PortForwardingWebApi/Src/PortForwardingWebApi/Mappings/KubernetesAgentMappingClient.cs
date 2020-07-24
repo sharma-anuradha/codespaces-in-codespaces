@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings
@@ -29,11 +30,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         {
             ["kubernetes.io/ingress.class"] = "nginx",
             ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
-            ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin",
+            ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin?cid=$request_id",
             ["nginx.ingress.kubernetes.io/configuration-snippet"] = @"
                 set $new_cookie $http_cookie;
 
                 if ($new_cookie ~ ""(.*)(?:^|;)\s*use_vso_pfs=[^;]+(.*)"") {
+                    set $new_cookie $1$2;
+                }
+                if ($new_cookie ~ ""(.*)(?:^|;)\s*VstsSession=[^;]+(.*)"") {
                     set $new_cookie $1$2;
                 }
                 if ($new_cookie ~ ""(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)"") {
@@ -47,6 +51,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
             ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '),
             ["nginx.ingress.kubernetes.io/server-snippet"] = @"
                 location /signin {
+                    set $http_correlation_id $request_id;
+
+                    if ($arg_cid) {
+                        set $http_correlation_id $arg_cid;
+                    }
+
+                    proxy_set_header X-Request-ID $http_correlation_id;
                     proxy_pass http://portal-vsclk-portal-website.default.svc.cluster.local;
                 }
                 location /authenticate-codespace {
@@ -83,8 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 "kubernetes_register_agent",
                 async (childLogger) =>
                 {
-                    childLogger.AddValue("AgentName", registration.Name);
-                    childLogger.AddValue("AgentUid", registration.Uid);
+                    childLogger.AddAgentRegistration(registration);
 
                     var podList = await KubernetesClient.ListNamespacedPodAsync(DefaultNamespace, fieldSelector: $"metadata.name={registration.Name}");
                     var namedPod = podList.Items.SingleOrDefault();
@@ -113,19 +123,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 throw new ArgumentNullException(nameof(mapping));
             }
 
-            logger
-                .FluentAddBaseValue("workspace_id", mapping.WorkspaceId)
-                .FluentAddBaseValue("source_port", mapping.SourcePort)
-                .FluentAddBaseValue("AgentName", mapping.AgentName)
-                .FluentAddBaseValue("AgentUid", mapping.AgentUid)
-                .FluentAddBaseValue("destination_port", mapping.DestinationPort);
+            logger.AddConnectionDetails(mapping);
 
             await Task.WhenAll(
                 logger.OperationScopeAsync(
                     "kubernetes_create_agent_endpoint",
                     async (childLogger) =>
                     {
-                        childLogger.AddValue("kubernetes_endpoint_name", mapping.GetKubernetesServiceName());
+                        childLogger.AddValue("KubernetesEndpointName", mapping.GetKubernetesServiceName());
 
                         var agentPod = await KubernetesClient.ReadNamespacedPodAsync(mapping.AgentName, DefaultNamespace);
 
@@ -158,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                     "kubernetes_create_agent_service",
                     async (childLogger) =>
                     {
-                        childLogger.AddValue("kubernetes_service_name", mapping.GetKubernetesServiceName());
+                        childLogger.AddValue("KubernetesServiceName", mapping.GetKubernetesServiceName());
 
                         var service = new V1Service
                         {

@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
@@ -86,6 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 Token = token,
                 VSLiveShareApiEndpoint = appSettings.VSLiveShareApiEndpoint,
             };
+
+            logger.AddConnectionDetails(connectionInfo);
 
             // At this stage we only care about headers setting the PF context.
             // TODO: Can we structure the helpers and services in a way that PFS would explicitly work only on top of headers?
@@ -177,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                             Query = context.Request.QueryString.ToString(),
                         };
 
-                        logger.AddValue("target_url", uriBuilder.Uri.ToString());
+                        logger.AddValue("TargetUrl", uriBuilder.Uri.ToString());
                         logger.LogInfo("connection_creation_middleware_redirect");
 
                         context.Response.Redirect(uriBuilder.Uri.ToString());

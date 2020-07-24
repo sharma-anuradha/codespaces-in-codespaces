@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Claims;
@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
 
         public override IFeatureCollection Features => throw new NotImplementedException();
 
-        public override IDictionary<object, object> Items { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public override IDictionary<object, object> Items { get => new Dictionary<object, object> { ["CorrelationId"] = "Test" }; set => throw new NotImplementedException(); }
 
         public override HttpRequest Request { get; }
         public Mock<HttpResponse> MockResponse { get; }
