@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenIdMetadataController.cs" company="Microsoft">
+// <copyright file="OpenIdMetadataController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -61,7 +61,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 return NotFound();
             }
 
-            var serviceUri = $"{Request.Scheme}://{Request.Host}/";
+            var serviceUri = Request.Host.Host == "localhost" ?
+                $"http://localhost:{Request.Host.Port}/" : $"https://{Request.Host}/";
             var issuerUri = issuerSettings.IssuerUri;
 
             var result = new OpenIdMetadataResult
