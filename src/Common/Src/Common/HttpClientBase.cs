@@ -6,6 +6,7 @@ using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -47,25 +48,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
         /// <param name="input">The input object that will be serialized as JSON for the request body.</param>
         /// <param name="logger">The logger to use to log the request/response details.</param>
         /// <returns>The deserialized object from the response body.</returns>
-        protected async Task<TResult> SendAsync<TInput, TResult>(
+        protected Task<TResult> SendAsync<TInput, TResult>(
             HttpMethod method,
             string requestUri,
             TInput input,
             IDiagnosticsLogger logger)
         {
-            var rawResult = await SendRawAsync(method, requestUri, input, logger.NewChildLogger());
+            var childLogger = logger?.NewChildLogger();
 
-            try
-            {
-                var result = JsonConvert.DeserializeObject<TResult>(rawResult);
-
-                return result;
-            }
-            catch (Exception)
-            {
-                logger?.LogError(GetType().FormatLogErrorMessage(nameof(SendAsync)));
-                throw;
-            }
+            return Retry.DoAsync(
+                async attempt =>
+                {
+                    var rawResult = await SendRawAsync(method, requestUri, input, childLogger);
+                    childLogger
+                          ?.FluentAddValue("Attempt", attempt)
+                          ?.FluentAddValue("RequestUri", requestUri)
+                          ?.LogInfo("HttpClientBase-SendAsync");
+                    return JsonConvert.DeserializeObject<TResult>(rawResult);
+                },
+                (attempt, exception) =>
+                {
+                    childLogger?.LogException(GetType().FormatLogErrorMessage(nameof(SendAsync)), exception);
+                });
         }
 
         /// <summary>
