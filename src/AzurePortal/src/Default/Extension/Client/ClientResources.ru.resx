@@ -167,22 +167,22 @@
     <value>Расположение</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>Планы пространств кода</value>
+    <value>Планы Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>План пространств кода</value>
+    <value>План Codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>планы пространств кода</value>
+    <value>планы codespaces</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>план пространств кода</value>
+    <value>план codespaces</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>Создание плана пространств кода</value>
+    <value>Создание плана Codespaces</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>Планы пространств кода</value>
+    <value>Планы Codespaces</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
     <value>Добавьте здесь описание вашей службы, чтобы кратко рассказать о своей службе клиентам. Также добавьте ссылку "Дополнительные сведения", ведущую на документацию или на маркетинговый сайт Azure для вашего типа ресурсов.</value>
@@ -281,7 +281,7 @@
     <value>Изменение пространства кода</value>
   </data>
   <data name="CodespacesBladeSubtitle" xml:space="preserve">
-    <value>Пространства кода</value>
+    <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
     <value>Мои пространства кода</value>
@@ -299,10 +299,10 @@
     <value>Удалить пространство кода</value>
   </data>
   <data name="CreateCodespace" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>Создание пространства кода</value>
   </data>
   <data name="SuspendCodespace" xml:space="preserve">
-    <value>Suspend Codespace</value>
+    <value>Приостановка пространства кода</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Подпись свойства</value>
@@ -338,7 +338,7 @@
     <value>Command1</value>
   </data>
   <data name="Item1" xml:space="preserve">
-    <value>Пространства кода</value>
+    <value>Codespaces</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
     <value>одно ключевое_слово_1</value>
@@ -356,7 +356,7 @@
     <value>строка подключения</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
-    <value>Пространства кода</value>
+    <value>Codespaces</value>
   </data>
   <data name="Overview" xml:space="preserve">
     <value>Обзор</value>
@@ -371,7 +371,7 @@
     <value>Имя плана пространства кода VS</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
-    <value>Пространства кода VS</value>
+    <value>VS Codespaces</value>
   </data>
   <data name="Overview_VirtualNetworkLabel" xml:space="preserve">
     <value>Виртуальная сеть или подсеть</value>
@@ -437,7 +437,7 @@
     <value>Помощник по службе приложений предоставляет аналитические сведения для улучшения интерфейса приложений на платформе Службы приложений. Рекомендации отсортированы по новизне, приоритету и влиянию.</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>Открытие пространства кода в Visual Studio</value>
+    <value>Открыть Codespaces в Visual Studio</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>Благодаря шаблонам Azure пользователи могут применять привычные и хорошо изученные конструктивные шаблоны во всех компонентах Azure.</value>
@@ -467,10 +467,10 @@
     <value>Выберите пункт меню</value>
   </data>
   <data name="DeleteCodespaceConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete {0}?</value>
+    <value>Удалить {0}?</value>
   </data>
   <data name="DeletePlanConfirmation" xml:space="preserve">
-    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
+    <value>Удаление {0} также удалит связанные с планом пространства кода ({1}). Продолжить?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>Первичный ключ</value>

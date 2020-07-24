@@ -1,5 +1,5 @@
 {
-  "displayName": "Codespace 计划",
+  "displayName": "Codespaces 计划",
   "publisherDisplayName": "Microsoft",
   "summary": "可随处访问的云承载开发环境",
   "longSummary": "无论是处理长期项目、短期功能分支，还是想要快速查看拉取请求，Visual Studio Codespaces 都可以通过在几分钟内提供完全配置的开发环境来帮助提高效率。",

@@ -299,10 +299,10 @@
     <value>Odstranit prostředí Codespaces</value>
   </data>
   <data name="CreateCodespace" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>Vytvořit prostředí Codespaces</value>
   </data>
   <data name="SuspendCodespace" xml:space="preserve">
-    <value>Suspend Codespace</value>
+    <value>Pozastavit prostředí Codespaces</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Popisek vlastnosti</value>
@@ -467,10 +467,10 @@
     <value>Vybrat položku nabídky</value>
   </data>
   <data name="DeleteCodespaceConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete {0}?</value>
+    <value>Opravdu chcete prostředek {0} odstranit?</value>
   </data>
   <data name="DeletePlanConfirmation" xml:space="preserve">
-    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
+    <value>Když se odstraní {0}, odstraní se i tento počet prostředí Codespaces přidružených k plánu: {1}. Chcete pokračovat?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>Primární klíč</value>

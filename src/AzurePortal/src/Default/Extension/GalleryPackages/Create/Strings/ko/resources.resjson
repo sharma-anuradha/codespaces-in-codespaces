@@ -1,5 +1,5 @@
 {
-  "displayName": "코드 공간 플랜",
+  "displayName": "Codespaces 플랜",
   "publisherDisplayName": "Microsoft",
   "summary": "어디서나 액세스할 수 있는 클라우드에 호스트되는 개발 환경",
   "longSummary": "장기 프로젝트 작업 중이든, 단기 기능 분기 작업 중이든 또는 끌어오기 요청을 빠르게 검토하려는 경우이든 관계없이 Visual Studio Codespaces를 사용하면 완전히 구성된 개발 환경을 몇 분 만에 제공하여 생산성을 높일 수 있습니다.",

@@ -299,10 +299,10 @@
     <value>Eliminar Codespace</value>
   </data>
   <data name="CreateCodespace" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>Criar Codespace</value>
   </data>
   <data name="SuspendCodespace" xml:space="preserve">
-    <value>Suspend Codespace</value>
+    <value>Suspender Codespace</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Etiqueta da propriedade</value>
@@ -467,10 +467,10 @@
     <value>Selecionar item do menu</value>
   </data>
   <data name="DeleteCodespaceConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete {0}?</value>
+    <value>Tem a certeza de que pretende eliminar {0}?</value>
   </data>
   <data name="DeletePlanConfirmation" xml:space="preserve">
-    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
+    <value>Ao eliminar {0}, também eliminará os {1} Codespaces associados ao plano. Quer prosseguir?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>Chave primária</value>

@@ -167,22 +167,22 @@
     <value>位置</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>程式碼空間方案</value>
+    <value>Codespaces 方案</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>程式碼空間方案</value>
+    <value>Codespaces 方案</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>程式碼空間方案</value>
+    <value>Codespaces 方案</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>程式碼空間方案</value>
+    <value>Codespaces 方案</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>建立程式碼空間方案</value>
+    <value>建立 Codespaces 方案</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>程式碼空間方案</value>
+    <value>Codespaces 方案</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
     <value>在此新增您的服務描述，以快速將服務介紹給客戶。同時新增「深入了解」連結，讓客戶可連結至文件或您資源類型的 Azure 行銷網站。</value>
@@ -281,10 +281,10 @@
     <value>編輯程式碼空間</value>
   </data>
   <data name="CodespacesBladeSubtitle" xml:space="preserve">
-    <value>程式碼空間</value>
+    <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
-    <value>我的程式碼空間</value>
+    <value>我的 Codespaces</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
     <value>資源組件副標題</value>
@@ -299,10 +299,10 @@
     <value>刪除程式碼空間</value>
   </data>
   <data name="CreateCodespace" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>建立程式碼空間</value>
   </data>
   <data name="SuspendCodespace" xml:space="preserve">
-    <value>Suspend Codespace</value>
+    <value>暫止程式碼空間</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>屬性標籤</value>
@@ -338,7 +338,7 @@
     <value>Command1</value>
   </data>
   <data name="Item1" xml:space="preserve">
-    <value>程式碼空間</value>
+    <value>Codespaces</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
     <value>一個 keyword1</value>
@@ -356,7 +356,7 @@
     <value>連接字串</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
-    <value>程式碼空間</value>
+    <value>Codespaces</value>
   </data>
   <data name="Overview" xml:space="preserve">
     <value>概觀</value>
@@ -371,7 +371,7 @@
     <value>VS 程式碼空間方案名稱</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
-    <value>VS 程式碼空間</value>
+    <value>VS Codespaces</value>
   </data>
   <data name="Overview_VirtualNetworkLabel" xml:space="preserve">
     <value>虛擬網路/子網路</value>
@@ -437,7 +437,7 @@
     <value>App Service Advisor 提供見解，以改進 App Service 平台上的應用程式體驗。建議會依據更新時間、優先順序與影響排序。</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>在 Visual Studio 中開啟程式碼空間</value>
+    <value>在 Visual Studio 中開啟 Codespaces</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>以下是 Azure 通用的樣式，讓使用者可以在 Azure 中使用一些常見而且經過研究的設計樣式。</value>
@@ -467,10 +467,10 @@
     <value>選取功能表項目</value>
   </data>
   <data name="DeleteCodespaceConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete {0}?</value>
+    <value>您確定要刪除 {0} 嗎?</value>
   </data>
   <data name="DeletePlanConfirmation" xml:space="preserve">
-    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
+    <value>刪除 {0} 也會刪除與方案建立關聯的 {1} Codespaces。要繼續嗎?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>主索引鍵</value>

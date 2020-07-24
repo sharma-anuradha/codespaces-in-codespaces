@@ -299,10 +299,10 @@
     <value>Codespace verwijderen</value>
   </data>
   <data name="CreateCodespace" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>Codespace maken</value>
   </data>
   <data name="SuspendCodespace" xml:space="preserve">
-    <value>Suspend Codespace</value>
+    <value>Codespace onderbreken</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>Label voor eigenschap</value>
@@ -467,10 +467,10 @@
     <value>Menu-item selecteren</value>
   </data>
   <data name="DeleteCodespaceConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete {0}?</value>
+    <value>Weet u zeker dat u {0} wilt verwijderen?</value>
   </data>
   <data name="DeletePlanConfirmation" xml:space="preserve">
-    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
+    <value>Als u {0} verwijdert, worden ook de {1} Codespaces die zijn gekoppeld aan het abonnement verwijderd. Wilt u doorgaan?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>Primaire sleutel</value>

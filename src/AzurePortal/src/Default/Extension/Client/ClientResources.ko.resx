@@ -167,22 +167,22 @@
     <value>위치</value>
   </data>
   <data name="CodespacesNames_Plans_plural" xml:space="preserve">
-    <value>코드 공간 플랜</value>
+    <value>Codespaces 플랜</value>
   </data>
   <data name="CodespacesNames_Plans_singular" xml:space="preserve">
-    <value>코드 공간 플랜</value>
+    <value>Codespaces 플랜</value>
   </data>
   <data name="CodespacesNames_Plans_lowerPlural" xml:space="preserve">
-    <value>코드 공간 플랜</value>
+    <value>Codespaces 플랜</value>
   </data>
   <data name="CodespacesNames_Plans_lowerSingular" xml:space="preserve">
-    <value>코드 공간 플랜</value>
+    <value>Codespaces 플랜</value>
   </data>
   <data name="CreateBladeTitle" xml:space="preserve">
-    <value>코드 공간 플랜 만들기</value>
+    <value>Codespaces 플랜 만들기</value>
   </data>
   <data name="CreateBladeSubtitle" xml:space="preserve">
-    <value>코드 공간 플랜</value>
+    <value>Codespaces 플랜</value>
   </data>
   <data name="CreateBladeIntroduction" xml:space="preserve">
     <value>고객에게 서비스를 빠르게 소개하려면 여기에 서비스에 대한 설명을 추가하세요. 또한 리소스 종류의 설명서 또는 Azure 마케팅 사이트로 연결되는 자세한 정보 링크를 추가하세요.</value>
@@ -281,10 +281,10 @@
     <value>코드 공간 편집</value>
   </data>
   <data name="CodespacesBladeSubtitle" xml:space="preserve">
-    <value>코드 공간</value>
+    <value>Codespaces</value>
   </data>
   <data name="CodepsacesBladeTitle" xml:space="preserve">
-    <value>내 코드 공간</value>
+    <value>내 Codespaces</value>
   </data>
   <data name="ResourcePartSubtitle" xml:space="preserve">
     <value>리소스 부분 부제</value>
@@ -299,10 +299,10 @@
     <value>코드 공간 삭제</value>
   </data>
   <data name="CreateCodespace" xml:space="preserve">
-    <value>Create Codespace</value>
+    <value>코드 공간 만들기</value>
   </data>
   <data name="SuspendCodespace" xml:space="preserve">
-    <value>Suspend Codespace</value>
+    <value>코드 공간 일시 중단</value>
   </data>
   <data name="PropertyLabel" xml:space="preserve">
     <value>속성 레이블</value>
@@ -338,7 +338,7 @@
     <value>Command1</value>
   </data>
   <data name="Item1" xml:space="preserve">
-    <value>코드 공간</value>
+    <value>Codespaces</value>
   </data>
   <data name="Item1Keywords" xml:space="preserve">
     <value>keyword1 1개</value>
@@ -356,7 +356,7 @@
     <value>연결 문자열</value>
   </data>
   <data name="Codespaces" xml:space="preserve">
-    <value>코드 공간</value>
+    <value>Codespaces</value>
   </data>
   <data name="Overview" xml:space="preserve">
     <value>개요</value>
@@ -371,7 +371,7 @@
     <value>VS 코드 공간 플랜 이름</value>
   </data>
   <data name="Overview_CodespacesLabel" xml:space="preserve">
-    <value>VS 코드 공간</value>
+    <value>VS Codespaces</value>
   </data>
   <data name="Overview_VirtualNetworkLabel" xml:space="preserve">
     <value>가상 네트워크/서브넷</value>
@@ -437,7 +437,7 @@
     <value>App Service Advisor는 App Service 플랫폼의 앱 환경을 개선하는 데 필요한 인사이트를 제공합니다. 권장 사항은 최신별, 우선 순위별, 영향별로 정렬됩니다.</value>
   </data>
   <data name="Tile_ChangeCodespaceConfigurationLinkTitle" xml:space="preserve">
-    <value>Visual Studio에서 코드 공간 열기</value>
+    <value>Visual Studio에서 Codespaces 열기</value>
   </data>
   <data name="Tile_ConsistencyDescription" xml:space="preserve">
     <value>Azure에서 패턴을 따르면 사용자가 Azure 전체에서 잘 알려지고 조사된 몇 가지 디자인 패턴을 활용할 수 있습니다.</value>
@@ -467,10 +467,10 @@
     <value>메뉴 항목 선택</value>
   </data>
   <data name="DeleteCodespaceConfirmation" xml:space="preserve">
-    <value>Are you sure you want to delete {0}?</value>
+    <value>{0}을(를) 삭제하시겠습니까?</value>
   </data>
   <data name="DeletePlanConfirmation" xml:space="preserve">
-    <value>Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?</value>
+    <value>{0}을(를) 삭제하면 플랜과 연결된 Codespaces {1}개도 삭제됩니다. 계속하시겠습니까?</value>
   </data>
   <data name="KeyPrimaryKeyLabel" xml:space="preserve">
     <value>기본 키</value>
