@@ -75,7 +75,7 @@ function main () {
     if [ -z "$portal_tag" ]
     then
         echo "Searching for latest vsclk.portal.website tag"
-        portal_tag="$(az acr repository show-tags --name vsclkonlinedev --repository vsclk.portal.website --orderby time_desc --query "[?starts_with(@, '0')]|[0]" | sed s/\"//g)"
+        portal_tag="$(az acr repository show-tags --name vsclkonlinedev --repository vsclk.portal.website --orderby time_desc --query "[?starts_with(@, '1')]|[0]" | sed s/\"//g)"
     fi
 
     if [ -f "terraform.tfstate" ]; then

@@ -434,6 +434,11 @@ data "azurerm_key_vault_secret" "GitHubNativeAppClientSecret" {
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
+data "azurerm_key_vault_secret" "GitHubAzurePortalClientSecret" {
+  name         = "Config-GitHubAzurePortalClientSecret"
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
 data "azurerm_key_vault_secret" "AzDevAppClientSecret" {
   name         = "Config-AzDevAppClientSecret"
   key_vault_id = data.azurerm_key_vault.kv.id
@@ -456,10 +461,13 @@ resource "kubernetes_secret" "portal_secrets" {
     "PORTAL_AppSettings__EnvironmentRegistrationEndpoint"                = "https://online.dev.core.vsengsaas.visualstudio.com/api/v1/environments"
     "PORTAL_AppSettings__GitHubAppClientId"                              = "fe42cbbb45cdcb17a106"
     "PORTAL_AppSettings__GitHubAppClientSecret"                          = data.azurerm_key_vault_secret.GitHubAppClientSecret.value
+    "PORTAL_AppSettings__GitHubAzurePortalClientId"                      = "85b34cc4079b954b09fc"
+    "PORTAL_AppSettings__GitHubAzurePortalClientSecret"                  = data.azurerm_key_vault_secret.GitHubAzurePortalClientSecret.value
     "PORTAL_AppSettings__GitHubNativeAppClientId"                        = "Iv1.faf5804e51bc0d8f"
     "PORTAL_AppSettings__GitHubNativeAppClientSecret"                    = data.azurerm_key_vault_secret.GitHubNativeAppClientSecret.value
     "PORTAL_AppSettings__GitHubPortForwardingDomainTemplate"             = "{0}.apps.dev.codespaces.githubusercontent.com"
     "PORTAL_AppSettings__GitHubPortForwardingEnableEnvironmentEndpoints" = "true"
+    "PORTAL_AppSettings__GitHubPortForwardingManagementEndpoint"         = "https://management.apps.dev.codespaces.githubusercontent.com/api/v1/PortForwardingConnections"
     "PORTAL_AppSettings__KeyVaultName"                                   = "vsclk-online-dev-kv"
     "PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientId"         = data.azurerm_key_vault_secret.app_sp_id.value
     "PORTAL_AppSettings__KeyVaultReaderServicePrincipalClientSecret"     = data.azurerm_key_vault_secret.app_sp_password.value
@@ -468,6 +476,7 @@ resource "kubernetes_secret" "portal_secrets" {
     "PORTAL_AppSettings__MicrosoftAppClientId"                           = "ce5aa96e-1717-4055-a2b5-cfe4aebbf36d"
     "PORTAL_AppSettings__MicrosoftAppClientSecret"                       = data.azurerm_key_vault_secret.MicrosoftAppClientSecret.value
     "PORTAL_AppSettings__PortForwardingDomainTemplate"                   = "{0}.app.online.dev.core.vsengsaas.visualstudio.com"
+    "PORTAL_AppSettings__PortForwardingManagementEndpoint"               = "https://management.app.online.dev.core.vsengsaas.visualstudio.com/api/v1/PortForwardingConnections"
     "PORTAL_AppSettings__PortForwardingEnableEnvironmentEndpoints"       = "true"
     "PORTAL_AppSettings__PortForwardingServiceEnabled"                   = "true"
     "PORTAL_AppSettings__PortalEndpoint"                                 = "https://online.dev.core.vsengsaas.visualstudio.com"

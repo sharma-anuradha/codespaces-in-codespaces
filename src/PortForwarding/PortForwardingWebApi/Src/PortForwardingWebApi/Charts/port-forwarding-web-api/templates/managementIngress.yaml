@@ -28,7 +28,7 @@ spec:
         {{- range $.Values.managementIngress.paths }}
           - path: {{ . }}
             backend:
-              serviceName: {{ $fullName }}
+              serviceName: {{ $fullName }}-management
               servicePort: http
         {{- end }}
   {{- end }}

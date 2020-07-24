@@ -30,7 +30,7 @@ spec:
         {{- range $ingressPaths }}
           - path: {{ . }}
             backend:
-              serviceName: {{ $serviceName}}
+              serviceName: {{ $serviceName}}-gh-auth
               servicePort: {{ $servicePort }}
         {{- end }}
   {{- end }}

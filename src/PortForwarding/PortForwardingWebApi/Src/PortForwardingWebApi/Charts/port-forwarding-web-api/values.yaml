@@ -15,7 +15,7 @@ pods:
   minReadySeconds: 1
   progressDeadlineSeconds: 300
   livenessProbePath: /health
-  livenessProbeDelaySeconds: 15 
+  livenessProbeDelaySeconds: 15
   livenessProbeDelayTimeoutSeconds:
   readinessProbePath: /warmup
   readinessProbeDelaySeconds: 15
@@ -58,16 +58,14 @@ service:
 ingress:
   enabled: true
   annotations:
-    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/canary: "true"
     nginx.ingress.kubernetes.io/canary-by-header: "X-VSOnline-Use-Forwarding"
     nginx.ingress.kubernetes.io/canary-by-cookie: use_vso_pfs
-  paths: 
+  paths:
     - /
 
 managementIngress:
-  kubernetes.io/ingress.class: nginx
-  paths: 
+  paths:
     - /api/v1/PortForwardingConnections
 
 resources:
