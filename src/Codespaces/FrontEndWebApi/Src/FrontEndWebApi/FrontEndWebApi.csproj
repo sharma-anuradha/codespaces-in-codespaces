@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
@@ -6,6 +6,10 @@
     <UserSecretsId>2c393ee2-9a6c-45a4-bb82-8c05b2f9ab70</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GenerateAppSettingsCommitId>true</GenerateAppSettingsCommitId>
+  </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="$(AspNetCoreDllVersions)" />
