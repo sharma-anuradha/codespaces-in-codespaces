@@ -107,6 +107,15 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public string LoadingScreenThemeColor { get; set; }
         }
 
+        public class Favicon
+        {
+            [JsonProperty("stable")]
+            public string Stable { get; set; }
+
+            [JsonProperty("insider")]
+            public string Insider { get; set; }
+        }
+
         public class PartnerInfo
         {
             [JsonProperty("partnerName")]
@@ -131,7 +140,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             public object FeatureFlags { get; set; }
 
             [JsonProperty("favicon")]
-            public object Favicon { get; set; }
+            public Favicon Favicon { get; set; }
 
             [JsonProperty("credentials")]
             public List<object> Credentials { get; set; }
@@ -212,7 +221,32 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 ? "is-logo"
                 : "";
 
+            ViewData["favicon-url"] = GetFaviconUrl(partnerInfoData);
+
             return View();
+        }
+
+        private string GetFaviconUrl(PartnerInfo partnerInfoData)
+        {
+            // get favicon from the partner info if possible, if not set, use the vscode one
+            // per dogfoodChannel, otherwise use vscode stable one
+            var stableUrl = "/vscode-stable-favicon.ico";
+            var insiderUrl = "/vscode-insider-favicon.ico";
+
+            if (partnerInfoData.VSCodeSettings == null)
+            {
+                return stableUrl;
+            }
+
+            var channel = partnerInfoData.VSCodeSettings.VSCodeChannel ?? "stable";
+            var favicon = partnerInfoData.Favicon ?? new Favicon {
+                Stable = stableUrl,
+                Insider = insiderUrl,
+            };
+
+            return (channel == "stable")
+                ? favicon.Stable
+                : favicon.Insider;
         }
     }
 }

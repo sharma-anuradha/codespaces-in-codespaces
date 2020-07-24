@@ -11,7 +11,7 @@ import { ServerlessSplashscreen } from '../../../../components/serverlessSpalshs
 interface IWorkbenchPageProps extends RouteComponentProps<{ id: string }> {}
 
 export const WorkbenchPageGithub = (props: IWorkbenchPageProps) => {
-    useEffect(() => {    
+    useEffect(() => {
         document.title = DEFAULT_TITLE;
     });
 

@@ -1,0 +1,42 @@
+.vscs-icon {
+    display: inline-block;
+    position: relative;
+    width: 16px;
+    height: 16px;
+    /* prevent flex layout to affect the sice of the icons */
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.vscs-icon > svg,
+.vscs-icon::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.vscs-icon::after {
+    content: '';
+    z-index: 2;
+}
+
+.vscs-icon svg,
+.vscs-icon use {
+    fill: inherit;
+    z-index: 1;
+}
+
+.vscs-icon--blue {
+    fill: var(--vscode-debugIcon-continueForeground, #0366d6);
+}
+.vscs-icon--green {
+    fill: var(--vscode-debugIcon-startForeground, #28a745);
+}
+.vscs-icon--red {
+    fill: var(--vscode-errorForeground, #cb2431);
+}
+.vscs-icon--black {
+    fill: var(--vscode-editor-foreground, #444d56);
+}

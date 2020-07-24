@@ -19,17 +19,13 @@ import { authService } from '../../../auth/authService';
 import { sendTelemetry } from '../../../telemetry/sendTelemetry';
 import { getWelcomeMessage } from '../../../utils/getWelcomeMessage';
 import { vsoAPI } from '../../../api/vsoAPI';
-import { Interface } from 'readline';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
+import { PlatformQueryParams, CONNECT_ATTEMPT_COUNT_LS_KEY } from '../../../constants';
+import { getPlatformQueryParam } from '../../../utils/getPlatformQueryParam';
 
 const { SECOND_MS } = timeConstants;
 
 const trace = createTrace('workbench');
-
-export const isAutoStart = () => {
-    const params = new URLSearchParams(location.search);
-    return params.get('autoStart') !== 'false';
-};
 
 interface IWorkbenchPageProps {
     platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
@@ -147,7 +143,7 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
         console.log(getWelcomeMessage(config.environment, `${process.env.VSCS_WORKBENCH_VERSION}`));
     };
 
-    public async componentDidMount() {
+    public async componentWillMount() {
         try {
             this.setState({ value: EnvironmentWorkspaceState.Initializing });
 
@@ -156,6 +152,44 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
             await config.fetch();
 
             this.logWelcomeMessage();
+
+            /**
+             * Check if we need to auto authorize to the environment.
+             */
+            const isAuthorized = !!(await authService.getPartnerInfo());
+            if (await getPlatformQueryParam(PlatformQueryParams.AutoAuthorize) && !isAuthorized) {
+                /**
+                 * Since we redirect for the credentials to external partners,
+                 * if something unexpected happens, there is a potential to stuck in an infinite loop.
+                 * The logic below aimed to break such loop after sequential failed 3 attempts.
+                 */
+                const connectAttempLsValue = localStorage.getItem(CONNECT_ATTEMPT_COUNT_LS_KEY) || '';
+                const connectAttemptCount = parseInt(connectAttempLsValue, 10) || 0;
+
+                // too many attempts, bail out of the OAuth redirection infinite loop
+                if (connectAttemptCount >= 3) {
+                    return this.setState({
+                        value: EnvironmentWorkspaceState.SignedOut,
+                        message:
+                            'Cannot connect to the Codespace.',
+                    });
+                }
+
+                // increment attempt count
+                localStorage.setItem(CONNECT_ATTEMPT_COUNT_LS_KEY, `${connectAttemptCount + 1}`);
+
+                return await authService.redirectToLogin();
+            }
+            // on successful auth, reset the count
+            localStorage.removeItem(CONNECT_ATTEMPT_COUNT_LS_KEY);
+
+            authService.onEvent((event) => {
+                if (event === 'signed-out') {
+                    this.setState({ value: EnvironmentWorkspaceState.SignedOut });
+                }
+            });
+
+            authService.keepUserAuthenticated();
 
             trace.info(`Getting environment info..`);
 
@@ -172,20 +206,13 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
             }
 
             /**
-             * Check if we need to autostart the environment.
+             * Check if we need to auto start the environment.
              */
             const isShutdown = this.environmentInfo.state === EnvironmentStateInfo.Shutdown;
-            if (isAutoStart() && isShutdown) {
+            const isAutoStart = await getPlatformQueryParam(PlatformQueryParams.AutoStart);
+            if (isAutoStart && isShutdown) {
                 return await this.startCodespace();
             }
-
-            authService.onEvent((event) => {
-                if (event === 'signed-out') {
-                    this.setState({ value: EnvironmentWorkspaceState.SignedOut });
-                }
-            });
-
-            authService.keepUserAuthenticated();
 
             this.setState({ value: this.environmentInfo.state });
         } catch (e) {
@@ -221,7 +248,10 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
                 message={message}
                 startEnvironment={this.startCodespace}
                 handleAPIError={this.handleAPIError}
-                onSignIn={authService.redirectToLogin}
+                onSignIn={async () => {
+                    localStorage.removeItem(CONNECT_ATTEMPT_COUNT_LS_KEY);
+                    await authService.redirectToLogin();
+                }}
             />
         );
     }

@@ -101,19 +101,36 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
         case EnvironmentWorkspaceState.Initializing: {
             return (
                 <SplashScreenMessage
-                    message='Getting things ready...'
+                    message='Connecting...'
+                    messageIcon={'progress'}
                     isLightTheme={isLightTheme}
                 />
             );
         }
         case EnvironmentWorkspaceState.SignedOut: {
             const buttonProps: IButtonLinkProps = {
-                text: 'Sign in',
+                text: 'Connect',
                 onClick: onSignIn,
             };
+
+            if (message) {
+                const buttonProps: IButtonLinkProps = {
+                    text: 'Try again',
+                    onClick: onSignIn,
+                };
+                return (
+                    <SplashScreenMessage
+                        message={message}
+                        messageIcon={'error'}
+                        button={buttonProps}
+                        isLightTheme={isLightTheme}
+                    />
+                );
+            }
+
             return (
                 <SplashScreenMessage
-                    message='Please sign in to proceed.'
+                    message='Codespace is disconnected.'
                     button={buttonProps}
                     isLightTheme={isLightTheme}
                 />
@@ -123,6 +140,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             return (
                 <SplashScreenMessage
                     message={message || 'Codespace error.'}
+                    messageIcon={'error'}
                     isLightTheme={isLightTheme}
                 />
             );
@@ -131,6 +149,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             return (
                 <SplashScreenMessage
                     message='Starting the codespace...'
+                    messageIcon={'progress'}
                     isLightTheme={isLightTheme}
                 />
             );
@@ -139,13 +158,18 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             return (
                 <SplashScreenMessage
                     message='The codespace has been deleted.'
+                    messageIcon={'error'}
                     isLightTheme={isLightTheme}
                 />
             );
         }
         case EnvironmentStateInfo.Failed: {
             return (
-                <SplashScreenMessage message='The codespace failed.' isLightTheme={isLightTheme} />
+                <SplashScreenMessage
+                    message='The codespace failed.'
+                    messageIcon={'error'}
+                    isLightTheme={isLightTheme}
+                />
             );
         }
         case EnvironmentStateInfo.Provisioning: {
@@ -153,6 +177,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
                 return (
                     <SplashScreenMessage
                         message='Getting things ready...'
+                        messageIcon={'progress'}
                         isLightTheme={isLightTheme}
                     />
                 );
@@ -173,12 +198,17 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             );
         }
         case EnvironmentStateInfo.Available: {
-            return <SplashScreenMessage message='Connecting...' isLightTheme={isLightTheme} />;
+            return <SplashScreenMessage
+                        message='Connecting...'
+                        messageIcon={'progress'}
+                        isLightTheme={isLightTheme}
+                    />;
         }
         case EnvironmentStateInfo.ShuttingDown: {
             return (
                 <SplashScreenMessage
                     message='The codespace is shutting down.'
+                    messageIcon={'progress'}
                     isLightTheme={isLightTheme}
                 />
             );
@@ -199,6 +229,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             return (
                 <SplashScreenMessage
                     message='The codespace is not available.'
+                    messageIcon={'error'}
                     isLightTheme={isLightTheme}
                 />
             );
@@ -207,6 +238,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             return (
                 <SplashScreenMessage
                     message='Unknown codespace state.'
+                    messageIcon={'error'}
                     isLightTheme={isLightTheme}
                 />
             );

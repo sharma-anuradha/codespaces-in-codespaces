@@ -21,6 +21,7 @@ import { isValidCascadeToken } from '../utils/isValidCascadeToken';
 import { isJwtTokenWithMicrosoftEmail } from '../utils/isJwtTokenWithMicrosoftEmail';
 import { AuthenticationError } from '../errors/AuthenticationError';
 import { TAuthServiceEvent } from '../interfaces/TAuthServiceEvent';
+import { PlatformQueryParams } from '../constants';
 
 const trace = createTrace('vso-workbench-auth-service');
 
@@ -97,13 +98,20 @@ export class AuthService {
         return token;
     };
 
-    public redirectToLogin = async () => {
+    public getManagementPortalUrl = async (): Promise<URL> => {
         const partnerInfo = await this.getPartnerInfo();
 
         const redirectUrl = getPartnerLoginRedirectionURL(partnerInfo);
         if (!redirectUrl) {
             throw new FatalPlatformRedirectionError('Cannot get login redirection URL.');
         }
+
+        return redirectUrl;
+    };
+
+    public redirectToLogin = async () => {
+        const partnerInfo = await this.getPartnerInfo();
+        const redirectUrl = await this.getManagementPortalUrl();
 
         const codespaceId =
             partnerInfo && 'codespaceId' in partnerInfo
@@ -116,7 +124,7 @@ export class AuthService {
              * the query param is only used by Salesforce at the moment.
              */
             redirectUrl.searchParams.append('environmentId', codespaceId);
-            redirectUrl.searchParams.append('codespaceId', codespaceId);
+            redirectUrl.searchParams.append(PlatformQueryParams.CodespaceId, codespaceId);
         }
 
         redirectUrl.searchParams.append('url', location.href);

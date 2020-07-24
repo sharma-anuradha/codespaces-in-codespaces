@@ -22,3 +22,14 @@ export const DEFAULT_MICROSFT_VSCODE_AUTH_PROVIDER_ID = 'default-vso-microsoft-v
 export const DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID = 'default-vso-github-browser-auth-provider';
 
 export const DOGFOOD_CHANNEL_QUERY_PARAM_NAME = 'dogfoodChannel';
+
+export const CONNECT_ATTEMPT_COUNT_LS_KEY = 'vscs-oauth-flow-attmept-count';
+
+export enum PlatformQueryParams {
+    // incoming / util params
+    AutoStart = 'autoStart',
+    AutoAuthorize = 'autoConnect',
+    DogfoodChannel = 'dogfoodChannel',
+    // outgoing params
+    CodespaceId = 'codespaceId',
+};

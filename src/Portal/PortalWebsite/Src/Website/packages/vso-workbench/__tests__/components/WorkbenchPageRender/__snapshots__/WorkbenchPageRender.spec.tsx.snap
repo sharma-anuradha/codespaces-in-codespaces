@@ -264,14 +264,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          The codespace has been deleted.
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--red "
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#error-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                The codespace has been deleted.
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -579,14 +603,38 @@ Array [
       >
          
         <div
-          className="vso-splash-screen__block"
+          className="vso-splash-screen__steps"
         >
-          <div
-            className="vso-splash-screen__message"
-          >
-             
-            Connecting...
-          </div>
+          <h4>
+            Preparing your Codespace
+          </h4>
+          <ul>
+            <li>
+              <div
+                className="vso-splash-screen__step-header"
+              >
+                <span
+                  className="vscs-icon vscs-icon--black vso-splash-screen__status vso-splash-screen__status-icon-progress"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    xmlns="http://www.w3.org/2000/svg"
+                    xmlnsXlink="http://www.w3.org/1999/xlink"
+                  >
+                    <use
+                      xlinkHref="#spinner-vscs-icon"
+                    />
+                  </svg>
+                </span>
+                 
+                <span
+                  className="title"
+                >
+                  Connecting...
+                </span>
+              </div>
+            </li>
+          </ul>
         </div>
          
       </div>
@@ -898,14 +946,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          The codespace is not available.
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--red "
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#error-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                The codespace is not available.
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -1212,24 +1284,35 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          The codespace is shutdown.
-        </div>
-        <div
-          className="vso-splash-screen__button"
-        >
-          <span
-            className="vso-button "
-            onClick={[Function]}
-          >
-            Connect
-          </span>
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+               
+              <span
+                className="title"
+              >
+                The codespace is shutdown.
+              </span>
+              <div
+                className="vso-splash-screen__button"
+              >
+                <span
+                  className="vso-button "
+                  onClick={[Function]}
+                >
+                  Connect
+                </span>
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -1536,14 +1619,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          The codespace is shutting down.
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--black vso-splash-screen__status vso-splash-screen__status-icon-progress"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#spinner-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                The codespace is shutting down.
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -1850,14 +1957,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          The codespace failed.
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--red "
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#error-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                The codespace failed.
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -2164,14 +2295,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          Starting the codespace...
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--black vso-splash-screen__status vso-splash-screen__status-icon-progress"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#spinner-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                Starting the codespace...
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -2478,14 +2633,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          Getting things ready...
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--black vso-splash-screen__status vso-splash-screen__status-icon-progress"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#spinner-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                Getting things ready...
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -2792,24 +2971,48 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          Please sign in to proceed.
-        </div>
-        <div
-          className="vso-splash-screen__button"
-        >
-          <span
-            className="vso-button "
-            onClick={[Function]}
-          >
-            Sign in
-          </span>
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--red "
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#error-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                0
+              </span>
+              <div
+                className="vso-splash-screen__button"
+              >
+                <span
+                  className="vso-button "
+                  onClick={[Function]}
+                >
+                  Try again
+                </span>
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -3116,14 +3319,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          1
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--red "
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#error-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                1
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -3430,14 +3657,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          Getting things ready...
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--black vso-splash-screen__status vso-splash-screen__status-icon-progress"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#spinner-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                Connecting...
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>
@@ -3744,14 +3995,38 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
     >
        
       <div
-        className="vso-splash-screen__block"
+        className="vso-splash-screen__steps"
       >
-        <div
-          className="vso-splash-screen__message"
-        >
-           
-          Getting things ready...
-        </div>
+        <h4>
+          Preparing your Codespace
+        </h4>
+        <ul>
+          <li>
+            <div
+              className="vso-splash-screen__step-header"
+            >
+              <span
+                className="vscs-icon vscs-icon--black vso-splash-screen__status vso-splash-screen__status-icon-progress"
+              >
+                <svg
+                  viewBox="0 0 16 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                >
+                  <use
+                    xlinkHref="#spinner-vscs-icon"
+                  />
+                </svg>
+              </span>
+               
+              <span
+                className="title"
+              >
+                Connecting...
+              </span>
+            </div>
+          </li>
+        </ul>
       </div>
        
     </div>

@@ -112,7 +112,7 @@ export class AuthService {
 
         const crossDomainPartnerInfo = await this.getInfoForKey(PARTNER_INFO_KEYCHAIN_KEY);
 
-        return crossDomainPartnerInfo;
+        return crossDomainPartnerInfo as (VSCodespacesPlatformInfoGeneral | null);
     };
 
     private async getInfoForKey(

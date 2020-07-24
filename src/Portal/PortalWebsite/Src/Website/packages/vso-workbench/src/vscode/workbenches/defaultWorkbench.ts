@@ -104,10 +104,10 @@ export class Workbench {
                 resolveCommonTelemetryProperties,
                 homeIndicator: await getHomeIndicator(),
                 productConfiguration: await getProductConfiguration(),
-                enableSyncByDefault: true,
-                commands,
                 authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+                enableSyncByDefault: true,
                 defaultLayout,
+                commands,
             };
 
             return providers;

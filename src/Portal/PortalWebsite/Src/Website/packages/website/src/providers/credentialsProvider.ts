@@ -16,7 +16,7 @@ import {
 } from 'vso-client-core';
 
 import { authService } from '../services/authService';
-import { getStoredGitHubToken, getGitHubAccessToken } from '../services/gitHubAuthenticationService';
+import { getStoredGitHubToken } from '../services/gitHubAuthenticationService';
 import { getStoredAzDevToken } from '../services/azDevAuthenticationService';
 import { createCascadeTokenKey } from '../split/github/createCascadeTokenKey';
 import { GitHubStrategy } from './GitHubStrategy';

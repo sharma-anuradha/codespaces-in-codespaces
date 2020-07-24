@@ -4,6 +4,7 @@ import {
     setKeychainKeys,
     PARTNER_INFO_KEYCHAIN_KEY,
     VSCS_LOADING_SCREEN_THEME_COLOR_LS_KEY,
+    VSCS_LOADING_SCREEN_FAVICON_LS_KEY,
 } from 'vso-client-core';
 
 (async () => {
@@ -31,8 +32,18 @@ import {
 
         setKeychainKeys(keys);
         await localStorageKeychain.set(PARTNER_INFO_KEYCHAIN_KEY, JSON.stringify(data));
+
+        // copy over the loadingScreenThemeColor that set on the `connect` page to allow
+        // workbench page to use the same color thus prevent flickering
         const { loadingScreenThemeColor } = data.vscodeSettings || {};
         localStorage.setItem(VSCS_LOADING_SCREEN_THEME_COLOR_LS_KEY, loadingScreenThemeColor);
+
+        // copy over the favicon that set on the `connect` page to allow
+        // workbench page to use the same icon thus prevent flickering
+        const faviconEl = document.querySelector('#js-favicon');
+        if (faviconEl) {
+            localStorage.setItem(VSCS_LOADING_SCREEN_FAVICON_LS_KEY, faviconEl.getAttribute('href') || '');
+        }
 
         const params = new URLSearchParams(window.location.search);
         const redirectParam = params.get('redirect') || '/';

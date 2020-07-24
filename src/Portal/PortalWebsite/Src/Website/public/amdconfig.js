@@ -33,6 +33,8 @@ self.require = {
         'xterm-addon-search': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm-addon-search/lib/xterm-addon-search.js`,
         'xterm-addon-web-links': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/xterm-addon-web-links/lib/xterm-addon-web-links.js`,
         'semver-umd': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/semver-umd/lib/semver-umd.js`,
+        'iconv-lite-umd': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/iconv-lite-umd/lib/iconv-lite-umd.js`,
+        'jschardet': `${window.location.origin}/workbench-page/web-standalone/${vscodeCommitId}/node_modules/jschardet/dist/jschardet.min.js`,
     },
 };
 
