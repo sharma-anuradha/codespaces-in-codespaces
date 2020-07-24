@@ -1,4 +1,4 @@
-﻿// <copyright file="CommonStartupBase.cs" company="Microsoft">
+// <copyright file="CommonStartupBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -71,7 +71,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 .SetBasePath(hostingEnvironment.ContentRootPath)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.json"), optional: false, reloadOnChange: true)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.secrets.json"), optional: true)
-                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true);
+                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true)
+                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.commitId.json"), optional: true);
 
             var hasOverrideFile = TryGetOverrideAppSettingsJsonFile(out var overrideAppSettingsJsonFile);
             var isDevelopment = hostingEnvironment.IsDevelopment();

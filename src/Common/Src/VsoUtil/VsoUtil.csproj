@@ -5,6 +5,10 @@
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
     <AssemblyName>$(MSBuildProjectName)</AssemblyName>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <GenerateAppSettingsCommitId>true</GenerateAppSettingsCommitId>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" Version="12.0.0" />

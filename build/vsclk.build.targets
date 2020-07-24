@@ -5,4 +5,18 @@
   <ItemGroup Condition=" '$(CollectSymbols)' == 'true' ">
     <PackageReference Include="Cascade.Build.CollectSymbols" Version="1.1.0" PrivateAssets="All" />
   </ItemGroup>
+
+  <Target Name="GenerateAppSettingsCommitId"  AfterTargets="Build"  Condition="'$(GenerateAppSettingsCommitId)'=='true'">
+  <Exec Command="echo $BUILD_SOURCEVERSION" IgnoreExitCode="true" ConsoleToMSBuild="true">
+  <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+  </Exec>
+  <ItemGroup>
+    <AppSettingsCommitId Include="{"/>
+    <AppSettingsCommitId Include="&quot;AppSettings&quot;:{"/>
+    <AppSettingsCommitId Include="&quot;gitCommit&quot;:"/>
+    <AppSettingsCommitId Include="&quot;$(OutputOfExec)&quot;"/>
+    <AppSettingsCommitId Include="}}"/>
+  </ItemGroup>
+  <WriteLinesToFile  File="$(OutputPath)\appsettings.commitId.json"   Lines="@(AppSettingsCommitId)" Overwrite="true" />
+  </Target>
 </Project>
