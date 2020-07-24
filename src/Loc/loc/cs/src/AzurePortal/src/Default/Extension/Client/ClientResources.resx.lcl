@@ -198,6 +198,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";CreateCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Vytvořit prostředí Codespaces]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";CreateCodespaceBladeSubtitle" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Create a new Codespace]]></Val>
@@ -243,11 +252,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";DeleteConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+      <Item ItemId=";DeleteCodespaceConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Are you sure you want to delete this resource?]]></Val>
+          <Val><![CDATA[Are you sure you want to delete {0}?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Opravdu chcete odstranit tento prostředek?]]></Val>
+            <Val><![CDATA[Opravdu chcete prostředek {0} odstranit?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -257,6 +266,15 @@
           <Val><![CDATA[Delete Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Odstranit plán]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";DeletePlanConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Když se odstraní {0}, odstraní se i tento počet prostředí Codespaces přidružených k plánu: {1}. Chcete pokračovat?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -888,6 +906,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";SuspendCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Suspend Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Pozastavit prostředí Codespaces]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";Tags" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Tags]]></Val>
@@ -1055,15 +1082,6 @@
           <Val><![CDATA[Select menu item]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Vybrat položku nabídky]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";addCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Add Codespace]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Přidat prostředí Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

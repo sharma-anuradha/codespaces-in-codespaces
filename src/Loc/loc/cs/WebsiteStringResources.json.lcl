@@ -571,7 +571,7 @@
         <Str Cat="Text">
           <Val><![CDATA[View dotfiles details]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Zobrazit podrobnosti dotfiles]]></Val>
+            <Val><![CDATA[Zobrazit podrobnosti tečkových souborů]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -580,7 +580,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Dotfiles Install Command]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Příkaz k instalaci dotfiles]]></Val>
+            <Val><![CDATA[Příkaz k instalaci tečkových souborů]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -589,7 +589,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Dotfiles Repository]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Úložiště dotfiles]]></Val>
+            <Val><![CDATA[Úložiště tečkových souborů]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -598,7 +598,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Dotfiles Target Path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Cílová cesta dotfiles]]></Val>
+            <Val><![CDATA[Cílová cesta tečkových souborů]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -859,14 +859,8 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud-powered dev environments accessible from anywhere]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vývojová prostředí, která využívají cloud a jsou dostupná odkudkoli]]></Val>
+            <Val><![CDATA[Cloudová vývojová prostředí, která jsou dostupná odkudkoli]]></Val>
           </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[mock]]></Val>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -937,7 +931,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Dotfiles repository does not exist, or you do not have access to it.  Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Úložiště Dotfiles neexistuje, nebo k němu nemáte přístup. Ověřte, že váš přihlášený účet GitHub má k úložišti přístup. Pokud ne a chcete se přepnout na jiný účet, odhlaste se.]]></Val>
+            <Val><![CDATA[Úložiště tečkových souborů neexistuje, nebo k němu nemáte přístup. Ověřte, že váš přihlášený účet GitHub má k úložišti přístup. Pokud ne a chcete se přepnout na jiný účet, odhlaste se.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1513,7 +1507,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud-powered dev environments accessible from anywhere]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vývojová prostředí, která využívají cloud a jsou dostupná odkudkoli]]></Val>
+            <Val><![CDATA[Cloudová vývojová prostředí, která jsou dostupná odkudkoli]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

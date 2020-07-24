@@ -22,7 +22,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Планы пространств кода]]></Val>
+            <Val><![CDATA[Планы Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

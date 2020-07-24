@@ -139,7 +139,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Back to Codespaces ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Вернуться к пространствам кода ]]></Val>
+            <Val><![CDATA[Вернуться в Codespaces ]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -220,7 +220,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Пространства кода]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -526,7 +526,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When a plan is deleted, the associated Codespaces will be deleted as well.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[При удалении плана связанное пространство кода также будет удалено.]]></Val>
+            <Val><![CDATA[При удалении плана связанные пространства кода также будут удалены.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -861,12 +861,6 @@
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Облачные среды разработки, доступные из любого места]]></Val>
           </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[mock]]></Val>
         </Str>
         <Disp Icon="Str" />
       </Item>

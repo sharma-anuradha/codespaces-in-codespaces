@@ -198,6 +198,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";CreateCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Crea codespace]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";CreateCodespaceBladeSubtitle" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Create a new Codespace]]></Val>
@@ -243,11 +252,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";DeleteConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+      <Item ItemId=";DeleteCodespaceConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Are you sure you want to delete this resource?]]></Val>
+          <Val><![CDATA[Are you sure you want to delete {0}?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Eliminare questa risorsa?]]></Val>
+            <Val><![CDATA[Eliminare {0}?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -257,6 +266,15 @@
           <Val><![CDATA[Delete Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Elimina piano]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";DeletePlanConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Se si elimina {0}, verranno eliminati anche i {1} codespace associati al piano. Continuare?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -888,6 +906,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";SuspendCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Suspend Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Sospendi codespace]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";Tags" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Tags]]></Val>
@@ -1055,15 +1082,6 @@
           <Val><![CDATA[Select menu item]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Seleziona voce di menu]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";addCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Add Codespace]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Aggiungi codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

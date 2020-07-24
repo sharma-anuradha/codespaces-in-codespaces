@@ -49,7 +49,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Пространства кода]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -58,7 +58,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Пространства кода]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -67,7 +67,7 @@
         <Str Cat="Text">
           <Val><![CDATA[codespaces plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[планы пространств кода]]></Val>
+            <Val><![CDATA[планы codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -76,7 +76,7 @@
         <Str Cat="Text">
           <Val><![CDATA[codespaces plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[план пространств кода]]></Val>
+            <Val><![CDATA[план codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -85,7 +85,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Планы пространств кода]]></Val>
+            <Val><![CDATA[Планы Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -94,7 +94,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[План пространств кода]]></Val>
+            <Val><![CDATA[План Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -184,7 +184,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Планы пространств кода]]></Val>
+            <Val><![CDATA[Планы Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -193,7 +193,16 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespaces Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Создание плана пространств кода]]></Val>
+            <Val><![CDATA[Создание плана Codespaces]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";CreateCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Создание пространства кода]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -243,11 +252,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";DeleteConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+      <Item ItemId=";DeleteCodespaceConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Are you sure you want to delete this resource?]]></Val>
+          <Val><![CDATA[Are you sure you want to delete {0}?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Вы действительно хотите удалить этот ресурс?]]></Val>
+            <Val><![CDATA[Удалить {0}?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -257,6 +266,15 @@
           <Val><![CDATA[Delete Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Удалить план]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";DeletePlanConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Удаление {0} также удалит связанные с планом пространства кода ({1}). Продолжить?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -346,7 +364,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Пространства кода]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -586,7 +604,7 @@
         <Str Cat="Text">
           <Val><![CDATA[VS Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Пространства кода VS]]></Val>
+            <Val><![CDATA[VS Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -888,6 +906,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";SuspendCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Suspend Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Приостановка пространства кода]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";Tags" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Tags]]></Val>
@@ -946,7 +973,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open Codespaces in Visual Studio]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Открытие пространства кода в Visual Studio]]></Val>
+            <Val><![CDATA[Открыть Codespaces в Visual Studio]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1055,15 +1082,6 @@
           <Val><![CDATA[Select menu item]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Выберите пункт меню]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";addCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Add Codespace]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Добавить пространство кода]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

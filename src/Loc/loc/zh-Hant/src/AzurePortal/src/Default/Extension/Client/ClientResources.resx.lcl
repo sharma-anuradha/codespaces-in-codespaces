@@ -40,7 +40,7 @@
         <Str Cat="Text">
           <Val><![CDATA[My Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[我的程式碼空間]]></Val>
+            <Val><![CDATA[我的 Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,7 +49,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -58,7 +58,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -67,7 +67,7 @@
         <Str Cat="Text">
           <Val><![CDATA[codespaces plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間方案]]></Val>
+            <Val><![CDATA[Codespaces 方案]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -76,7 +76,7 @@
         <Str Cat="Text">
           <Val><![CDATA[codespaces plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間方案]]></Val>
+            <Val><![CDATA[Codespaces 方案]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -85,7 +85,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間方案]]></Val>
+            <Val><![CDATA[Codespaces 方案]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -94,7 +94,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間方案]]></Val>
+            <Val><![CDATA[Codespaces 方案]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -184,7 +184,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces Plans]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間方案]]></Val>
+            <Val><![CDATA[Codespaces 方案]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -193,7 +193,16 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespaces Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[建立程式碼空間方案]]></Val>
+            <Val><![CDATA[建立 Codespaces 方案]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";CreateCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[建立程式碼空間]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -243,11 +252,11 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";DeleteConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+      <Item ItemId=";DeleteCodespaceConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Are you sure you want to delete this resource?]]></Val>
+          <Val><![CDATA[Are you sure you want to delete {0}?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[確定要刪除此資源嗎?]]></Val>
+            <Val><![CDATA[您確定要刪除 {0} 嗎?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -257,6 +266,15 @@
           <Val><![CDATA[Delete Plan]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[刪除計劃]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";DeletePlanConfirmation" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Deleting {0} will also delete the {1} Codespaces associated with the plan. Do you want to proceed?]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[刪除 {0} 也會刪除與方案建立關聯的 {1} Codespaces。要繼續嗎?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -346,7 +364,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -586,7 +604,7 @@
         <Str Cat="Text">
           <Val><![CDATA[VS Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[VS 程式碼空間]]></Val>
+            <Val><![CDATA[VS Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -888,6 +906,15 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
+      <Item ItemId=";SuspendCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Suspend Codespace]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[暫止程式碼空間]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
       <Item ItemId=";Tags" ItemType="0;.resx" PsrId="211" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[Tags]]></Val>
@@ -946,7 +973,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open Codespaces in Visual Studio]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[在 Visual Studio 中開啟程式碼空間]]></Val>
+            <Val><![CDATA[在 Visual Studio 中開啟 Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1055,15 +1082,6 @@
           <Val><![CDATA[Select menu item]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[選取功能表項目]]></Val>
-          </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";addCodespace" ItemType="0;.resx" PsrId="211" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[Add Codespace]]></Val>
-          <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[新增程式碼空間]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

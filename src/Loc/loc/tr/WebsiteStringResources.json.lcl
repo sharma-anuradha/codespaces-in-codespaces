@@ -571,7 +571,7 @@
         <Str Cat="Text">
           <Val><![CDATA[View dotfiles details]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Dotfiles ayrıntılarını görüntüle]]></Val>
+            <Val><![CDATA[Noktalı dosya ayrıntılarını görüntüle]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -580,7 +580,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Dotfiles Install Command]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Dotfiles Yükleme Komutu]]></Val>
+            <Val><![CDATA[Noktalı Dosya Yükleme Komutu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -589,7 +589,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Dotfiles Repository]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Dotfiles Deposu]]></Val>
+            <Val><![CDATA[Noktalı Dosya Deposu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -598,7 +598,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Dotfiles Target Path]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Dotfiles Hedef Yolu]]></Val>
+            <Val><![CDATA[Noktalı Dosya Hedef Yolu]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -864,12 +864,6 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[mock]]></Val>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
       <Item ItemId=";more" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[More]]></Val>
@@ -937,7 +931,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Dotfiles repository does not exist, or you do not have access to it.  Verify that your signed-in GitHub account has access to the repository. If not, log out to switch to a different account.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Dotfiles deposu mevcut değil veya depoya erişiminiz yok. Oturum açtığınız GitHub hesabınızın depoya erişimi olduğunu doğrulayın. Yoksa, oturumu kapatıp farklı bir hesaba geçin.]]></Val>
+            <Val><![CDATA[Noktalı dosya deposu mevcut değil veya depoya erişiminiz yok. Oturum açtığınız GitHub hesabınızın depoya erişimi olduğunu doğrulayın. Yoksa, oturumu kapatıp farklı bir hesaba geçin.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
