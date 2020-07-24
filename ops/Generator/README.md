@@ -5,6 +5,7 @@
 In this directory
 
 ```
+npm install -g ts-node
 npm install
 ts-node-script index.ts (Input Directory) (Output Directory)
 ```
@@ -14,6 +15,8 @@ ts-node-script index.ts (Input Directory) (Output Directory)
 In VS Code, launch with `Run Program`. This should automatically launch `ts-node-script` with the default Components folder and `Components.Generated` as Output.
 
 Else, run `ts-node-script index.ts (Input Directory) (Output Directory)`
+
+ex. `ts-node-script index.ts ..\Components\ ..\Components.Generated\`
 
 
 

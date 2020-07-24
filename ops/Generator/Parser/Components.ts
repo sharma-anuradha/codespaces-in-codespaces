@@ -83,9 +83,10 @@ export class Subscription {
   env: string;
   count: number;
   provisioned: Provisioned[] = [];
+  outputName: SubscriptionName;
 
   generateNamesJson(globalPrefix: string, env: string, compPrefix: string) {
-    return {
+    return this.outputName = {
       baseEnvName: `${globalPrefix}-${compPrefix}-${env}`,
       baseName: compPrefix,
       basePlaneName: `${globalPrefix}-${compPrefix}-${env}-${this.plane}`,
@@ -97,6 +98,18 @@ export class Subscription {
       plane: this.plane,
     };
   }
+}
+
+export class SubscriptionName {
+  baseEnvName: string;
+  baseName: string;
+  basePlaneName: string;
+  component: string;
+  env: string;
+  id: string;
+  nameFile: string;
+  outputPath: string;
+  plane: string;
 }
 
 export class Provisioned {
