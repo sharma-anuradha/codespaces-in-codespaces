@@ -17,6 +17,8 @@
     <AppSettingsCommitId Include="&quot;$(OutputOfExec)&quot;"/>
     <AppSettingsCommitId Include="}}"/>
   </ItemGroup>
+
   <WriteLinesToFile  File="$(OutputPath)\appsettings.commitId.json"   Lines="@(AppSettingsCommitId)" Overwrite="true" />
+  <WriteLinesToFile  File="$(OutputPath)\publish\appsettings.commitId.json"   Lines="@(AppSettingsCommitId)" Overwrite="true" />
   </Target>
 </Project>
