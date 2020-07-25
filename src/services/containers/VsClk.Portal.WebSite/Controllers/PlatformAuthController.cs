@@ -230,8 +230,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         {
             // get favicon from the partner info if possible, if not set, use the vscode one
             // per dogfoodChannel, otherwise use vscode stable one
-            var stableUrl = "/vscode-stable-favicon.ico";
-            var insiderUrl = "/vscode-insider-favicon.ico";
+            var stableUrl = "~/vscode-stable-favicon.ico";
+            var insiderUrl = "~/vscode-insider-favicon.ico";
 
             if (partnerInfoData.VSCodeSettings == null)
             {

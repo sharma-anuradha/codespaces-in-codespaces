@@ -132,6 +132,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                     return await FetchStaticAsset("favicon.ico", "image/x-icon");
                 case "site.css":
                     return await FetchStaticAsset("site.css", "text/css");
+                case "splash-screen-styles.css":
+                    return await FetchStaticAsset("splash-screen-styles.css", "text/css");
+                case "vscode-stable-favicon.ico":
+                    return await FetchStaticAsset("vscode-stable-favicon.ico", "text/css");
+                case "vscode-insider-favicon.ico":
+                    return await FetchStaticAsset("vscode-insider-favicon.ico", "text/css");
                 case "spinner-dark.svg":
                     return await FetchStaticAsset("spinner-dark.svg", "image/svg+xml");
                 case "ms-logo.svg":
