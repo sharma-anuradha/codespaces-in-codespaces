@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseResourceImageTask.cs" company="Microsoft">
+// <copyright file="BaseResourceImageTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -209,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddValue("ImageCountToBeRetained", blobCountToBeRetained);
 
                     // Doing this object conversion to access the created date of the blob. Since its is not accessible with IListBlobItem object.
-                    var blobs = blobsList.Results.Cast<CloudBlockBlob>();
+                    var blobs = blobsList.Results.OfType<CloudBlockBlob>();
                     blobs = blobs.OrderByDescending((blob) => blob.Properties.LastModified);
 
                     for (var index = 0; index < blobs.Count(); index++)
