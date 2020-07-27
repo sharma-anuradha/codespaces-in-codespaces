@@ -117,7 +117,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             && record.Created <= operationFailedTimeLimit))
                     {
                         didFailProvisioning = true;
-                        reason = (record.ProvisioningStatus == null) ? "FailProvisioningNullStatus" : "FailProvisioning";
+                        if (record.ProvisioningStatus == OperationState.Succeeded && record.IsReady == false)
+                        {
+                            reason = "FailReceivingHeartBeat";
+                        }
+                        else
+                        {
+                            reason = (record.ProvisioningStatus == null) ? "FailProvisioningNullStatus" : "FailProvisioning";
+                        }
                     }
                     else if (record.StartingStatus == OperationState.Failed
                         || record.StartingStatus == OperationState.Cancelled

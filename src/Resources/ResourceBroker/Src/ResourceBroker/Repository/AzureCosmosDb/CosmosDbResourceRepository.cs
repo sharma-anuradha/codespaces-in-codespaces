@@ -331,6 +331,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             // Special case: For resources that are stuck/failed in the "Starting" state, only consider
             // the VM resource type. Storage resources should not be considered because they contain user
             // data that we do not want to clean up until the user has explicitly asked for deletion.
+            //
+            // Also, for VMs, check instances where heartbeat was never received (which means:
+            // * isAssigned = false
+            // * isReady = false
+            // * created <= 1 hour ago
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c
                 FROM c
@@ -365,6 +370,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                              OR c.deletingStatus = @operationStateInProgress
                             ) AND c.deletingStatusChanged <= @operationFailedTimeLimit
                         )
+                        OR (
+                            c.type = @computeVmResourceType
+                            AND c.provisioningStatus = @operationStateSucceeded
+                            AND c.isAssigned = false
+                            AND c.isReady = false
+                            AND c.created <= @operationFailedTimeLimit
+                        )
                     )",
                 new SqlParameterCollection
                 {
@@ -374,6 +386,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     new SqlParameter { Name = "@operationStateCancelled", Value = OperationState.Cancelled.ToString() },
                     new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
                     new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@operationStateSucceeded", Value = OperationState.Succeeded.ToString() },
                     new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1) },
                     new SqlParameter { Name = "@computeVmResourceType", Value = ResourceType.ComputeVM.ToString() },
                 });
