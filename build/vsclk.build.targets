@@ -8,17 +8,30 @@
 
   <Target Name="GenerateAppSettingsCommitId"  AfterTargets="Build"  Condition="'$(GenerateAppSettingsCommitId)'=='true'">
   <Exec Command="echo $BUILD_SOURCEVERSION" IgnoreExitCode="true" ConsoleToMSBuild="true">
-  <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
+  <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfCommitId" />
+  </Exec>
+  <Exec Command="echo $BUILD_BUILDNUMBER" IgnoreExitCode="true" ConsoleToMSBuild="true">
+  <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfBuildNumber" />
+  </Exec>
+  <Exec Command="echo $BUILD_BUILDID" IgnoreExitCode="true" ConsoleToMSBuild="true">
+  <Output TaskParameter="ConsoleOutput" PropertyName="OutputOfBuildId" />
   </Exec>
   <ItemGroup>
-    <AppSettingsCommitId Include="{"/>
-    <AppSettingsCommitId Include="&quot;AppSettings&quot;:{"/>
-    <AppSettingsCommitId Include="&quot;gitCommit&quot;:"/>
-    <AppSettingsCommitId Include="&quot;$(OutputOfExec)&quot;"/>
-    <AppSettingsCommitId Include="}}"/>
+    <AppSettingsIds Include="{"/>
+    <AppSettingsIds Include="&quot;AppSettings&quot;:{"/>
+    <AppSettingsIds Include="&quot;gitCommit&quot;:"/>
+    <AppSettingsIds Include="&quot;$(OutputOfCommitId)&quot;,"/>
+
+    <AppSettingsIds Include="&quot;buildNumber&quot;:"/>
+    <AppSettingsIds Include="&quot;$(OutputOfBuildNumber)&quot;,"/>
+
+    <AppSettingsIds Include="&quot;buildId&quot;:"/>
+    <AppSettingsIds Include="&quot;$(OutputOfBuildId)&quot;"/>
+    <AppSettingsIds Include="}}"/>
+
   </ItemGroup>
 
-  <WriteLinesToFile  File="$(OutputPath)\appsettings.commitId.json"   Lines="@(AppSettingsCommitId)" Overwrite="true" />
-  <WriteLinesToFile  File="$(OutputPath)\publish\appsettings.commitId.json"   Lines="@(AppSettingsCommitId)" Overwrite="true" />
+  <WriteLinesToFile  File="$(OutputPath)\appsettings.commitId.json"   Lines="@(AppSettingsIds)" Overwrite="true" />
+  <WriteLinesToFile  File="$(OutputPath)\publish\appsettings.commitId.json"   Lines="@(AppSettingsIds)" Overwrite="true" />
   </Target>
 </Project>

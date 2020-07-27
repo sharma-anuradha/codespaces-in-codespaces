@@ -1,4 +1,4 @@
-﻿// <copyright file="AppSettingsBase.cs" company="Microsoft">
+// <copyright file="AppSettingsBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -114,5 +114,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public AgentSettings AgentSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the build Id of this build. Used for troubleshooting.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string BuildId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the build number of this build. Used for troubleshooting.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string BuildNumber { get; set; }
     }
 }

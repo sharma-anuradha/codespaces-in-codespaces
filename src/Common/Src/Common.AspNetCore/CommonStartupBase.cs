@@ -253,6 +253,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             {
                 ServiceName = ServiceName,
                 CommitId = AppSettings.GitCommit,
+                AdditionalValues = new Dictionary<string, string>
+                {
+                    { "BuildId", AppSettings.BuildId },
+                    { "BuildNumber", AppSettings.BuildNumber },
+                },
             };
 
             services.AddTransient(serviceProvider =>
