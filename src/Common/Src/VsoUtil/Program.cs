@@ -1,4 +1,4 @@
-﻿// <copyright file="Program.cs" company="Microsoft">
+// <copyright file="Program.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -43,7 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(CleanDevStamp),
                     typeof(ListDevStamps),
                     typeof(GetSkuImageVersionCommand),
-                    typeof(CleanResourceGroups))
+                    typeof(CleanResourceGroups),
+                    typeof(ManagePreviewUsersCommand))
                 .WithParsed<ShowDbAccountInfoCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CreatePortForwardingConnection>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<PortForwardingConnectionEstablished>(command => command.Execute(Console.Out, Console.Error))
@@ -62,6 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<ListDevStamps>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<GetSkuImageVersionCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CleanResourceGroups>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ManagePreviewUsersCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithNotParsed(errs => { exitCode = 1; });
             }
             catch (Exception ex)
