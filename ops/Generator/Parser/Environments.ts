@@ -113,6 +113,12 @@ export class Plane {
             plane: this.name
         }
     }
+
+    clone() : Plane {
+        const obj = new Plane(this.name);
+        obj.instances = this.instances.map(i => i.clone());
+        return obj;
+    }
 }
 
 export class Environment {
@@ -131,6 +137,14 @@ export class Environment {
             component: componentNames.component,
             env: this.name,
         }
+    }
+
+    clone() : Environment {
+        const obj = new Environment();
+        obj.name = this.name;
+        obj.pme = this.pme;
+        obj.planes = this.planes.map(p => p.clone());
+        return obj;
     }
 }
 
@@ -154,12 +168,27 @@ export class Instance {
             instanceRegions: regions.map(n => `${n.geography.name}-${n.region.name}`)
         }
     }
+
+    clone(): Instance {
+        const obj = new Instance();
+        obj.name = this.name;
+        obj.stamps = this.stamps.map(s => s.clone());
+        return obj;
+    }
 }
 
 export class Stamp {
     name: string;
     location: DataLocation;
     dataLocations: DataLocation[] = [];
+
+    clone(): Stamp {
+        const obj = new Stamp();
+        obj.name = this.name;
+        obj.location = this.location.clone();
+        obj.dataLocations = this.dataLocations.map(dl => dl.clone());
+        return obj;
+    }
 }
 
 export class DataLocation {
@@ -169,12 +198,14 @@ export class DataLocation {
 
     generateNamesJson(instanceNames: InstanceNames): RegionNames {
         const baseName = ResourceNames.makeResourceName(instanceNames.prefix, instanceNames.component, instanceNames.env, instanceNames.plane, instanceNames.instance, this.geography.name, this.region.name);
+        const baseStorageName = ResourceNames.convertToStorageResourceName(instanceNames.prefix, baseName);
         return this.outputNames = {
             baseName: baseName,
             baseEnvironmentName: instanceNames.baseEnvironmentName,
             basePlaneName: instanceNames.basePlaneName,
             baseInstanceName: instanceNames.baseInstanceName,
             baseRegionName: baseName,
+            baseRegionStorageName: baseStorageName,
             prefix: instanceNames.prefix,
             component: instanceNames.component,
             env: instanceNames.env,
@@ -185,5 +216,12 @@ export class DataLocation {
             region: `${this.geography.name}-${this.region.name}`,
             location: this.region.fullName
         }
+    }
+
+    clone(): DataLocation {
+        const obj = new DataLocation();
+        obj.geography = this.geography;
+        obj.region = this.region;
+        return obj;
     }
 }

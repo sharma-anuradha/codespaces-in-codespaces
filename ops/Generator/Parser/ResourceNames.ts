@@ -23,6 +23,7 @@ export class InstanceNames extends PlaneNames {
 
 export class RegionNames extends InstanceNames {
     baseRegionName: string;
+    baseRegionStorageName: string;
     geo: string;
     region: string;
     location: string;
@@ -75,5 +76,9 @@ export default abstract class ResourceNames {
         }
 
         return resourceName;
+    }
+
+    public static convertToStorageResourceName(prefix: string, baseResourceName: string): string {
+        return baseResourceName.replace(`${prefix}-`, '').replace(/-/g, '');
     }
 }

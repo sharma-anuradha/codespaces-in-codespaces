@@ -14,7 +14,9 @@ export default abstract class Names {
       const componentJson = comp.generateNamesJson(globalPrefix);
       FileHandler.GenerateJson(outputDir, `${componentJson.baseName}.names.json`, componentJson);
 
-      for (const env of environments) {
+      for (const envOriginal of environments) {
+        const env = envOriginal.clone();
+        comp.environments.push(env);
         const envJson = env.generateNamesJson(comp.outputNames);
         FileHandler.GenerateJson(outputDir, `${envJson.baseName}.names.json`, envJson);
 

@@ -19,22 +19,6 @@
     "basePlaneName": {
       "type": "string",
       "value": "{{{basePlaneName}}}"
-    },
-    "baseInstanceName": {
-      "type": "string",
-      "value": "{{{baseInstanceName}}}"
-    },
-    "instanceRegions": {
-      "type": "array",
-      "value": {{{instanceRegions}}}
-    },
-    "baseRegionName": {
-      "type": "string",
-      "value": "{{{baseRegionName}}}"
-    },
-    "baseRegionStorageName": {
-      "type": "string",
-      "value": "{{{baseRegionStorageName}}}"
     }
   }
 }

@@ -1,4 +1,4 @@
-import { ComponentsDeployment } from "./Parser/Components";
+import { ComponentsDeployment, Component } from "./Parser/Components";
 import FileHandler from "./Helpers/FileHandler";
 import { EnvironmentsDeployment, Environment, Plane, Instance, Stamp } from "./Parser/Environments";
 import * as path from "path";
@@ -27,8 +27,7 @@ class NameMatch {
 export default class Templates {
   inputDir: string;
   outputDir: string;
-  envDep: EnvironmentsDeployment;
-  compDep: ComponentsDeployment;
+  components: Component[];
   staticItemsDetect = /[^[\\}]+(?=])/g;
   staticCommentHeader = "Auto-Generated From Template";
   staticCommentFooter =
@@ -37,13 +36,11 @@ export default class Templates {
   constructor(
     inputDir: string,
     outputDir: string,
-    envDep: EnvironmentsDeployment,
-    compDep: ComponentsDeployment
+    components: Component[]
   ) {
     this.inputDir = path.normalize(inputDir);
     this.outputDir = path.normalize(outputDir);
-    this.envDep = envDep;
-    this.compDep = compDep;
+    this.components = components;
   }
 
   public Generate(): void {
@@ -92,11 +89,16 @@ export default class Templates {
 
   private getNames(fileName: string): NameMatch[] {
     const compComponentsName = fileName.split(".")[0]?.toLowerCase();
-    const comp = this.compDep.components.find(
-      (n) => n.displayName?.toLowerCase() === compComponentsName
-    );
-    if (comp == null) {
+    if (!compComponentsName) {
       // console.log(`warning: filename contains no component name: ${fileName}`);
+      return [];
+    }
+
+    const comp = this.components.find(
+      (n) => n.prefix?.toLowerCase() === compComponentsName
+    );
+    if (!comp) {
+      // console.log(`warning: non-matching component name: ${fileName}`);
       return [];
     }
 
@@ -140,7 +142,7 @@ export default class Templates {
 
     const names: NameMatch[] = [];
 
-    const environments: Environment[] = this.envDep.environments.filter(envFilter);
+    const environments: Environment[] = comp.environments.filter(envFilter);
     for (const env of environments) {
       const planes = env.planes.filter(planeFilter);
       if (!planes?.length) {

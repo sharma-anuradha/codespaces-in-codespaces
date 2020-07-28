@@ -168,9 +168,9 @@
                 }
             ]
         },
-        "code": {
+        "codesp": {
             "displayName": "Codespaces",
-            "prefix": "code",
+            "prefix": "codesp",
             "dependsOn": [
                 "core",
                 "collab"
@@ -180,13 +180,13 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
                     "plane": "ctl",
                     "provisioned": {
-                        "vscs-code-dev-ctl": {
+                        "vscs-codesp-dev-ctl": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-ppe-ctl": {
+                        "vscs-codesp-ppe-ctl": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-prod-ctl": {
+                        "vscs-codesp-prod-ctl": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -195,13 +195,13 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-github",
                     "plane": "ctl",
                     "provisioned": {
-                        "vscs-code-dev-ctl-github": {
+                        "vscs-codesp-dev-ctl-github": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-ppe-ctl-github": {
+                        "vscs-codesp-ppe-ctl-github": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-prod-ctl-github": {
+                        "vscs-codesp-prod-ctl-github": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -210,13 +210,13 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-images",
                     "plane": "data",
                     "provisioned": {
-                        "vscs-code-dev-data-images": {
+                        "vscs-codesp-dev-data-images": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-ppe-data-images": {
+                        "vscs-codesp-ppe-data-images": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-prod-data-images": {
+                        "vscs-codesp-prod-data-images": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -225,31 +225,31 @@
                     "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
                     "plane": "data",
                     "provisioned": {
-                        "vscs-code-dev-data-ap": {
+                        "vscs-codesp-dev-data-ap": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-dev-data-eu": {
+                        "vscs-codesp-dev-data-eu": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-dev-data-us": {
+                        "vscs-codesp-dev-data-us": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-ppe-data-ap": {
+                        "vscs-codesp-ppe-data-ap": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-ppe-data-eu": {
+                        "vscs-codesp-ppe-data-eu": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-ppe-data-us": {
+                        "vscs-codesp-ppe-data-us": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-prod-data-ap": {
+                        "vscs-codesp-prod-data-ap": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-prod-data-eu": {
+                        "vscs-codesp-prod-data-eu": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-prod-data-us": {
+                        "vscs-codesp-prod-data-us": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -260,13 +260,13 @@
                     "env": "dev",
                     "count": 1,
                     "provisioned": {
-                        "vscs-code-dev-data-compute-ap-001": {
+                        "vscs-codesp-dev-data-compute-ap-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-dev-data-compute-eu-001": {
+                        "vscs-codesp-dev-data-compute-eu-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-dev-data-compute-us-001": {
+                        "vscs-codesp-dev-data-compute-us-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }
@@ -277,13 +277,13 @@
                     "env": "dev",
                     "count": 1,
                     "provisioned": {
-                        "vscs-code-dev-data-storage-ap-001": {
+                        "vscs-codesp-dev-data-storage-ap-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-dev-data-storage-eu-001": {
+                        "vscs-codesp-dev-data-storage-eu-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         },
-                        "vscs-code-dev-data-storage-us-001": {
+                        "vscs-codesp-dev-data-storage-us-001": {
                             "subscriptionId": "00000000-0000-0000-0000-000000000000"
                         }
                     }

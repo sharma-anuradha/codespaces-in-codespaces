@@ -1,5 +1,6 @@
 import { AssertionError } from "assert";
 import ResourceNames, { ComponentNames } from "./ResourceNames";
+import { Environment } from "./Environments";
 
 export class ComponentsDeployment {
   globalPrefix: string;
@@ -59,6 +60,7 @@ export class Component {
   displayName: string;
   dependsOn: string[];
   subscriptions: Subscription[] = [];
+  environments: Environment[] = [];
   outputNames: ComponentNames;
 
   generateNamesJson(prefix: string): ComponentNames {

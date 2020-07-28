@@ -34,15 +34,11 @@ class Main {
 
     this.compDep = new ComponentsDeployment(compJson);
     this.envDep = new EnvironmentsDeployment(envJson);
-
-    const componentsDir = FileHandler.GetDirectories(this.inputDir);
-    this.components = this.compDep.components.filter((n) =>
-      componentsDir.includes(n.displayName)
-    );
+    this.components = this.compDep.components;
   }
 
   GenerateTemplates() {
-    const templates = new Templates(this.inputDir, this.outputDir, this.envDep, this.compDep);
+    const templates = new Templates(this.inputDir, this.outputDir, this.components);
     templates.Generate();
   }
 
