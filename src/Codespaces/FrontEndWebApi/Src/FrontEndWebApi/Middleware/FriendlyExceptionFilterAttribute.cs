@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
                 case CodedException codedException:
                     context.Result = codedException switch
                     {
+                        CodedValidationException ex => new BadRequestObjectResult(ex.MessageCode),
                         ConflictException ex => new ConflictObjectResult(ex.MessageCode),
                         EntityNotFoundException ex => new NotFoundObjectResult(ex.MessageCode),
                         ForbiddenException ex => new ObjectResult(ex.MessageCode) { StatusCode = StatusCodes.Status403Forbidden },

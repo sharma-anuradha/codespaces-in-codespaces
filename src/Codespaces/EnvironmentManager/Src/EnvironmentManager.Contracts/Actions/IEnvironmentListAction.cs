@@ -1,4 +1,4 @@
-﻿// <copyright file="IEnvironmentListAction.cs" company="Microsoft">
+// <copyright file="IEnvironmentListAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,7 +13,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Environment List Action.
     /// </summary>
-    public interface IEnvironmentListAction : IEntityAction<ListEnvironmentActionInput, IEnumerable<CloudEnvironment>>
+    public interface IEnvironmentListAction : IEntityAction<ListEnvironmentActionInput, object, IEnumerable<CloudEnvironment>>
     {
         /// <summary>
         /// Run environment list action.

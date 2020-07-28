@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -17,13 +18,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// Environment Item Base Action which supports a generic result typoe.
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
     /// <typeparam name="TResult">TResult type.</typeparam>
-    public abstract class EnvironmentBaseItemAction<TInput, TResult> :
-        EntityItemAction<TInput, TResult, EnvironmentTransition, ICloudEnvironmentRepository, CloudEnvironment>,
-        IEnvironmentBaseItemAction<TInput, TResult>
+    public abstract class EnvironmentBaseItemAction<TInput, TState, TResult> :
+        EntityItemAction<TInput, TState, TResult, EnvironmentTransition, ICloudEnvironmentRepository, CloudEnvironment>,
+        IEnvironmentBaseItemAction<TInput, TState, TResult>
+        where TState : class, new()
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnvironmentBaseItemAction{TInput, TResult}"/> class.
+        /// Initializes a new instance of the <see cref="EnvironmentBaseItemAction{TInput, TState, TResult}"/> class.
         /// </summary>
         /// <param name="environmentStateManager">Target environment state manager.</param>
         /// <param name="repository">Target repository.</param>
@@ -58,6 +61,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         protected override string EntityName => "Environment";
 
         /// <inheritdoc/>
+        protected override async Task<EnvironmentTransition> FetchOrGetDefaultAsync(
+            TInput input,
+            IDiagnosticsLogger logger)
+        {
+            // Fetch record
+            var record = await base.FetchOrGetDefaultAsync(input, logger);
+
+            if (record != null)
+            {
+                ValidateAndAuthorizeRecord(record, logger);
+            }
+
+            return record;
+        }
+
+        /// <inheritdoc/>
         protected override async Task<EnvironmentTransition> FetchAsync(
             TInput input,
             IDiagnosticsLogger logger)
@@ -65,22 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Fetch record
             var record = await base.FetchAsync(input, logger);
 
-            if (record != null)
-            {
-                // Apply logging
-                logger.AddCloudEnvironment(record.Value);
-
-                // Authorize Access
-                var nonOwnerScopes = new[]
-                {
-                    PlanAccessTokenScopes.ReadEnvironments,
-                    PlanAccessTokenScopes.ReadCodespaces,
-                };
-                EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes, logger.NewChildLogger());
-
-                // Validate location
-                ValidateTargetLocation(record.Value.Location, logger);
-            }
+            ValidateAndAuthorizeRecord(record, logger);
 
             return record;
         }
@@ -89,6 +93,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         protected override EnvironmentTransition BuildTransition(CloudEnvironment model)
         {
             return new EnvironmentTransition(model);
+        }
+
+        private void ValidateAndAuthorizeRecord(EnvironmentTransition record, IDiagnosticsLogger logger)
+        {
+            // Apply logging
+            logger.AddCloudEnvironment(record.Value);
+            logger.AddVsoPlanInfo(record.Value.PlanId);
+
+            // Authorize Access
+            var nonOwnerScopes = new[]
+            {
+                PlanAccessTokenScopes.ReadEnvironments,
+                PlanAccessTokenScopes.ReadCodespaces,
+            };
+            EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes, logger.NewChildLogger());
         }
     }
 }

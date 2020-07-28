@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentCreateActionInput.cs" company="Microsoft">
+// <copyright file="EnvironmentCreateActionInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -30,10 +30,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets start env params.
         /// </summary>
         public StartCloudEnvironmentParameters StartEnvironmentParams { get; set; }
-
-        /// <summary>
-        /// Gets or sets the cloud environment being created.
-        /// </summary>
-        public CloudEnvironment CloudEnvironment { get; set; }
     }
 }

@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Environment Create Action.
     /// </summary>
-    public class EnvironmentCreateAction : EnvironmentItemAction<EnvironmentCreateActionInput>, IEnvironmentCreateAction
+    public class EnvironmentCreateAction : EnvironmentItemAction<EnvironmentCreateActionInput, EnvironmentCreateTransientState>, IEnvironmentCreateAction
     {
         private readonly Regex envNameRegex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
 
@@ -33,8 +33,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// Initializes a new instance of the <see cref="EnvironmentCreateAction"/> class.
         /// </summary>
         /// <param name="planManager">Target plan manager.</param>
-        /// <param name="skuCatalog">The sku catalog.</param>
-        /// <param name="skuUtils">skuUtils to find sku's eligiblity.</param>
+        /// <param name="skuCatalog">Target sku catalog.</param>
+        /// <param name="skuUtils">Target skuUtils, to find sku's eligiblity.</param>
         /// <param name="environmentListAction">Target environment list action.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         /// <param name="planManagerSettings">Target plan manager settings.</param>
@@ -77,11 +77,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentAccessManager environmentAccessManager,
             IEnvironmentDeleteAction environmentDeleteAction,
             IMapper mapper)
-            : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager)
+            : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
-            SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
-            SkuUtils = Requires.NotNull(skuUtils, nameof(skuUtils));
             EnvironmentListAction = Requires.NotNull(environmentListAction, nameof(environmentListAction));
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
             PlanManagerSettings = Requires.NotNull(planManagerSettings, nameof(planManagerSettings));
@@ -101,10 +99,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         protected override string LogBaseName => "environment_create_action";
 
         private IPlanManager PlanManager { get; }
-
-        private ISkuCatalog SkuCatalog { get; }
-
-        private ISkuUtils SkuUtils { get; }
 
         private IEnvironmentListAction EnvironmentListAction { get; }
 
@@ -133,7 +127,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IMapper Mapper { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> Run(EnvironmentCreateDetails details, StartCloudEnvironmentParameters startEnvironmentParams, MetricsInfo metricsInfo, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironment> Run(
+            EnvironmentCreateDetails details,
+            StartCloudEnvironmentParameters startEnvironmentParams,
+            MetricsInfo metricsInfo,
+            IDiagnosticsLogger logger)
         {
             // Base Validation
             ValidationUtil.IsRequired(details, nameof(details));
@@ -160,7 +158,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         }
 
         /// <inheritdoc/>
-        protected override async Task<CloudEnvironment> RunCoreAsync(EnvironmentCreateActionInput input, IDiagnosticsLogger logger)
+        protected override async Task<CloudEnvironment> RunCoreAsync(
+            EnvironmentCreateActionInput input,
+            EnvironmentCreateTransientState transientState,
+            IDiagnosticsLogger logger)
         {
             // Core Logging
             logger.AddVsoPlan(input.Plan);
@@ -176,15 +177,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Core Validation
             ValidateInput(input, logger);
             ValidateTargetLocation(input.Plan.Plan.Location, logger);
-            await ValidateEnvironmentAsync(input, logger);
             await ValidateSubscriptionAndPlanAsync(input, logger);
 
             // Build Transition
             var cloudEnvironment = Mapper.Map<EnvironmentCreateDetails, CloudEnvironment>(input.Details);
             var record = BuildTransition(cloudEnvironment);
-
-            // Updating cloudEnvironment record on the input so that HandleExceptionAsync can access it.
-            input.CloudEnvironment = record.Value;
 
             // Map core properties
             record.Value.Id = Guid.NewGuid().ToString();
@@ -196,6 +193,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             record.Value.HasUnpushedGitChanges = false;
             record.Value.SubnetResourceId = input.Plan.Properties?.VnetProperties?.SubnetId;
             record.Value.SkuName ??= input.Plan.Properties?.VnetProperties?.SubnetId;
+
+            // Set to transient state to facilitate cleanup in case of environment creation failure
+            transientState.EnvironmentId = Guid.Parse(record.Value.Id);
 
             // Build options
             var environmentOptions = new CloudEnvironmentOptions();
@@ -209,18 +209,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Setup static environment
             if (record.Value.Type == EnvironmentType.StaticEnvironment)
             {
-                await RunCoreStaticEnvironmentAsync(input, record, logger);
+                await RunCoreStaticEnvironmentAsync(input, record, transientState, logger);
             }
             else
             {
                 // Queued or standard create
                 if (environmentOptions.QueueResourceAllocation || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
                 {
-                    await QueueCoreEnvironmentAsync(input, record, environmentOptions, logger);
+                    await QueueCoreEnvironmentAsync(input, record, environmentOptions, transientState, logger);
                 }
                 else
                 {
-                    await RunCoreEnvironmentAsync(input, record, environmentOptions, logger);
+                    await RunCoreEnvironmentAsync(input, record, environmentOptions, transientState, logger);
                 }
             }
 
@@ -228,14 +228,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         }
 
         /// <inheritdoc/>
-        protected override async Task<bool> HandleExceptionAsync(EnvironmentCreateActionInput input, Exception ex, IDiagnosticsLogger logger)
+        protected override async Task<bool> HandleExceptionAsync(
+            EnvironmentCreateActionInput input,
+            Exception ex,
+            EnvironmentCreateTransientState transientState,
+            IDiagnosticsLogger logger)
         {
             var isFullyHandled = false;
 
-            if (input.CloudEnvironment != null)
+            if (transientState.EnvironmentId != default)
             {
                 // Delete the environment
-                await EnvironmentDeleteAction.Run(input.CloudEnvironment, logger.NewChildLogger());
+                await EnvironmentDeleteAction.Run(
+                    transientState.EnvironmentId,
+                    transientState.AllocatedComputeId,
+                    transientState.AllocatedStorageId,
+                    transientState.AllocatedOsDiskId,
+                    transientState.AllocatedLiveshareWorkspaceId,
+                    logger.NewChildLogger());
             }
 
             if (ex is EnvironmentMonitorInitializationException)
@@ -267,19 +277,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private async Task ValidateEnvironmentAsync(
             EnvironmentCreateActionInput input, IDiagnosticsLogger logger)
         {
-            SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.Details.SkuName, out var sku);
-
             // Validate name
             input.Details.FriendlyName = input.Details.FriendlyName.Trim();
-            ValidationUtil.IsTrue(this.envNameRegex.IsMatch(input.Details.FriendlyName), $"'{Truncate(input.Details.FriendlyName, 200)}' is not a valid FriendlyName.");
+            ValidationUtil.IsTrue(this.envNameRegex.IsMatch(input.Details.FriendlyName), $"'{input.Details.FriendlyName.Truncate(200)}' is not a valid FriendlyName.");
 
             // Validate sku details
-            ValidationUtil.IsTrue(sku != null, $"The requested SKU is not defined: {Truncate(input.Details.SkuName, 200)}");
-            var profile = await CurrentUserProvider.GetProfileAsync();
-            var isSkuVisible = await SkuUtils.IsVisible(sku, input.Plan.Plan, profile);
-            ValidationUtil.IsTrue(isSkuVisible, $"The requested SKU '{Truncate(input.Details.SkuName, 200)}' is not visible.");
-            ValidationUtil.IsTrue(sku.Enabled, $"The requested SKU '{Truncate(input.Details.SkuName, 200)}' is not available.");
-            ValidationUtil.IsTrue(sku.SkuLocations.Contains(input.Plan.Plan.Location), $"The requested SKU '{Truncate(input.Details.SkuName, 200)}' is not available in location: {input.Plan.Plan.Location}");
+            await ValidateSkuAsync(input.Details.SkuName, input.Plan.Plan);
 
             // Validate VNet details
             var isVnetInjectionEnabled = await PlanManager.CheckFeatureFlagsAsync(input.Plan, PlanFeatureFlag.VnetInjection, logger.NewChildLogger());
@@ -348,7 +351,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
         }
 
-        private async Task RunCoreStaticEnvironmentAsync(EnvironmentCreateActionInput input, EnvironmentTransition record, IDiagnosticsLogger logger)
+        private async Task RunCoreStaticEnvironmentAsync(
+            EnvironmentCreateActionInput input,
+            EnvironmentTransition record,
+            EnvironmentCreateTransientState transientState,
+            IDiagnosticsLogger logger)
         {
             // Map core properties
             record.Value.SkuName = StaticEnvironmentSku.Name;
@@ -364,6 +371,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 input.StartEnvironmentParams.UserProfile.Email,
                 null,
                 logger.NewChildLogger());
+
+            // Set to transient state to facilitate cleanup in case of environment creation failure
+            transientState.AllocatedLiveshareWorkspaceId = record.Value.Connection.WorkspaceId;
 
             // Environments must be initialized in Created state.
             await EnvironmentStateManager.SetEnvironmentStateAsync(
@@ -384,7 +394,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
         }
 
-        private async Task QueueCoreEnvironmentAsync(EnvironmentCreateActionInput input, EnvironmentTransition record, CloudEnvironmentOptions environmentOptions, IDiagnosticsLogger logger)
+        private async Task QueueCoreEnvironmentAsync(
+            EnvironmentCreateActionInput input,
+            EnvironmentTransition record,
+            CloudEnvironmentOptions environmentOptions,
+            EnvironmentCreateTransientState transientState,
+            IDiagnosticsLogger logger)
         {
             // Environments must be initialized in Queued state.
             await EnvironmentStateManager.SetEnvironmentStateAsync(
@@ -398,13 +413,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             await EnvironmentContinuation.CreateAsync(Guid.Parse(record.Value.Id), record.Value.LastStateUpdated, environmentOptions, input.StartEnvironmentParams, "createnewenvironment", logger.NewChildLogger());
         }
 
-        private async Task RunCoreEnvironmentAsync(EnvironmentCreateActionInput input, EnvironmentTransition record, CloudEnvironmentOptions environmentOptions, IDiagnosticsLogger logger)
+        private async Task RunCoreEnvironmentAsync(
+            EnvironmentCreateActionInput input,
+            EnvironmentTransition record,
+            CloudEnvironmentOptions environmentOptions,
+            EnvironmentCreateTransientState transientState,
+            IDiagnosticsLogger logger)
         {
             // Allocate Storage and Compute
             var allocationResult = await AllocateComputeAndStorageAsync(record.Value, environmentOptions, logger.NewChildLogger());
             record.Value.Storage = allocationResult.Storage;
             record.Value.Compute = allocationResult.Compute;
             record.Value.OSDisk = allocationResult.OSDisk;
+
+            // Set to transient state to facilitate cleanup in case of environment creation failure
+            transientState.AllocatedStorageId = record.Value.Storage?.ResourceId;
+            transientState.AllocatedComputeId = record.Value.Compute?.ResourceId;
+            transientState.AllocatedOsDiskId = record.Value.OSDisk?.ResourceId;
 
             // Start Environment Monitoring
             await EnvironmentMonitor.MonitorHeartbeatAsync(record.Value.Id, record.Value.Compute.ResourceId, logger.NewChildLogger());
@@ -419,6 +444,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 input.StartEnvironmentParams.UserProfile.Email,
                 null,
                 logger.NewChildLogger());
+
+            // Set to transient state to facilitate cleanup in case of environment creation failure
+            transientState.AllocatedLiveshareWorkspaceId = record.Value.Connection.WorkspaceId;
 
             // Environments must be initialized in Created state.
             await EnvironmentStateManager.SetEnvironmentStateAsync(
@@ -468,21 +496,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 logger.LogError($"{LogBaseName}_create_allocate_error");
                 throw new UnavailableException((int)MessageCodes.UnableToAllocateResources, ex.Message, ex);
             }
-        }
-
-        private string Truncate(string value, int maxChars)
-        {
-            if (value == null)
-            {
-                return string.Empty;
-            }
-
-            if (value.Length <= maxChars)
-            {
-                return value;
-            }
-
-            return $"{value.Substring(0, maxChars)}...";
         }
     }
 }

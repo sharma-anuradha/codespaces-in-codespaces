@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentUpdateStatusAction.cs" company="Microsoft">
+// <copyright file="EnvironmentUpdateStatusAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,7 +6,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -16,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Environment Update Status Action.
     /// </summary>
-    public class EnvironmentUpdateStatusAction : EnvironmentItemAction<EnvironmentUpdateStatusActionInput>, IEnvironmentUpdateStatusAction
+    public class EnvironmentUpdateStatusAction : EnvironmentItemAction<EnvironmentUpdateStatusActionInput, object>, IEnvironmentUpdateStatusAction
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentUpdateStatusAction"/> class.
@@ -27,14 +26,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="environmentAccessManager">Target environment access manager.</param>
+        /// <param name="skuCatalog">Target sku catalog.</param>
+        /// <param name="skuUtils">Target skuUtils, to find sku's eligiblity.</param>
         public EnvironmentUpdateStatusAction(
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,
             IControlPlaneInfo controlPlaneInfo,
-            IEnvironmentAccessManager environmentAccessManager)
-            : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager)
+            IEnvironmentAccessManager environmentAccessManager,
+            ISkuCatalog skuCatalog,
+            ISkuUtils skuUtils)
+            : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
         }
 
@@ -61,14 +64,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         }
 
         /// <inheritdoc/>
-        protected override async Task<CloudEnvironment> RunCoreAsync(EnvironmentUpdateStatusActionInput input, IDiagnosticsLogger logger)
+        protected override async Task<CloudEnvironment> RunCoreAsync(
+            EnvironmentUpdateStatusActionInput input,
+            object transientObject,
+            IDiagnosticsLogger logger)
         {
             // Fetch Record
             var record = await FetchAsync(input, logger.NewChildLogger());
-            if (record == null)
-            {
-                throw new EntityNotFoundException($"Target '{input.Id}' not found.");
-            }
 
             var cloudEnvironment = record.Value;
 

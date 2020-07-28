@@ -1,14 +1,12 @@
-﻿// <copyright file="EnvironmentSuspensionContinuationHandler.cs" company="Microsoft">
+// <copyright file="EnvironmentSuspensionContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -61,30 +59,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         {
             return await logger.OperationScopeAsync("handle_environment_suspension", async (childLogger) =>
             {
-                using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
+                var environmentSuspensionInput = input as EnvironmentContinuationInput;
+                childLogger.AddEnvironmentId(environmentSuspensionInput.EnvironmentId);
+
+                if (environmentSuspensionInput != null)
                 {
-                    var environmentSuspensionInput = input as EnvironmentContinuationInput;
-
-                    if (environmentSuspensionInput != null)
+                    try
                     {
-                        CloudEnvironment environment;
-                        try
+                        using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
                         {
-                            environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentSuspensionInput.EnvironmentId), logger.NewChildLogger());
-                        }
-                        catch (EntityNotFoundException)
-                        {
-                            // Not required to suspend as the environment is already deleted.
-                            return CreateFinalResult(OperationState.Succeeded);
+                            await EnvironmentManager.SuspendAsync(Guid.Parse(environmentSuspensionInput.EnvironmentId), logger.NewChildLogger());
                         }
 
-                        childLogger.AddCloudEnvironment(environment);
-                        var isSuspended = await EnvironmentManager.SuspendAsync(environment, logger.NewChildLogger());
-                        if (isSuspended.HttpStatusCode == StatusCodes.Status200OK)
-                        {
-                            return CreateFinalResult(OperationState.Succeeded);
-                        }
-
+                        return CreateFinalResult(OperationState.Succeeded);
+                    }
+                    catch (Exception ex)
+                    {
+                        childLogger.LogException("handle_environment_suspension_error", ex);
                         return CreateFinalResult(OperationState.Failed, "SuspensionFailed");
                     }
                 }

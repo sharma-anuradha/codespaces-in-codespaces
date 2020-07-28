@@ -132,6 +132,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentUpdateStatusAction, EnvironmentUpdateStatusAction>();
             services.AddSingleton<IEnvironmentListAction, EnvironmentListAction>();
             services.AddSingleton<IEnvironmentDeleteAction, EnvironmentDeleteAction>();
+            services.AddSingleton<IEnvironmentResumeAction, EnvironmentResumeAction>();
+            services.AddSingleton<IEnvironmentFinalizeResumeAction, EnvironmentFinalizeResumeAction>();
+            services.AddSingleton<IEnvironmentSuspendAction, EnvironmentSuspendAction>();
+            services.AddSingleton<IEnvironmentForceSuspendAction, EnvironmentForceSuspendAction>();
 
             // The environment metrics
             services.AddSingleton<IEnvironmentMetricsManager, EnvironmentMetricsManager>();

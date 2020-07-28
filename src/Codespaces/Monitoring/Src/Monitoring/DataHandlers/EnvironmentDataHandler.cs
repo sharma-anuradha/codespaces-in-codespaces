@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentDataHandler.cs" company="Microsoft">
+// <copyright file="EnvironmentDataHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -82,8 +82,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        // Shutdown if the environment is idle
                        if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
                        {
-                           var environmentServiceResult = await environmentManager.SuspendAsync(environment, childLogger);
-                           return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                           environment = await environmentManager.SuspendAsync(Guid.Parse(environment.Id), childLogger);
+                           environment.LastUpdatedByHeartBeat = environmentData.Timestamp;
+                           return new CollectedDataHandlerContext(environment);
                        }
                        else if (newState.state == CloudEnvironmentState.Unavailable)
                        {

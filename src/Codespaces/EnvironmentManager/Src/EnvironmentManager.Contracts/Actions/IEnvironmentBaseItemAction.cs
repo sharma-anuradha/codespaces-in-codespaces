@@ -1,4 +1,4 @@
-﻿// <copyright file="IEnvironmentBaseItemAction.cs" company="Microsoft">
+// <copyright file="IEnvironmentBaseItemAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,8 +10,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// Environment Item Base Action.
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
     /// <typeparam name="TResult">Result type.</typeparam>
-    public interface IEnvironmentBaseItemAction<TInput, TResult> : IEntityAction<TInput, TResult>
+    public interface IEnvironmentBaseItemAction<TInput, TState, TResult> : IEntityAction<TInput, TState, TResult>
     {
     }
 }

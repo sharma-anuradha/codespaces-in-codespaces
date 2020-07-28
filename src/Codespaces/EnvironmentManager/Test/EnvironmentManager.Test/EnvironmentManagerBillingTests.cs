@@ -84,11 +84,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public async Task DeleteEnvironmentUpdatesBillingState()
         {
             await planRepository.CreateAsync(testVsoPlan, logger);
-            var testEnvironment = (await CreateTestEnvironmentAsync());
+            var testEnvironment = await CreateTestEnvironmentAsync();
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
 
-            await this.environmentManager.DeleteAsync(testEnvironment, this.logger);
+            await this.environmentManager.DeleteAsync(Guid.Parse(testEnvironment.Id), this.logger);
 
             Assert.Collection(
                 billingEventRepository.Values,

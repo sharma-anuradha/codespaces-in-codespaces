@@ -17,17 +17,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
     /// Entity item action.
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
     /// <typeparam name="TResult">Result type.</typeparam>
     /// <typeparam name="TEntityTransition">Working model type.</typeparam>
     /// <typeparam name="TRepository">Repository type.</typeparam>
     /// <typeparam name="TRepositoryModel">Repository model type.</typeparam>
-    public abstract class EntityItemAction<TInput, TResult, TEntityTransition, TRepository, TRepositoryModel> : EntityAction<TInput, TResult, TEntityTransition, TRepository, TRepositoryModel>
+    public abstract class EntityItemAction<TInput, TState, TResult, TEntityTransition, TRepository, TRepositoryModel> : EntityAction<TInput, TState, TResult, TEntityTransition, TRepository, TRepositoryModel>
         where TRepositoryModel : TaggedEntity
         where TEntityTransition : class, IEntityTransition<TRepositoryModel>
         where TRepository : class, IDocumentDbCollection<TRepositoryModel>
+        where TState : class, new()
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EntityItemAction{TInput, TResult, TModel, TRepository, TRepositoryModel}"/> class.
+        /// Initializes a new instance of the <see cref="EntityItemAction{TInput, TState, TResult, TEntityTransition, TRepository, TRepositoryModel}"/> class.
         /// </summary>
         /// <param name="repository">Target repository.</param>
         /// <param name="currentLocationProvider">Target current location provider.</param>
@@ -48,8 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// </summary>
         /// <param name="input">Target input.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns>Returns working model.</returns>
-        protected virtual async Task<TEntityTransition> FetchAsync(TInput input, IDiagnosticsLogger logger)
+        /// <returns>Returns working model or null if not found.</returns>
+        protected virtual async Task<TEntityTransition> FetchOrGetDefaultAsync(TInput input, IDiagnosticsLogger logger)
         {
             var id = default(Guid);
 
@@ -70,6 +72,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
             // Fetch environment transition
             return await Repository.BuildTransitionAsync(
                 EntityName, id.ToString(), BuildTransition, logger.NewChildLogger());
+        }
+
+        /// <summary>
+        /// Builds model to use.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns working model. Throws <see cref="EntityNotFoundException"/> if record does not exist.</returns>
+        protected virtual async Task<TEntityTransition> FetchAsync(TInput input, IDiagnosticsLogger logger)
+        {
+            var record = await FetchOrGetDefaultAsync(input, logger);
+            if (record == null)
+            {
+                throw new EntityNotFoundException($"Target not found.");
+            }
+
+            return record;
         }
 
         /// <summary>

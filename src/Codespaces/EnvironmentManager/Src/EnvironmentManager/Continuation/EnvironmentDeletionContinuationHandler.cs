@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentDeletionContinuationHandler.cs" company="Microsoft">
+// <copyright file="EnvironmentDeletionContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                     if (input is EnvironmentContinuationInput environmentDeletionInput)
                     {
                         childLogger.AddEnvironmentId(environmentDeletionInput.EnvironmentId);
-                        var isDeleted = await EnvironmentDeleteAction.Run(environmentDeletionInput.EnvironmentId, logger.NewChildLogger());
+                        var isDeleted = await EnvironmentDeleteAction.Run(Guid.Parse(environmentDeletionInput.EnvironmentId), logger.NewChildLogger());
                         if (isDeleted)
                         {
                             return CreateFinalResult(OperationState.Succeeded);

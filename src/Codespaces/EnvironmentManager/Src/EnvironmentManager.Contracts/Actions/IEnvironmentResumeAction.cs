@@ -1,29 +1,28 @@
-// <copyright file="IEnvironmentCreateAction.cs" company="Microsoft">
+// <copyright file="IEnvironmentResumeAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
-    /// Environment Update Status Action.
+    /// Environment Resume Action.
     /// </summary>
-    public interface IEnvironmentCreateAction : IEnvironmentItemAction<EnvironmentCreateActionInput, EnvironmentCreateTransientState>
+    public interface IEnvironmentResumeAction : IEnvironmentItemAction<EnvironmentResumeActionInput, EnvironmentResumeTransientState>
     {
         /// <summary>
-        /// Run environment create action.
+        /// Run environment resume action.
         /// </summary>
-        /// <param name="details">Target options.</param>
+        /// <param name="environmentId">Target environment id.</param>
         /// <param name="startEnvironmentParams">Target environment params.</param>
-        /// <param name="metricsInfo">Target metrics info.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the create action.</returns>
         Task<CloudEnvironment> Run(
-            EnvironmentCreateDetails details,
+            Guid environmentId,
             StartCloudEnvironmentParameters startEnvironmentParams,
-            MetricsInfo metricsInfo,
             IDiagnosticsLogger logger);
     }
 }

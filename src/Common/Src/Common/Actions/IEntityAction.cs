@@ -1,4 +1,4 @@
-﻿// <copyright file="IEntityAction.cs" company="Microsoft">
+// <copyright file="IEntityAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,8 +11,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
     /// Entity Action.
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
     /// <typeparam name="TResult">Result type.</typeparam>
-    public interface IEntityAction<TInput, TResult>
+    public interface IEntityAction<TInput, TState, TResult>
     {
         /// <summary>
         /// Run action.

@@ -1,4 +1,4 @@
-﻿// <copyright file="EntityAction.cs" company="Microsoft">
+// <copyright file="EntityAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,23 +19,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
     /// Entity action.
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
     /// <typeparam name="TResult">Result type.</typeparam>
     /// <typeparam name="TModel">Working model type.</typeparam>
     /// <typeparam name="TRepository">Repository type.</typeparam>
     /// <typeparam name="TRepositoryModel">Repository model type.</typeparam>
-    public abstract class EntityAction<TInput, TResult, TModel, TRepository, TRepositoryModel> : IEntityAction<TInput, TResult>
+    public abstract class EntityAction<TInput, TState, TResult, TModel, TRepository, TRepositoryModel> : IEntityAction<TInput, TState, TResult>
         where TRepository : class, IDocumentDbCollection<TRepositoryModel>
         where TRepositoryModel : TaggedEntity
+        where TState : class, new()
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EntityAction{TInput, TResult, TModel, TRepository, TRepositoryModel}"/> class.
+        /// Initializes a new instance of the <see cref="EntityAction{TInput, TState, TResult, TModel, TRepository, TRepositoryModel}"/> class.
         /// </summary>
         /// <param name="repository">Target repository.</param>
         /// <param name="currentLocationProvider">Target current location provider.</param>
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="systemActionGetProvider">Target system action get provider.</param>
-        public EntityAction(
+        protected EntityAction(
             TRepository repository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,
@@ -86,16 +88,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         public virtual async Task<TResult> Run(TInput input, IDiagnosticsLogger logger)
         {
             var result = default(TResult);
+            var transientState = new TState();
 
             await logger.OperationScopeWithThrowingCustomExceptionControlFlowAsync(
                 LogBaseName,
                 async (childLogger) =>
                 {
-                    result = await RunCoreAsync(input, childLogger);
+                    result = await RunCoreAsync(input, transientState, childLogger);
                 },
                 async (ex, childLogger) =>
                 {
-                    return await HandleExceptionAsync(input, ex, childLogger);
+                    return await HandleExceptionAsync(input, ex, transientState, childLogger);
                 });
 
             return result;
@@ -105,18 +108,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// Process input post logging.
         /// </summary>
         /// <param name="input">Target input.</param>
+        /// <param name="transientState">Transitent state to track properties required for exception handling.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Resulting object of action.</returns>
-        protected abstract Task<TResult> RunCoreAsync(TInput input, IDiagnosticsLogger logger);
+        protected abstract Task<TResult> RunCoreAsync(TInput input, TState transientState, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Handle exceptions from RunCoreAsync.
         /// </summary>
         /// <param name="input">Target input.</param>
         /// <param name="ex">Target Exception.</param>
+        /// <param name="transientState">Transitent state to track properties required for exception handling.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns true if the exception is fully handled. false otherwise.</returns>
-        protected virtual Task<bool> HandleExceptionAsync(TInput input, Exception ex, IDiagnosticsLogger logger) => Task.FromResult(false);
+        protected virtual Task<bool> HandleExceptionAsync(TInput input, Exception ex, TState transientState, IDiagnosticsLogger logger) => Task.FromResult(false);
 
         /// <summary>
         /// Check Location Validity.

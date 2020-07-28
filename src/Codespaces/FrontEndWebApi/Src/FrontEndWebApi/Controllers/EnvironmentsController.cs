@@ -207,33 +207,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> SuspendAsync(
-            [FromRoute] string environmentId,
+            [FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var environment = await GetEnvironmentAsync(environmentId, logger);
+            Requires.NotEmpty(environmentId, nameof(environmentId));
 
-            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
-
-            // Reroute to correct location if needed
-            var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
-            if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
-            {
-                return RedirectToLocation(owningStamp);
-            }
-
-            // We are in the right location, go ahead and shutdown
             var result = await EnvironmentManager.SuspendAsync(
-                environment, logger.NewChildLogger());
-            if (result.CloudEnvironment == null)
-            {
-                logger.AddReason($"{result.HttpStatusCode}");
+                environmentId, logger.NewChildLogger());
 
-                return StatusCode(result.HttpStatusCode, result.MessageCode);
-            }
-
-            logger.AddCloudEnvironment(result.CloudEnvironment);
-
-            return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
+            return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result));
         }
 
         /// <summary>
@@ -253,60 +235,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> ResumeAsync(
-            [FromRoute] string environmentId,
+            [FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var environment = await GetEnvironmentAsync(environmentId, logger);
-            logger.AddSkuName(environment?.SkuName);
-
-            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
-
-            // Reroute to correct location if needed
-            var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
-            if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
-            {
-                return RedirectToLocation(owningStamp);
-            }
-
-            // Add VNet information to environment.
-            VsoPlanInfo.TryParse(environment.PlanId, out var plan);
-            var planDetails = await PlanManager.GetAsync(plan, logger);
-            if (!await PlanManager.CheckFeatureFlagsAsync(planDetails, PlanFeatureFlag.VnetInjection, logger.NewChildLogger()))
-            {
-                var message = $"{HttpStatusCode.BadRequest}: The requested vnet injection feature is disabled";
-                logger.AddReason(message);
-                return BadRequest(message);
-            }
-
-            var subnetId = planDetails.Properties?.VnetProperties?.SubnetId;
-            environment.SubnetResourceId = subnetId;
+            Requires.NotEmpty(environmentId, nameof(environmentId));
 
             var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
-            var planInfo = VsoPlanInfo.TryParse(environment.PlanId);
-            var subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
-
-            if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
-            {
-                var message = $"{HttpStatusCode.Forbidden}: The subscription is not in a valid state.";
-                logger.AddSubscriptionId(planInfo.Subscription);
-                logger.AddReason(message);
-                return StatusCode(StatusCodes.Status403Forbidden, MessageCodes.SubscriptionCannotPerformAction);
-            }
 
             var result = await EnvironmentManager.ResumeAsync(
-                environment,
+                environmentId,
                 startEnvParams,
-                subscription,
                 logger.NewChildLogger());
 
-            if (result.CloudEnvironment == null)
-            {
-                return StatusCode(result.HttpStatusCode, result.MessageCode);
-            }
-
-            logger.AddCloudEnvironment(result.CloudEnvironment);
-
-            return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result.CloudEnvironment));
+            return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result));
         }
 
         /// <summary>
@@ -338,7 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // Build metrics manager
             var metricsInfo = await GetMetricsInfoAsync(logger);
 
-            // Create the environement
+            // Get start environment parameters
             var startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
 
             // Create environment
@@ -371,32 +312,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
         public async Task<IActionResult> DeleteAsync(
-            [FromRoute] string environmentId,
+            [FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var environment = await GetEnvironmentAsync(environmentId, logger);
-
-            var nonOwnerScopes = new[]
-            {
-                PlanAccessTokenScopes.DeleteEnvironments,
-                PlanAccessTokenScopes.DeleteCodespaces,
-            };
-            EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes, logger);
-
-            // Reroute to correct location if needed
-            var owningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(environment.Location);
-            if (owningStamp.Location != CurrentLocationProvider.CurrentLocation)
-            {
-                return RedirectToLocation(owningStamp);
-            }
-
-            // We are in the right location, go ahead and delete
-            var result = await EnvironmentManager.DeleteAsync(
-                environment, logger.NewChildLogger());
-            if (!result)
-            {
-                return NotFound();
-            }
+            await EnvironmentManager.DeleteAsync(environmentId, logger.NewChildLogger());
 
             return NoContent();
         }

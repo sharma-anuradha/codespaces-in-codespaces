@@ -374,25 +374,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             moq
                 .Setup(obj => obj.ResumeAsync(
-                    It.IsAny<CloudEnvironment>(),
+                    It.IsAny<Guid>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
-                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
-                    CloudEnvironment env,
+                    Guid envId,
                     StartCloudEnvironmentParameters startParams,
-                    Subscription subscription,
                     IDiagnosticsLogger logger) =>
                 {
                     Assert.Equal(MockServiceUri, startParams.FrontEndServiceUri.ToString());
                     Assert.Equal(MockCallbackUriFormat, startParams.CallbackUriFormat);
 
-                    return new CloudEnvironmentServiceResult
-                    {
-                        CloudEnvironment = env,
-                        MessageCode = 0,
-                        HttpStatusCode = StatusCodes.Status200OK,
-                    };
+                    return new CloudEnvironment { Id = envId.ToString() };
                 });
 
             moq

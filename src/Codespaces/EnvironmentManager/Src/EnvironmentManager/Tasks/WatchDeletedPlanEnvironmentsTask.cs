@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         foreach (var environment in nonDeletedEnvironments)
                         {
                             childLogger.AddCloudEnvironment(environment);
-                            var result = await EnvManager.DeleteAsync(environment, childLogger.NewChildLogger());
+                            var result = await EnvManager.DeleteAsync(Guid.Parse(environment.Id), childLogger.NewChildLogger());
                             if (result)
                             {
                                 deletedEnvironmentCount++;

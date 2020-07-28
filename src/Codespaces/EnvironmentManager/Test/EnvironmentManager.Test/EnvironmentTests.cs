@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal(environmentToDelete.FriendlyName.ToLowerInvariant(), environmentToDelete.FriendlyNameInLowerCase);
 
             // Deleting environment after environment name validation.
-            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete, logger);
+            var deleteResult = await this.environmentManager.DeleteAsync(Guid.Parse(environmentToDelete.Id), logger);
             Assert.True(deleteResult);
         }
 

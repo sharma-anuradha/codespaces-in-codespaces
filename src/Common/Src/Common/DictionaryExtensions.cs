@@ -47,5 +47,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             return dictionary.TryGetValue(key, out var value) ? value : defaultValueCallback();
         }
+
+        /// <summary>
+        /// Gets value casted to specified type.
+        /// </summary>
+        /// <typeparam name="TValue">Value type.</typeparam>
+        /// <param name="dictionary">Target dictionary.</param>
+        /// <param name="key">Target key.</param>
+        /// <param name="value">Found value or default.</param>
+        /// <returns>True if the key is found and can be casted to the given type, false otherwise.</returns>
+        public static bool TryGetValue<TValue>(
+            this IDictionary<string, object> dictionary,
+            string key,
+            out TValue value)
+        {
+            value = default;
+
+            if (!dictionary.TryGetValue(key, out var rawValue))
+            {
+                return false;
+            }
+
+            if (rawValue is TValue tValue)
+            {
+                value = tValue;
+                return true;
+            }
+
+            return false;
+        }
     }
 }

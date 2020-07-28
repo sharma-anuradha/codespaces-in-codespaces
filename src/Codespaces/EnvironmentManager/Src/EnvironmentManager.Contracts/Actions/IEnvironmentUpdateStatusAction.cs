@@ -1,4 +1,4 @@
-﻿// <copyright file="IEnvironmentUpdateStatusAction.cs" company="Microsoft">
+// <copyright file="IEnvironmentUpdateStatusAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Environment Update Status Action.
     /// </summary>
-    public interface IEnvironmentUpdateStatusAction : IEnvironmentItemAction<EnvironmentUpdateStatusActionInput>
+    public interface IEnvironmentUpdateStatusAction : IEnvironmentItemAction<EnvironmentUpdateStatusActionInput, object>
     {
         /// <summary>
         /// Update environment status.

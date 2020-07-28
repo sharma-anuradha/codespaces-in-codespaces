@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentListAction.cs" company="Microsoft">
+// <copyright file="EnvironmentListAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Environment List Action.
     /// </summary>
-    public class EnvironmentListAction : EntityListAction<ListEnvironmentActionInput, CloudEnvironment, ICloudEnvironmentRepository>, IEnvironmentListAction
+    public class EnvironmentListAction : EntityListAction<ListEnvironmentActionInput, object, CloudEnvironment, ICloudEnvironmentRepository>, IEnvironmentListAction
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentListAction"/> class.
@@ -106,7 +106,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         }
 
         /// <inheritdoc/>
-        protected override async Task<IEnumerable<CloudEnvironment>> RunCoreAsync(ListEnvironmentActionInput input, IDiagnosticsLogger logger)
+        protected override async Task<IEnumerable<CloudEnvironment>> RunCoreAsync(
+            ListEnvironmentActionInput input,
+            object transientState,
+            IDiagnosticsLogger logger)
         {
             var environments = Enumerable.Empty<CloudEnvironment>();
             var environmentNameInLowerCase = input.Name?.Trim()?.ToLowerInvariant();

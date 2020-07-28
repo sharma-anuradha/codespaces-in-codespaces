@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Environment Delete Action.
     /// </summary>
-    public class EnvironmentDeleteAction : EnvironmentBaseItemAction<EnvironmentDeleteActionInput, bool>, IEnvironmentDeleteAction
+    public class EnvironmentDeleteAction : EnvironmentBaseItemAction<EnvironmentDeleteActionInput, object, bool>, IEnvironmentDeleteAction
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentDeleteAction"/> class.
@@ -54,139 +54,156 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IWorkspaceManager WorkspaceManager { get; }
 
         /// <inheritdoc/>
-        public async Task<bool> Run(string cloudEnvironmentId, IDiagnosticsLogger logger)
+        public async Task<bool> Run(Guid cloudEnvironmentId, IDiagnosticsLogger logger)
         {
-            Requires.NotNullOrEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
+            Requires.NotEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
 
-            var input = new EnvironmentDeleteActionInput
-            {
-                CloudEnvironment = new CloudEnvironment { Id = cloudEnvironmentId },
-            };
-
-            input.CloudEnvironment = (await FetchAsync(input, logger))?.Value;
-            if (input.CloudEnvironment == null)
-            {
-                // Already deleted / does not exist.
-                return true;
-            }
+            var input = new EnvironmentDeleteActionInput(cloudEnvironmentId);
 
             return await Run(input, logger);
         }
 
         /// <inheritdoc/>
-        public async Task<bool> Run(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public async Task<bool> Run(
+            Guid cloudEnvironmentId,
+            Guid? computeResourceId,
+            Guid? storageResourceId,
+            Guid? osDiskResourceId,
+            string liveshareWorkspaceId,
+            IDiagnosticsLogger logger)
         {
-            Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
+            Requires.NotEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
 
-            var input = new EnvironmentDeleteActionInput
+            var input = new EnvironmentDeleteActionInput(cloudEnvironmentId)
             {
-                CloudEnvironment = cloudEnvironment,
+                AllocatedComputeId = computeResourceId,
+                AllocatedStorageId = storageResourceId,
+                AllocatedOsDiskId = osDiskResourceId,
+                AllocatedLiveshareWorkspaceId = liveshareWorkspaceId,
             };
+
             return await Run(input, logger);
         }
 
         /// <inheritdoc/>
-        protected override Task<bool> RunCoreAsync(EnvironmentDeleteActionInput input, IDiagnosticsLogger logger)
+        protected override async Task<bool> RunCoreAsync(
+            EnvironmentDeleteActionInput input,
+            object transientState,
+            IDiagnosticsLogger logger)
         {
             Requires.NotNull(input, nameof(input));
             Requires.NotNull(logger, nameof(logger));
 
-            return logger.OperationScopeAsync(
-                $"{LogBaseName}_delete",
-                async (childLogger) =>
+            var record = await FetchOrGetDefaultAsync(input, logger.NewChildLogger());
+
+            var computeToken = input.AllocatedComputeId;
+            var storageToken = input.AllocatedStorageId;
+            var liveshareToken = input.AllocatedLiveshareWorkspaceId;
+            var osDiskIdToken = input.AllocatedOsDiskId;
+
+            if (record?.Value != null)
+            {
+                // Validate location
+                ValidateTargetLocation(record.Value.Location, logger);
+
+                // Authorize
+                var nonOwnerScopes = new[]
                 {
-                    var cloudEnvironment = input.CloudEnvironment;
-                    childLogger.AddCloudEnvironment(cloudEnvironment);
-                    childLogger.AddVsoPlanInfo(cloudEnvironment.PlanId);
+                    PlanAccessTokenScopes.DeleteEnvironments,
+                    PlanAccessTokenScopes.DeleteCodespaces,
+                };
+                EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes, logger);
 
-                    if (cloudEnvironment.Type == EnvironmentType.CloudEnvironment)
-                    {
-                        var storageIdToken = cloudEnvironment.Storage?.ResourceId;
-                        if (storageIdToken != null)
-                        {
-                            await childLogger.OperationScopeAsync(
-                                $"{LogBaseName}_delete_storage",
-                                async (innerLogger) =>
-                                {
-                                    innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                                        .FluentAddBaseValue(nameof(storageIdToken), storageIdToken.Value);
+                if (record.Value.Type == EnvironmentType.CloudEnvironment)
+                {
+                    computeToken ??= record.Value.Compute?.ResourceId;
+                    storageToken ??= record.Value.Storage?.ResourceId;
+                    osDiskIdToken ??= record.Value.OSDisk?.ResourceId;
+                }
 
-                                    await ResourceBrokerClient.DeleteAsync(
-                                        Guid.Parse(cloudEnvironment.Id),
-                                        storageIdToken.Value,
-                                        innerLogger.NewChildLogger());
-                                },
-                                swallowException: true);
-                        }
+                liveshareToken ??= record.Value.Connection?.WorkspaceId;
+            }
 
-                        var computeIdToken = cloudEnvironment.Compute?.ResourceId;
-                        if (computeIdToken != null)
-                        {
-                            await childLogger.OperationScopeAsync(
-                               $"{LogBaseName}_delete_compute",
-                               async (innerLogger) =>
-                               {
-                                   innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                                        .FluentAddBaseValue(nameof(computeIdToken), computeIdToken.Value);
+            await CleanupResourcesAsync(input.Id, computeToken, storageToken, osDiskIdToken, liveshareToken, logger);
 
-                                   await ResourceBrokerClient.DeleteAsync(
-                                       Guid.Parse(cloudEnvironment.Id),
-                                       computeIdToken.Value,
-                                       innerLogger.NewChildLogger());
-                               },
-                               swallowException: true);
-                        }
+            if (record?.Value != null)
+            {
+                // Attempt delete only if the environment exists.
+                await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, null, logger.NewChildLogger());
+                return await Repository.DeleteAsync(record.Value.Id, logger.NewChildLogger());
+            }
 
-                        var osDiskIdToken = cloudEnvironment.OSDisk?.ResourceId;
-                        if (osDiskIdToken != null)
-                        {
-                            await childLogger.OperationScopeAsync(
-                               $"{LogBaseName}_delete_osdisk",
-                               async (innerLogger) =>
-                               {
-                                   innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                                        .FluentAddBaseValue(nameof(osDiskIdToken), osDiskIdToken.Value);
-
-                                   await ResourceBrokerClient.DeleteAsync(
-                                       Guid.Parse(cloudEnvironment.Id),
-                                       osDiskIdToken.Value,
-                                       innerLogger.NewChildLogger());
-                               },
-                               swallowException: true);
-                        }
-                    }
-
-                    if (cloudEnvironment.Connection?.WorkspaceId != null)
-                    {
-                        await childLogger.OperationScopeAsync(
-                            $"{LogBaseName}_delete_workspace",
-                            async (innerLogger) =>
-                            {
-                                innerLogger.FluentAddBaseValue(nameof(cloudEnvironment.Id), cloudEnvironment.Id)
-                                    .FluentAddBaseValue("ConnectionSessionId", cloudEnvironment.Connection?.WorkspaceId);
-
-                                await WorkspaceManager.DeleteWorkspaceAsync(cloudEnvironment.Connection.WorkspaceId, innerLogger.NewChildLogger());
-                            },
-                            swallowException: true);
-                    }
-
-                    cloudEnvironment = (await FetchAsync(input, logger))?.Value;
-                    if (cloudEnvironment != null)
-                    {
-                        // Attempt delete only if the environment exists.
-                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, null, childLogger.NewChildLogger());
-                        return await Repository.DeleteAsync(cloudEnvironment.Id, childLogger.NewChildLogger());
-                    }
-
-                    // Return true if the environment is already deleted or if the delete is attempted before the record is persisted (ex: Cleanup attempt in response to creation failure)
-                    return true;
-                });
+            // Return true if the environment is already deleted or if the delete is attempted before the record is persisted (ex: Cleanup attempt in response to creation failure)
+            return true;
         }
 
-        /// <inheritdoc/>
-        protected override EnvironmentTransition BuildTransition(CloudEnvironment model)
+        private async Task CleanupResourcesAsync(
+            Guid environmentId,
+            Guid? computeIdToken,
+            Guid? storageIdToken,
+            Guid? osDiskIdToken,
+            string liveshareToken,
+            IDiagnosticsLogger logger)
         {
-            throw new NotSupportedException();
+            if (storageIdToken != null)
+            {
+                await logger.OperationScopeAsync(
+                    $"{LogBaseName}_delete_storage",
+                    async (innerLogger) =>
+                    {
+                        innerLogger.FluentAddBaseValue(nameof(storageIdToken), storageIdToken.Value);
+
+                        await ResourceBrokerClient.DeleteAsync(
+                            environmentId,
+                            storageIdToken.Value,
+                            innerLogger.NewChildLogger());
+                    },
+                    swallowException: true);
+            }
+
+            if (computeIdToken != null)
+            {
+                await logger.OperationScopeAsync(
+                   $"{LogBaseName}_delete_compute",
+                   async (innerLogger) =>
+                   {
+                       innerLogger.FluentAddBaseValue(nameof(computeIdToken), computeIdToken.Value);
+
+                       await ResourceBrokerClient.DeleteAsync(
+                           environmentId,
+                           computeIdToken.Value,
+                           innerLogger.NewChildLogger());
+                   },
+                   swallowException: true);
+            }
+
+            if (osDiskIdToken != null)
+            {
+                await logger.OperationScopeAsync(
+                   $"{LogBaseName}_delete_osdisk",
+                   async (innerLogger) =>
+                   {
+                       innerLogger.FluentAddBaseValue(nameof(osDiskIdToken), osDiskIdToken.Value);
+
+                       await ResourceBrokerClient.DeleteAsync(
+                           environmentId,
+                           osDiskIdToken.Value,
+                           innerLogger.NewChildLogger());
+                   },
+                   swallowException: true);
+            }
+
+            if (liveshareToken != null)
+            {
+                await logger.OperationScopeAsync(
+                   $"{LogBaseName}_delete_workspace",
+                   async (innerLogger) =>
+                   {
+                       innerLogger.FluentAddBaseValue("ConnectionSessionId", liveshareToken);
+                       await WorkspaceManager.DeleteWorkspaceAsync(liveshareToken, innerLogger.NewChildLogger());
+                   },
+                   swallowException: true);
+            }
         }
     }
 }

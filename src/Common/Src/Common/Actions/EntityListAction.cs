@@ -1,4 +1,4 @@
-﻿// <copyright file="EntityListAction.cs" company="Microsoft">
+// <copyright file="EntityListAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,21 +14,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
     /// Entity list action.
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
     /// <typeparam name="TResult">Working result type.</typeparam>
     /// <typeparam name="TRepository">Repository type.</typeparam>
-    public abstract class EntityListAction<TInput, TResult, TRepository> : EntityAction<TInput, IEnumerable<TResult>, IEnumerable<TResult>, TRepository, TResult>
+    public abstract class EntityListAction<TInput, TState, TResult, TRepository> : EntityAction<TInput, TState, IEnumerable<TResult>, IEnumerable<TResult>, TRepository, TResult>
         where TResult : TaggedEntity
         where TRepository : class, IDocumentDbCollection<TResult>
+        where TState : class, new()
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EntityListAction{TInput, TResult, TRepository}"/> class.
+        /// Initializes a new instance of the <see cref="EntityListAction{TInput, TState, TResult, TRepository}"/> class.
         /// </summary>
         /// <param name="repository">Target repository.</param>
         /// <param name="currentLocationProvider">Target current location provider.</param>
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="systemActionGetProvider">Target system action get provider.</param>
-        public EntityListAction(
+        protected EntityListAction(
             TRepository repository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,

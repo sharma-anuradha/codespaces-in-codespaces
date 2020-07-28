@@ -1,4 +1,4 @@
-﻿// <copyright file="StartEnvironmentResultHandler.cs" company="Microsoft">
+// <copyright file="StartEnvironmentResultHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             if (Guid.TryParse(storageResourceId, out var storageResourceIdGuid))
                             {
                                 handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
-                                    cloudEnvironment,
+                                    Guid.Parse(cloudEnvironment.Id),
                                     storageResourceIdGuid,
                                     string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
                                     childLogger.NewChildLogger());
@@ -120,8 +120,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                         else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
                         {
                             // Shutdown the environment if the environment has failed to start.
-                            var environmentServiceResult = await environmentManager.ForceSuspendAsync(cloudEnvironment, childLogger.NewChildLogger());
-                            return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                            cloudEnvironment = await environmentManager.ForceSuspendAsync(Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
+                            return new CollectedDataHandlerContext(cloudEnvironment);
                         }
                     }
                     else if (jobResultData.JobState == JobState.Started)

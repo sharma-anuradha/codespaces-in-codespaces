@@ -1,4 +1,4 @@
-// <copyright file="IEnvironmentGetAction.cs" company="Microsoft">
+// <copyright file="IEnvironmentForceSuspendAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,9 +7,9 @@ using System;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
-    /// Environment Get Action.
+    /// Environment force suspend action.
     /// </summary>
-    public interface IEnvironmentGetAction : IEnvironmentItemAction<Guid, object>
+    public interface IEnvironmentForceSuspendAction : IEnvironmentItemAction<Guid, object>
     {
     }
 }

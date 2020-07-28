@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -215,7 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 httpContext: mockHttpContext,
                 serviceUriBuilder: mockServiceUriBuilder);
 
-            var actionResult = await environmentController.ResumeAsync(expectedEnvId, logger);
+            var actionResult = await environmentController.ResumeAsync(Guid.Parse(expectedEnvId), logger);
             Assert.IsType<OkObjectResult>(actionResult);
         }
 

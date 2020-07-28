@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -157,7 +157,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                MockUtil.MockCurrentUserProvider(),
                MockUtil.MockControlPlaneInfo());
 
-            var environmentDeleteAction = new Mock<IEnvironmentDeleteAction>().Object;
+            var environmentDeleteAction = new EnvironmentDeleteAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                resourceBroker,
+                workspaceManager
+                );
 
             var environmentCreateAction = new EnvironmentCreateAction(
                 MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
@@ -189,26 +198,91 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockCurrentLocationProvider(),
                 MockUtil.MockCurrentUserProvider(),
                 MockUtil.MockControlPlaneInfo(),
-                environmentAccessManager);
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true));
+
+            var environmentForceSuspendAction = new EnvironmentForceSuspendAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                environmentContinuationOperations.Object,
+                resourceBroker
+                );
+
+            var environmentSuspendAction = new EnvironmentSuspendAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                resourceBroker,
+                environmentMonitor,
+                environmentForceSuspendAction
+                );
+
+            var environmentResumeAction = new EnvironmentResumeAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                MockUtil.MockSubscriptionManager(),
+                environmentSubscriptionManager,
+                environmentSettings,
+                workspaceManager,
+                environmentMonitor,
+                environmentContinuationOperations.Object,
+                resourceAllocationManager,
+                resourceStartManager,
+                environmentSuspendAction,
+                resourceBroker
+                );
+
+            var environmentFinalizeResumeAction = new EnvironmentFinalizeResumeAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                resourceBroker
+                );
 
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
                 MockUtil.MockSkuCatalog(),
-                this.environmentMonitor,
                 environmentContinuationOperations.Object,
                 environmentSettings,
                 planManager,
                 planSettings,
                 this.environmentStateManager,
-                this.environmentRepairWorkflows,
-                this.resourceAllocationManager,
                 this.resourceStartManager,
-                this.workspaceManager,
                 environmentGetAction,
                 environmentListAction,
                 this.environmentUpdateStatusAction,
-                environmentCreateAction);
+                environmentCreateAction,
+                environmentResumeAction,
+                environmentFinalizeResumeAction,
+                environmentSuspendAction,
+                environmentForceSuspendAction,
+                environmentDeleteAction
+                );
         }
 
         public async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test", string skuName = "testSkuName")

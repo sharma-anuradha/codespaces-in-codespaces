@@ -1,4 +1,4 @@
-﻿using AutoMapper.Configuration.Conventions;
+using AutoMapper.Configuration.Conventions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.Azure.Management.Cdn.Fluent.Models;
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             Assert.Equal((int)MessageCodes.ExceededQuota, ex.MessageCode);
 
             // Delete 1 environment.
-            var deleteResult = await this.environmentManager.DeleteAsync(environmentToDelete, logger);
+            var deleteResult = await this.environmentManager.DeleteAsync(Guid.Parse(environmentToDelete.Id), logger);
             Assert.True(deleteResult);
 
             // User should be allowed to create environment.
@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             // Default Max Compute Quota = 10
             // Compute Core per SKU = 1
             var environmentToResume = await CreateTestEnvironmentAsync("Test0", "windows");
-            await this.environmentManager.ForceSuspendAsync(environmentToResume, logger);
+            await this.environmentManager.ForceSuspendAsync(Guid.Parse(environmentToResume.Id), logger);
 
             await CreateEnvironmentsAsync(10, "windows", "windows");
 
@@ -83,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 FrontEndServiceUri = new Uri("http://localhost/"),
             };
 
-            await this.environmentManager.ResumeAsync(environmentToResume, startEnvironmentParams, Subscription, logger);
+            await this.environmentManager.ResumeAsync(Guid.Parse(environmentToResume.Id), startEnvironmentParams, logger);
 
             // Subscription is allowed to Resume cores that go over Default Max Compute Cores
             Assert.Equal(11, listEnvironments.Count());

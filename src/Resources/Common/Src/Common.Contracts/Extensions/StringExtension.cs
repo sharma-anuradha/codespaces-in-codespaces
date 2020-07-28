@@ -1,4 +1,4 @@
-﻿// <copyright file="StringExtension.cs" company="Microsoft">
+// <copyright file="StringExtension.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -53,6 +53,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Trucate a string.
+        /// </summary>
+        /// <param name="value">String to truncate.</param>
+        /// <param name="maxChars">Maximum number of characters to be retained.</param>
+        /// <returns>Truncated string.</returns>
+        public static string Truncate(this string value, int maxChars)
+        {
+            if (value.Length <= maxChars)
+            {
+                return value;
+            }
+
+            return $"{value.Substring(0, maxChars)}...";
         }
     }
 }

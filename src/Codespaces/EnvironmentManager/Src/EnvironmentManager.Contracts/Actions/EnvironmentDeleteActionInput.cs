@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentDeleteActionInput.cs" company="Microsoft">
+// <copyright file="EnvironmentDeleteActionInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,11 +13,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     public class EnvironmentDeleteActionInput : IEntityActionIdInput
     {
         /// <summary>
-        ///  Gets or sets the cloud environment record to be deleted.
+        /// Initializes a new instance of the <see cref="EnvironmentDeleteActionInput"/> class.
         /// </summary>
-        public CloudEnvironment CloudEnvironment { get; set; }
+        /// <param name="environmentId">Target environment Id.</param>
+        public EnvironmentDeleteActionInput(Guid environmentId)
+        {
+            Id = environmentId;
+        }
+
+        /// <summary>
+        /// Gets or sets the compute resource id allocated to the environment.
+        /// This is optional if the compute is already persisted on the environment record.
+        /// </summary>
+        public Guid? AllocatedComputeId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the storage resource id allocated to the environment.
+        /// This is optional if the storage is already persisted on the environment record.
+        /// </summary>
+        public Guid? AllocatedStorageId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the os disk resource id allocated to the environment.
+        /// This is optional if the storage is already persisted on the environment record.
+        /// </summary>
+        public Guid? AllocatedOsDiskId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the liveshare workspace id allocated to the environment.
+        /// This is optional if the lievshare workspace id is already persisted on the environment record.
+        /// </summary>
+        public string AllocatedLiveshareWorkspaceId { get; set; }
 
         /// <inheritdoc/>
-        public Guid Id => Guid.Parse(CloudEnvironment.Id);
+        public Guid Id { get; }
     }
 }

@@ -105,42 +105,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Deletes an environment.
         /// </summary>
-        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="environmentId">Target environment Id.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>True if the environment was deleted, otherwise false.</returns>
-        Task<bool> DeleteAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
+        Task<bool> DeleteAsync(Guid environmentId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Starts a shutdown environment.
         /// </summary>
-        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="environmentId">Target environment Id.</param>
         /// <param name="startCloudEnvironmentParameters">The parameters for staring compute.</param>
-        /// <param name="subscription">The subscription the environment is part of.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironmentServiceResult> ResumeAsync(
-            CloudEnvironment cloudEnvironment,
+        /// <returns>The cloud environment record.</returns>
+        Task<CloudEnvironment> ResumeAsync(
+            Guid environmentId,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
-            Subscription subscription,
             IDiagnosticsLogger logger);
 
         /// <summary>
         /// Completes the start of a shutdown environment.
         /// </summary>
-        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="environmentId">Target environment Id.</param>
         /// <param name="storageResourceId">Target new storage that should be swapped in.</param>
         /// <param name="archiveStorageResourceId">Target archive storage resource id if waking from archive.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironment> ResumeCallbackAsync(CloudEnvironment cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, IDiagnosticsLogger logger);
+        /// <returns>The cloud environment record.</returns>
+        Task<CloudEnvironment> ResumeCallbackAsync(Guid environmentId, Guid storageResourceId, Guid? archiveStorageResourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Shuts down an environment.
         /// </summary>
-        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="environmentId">The environment Id.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironmentServiceResult> SuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
+        /// <returns>The cloud environment record.</returns>
+        Task<CloudEnvironment> SuspendAsync(Guid environmentId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Callback to be executed after running shutdown on the vm.
@@ -153,10 +151,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Force suspends an environment.
         /// </summary>
-        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="environmentId">The environment Id.</param>
         /// <param name="logger">The logger.</param>
-        /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironmentServiceResult> ForceSuspendAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
+        /// <returns>The cloud environment record.</returns>
+        Task<CloudEnvironment> ForceSuspendAsync(Guid environmentId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Updates the given environment's settings according to the given update request.

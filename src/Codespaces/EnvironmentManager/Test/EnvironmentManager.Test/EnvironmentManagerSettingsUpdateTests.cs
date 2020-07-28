@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -547,6 +547,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
             var environmentCreateAction = new Mock<IEnvironmentCreateAction>().Object;
             var environmentListAction = new EnvironmentListAction(environmentRepository, MockUtil.MockCurrentLocationProvider(), MockUtil.MockCurrentUserProvider(), MockUtil.MockControlPlaneInfo());
+            var environmentResumeAction = new Mock<IEnvironmentResumeAction>().Object;
+            var environmentFinalizeResumeAction = new Mock<IEnvironmentFinalizeResumeAction>().Object;
+            var environmentDeleteAction = new Mock<IEnvironmentDeleteAction>().Object;
+            var environmentSuspendAction = new Mock<IEnvironmentSuspendAction>().Object;
+            var environmentForceSuspendAction = new Mock<IEnvironmentForceSuspendAction>().Object;
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
@@ -556,20 +561,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentRepository,
                 resourceBroker,
                 skuCatalog,
-                environmentMonitor,
                 environmentContinuationOperations.Object,
                 environmentSettings,
                 planManager,
                 planSettings,
                 environmentStateManager,
-                environmentRepairWorkflows,
-                resourceAllocationManager,
                 resourceStartManager,
-                workspaceManager,
                 environmentGetAction,
                 environmentListAction,
                 environmentUpdateStatusAction,
-                environmentCreateAction);
+                environmentCreateAction,
+                environmentResumeAction,
+                environmentFinalizeResumeAction,
+                environmentSuspendAction,
+                environmentForceSuspendAction,
+                environmentDeleteAction);
         }
 
         private static ICloudEnvironmentSku MockSku(
