@@ -293,7 +293,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 .AddIdentityMap();                      // map user IDs for the validated user principal
 
             // Add user authentication using VSO (Cascade) tokens.
-            services.AddAuthentication().AddVsoJwtBearerAuthentication();
+            services.AddAuthentication((options) =>
+            {
+                options.DefaultForbidScheme = JwtBearerUtility.VsoAuthenticationScheme;
+            }).AddVsoJwtBearerAuthentication();
 
             // Add custom authentication (rpaas, VM tokens) and VM token validator.
             services.AddCustomFrontEndAuthentication(
