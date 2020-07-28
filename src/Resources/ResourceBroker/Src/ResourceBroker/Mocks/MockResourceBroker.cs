@@ -1,4 +1,4 @@
-﻿// <copyright file="MockResourceBroker.cs" company="Microsoft">
+// <copyright file="MockResourceBroker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public async Task<bool> StartAsync(Guid environmentId, StartAction action, IEnumerable<StartInput> input, string trigger, IDiagnosticsLogger logger)
+        public async Task<bool> StartAsync(Guid environmentId, StartAction action, IEnumerable<StartInput> input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             if (action == StartAction.StartCompute)
             {
@@ -131,49 +131,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<bool> StartAsync(Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> StartAsync(Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<SuspendInput> input, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid environmentId, IEnumerable<SuspendInput> input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> SuspendAsync(Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> SuspendAsync(Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteAsync(Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> DeleteAsync(Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteAsync(Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> DeleteAsync(Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return Task.FromResult(true);
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<StatusResult>> StatusAsync(Guid environmentId, IEnumerable<StatusInput> input, string trigger, IDiagnosticsLogger logger)
+        public Task<IEnumerable<StatusResult>> StatusAsync(Guid environmentId, IEnumerable<StatusInput> input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<StatusResult> StatusAsync(Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger)
+        public Task<StatusResult> StatusAsync(Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<bool> ProcessHeartbeatAsync(Guid id, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> ProcessHeartbeatAsync(Guid id, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return Task.FromResult(true);
         }

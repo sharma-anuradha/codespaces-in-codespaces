@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceContinuationOperations.cs" company="Microsoft">
+// <copyright file="ResourceContinuationOperations.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -132,13 +132,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDictionary<string, string> environmentVariables,
             IEnumerable<UserSecretData> userSecrets,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             logger.FluentAddBaseValue("StorageResourceId", storageResourceId)
                 .FluentAddBaseValue("OSDiskResourceId", osDiskResourceId)
                 .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
 
-            var loggingProperties = await BuildLoggingProperties(computeResourceId, reason, logger);
+            var consolidatedloggerProperties = await BuildLoggingProperties(computeResourceId, reason, logger, loggingProperties);
 
             var input = new StartEnvironmentContinuationInput
             {
@@ -153,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
         /// <inheritdoc/>
@@ -162,12 +163,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid blobResourceId,
             Guid fileResourceId,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             logger.FluentAddBaseValue("BlobResourceId", blobResourceId)
                 .FluentAddBaseValue("StorageResourceId", fileResourceId);
 
-            var loggingProperties = await BuildLoggingProperties(blobResourceId, reason, logger);
+            var consolidatedloggerProperties = await BuildLoggingProperties(blobResourceId, reason, logger, loggingProperties);
 
             var input = new StartArchiveContinuationInput()
             {
@@ -178,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = StartArchiveContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
         /// <inheritdoc/>
@@ -186,9 +188,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid? environmentId,
             Guid resourceId,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
-            var loggingProperties = await BuildLoggingProperties(resourceId, reason, logger);
+            var consolidatedloggerProperties = await BuildLoggingProperties(resourceId, reason, logger, loggingProperties);
 
             var input = new DeleteResourceContinuationInput()
             {
@@ -198,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = DeleteResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
         /// <inheritdoc/>
@@ -206,9 +209,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid environmentId,
             Guid resourceId,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
-            var loggingProperties = await BuildLoggingProperties(resourceId, reason, logger);
+            var consolidatedloggerProperties = await BuildLoggingProperties(resourceId, reason, logger, loggingProperties);
 
             var input = new CleanupResourceContinuationInput()
             {
@@ -218,7 +222,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             };
             var target = CleanupResourceContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.ResourceId, loggingProperties);
+            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
         /// <inheritdoc/>
@@ -286,7 +290,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private async Task<IDictionary<string, string>> BuildLoggingProperties(
             Guid resourceId,
             string reason,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var resource = await ResourceRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
             if (resource == null)
@@ -296,7 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             var resourceDetials = resource.GetDetails();
 
-            return new Dictionary<string, string>()
+            var consolidatedloggerProperties = new Dictionary<string, string>()
                 {
                     { ResourceLoggingPropertyConstants.ResourceId, resourceId.ToString() },
                     { ResourceLoggingPropertyConstants.OperationReason, reason },
@@ -308,6 +313,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     { ResourceLoggingPropertyConstants.PoolImageFamilyName, resourceDetials.ImageFamilyName },
                     { ResourceLoggingPropertyConstants.PoolImageName, resourceDetials.ImageName },
                 };
+
+            if (loggingProperties != null)
+            {
+                foreach (var property in loggingProperties)
+                {
+                    consolidatedloggerProperties[property.Key] = property.Value;
+                }
+            }
+
+            return consolidatedloggerProperties;
         }
 
         private IDictionary<string, string> BuildLoggingProperties(

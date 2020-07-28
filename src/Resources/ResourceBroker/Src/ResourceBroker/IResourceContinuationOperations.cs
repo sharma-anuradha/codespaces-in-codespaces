@@ -1,4 +1,4 @@
-﻿// <copyright file="IResourceContinuationOperations.cs" company="Microsoft">
+// <copyright file="IResourceContinuationOperations.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -51,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="userSecrets">User secrets applicable to the environment.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> StartEnvironmentAsync(
             Guid environmentId,
@@ -61,7 +62,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDictionary<string, string> environmentVariables,
             IEnumerable<UserSecretData> userSecrets,
             string reason,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Starts arhive of storage by invoking the continution activator.
@@ -71,13 +73,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="storageResourceId">Target storage resource id.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> StartArchiveAsync(
             Guid environmentId,
             Guid blobResourceId,
             Guid storageResourceId,
             string reason,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Delete resource by invoking the continution activator.
@@ -86,12 +90,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="resourceId">Target resource id.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> DeleteAsync(
             Guid? environmentId,
             Guid resourceId,
             string reason,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Delete resource by invoking the continution activator.
@@ -100,12 +106,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="resourceId">Target resource id.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>Resuling continuation result.</returns>
         Task<ContinuationResult> SuspendAsync(
             Guid environmentId,
             Guid resourceId,
             string reason,
-            IDiagnosticsLogger logger);
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Delete orphaned resource by invoking the continuation activator.

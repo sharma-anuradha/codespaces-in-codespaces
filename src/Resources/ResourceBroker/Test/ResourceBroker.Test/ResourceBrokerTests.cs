@@ -227,7 +227,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             secretManager.Setup(x => x.GetApplicableSecretsAndValuesAsync(filterSecretsInput, logger)).Returns(Task.FromResult(userSecrets)).Verifiable();
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.StartEnvironmentAsync(EnvironmentId, input1.ResourceId, input2.ResourceId, input3.ResourceId, null, variables, userSecrets, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.StartEnvironmentAsync(EnvironmentId, input1.ResourceId, input2.ResourceId, input3.ResourceId, null, variables, userSecrets, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>();
             resourceRepository.Setup(x => x.GetAsync(ResourceId1.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId1.ToString(), Type = ResourceType.ComputeVM })).Verifiable();
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.OSDisk })).Verifiable();
@@ -273,7 +273,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var logger = BuildLogger().Object;
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.StartArchiveAsync(EnvironmentId, input1.ResourceId, input2.ResourceId, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.StartArchiveAsync(EnvironmentId, input1.ResourceId, input2.ResourceId, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>();
             resourceRepository.Setup(x => x.GetAsync(ResourceId1.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId1.ToString(), Type = ResourceType.StorageArchive })).Verifiable();
             resourceRepository.Setup(x => x.GetAsync(ResourceId2.ToString(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ResourceRecord() { Id = ResourceId2.ToString(), Type = ResourceType.StorageFileShare })).Verifiable();
@@ -318,7 +318,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
@@ -341,8 +341,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
-            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId2, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId2, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
@@ -364,7 +364,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var allocationStrategies = new[] { allocationStrategy };
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.SuspendAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;
@@ -386,8 +386,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var logger = BuildLogger().Object;
 
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
-            resourceContinuationOperations.Setup(x => x.DeleteAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
-            resourceContinuationOperations.Setup(x => x.DeleteAsync(EnvironmentId, ResourceId2, Reason, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.DeleteAsync(EnvironmentId, ResourceId1, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
+            resourceContinuationOperations.Setup(x => x.DeleteAsync(EnvironmentId, ResourceId2, Reason, It.IsAny<IDiagnosticsLogger>(), null)).Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>().Object;
             var secretManager = new Mock<ISecretManager>().Object;

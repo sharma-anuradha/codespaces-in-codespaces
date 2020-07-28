@@ -1,4 +1,4 @@
-﻿using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         {
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>();
             resourceContinuationOperations.
-                Setup((x) => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                Setup((x) => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), null))
                 .Returns(Task.FromResult(new ContinuationResult())).Verifiable();
             return resourceContinuationOperations.Object;
         }

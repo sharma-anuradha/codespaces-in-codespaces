@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpResourceBrokerClient.cs" company="Microsoft">
+// <copyright file="HttpResourceBrokerClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -75,7 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             Guid environmentId,
             StartRequestAction action,
             IEnumerable<StartRequestBody> resources,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNullOrEmpty(resources, nameof(resources));
@@ -91,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<bool> SuspendAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        public async Task<bool> SuspendAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNullOrEmpty(resources, nameof(resources));
@@ -107,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        public async Task<bool> DeleteAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNullOrEmpty(resources, nameof(resources));
@@ -123,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<StatusResponseBody>> StatusAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<StatusResponseBody>> StatusAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNullOrEmpty(resources, nameof(resources));
@@ -139,7 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task<bool> ProcessHeartbeatAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+        public async Task<bool> ProcessHeartbeatAsync(Guid environmentId, Guid resourceId, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceBrokerHttpContract.GetProcessHeartbeatUri(environmentId, resourceId);

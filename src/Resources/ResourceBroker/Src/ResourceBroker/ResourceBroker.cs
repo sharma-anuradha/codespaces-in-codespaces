@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceBroker.cs" company="Microsoft">
+// <copyright file="ResourceBroker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<bool> StartAsync(
-            Guid environmentId, StartAction action, IEnumerable<StartInput> resources, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, StartAction action, IEnumerable<StartInput> resources, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_start",
@@ -147,7 +147,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     computeResource.Resource.Variables,
                                     userSecrets,
                                     trigger,
-                                    childLogger.NewChildLogger());
+                                    childLogger.NewChildLogger(),
+                                    loggingProperties);
                             }
                             else
                             {
@@ -170,7 +171,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     blobResource.Resource.ResourceId,
                                     storageResource.Resource.ResourceId,
                                     trigger,
-                                    childLogger.NewChildLogger());
+                                    childLogger.NewChildLogger(),
+                                    loggingProperties);
                             }
                             else
                             {
@@ -186,21 +188,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<bool> StartAsync(
-            Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             throw new NotSupportedException("No action type supports the starting of a single resource.");
         }
 
         /// <inheritdoc/>
         public Task<bool> SuspendAsync(
-            Guid environmentId, IEnumerable<SuspendInput> inputs, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<SuspendInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_suspend_set",
                 async (childLogger) =>
                 {
                     var results = await Task.WhenAll(
-                        inputs.Select(input => SuspendAsync(environmentId, input, trigger, childLogger.NewChildLogger())));
+                        inputs.Select(input => SuspendAsync(environmentId, input, trigger, childLogger.NewChildLogger(), loggingProperties)));
 
                     return results.All(x => x);
                 });
@@ -208,7 +210,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<bool> SuspendAsync(
-            Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_suspend",
@@ -217,7 +219,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
 
                     await ResourceContinuationOperations.SuspendAsync(
-                        environmentId, input.ResourceId, trigger, logger);
+                        environmentId, input.ResourceId, trigger, logger, loggingProperties);
 
                     return true;
                 });
@@ -225,14 +227,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<bool> DeleteAsync(
-            Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_delete_set",
                 async (childLogger) =>
                 {
                     var results = await Task.WhenAll(
-                        inputs.Select(input => DeleteAsync(environmentId, input, trigger, childLogger.NewChildLogger())));
+                        inputs.Select(input => DeleteAsync(environmentId, input, trigger, childLogger.NewChildLogger(), loggingProperties)));
 
                     return results.All(x => x);
                 });
@@ -240,7 +242,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<bool> DeleteAsync(
-            Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_delete",
@@ -249,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, input.ResourceId);
 
                     await ResourceContinuationOperations.DeleteAsync(
-                        environmentId, input.ResourceId, trigger, childLogger.NewChildLogger());
+                        environmentId, input.ResourceId, trigger, childLogger.NewChildLogger(), loggingProperties);
 
                     return true;
                 });
@@ -257,14 +259,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<IEnumerable<StatusResult>> StatusAsync(
-            Guid environmentId, IEnumerable<StatusInput> inputs, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, IEnumerable<StatusInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_status_set",
                 async (childLogger) =>
                 {
                     var results = await Task.WhenAll(
-                        inputs.Select(input => StatusAsync(environmentId, input, trigger, childLogger.NewChildLogger())));
+                        inputs.Select(input => StatusAsync(environmentId, input, trigger, childLogger.NewChildLogger(), loggingProperties)));
 
                     return results.AsEnumerable();
                 });
@@ -272,7 +274,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         /// <inheritdoc/>
         public Task<StatusResult> StatusAsync(
-            Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger)
+            Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_status",
@@ -310,7 +312,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<bool> ProcessHeartbeatAsync(Guid id, string trigger, IDiagnosticsLogger logger)
+        public Task<bool> ProcessHeartbeatAsync(Guid id, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_processheartbeat",

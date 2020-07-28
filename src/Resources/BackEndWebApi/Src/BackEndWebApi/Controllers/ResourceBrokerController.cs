@@ -96,15 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             try
             {
-                var loggingProperties = new Dictionary<string, string>()
-                {
-                    [ResourceLoggingConstants.EnvironmentId] = environmentId.ToString(),
-                };
-
-                if (Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationId))
-                {
-                    loggingProperties.Add(HttpConstants.CorrelationIdHeader, correlationId.First());
-                }
+                var loggingProperties = BuildLoggingProperties(environmentId);
 
                 var result = await ResourceBrokerHttp.AllocateAsync(environmentId, resourceRequests, logger.NewChildLogger(), loggingProperties);
                 return Ok(result);
@@ -138,8 +130,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             logger.AddBaseEnvironmentId(environmentId);
+            var loggingProperties = BuildLoggingProperties(environmentId);
 
-            var result = await ResourceBrokerHttp.StartAsync(environmentId, action, resourceRequests, logger.NewChildLogger());
+            var result = await ResourceBrokerHttp.StartAsync(environmentId, action, resourceRequests, logger.NewChildLogger(), loggingProperties);
             return Ok(result);
         }
 
@@ -164,8 +157,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             logger.AddBaseEnvironmentId(environmentId);
+            var loggingProperties = BuildLoggingProperties(environmentId);
 
-            var result = await ResourceBrokerHttp.SuspendAsync(environmentId, resourceRequests, logger.NewChildLogger());
+            var result = await ResourceBrokerHttp.SuspendAsync(environmentId, resourceRequests, logger.NewChildLogger(), loggingProperties);
             return Ok(result);
         }
 
@@ -194,7 +188,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                 logger.AddBaseEnvironmentId(environmentId);
             }
 
-            var result = await ResourceBrokerHttp.DeleteAsync(environmentId, resourceRequests, logger.NewChildLogger());
+            var loggingProperties = BuildLoggingProperties(environmentId);
+
+            var result = await ResourceBrokerHttp.DeleteAsync(environmentId, resourceRequests, logger.NewChildLogger(), loggingProperties);
             return Ok(result);
         }
 
@@ -218,8 +214,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             logger.AddBaseEnvironmentId(environmentId);
+            var loggingProperties = BuildLoggingProperties(environmentId);
 
-            var result = await ResourceBrokerHttp.StatusAsync(environmentId, id, logger.NewChildLogger());
+            var result = await ResourceBrokerHttp.StatusAsync(environmentId, id, logger.NewChildLogger(), loggingProperties);
 
             if (result.Any(x => x == default))
             {
@@ -249,8 +246,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             [FromServices]IDiagnosticsLogger logger)
         {
             logger.AddBaseEnvironmentId(environmentId);
+            var loggingProperties = BuildLoggingProperties(environmentId);
 
-            var result = await ResourceBrokerHttp.ProcessHeartbeatAsync(environmentId, id, logger.NewChildLogger());
+            var result = await ResourceBrokerHttp.ProcessHeartbeatAsync(environmentId, id, logger.NewChildLogger(), loggingProperties);
             return Ok(result);
         }
 
@@ -295,17 +293,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
         /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.StartAsync(
-            Guid environmentId, StartRequestAction resourceAction, IEnumerable<StartRequestBody> resourceRequests, IDiagnosticsLogger logger)
+            Guid environmentId,
+            StartRequestAction resourceAction,
+            IEnumerable<StartRequestBody> resourceRequests,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var actionInput = (StartAction)((int)resourceAction);
             var resourceInput = Mapper.Map<IEnumerable<StartInput>>(resourceRequests);
 
             return await ResourceBroker.StartAsync(
-                environmentId, actionInput, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger());
+                environmentId, actionInput, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger(), loggingProperties);
         }
 
         /// <inheritdoc/>
-        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendAsync(Guid environmentId, IEnumerable<Guid> resourceRequests, IDiagnosticsLogger logger)
+        async Task<bool> IResourceBrokerResourcesHttpContract.SuspendAsync(
+            Guid environmentId,
+            IEnumerable<Guid> resourceRequests,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var resourceInput = new List<SuspendInput>();
             foreach (var resourceRequest in resourceRequests)
@@ -317,12 +323,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             return await ResourceBroker.SuspendAsync(
-                environmentId, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger());
+                environmentId, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger(), loggingProperties);
         }
 
         /// <inheritdoc/>
         async Task<bool> IResourceBrokerResourcesHttpContract.DeleteAsync(
-            Guid environmentId, IEnumerable<Guid> resourceRequests, IDiagnosticsLogger logger)
+            Guid environmentId,
+            IEnumerable<Guid> resourceRequests,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var resourceInput = new List<DeleteInput>();
             foreach (var resourceRequest in resourceRequests)
@@ -334,12 +343,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             return await ResourceBroker.DeleteAsync(
-                environmentId, resourceInput, "FrontEndService", logger.NewChildLogger());
+                environmentId, resourceInput, "FrontEndService", logger.NewChildLogger(), loggingProperties);
         }
 
         /// <inheritdoc/>
         async Task<IEnumerable<StatusResponseBody>> IResourceBrokerResourcesHttpContract.StatusAsync(
-            Guid environmentId, IEnumerable<Guid> resourceRequests, IDiagnosticsLogger logger)
+            Guid environmentId,
+            IEnumerable<Guid> resourceRequests,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             var resourceInput = new List<StatusInput>();
             foreach (var resourceRequest in resourceRequests)
@@ -351,7 +363,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
             }
 
             var resourceResults = await ResourceBroker.StatusAsync(
-                environmentId, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger());
+                environmentId, resourceInput, "FrontEndStartComputeService", logger.NewChildLogger(), loggingProperties);
 
             var resourceResponses = new List<StatusResponseBody>();
             foreach (var resourceResult in resourceResults)
@@ -391,10 +403,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
         /// <inheritdoc/>
         Task<bool> IResourceBrokerResourcesHttpContract.ProcessHeartbeatAsync(
-            Guid environmentId, Guid resourceId, IDiagnosticsLogger logger)
+            Guid environmentId,
+            Guid resourceId,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             return ResourceBroker.ProcessHeartbeatAsync(
-                resourceId, "FrontEndStartComputeService", logger.NewChildLogger());
+                resourceId, "FrontEndStartComputeService", logger.NewChildLogger(), loggingProperties);
+        }
+
+        private IDictionary<string, string> BuildLoggingProperties(Guid environmentId)
+        {
+            var loggingProperties = new Dictionary<string, string>()
+            {
+                [ResourceLoggingConstants.EnvironmentId] = environmentId.ToString(),
+            };
+
+            if (Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationId))
+            {
+                loggingProperties.Add(HttpConstants.CorrelationIdHeader, correlationId.First());
+            }
+
+            return loggingProperties;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="IResourceBroker.cs" company="Microsoft">
+// <copyright file="IResourceBroker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -22,9 +22,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">Input for the environment to be started.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>A task.</returns>
         Task<bool> StartAsync(
-            Guid environmentId, StartAction action, IEnumerable<StartInput> input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, StartAction action, IEnumerable<StartInput> input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Start compute with storage and startup parameters.
@@ -34,9 +35,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">Input for the environment to be started.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>A task.</returns>
         Task<bool> StartAsync(
-            Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, StartAction action, StartInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Suspends resource set based on input manifest.
@@ -45,9 +47,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">The suspend input.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the suspend operation was successful.</returns>
         Task<bool> SuspendAsync(
-            Guid environmentId, IEnumerable<SuspendInput> input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<SuspendInput> input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Performs cleanup operations to be done before delete on the resource.
@@ -56,9 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">The suspend input.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the suspend operation was successful.</returns>
         Task<bool> SuspendAsync(
-            Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, SuspendInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Delete resource set based on input manifest.
@@ -67,9 +71,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="inputs">The delete input.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the resource was deleted.</returns>
         Task<bool> DeleteAsync(
-           Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger);
+           Guid environmentId, IEnumerable<DeleteInput> inputs, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Delete a resource.
@@ -78,9 +83,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">The deallocate input.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the resource was deleted.</returns>
         Task<bool> DeleteAsync(
-            Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, DeleteInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Status check set based on input manifest.
@@ -89,9 +95,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">The suspend input.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the suspend operation was successful.</returns>
         Task<IEnumerable<StatusResult>> StatusAsync(
-            Guid environmentId, IEnumerable<StatusInput> input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, IEnumerable<StatusInput> input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Status check on a resource.
@@ -100,9 +107,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="input">The suspend input.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the suspend operation was successful.</returns>
         Task<StatusResult> StatusAsync(
-            Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger);
+            Guid environmentId, StatusInput input, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
         /// Checks to see if a given resource exists.
@@ -110,8 +118,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// <param name="id">The target resource id.</param>
         /// <param name="trigger">Target trgger.</param>
         /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
         /// <returns>True if the resource exists.</returns>
         Task<bool> ProcessHeartbeatAsync(
-            Guid id, string trigger, IDiagnosticsLogger logger);
+            Guid id, string trigger, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null);
     }
 }
