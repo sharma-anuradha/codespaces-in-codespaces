@@ -3,6 +3,7 @@ import FileHandler from "./Helpers/FileHandler";
 import { Environment } from "./Parser/Environments";
 
 export default abstract class Names {
+
   public static Generate(
     components: Component[],
     environments: Environment[],
@@ -10,66 +11,25 @@ export default abstract class Names {
     outputDir: string
   ): void {
     for (const comp of components) {
-      FileHandler.GenerateJson(
-        outputDir,
-        `${comp.prefix}.names.json`,
-        comp.generateNamesJson()
-      );
-      for (const env of environments) {
-        FileHandler.GenerateJson(
-          outputDir,
-          `${comp.prefix}.${env.name}.names.json`,
-          env.generateNamesJson(globalPrefix, comp.prefix)
-        );
-        for (const sub of comp.subscriptions) {
-          FileHandler.GenerateJson(
-            outputDir,
-            `${comp.prefix}.${env.name}-${sub.plane}.names.json`,
-            sub.generateNamesJson(
-              globalPrefix,
-              sub.env ?? env.name,
-              comp.prefix
-            )
-          );
+      const componentJson = comp.generateNamesJson(globalPrefix);
+      FileHandler.GenerateJson(outputDir, `${componentJson.baseName}.names.json`, componentJson);
 
-          for (const instance of env.instances) {
-            FileHandler.GenerateJson(
-              outputDir,
-              `${comp.prefix}.${env.name}-${sub.plane}-${instance.name}.names.json`,
-              instance.generateNamesJson(
-                globalPrefix,
-                sub.env ?? env.name,
-                sub.plane,
-                instance.stamps.flatMap((n) => n.dataLocations),
-                comp.prefix
-              )
-            );
+      for (const env of environments) {
+        const envJson = env.generateNamesJson(comp.outputNames);
+        FileHandler.GenerateJson(outputDir, `${envJson.baseName}.names.json`, envJson);
+
+        for (const plane of env.planes) {
+          const planeJson = plane.generateNamesJson(env.outputNames)
+          FileHandler.GenerateJson(outputDir, `${planeJson.baseName}.names.json`, planeJson);
+
+          for (const instance of plane.instances) {
+            const instanceRegions = instance.stamps.flatMap((n) => n.location);
+            const instanceJson = instance.generateNamesJson(plane.outputNames, instanceRegions);
+            FileHandler.GenerateJson(outputDir, `${instanceJson.baseName}.names.json`, instanceJson);
 
             for (const stamp of instance.stamps) {
-              FileHandler.GenerateJson(
-                outputDir,
-                `${comp.prefix}.${env.name}-${sub.plane}-${instance.name}-${stamp.location.geography.name}-${stamp.location.region.name}.names.json`,
-                stamp.location.generateNamesJson(
-                  globalPrefix,
-                  sub.env ?? env.name,
-                  sub.plane,
-                  instance.name,
-                  comp.prefix
-                )
-              );
-              for (const dl of stamp.dataLocations) {
-                FileHandler.GenerateJson(
-                  outputDir,
-                  `${comp.prefix}.${env.name}-${sub.plane}-${instance.name}-${dl.geography.name}-${dl.region.name}.names.json`,
-                  dl.generateNamesJson(
-                    globalPrefix,
-                    sub.env ?? env.name,
-                    sub.plane,
-                    instance.name,
-                    comp.prefix
-                  )
-                );
-              }
+              const stampJson = stamp.location.generateNamesJson(instance.outputNames);
+              FileHandler.GenerateJson(outputDir, `${stampJson.baseName}.names.json`, stampJson);
             }
           }
         }

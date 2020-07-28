@@ -1,9 +1,8 @@
 import { ComponentsDeployment } from "./Parser/Components";
 import FileHandler from "./Helpers/FileHandler";
-import { EnvironmentsDeployment } from "./Parser/Environments";
+import { EnvironmentsDeployment, Environment, Plane, Instance, Stamp } from "./Parser/Environments";
 import * as path from "path";
 import { writeFileSync } from "fs";
-import { Console } from "console";
 
 class Match {
   key: string;
@@ -50,7 +49,6 @@ export default class Templates {
   public Generate(): void {
     const templateFiles = this.getTemplateList(this.inputDir);
 
-    // TODO: Message if no templates found?
     for (const templatePath of templateFiles) {
       const fileName = templatePath.split("\\").pop();
       const filetype = fileName.split(".").pop();
@@ -58,13 +56,23 @@ export default class Templates {
       const outputDir = templatePath
         .replace(this.inputDir, this.outputDir)
         .replace(fileName, "");
-      FileHandler.CreateDirectory(outputDir);
+
       const names = this.getNames(fileName);
+      if (!names?.length) {
+        const name = {
+          fileName: fileName,
+          outputName: fileName,
+          names: null
+        };
+        names.push(name);
+        console.log(`info: ${name.fileName} -> ${name.outputName} -> *`);
+      }
+
       for (const name of names) {
         let buffer = orgBuffer;
         const commentHeader = [
           this.staticCommentHeader,
-          `${templatePath}`,
+          `${templatePath} (${name.names?.baseName ?? '*'})`,
           this.staticCommentFooter,
         ];
         switch (filetype) {
@@ -76,116 +84,125 @@ export default class Templates {
             buffer = this.textReplacement(buffer, name);
             break;
         }
+        FileHandler.CreateDirectory(outputDir);
         writeFileSync(path.join(outputDir, name.outputName), buffer);
       }
     }
   }
 
   private getNames(fileName: string): NameMatch[] {
-    const compComponentsName = fileName.split(".")[0];
-    const compComponentsTemplate = fileName.split(".")[1];
+    const compComponentsName = fileName.split(".")[0]?.toLowerCase();
     const comp = this.compDep.components.find(
-      (n) => n.displayName === compComponentsName
+      (n) => n.displayName?.toLowerCase() === compComponentsName
     );
     if (comp == null) {
-      // TODO: Component missing, tell user?
+      // console.log(`warning: filename contains no component name: ${fileName}`);
+      return [];
+    }
+
+    const compComponentsTemplate = fileName.split(".")[1];
+    if (!compComponentsTemplate) {
+      // console.log(`warning: filename contains no component template: ${fileName}`);
       return [];
     }
 
     const match = this.generateMatches(compComponentsTemplate.split("-"));
+    if (!match?.length) {
+      return [];
+    }
     const staticMatch = this.generateStaticMatch(
       match.filter((n) => n.isStatic)
     );
 
-    // If we have a static plane, filter the subscriptions to just those with those planes. Otherwise use all.
-    const subscriptions =
-      staticMatch.plane != null
-        ? comp.subscriptions.filter((n) => n.plane === staticMatch.plane)
-        : comp.subscriptions;
-    const environments =
-      staticMatch.env != null
-        ? this.envDep.environments.filter((n) => n.name == staticMatch.env)
-        : this.envDep.environments;
-
-    if (subscriptions.length <= 0) {
-      throw `Couldn't find any subscriptions for this component: File - ${fileName}, Plane - ${staticMatch.plane}`;
+    const hasEnvironments = staticMatch.env || this.containsMatch(match, ["{Env}"]);
+    const envFilter = function (e: Environment) {
+      return hasEnvironments && (staticMatch.env == null || e.name == staticMatch.env);
+    }
+    const hasPlanes = staticMatch.plane || this.containsMatch(match, ["{Plane}"]);
+    const planeFilter = function (p: Plane) {
+      return hasPlanes && (staticMatch.plane == null || p.name == staticMatch.plane);
+    }
+    const hasInstances = staticMatch.instance || this.containsMatch(match, ["{Instance}"]);
+    const instanceFilter = function (i: Instance) {
+      return hasInstances && (staticMatch.instance == null || i.name == staticMatch.instance);
+    }
+    const hasStamps = (staticMatch.geo && staticMatch.region) || (this.containsMatch(match, ["{Geo}"]) && this.containsMatch(match, ["{Region}"]));
+    const staticStampName = staticMatch.geo && staticMatch.region ? `${staticMatch.geo}-${staticMatch.region}` : null;
+    const stampFilter = function (s: Stamp) {
+      return hasStamps && (staticStampName == null || s.name == staticStampName);
     }
 
-    const useInstance =
-      !this.containsMatch(match, ["{Region}", "{Geo}"]) &&
-      staticMatch.geo == null &&
-      staticMatch.region == null;
-    const useSubscriptions =
-      !this.containsMatch(match, ["{Instance}"]) &&
-      staticMatch.instance == null;
-    const useEnvironments =
-      !this.containsMatch(match, ["{Plane}"]) && staticMatch.plane == null;
-    const names = [];
+    if (!hasEnvironments && !hasPlanes && !hasInstances && !hasStamps) {
+      // no replacement pattern match;
+      console.log(`warning: the file pattern ${compComponentsTemplate} is not valid: ${fileName}`)
+      return [];
+    }
 
+    const names: NameMatch[] = [];
+
+    const environments: Environment[] = this.envDep.environments.filter(envFilter);
     for (const env of environments) {
-      if (useEnvironments) {
-        // environment
+      const planes = env.planes.filter(planeFilter);
+      if (!planes?.length) {
+        // {env}
+        const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
+        const outputName = fileName.replace(/{Env}/gi, env.name).replace(staticEnv, env.name);
         names.push({
           fileName: fileName,
-          outputName: `${comp.prefix}.${env.name}.${fileName
-            .split(".")
-            .slice(2)
-            .join(".")}`,
+          outputName: outputName,
           names: env.outputNames,
         });
-      } else {
-        for (const sub of subscriptions) {
-          if (useSubscriptions) {
+      }
+      else {
+        for (const plane of planes) {
+          const instances = plane.instances.filter(instanceFilter);
+          if (!instances?.length) {
+            // {env}-{plane}
+            const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
+            const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
+            const outputName = fileName
+              .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
+              .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name);
             names.push({
               fileName: fileName,
-              outputName: `${comp.prefix}.${env.name}-${
-                sub.plane
-              }.${fileName.split(".").slice(2).join(".")}`,
-              names: sub.outputName,
+              outputName: outputName,
+              names: plane.outputNames,
             });
-          } else {
-            const instances =
-              staticMatch.instance != null
-                ? env.instances.filter((n) => n.name == staticMatch.instance)
-                : env.instances;
-            if (instances.length <= 0) {
-              throw `Couldn't find any instances for this component: File - ${fileName}, Instance - ${staticMatch.instance}`;
-            }
+          }
+          else {
             for (const instance of instances) {
-              // FIXME: Copying existing file to output directory, using temp names.
-              if (useInstance) {
+              const stamps = instance.stamps.filter(stampFilter);
+              if (!stamps?.length) {
+                // {env}-{plane}-{instance}
+                const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
+                const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
+                const staticInstance = new RegExp(`\\[${instance.name}\\]`, "gi");
+                const outputName = fileName
+                  .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
+                  .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name)
+                  .replace(/{Instance}/gi, instance.name).replace(staticInstance, instance.name);
                 names.push({
                   fileName: fileName,
-                  outputName: `${comp.prefix}.${env.name}-${sub.plane}-${
-                    instance.name
-                  }.${fileName.split(".").slice(2).join(".")}`,
+                  outputName: outputName,
                   names: instance.outputNames,
                 });
-              } else {
-                let stamps =
-                  staticMatch.geo != null
-                    ? instance.stamps.filter(
-                        (n) => n.location.geography.name == staticMatch.geo
-                      )
-                    : instance.stamps;
-                if (stamps.length <= 0) {
-                  throw `Couldn't find any Geo stamps for this component: File - ${fileName}, Stamp - ${staticMatch.geo}`;
-                }
-                stamps =
-                  staticMatch.region != null
-                    ? stamps.filter(
-                        (n) => n.location.region.name == staticMatch.region
-                      )
-                    : stamps;
-                if (stamps.length <= 0) {
-                  throw `Couldn't find any Region stamps for this component: File - ${fileName}, Stamp - ${staticMatch.region}`;
-                }
+              }
+              else {
                 for (const stamp of stamps) {
+                  // {env}-{plane}-{instance}-{stamp}
+                  const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
+                  const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
+                  const staticInstance = new RegExp(`\\[${instance.name}\\]`, "gi");
+                  const staticGeo = new RegExp(`\\[${stamp.location.geography.name}\\]`, "gi");
+                  const staticRegion = new RegExp(`\\[${stamp.location.region.name}\\]`, "gi");
+                  const outputName = fileName
+                    .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
+                    .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name)
+                    .replace(/{Instance}/gi, instance.name).replace(staticInstance, instance.name)
+                    .replace(/{Geo}-{Region}/gi, stamp.name).replace(staticGeo, stamp.location.geography.name).replace(staticRegion, stamp.location.region.name)
                   names.push({
                     fileName: fileName,
-                    outputName: `${comp.prefix}.${env.name}-${sub.plane}-${
-                      instance.name
-                    }-${stamp.name}.${fileName.split(".").slice(2).join(".")}`,
+                    outputName: outputName,
                     names: stamp.location.outputNames,
                   });
                 }
@@ -194,6 +211,10 @@ export default class Templates {
           }
         }
       }
+    }
+
+    for (const name of names) {
+      console.log(`info: ${name.fileName} -> ${name.outputName} -> ${name.names?.baseName}`);
     }
 
     return names;
@@ -217,22 +238,28 @@ export default class Templates {
   private textReplacement(buffer: Buffer, namesObj: NameMatch): Buffer {
     let text = buffer.toString("utf8");
     const names = namesObj.names;
-    const nameReplaceMatches = /[^{{{\\}]+(?=}}})/g.exec(text);
 
-    if (nameReplaceMatches) {
-      for (const match of nameReplaceMatches) {
-        if (!Object.keys(names).includes(match)) {
-          // TODO: Throw better error, line number? Other values?
-          throw `Property ${match} not found in names object. ${namesObj}`;
+    if (names) {
+      const nameReplaceMatches = /[^{{{\\}]+(?=}}})/g.exec(text);
+
+      if (nameReplaceMatches) {
+        for (const match of nameReplaceMatches) {
+          if (!Object.keys(names).includes(match)) {
+            // TODO: Throw better error, line number? Other values?
+            throw `Property ${match} not found in names object. ${namesObj}`;
+          }
         }
+
+        for (const name in names) {
+          const regex = new RegExp("{{{" + name + "}}}", "g");
+          const value = namesObj.names[name];
+          const replaceValue = typeof value === 'string' ? value : JSON.stringify(value);
+          text = text.replace(regex, replaceValue);
+        }
+      } else {
+        console.log(`warning: No template values found in ${namesObj.fileName}`);
+        // throw (`No template values found in ${namesObj.fileName}`);
       }
-  
-      for (const name in names) {
-        const regex = new RegExp("{{{" + name + "}}}", "g");
-        text = text.replace(regex, namesObj.names[name]);
-      }
-    } else {
-      throw (`No template values found in ${namesObj.fileName}`);
     }
 
     return Buffer.from(text, "utf8");
@@ -241,7 +268,7 @@ export default class Templates {
   private getTemplateList(inputDir: string): string[] {
     const files: string[] = [];
     FileHandler.GetAllFiles(inputDir, files);
-    return files.filter((n) => n.includes(".Template."));
+    return files;
   }
 
   private generateMatches(compComponentsTemplate: string[]): Match[] {

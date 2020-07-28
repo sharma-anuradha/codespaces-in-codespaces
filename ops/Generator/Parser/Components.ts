@@ -1,3 +1,6 @@
+import { AssertionError } from "assert";
+import ResourceNames, { ComponentNames } from "./ResourceNames";
+
 export class ComponentsDeployment {
   globalPrefix: string;
   components: Component[] = [];
@@ -56,25 +59,18 @@ export class Component {
   displayName: string;
   dependsOn: string[];
   subscriptions: Subscription[] = [];
-  outputName: ComponentName;
+  outputNames: ComponentNames;
 
-  generateNamesJson(): ComponentName {
-    return this.outputName = {
-      baseName: this.prefix,
-      component: this.prefix,
-      id: this.prefix,
-      nameFile: `${this.prefix}.names.json`,
-      outputPath: this.prefix,
+  generateNamesJson(prefix: string): ComponentNames {
+    const baseComponentName = ResourceNames.makeResourceName(prefix, this.prefix);
+    const baseName = baseComponentName;
+
+    return this.outputNames = {
+      prefix: prefix,
+      baseName: baseName,
+      component: this.prefix
     };
   }
-}
-
-export class ComponentName {
-    baseName: string;
-    component: string;
-    id: string;
-    nameFile: string;
-    outputPath: string;
 }
 
 export class Subscription {
@@ -85,30 +81,28 @@ export class Subscription {
   provisioned: Provisioned[] = [];
   outputName: SubscriptionName;
 
-  generateNamesJson(globalPrefix: string, env: string, compPrefix: string) {
+  generateNamesJson(prefix: string, env: string, compPrefix: string) : SubscriptionName {
+    const baseEnvName = ResourceNames.makeResourceName(prefix, compPrefix, env);
+    const basePlaneName = ResourceNames.makeResourceName(prefix, compPrefix, env, this.plane);
+    const baseName = basePlaneName;
+
     return this.outputName = {
-      baseEnvName: `${globalPrefix}-${compPrefix}-${env}`,
-      baseName: compPrefix,
-      basePlaneName: `${globalPrefix}-${compPrefix}-${env}-${this.plane}`,
+      baseName: baseName,
+      baseEnvName: baseEnvName,
+      basePlaneName: basePlaneName,
       component: compPrefix,
       env: env,
-      id: `${globalPrefix}-${compPrefix}-${env}-${this.plane}`,
-      nameFile: `${compPrefix}.${env}-${this.plane}-names.json`,
-      outputPath: `${compPrefix}.${env}.${this.plane}`,
       plane: this.plane,
     };
   }
 }
 
 export class SubscriptionName {
-  baseEnvName: string;
   baseName: string;
+  baseEnvName: string;
   basePlaneName: string;
   component: string;
   env: string;
-  id: string;
-  nameFile: string;
-  outputPath: string;
   plane: string;
 }
 

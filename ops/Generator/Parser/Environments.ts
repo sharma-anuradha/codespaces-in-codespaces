@@ -1,203 +1,189 @@
 import { find } from "lodash";
+import ResourceNames, { EnvironmentNames, InstanceNames, RegionNames, PlaneNames, ComponentNames } from "./ResourceNames";
 
 export class EnvironmentsDeployment implements IEnvironmentsDeployment {
-  globalPrefix: string;
-  environments: Environment[] = [];
-  geographies: Geography[] = [];
+    globalPrefix: string;
+    environments: Environment[] = [];
+    geographies: Geography[] = [];
 
-  constructor(environments: any) {
-    this.parseEnvironmentsDeploymentsJson(environments);
-  }
+    constructor(environments: any) {
+        this.parseEnvironmentsDeploymentsJson(environments);
+    }
 
-  private getGeography(name: string): Geography {
-    return find(this.geographies, ["name", name]);
-  }
+    private getGeography(name: string): Geography {
+        return find(this.geographies, ["name", name]);
+    }
 
-  private getRegion(geo: Geography, name: string): Region {
-    return find(geo.regions, ["name", name]);
-  }
+    private getRegion(geo: Geography, name: string): Region {
+        return find(geo.regions, ["name", name]);
+    }
 
-  private parseEnvironmentsDeploymentsJson(env: any) {
-    this.parseGeographiesJson(env.geographies);
-    this.parseEnvironmentsJson(env.environments);
-  }
+    private parseEnvironmentsDeploymentsJson(env: any) {
+        this.parseGeographiesJson(env.geographies);
+        this.parseEnvironmentsJson(env.environments);
+    }
 
-  private getDataLocation(location: string): DataLocation {
-    const locationSplit = location.split("-");
-    const geoTag = this.getGeography(locationSplit[0]);
-    const regionTag = this.getRegion(geoTag, locationSplit[1]);
-    const dl = new DataLocation();
-    dl.geography = geoTag;
-    dl.region = regionTag;
-    return dl;
-  }
+    private getDataLocation(location: string): DataLocation {
+        const locationSplit = location.split("-");
+        const geoTag = this.getGeography(locationSplit[0]);
+        const regionTag = this.getRegion(geoTag, locationSplit[1]);
+        const dl = new DataLocation();
+        dl.geography = geoTag;
+        dl.region = regionTag;
+        return dl;
+    }
 
-  private parseEnvironmentsJson(environments: any) {
-    for (const envName in environments) {
-      const env = new Environment();
-      env.name = envName;
-      const envObj = environments[envName];
-      env.pme = envObj.pme;
-      for (const instanceName in envObj.instances) {
-        const instance = envObj.instances[instanceName];
-        const inst = new Instance();
-        inst.name = instanceName;
-        for (const stampName in instance.stamps) {
-          const smp = new Stamp();
-          smp.name = stampName;
-          const stamp = instance.stamps[stampName];
-          smp.location = this.getDataLocation(stamp.location);
-          for (const data of stamp.dataLocations) {
-            smp.dataLocations.push(this.getDataLocation(data));
-          }
-          inst.stamps.push(smp);
+    private parseEnvironmentsJson(environments: any) {
+        for (const envName in environments) {
+            const env = new Environment();
+            env.name = envName;
+            const envObj = environments[envName];
+            env.pme = envObj.pme;
+            for (const plane of env.planes) {
+                for (const instanceName in envObj.instances) {
+                    const instance = envObj.instances[instanceName];
+                    const inst = new Instance();
+                    inst.name = instanceName;
+                    for (const stampName in instance.stamps) {
+                        const smp = new Stamp();
+                        smp.name = stampName;
+                        const stamp = instance.stamps[stampName];
+                        smp.location = this.getDataLocation(stamp.location);
+                        for (const data of stamp.dataLocations) {
+                            smp.dataLocations.push(this.getDataLocation(data));
+                        }
+                        inst.stamps.push(smp);
+                    }
+                    plane.instances.push(inst);
+                }
+            }
+            this.environments.push(env);
         }
-        env.instances.push(inst);
-      }
-      this.environments.push(env);
     }
-  }
 
-  private parseGeographiesJson(geos: any) {
-    for (const geoName in geos) {
-      const geo = new Geography();
-      geo.name = geoName;
-      for (const regName in geos[geoName]) {
-        const reg = new Region();
-        reg.name = regName;
-        reg.fullName = geos[geoName][regName];
-        geo.regions.push(reg);
-      }
-      this.geographies.push(geo);
+    private parseGeographiesJson(geos: any) {
+        for (const geoName in geos) {
+            const geo = new Geography();
+            geo.name = geoName;
+            for (const regName in geos[geoName]) {
+                const reg = new Region();
+                reg.name = regName;
+                reg.fullName = geos[geoName][regName];
+                geo.regions.push(reg);
+            }
+            this.geographies.push(geo);
+        }
     }
-  }
 }
 
 export interface IEnvironmentsDeployment {
-  environments: Environment[];
-  geographies: Geography[];
+    environments: Environment[];
+    geographies: Geography[];
 }
 
 export class Geography {
-  name: string;
-  regions: Region[] = [];
+    name: string;
+    regions: Region[] = [];
 }
 
 export class Region {
-  name: string;
-  fullName: string;
+    name: string;
+    fullName: string;
 }
 
-export class Environment {
-  name: string;
-  pme: boolean;
-  instances: Instance[] = [];
-  outputNames: EnvironmentName;
+export class Plane {
+    name: string;
+    instances: Instance[] = [];
+    outputNames: PlaneNames;
 
-  generateNamesJson(globalPrefix: string, compPrefix: string): EnvironmentName {
-    return this.outputNames = {
-        baseEnvName: `${globalPrefix}-${compPrefix}-${this.name}`,
-        baseName: compPrefix,
-        component: compPrefix,
-        env: this.name,
-        id: `${globalPrefix}-${compPrefix}-${this.name}`,
-        nameFile: `${compPrefix}.${this.name}.names.json`,
-        outputPath: `${compPrefix}.${this.name}`
-      }
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    generateNamesJson(environmentNames: EnvironmentNames): PlaneNames {
+        const baseName = ResourceNames.makeResourceName(environmentNames.prefix, environmentNames.component, environmentNames.env, this.name);
+
+        return this.outputNames = {
+            baseName: baseName,
+            baseEnvironmentName: environmentNames.baseEnvironmentName,
+            basePlaneName: baseName,
+            prefix: environmentNames.prefix,
+            component: environmentNames.component,
+            env: environmentNames.env,
+            plane: this.name
+        }
     }
 }
 
-export class EnvironmentName {
-  baseEnvName: string;
-  baseName: string;
-  component: string;
-  env: string;
-  id: string;
-  nameFile: string;
-  outputPath: string;
+export class Environment {
+    name: string;
+    pme: boolean;
+    planes: Plane[] = [new Plane("ops"), new Plane("ctl"), new Plane("data")];
+    outputNames: EnvironmentNames;
+
+    generateNamesJson(componentNames: ComponentNames): EnvironmentNames {
+        const baseName = ResourceNames.makeResourceName(componentNames.prefix, componentNames.component, this.name);
+
+        return this.outputNames = {
+            baseName: baseName,
+            baseEnvironmentName: baseName,
+            prefix: componentNames.prefix,
+            component: componentNames.component,
+            env: this.name,
+        }
+    }
 }
 
 export class Instance {
-  name: string;
-  stamps: Stamp[] = [];
-  outputNames: InstanceName;
+    name: string;
+    stamps: Stamp[] = [];
+    outputNames: InstanceNames;
 
-  generateNamesJson(globalPrefix: string, env: string, plane: string, regions: DataLocation[], compPrefix: string): InstanceName {
-      return this.outputNames = {
-        baseEnvName: `${globalPrefix}-${compPrefix}-${env}`,
-        baseInstanceName: `${globalPrefix}-${compPrefix}-${env}-${plane}-${this.name}`,
-        baseName: `${compPrefix}`,
-        basePlaneName: `${globalPrefix}-${compPrefix}-${env}-${plane}`,
-        component:  `${compPrefix}`,
-        env:  `${env}`,
-        id: `${globalPrefix}-${compPrefix}-${env}-${plane}-${this.name}`,
-        instance: `${this.name}`,
-        nameFile: `${compPrefix}.${env}-${plane}-${this.name}.names.json`,
-        outputPath: `${compPrefix}.${env}-${plane}.${this.name}`,
-        plane: `${plane}`,
-        region: regions.map(n => `${n.geography.name}-${n.region.name}`)
-      }
-  }
-}
-
-export class InstanceName {
-  baseEnvName: string;
-  baseInstanceName: string;
-  baseName: string;
-  basePlaneName: string;
-  component: string;
-  env: string;
-  id: string;
-  instance: string;
-  nameFile: string;
-  outputPath: string;
-  plane: string;
-  region: string[];
+    generateNamesJson(planeNames: PlaneNames, regions: DataLocation[]): InstanceNames {
+        const baseName = ResourceNames.makeResourceName(planeNames.prefix, planeNames.component, planeNames.env, planeNames.plane, this.name);
+        return this.outputNames = {
+            baseName: baseName,
+            baseEnvironmentName: planeNames.baseEnvironmentName,
+            basePlaneName: planeNames.basePlaneName,
+            baseInstanceName: baseName,
+            prefix: planeNames.prefix,
+            component: planeNames.component,
+            env: planeNames.env,
+            plane: planeNames.plane,
+            instance: this.name,
+            instanceRegions: regions.map(n => `${n.geography.name}-${n.region.name}`)
+        }
+    }
 }
 
 export class Stamp {
-  name: string;
-  location: DataLocation;
-  dataLocations: DataLocation[] = [];
+    name: string;
+    location: DataLocation;
+    dataLocations: DataLocation[] = [];
 }
 
 export class DataLocation {
     geography: Geography;
     region: Region;
-    env: string;
-    outputNames: DataLocationName;
+    outputNames: RegionNames;
 
-    generateNamesJson(globalPrefix: string, env: string, plane: string, instance: string, compPrefix: string): DataLocationName {
+    generateNamesJson(instanceNames: InstanceNames): RegionNames {
+        const baseName = ResourceNames.makeResourceName(instanceNames.prefix, instanceNames.component, instanceNames.env, instanceNames.plane, instanceNames.instance, this.geography.name, this.region.name);
         return this.outputNames = {
-            baseEnvName: `${globalPrefix}-${compPrefix}-${env}`,
-            baseInstanceName: `${globalPrefix}-${compPrefix}-${env}-${plane}-${instance}`,
-            baseName: `${compPrefix}`,
-            basePlaneName: `${globalPrefix}-${compPrefix}-${env}-${plane}-${this.geography.name}-${this.region.name}`,
-            baseRegionName: `${globalPrefix}-${compPrefix}-${env}-${plane}`,
-            component:  `${compPrefix}`,
-            env:  `${env}`,
-            id: `${globalPrefix}-${compPrefix}-${env}-${plane}-${instance}`,
-            instance: `${instance}`,
-            nameFile: `${compPrefix}.${env}-${plane}-${instance}.names.json`,
-            outputPath: `${compPrefix}.${env}-${plane}-${instance}`,
-            plane: `${plane}`,
-            region: `${this.geography.name}-${this.region.name}`
-          }
+            baseName: baseName,
+            baseEnvironmentName: instanceNames.baseEnvironmentName,
+            basePlaneName: instanceNames.basePlaneName,
+            baseInstanceName: instanceNames.baseInstanceName,
+            baseRegionName: baseName,
+            prefix: instanceNames.prefix,
+            component: instanceNames.component,
+            env: instanceNames.env,
+            plane: instanceNames.plane,
+            instance: instanceNames.instance,
+            instanceRegions: instanceNames.instanceRegions,
+            geo: this.geography.name,
+            region: `${this.geography.name}-${this.region.name}`,
+            location: this.region.fullName
+        }
     }
-}
-
-export class DataLocationName {
-  baseEnvName: string;
-  baseInstanceName: string;
-  baseName: string;
-  basePlaneName: string;
-  baseRegionName: string;
-  component: string;
-  env: string;
-  id: string;
-  instance: string;
-  nameFile: string;
-  outputPath: string;
-  plane: string;
-  region: string;
 }

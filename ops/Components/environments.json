@@ -1,91 +1,106 @@
 {
-    "geographies": {
-        "ap": {
-            "se": "SoutheastAsia"
-        },
-        "au": {
-            "e": "AustralizEast"
-        },
-        "eu": {
-            "w": "WestEurope"
-        },
-        "uk": {
-            "s": "UKSouth"
-        },
-        "us": {
-            "e": "EastUS",
-            "w2": "WestUs2"
-        }
+  "geographies": {
+    "ap": {
+      "se": "SoutheastAsia"
     },
-    "environments": {
-        "dev": {
-            "pme": false,
-            "instances": {
-                "ci": {
-                    "stamps": {
-                        "us-w2": {
-                            "location": "us-w2",
-                            "dataLocations": [
-                                "us-w2"
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "ppe": {
-            "pme": true,
-            "instances": {
-                "rel": {
-                    "stamps": {
-                        "eu-w": {
-                            "location": "eu-w",
-                            "dataLocations": [
-                                "eu-w"
-                            ]
-                        },
-                        "us-w2": {
-                            "location": "us-w2",
-                            "dataLocations": [
-                                "us-w2"
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "prod": {
-            "pme": true,
-            "instances": {
-                "rel": {
-                    "stamps": {
-                        "ap-se": {
-                            "location": "ap-se",
-                            "dataLocations": [
-                                "ap-se"
-                            ]
-                        },
-                        "eu-w": {
-                            "location": "eu-w",
-                            "dataLocations": [
-                                "eu-w"
-                            ]
-                        },
-                        "us-e": {
-                            "location": "us-e",
-                            "dataLocations": [
-                                "us-e"
-                            ]
-                        },
-                        "us-w2": {
-                            "location": "us-w2",
-                            "dataLocations": [
-                                "us-w2"
-                            ]
-                        }
-                    }
-                }
-            }
-        }
+    "au": {
+      "e": "AustralizEast"
+    },
+    "eu": {
+      "w": "WestEurope"
+    },
+    "uk": {
+      "s": "UKSouth"
+    },
+    "us": {
+      "e": "EastUS",
+      "w2": "WestUs2"
     }
+  },
+  "environments": {
+    "test": {
+      "pme": false,
+      "instances": {
+        "tst": {
+          "stamps": {
+            "us-w2": {
+              "location": "us-w2",
+              "dataLocations": [
+                "us-w2"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "dev": {
+      "pme": false,
+      "instances": {
+        "ci": {
+          "stamps": {
+            "us-w2": {
+              "location": "us-w2",
+              "dataLocations": [
+                "us-w2"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "ppe": {
+      "pme": true,
+      "instances": {
+        "rel": {
+          "stamps": {
+            "eu-w": {
+              "location": "eu-w",
+              "dataLocations": [
+                "eu-w"
+              ]
+            },
+            "us-w2": {
+              "location": "us-w2",
+              "dataLocations": [
+                "us-w2"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "prod": {
+      "pme": true,
+      "instances": {
+        "rel": {
+          "stamps": {
+            "ap-se": {
+              "location": "ap-se",
+              "dataLocations": [
+                "ap-se"
+              ]
+            },
+            "eu-w": {
+              "location": "eu-w",
+              "dataLocations": [
+                "eu-w"
+              ]
+            },
+            "us-e": {
+              "location": "us-e",
+              "dataLocations": [
+                "us-e"
+              ]
+            },
+            "us-w2": {
+              "location": "us-w2",
+              "dataLocations": [
+                "us-w2"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
 }
