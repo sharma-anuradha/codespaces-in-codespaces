@@ -1,4 +1,4 @@
-﻿// <copyright file="VsoPlan.cs" company="Microsoft">
+// <copyright file="VsoPlan.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -25,6 +25,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "userId")]
         public string UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets ID of the tenant that the plan is in.
+        /// </summary>
+        /// <remarks>
+        /// The tenant ID can be used to direct the user to login to the correct tenant
+        /// for access the plan.
+        /// </remarks>
+        [JsonProperty(Required = Required.Default, PropertyName = "tenant")]
+        public string Tenant { get; set; }
 
         /// <summary>
         /// Gets or sets the billing plan selected for this plan. This corresponds to the "SKU"

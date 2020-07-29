@@ -345,7 +345,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var plansList = new List<VsoPlan>();
             var planManager = MockPlanManager(knownPlans: plansList);
 
-            var controller = CreateTestController(planManager: planManager);
+            var tenantId = Guid.Empty.ToString().Replace('0', '1');
+            var userIdentity = new VsoClaimsIdentity(new ClaimsIdentity(new[]
+            {
+                new Claim("tid", tenantId),
+            }));
+            var currentUserProvider = MockUtil.MockCurrentUserProvider(identity: userIdentity);
+
+            var controller = CreateTestController(
+                planManager: planManager,
+                currentUserProvider: currentUserProvider);
 
             var headers = new PlanResourceHeaders();
             var resource = ToPlanResource(MockVsoPlan(userId: null));
@@ -364,6 +373,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             Assert.Single(plansList);
             Assert.Null(plansList[0].UserId);
+            Assert.Equal(tenantId, plansList[0].Tenant);
         }
 
         [Fact]
@@ -384,17 +394,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         private static SubscriptionsController CreateTestController(
             IEnvironmentManager environmentManager = null,
             IPlanManager planManager = null,
-            HttpContext httpContext = null)
+            HttpContext httpContext = null,
+            ICurrentUserProvider currentUserProvider = null)
         {
             environmentManager ??= MockUtil.MockEnvironmentManager();
             planManager ??= MockPlanManager();
+            currentUserProvider ??= new Mock<ICurrentUserProvider>().Object;
             var mapper = MockUtil.MockMapper();
             var configuration = new Mock<ISystemConfiguration>();
             var tokenProvider = new Mock<ITokenProvider>();
             var subscriptionManager = new Mock<ISubscriptionManager>();
-            var currentUserProvider = new Mock<ICurrentUserProvider>();
             var superUserIdentity = MockVsoSuperuserClaimsIdentity();
-
 
             var controller = new SubscriptionsController(
                 planManager,
@@ -403,7 +413,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 environmentManager,
                 configuration.Object,
                 subscriptionManager.Object,
-                currentUserProvider.Object,
+                currentUserProvider,
                 superUserIdentity);
 
             var logger = new Mock<IDiagnosticsLogger>();

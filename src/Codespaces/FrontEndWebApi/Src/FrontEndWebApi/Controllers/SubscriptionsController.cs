@@ -223,6 +223,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 async (logger) =>
                 {
                     var partner = await HttpContext.GetPartnerAsync(SystemConfiguration, logger);
+                    var tenantId = CurrentUserProvider.Identity?.GetTenantId();
 
                     ValidationUtil.IsRequired(subscriptionId);
                     ValidationUtil.IsRequired(resourceGroup);
@@ -239,6 +240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     var plan = new VsoPlan
                     {
+                        Tenant = tenantId,
                         Plan = new VsoPlanInfo
                         {
                             Location = location,
@@ -270,6 +272,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     else
                     {
                         ValidationUtil.IsTrue(string.IsNullOrEmpty(resource.Properties?.UserId));
+
+                        // Tenant ID is required when creating multi-user plans.
+                        ValidationUtil.IsRequired(tenantId, nameof(tenantId));
                     }
 
                     var resourceProvider = providerNamespace.Equals(VsoPlanInfo.CodespacesProviderNamespace, StringComparison.InvariantCultureIgnoreCase) ? providerNamespace : null;
