@@ -133,6 +133,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Posts metrics event
                     var stateSnapshot = new CloudEnvironmentStateSnapshot(oldState, oldStateUpdated);
                     EnvironmentMetricsLogger.PostEnvironmentEvent(cloudEnvironment, stateSnapshot, logger.NewChildLogger());
+
+                    // Log to operational telemetry (Do not alter - used by dashboards)
+                    logger.AddCloudEnvironment(cloudEnvironment)
+                        .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
                 });
         }
 
