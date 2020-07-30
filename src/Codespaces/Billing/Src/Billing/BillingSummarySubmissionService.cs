@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingSummarySubmissionService.cs" company="Microsoft">
+// <copyright file="BillingSummarySubmissionService.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IPlanManager planManager)
-            : base(controlPlanInfo, logger, claimedDistributedLease, taskHelper, planManager, "billingsub-worker")
+            : base(controlPlanInfo, logger, claimedDistributedLease, taskHelper, planManager)
         {
             this.controlPlanInfo = controlPlanInfo;
             this.billingEventManager = billingEventManager;
@@ -55,6 +55,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             this.claimedDistributedLease = claimedDistributedLease;
             this.planManager = planManager;
         }
+
+        /// <inheritdoc/>
+        protected override string ServiceName => "billingsub-worker";
 
         /// <inheritdoc />
         public async Task ProcessBillingSummariesAsync(CancellationToken cancellationToken)
@@ -112,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                                                     x.Time < endTime &&
                                                                     x.Type == BillingEventTypes.BillingSummary
                                                                     && ((BillingSummary)x.Args).SubmissionState == BillingSubmissionState.None;
-                                var billingSummaries = await billingEventManager.GetPlanEventsAsync(filter, innerLogger);
+                                var billingSummaries = await this.billingEventManager.GetPlanEventsAsync(filter, innerLogger);
                                 bool submittingFinalBill = false;
                                 foreach (var summary in billingSummaries)
                                 {
@@ -135,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         async (innerLogger) =>
                         {
                             // Get the storage mechanism for billing submission
-                            var storageClient = await billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
+                            var storageClient = await this.billingStorageFactory.CreateBillingSubmissionCloudStorage(region);
                             var billingSummaryQueueSubmission = new BillingSummaryQueueSubmission()
                             {
                                 BatchId = batchID,
@@ -158,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             $"{ServiceName}_update_plan_submitted_final_bill",
                             async (innerLogger) =>
                             {
-                                await planManager.UpdateFinalBillSubmittedAsync(plan, innerLogger);
+                                await this.planManager.UpdateFinalBillSubmittedAsync(plan, innerLogger);
                                 innerLogger.AddVsoPlan(plan).LogInfo("final_bill_submitted");
                             }, swallowException: true);
                     }

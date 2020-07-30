@@ -1,4 +1,4 @@
-﻿// <copyright file="IPlanManager.cs" company="Microsoft">
+// <copyright file="IPlanManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -113,6 +113,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="logger">The IDiagnosticsLogger.</param>
         /// <returns>List of plans.</returns>
         Task<IEnumerable<VsoPlan>> GetBillablePlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Gets only the billable plans by shard and partner.
+        /// </summary>
+        /// <param name="list">The location list.</param>
+        /// <param name="planShard">The plan shard.</param>
+        /// <param name="partner">The partner.</param>
+        /// <param name="logger">The IDiagnosticsLogger.</param>
+        /// <returns>List of plans.</returns>
+        Task<IEnumerable<VsoPlan>> GetPartnerPlansByShardAsync(IEnumerable<AzureLocation> list, string planShard, Partner partner, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Returns the SkuPlan sharding mechanism. We have currently sharing by SubscriptionId so the returned list

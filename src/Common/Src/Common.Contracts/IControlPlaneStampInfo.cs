@@ -1,4 +1,4 @@
-﻿// <copyright file="IControlPlaneStampInfo.cs" company="Microsoft">
+// <copyright file="IControlPlaneStampInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -105,6 +105,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="billingLocation">The billing submission location.</param>
         /// <returns>The storage account name.</returns>
         string GetStampStorageAccountNameForBillingSubmission(AzureLocation billingLocation);
+
+        /// <summary>
+        /// Gets the control-plane stamp storage account name for github queue billing submissions.
+        /// </summary>
+        /// <param name="billingLocation">The billing submission location.</param>
+        /// <param name="partnerId">The id used to construct a queue name.</param>
+        /// <returns>The storage account name.</returns>
+        string GetStampStorageAccountNameForPartner(AzureLocation billingLocation, string partnerId);
 
         /// <summary>
         /// Gets the data-plane stamp storage account name for archive storage.

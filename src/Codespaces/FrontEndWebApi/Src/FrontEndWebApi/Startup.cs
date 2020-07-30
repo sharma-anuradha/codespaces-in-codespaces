@@ -219,6 +219,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add the secret store manager
             services.AddSecretStoreManager();
 
+            // Add the GitHub SubmissionWorker
+            services.AddGitHubWorker(frontEndAppSettings.UseMocksForLocalDevelopment);
+
             if (!frontEndAppSettings.DisableBackgroundTasksForLocalDevelopment)
             {
                 // Add the plan background worker

@@ -1,8 +1,9 @@
-﻿// <copyright file="BillingServiceBase.cs" company="Microsoft">
+// <copyright file="BillingServiceBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,15 +45,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IDiagnosticsLogger logger,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
-            IPlanManager planManager,
-            string serviceName)
+            IPlanManager planManager)
         {
             this.controlPlaneInfo = controlPlaneInfo;
             Logger = logger.NewChildLogger();
             this.claimedDistributedLease = claimedDistributedLease;
             this.taskHelper = taskHelper;
             this.planManager = planManager;
-            ServiceName = serviceName;
         }
 
         /// <summary>
@@ -63,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Gets the service named used for logging.
         /// </summary>
-        protected string ServiceName { get; }
+        protected abstract string ServiceName { get; }
 
         /// <summary>
         /// The outer execute method for any service.
@@ -76,16 +75,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             // 12:00:00 -> 1:00:00
             var now = DateTime.UtcNow;
             var absoluteDate = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
-            var start = absoluteDate.Subtract(TimeSpan.FromHours(lookBackThresholdHrs));
+            var start = absoluteDate.Subtract(TimeSpan.FromHours(this.lookBackThresholdHrs));
             var end = absoluteDate;
-            var controlPlaneRegions = controlPlaneInfo.Stamp.DataPlaneLocations.Shuffle();
-            var planShards = planManager.GetShards();
+            var controlPlaneRegions = this.controlPlaneInfo.Stamp.DataPlaneLocations.Shuffle();
+            var planShards = GetShards();
             var plansToRegionsShards = planShards.SelectMany(x => controlPlaneRegions, (planShard, region) => new { planShard, region });
 
             Logger.FluentAddValue("startCalculationTime", start);
             Logger.FluentAddValue("endCalculationTime", end);
 
-            await taskHelper.RunConcurrentEnumerableAsync(
+            await this.taskHelper.RunConcurrentEnumerableAsync(
                 $"{ServiceName}_run",
                 plansToRegionsShards,
                 async (x, childlogger) =>
@@ -93,8 +92,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var planShard = x.planShard;
                     var region = x.region;
                     var leaseName = $"{ServiceName}-{planShard}-{region}".ToLowerInvariant();
+
+                    // leaseName += Guid.NewGuid().ToString();
                     childlogger.FluentAddBaseValue("Service", "billingservices");
-                    using (var lease = await claimedDistributedLease.Obtain(
+                    using (var lease = await this.claimedDistributedLease.Obtain(
                                                   $"{ServiceName}-leases",
                                                   leaseName,
                                                   TimeSpan.FromHours(1),
@@ -107,6 +108,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     }
                 },
                 Logger);
+        }
+
+        /// <summary>
+        /// Get the shards for the plan query.
+        /// </summary>
+        /// <returns>Returns a list of single character strings.</returns>
+        protected virtual IEnumerable<string> GetShards()
+        {
+            return this.planManager.GetShards();
         }
 
         /// <summary>

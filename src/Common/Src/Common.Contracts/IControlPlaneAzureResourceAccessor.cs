@@ -1,4 +1,4 @@
-﻿// <copyright file="IControlPlaneAzureResourceAccessor.cs" company="Microsoft">
+// <copyright file="IControlPlaneAzureResourceAccessor.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -109,6 +109,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>
         /// <returns>A tuple of the account name and the account key.</returns>
         Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation);
+
+        /// <summary>
+        /// Gets the stamp-level storage account used for github.
+        /// </summary>
+        /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>
+        /// <param name="partnerId">A two character string to distinguish partner storage accounts.</param>
+        /// <returns>A tuple of the account name and the account key.</returns>
+        Task<(string, string)> GetStampStorageAccountForPartner(AzureLocation billingSubmissionLocation, string partnerId);
 
         /// <summary>
         /// Gets the application id, secret and tenant.

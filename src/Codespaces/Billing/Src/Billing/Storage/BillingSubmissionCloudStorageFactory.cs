@@ -85,9 +85,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var usageCollection = new BillingSubmissionQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
                 var errorCollection = new BillingSubmissionErrorQueueCollection(provider, healthProvider, loggerFactory, resourceNameBuilder, logValues);
 
-                // cache the collection
+                // Cache the collection
                 var storageclient = new BillingSubmissionCloudStorageClient(tableClient, usageCollection, errorCollection, logger);
                 storedCollections.GetOrAdd(location, storageclient);
+
                 return storageclient;
             }
         }

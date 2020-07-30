@@ -1,4 +1,4 @@
-﻿// <copyright file="IControlPlaneInfo.cs" company="Microsoft">
+// <copyright file="IControlPlaneInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

@@ -294,6 +294,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
+        public async Task<IEnumerable<VsoPlan>> GetPartnerPlansByShardAsync(
+            IEnumerable<AzureLocation> locations, string planShard, Partner partner, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(locations, nameof(locations));
+            Requires.Argument(locations.Any(), nameof(locations), "locations collection must not me empty.");
+            Requires.NotNullOrEmpty(planShard, nameof(planShard));
+            Requires.NotNull(logger, nameof(logger));
+
+            try
+            {
+                // TODO: Change this to be streaming so that we consume less memory
+                var allPlans = (await planRepository.GetWhereAsync(
+                    (plan) => plan.Plan.Subscription.StartsWith(planShard) && plan.Partner == partner,
+                    logger)).Where(t => locations.Contains(t.Plan.Location));
+
+                return allPlans;
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<IEnumerable<VsoPlan>> GetBillablePlansByShardAsync(IEnumerable<AzureLocation> locations, string planShard, IDiagnosticsLogger logger)
         {
             Requires.NotNull(locations, nameof(locations));

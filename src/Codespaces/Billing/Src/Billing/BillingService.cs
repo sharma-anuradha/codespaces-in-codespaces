@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IPlanManager planManager)
-            : base(controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, planManager, "billingworker")
+            : base(controlPlaneInfo, diagnosticsLogger, claimedDistributedLease, taskHelper, planManager)
         {
             Requires.NotNull(billingEventManager, nameof(billingEventManager));
             Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -78,6 +78,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             // Send all logs to billingservices Geneva logger table
             Logger.FluentAddBaseValue("Service", "billingservices");
         }
+
+        /// <inheritdoc/>
+        protected override string ServiceName => "billingworker";
 
         /// <inheritdoc/>
         public async Task GenerateBillingSummaryAsync(CancellationToken cancellationToken)

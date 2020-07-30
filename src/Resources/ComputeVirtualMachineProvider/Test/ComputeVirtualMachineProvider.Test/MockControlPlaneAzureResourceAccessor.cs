@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault.Models;
@@ -114,12 +114,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc/>
+        public Task<(string, string)> GetStampStorageAccountForPartner(AzureLocation billingSubmissionLocation, string partnerId, string partnerName)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger) 
         {
             throw new NotImplementedException();
         }
 
         public Task<(string, string, string)> GetApplicationKeyAndSecretsAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<(string, string)> GetStampStorageAccountForPartner(AzureLocation billingSubmissionLocation, string partnerId)
         {
             throw new NotImplementedException();
         }

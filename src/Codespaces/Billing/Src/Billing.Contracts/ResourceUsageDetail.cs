@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Gets or sets compute usage.
         /// </summary>
-        [JsonProperty(Required = Required.Default, PropertyName = "compute")]
+        [JsonProperty(Required = Required.Default, PropertyName = "compute", NullValueHandling = NullValueHandling.Ignore)]
         public IList<ComputeUsageDetail> Compute { get; set; }
 
         /// <summary>

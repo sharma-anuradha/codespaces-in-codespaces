@@ -1,4 +1,4 @@
-﻿// <copyright file="ControlPlaneStampInfo.cs" company="Microsoft">
+// <copyright file="ControlPlaneStampInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -138,6 +138,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string GetStampStorageAccountNameForBillingSubmission(AzureLocation billingLocation)
         {
             return MakeStorageAccountName(BillingStorageImageKind, billingLocation);
+        }
+
+        /// <inheritdoc/>
+        public string GetStampStorageAccountNameForPartner(AzureLocation billingLocation, string partnerId)
+        {
+            return MakeStorageAccountName(partnerId, billingLocation);
         }
 
         /// <inheritdoc/>

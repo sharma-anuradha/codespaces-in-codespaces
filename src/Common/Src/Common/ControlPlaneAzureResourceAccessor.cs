@@ -1,8 +1,9 @@
-﻿// <copyright file="ControlPlaneAzureResourceAccessor.cs" company="Microsoft">
+// <copyright file="ControlPlaneAzureResourceAccessor.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -230,8 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForComputeVmAgentImages(computeVmLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName,
-                default);
+                storageAccountName);
         }
 
         /// <inheritdoc/>
@@ -240,8 +240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForStorageImages(computeStorageLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName,
-                default);
+                storageAccountName);
         }
 
         /// <inheritdoc/>
@@ -327,8 +326,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForBillingSubmission(billingSubmissionLocation);
             return await GetStorageAccountAsync(
                 ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName,
-                default);
+                storageAccountName);
+        }
+
+        /// <inheritdoc/>
+        public async Task<(string, string)> GetStampStorageAccountForPartner(AzureLocation billingSubmissionLocation, string partnerId)
+        {
+            var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForPartner(billingSubmissionLocation, partnerId);
+            return await GetStorageAccountAsync(
+                ControlPlaneInfo.Stamp.StampResourceGroupName,
+                storageAccountName);
         }
 
         /// <inheritdoc/>
@@ -375,7 +382,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             return (endpoint, key);
         }
 
-        private async Task<(string, string)> GetStorageAccountAsync(string resourceGroup, string accountName, IDiagnosticsLogger logger)
+        private async Task<(string, string)> GetStorageAccountAsync(string resourceGroup, string accountName, IDiagnosticsLogger logger = default)
         {
             Requires.NotNull(resourceGroup, nameof(resourceGroup));
             Requires.NotNull(accountName, nameof(accountName));
@@ -390,11 +397,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     var keys = await storageManagementClient.StorageAccounts.ListKeysAsync(resourceGroup, accountName);
                     key = keys.Keys.First().Value;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     logger?.FluentAddValue(nameof(accountName), accountName)
                         .FluentAddValue(nameof(resourceGroup), resourceGroup)
-                        .LogError("get_storage_account_error");
+                        .LogError($"get_storage_account_error: {e.Message}");
+
                     throw;
                 }
 
@@ -426,12 +434,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             var subscriptionId = await GetCurrentSubscriptionIdAsync();
             var azureCredentials = await GetAzureCredentialsAsync();
-            StorageManagementClient = new StorageManagementClient(ConfigureRestClient(azureCredentials))
+            var storageManagementClient = new StorageManagementClient(ConfigureRestClient(azureCredentials))
             {
                 SubscriptionId = subscriptionId,
             };
 
-            return StorageManagementClient;
+            StorageManagementClient = storageManagementClient;
+
+            return storageManagementClient;
         }
 
         private async Task<IBatchManagementClient> GetBatchManagementClientAsync()

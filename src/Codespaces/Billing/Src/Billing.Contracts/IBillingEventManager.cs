@@ -11,6 +11,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
+    /// <summary>
+    /// The billing event manager.
+    /// </summary>
     public interface IBillingEventManager
     {
         /// <summary>
@@ -47,10 +50,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             ICollection<string> eventTypes,
             IDiagnosticsLogger logger);
 
+        /// <summary>
+        /// Gets plan events asynchronously.
+        /// </summary>
+        /// <param name="filter">The filter.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The billing events.</returns>
         Task<IEnumerable<BillingEvent>> GetPlanEventsAsync(
             Expression<Func<BillingEvent, bool>> filter,
             IDiagnosticsLogger logger);
 
+        /// <summary>
+        /// Update event asynchronously.
+        /// </summary>
+        /// <param name="billingEvent">The billing event.</param>
+        /// <param name="logger">The logger.</param>
+        /// <returns>The not copy and pasted billing event.</returns>
         Task<BillingEvent> UpdateEventAsync(
             BillingEvent billingEvent,
             IDiagnosticsLogger logger);
