@@ -37,6 +37,8 @@
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider\ComputeVirtualMachineProvider.csproj" />
     <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider\DiskProvider.csproj" />
     <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider\KeyVaultProvider.csproj" />
+    <ProjectReference Include="..\..\..\ManagedIdentityProvider\Src\ManagedIdentityProvider.Contracts\ManagedIdentityProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\ManagedIdentityProvider\Src\ManagedIdentityProvider\ManagedIdentityProvider.csproj" />
     <ProjectReference Include="..\..\..\NetworkInterfaceProvider\Src\NetworkInterfaceProvider\NetworkInterfaceProvider.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker.Contracts\ResourceBroker.Contracts.csproj" />
     <ProjectReference Include="..\..\..\ResourceBroker\Src\ResourceBroker\ResourceBroker.csproj" />

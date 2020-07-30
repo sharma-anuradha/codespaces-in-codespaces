@@ -24,6 +24,8 @@
       "..\\Resources\\NetworkInterfaceProvider\\Src\\NetworkInterfaceProvider.Contracts\\NetworkInterfaceProvider.Contracts.csproj",
       "..\\Resources\\NetworkInterfaceProvider\\Src\\NetworkInterfaceProvider.Extensions\\NetworkInterfaceProvider.Extensions.csproj",
       "..\\Resources\\NetworkInterfaceProvider\\Src\\NetworkInterfaceProvider\\NetworkInterfaceProvider.csproj",
+      "..\\Resources\\ManagedIdentityProvider\\Src\\ManagedIdentityProvider\\ManagedIdentityProvider.csproj",
+      "..\\Resources\\ManagedIdentityProvider\\Src\\ManagedIdentityProvider.Contracts\\ManagedIdentityProvider.Contracts.csproj",
       "..\\Resources\\ResourceBroker\\Src\\ResourceBroker.Contracts\\ResourceBroker.Contracts.csproj",
       "..\\Resources\\ResourceBroker\\Src\\ResourceBroker.Extensions\\ResourceBroker.Extensions.csproj",
       "..\\Resources\\ResourceBroker\\Src\\ResourceBroker\\ResourceBroker.csproj",

@@ -1,4 +1,4 @@
-﻿// <copyright file="FPAAccessTokenHandler.cs" company="Microsoft">
+// <copyright file="FPAAccessTokenHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,43 +18,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
     /// </summary>
     public class FPAAccessTokenHandler : DelegatingHandler
     {
-        private const string AuthTokenPrefix = "bearer ";
+        private readonly IFirstPartyTokenBuilder tokenBuilder;
+        private readonly IDiagnosticsLogger logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FPAAccessTokenHandler"/> class.
         /// </summary>
         /// <param name="innerHandler">The inner handler.</param>
-        /// <param name="firstPartyAppSettings">The first party app settings.</param>
-        /// <param name="firstPartyCertReader">The first party certificate reader.</param>
-        /// <param name="logger">the logger.</param>
+        /// <param name="tokenBuilder">The first party token builder.</param>
+        /// <param name="logger">The logger instance.</param>
         public FPAAccessTokenHandler(
             HttpMessageHandler innerHandler,
-            FirstPartyAppSettings firstPartyAppSettings,
-            IFirstPartyCertificateReader firstPartyCertReader,
+            IFirstPartyTokenBuilder tokenBuilder,
             IDiagnosticsLogger logger)
             : base(innerHandler)
         {
-            FirstPartyAppSettings = Requires.NotNull(firstPartyAppSettings, nameof(firstPartyAppSettings));
-            FirstPartyCertificateReader = Requires.NotNull(firstPartyCertReader, nameof(firstPartyCertReader));
-            Logger = logger;
+            this.tokenBuilder = tokenBuilder;
+            this.logger = logger;
         }
-
-        private FirstPartyAppSettings FirstPartyAppSettings { get; }
-
-        private IFirstPartyCertificateReader FirstPartyCertificateReader { get; }
-
-        private IDiagnosticsLogger Logger { get; }
-
-        private IConfidentialClientApplication ConfidentialClientApplication { get; set; }
-
-        private DateTime LastCertificateUpdate { get; set; }
 
         /// <inheritdoc/>
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            var authToken = await GetFPAToken();
+            var authToken = (await tokenBuilder.GetFpaTokenAsync(logger)).AccessToken;
 
             if (!string.IsNullOrEmpty(authToken))
             {
@@ -62,30 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
             }
 
             return await base.SendAsync(request, cancellationToken);
-        }
-
-        private async Task<string> GetFPAToken()
-        {
-            // TODO: Unify this code with other FPA accessor.
-            // re-get the cert every 4 hours to ensure we're using a current value.
-            if (DateTime.UtcNow > LastCertificateUpdate.AddHours(4))
-            {
-                var cert = await FirstPartyCertificateReader.GetApiFirstPartyAppCertificate(Logger);
-
-                ConfidentialClientApplication = ConfidentialClientApplicationBuilder
-                 .Create(FirstPartyAppSettings.ApiFirstPartyAppId)
-                 .WithAuthority(FirstPartyAppSettings.Authority, FirstPartyAppSettings.AuthorityTenantId, true)
-                 .WithCertificate(new System.Security.Cryptography.X509Certificates.X509Certificate2(cert.RawBytes))
-                 .Build();
-            }
-
-            var token = await ConfidentialClientApplication
-                .AcquireTokenForClient(new[] { FirstPartyAppSettings.Scope })
-                .WithAuthority(FirstPartyAppSettings.Authority, FirstPartyAppSettings.AuthorityTenantId, true)
-                .WithSendX5C(true)
-                .ExecuteAsync();
-
-            return token.AccessToken;
         }
     }
 }

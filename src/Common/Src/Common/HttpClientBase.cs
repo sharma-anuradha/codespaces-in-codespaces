@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientBase.cs" company="Microsoft">
+// <copyright file="HttpClientBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,16 +18,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
     /// <summary>
     /// Http client base class.
     /// </summary>
-    /// <typeparam name="TOptions">The options type.</typeparam>
-    public abstract class HttpClientBase<TOptions>
-        where TOptions : class, IHttpClientProviderOptions, new()
+    public abstract class HttpClientBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="HttpClientBase{TOptions}"/> class.
+        /// Initializes a new instance of the <see cref="HttpClientBase"/> class.
         /// </summary>
         /// <param name="httpClientProvider">Http client provider.</param>
-        public HttpClientBase(
-            IHttpClientProvider<TOptions> httpClientProvider)
+        public HttpClientBase(IHttpClientProvider httpClientProvider)
         {
             HttpClientProvider = Requires.NotNull(httpClientProvider, nameof(httpClientProvider));
         }
@@ -91,10 +88,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient
 
             // Set up logging
             var duration = logger?.StartDuration();
-            var fullRequestUri = new UriBuilder(HttpClientProvider.HttpClient.BaseAddress)
-            {
-                Path = requestUri,
-            }.Uri;
 
             // TODO: add the correlation id header..any other interesting headers.
             httpRequestMessage.Headers.Add("Accept", "application/json");

@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault.Models;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 
@@ -123,5 +124,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         /// <returns>Secrets for connecting.</returns>
         Task<(string, string, string)> GetApplicationKeyAndSecretsAsync();
+
+        /// <summary>
+        /// Gets the Azure Credentials.
+        /// </summary>
+        /// <returns>AzureCredentials.</returns>
+        Task<AzureCredentials> GetAzureCredentialsAsync();
     }
 }

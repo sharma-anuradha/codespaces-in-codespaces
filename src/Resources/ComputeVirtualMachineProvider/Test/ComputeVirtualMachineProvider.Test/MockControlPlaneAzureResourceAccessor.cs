@@ -6,6 +6,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Test
 {
@@ -131,6 +132,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         }
 
         public Task<(string, string)> GetStampStorageAccountForPartner(AzureLocation billingSubmissionLocation, string partnerId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<AzureCredentials> GetAzureCredentialsAsync()
         {
             throw new NotImplementedException();
         }

@@ -350,6 +350,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
+        public async Task<AzureCredentials> GetAzureCredentialsAsync()
+        {
+            if (AzureCredentials == null)
+            {
+                var sp = ServicePrincipal;
+                var azureAppId = sp.ClientId;
+                var azureAppKey = await sp.GetClientSecretAsync();
+                var azureTenant = sp.TenantId;
+                var creds = new AzureCredentialsFactory()
+                    .FromServicePrincipal(
+                        azureAppId,
+                        azureAppKey,
+                        azureTenant,
+                        AzureEnvironment.AzureGlobalCloud);
+                AzureCredentials = creds;
+            }
+
+            return AzureCredentials;
+        }
+
+        /// <inheritdoc/>
         void IDisposable.Dispose()
         {
             var storageManagementClient = StorageManagementClient;
@@ -485,26 +506,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 .WithCredentials(creds)
                 .WithDelegatingHandler(new ProviderRegistrationDelegatingHandler(creds))
                 .Build();
-        }
-
-        private async Task<AzureCredentials> GetAzureCredentialsAsync()
-        {
-            if (AzureCredentials == null)
-            {
-                var sp = ServicePrincipal;
-                var azureAppId = sp.ClientId;
-                var azureAppKey = await sp.GetClientSecretAsync();
-                var azureTenant = sp.TenantId;
-                var creds = new AzureCredentialsFactory()
-                    .FromServicePrincipal(
-                        azureAppId,
-                        azureAppKey,
-                        azureTenant,
-                        AzureEnvironment.AzureGlobalCloud);
-                AzureCredentials = creds;
-            }
-
-            return AzureCredentials;
         }
 
         /// <summary>

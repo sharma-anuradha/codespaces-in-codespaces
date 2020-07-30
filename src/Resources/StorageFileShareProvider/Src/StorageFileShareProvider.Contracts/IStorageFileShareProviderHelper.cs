@@ -37,6 +37,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.C
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Enables KeyVault Encryption on a Storage Account.
+        /// </summary>
+        /// <param name="azureResourceInfo">Storage account reference.</param>
+        /// <param name="keyVaultUri">The KeyVault URI.</param>
+        /// <param name="keyName">The name of the key within the Vault.</param>
+        /// <param name="keyVersion">The key version. Can be empty string.</param>
+        /// <param name="logger">A logger instance.</param>
+        /// <returns>Task.</returns>
+        Task EnableKeyVaultEncryptionAsync(
+            AzureResourceInfo azureResourceInfo,
+            string keyVaultUri,
+            string keyName,
+            string keyVersion,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Create a file share in the provided storage account.
         /// </summary>
         /// <param name="azureStorageAccountId">Azure Resource Id of the storage account.</param>

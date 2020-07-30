@@ -33,27 +33,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class AzureClientFPAFactory : AzureClientFactoryBase, IAzureClientFPAFactory
     {
-        private const string FirstPartyAppAuthority = "https://login.windows.net";
-
-        private static readonly Regex TenantIdRegex =
-            new Regex("authorization_uri=\"[a-z]*://[^/]*/([^\"]*)\"");
+        private static readonly Regex TenantIdRegex = new Regex("[a-z]*://[^/]*/([^\"]*)");
+        private readonly IFirstPartyTokenBuilder tokenBuilder;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureClientFPAFactory"/> class.
         /// </summary>
-        /// <param name="firstPartyAppSettings">first party app settings.</param>
-        /// <param name="firstPartyCertReader">first party certificate reader.</param>
-        public AzureClientFPAFactory(
-            FirstPartyAppSettings firstPartyAppSettings,
-            IFirstPartyCertificateReader firstPartyCertReader)
+        /// <param name="tokenBuilder">First party token builder.</param>
+        public AzureClientFPAFactory(IFirstPartyTokenBuilder tokenBuilder)
         {
-            FirstPartyAppSettings = Requires.NotNull(firstPartyAppSettings, nameof(firstPartyAppSettings));
-            FirstPartyCertificateReader = Requires.NotNull(firstPartyCertReader, nameof(firstPartyCertReader));
+            this.tokenBuilder = Requires.NotNull(tokenBuilder, nameof(tokenBuilder));
         }
-
-        private FirstPartyAppSettings FirstPartyAppSettings { get; }
-
-        private IFirstPartyCertificateReader FirstPartyCertificateReader { get; }
 
         /// <inheritdoc/>
         public Task<IAzure> GetAzureClientAsync(string subscriptionId, string azureAppId, string azureAppKey, string azureTenantId)
@@ -123,21 +113,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         private async Task<(string Secret, string TenantId)> GetFPAToken(Guid subscriptionId, IDiagnosticsLogger logger)
         {
-            var cert = await FirstPartyCertificateReader.GetApiFirstPartyAppCertificate(logger);
-
             var subTenantId = await GetTenantIdForSubscription(subscriptionId);
-            var certificate = new X509Certificate2(cert.RawBytes);
-            var builder = ConfidentialClientApplicationBuilder
-                .Create(FirstPartyAppSettings.ApiFirstPartyAppId)
-                .WithAuthority(FirstPartyAppAuthority, subTenantId, true)
-                .WithCertificate(certificate)
-                .Build();
 
-            var token = await builder
-                .AcquireTokenForClient(new[] { FirstPartyAppSettings.Scope })
-                .WithAuthority(FirstPartyAppAuthority, subTenantId, true)
-                .WithSendX5C(true)
-                .ExecuteAsync();
+            var token = await tokenBuilder.GetFpaTokenAsync(subTenantId, logger);
 
             return (token.AccessToken, subTenantId);
         }
@@ -157,18 +135,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     throw new InvalidOperationException($"The subscription {subscriptionId} could not be found");
                 }
-                else if (response.StatusCode != HttpStatusCode.Unauthorized)
+
+                var wwwAuthenticateHeader = HttpBearerChallengeUtils.ParseWwwAuthenticateHeader(response);
+
+                if (!wwwAuthenticateHeader.TryGetValue("authorization_uri", out var authorizationUri))
                 {
-                    throw new InvalidOperationException($"We expect this GET subscription call to fail with Unauthorized, not {response.StatusCode}!");
+                    throw new InvalidOperationException($"WWW-Authenticate header does not contain an authorization_uri");
                 }
 
-                if (!response.Headers.Contains("WWW-Authenticate"))
-                {
-                    throw new InvalidOperationException("We require a WWW-Authenticate response header to get the tenantID!");
-                }
-
-                var wwwAuthenticate = GetHeaderValue(response.Headers, "WWW-Authenticate");
-                var regexMatch = TenantIdRegex.Match(wwwAuthenticate);
+                var regexMatch = TenantIdRegex.Match(authorizationUri);
                 if (!regexMatch.Success)
                 {
                     throw new InvalidOperationException("Failed to parse the WWW-Authenticate response header for the tenantID!");
@@ -182,13 +157,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                 return tenantId;
             }
-        }
-
-        private string GetHeaderValue(HttpHeaders headers, string headerName)
-        {
-            IEnumerable<string> values = null;
-            headers?.TryGetValues(headerName, out values);
-            return values?.FirstOrDefault();
         }
 
         private async Task<RestClient> CreateFPARestClientAsync(Guid subscriptionId, IDiagnosticsLogger logger)

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Storage.Fluent;
 using Microsoft.Azure.Management.Storage.Fluent.Models;
 using Microsoft.Azure.Storage;
@@ -112,6 +113,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     await azure.StorageAccounts.Inner.CreateAsync(azureResourceGroup, storageAccountName, storageCreateParams);
 
                     return new AzureResourceInfo(Guid.Parse(azureSubscriptionId), azureResourceGroup, storageAccountName);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task EnableKeyVaultEncryptionAsync(
+            AzureResourceInfo azureResourceInfo,
+            string keyVaultUri,
+            string keyName,
+            string keyVersion,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
+            logger.FluentAddValue("AzureStorageAccountName", azureResourceInfo.Name);
+
+            return logger.OperationScopeAsync(
+                "file_share_storage_provider_enable_keyvault_encryption",
+                async (childLogger) =>
+                {
+                    var cloudStorageAccount = await GetCloudStorageAccount(azureResourceInfo, null, childLogger);
+
+                    var azure = await azureClientFactory.GetAzureClientAsync(azureResourceInfo.SubscriptionId);
+
+                    return await azure.StorageAccounts.GetByResourceGroup(azureResourceInfo.ResourceGroup, azureResourceInfo.Name)
+                    .Update()
+                    .WithEncryptionKeyFromKeyVault(keyVaultUri, keyName, keyVersion)
+                    .ApplyAsync();
                 });
         }
 

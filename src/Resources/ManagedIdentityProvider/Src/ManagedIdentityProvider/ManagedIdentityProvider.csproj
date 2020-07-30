@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
+    <ProjectReference Include="..\ManagedIdentityProvider.Contracts\ManagedIdentityProvider.Contracts.csproj" />
+  </ItemGroup>
+</Project>

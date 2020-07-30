@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -44,20 +44,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         /// <summary>
         /// Adds the <see cref="IAzureClientFactory"/>.
         /// </summary>
-        /// <param name="services">The service collecdtion.</param>
+        /// <param name="services">The service collection.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddAzureClientFactory(this IServiceCollection services)
         {
             services.AddSingleton<IAzureClientFactory, AzureClientFactory>();
             services.AddSingleton<IAzureClientFPAFactory, AzureClientFPAFactory>();
             services.AddSingleton<IFirstPartyCertificateReader, FirstPartyCertificateReader>();
+            services.AddSingleton<IFirstPartyTokenBuilder, FirstPartyTokenBuilder>();
             return services;
         }
 
         /// <summary>
         /// Adds the <see cref="IControlPlaneAzureClientFactory"/>.
         /// </summary>
-        /// <param name="services">The service collecdtion.</param>
+        /// <param name="services">The service collection.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddControlPlaneAzureClientFactory(this IServiceCollection services)
         {
@@ -68,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         /// <summary>
         /// Adds the <see cref="ICurrentLocationProvider"/>.
         /// </summary>
-        /// <param name="services">The service collecdtion.</param>
+        /// <param name="services">The service collection.</param>
         /// <param name="azureLocation">The current azure location.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddCurrentLocationProvider(this IServiceCollection services, AzureLocation azureLocation)
@@ -79,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         /// <summary>
         /// Adds the <see cref="IControlPlaneInfo"/>.
         /// </summary>
-        /// <param name="services">The service collecdtion.</param>
+        /// <param name="services">The service collection.</param>
         /// <param name="controlPlaneSettings">The control plane settings.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddControlPlaneInfo(
@@ -97,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensio
         /// <summary>
         /// Adds the <see cref="IControlPlaneAzureResourceAccessor"/>.
         /// </summary>
-        /// <param name="services">The service collecdtion.</param>
+        /// <param name="services">The service collection.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddControlPlaneAzureResourceAccessor(
             this IServiceCollection services)

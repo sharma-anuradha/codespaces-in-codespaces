@@ -1,4 +1,4 @@
-﻿// <copyright file="RPaaSMetaRPHttpProvider.cs" company="Microsoft">
+// <copyright file="RPaaSMetaRPHttpProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -28,25 +28,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Http
         /// </summary>
         /// <param name="options">The options instance.</param>
         /// <param name="currentUserProvider">The current user provider.</param>
-        /// <param name="firstPartyCertificateReader">the first party secret reader.</param>
         /// <param name="logger">The logger.</param>
         /// <param name="controlPlaneInfo">Control plane information used to get the KV.</param>
-        /// <param name="firstPartyAppSettings">First Party Add settings.</param>
+        /// <param name="tokenBuilder">First Party Token Builder.</param>
         /// <param name="productInfo">Product info for the current service, to be added to.
         /// request headers.</param>
         public RPaaSMetaRPHttpProvider(
             IOptions<TOptions> options,
             IDiagnosticsLogger logger,
-            IFirstPartyCertificateReader firstPartyCertificateReader,
-            FirstPartyAppSettings firstPartyAppSettings,
+            IFirstPartyTokenBuilder tokenBuilder,
             ProductInfoHeaderValue productInfo)
         {
             Requires.NotNull(options, nameof(options));
             Requires.NotNull(productInfo, nameof(productInfo));
-            Requires.NotNull(firstPartyAppSettings, nameof(firstPartyAppSettings));
+            Requires.NotNull(tokenBuilder, nameof(tokenBuilder));
 
             HttpMessageHandler httpHandlerChain = new HttpClientHandler();
-            httpHandlerChain = new FPAAccessTokenHandler(httpHandlerChain, firstPartyAppSettings, firstPartyCertificateReader, logger);
+            httpHandlerChain = new FPAAccessTokenHandler(httpHandlerChain, tokenBuilder, logger);
             httpHandlerChain = new ProductInfoHeaderHandler(httpHandlerChain, productInfo);
 
             HttpClient = new HttpClient(httpHandlerChain)

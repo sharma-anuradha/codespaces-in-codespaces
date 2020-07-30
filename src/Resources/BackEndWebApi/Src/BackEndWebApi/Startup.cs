@@ -32,6 +32,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ManagedIdentityProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -180,6 +181,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
 
             // Network Interface Provider
             services.AddNetworkInterfaceProvider(appSettings.BackEnd.MocksSettings);
+
+            // Managed Identity Provider
+            services.AddManagedIdentityProvider();
 
             // Capacity Manager
             services.AddCapacityManager(appSettings.DeveloperPersonalStamp, appSettings.BackEnd.MocksSettings);
