@@ -1,4 +1,4 @@
-﻿// <copyright file="AuthenticationBuilderRPaasExtensions.cs" company="Microsoft">
+// <copyright file="AuthenticationBuilderRPaasExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -439,7 +439,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 }
 
                 logger.LogInfo("jwt_aadrpsaas_success");
-                httpContext.User = armUserPrincipal;
+                httpContext.User = new ClaimsPrincipal(
+                    new VsoClaimsIdentity(armUserPrincipal.Identities.Single()));
 
                 var armUserIdentity = armUserPrincipal.Identities.First();
                 if (!await TrySetCurrentUserIdentityAsync(httpContext, armUserIdentity, logger.NewChildLogger()))
