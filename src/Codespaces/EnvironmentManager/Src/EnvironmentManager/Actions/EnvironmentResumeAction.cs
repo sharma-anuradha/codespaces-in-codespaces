@@ -139,6 +139,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 return record.Value;
             }
 
+            // Redirect early if the Codespace is in the wrong region.
+            ValidateTargetLocation(record.Value.Location, logger);
+
             var plan = await FetchPlanAsync(record.Value, logger.NewChildLogger());
 
             // Validate
