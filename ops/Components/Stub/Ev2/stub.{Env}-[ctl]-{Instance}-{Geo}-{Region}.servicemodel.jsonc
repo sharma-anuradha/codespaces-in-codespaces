@@ -33,12 +33,7 @@
       "serviceResources": [
         {
           "name": "{{{baseRegionName}}}-service",
-          "instanceOf": "{{{baseRegionName}}}-stub",
-          "scopeTags": [
-            {
-              "name": "{{{baseRegionName}}}-service"
-            }
-          ]
+          "instanceOf": "{{{baseRegionName}}}-stub"
         }
       ]
     }

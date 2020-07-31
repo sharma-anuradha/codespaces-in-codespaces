@@ -37,12 +37,7 @@
       "serviceResources": [
         {
           "name": "vscs-stub-ppe-ctl-rel-eu-w-service",
-          "instanceOf": "vscs-stub-ppe-ctl-rel-eu-w-stub",
-          "scopeTags": [
-            {
-              "name": "vscs-stub-ppe-ctl-rel-eu-w-service"
-            }
-          ]
+          "instanceOf": "vscs-stub-ppe-ctl-rel-eu-w-stub"
         }
       ]
     }

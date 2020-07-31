@@ -37,12 +37,7 @@
       "serviceResources": [
         {
           "name": "vscs-stub-prod-ctl-rel-us-e-service",
-          "instanceOf": "vscs-stub-prod-ctl-rel-us-e-stub",
-          "scopeTags": [
-            {
-              "name": "vscs-stub-prod-ctl-rel-us-e-service"
-            }
-          ]
+          "instanceOf": "vscs-stub-prod-ctl-rel-us-e-stub"
         }
       ]
     }

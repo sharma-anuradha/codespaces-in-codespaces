@@ -1,0 +1,92 @@
+# Test-ServiceRollout.ps1
+# Test one of the service rollouts from the Components.generated folder.
+
+#requires -version 5.1
+
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$Component,
+    [string]$RolloutSpecName = "*.rolloutspec.jsonc",
+    [string]$ComponentsGeneratedFolder ="$PSScriptRoot\..\Components.generated",
+    [string]$Ev2SubFolder = "Ev2"
+)
+
+# Global error handling
+trap {
+    Write-Error $_
+    exit 1
+}
+
+if ($PSVersionTable.PSVersion.Major  -gt 5) {
+    throw "The Ev2 cmdlets require PowerShell 5.1 with full .NET Framework :("
+}
+
+function Get-ServiceRoot() {
+    $path = [System.IO.Path]::GetFullPath(([System.IO.Path]::Combine($ComponentsGeneratedFolder, $Component, $Ev2SubFolder)))
+    $serviceRoot = Get-Item -Path $path
+    if (!$serviceRoot) {
+        throw "Service root does not exist: $path"
+    }
+    $serviceRoot
+}
+
+function Get-RolloutSpecs() {
+    $serviceRoot = Get-ServiceRoot
+    $specs = $serviceRoot.GetFiles($RolloutSpecName) | % { $_.FullName }
+
+    if (!$specs) {
+        throw "Rollout spec(s) not found: '$serviceRoot\$RolloutSpecName'"
+    }
+
+    $specs
+}
+
+function Import-AzureDeploymentExpressClient {
+    $moduleName = "Microsoft.Azure.Deployment.Express.Client"
+    try {
+        $azureServiceDeployClient = Get-Item -Path ([System.IO.Path]::Combine($env:LOCALAPPDATA, "Microsoft", "AzureServiceDeployClient"))
+        $latestVersion = $azureServiceDeployClient.GetDirectories() | % { New-Object -TypeName System.Version -ArgumentList $_.Name } | Sort-Object -Descending | Select-Object -First 1 | % { $_.ToString() }
+        $moduleDll = (Get-Item -Path ([System.IO.Path]::Combine($azureServiceDeployClient.FullName, $latestVersion, "$moduleName.dll"))).FullName
+        Import-Module -Global $moduleDll
+    }
+    catch {
+        "Could not load $modulName" | Write-Host -ForegroundColor Red
+        "Install the Ev2 powershell cmdlets from https://ev2docs.azure.net/references/cmdlets/Intro.html" | Write-Host -ForegroundColor Red
+        throw
+    }
+}
+
+Import-AzureDeploymentExpressClient
+$serviceGroupRoot = (Get-ServiceRoot).FullName
+$rolloutSpecs = Get-RolloutSpecs
+"Validating rollout specs:" | Write-Host -ForegroundColor DarkGray
+$rolloutSpecs | Out-String | Write-Host -ForegroundColor DarkGray
+
+$goodRolloutSpecs = @()
+$badRolloutSpecs = @()
+$rolloutSpecs | %{
+    $rolloutSpec = $_
+    try {
+        "Validating $rolloutSpec" | Write-Host -ForegroundColor DarkBlue
+        Test-AzureServiceRollout -ServiceGroupRoot $serviceGroupRoot -RolloutSpec $rolloutSpec -ClientMode -EnableStrictValidation -TreatWarningAsError
+        $goodRolloutSpecs += $rolloutSpec
+    }
+    catch {
+        "Error validating ${rolloutSpec}: $($_ | Out-String)" | Write-Host -ForegroundColor Red
+        $badRolloutSpecs += $rolloutSpec
+    }
+}
+
+if ($goodRolloutSpecs) {
+    "Valid rolloutspecs:" | Write-Host -ForegroundColor Green
+    $goodRolloutSpecs | Out-String | Write-Host -ForegroundColor Green
+}
+
+if ($badRolloutSpecs) {
+    "Invalid rolloutspecs:" | Write-Host -ForegroundColor Yellow
+    $badRolloutSpecs | Out-String | Write-Host -ForegroundColor Yellow
+    throw "validation failed"
+}
+
+"validation succeeded" | Write-Host -ForegroundColor Green
