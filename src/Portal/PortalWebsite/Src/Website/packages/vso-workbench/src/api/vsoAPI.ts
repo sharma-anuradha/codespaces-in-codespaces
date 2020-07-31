@@ -7,6 +7,10 @@ import { HttpError } from '../errors/HttpError';
 
 const cache: { [key: string]: Promise<IEnvironment> | undefined } = {};
 
+const headerNames = {
+    acceptRedirects: 'X-Can-Accept-Redirects',
+};
+
 export class VsoAPI {
     public getEnvironmentInfo = async (id: string, token: string): Promise<IEnvironment> => {
         const key = `${id}_${token}`;
@@ -28,12 +32,19 @@ export class VsoAPI {
 
     private getEnvironmentInfoInternal = async (id: string, token: string) => {
         const url = `${config.api}/environments/${id}?t=${Date.now()}`;
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            [headerNames.acceptRedirects]: 'false',
+        };
 
-        const environmentInfoResponse = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        let environmentInfoResponse = await fetch(url, { headers });
+
+        if (environmentInfoResponse.status === 333) {
+            const { location: redirectLocation } = await environmentInfoResponse.json();
+            if (redirectLocation) {
+                environmentInfoResponse = await fetch(redirectLocation, { headers });
+            }
+        }
 
         if (!environmentInfoResponse.ok) {
             const message = 'Cannot fetch Codespace info';
@@ -67,12 +78,22 @@ export class VsoAPI {
 
         const url = new URL(`${apiEndpoint}/environments/${codespace.id}/start`);
 
-        const envStartResponse = await fetch(url.toString(), {
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            [headerNames.acceptRedirects]: 'false',
+        };
+
+        let envStartResponse = await fetch(url.toString(), {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers,
         });
+
+        if (envStartResponse.status === 333) {
+            const { location: redirectLocation } = await envStartResponse.json();
+            if (redirectLocation) {
+                envStartResponse = await fetch(redirectLocation, { method: 'POST', headers });
+            }
+        }
 
         if (!envStartResponse.ok) {
             throw new Error(`${envStartResponse.status} ${envStartResponse.statusText}`);

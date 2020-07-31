@@ -1,4 +1,4 @@
-﻿// <copyright file="FriendlyExceptionFilterAttribute.cs" company="Microsoft">
+// <copyright file="FriendlyExceptionFilterAttribute.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -48,7 +48,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
                         Query = context.HttpContext.Request.QueryString.Value,
                         Scheme = Uri.UriSchemeHttps,
                     };
-                    context.Result = new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
+                    if (context.HttpContext.Request.Headers.TryGetValue("X-Can-Accept-Redirects", out var acceptRedirectsValue) &&
+                        string.Equals(acceptRedirectsValue.ToString(), "false", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        context.Result = CreateSoftRedirectResponse(builder.ToString());
+                    }
+                    else
+                    {
+                        context.Result = new RedirectResult(builder.ToString(), permanent: false, preserveMethod: true);
+                    }
+
                     break;
 
                 case ArgumentException _:
@@ -67,6 +76,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
                     context.Result = new UnauthorizedResult();
                     break;
             }
+        }
+
+        private static IActionResult CreateSoftRedirectResponse(string location)
+        {
+            return new ObjectResult(new
+            {
+                Location = location,
+            })
+            {
+                // We'll use unassigned code as the other ones have meaning other than what we need here.
+                StatusCode = 333,
+            };
         }
 
         private static IActionResult CreateBadRequestResult(ExceptionContext context)
