@@ -77,7 +77,9 @@ export default class Hub {
     }
 
     AddJsonHubCallback(callback: any) {
-        this.jsonHubCallbacks.push(callback);
+        if (!this.jsonHubCallbacks.includes(callback)) {
+            this.jsonHubCallbacks.push(callback);
+        }
     }
 
     RemoveJsonHubCallback(callback: any) {

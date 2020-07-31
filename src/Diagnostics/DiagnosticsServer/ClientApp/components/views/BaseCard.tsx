@@ -56,7 +56,7 @@ class BaseCard extends React.Component<{
       <Button
         size="sm"
         color="danger"
-        onClick={() => this.props.appState.cards.remove(this.props.layoutCard)}
+        onClick={() => this.props.appState.cardTabs[this.props.appState.selectedTab].cards.remove(this.props.layoutCard)}
       >
         <FontAwesomeIcon icon={faTrash} />
       </Button>

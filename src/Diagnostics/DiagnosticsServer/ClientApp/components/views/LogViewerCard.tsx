@@ -50,10 +50,6 @@ class LogViewerCard extends React.Component<{
     this.props.hub.AddJsonHubCallback((n) => this.monitorLogs(n));
   }
 
-  componentWillUnmount() {
-    this.props.hub.RemoveJsonHubCallback((n) => this.monitorLogs(n));
-  }
-
   updateProperty(key) {
     this.card.options[key.target.name] = key.target.value;
     this.props.appState.Save();

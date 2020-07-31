@@ -1,5 +1,11 @@
 import LogViewerCard from "@Components/views/LogViewerCard";
-import { faFileImport, faPlus, faRedo } from "@fortawesome/free-solid-svg-icons";
+import {
+  faFileImport,
+  faPlus,
+  faRedo,
+  faMinus,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { cloneDeep } from "lodash";
 import { observable } from "mobx";
@@ -13,15 +19,28 @@ import {
   Input,
   PopoverBody,
   PopoverHeader,
-  UncontrolledPopover
+  UncontrolledPopover,
+  TabContent,
+  Label,
+  Nav,
+  NavItem,
+  NavLink,
 } from "reactstrap";
 import { v4 as uuidv4 } from "uuid";
 import Hub from "hub";
 import Actions from "../../actions";
-import { AppState, CardType, DefaultSize, GridCard } from "../../appState";
+import {
+  AppState,
+  CardType,
+  DefaultSize,
+  GridCard,
+  CardTab,
+} from "../../appState";
 import BaseCard from "./BaseCard";
 import IsNgrokRunningCard from "./IsNgrokRunningCard";
 import ProcessViewerCard from "./ProcessViewerCard";
+import classnames from "classnames";
+
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 @inject("hub")
@@ -32,13 +51,12 @@ class LogGrid extends React.Component<{
   hub?: Hub;
 }> {
   @observable cardTemplates: GridCard[];
-  @observable layouts: any;
   @observable selectedCardType: GridCard;
   @observable cardJsonImport: string = "";
+  @observable newCardTab: CardTab = new CardTab();
 
   constructor(props) {
     super(props);
-    this.layouts = this.props.appState.layouts;
     this.cardTemplates = Actions.generateNewCardsTemplate();
     this.selectedCardType = this.cardTemplates[0];
   }
@@ -48,13 +66,17 @@ class LogGrid extends React.Component<{
   }
 
   onLayoutChange(layouts) {
-    this.layouts = layouts;
-    Actions.saveToLocalStorage("log_layouts", layouts);
+    this.props.appState.cardTabs[
+      this.props.appState.selectedTab
+    ].layouts = layouts;
+    this.props.appState.Save();
   }
 
   renderCards() {
     let card: {};
-    return this.props.appState.cards.map((n) => {
+    return this.props.appState.cardTabs[
+      this.props.appState.selectedTab
+    ].cards.map((n) => {
       switch (n.card.type) {
         case CardType.LogViewer:
           card = <LogViewerCard layoutCard={n} />;
@@ -92,7 +114,9 @@ class LogGrid extends React.Component<{
   }
 
   addCard(newCard: GridCard, closeWindow: boolean = false) {
-    if (newCard.type === CardType.Unknown) { return; }
+    if (newCard.type === CardType.Unknown) {
+      return;
+    }
     const cloneCard = cloneDeep(newCard);
     cloneCard.id = `${uuidv4()}_${cloneCard.type}`;
     const defaultSize = new DefaultSize();
@@ -108,7 +132,9 @@ class LogGrid extends React.Component<{
       minH: size.minHeight ? size.minHeight : defaultSize.minHeight,
       card: cloneCard,
     };
-    this.props.appState.cards.push(card);
+    this.props.appState.cardTabs[this.props.appState.selectedTab].cards.push(
+      card
+    );
     // TODO: Cheap hack to avoid having to implement 'PopOver' (and the needed isOpen, Enabled settings)
     // If we click the add button again, it'll take focus on it, closing the popover.
     if (closeWindow) {
@@ -130,7 +156,14 @@ class LogGrid extends React.Component<{
         <PopoverHeader className="text-header">Import Card</PopoverHeader>
         <PopoverBody>
           <FormGroup>
-            <Input type="textarea" name="text" onChange={(e) => { this.cardJsonImport = e.target.value }} value={this.cardJsonImport} />
+            <Input
+              type="textarea"
+              name="text"
+              onChange={(e) => {
+                this.cardJsonImport = e.target.value;
+              }}
+              value={this.cardJsonImport}
+            />
           </FormGroup>
           <FormGroup>
             <Button
@@ -188,33 +221,136 @@ class LogGrid extends React.Component<{
     );
   }
 
+  renderTabs() {
+    const selectedTab = this.props.appState.cardTabs[this.props.appState.selectedTab];
+    if (selectedTab) {
+      document.title = `Diagnostics - ${selectedTab.name}`;
+    }
+    return this.props.appState.cardTabs.map((n, index) => {
+      return (
+        <NavItem key={`tab_${index}`}>
+          <NavLink
+            style={{ cursor: "hand" }}
+            className={classnames({
+              active: this.props.appState.selectedTab === index,
+            })}
+            onClick={() => {
+              if (this.props.appState.cardTabs[index]) {
+                this.props.appState.selectedTab = index;
+              }
+            }}
+          >
+            {n.name}
+            {index === this.props.appState.selectedTab ? (
+              <ButtonGroup
+                style={{ marginLeft: "15px" }}
+                className="layout-buttons"
+              >
+                <Button size="sm" id="add_card">
+                  <FontAwesomeIcon icon={faPlus} />
+                </Button>
+                {this.renderAddNewCard()}
+                <Button size="sm" id="import_card">
+                  <FontAwesomeIcon icon={faFileImport} />
+                </Button>
+                {this.renderImportCard()}
+                <Button size="sm" id="reload_logs" onClick={() => this.reloadLogs()}>
+                  <FontAwesomeIcon icon={faRedo} />
+                </Button>
+                {this.props.appState.cardTabs.length > 1 ? (
+                  <Button size="sm" color="danger"
+                    onClick={() => {
+                      this.props.appState.cardTabs.remove(
+                        this.props.appState.cardTabs[index]
+                      );
+                      if (index === this.props.appState.selectedTab) {
+                        this.props.appState.selectedTab = 0;
+                      }
+                    }}
+                    id={`remove_tab_${index}`}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
+                ) : (
+                  <div />
+                )}
+              </ButtonGroup>
+            ) : (
+              <div />
+            )}
+          </NavLink>
+        </NavItem>
+      );
+    });
+  }
+
+  renderNewTab() {
+    return (
+      <NavItem key={`tab_new`}>
+        <NavLink>
+          <Button size="sm" id="add_tab">
+            <FontAwesomeIcon icon={faPlus} />
+          </Button>
+        </NavLink>
+        <UncontrolledPopover
+          trigger="legacy"
+          placement="bottom"
+          target="add_tab"
+        >
+          <PopoverBody>
+            <FormGroup>
+              <Label>Name</Label>
+              <Input
+                type="text"
+                name="name"
+                value={this.newCardTab.name}
+                onChange={(x) => {
+                  this.newCardTab.name = x.target.value;
+                }}
+              />
+            </FormGroup>
+            <Button
+              onClick={() => {
+                if (this.newCardTab.name === "") {
+                  this.newCardTab.name = "Blank???";
+                }
+                document.getElementById("add_tab").click();
+                this.props.appState.cardTabs.push(this.newCardTab);
+                this.newCardTab = new CardTab();
+                this.props.appState.selectedTab =
+                  this.props.appState.cardTabs.length - 1;
+              }}
+              block={true}
+            >
+              Add Tab
+            </Button>
+          </PopoverBody>
+        </UncontrolledPopover>
+      </NavItem>
+    );
+  }
+
   render() {
     return (
       <div className="layout">
-        <ButtonGroup className="layout-buttons">
-          <Button id="add_card">
-            <FontAwesomeIcon icon={faPlus} />
-          </Button>
-          <Button id="import_card">
-            <FontAwesomeIcon icon={faFileImport} />
-          </Button>
-          <Button id="reload_logs" onClick={() => this.reloadLogs()}>
-            <FontAwesomeIcon icon={faRedo} />
-          </Button>
-        </ButtonGroup>
-        {this.renderAddNewCard()}
-        {this.renderImportCard()}
-        <ResponsiveGridLayout
-          className="layout"
-          layouts={this.layouts}
-          onLayoutChange={(layout, layouts) =>
-            this.onLayoutChange(layouts)
-          }
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-        >
-          {this.renderCards()}
-        </ResponsiveGridLayout>
+        <Nav tabs={true}>
+          {this.renderTabs()}
+          {this.renderNewTab()}
+        </Nav>
+        <TabContent style={{ marginTop: "10px" }}>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={
+              this.props.appState.cardTabs[this.props.appState.selectedTab]
+                .layouts
+            }
+            onLayoutChange={(layout, layouts) => this.onLayoutChange(layouts)}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          >
+            {this.renderCards()}
+          </ResponsiveGridLayout>
+        </TabContent>
       </div>
     );
   }
