@@ -1,0 +1,18 @@
+{
+  "baseName": "vscs-comm-prod-ctl-rel",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "basePlaneName": "vscs-comm-prod-ctl",
+  "baseInstanceName": "vscs-comm-prod-ctl-rel",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "prod",
+  "plane": "ctl",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ]
+}

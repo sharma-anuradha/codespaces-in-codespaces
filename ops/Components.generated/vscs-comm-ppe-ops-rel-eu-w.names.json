@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-comm-ppe-ops-rel-eu-w",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "basePlaneName": "vscs-comm-ppe-ops",
+  "baseInstanceName": "vscs-comm-ppe-ops-rel",
+  "baseRegionName": "vscs-comm-ppe-ops-rel-eu-w",
+  "baseRegionStorageName": "commppeopsreleuw",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "ppe",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "eu",
+  "region": "eu-w",
+  "regionLocation": "WestEurope"
+}

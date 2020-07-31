@@ -1,6 +1,6 @@
-import { ComponentsDeployment, Component } from "./Parser/Components";
+import { Component } from "./Parser/Components";
 import FileHandler from "./Helpers/FileHandler";
-import { EnvironmentsDeployment, Environment, Plane, Instance, Stamp } from "./Parser/Environments";
+import { Environment, Plane, Instance, Stamp } from "./Parser/Environments";
 import * as path from "path";
 import { writeFileSync } from "fs";
 
@@ -62,7 +62,7 @@ export default class Templates {
           names: null
         };
         names.push(name);
-        console.log(`info: ${name.fileName} -> ${name.outputName} -> *`);
+        // console.log(`info: ${name.fileName} -> ${name.outputName} -> *`);
       }
 
       for (const name of names) {
@@ -216,7 +216,7 @@ export default class Templates {
     }
 
     for (const name of names) {
-      console.log(`info: ${name.fileName} -> ${name.outputName} -> ${name.names?.baseName}`);
+      console.log(`info: ${name.fileName} -> ${name.outputName} (${name.names?.baseName})`);
     }
 
     return names;
@@ -242,13 +242,13 @@ export default class Templates {
     const names = namesObj.names;
 
     if (names) {
-      const nameReplaceMatches = /[^{{{\\}]+(?=}}})/g.exec(text);
+      const variablePattern = /[^{{{\\}]+(?=}}})/g;
+      const matches = text.match(variablePattern);
 
-      if (nameReplaceMatches) {
-        for (const match of nameReplaceMatches) {
+      if (matches?.length > 0) {
+        for (const match of matches) {
           if (!Object.keys(names).includes(match)) {
-            // TODO: Throw better error, line number? Other values?
-            throw `Property ${match} not found in names object. ${namesObj}`;
+            throw `error: property '${match}' does not exist in names object '${names.baseName}': template file '${namesObj.fileName}'`;
           }
         }
 

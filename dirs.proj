@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="src/dirs.proj" />
     <ProjectReference Include="test/dirs.proj" />
+    <ProjectReference Include="ops/ops.csproj" />
   </ItemGroup>
 
 </Project>

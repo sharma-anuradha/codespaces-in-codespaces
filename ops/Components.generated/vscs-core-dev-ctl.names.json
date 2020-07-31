@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-core-dev-ctl",
+  "baseEnvironmentName": "vscs-core-dev",
+  "basePlaneName": "vscs-core-dev-ctl",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "dev",
+  "plane": "ctl"
+}

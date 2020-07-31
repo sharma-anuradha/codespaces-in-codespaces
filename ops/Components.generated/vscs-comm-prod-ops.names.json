@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-comm-prod-ops",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "basePlaneName": "vscs-comm-prod-ops",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "prod",
+  "plane": "ops"
+}

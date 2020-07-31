@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-collab-prod-ctl",
+  "baseEnvironmentName": "vscs-collab-prod",
+  "basePlaneName": "vscs-collab-prod-ctl",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "prod",
+  "plane": "ctl"
+}

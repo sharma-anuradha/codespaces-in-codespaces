@@ -1,0 +1,16 @@
+{
+  "baseName": "vscs-collab-ppe-data-rel",
+  "baseEnvironmentName": "vscs-collab-ppe",
+  "basePlaneName": "vscs-collab-ppe-data",
+  "baseInstanceName": "vscs-collab-ppe-data-rel",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "ppe",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ]
+}

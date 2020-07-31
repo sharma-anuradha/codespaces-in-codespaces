@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-stub-ppe-data-rel-us-w2",
+  "baseEnvironmentName": "vscs-stub-ppe",
+  "basePlaneName": "vscs-stub-ppe-data",
+  "baseInstanceName": "vscs-stub-ppe-data-rel",
+  "baseRegionName": "vscs-stub-ppe-data-rel-us-w2",
+  "baseRegionStorageName": "stubppedatarelusw2",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "ppe",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

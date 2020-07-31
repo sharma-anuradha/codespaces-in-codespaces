@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-stub-ppe-ops-rel-us-w2",
+  "baseEnvironmentName": "vscs-stub-ppe",
+  "basePlaneName": "vscs-stub-ppe-ops",
+  "baseInstanceName": "vscs-stub-ppe-ops-rel",
+  "baseRegionName": "vscs-stub-ppe-ops-rel-us-w2",
+  "baseRegionStorageName": "stubppeopsrelusw2",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "ppe",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

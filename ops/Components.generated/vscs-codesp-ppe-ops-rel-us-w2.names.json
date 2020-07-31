@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-codesp-ppe-ops-rel-us-w2",
+  "baseEnvironmentName": "vscs-codesp-ppe",
+  "basePlaneName": "vscs-codesp-ppe-ops",
+  "baseInstanceName": "vscs-codesp-ppe-ops-rel",
+  "baseRegionName": "vscs-codesp-ppe-ops-rel-us-w2",
+  "baseRegionStorageName": "codespppeopsrelusw2",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "ppe",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

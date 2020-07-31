@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-comm-test-ctl-tst-us-w2",
+  "baseEnvironmentName": "vscs-comm-test",
+  "basePlaneName": "vscs-comm-test-ctl",
+  "baseInstanceName": "vscs-comm-test-ctl-tst",
+  "baseRegionName": "vscs-comm-test-ctl-tst-us-w2",
+  "baseRegionStorageName": "commtestctltstusw2",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "test",
+  "plane": "ctl",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

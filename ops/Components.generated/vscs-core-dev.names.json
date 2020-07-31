@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-core-dev",
+  "baseEnvironmentName": "vscs-core-dev",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "dev"
+}

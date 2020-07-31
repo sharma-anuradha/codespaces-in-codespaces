@@ -1,0 +1,38 @@
+# vsclk-cluster-signlr-dev-ci-variables.yml
+
+variables:
+  - template: variables.yml
+  - name: serviceName
+    value: signlr
+  - name: serviceEnv
+    value: dev
+  - name: serviceInstance
+    value: ci
+  - name: dnsNameSuffix
+    value:
+  - name: serviceSubscription
+    value: vsclk-core-dev
+  - name: azureContainerRegistry
+    value: ${{ variables.servicePrefix }}${{ variables.serviceName }}${{ variables.serviceEnv }}.azurecr.io
+  - name: dnsName
+    value: ${{ variables.serviceName }}${{ variables.dnsNameSuffix }}.${{ variables.dnsBaseNameDev }}
+  - name: serviceConnector
+    value: ${{ variables.servicePrefix }}-${{ variables.serviceName }}-${{ variables.serviceEnv }}-devops
+  - name: sslCertKeyvaultName
+    value: ${{ variables.serviceSubscription }}-kv
+  - name: sslCertSecrets
+    value: "\
+      ssl-cert:${{ variables.sslCertSecretNameCoreDev }},\
+    "
+  - name: clusterVersion
+    value: ${{ variables.clusterVersionDev }}
+  - name: clusterNodeCount
+    value: ${{ variables.signlrServiceNodeCountDev }}
+  - name: signlrEnabled
+    value: true
+  - name: signlrCapacity
+    value: ${{ variables.signlrCapacityDev }}
+  - name: signlrCapacitySecondary
+    value: ${{ variables.signlrCapacitySecondaryDev }}
+  - name: portForwardingEnabled
+    value: false

@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-collab-ppe-data",
+  "baseEnvironmentName": "vscs-collab-ppe",
+  "basePlaneName": "vscs-collab-ppe-data",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "ppe",
+  "plane": "data"
+}

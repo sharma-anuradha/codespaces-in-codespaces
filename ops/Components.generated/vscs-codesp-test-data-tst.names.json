@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-codesp-test-data-tst",
+  "baseEnvironmentName": "vscs-codesp-test",
+  "basePlaneName": "vscs-codesp-test-data",
+  "baseInstanceName": "vscs-codesp-test-data-tst",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "test",
+  "plane": "data",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

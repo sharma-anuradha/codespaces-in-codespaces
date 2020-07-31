@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-core-dev-ops-ci",
+  "baseEnvironmentName": "vscs-core-dev",
+  "basePlaneName": "vscs-core-dev-ops",
+  "baseInstanceName": "vscs-core-dev-ops-ci",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "dev",
+  "plane": "ops",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

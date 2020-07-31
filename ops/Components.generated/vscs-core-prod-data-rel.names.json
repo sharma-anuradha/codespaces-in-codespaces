@@ -1,0 +1,18 @@
+{
+  "baseName": "vscs-core-prod-data-rel",
+  "baseEnvironmentName": "vscs-core-prod",
+  "basePlaneName": "vscs-core-prod-data",
+  "baseInstanceName": "vscs-core-prod-data-rel",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "prod",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ]
+}

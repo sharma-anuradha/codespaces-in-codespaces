@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-collab-dev-ops",
+  "baseEnvironmentName": "vscs-collab-dev",
+  "basePlaneName": "vscs-collab-dev-ops",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "dev",
+  "plane": "ops"
+}

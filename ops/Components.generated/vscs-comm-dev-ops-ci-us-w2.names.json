@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-comm-dev-ops-ci-us-w2",
+  "baseEnvironmentName": "vscs-comm-dev",
+  "basePlaneName": "vscs-comm-dev-ops",
+  "baseInstanceName": "vscs-comm-dev-ops-ci",
+  "baseRegionName": "vscs-comm-dev-ops-ci-us-w2",
+  "baseRegionStorageName": "commdevopsciusw2",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "dev",
+  "plane": "ops",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

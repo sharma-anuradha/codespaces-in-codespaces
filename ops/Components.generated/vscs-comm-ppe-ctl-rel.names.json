@@ -1,0 +1,16 @@
+{
+  "baseName": "vscs-comm-ppe-ctl-rel",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "basePlaneName": "vscs-comm-ppe-ctl",
+  "baseInstanceName": "vscs-comm-ppe-ctl-rel",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "ppe",
+  "plane": "ctl",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-stub-dev",
+  "baseEnvironmentName": "vscs-stub-dev",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "dev"
+}

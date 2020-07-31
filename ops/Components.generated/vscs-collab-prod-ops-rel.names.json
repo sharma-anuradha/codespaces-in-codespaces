@@ -1,0 +1,18 @@
+{
+  "baseName": "vscs-collab-prod-ops-rel",
+  "baseEnvironmentName": "vscs-collab-prod",
+  "basePlaneName": "vscs-collab-prod-ops",
+  "baseInstanceName": "vscs-collab-prod-ops-rel",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "prod",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ]
+}

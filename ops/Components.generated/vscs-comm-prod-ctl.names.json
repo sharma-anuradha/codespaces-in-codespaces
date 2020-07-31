@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-comm-prod-ctl",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "basePlaneName": "vscs-comm-prod-ctl",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "prod",
+  "plane": "ctl"
+}

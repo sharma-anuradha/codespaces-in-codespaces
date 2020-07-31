@@ -1,0 +1,18 @@
+{
+  "baseName": "vscs-stub-prod-ops-rel",
+  "baseEnvironmentName": "vscs-stub-prod",
+  "basePlaneName": "vscs-stub-prod-ops",
+  "baseInstanceName": "vscs-stub-prod-ops-rel",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "prod",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-codesp-dev",
+  "baseEnvironmentName": "vscs-codesp-dev",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "dev"
+}

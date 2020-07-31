@@ -1,0 +1,46 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "{{{baseInstanceName}}}-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{baseInstanceName}}}-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{baseInstanceName}}}-stub",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\{{{component}}}.{{{env}}}-ctl-{{{instance}}}.stub.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{baseInstanceName}}}",
+      "location": "{{{instanceLocation}}}",
+      "instanceOf": "{{{baseInstanceName}}}-rg",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{baseInstanceName}}}-service",
+          "instanceOf": "{{{baseInstanceName}}}-stub",
+          "scopeTags": [
+            {
+              "name": "{{{baseInstanceName}}}-service"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

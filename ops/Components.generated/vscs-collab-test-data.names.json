@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-collab-test-data",
+  "baseEnvironmentName": "vscs-collab-test",
+  "basePlaneName": "vscs-collab-test-data",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "test",
+  "plane": "data"
+}

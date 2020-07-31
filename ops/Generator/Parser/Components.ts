@@ -73,6 +73,10 @@ export class Component {
       component: this.prefix
     };
   }
+
+  getSubscription(env: string, plane:string): Subscription[] {
+    return this.subscriptions.filter(s => s.env === env && s.plane === plane)
+  }
 }
 
 export class Subscription {

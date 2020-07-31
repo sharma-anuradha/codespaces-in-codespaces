@@ -1,3 +1,4 @@
+import { Region } from "./Environments";
 
 export class ComponentNames {
     baseName: string;
@@ -13,11 +14,14 @@ export class EnvironmentNames extends ComponentNames {
 export class PlaneNames extends EnvironmentNames {
     basePlaneName: string;
     plane: string;
+    subscriptionName: string;
+    subscriptionId: string;
 }
 
 export class InstanceNames extends PlaneNames {
     baseInstanceName: string;
     instance: string;
+    instanceLocation: string;
     instanceRegions: string[];
 }
 
@@ -26,7 +30,7 @@ export class RegionNames extends InstanceNames {
     baseRegionStorageName: string;
     geo: string;
     region: string;
-    location: string;
+    regionLocation: string;
 }
 
 export default abstract class ResourceNames {

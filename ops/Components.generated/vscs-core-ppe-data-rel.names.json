@@ -1,0 +1,16 @@
+{
+  "baseName": "vscs-core-ppe-data-rel",
+  "baseEnvironmentName": "vscs-core-ppe",
+  "basePlaneName": "vscs-core-ppe-data",
+  "baseInstanceName": "vscs-core-ppe-data-rel",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "ppe",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ]
+}

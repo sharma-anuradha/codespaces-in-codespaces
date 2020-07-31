@@ -1,0 +1,11 @@
+{
+  "baseName": "vscs-stub-prod-ctl",
+  "baseEnvironmentName": "vscs-stub-prod",
+  "basePlaneName": "vscs-stub-prod-ctl",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "prod",
+  "plane": "ctl",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-stub-ppe-ctl"
+}

@@ -1,0 +1,5 @@
+{
+  "prefix": "vscs",
+  "baseName": "vscs-core",
+  "component": "core"
+}

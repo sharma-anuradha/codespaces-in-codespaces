@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-codesp-prod-ctl",
+  "baseEnvironmentName": "vscs-codesp-prod",
+  "basePlaneName": "vscs-codesp-prod-ctl",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "prod",
+  "plane": "ctl"
+}

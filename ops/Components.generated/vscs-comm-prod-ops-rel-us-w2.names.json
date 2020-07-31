@@ -1,0 +1,23 @@
+{
+  "baseName": "vscs-comm-prod-ops-rel-us-w2",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "basePlaneName": "vscs-comm-prod-ops",
+  "baseInstanceName": "vscs-comm-prod-ops-rel",
+  "baseRegionName": "vscs-comm-prod-ops-rel-us-w2",
+  "baseRegionStorageName": "commprodopsrelusw2",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "prod",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

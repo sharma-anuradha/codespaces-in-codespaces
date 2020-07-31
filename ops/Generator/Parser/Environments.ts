@@ -39,11 +39,13 @@ export class EnvironmentsDeployment implements IEnvironmentsDeployment {
             env.name = envName;
             const envObj = environments[envName];
             env.pme = envObj.pme;
+            const envLocation = this.getDataLocation(envObj.location).region.fullName;
             for (const plane of env.planes) {
                 for (const instanceName in envObj.instances) {
                     const instance = envObj.instances[instanceName];
                     const inst = new Instance();
                     inst.name = instanceName;
+                    inst.location = envLocation;
                     for (const stampName in instance.stamps) {
                         const smp = new Stamp();
                         smp.name = stampName;
@@ -95,6 +97,8 @@ export class Plane {
     name: string;
     instances: Instance[] = [];
     outputNames: PlaneNames;
+    subscriptionName: string;
+    subscriptionId: string;
 
     constructor(name: string) {
         this.name = name;
@@ -110,13 +114,17 @@ export class Plane {
             prefix: environmentNames.prefix,
             component: environmentNames.component,
             env: environmentNames.env,
-            plane: this.name
+            plane: this.name,
+            subscriptionId: this.subscriptionId,
+            subscriptionName: this.subscriptionName
         }
     }
 
     clone() : Plane {
         const obj = new Plane(this.name);
         obj.instances = this.instances.map(i => i.clone());
+        obj.subscriptionName = this.subscriptionName;
+        obj.subscriptionId = this.subscriptionId;
         return obj;
     }
 }
@@ -151,6 +159,7 @@ export class Environment {
 export class Instance {
     name: string;
     stamps: Stamp[] = [];
+    location: string;
     outputNames: InstanceNames;
 
     generateNamesJson(planeNames: PlaneNames, regions: DataLocation[]): InstanceNames {
@@ -164,14 +173,18 @@ export class Instance {
             component: planeNames.component,
             env: planeNames.env,
             plane: planeNames.plane,
+            subscriptionName: planeNames.subscriptionName,
+            subscriptionId: planeNames.subscriptionId,
             instance: this.name,
-            instanceRegions: regions.map(n => `${n.geography.name}-${n.region.name}`)
+            instanceLocation: this.location,
+            instanceRegions: regions.map(n => `${n.geography.name}-${n.region.name}`),
         }
     }
 
     clone(): Instance {
         const obj = new Instance();
         obj.name = this.name;
+        obj.location = this.location;
         obj.stamps = this.stamps.map(s => s.clone());
         return obj;
     }
@@ -210,11 +223,14 @@ export class DataLocation {
             component: instanceNames.component,
             env: instanceNames.env,
             plane: instanceNames.plane,
+            subscriptionName: instanceNames.subscriptionName,
+            subscriptionId: instanceNames.subscriptionId,
             instance: instanceNames.instance,
+            instanceLocation: instanceNames.instanceLocation,
             instanceRegions: instanceNames.instanceRegions,
             geo: this.geography.name,
             region: `${this.geography.name}-${this.region.name}`,
-            location: this.region.fullName
+            regionLocation: this.region.fullName
         }
     }
 

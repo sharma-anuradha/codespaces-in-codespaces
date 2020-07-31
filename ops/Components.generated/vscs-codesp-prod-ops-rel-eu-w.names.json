@@ -1,0 +1,23 @@
+{
+  "baseName": "vscs-codesp-prod-ops-rel-eu-w",
+  "baseEnvironmentName": "vscs-codesp-prod",
+  "basePlaneName": "vscs-codesp-prod-ops",
+  "baseInstanceName": "vscs-codesp-prod-ops-rel",
+  "baseRegionName": "vscs-codesp-prod-ops-rel-eu-w",
+  "baseRegionStorageName": "codespprodopsreleuw",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "prod",
+  "plane": "ops",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "geo": "eu",
+  "region": "eu-w",
+  "regionLocation": "WestEurope"
+}

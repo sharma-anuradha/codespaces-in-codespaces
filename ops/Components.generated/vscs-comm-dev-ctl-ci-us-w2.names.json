@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-comm-dev-ctl-ci-us-w2",
+  "baseEnvironmentName": "vscs-comm-dev",
+  "basePlaneName": "vscs-comm-dev-ctl",
+  "baseInstanceName": "vscs-comm-dev-ctl-ci",
+  "baseRegionName": "vscs-comm-dev-ctl-ci-us-w2",
+  "baseRegionStorageName": "commdevctlciusw2",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "dev",
+  "plane": "ctl",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

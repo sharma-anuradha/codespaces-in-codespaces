@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-codesp-test-data",
+  "baseEnvironmentName": "vscs-codesp-test",
+  "basePlaneName": "vscs-codesp-test-data",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "test",
+  "plane": "data"
+}

@@ -1,0 +1,38 @@
+# vsclk-cluster-signlr-ppe-rel-variables.yml
+
+variables:
+  - template: variables.yml
+  - name: serviceName
+    value: signlr
+  - name: serviceEnv
+    value: prod
+  - name: serviceInstance
+    value: rel
+  - name: dnsNameSuffix
+    value: -${{ variables.serviceInstance }}
+  - name: serviceSubscription
+    value: vsclk-core-prod
+  - name: azureContainerRegistry
+    value: ${{ variables.servicePrefix }}${{ variables.serviceName }}${{ variables.serviceEnv }}.azurecr.io
+  - name: dnsName
+    value: ${{ variables.serviceName }}${{ variables.dnsNameSuffix }}.${{ variables.dnsBaseName }}
+  - name: serviceConnector
+    value: ${{ variables.servicePrefix }}-${{ variables.serviceName }}-${{ variables.serviceEnv }}-devops
+  - name: sslCertKeyvaultName
+    value: ${{ variables.serviceSubscription }}-kv
+  - name: sslCertSecrets
+    value: "\
+      ssl-cert:core-vsengsaas-visualstudio-com-ssl,\
+    "
+  - name: clusterVersion
+    value: ${{ variables.clusterVersionProd }}
+  - name: clusterNodeCount
+    value: ${{ variables.signlrServiceNodeCountProd }}
+  - name: signlrEnabled
+    value: true
+  - name: signlrCapacity
+    value: ${{ variables.signlrCapacityProd }}
+  - name: signlrCapacitySecondary
+    value: ${{ variables.signlrCapacitySecondaryProd }}
+  - name: portForwardingEnabled
+    value: false

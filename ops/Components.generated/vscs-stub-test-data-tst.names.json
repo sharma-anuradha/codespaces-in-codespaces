@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-stub-test-data-tst",
+  "baseEnvironmentName": "vscs-stub-test",
+  "basePlaneName": "vscs-stub-test-data",
+  "baseInstanceName": "vscs-stub-test-data-tst",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "test",
+  "plane": "data",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

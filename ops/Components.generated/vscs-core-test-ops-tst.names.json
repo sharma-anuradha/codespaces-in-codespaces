@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-core-test-ops-tst",
+  "baseEnvironmentName": "vscs-core-test",
+  "basePlaneName": "vscs-core-test-ops",
+  "baseInstanceName": "vscs-core-test-ops-tst",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "test",
+  "plane": "ops",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

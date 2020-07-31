@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-core-ppe-ctl-rel-eu-w",
+  "baseEnvironmentName": "vscs-core-ppe",
+  "basePlaneName": "vscs-core-ppe-ctl",
+  "baseInstanceName": "vscs-core-ppe-ctl-rel",
+  "baseRegionName": "vscs-core-ppe-ctl-rel-eu-w",
+  "baseRegionStorageName": "coreppectlreleuw",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "ppe",
+  "plane": "ctl",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "eu",
+  "region": "eu-w",
+  "regionLocation": "WestEurope"
+}

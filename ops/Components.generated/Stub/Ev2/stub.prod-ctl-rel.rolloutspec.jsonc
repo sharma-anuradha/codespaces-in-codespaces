@@ -1,0 +1,28 @@
+// Auto-Generated From Template
+// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.rolloutspec.jsonc (vscs-stub-prod-ctl-rel)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+
+  "rolloutMetadata": {
+    "serviceModelPath": "stub.prod-ctl-rel.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-stub-prod-ctl-rel Rollout 1.0.0.0",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "Deploy vscs-stub-prod-ctl-rel-service",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-prod-ctl-rel-service",
+      "actions": [ "deploy" ]
+    }
+  ]
+}

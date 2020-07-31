@@ -1,0 +1,50 @@
+// Auto-Generated From Template
+// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc (vscs-stub-prod-ctl-rel)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "vscs-stub-prod-ctl-rel-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-stub-prod-ctl-rel-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-stub-prod-ctl-rel-stub",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\stub.prod-ctl-rel.stub.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-stub-prod-ctl-rel",
+      "location": "WestUs2",
+      "instanceOf": "vscs-stub-prod-ctl-rel-rg",
+      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "serviceResources": [
+        {
+          "name": "vscs-stub-prod-ctl-rel-service",
+          "instanceOf": "vscs-stub-prod-ctl-rel-stub",
+          "scopeTags": [
+            {
+              "name": "vscs-stub-prod-ctl-rel-service"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

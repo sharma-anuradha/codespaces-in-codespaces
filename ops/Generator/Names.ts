@@ -21,6 +21,14 @@ export default abstract class Names {
         FileHandler.GenerateJson(outputDir, `${envJson.baseName}.names.json`, envJson);
 
         for (const plane of env.planes) {
+
+          const subscription = comp.getSubscription(env.name, plane.name)[0];
+          const firstSub = subscription?.provisioned[0];
+          if (firstSub) {
+              plane.subscriptionName = firstSub.name;
+              plane.subscriptionId = firstSub.subscriptionId;
+          }
+
           const planeJson = plane.generateNamesJson(env.outputNames)
           FileHandler.GenerateJson(outputDir, `${planeJson.baseName}.names.json`, planeJson);
 

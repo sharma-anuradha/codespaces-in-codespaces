@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-core-test-ctl-tst",
+  "baseEnvironmentName": "vscs-core-test",
+  "basePlaneName": "vscs-core-test-ctl",
+  "baseInstanceName": "vscs-core-test-ctl-tst",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "test",
+  "plane": "ctl",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

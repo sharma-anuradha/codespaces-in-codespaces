@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-collab-dev-ops-ci-us-w2",
+  "baseEnvironmentName": "vscs-collab-dev",
+  "basePlaneName": "vscs-collab-dev-ops",
+  "baseInstanceName": "vscs-collab-dev-ops-ci",
+  "baseRegionName": "vscs-collab-dev-ops-ci-us-w2",
+  "baseRegionStorageName": "collabdevopsciusw2",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "dev",
+  "plane": "ops",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

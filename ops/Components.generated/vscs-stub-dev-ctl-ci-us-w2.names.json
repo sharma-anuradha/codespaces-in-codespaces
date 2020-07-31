@@ -1,0 +1,22 @@
+{
+  "baseName": "vscs-stub-dev-ctl-ci-us-w2",
+  "baseEnvironmentName": "vscs-stub-dev",
+  "basePlaneName": "vscs-stub-dev-ctl",
+  "baseInstanceName": "vscs-stub-dev-ctl-ci",
+  "baseRegionName": "vscs-stub-dev-ctl-ci-us-w2",
+  "baseRegionStorageName": "stubdevctlciusw2",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "dev",
+  "plane": "ctl",
+  "subscriptionName": "vscs-stub-dev-ctl",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

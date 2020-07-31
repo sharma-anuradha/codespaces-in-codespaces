@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-comm-ppe-ctl",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "basePlaneName": "vscs-comm-ppe-ctl",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "ppe",
+  "plane": "ctl"
+}

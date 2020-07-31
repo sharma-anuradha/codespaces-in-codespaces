@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-stub-prod-ops",
+  "baseEnvironmentName": "vscs-stub-prod",
+  "basePlaneName": "vscs-stub-prod-ops",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "prod",
+  "plane": "ops"
+}

@@ -1,0 +1,44 @@
+// Auto-Generated From Template
+// ..\Components\Core\Ev2\ARM\Core.{Env}-[ctl]-{Instance}-{Geo}-{Region}.stub.jsonc (vscs-core-prod-ctl-rel-ap-se)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+    "baseName": {
+      "type": "string",
+      "value": "vscs-core-prod-ctl-rel-ap-se"
+    },
+    "baseEnvironmentName": {
+      "type": "string",
+      "value": "vscs-core-prod"
+    },
+    "basePlaneName": {
+      "type": "string",
+      "value": "vscs-core-prod-ctl"
+    },
+    "baseInstanceName": {
+      "type": "string",
+      "value": "vscs-core-prod-ctl-rel"
+    },
+    "instanceRegions": {
+      "type": "array",
+      "value": ["ap-se","eu-w","us-e","us-w2"]
+    },
+    "baseRegionName": {
+      "type": "string",
+      "value": "vscs-core-prod-ctl-rel-ap-se"
+    },
+    "baseRegionStorageName": {
+      "type": "string",
+      "value": "coreprodctlrelapse"
+    }
+  }
+}

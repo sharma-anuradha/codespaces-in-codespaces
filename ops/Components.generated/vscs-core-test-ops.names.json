@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-core-test-ops",
+  "baseEnvironmentName": "vscs-core-test",
+  "basePlaneName": "vscs-core-test-ops",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "test",
+  "plane": "ops"
+}

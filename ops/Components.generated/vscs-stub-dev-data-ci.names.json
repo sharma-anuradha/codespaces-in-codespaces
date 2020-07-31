@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-stub-dev-data-ci",
+  "baseEnvironmentName": "vscs-stub-dev",
+  "basePlaneName": "vscs-stub-dev-data",
+  "baseInstanceName": "vscs-stub-dev-data-ci",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "dev",
+  "plane": "data",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

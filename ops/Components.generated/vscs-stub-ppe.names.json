@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-stub-ppe",
+  "baseEnvironmentName": "vscs-stub-ppe",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "ppe"
+}

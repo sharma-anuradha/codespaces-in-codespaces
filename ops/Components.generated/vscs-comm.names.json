@@ -1,0 +1,5 @@
+{
+  "prefix": "vscs",
+  "baseName": "vscs-comm",
+  "component": "comm"
+}

@@ -1,0 +1,74 @@
+﻿<Project Sdk="Microsoft.Build.NoTargets">
+
+  <PropertyGroup>
+    <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+    <RestorePackages>false</RestorePackages>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateComponentsOnBuild>false</GenerateComponentsOnBuild>
+    <GenerateComponentContinueOnError>false</GenerateComponentContinueOnError>
+    <OpsFolder>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)))</OpsFolder>
+    <GenerateComponentsInputFolderName>Components</GenerateComponentsInputFolderName>
+    <GenerateComponentsOutputFolderName>$(GenerateComponentsInputFolderName).generated</GenerateComponentsOutputFolderName>
+    <GenerateComponentsInputFolder>$([System.IO.Path]::Combine($(OpsFolder),$(GenerateComponentsInputFolderName)))</GenerateComponentsInputFolder>
+    <GenerateComponentsOutputFolder>$([System.IO.Path]::Combine($(OpsFolder),$(GenerateComponentsOutputFolderName)))</GenerateComponentsOutputFolder>
+    <ComponentsGeneratorFolder>$([System.IO.Path]::Combine($(OpsFolder),'Generator'))</ComponentsGeneratorFolder>
+    <ComponentGeneratorScript>$([System.IO.Path]::Combine($(ComponentsGeneratorFolder),'index.ts'))</ComponentGeneratorScript>
+  </PropertyGroup>
+
+  <!-- Ensure static outputs are copied to the output directory. -->
+  <ItemGroup Condition="'$(GenerateComponentsOnBuild)'!='true'">
+    <Content Include="$(GenerateComponentsOutputFolder)\**" Exclude="*.csproj">
+      <Link>$(GenerateComponentsOutputFolderName)\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- Generate the Components.generated folder at build time if flag is set. -->
+  <Target Name="GenerateComponentsOnBuild"
+    Condition="'$(GenerateComponentsOnBuild)'=='true'"
+    AfterTargets="Build"
+    DependsOnTargets="GenerateComponents">
+  </Target>
+
+  <!-- Do not generate the Components.generated folder at build time if flag is not set. -->
+  <Target Name="SkipGenerateComponentsOnBuild"
+    Condition="'$(GenerateComponentsOnBuild)'!='true'"
+    AfterTargets="Build">
+    <Message Text="Skipping component generation on build." Importance="normal"/>
+  </Target>
+
+  <!-- Invoke the generator tool and copy generated files to the output dir. -->
+  <Target Name="GenerateComponents" DependsOnTargets="VerifyTsNodeScriptDependencies">
+    <Message Text="Generating components" Importance="high" />
+    <Exec
+      Command="npm install"
+      WorkingDirectory="$(ComponentsGeneratorFolder)" />
+    <Exec
+      Command="ts-node-script --script-mode $(ComponentGeneratorScript) $(GenerateComponentsInputFolder) $(GenerateComponentsOutputFolder)" />
+    <ItemGroup>
+      <GenerateComponents Include="$(GenerateComponentsOutputFolder)\**\**"/>
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(GenerateComponents)"
+      DestinationFiles="@(GenerateComponents->'$(OutputPath)\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+  <!-- Verify that the required tool dependencies are installed. -->
+  <Target Name="VerifyTsNodeScriptDependencies">
+    <Message Text="Checking npm version" Importance="high" />
+    <Exec Command="npm --version" ContinueOnError="true">
+       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+    <Error Condition="'$(ErrorCode)' != '0'" Text="Npm is required to build this project." />
+    <Message Text="Checking ts-node-script version" Importance="high" />
+    <Exec Command="ts-node-script --version" ContinueOnError="true">
+       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+    <Error Condition="'$(ErrorCode)' != '0'" Text="ts-node-script is required to build this project." />
+  </Target>
+
+</Project>

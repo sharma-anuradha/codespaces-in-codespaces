@@ -1,0 +1,11 @@
+{
+  "contentVersion": "1.0.0.0",
+
+  "name": "myAutoRestartPolicy",
+  "version": "1.0.0",
+  "autoRestart": {
+    "maxRestartAttempts": "3",
+    "waitDurationAfterFailure": "PT1M",
+    "skipSucceeded" : true
+  }
+}

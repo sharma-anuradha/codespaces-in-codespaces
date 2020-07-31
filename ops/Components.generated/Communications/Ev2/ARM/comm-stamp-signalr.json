@@ -1,0 +1,88 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "env": {
+      "type": "string"
+    },
+    "instance": {
+      "type": "string"
+    },
+    "resourceNamePrefix": {
+      "type": "string",
+      "defaultValue": "vssvc-"
+    },
+    "serviceName": {
+      "type": "string"
+    },
+    "stampName": {
+      "type": "string"
+    },
+    "signalRCapacity": {
+      "type": "object"
+    },
+    "signalRCapacitySecondary": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "env": "[parameters('env')]",
+    "instance": "[parameters('instance')]",
+    "resourceNamePrefix": "[parameters('resourceNamePrefix')]",
+    "serviceName": "[parameters('serviceName')]",
+    "stampName": "[parameters('stampName')]",
+    "baseResourceName": "[concat(variables('resourceNamePrefix'),'-',variables('serviceName'),'-',variables('env'),'-',variables('instance'),'-',variables('stampName'))]",
+    "signalRName": "[concat(variables('baseResourceName'),'-signalr')]"
+  },
+  "resources": [
+    {
+      "comments": "*** Stamp SignalR ***",
+      "type": "Microsoft.SignalRService/SignalR",
+      "apiVersion": "2018-10-01",
+      "name": "[variables('signalRName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard_S1",
+        "tier": "Standard",
+        "size": "S1",
+        "capacity": "[parameters('signalRCapacity')[parameters('stampName')]]"
+      },
+      "properties": {
+        "hostNamePrefix": "[variables('baseResourceName')]"
+      }
+    },
+    {
+      "comments": "*** Stamp SignalR Primary 1 ***",
+      "type": "Microsoft.SignalRService/SignalR",
+      "apiVersion": "2018-10-01",
+      "name": "[concat(variables('signalRName'),'-primary-1')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard_S1",
+        "tier": "Standard",
+        "size": "S1",
+        "capacity": "[parameters('signalRCapacity')[parameters('stampName')]]"
+      },
+      "properties": {
+        "hostNamePrefix": "[variables('baseResourceName')]"
+      }
+    },
+    {
+      "comments": "*** Stamp SignalR Secondary ***",
+      "type": "Microsoft.SignalRService/SignalR",
+      "apiVersion": "2018-10-01",
+      "name": "[concat(variables('signalRName'),'-secondary')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard_S1",
+        "tier": "Standard",
+        "size": "S1",
+        "capacity": "[parameters('signalRCapacitySecondary')[parameters('stampName')]]"
+      },
+      "properties": {
+        "hostNamePrefix": "[variables('baseResourceName')]"
+      }
+    }
+  ]
+}

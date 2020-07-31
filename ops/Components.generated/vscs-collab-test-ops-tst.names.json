@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-collab-test-ops-tst",
+  "baseEnvironmentName": "vscs-collab-test",
+  "basePlaneName": "vscs-collab-test-ops",
+  "baseInstanceName": "vscs-collab-test-ops-tst",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "test",
+  "plane": "ops",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

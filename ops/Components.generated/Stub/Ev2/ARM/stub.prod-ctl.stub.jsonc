@@ -1,0 +1,28 @@
+// Auto-Generated From Template
+// ..\Components\Stub\Ev2\ARM\stub.{Env}-[ctl].stub.jsonc (vscs-stub-prod-ctl)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+    "baseName": {
+      "type": "string",
+      "value": "vscs-stub-prod-ctl"
+    },
+    "baseEnvironmentName": {
+      "type": "string",
+      "value": "vscs-stub-prod"
+    },
+    "basePlaneName": {
+      "type": "string",
+      "value": "vscs-stub-prod-ctl"
+    }
+  }
+}

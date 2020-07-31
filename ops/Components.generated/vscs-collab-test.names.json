@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-collab-test",
+  "baseEnvironmentName": "vscs-collab-test",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "test"
+}

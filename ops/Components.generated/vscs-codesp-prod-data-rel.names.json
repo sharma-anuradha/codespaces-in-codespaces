@@ -1,0 +1,18 @@
+{
+  "baseName": "vscs-codesp-prod-data-rel",
+  "baseEnvironmentName": "vscs-codesp-prod",
+  "basePlaneName": "vscs-codesp-prod-data",
+  "baseInstanceName": "vscs-codesp-prod-data-rel",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "prod",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ]
+}

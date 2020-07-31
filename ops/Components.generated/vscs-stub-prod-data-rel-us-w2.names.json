@@ -1,0 +1,23 @@
+{
+  "baseName": "vscs-stub-prod-data-rel-us-w2",
+  "baseEnvironmentName": "vscs-stub-prod",
+  "basePlaneName": "vscs-stub-prod-data",
+  "baseInstanceName": "vscs-stub-prod-data-rel",
+  "baseRegionName": "vscs-stub-prod-data-rel-us-w2",
+  "baseRegionStorageName": "stubproddatarelusw2",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "prod",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

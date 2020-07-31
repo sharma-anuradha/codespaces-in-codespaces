@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-codesp-ppe-data-rel-us-w2",
+  "baseEnvironmentName": "vscs-codesp-ppe",
+  "basePlaneName": "vscs-codesp-ppe-data",
+  "baseInstanceName": "vscs-codesp-ppe-data-rel",
+  "baseRegionName": "vscs-codesp-ppe-data-rel-us-w2",
+  "baseRegionStorageName": "codespppedatarelusw2",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "ppe",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

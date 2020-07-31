@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-core-test-data",
+  "baseEnvironmentName": "vscs-core-test",
+  "basePlaneName": "vscs-core-test-data",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "test",
+  "plane": "data"
+}

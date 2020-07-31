@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-collab-ppe",
+  "baseEnvironmentName": "vscs-collab-ppe",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "ppe"
+}

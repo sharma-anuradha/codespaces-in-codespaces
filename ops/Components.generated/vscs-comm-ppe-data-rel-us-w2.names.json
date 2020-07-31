@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-comm-ppe-data-rel-us-w2",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "basePlaneName": "vscs-comm-ppe-data",
+  "baseInstanceName": "vscs-comm-ppe-data-rel",
+  "baseRegionName": "vscs-comm-ppe-data-rel-us-w2",
+  "baseRegionStorageName": "commppedatarelusw2",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "ppe",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

@@ -1,0 +1,7 @@
+{
+  "baseName": "vscs-comm-prod",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "prod"
+}

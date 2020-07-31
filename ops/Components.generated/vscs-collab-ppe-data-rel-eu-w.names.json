@@ -1,0 +1,21 @@
+{
+  "baseName": "vscs-collab-ppe-data-rel-eu-w",
+  "baseEnvironmentName": "vscs-collab-ppe",
+  "basePlaneName": "vscs-collab-ppe-data",
+  "baseInstanceName": "vscs-collab-ppe-data-rel",
+  "baseRegionName": "vscs-collab-ppe-data-rel-eu-w",
+  "baseRegionStorageName": "collabppedatareleuw",
+  "prefix": "vscs",
+  "component": "collab",
+  "env": "ppe",
+  "plane": "data",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "geo": "eu",
+  "region": "eu-w",
+  "regionLocation": "WestEurope"
+}

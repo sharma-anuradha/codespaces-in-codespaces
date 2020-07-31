@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-codesp-test-data-tst-us-w2",
+  "baseEnvironmentName": "vscs-codesp-test",
+  "basePlaneName": "vscs-codesp-test-data",
+  "baseInstanceName": "vscs-codesp-test-data-tst",
+  "baseRegionName": "vscs-codesp-test-data-tst-us-w2",
+  "baseRegionStorageName": "codesptestdatatstusw2",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "test",
+  "plane": "data",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

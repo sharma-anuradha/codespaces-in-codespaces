@@ -1,0 +1,9 @@
+{
+  "providerType":"ServiceTree",
+  "identifier": "8fa58105-2fc7-4ffb-8d9e-5654c301864b",
+  "description": "Visual Studio Codespaces",
+  "ownerGroupObjectId": "00000000-0000-0000-0000-000000000000",
+  "ownerGroupContactEmail": "vsanywhereteam@microsoft.com",
+  "policyCheckEnabled": "true",
+  "contentVersion": "1.0.0.0"
+}

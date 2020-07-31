@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-stub-test-data-tst-us-w2",
+  "baseEnvironmentName": "vscs-stub-test",
+  "basePlaneName": "vscs-stub-test-data",
+  "baseInstanceName": "vscs-stub-test-data-tst",
+  "baseRegionName": "vscs-stub-test-data-tst-us-w2",
+  "baseRegionStorageName": "stubtestdatatstusw2",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "test",
+  "plane": "data",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

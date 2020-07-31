@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-codesp-dev-ops",
+  "baseEnvironmentName": "vscs-codesp-dev",
+  "basePlaneName": "vscs-codesp-dev-ops",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "dev",
+  "plane": "ops"
+}

@@ -1,0 +1,11 @@
+{
+  "baseName": "vscs-stub-dev-ctl",
+  "baseEnvironmentName": "vscs-stub-dev",
+  "basePlaneName": "vscs-stub-dev-ctl",
+  "prefix": "vscs",
+  "component": "stub",
+  "env": "dev",
+  "plane": "ctl",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-stub-dev-ctl"
+}

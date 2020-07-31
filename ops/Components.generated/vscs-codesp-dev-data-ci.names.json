@@ -1,0 +1,17 @@
+{
+  "baseName": "vscs-codesp-dev-data-ci",
+  "baseEnvironmentName": "vscs-codesp-dev",
+  "basePlaneName": "vscs-codesp-dev-data",
+  "baseInstanceName": "vscs-codesp-dev-data-ci",
+  "prefix": "vscs",
+  "component": "codesp",
+  "env": "dev",
+  "plane": "data",
+  "subscriptionName": "vscs-codesp-dev-data-compute-ap-001",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "baseName": "vscs-comm-dev-data-ci",
+  "baseEnvironmentName": "vscs-comm-dev",
+  "basePlaneName": "vscs-comm-dev-data",
+  "baseInstanceName": "vscs-comm-dev-data-ci",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "dev",
+  "plane": "data",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ]
+}

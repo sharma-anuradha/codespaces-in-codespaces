@@ -1,0 +1,20 @@
+{
+  "baseName": "vscs-comm-test-data-tst-us-w2",
+  "baseEnvironmentName": "vscs-comm-test",
+  "basePlaneName": "vscs-comm-test-data",
+  "baseInstanceName": "vscs-comm-test-data-tst",
+  "baseRegionName": "vscs-comm-test-data-tst-us-w2",
+  "baseRegionStorageName": "commtestdatatstusw2",
+  "prefix": "vscs",
+  "component": "comm",
+  "env": "test",
+  "plane": "data",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "geo": "us",
+  "region": "us-w2",
+  "regionLocation": "WestUs2"
+}

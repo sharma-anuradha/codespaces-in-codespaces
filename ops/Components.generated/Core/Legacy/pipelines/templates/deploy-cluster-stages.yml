@@ -1,0 +1,472 @@
+# deploy-cluster-stages.yml
+
+parameters:
+  startDependsOn: []
+  pool: ''
+  serviceConnector: ''
+  azureContainerRegistry: ''
+  serviceSubscription: ''
+  servicePrefix: ''
+  serviceName: ''
+  serviceEnv: ''
+  serviceInstance: ''
+  serviceLocation: ''
+  dnsName: ''
+  clusterVersion: ''
+  clusterNodeCount: ''
+  teamGroupId: ''
+  sslCertKeyvaultName: ''
+  sslCertSecrets: ''
+  flags: ''
+  continueOnError: false
+  helmVersion: ''
+  kubectlVersion: ''
+  signlrEnabled: false
+  signlrCapacity: ''
+  signlrCapacitySecondary: ''
+  regions: []
+  portForwardingEnabled: false
+
+stages:
+
+  # Empty stage to kick off all stamps
+  - template: empty-stage.yml
+    parameters:
+      name: Start_${{ parameters.serviceEnv }}
+      displayName: Start (${{ parameters.serviceEnv }})
+      dependsOn: ${{ parameters.startDependsOn }}
+      pool: ${{ parameters.pool }}
+
+  # Common
+  - template: deploy-cluster-stage.yml
+    parameters:
+      name: Common_${{ parameters.serviceEnv }}
+      displayName: Common Resources (${{ parameters.serviceEnv }})
+      dependsOn:
+      - Start_${{ parameters.serviceEnv }}
+      pool: ${{ parameters.pool }}
+      stage: common
+      serviceStamp: ${{ parameters.serviceInstance }}
+      serviceStampLocation: ${{ parameters.serviceLocation }}
+      serviceConnector: ${{ parameters.serviceConnector }}
+      serviceSubscription: ${{ parameters.serviceSubscription }}
+      servicePrefix: ${{ parameters.servicePrefix }}
+      serviceName: ${{ parameters.serviceName }}
+      serviceEnv: ${{ parameters.serviceEnv }}
+      serviceInstance: ${{ parameters.serviceInstance }}
+      serviceLocation: ${{ parameters.serviceLocation }}
+      regions: ${{ parameters.regions }}
+      dnsName: ${{ parameters.dnsName }}
+      clusterVersion: ${{ parameters.clusterVersion }}
+      clusterNodeCount: ${{ parameters.clusterNodeCount }}
+      teamGroupId: ${{ parameters.teamGroupId }}
+      sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+      sslCertSecrets: ${{ parameters.sslCertSecrets }}
+      signlrEnabled: ${{ parameters.signlrEnabled }}
+      signlrCapacity: ${{ parameters.signlrCapacity }}
+      signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+      flags: ${{ parameters.flags }}
+      continueOnError: ${{ parameters.continueOnError }}
+      helmVersion: ${{ parameters.helmVersion }}
+      kubectlVersion: ${{ parameters.kubectlVersion }}
+      portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # Container Images
+  - template: docker-compose-stage.yml
+    parameters:
+      name: ContainerImages_${{ parameters.serviceEnv }}
+      displayName: Build and Push Container Images (${{ parameters.serviceEnv }})
+      dependsOn:
+      - Start_${{ parameters.serviceEnv }}
+      pool: ${{ parameters.pool }}
+      azureSubscription: ${{ parameters.serviceConnector }}
+      azureContainerRegistry: '${{ parameters.azureContainerRegistry }}'
+
+  # Empty stage to kick off all stamps
+  - template: empty-stage.yml
+    parameters:
+      name: Stamps_${{ parameters.serviceEnv }}
+      displayName: All Stamps (${{ parameters.serviceEnv }})
+      dependsOn:
+      - Common_${{ parameters.serviceEnv }}
+      pool: ${{ parameters.pool }}
+
+  # Empty stage to kick off all clusters
+  - template: empty-stage.yml
+    parameters:
+      name: Clusters_${{ parameters.serviceEnv }}
+      displayName: All Clusters (${{ parameters.serviceEnv }})
+      dependsOn:
+      - ContainerImages_${{ parameters.serviceEnv }}
+      pool: ${{ parameters.pool }}
+
+  # StampUSE
+  - ${{ if containsValue(parameters.regions, 'use') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: StampUSE_${{ parameters.serviceEnv }}
+        displayName: Stamp East US (${{ parameters.serviceEnv }})
+        dependsOn:
+        - Stamps_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: stamp
+        serviceStamp: use
+        serviceStampLocation: eastus
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # StampUSW2
+  - ${{ if containsValue(parameters.regions, 'usw2') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: StampUSW2_${{ parameters.serviceEnv }}
+        displayName: Stamp West US 2 (${{ parameters.serviceEnv }})
+        dependsOn:
+        - Stamps_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: stamp
+        serviceStamp: usw2
+        serviceStampLocation: westus2
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # StampEUW
+  - ${{ if containsValue(parameters.regions, 'euw') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: StampEUW_${{ parameters.serviceEnv }}
+        displayName: Stamp West Europe (${{ parameters.serviceEnv }})
+        dependsOn:
+        - Stamps_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: stamp
+        serviceStamp: euw
+        serviceStampLocation: westeurope
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # StampASSE
+  - ${{ if containsValue(parameters.regions, 'asse') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: StampASSE_${{ parameters.serviceEnv }}
+        displayName: Stamp Southeast Asia (${{ parameters.serviceEnv }})
+        dependsOn:
+        - Stamps_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: stamp
+        serviceStamp: asse
+        serviceStampLocation: southeastasia
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # StampUSEC
+  - ${{ if containsValue(parameters.regions, 'usec') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: StampUSEC_${{ parameters.serviceEnv }}
+        displayName: Stamp East US 2 EUAP (${{ parameters.serviceEnv }})
+        dependsOn:
+        - Stamps_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: stamp
+        serviceStamp: usec
+        serviceStampLocation: eastus2euap
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+  
+  # ClusterUSE
+  - ${{ if containsValue(parameters.regions, 'use') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: ClusterUSE_${{ parameters.serviceEnv }}
+        displayName: Cluster East US (${{ parameters.serviceEnv }})
+        dependsOn:
+        - StampUSE_${{ parameters.serviceEnv }}
+        - Clusters_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: cluster
+        serviceStamp: use
+        serviceStampLocation: eastus
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # ClusterUSW2
+  - ${{ if containsValue(parameters.regions, 'usw2') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: ClusterUSW2_${{ parameters.serviceEnv }}
+        displayName: Cluster West US 2 (${{ parameters.serviceEnv }})
+        dependsOn:
+        - StampUSW2_${{ parameters.serviceEnv }}
+        - Clusters_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: cluster
+        serviceStamp: usw2
+        serviceStampLocation: westus2
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # ClusterEUW
+  - ${{ if containsValue(parameters.regions, 'euw') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: ClusterEUW_${{ parameters.serviceEnv }}
+        displayName: Cluster West Europe (${{ parameters.serviceEnv }})
+        dependsOn:
+        - StampEUW_${{ parameters.serviceEnv }}
+        - Clusters_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: cluster
+        serviceStamp: euw
+        serviceStampLocation: westeurope
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+  # ClusterASSE
+  - ${{ if containsValue(parameters.regions, 'asse') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: ClusterASSE_${{ parameters.serviceEnv }}
+        displayName: Cluster Southeast Asia (${{ parameters.serviceEnv }})
+        dependsOn:
+        - StampASSE_${{ parameters.serviceEnv }}
+        - Clusters_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: cluster
+        serviceStamp: asse
+        serviceStampLocation: southeastasia
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+
+     # ClusterUSEC
+  - ${{ if containsValue(parameters.regions, 'usec') }}:
+    - template: deploy-cluster-stage.yml
+      parameters:
+        name: ClusterUSEC_${{ parameters.serviceEnv }}
+        displayName: Cluster East US 2 EUAP (${{ parameters.serviceEnv }})
+        dependsOn:
+        - StampUSEC_${{ parameters.serviceEnv }}
+        - Clusters_${{ parameters.serviceEnv }}
+        pool: ${{ parameters.pool }}
+        stage: cluster
+        serviceStamp: usec
+        serviceStampLocation: eastus2euap
+        serviceConnector: ${{ parameters.serviceConnector }}
+        serviceSubscription: ${{ parameters.serviceSubscription }}
+        servicePrefix: ${{ parameters.servicePrefix }}
+        serviceName: ${{ parameters.serviceName }}
+        serviceEnv: ${{ parameters.serviceEnv }}
+        serviceInstance: ${{ parameters.serviceInstance }}
+        serviceLocation: ${{ parameters.serviceLocation }}
+        regions: ${{ parameters.regions }}
+        dnsName: ${{ parameters.dnsName }}
+        clusterVersion: ${{ parameters.clusterVersion }}
+        clusterNodeCount: ${{ parameters.clusterNodeCount }}
+        teamGroupId: ${{ parameters.teamGroupId }}
+        sslCertKeyvaultName: ${{ parameters.sslCertKeyvaultName }}
+        sslCertSecrets: ${{ parameters.sslCertSecrets }}
+        signlrEnabled: ${{ parameters.signlrEnabled }}
+        signlrCapacity: ${{ parameters.signlrCapacity }}
+        signlrCapacitySecondary: ${{ parameters.signlrCapacitySecondary }}
+        flags: ${{ parameters.flags }}
+        continueOnError: ${{ parameters.continueOnError }}
+        helmVersion: ${{ parameters.helmVersion }}
+        kubectlVersion: ${{ parameters.kubectlVersion }}
+        portForwardingEnabled: ${{ parameters.portForwardingEnabled }}
+ 
+  # Empty stage signals completion
+  - template: empty-stage.yml
+    parameters:
+      name: Done_${{ parameters.serviceEnv }}
+      displayName: Done (${{ parameters.serviceEnv }})
+      dependsOn:
+      - ${{ if containsValue(parameters.regions, 'use') }}:
+        - ClusterUSE_${{ parameters.serviceEnv }}
+      - ${{ if containsValue(parameters.regions, 'usw2') }}:
+        - ClusterUSW2_${{ parameters.serviceEnv }}
+      - ${{ if containsValue(parameters.regions, 'euw') }}:
+        - ClusterEUW_${{ parameters.serviceEnv }}
+      - ${{ if containsValue(parameters.regions, 'asse') }}:
+        - ClusterASSE_${{ parameters.serviceEnv }}
+      pool: ${{ parameters.pool }}

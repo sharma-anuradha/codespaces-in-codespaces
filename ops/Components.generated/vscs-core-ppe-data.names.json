@@ -1,0 +1,9 @@
+{
+  "baseName": "vscs-core-ppe-data",
+  "baseEnvironmentName": "vscs-core-ppe",
+  "basePlaneName": "vscs-core-ppe-data",
+  "prefix": "vscs",
+  "component": "core",
+  "env": "ppe",
+  "plane": "data"
+}
