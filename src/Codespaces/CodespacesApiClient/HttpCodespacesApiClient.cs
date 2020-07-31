@@ -3,8 +3,10 @@
 // </copyright>
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mime;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
@@ -18,6 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
     /// <inheritdoc/>
     public class HttpCodespacesApiClient : ICodespacesApiClient
     {
+        private readonly string authToken;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpCodespacesApiClient"/> class.
         /// </summary>
@@ -40,6 +44,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
             };
         }
 
+        private HttpCodespacesApiClient(HttpClient httpClient, string authToken)
+        {
+            HttpClient = Requires.NotNull(httpClient, nameof(httpClient));
+            Requires.NotNullOrWhiteSpace(authToken, nameof(authToken));
+            this.authToken = authToken;
+        }
+
         private HttpClient HttpClient { get; }
 
         /// <inheritdoc/>
@@ -52,13 +63,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
                 Path = $"/api/v1/environments/{codespaceId}",
             }.Uri;
 
-            var message = new HttpRequestMessage(HttpMethod.Get, fullRequestUri);
-
-            message.Headers.Add("Accept", "application/json");
-
             try
             {
-                var response = await HttpClient.SendAsync(message);
+                var response = await HttpClient.SendAsync(CreateGetCodespaceRequest(fullRequestUri));
+
+                if (response.StatusCode == HttpStatusCode.TemporaryRedirect &&
+                    Uri.TryCreate(response.Headers.Location.ToString(), UriKind.Absolute, out var redirectedUri))
+                {
+                    response = await HttpClient.SendAsync(CreateGetCodespaceRequest(redirectedUri));
+                }
+
                 logger?.AddClientHttpResponseDetails(response);
 
                 await response.ThrowIfFailedAsync();
@@ -68,17 +82,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
                 var environment = JsonConvert.DeserializeObject<CloudEnvironmentResult>(resultBody);
 
                 logger?.TryAddDuration(duration);
-                logger?.LogInfo("frontendwebapiclient_get_environment");
+                logger?.LogInfo("codespaces_client_get_codespace");
 
                 return environment;
             }
             catch (Exception ex)
             {
                 logger?.TryAddDuration(duration);
-                logger?.LogException("frontendwebapiclient_get_environment_failed", ex);
+                logger?.LogException("codespaces_client_get_codespace", ex);
             }
 
             return null;
+
+            HttpRequestMessage CreateGetCodespaceRequest(Uri requestUri)
+            {
+                var message = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+                message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
+                if (!string.IsNullOrEmpty(authToken))
+                {
+                    message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                }
+
+                return message;
+            }
+        }
+
+        /// <inheritdoc/>
+        public ICodespacesApiClient WithAuthToken(string authToken)
+        {
+            return new HttpCodespacesApiClient(HttpClient, authToken);
         }
     }
 }

@@ -21,9 +21,9 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.VsSaaS.AspNetCore.Http;
+using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 {
@@ -89,7 +89,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
             services.AddSingleton(PortForwardingHostUtils);
             PortForwardingRoutingHelper = new PortForwardingRoutingHelper(PortForwardingHostUtils);
 
-            services.AddHttpClient<IFrontEndWebApiClient, FrontEndWebApiClient>();
+            services.AddHttpCodespacesApiClient((options) =>
+            {
+                options.BaseAddress = AppSettings.PortalEndpoint;
+                options.ServiceName = "VSCodespacesPortal";
+                options.Version = typeof(Startup).Assembly.GetName().Version!.ToString();
+            });
 
             services.AddSingleton<IWorkspaceInfo, WorkspaceInfo>();
             services.AddSingleton<ICookieEncryptionUtils, CookieEncryptionUtils>();

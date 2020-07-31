@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Codespaces\CodespacesApiClient\CodespacesApiClient.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\Tokens\Src\TokenService.Client\TokenService.Client.csproj" />
     <ProjectReference Include="..\..\..\PortForwarding\PortForwarding.Common\Src\PortForwarding.Common\PortForwarding.Common.csproj" />

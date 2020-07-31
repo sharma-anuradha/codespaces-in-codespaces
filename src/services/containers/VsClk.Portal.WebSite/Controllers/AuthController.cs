@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -16,18 +16,18 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private AppSettings AppSettings { get; set; }
         private ICookieEncryptionUtils CookieEncryptionUtils { get; }
-        private IFrontEndWebApiClient FrontEndWebApiClient { get; }
+        private ICodespacesApiClient CodespacesApiClient { get; }
         private ILiveShareTokenExchangeUtil TokenExchangeUtil { get; }
 
         public AuthController(
             AppSettings appSettings,
             ICookieEncryptionUtils cookieEncryptionUtils,
-            IFrontEndWebApiClient frontEndWebApiClient,
+            ICodespacesApiClient codespacesApiClient,
             ILiveShareTokenExchangeUtil tokenExchangeUtil)
         {
             AppSettings = appSettings;
             CookieEncryptionUtils = cookieEncryptionUtils;
-            FrontEndWebApiClient = frontEndWebApiClient;
+            CodespacesApiClient = codespacesApiClient;
             TokenExchangeUtil = tokenExchangeUtil;
         }
 
@@ -182,10 +182,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             // 1. Fetch the environment record.
             // Note: The token we receive, whether it's cascade token or aad token, has to be valid for fetching environments.
-            var environment = await FrontEndWebApiClient.GetEnvironmentAsync(
-                environmentId,
-                string.IsNullOrEmpty(token) ? cascadeToken : token,
-                logger);
+            var environment = await CodespacesApiClient
+                .WithAuthToken(string.IsNullOrEmpty(token) ? cascadeToken : token)
+                .GetCodespaceAsync(environmentId, logger);
 
             if (environment == default)
             {

@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite;
-using Microsoft.VsCloudKernel.Services.Portal.WebSite.Clients;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Moq;
@@ -82,9 +82,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_NoEnvironment_404()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            var client = new Mock<ICodespacesApiClient>();
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(null as CloudEnvironmentResult);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(
@@ -103,9 +105,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_NoConnectionSessionId_503()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            var client = new Mock<ICodespacesApiClient>();
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(new CloudEnvironmentResult());
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(
@@ -124,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_CannotExchangeToken_403()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -132,8 +136,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<IStatusCodeActionResult>(
@@ -152,7 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_ConnectionSessionId_302()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -160,8 +166,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<RedirectResult>(
@@ -180,7 +188,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_ConnectionSessionId_SetsPath()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -188,8 +196,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<RedirectResult>(
@@ -208,7 +218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_ConnectionSessionId_KeepsQuery()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -216,8 +226,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<RedirectResult>(
@@ -236,7 +248,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_GitHub_ConnectionSessionId_KeepsQuery()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -244,8 +256,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var headers = new Dictionary<string, string>
             {
@@ -269,7 +283,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_ConnectionSessionId_CookieHasConnectionSessionId()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -277,8 +291,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<RedirectResult>(
@@ -303,7 +319,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         [Fact]
         public async Task AuthenticateEnvironmentAsync_ConnectionSessionId_CookieHasEnvironmentId()
         {
-            var client = new Mock<IFrontEndWebApiClient>();
+            var client = new Mock<ICodespacesApiClient>();
             var environment = new CloudEnvironmentResult
             {
                 Connection = new ConnectionInfoBody
@@ -311,8 +327,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     ConnectionSessionId = "ABCDEF0123456789"
                 }
             };
-            client.Setup(c => c.GetEnvironmentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+            client.Setup(c => c.GetCodespaceAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                   .ReturnsAsync(environment);
+            client.Setup(c => c.WithAuthToken(It.IsAny<string>()))
+                  .Returns(client.Object);
 
             var controller = CreateController(client.Object);
             var result = Assert.IsAssignableFrom<RedirectResult>(
@@ -350,7 +368,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
         }
 
         private AuthController CreateController(
-            IFrontEndWebApiClient frontEndWebApiClient = null,
+            ICodespacesApiClient frontEndWebApiClient = null,
             ILiveShareTokenExchangeUtil tokenExchangeUtil = null,
             string host = null,
             string path = null,
@@ -387,7 +405,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
             var controller = new AuthController(
                 MockAppSettings.Settings,
                 cookieEncryptionUtils,
-                frontEndWebApiClient ?? new Mock<IFrontEndWebApiClient>().Object,
+                frontEndWebApiClient ?? new Mock<ICodespacesApiClient>().Object,
                 tokenExchangeUtil ?? new Mock<ILiveShareTokenExchangeUtil>().Object)
             {
                 ControllerContext = new ControllerContext

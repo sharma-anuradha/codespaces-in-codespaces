@@ -14,6 +14,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
     public interface ICodespacesApiClient
     {
         /// <summary>
+        /// Sets auth token to be used to authenticate the requests.
+        /// </summary>
+        /// <param name="authToken">Authentication token.</param>
+        /// <returns>The same <see cref="ICodespacesApiClient"/> instance.</returns>
+        ICodespacesApiClient WithAuthToken(string authToken);
+
+        /// <summary>
         /// Fetches environment record from FrontEnd service.
         /// </summary>
         /// <param name="codespaceId">The codespace id.</param>

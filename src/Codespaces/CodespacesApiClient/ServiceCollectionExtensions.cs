@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
@@ -23,7 +24,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
             Action<HttpCodespacesApiClientOptions> configureOptions)
         {
             return services.Configure(configureOptions)
-                .AddHttpClient<ICodespacesApiClient, HttpCodespacesApiClient>();
+                .AddHttpClient<ICodespacesApiClient, HttpCodespacesApiClient>()
+                .ConfigurePrimaryHttpMessageHandler(_ =>
+                {
+                    return new SocketsHttpHandler()
+                    {
+                        AllowAutoRedirect = false,
+                    };
+                });
         }
     }
 }
