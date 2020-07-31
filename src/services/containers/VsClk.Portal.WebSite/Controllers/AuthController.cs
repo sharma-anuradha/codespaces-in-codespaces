@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 {
@@ -79,6 +80,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         public IActionResult AuthenticateWorkspaceAsync(
             [FromRoute] string environmentId,
             [FromForm] string cascadeToken,
+            [FromForm] string featureFlags,
             [FromQuery(Name = "port")] int? port)
         {
             if (string.IsNullOrEmpty(cascadeToken))
@@ -120,9 +122,16 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             {
                 Action = actionUriBuilder.Uri.ToString(),
                 CascadeToken = cascadeToken,
+                FeatureFlags = featureFlags,
             };
 
             return View(details);
+        }
+
+        public class FeatureFlags
+        {
+            [JsonProperty("portForwardingServiceEnabled")]
+            public bool PortForwardingServiceEnabled { get; set; }
         }
 
         // TODO: add exception to authentication
@@ -145,6 +154,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             [FromRoute] string environmentId,
             [FromForm] string token,
             [FromForm] string cascadeToken,
+            [FromForm] string featureFlags,
             [FromQuery(Name = "port")] int? port,
             [FromQuery(Name = "path")] string path,
             [FromQuery(Name = "query")] string query,
@@ -219,7 +229,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 partner = HttpContext.GetPartner();
             }
 
-            if (AppSettings.PortForwardingServiceEnabled == "true" && partner == Partners.VSOnline)
+            var flags = !string.IsNullOrEmpty(featureFlags) ? JsonConvert.DeserializeObject<FeatureFlags>(featureFlags) : new FeatureFlags();
+            if (AppSettings.PortForwardingServiceEnabled == "true" && (partner == Partners.VSOnline || flags.PortForwardingServiceEnabled))
             {
                 Response.Cookies.Append(Constants.PFSCookieName, Constants.PFSCookieValue);
             }

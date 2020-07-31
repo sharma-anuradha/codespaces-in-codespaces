@@ -71,6 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     environmentId,
                     token,
                     cascadeToken,
+                    featureFlags: null,
                     port,
                     path: null,
                     query: null,
@@ -94,6 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     "aadToken",
                     cascadeToken: null,
+                    featureFlags: null,
                     port: 1234,
                     path: null,
                     query: null,
@@ -117,6 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     "aadToken",
                     cascadeToken: null,
+                    featureFlags: null,
                     port: 1234,
                     path: null,
                     query: null,
@@ -147,6 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: "aadToken",
                     cascadeToken: null,
+                    featureFlags: null,
                     port: 1234,
                     path: null,
                     query: null,
@@ -177,6 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: null,
                     cascadeToken: "cascadeToken",
+                    featureFlags: null,
                     port: 1234,
                     path: null,
                     query: null,
@@ -207,6 +212,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: null,
                     cascadeToken: "cascadeToken",
+                    featureFlags: null,
                     port: 1234,
                     path: "/some/deep/path/with.file.ext",
                     query: null,
@@ -237,6 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: null,
                     cascadeToken: "cascadeToken",
+                    featureFlags: null,
                     port: 1234,
                     path: "/some",
                     query: "and=query",
@@ -272,6 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: null,
                     cascadeToken: "cascadeToken",
+                    featureFlags: null,
                     port: 1234,
                     path: "/some",
                     query: "and=query",
@@ -302,6 +310,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: null,
                     cascadeToken: "cascadeToken",
+                    featureFlags: null,
                     port: 1234,
                     path: "/some",
                     query: "and=query",
@@ -338,6 +347,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                     "environmentId",
                     token: null,
                     cascadeToken: "cascadeToken",
+                    featureFlags: null,
                     port: 1234,
                     path: "/some",
                     query: "and=query",
@@ -359,12 +369,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                 controller.AuthenticateWorkspaceAsync(
                     "environmentId",
                     cascadeToken: "cascadeToken",
+                    featureFlags: "featureFlags",
                     port: 1234));
 
             var formDetails = Assert.IsType<AuthenticateWorkspaceFormDetails>(result.Model);
 
             Assert.Equal("https://environmentid-1234.apps.test.workspaces.githubusercontent.com/authenticate-codespace/environmentId?path=abc&port=1234&query=def", formDetails.Action);
             Assert.Equal("cascadeToken", formDetails.CascadeToken);
+            Assert.Equal("featureFlags", formDetails.FeatureFlags);
         }
 
         private AuthController CreateController(

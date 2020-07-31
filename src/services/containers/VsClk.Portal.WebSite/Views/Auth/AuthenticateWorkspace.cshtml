@@ -10,6 +10,7 @@
 <body>
     <form action="@Model.Action" method="POST" id="tokenForm">
         <input type="hidden" name="cascadeToken" value="@Model.CascadeToken" />
+        <input type="hidden" name="featureFlags" value="@Model.FeatureFlags" />
     </form>
 
     <script>
