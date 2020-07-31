@@ -238,6 +238,23 @@ export class Actions {
             },
             id: "",
         },
+        {
+            type: CardType.LogViewer,
+            name: "Job Scheduler",
+            description: "Shows the job scheduled runs",
+            options: {
+                filterList: [
+                    {
+                        name: "Message",
+                        key: "msg",
+                        value: "job_scheduler_run_complete",
+                        placeHolder: "",
+                    },
+                ],
+                columnSettings: "JobName,JobScheduleRun,Duration,time",
+            },
+            id: "",
+        },
       {
         type: CardType.IsNgrokRunning,
         name: "Is Ngrok Running?",

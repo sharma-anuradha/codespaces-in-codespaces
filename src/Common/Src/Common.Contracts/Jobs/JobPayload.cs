@@ -1,6 +1,8 @@
-﻿// <copyright file="JobPayload.cs" company="Microsoft">
+// <copyright file="JobPayload.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
+
+using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -9,6 +11,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// </summary>
     public abstract class JobPayload
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JobPayload"/> class.
+        /// </summary>
+        protected JobPayload()
+        {
+            LoggerProperties = new Dictionary<string, object>();
+        }
+
+        /// <summary>
+        /// Gets or sets the logger properties we want to pass into the queue.
+        /// </summary>
+        public Dictionary<string, object> LoggerProperties { get; set; }
     }
 
 #pragma warning disable SA1402 // File may only contain a single type

@@ -2,7 +2,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -19,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -107,10 +112,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<ICreateComponentStrategy, CreateNetworkInterfaceStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateQueueStrategy>();
 
+            // Job scheduler lease support
+            services.AddSingleton<IJobSchedulerLease, JobSchedulerLease>();
+            services.AddSingleton<IJobSchedulerLeaseProvider, JobSchedulerLeaseProvider>();
+
+            // Job payload factories
+            services.AddSingleton<WatchPoolPayloadFactory>();
+
+            // Job schedule Registration
+            services.AddSingleton<IJobSchedulerRegister, WatchPoolJobScheduleRegister>();
+
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
             services.AddSingleton<IDeleteResourceGroupDeploymentsTask, DeleteResourceGroupDeploymentsTask>();
-            services.AddSingleton<IWatchPoolProducerTask, WatchPoolProducerTask>();
             services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
@@ -158,6 +172,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             // SDK provider
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
+        }
+
+        private class JobSchedulerLeaseProvider : IJobSchedulerLeaseProvider
+        {
+            public JobSchedulerLeaseProvider(
+                IClaimedDistributedLease claimedDistributedLease,
+                ResourceBrokerSettings resourceBrokerSettings,
+                IResourceNameBuilder resourceNameBuilder)
+            {
+                ClaimedDistributedLease = Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
+                ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
+                ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
+            }
+
+            private IClaimedDistributedLease ClaimedDistributedLease { get; }
+
+            private ResourceBrokerSettings ResourceBrokerSettings { get; }
+
+            private IResourceNameBuilder ResourceNameBuilder { get; }
+
+            public Task<IDisposable> ObtainAsync(string jobName, TimeSpan timeSpan, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            {
+                return ClaimedDistributedLease.Obtain(
+                    ResourceBrokerSettings.LeaseContainerName,
+                    ResourceNameBuilder.GetLeaseName($"schedule-{jobName}-lease"),
+                    timeSpan,
+                    logger);
+            }
         }
     }
 }

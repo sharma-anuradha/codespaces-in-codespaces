@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>$(NetStandardTargetFramework)</TargetFramework>
@@ -8,6 +8,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.VsSaaS.Azure.KeyVault" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.7.0" />
+      <PackageReference Include="ncrontab.signed" Version="3.3.2" />
+
   </ItemGroup>
   
   <ItemGroup>
@@ -25,6 +27,7 @@
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.Blob" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
     <PackageReference Include="Microsoft.VsSaaS.Diagnostics.Health" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(AspNetCoreDllVersions)" />
   </ItemGroup>
 
 </Project>

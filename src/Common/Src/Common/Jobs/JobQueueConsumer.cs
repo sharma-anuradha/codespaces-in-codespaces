@@ -93,6 +93,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         childLogger.FluentAddValue(JobQueueLoggerConst.JobId, job.Id)
                             .FluentAddValue(JobQueueLoggerConst.JobType, typeTag)
                             .FluentAddValue(JobQueueLoggerConst.JobQueueDuration, now - job.Created);
+                        var jobTyped = (IJob<T>)job;
+
+                        // pass deserialized logger properties from the producer.
+                        foreach (var kvp in jobTyped.Payload.LoggerProperties)
+                        {
+                            childLogger.FluentAddValue(kvp.Key, kvp.Value.ToString());
+                        }
 
                         if (jobPayloadOptions?.ExpireTimeout.HasValue == true &&
                             now > job.Created.Add(jobPayloadOptions.ExpireTimeout.Value))
@@ -115,7 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                         cancelled = true;
                                     }))
                                 {
-                                    await jobHandler.HandleJobAsync((IJob<T>)job, childLogger, cts.Token);
+                                    await jobHandler.HandleJobAsync(jobTyped, childLogger, cts.Token);
                                     childLogger.FluentAddValue(JobQueueLoggerConst.JobHandlerDuration, start.Elapsed);
                                     var jobDuration = DateTime.UtcNow - job.Created;
                                     childLogger.FluentAddValue(JobQueueLoggerConst.JobDuration, jobDuration);

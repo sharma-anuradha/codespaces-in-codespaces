@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Base class for all our watch pool job handlers.
     /// </summary>
     /// <typeparam name="TJobHandlerType">Type of the job handler type.</typeparam>
-    public abstract class WatchPoolJobHandlerBase<TJobHandlerType> : JobHandlerPayloadBase<WatchPoolProducerTask.ResourcePoolPayload<TJobHandlerType>>
+    public abstract class WatchPoolJobHandlerBase<TJobHandlerType> : JobHandlerPayloadBase<WatchPoolPayloadFactory.ResourcePoolPayload<TJobHandlerType>>
         where TJobHandlerType : class
     {
         /// <summary>
@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourcePoolDefinitionStore ResourcePoolDefinitionStore { get; }
 
         /// <inheritdoc/>
-        protected override async Task HandleJobAsync(WatchPoolProducerTask.ResourcePoolPayload<TJobHandlerType> payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override async Task HandleJobAsync(WatchPoolPayloadFactory.ResourcePoolPayload<TJobHandlerType> payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(payload.PoolId))
             {

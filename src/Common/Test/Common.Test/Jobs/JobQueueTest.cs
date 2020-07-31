@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -282,6 +282,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 Assert.Equal(1, jobIntMetrics.Failures);
                 Assert.Equal(0, jobIntMetrics.Cancelled);
                 Assert.NotEqual(TimeSpan.Zero, jobIntMetrics.ProcessTime);
+            });
+        }
+
+        [Fact]
+        public Task JobLoggerPropertiesAsync()
+        {
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                var payloadsProcessed = new BufferBlock<JobContentPayload<int>>();
+                jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
+                    async (payload, logger, ct) =>
+                    {
+                        await payloadsProcessed.SendAsync(payload);
+                    });
+                var jobPayload = new JobContentPayload<int>(100);
+                jobPayload.LoggerProperties.Add("property1", 200);
+                jobPayload.LoggerProperties.Add("property2", "hi");
+
+                await jobQueueProducer.AddJobAsync(jobPayload);
+                var jobPayloadReceived = await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(2, jobPayloadReceived.LoggerProperties.Count);
+                Assert.Equal(200, Convert.ToInt32(jobPayloadReceived.LoggerProperties["property1"]));
+                Assert.Equal("hi", jobPayloadReceived.LoggerProperties["property2"]);
             });
         }
 

@@ -29,6 +29,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
@@ -315,6 +316,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 writer.AutoFlush = true;
                 Console.SetOut(writer);
             }
+
+            // Job Scheduler support
+            services.AddJobScheduler();
 
             // Job Queues support
             services.AddSingleton<IQueueFactory, StorageQueueFactory>();

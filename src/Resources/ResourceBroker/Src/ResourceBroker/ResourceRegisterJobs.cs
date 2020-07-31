@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 {
@@ -24,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// Initializes a new instance of the <see cref="ResourceRegisterJobs"/> class.
         /// </summary>
         /// <param name="deleteResourceGroupDeploymentsTask">Task to delete resource group deployments.</param>
-        /// <param name="watchPoolProducerTask">Target watch pool version job.</param>
+        /// <param name="jobSchedulersRegisters">List of job scheduler to register.</param>
         /// <param name="watchOrphanedPoolTask">Target watch orphaned pool job.</param>
         /// <param name="watchOrphanedAzureResourceTask">Target watch orphaned Azure resources job.</param>
         /// <param name="watchOrphanedVmAgentImagesTask">Target watch orphaned VM images/blobs job.</param>
@@ -43,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
         public ResourceRegisterJobs(
             IDeleteResourceGroupDeploymentsTask deleteResourceGroupDeploymentsTask,
-            IWatchPoolProducerTask watchPoolProducerTask,
+            IEnumerable<IJobSchedulerRegister> jobSchedulersRegisters,
             IWatchOrphanedPoolTask watchOrphanedPoolTask,
             IWatchOrphanedAzureResourceTask watchOrphanedAzureResourceTask,
             WatchOrphanedVmAgentImagesTask watchOrphanedVmAgentImagesTask,
@@ -62,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchFailedResourcesTask watchFailedResourcesTask)
         {
             DeleteResourceGroupDeploymentsTask = deleteResourceGroupDeploymentsTask;
-            WatchPoolProducerTask = watchPoolProducerTask;
+            JobSchedulersRegisters = jobSchedulersRegisters;
             WatchOrphanedPoolTask = watchOrphanedPoolTask;
             WatchOrphanedAzureResourceTask = watchOrphanedAzureResourceTask;
             WatchOrphanedVmAgentImagesTask = watchOrphanedVmAgentImagesTask;
@@ -86,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IDeleteResourceGroupDeploymentsTask DeleteResourceGroupDeploymentsTask { get; }
 
-        private IWatchPoolProducerTask WatchPoolProducerTask { get; }
+        private IEnumerable<IJobSchedulerRegister> JobSchedulersRegisters { get; }
 
         private IWatchOrphanedPoolTask WatchOrphanedPoolTask { get; }
 
@@ -148,12 +149,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     .GetOrCreate(ResourceJobQueueConstants.GenericQueueName)
                     .RegisterJobHandlers(JobHandlers);
 
-                // Job: Watch Pool producer
-                var watchPoolproducerTaskTimeSpan = TimeSpan.FromMinutes(1);
-                TaskHelper.RunBackgroundLoop(
-                    $"{ResourceLoggingConstants.WatchPoolProducerTask}_run",
-                    (childLogger) => WatchPoolProducerTask.RunAsync(watchPoolproducerTaskTimeSpan, childLogger),
-                    watchPoolproducerTaskTimeSpan);
+                // register all the job schedulers
+                foreach (var jobSchedulersRegister in JobSchedulersRegisters)
+                {
+                    jobSchedulersRegister.RegisterScheduleJob();
+                }
             }
             else
             {
