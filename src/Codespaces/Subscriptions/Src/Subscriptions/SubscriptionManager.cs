@@ -1,4 +1,4 @@
-﻿// <copyright file="SubscriptionManager.cs" company="Microsoft">
+// <copyright file="SubscriptionManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -155,13 +155,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         }
 
         /// <inheritdoc />
-        public async Task<Subscription> UpdateSubscriptionStateAsync(Subscription subscription, SubscriptionStateEnum state, IDiagnosticsLogger logger)
+        public async Task<Subscription> UpdateSubscriptionStateAsync(Subscription subscription, SubscriptionStateEnum state, string resourceProvider, IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
                 $"{LoggingBaseName}_update_subscription_state",
                 async (childLogger) =>
                 {
-                    // TODO: Only do work if state has changed
+                    if ((resourceProvider.Equals(VsoPlanInfo.CodespacesProviderNamespace) && !subscription.ResourceProvider.Equals(VsoPlanInfo.CodespacesProviderNamespace)) ||
+                        (resourceProvider.Equals(VsoPlanInfo.VsoProviderNamespace) && !string.IsNullOrEmpty(subscription.ResourceProvider)))
+                    {
+                        // This block catches mismatches in the resource provider saved in the subscriptions table and the resource provider
+                        // that initiated the subscription state update.
+                        // Do not update the subscription record in the db.
+                        return subscription;
+                    }
+
+                    if (subscription.SubscriptionState == state)
+                    {
+                        // no work to do, new state and current state are the same
+                        return subscription;
+                    }
+
                     subscription.SubscriptionState = state;
                     subscription.SubscriptionStateUpdateDate = DateTime.UtcNow;
 
@@ -192,6 +206,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_can_subscription_create",
                 async (childLogger) =>
                 {
+                    if (await Settings.GetSubscriptionExemptFeatureFlagAsync(subscription.Id, logger))
+                    {
+                        return true;
+                    }
+
                     if (!await Settings.GetSubscriptionStateCheckFeatureFlagAsync(logger))
                     {
                         return true;

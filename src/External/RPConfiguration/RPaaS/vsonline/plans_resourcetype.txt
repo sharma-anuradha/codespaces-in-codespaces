@@ -1,6 +1,6 @@
 { "properties":
-{ "routingType": "Default", 
-"regionality": "regional", 
+{ "routingType": "Default",
+"regionality": "regional",
 "endpoints": [
 {
 "apiVersions": [ "2019-07-01-preview"],
@@ -19,7 +19,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -37,7 +38,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -58,7 +60,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -76,7 +79,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -97,7 +101,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -115,7 +120,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -136,7 +142,8 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
@@ -154,13 +161,14 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
-}], 
+}],
 "swaggerSpecifications": [
-{ "apiVersions": [ "2019-07-01-preview","2019-07-01-alpha","2019-07-01-beta","2019-07-01-privatepreview","2020-05-26-preview","2020-05-26-alpha","2020-05-26-beta","2020-05-26-privatepreview" ], 
-"swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/" 
-}] 
-}, 
+{ "apiVersions": [ "2019-07-01-preview","2019-07-01-alpha","2019-07-01-beta","2019-07-01-privatepreview","2020-05-26-preview","2020-05-26-alpha","2020-05-26-beta","2020-05-26-privatepreview" ],
+"swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/vsonline/resource-manager/Microsoft.VSOnline/"
+}]
+},
 "location": "WestUs2", "tags": { "department": "DevDiv" }}

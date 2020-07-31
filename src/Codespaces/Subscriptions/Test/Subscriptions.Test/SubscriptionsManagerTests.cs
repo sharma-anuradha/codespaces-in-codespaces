@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
@@ -72,7 +72,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
                                     skuCatalog.Object);
         }
 
-
         [Fact]
         public async void CanUpdateSubscriptionState()
         {
@@ -81,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             Assert.Equal(SubscriptionStateEnum.Registered, savedSub.SubscriptionState);
             Assert.Equal(subscription.Id, savedSub.Id);
 
-            var updatedSub = await subscriptionManager.UpdateSubscriptionStateAsync(savedSub, SubscriptionStateEnum.Unregistered, logger);
+            var updatedSub = await subscriptionManager.UpdateSubscriptionStateAsync(savedSub, SubscriptionStateEnum.Unregistered, VsoPlanInfo.VsoProviderNamespace, logger);
             Assert.Equal(SubscriptionStateEnum.Unregistered, updatedSub.SubscriptionState);
         }
 
@@ -116,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             Assert.True(canCreate);
 
             // Update SubscriptionState
-            await subscriptionManager.UpdateSubscriptionStateAsync(subscription, SubscriptionStateEnum.Unregistered, logger);
+            await subscriptionManager.UpdateSubscriptionStateAsync(subscription, SubscriptionStateEnum.Unregistered, VsoPlanInfo.VsoProviderNamespace, logger);
             var updatedSubCanCreate = await subscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger);
             Assert.False(updatedSubCanCreate);
         }
@@ -168,6 +167,45 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
 
             var updatedSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger, VsoPlanInfo.CodespacesProviderNamespace);
             Assert.Equal(VsoPlanInfo.CodespacesProviderNamespace, updatedSubscription.ResourceProvider);
+        }
+
+        [Fact]
+        public async void CanUnregisterVSonlineRP()
+        {
+            var subscription = await AddSubscriptionsToRepoAsync(SubscriptionStateEnum.Registered);
+            var savedSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger);
+            Assert.Null(savedSubscription.ResourceProvider); //indicates VSOnline RP
+
+            var updatedSubscription = await subscriptionManager.UpdateSubscriptionStateAsync(subscription, SubscriptionStateEnum.Unregistered, VsoPlanInfo.VsoProviderNamespace, logger);
+            Assert.Equal(SubscriptionStateEnum.Unregistered, updatedSubscription.SubscriptionState);
+        }
+
+        [Fact]
+        public async void CanUnregisterCodespacesRP()
+        {
+            var subscription = await AddSubscriptionsToRepoAsync(SubscriptionStateEnum.Registered);
+            var savedSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger);
+            Assert.Null(savedSubscription.ResourceProvider);
+
+            var updatedRPSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger, VsoPlanInfo.CodespacesProviderNamespace);
+            Assert.Equal(VsoPlanInfo.CodespacesProviderNamespace, updatedRPSubscription.ResourceProvider);
+
+            var updatedStateSubscription = await subscriptionManager.UpdateSubscriptionStateAsync(updatedRPSubscription, SubscriptionStateEnum.Unregistered, VsoPlanInfo.CodespacesProviderNamespace, logger);
+            Assert.Equal(SubscriptionStateEnum.Unregistered, updatedStateSubscription.SubscriptionState);
+        }
+
+        [Fact]
+        public async void CanNotUnregisterCodespacesRPWhenIntiatedByVSOnlineRp()
+        {
+            var subscription = await AddSubscriptionsToRepoAsync(SubscriptionStateEnum.Registered);
+            var savedSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger);
+            Assert.Null(savedSubscription.ResourceProvider);
+
+            var updatedRPSubscription = await subscriptionManager.GetSubscriptionAsync(subscription.Id, logger, VsoPlanInfo.CodespacesProviderNamespace);
+            Assert.Equal(VsoPlanInfo.CodespacesProviderNamespace, updatedRPSubscription.ResourceProvider);
+
+            var updatedStateSubscription = await subscriptionManager.UpdateSubscriptionStateAsync(updatedRPSubscription, SubscriptionStateEnum.Unregistered, VsoPlanInfo.VsoProviderNamespace, logger);
+            Assert.Equal(SubscriptionStateEnum.Registered, updatedStateSubscription.SubscriptionState);
         }
 
         private async Task<Subscription> AddSubscriptionsToRepoAsync(

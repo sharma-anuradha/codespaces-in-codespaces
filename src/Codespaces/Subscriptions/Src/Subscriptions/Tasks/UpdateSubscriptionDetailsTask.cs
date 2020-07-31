@@ -1,4 +1,4 @@
-﻿// <copyright file="UpdateSubscriptionDetailsTask.cs" company="Microsoft">
+// <copyright file="UpdateSubscriptionDetailsTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -115,21 +115,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
                         =>
                         {
                             var subscription = await SubscriptionManager.GetSubscriptionAsync(plan.Plan.Subscription, childLogger.NewChildLogger());
-                            var subscriptionDetails = await SubscriptionManager.GetSubscriptionDetailsFromExternalSourceAsync(subscription, childLogger.NewChildLogger());
-                            if (subscriptionDetails != null)
+                            var resourceProvider = string.IsNullOrEmpty(subscription.ResourceProvider) ? VsoPlanInfo.VsoProviderNamespace : VsoPlanInfo.CodespacesProviderNamespace;
+                            if (subscription.SubscriptionState == SubscriptionStateEnum.Unregistered ||
+                                subscription.SubscriptionState == SubscriptionStateEnum.Deleted)
                             {
-                                if (!Enum.TryParse(subscriptionDetails.State, true, out SubscriptionStateEnum subscriptionStateEnum))
+                                logger.AddValue("SubscriptionState", subscription.SubscriptionState.ToString());
+                                logger.LogErrorWithDetail("subscription_state_error", $"Subscription state was not valid for registeredSubscription request.");
+                            }
+                            else
+                            {
+                                var subscriptionDetails = await SubscriptionManager.GetSubscriptionDetailsFromExternalSourceAsync(subscription, childLogger.NewChildLogger());
+                                if (subscriptionDetails != null)
                                 {
-                                    logger.AddValue("SubscriptionState", subscriptionDetails.State);
-                                    logger.LogErrorWithDetail("subscription_state_error", $"Subscription state could not be parsed.");
-                                }
-                                else
-                                {
-                                    // Update the subscription state
-                                    subscription = await SubscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, childLogger.NewChildLogger());
+                                    if (!Enum.TryParse(subscriptionDetails.State, true, out SubscriptionStateEnum subscriptionStateEnum))
+                                    {
+                                        logger.AddValue("SubscriptionState", subscriptionDetails.State);
+                                        logger.LogErrorWithDetail("subscription_state_error", $"Subscription state could not be parsed.");
+                                    }
+                                    else
+                                    {
+                                        // Update the subscription state
+                                        subscription = await SubscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, resourceProvider, childLogger.NewChildLogger());
 
-                                    // update the subscription offer.
-                                    subscription = await SubscriptionManager.UpdateSubscriptionQuotaAsync(subscription, subscriptionDetails.QuotaId, childLogger.NewChildLogger());
+                                        // update the subscription offer.
+                                        subscription = await SubscriptionManager.UpdateSubscriptionQuotaAsync(subscription, subscriptionDetails.QuotaId, childLogger.NewChildLogger());
+                                    }
                                 }
                             }
 

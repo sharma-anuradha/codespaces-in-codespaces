@@ -1,4 +1,4 @@
-﻿// <copyright file="ISubscriptionManager.cs" company="Microsoft">
+// <copyright file="ISubscriptionManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -60,9 +60,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// </summary>
         /// <param name="subscriptionId">The desired subscription.</param>
         /// <param name="state">the new state.</param>
+        /// <param name="resourceProvider">the resource provider namespace.</param>
         /// <param name="logger">the logger.</param>
         /// <returns>A task that shows completion of the update.</returns>
-        Task<Subscription> UpdateSubscriptionStateAsync(Subscription subscriptionId, SubscriptionStateEnum state, IDiagnosticsLogger logger);
+        Task<Subscription> UpdateSubscriptionStateAsync(Subscription subscriptionId, SubscriptionStateEnum state, string resourceProvider, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Checks is the subscription is allowed to create plans and environments.

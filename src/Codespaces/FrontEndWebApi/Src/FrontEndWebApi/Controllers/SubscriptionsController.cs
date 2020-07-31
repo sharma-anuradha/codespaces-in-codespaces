@@ -1118,7 +1118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     var subscription = await SubscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
 
-                    subscription = await SubscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, logger);
+                    subscription = await SubscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, providerNamespace, logger);
 
                     return new StatusCodeResult((int)HttpStatusCode.OK);
                 },

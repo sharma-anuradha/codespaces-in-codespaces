@@ -1,6 +1,6 @@
 { "properties":
-{ "routingType": "Default", 
-"regionality": "regional", 
+{ "routingType": "Default",
+"regionality": "regional",
 "endpoints": [
 {
 "apiVersions": [ "2020-06-16"],
@@ -19,12 +19,13 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
 {
-"apiVersions": [ "2020-06-16-alpha"],
+"apiVersions": [ "2020-06-16-alpha", "2020-07-10-alpha"],
 "locations": ["West Europe","East US","West Us 2","Southeast Asia"],
 "timeout": "PT2M",
 "extensions": [{
@@ -37,12 +38,13 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
 {
-"apiVersions": [ "2020-06-16-beta" ],
+"apiVersions": [ "2020-06-16-beta", "2020-07-10-beta" ],
 "locations": ["West Europe",
           "East US",
           "West Us 2",
@@ -58,12 +60,13 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
 },
 {
-"apiVersions": [ "2020-06-16-privatepreview"],
+"apiVersions": [ "2020-06-16-privatepreview", "2020-07-10-privatepreview"],
 "locations": ["East US 2 EUAP"],
 "timeout": "PT2M",
 "extensions": [{
@@ -76,13 +79,14 @@
               "ResourcePatchValidate",
               "ResourcePatchCompleted",
               "ResourcePostAction",
-              "ResourceReadBegin"
+              "ResourceReadBegin",
+              "SubscriptionLifeCycleNotification"
             ]
         }]
-}], 
+}],
 "swaggerSpecifications": [
-{ "apiVersions": [ "2020-06-16","2020-06-16-alpha","2020-06-16-beta","2020-06-16-privatepreview" ], 
-"swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/codespaces/resource-manager/Microsoft.Codespaces/" 
-}] 
-}, 
+{ "apiVersions": [ "2020-06-16","2020-06-16-alpha","2020-06-16-beta","2020-06-16-privatepreview","2020-07-10-alpha","2020-07-10-beta","2020-07-10-privatepreview" ],
+"swaggerSpecFolderUri": "https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster/specification/codespaces/resource-manager/Microsoft.Codespaces/"
+}]
+},
 "location": "WestUs2", "tags": { "department": "DevDiv" }}

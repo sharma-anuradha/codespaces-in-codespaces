@@ -1,4 +1,4 @@
-﻿// <copyright file="SubscriptionManagerSettings.cs" company="Microsoft">
+// <copyright file="SubscriptionManagerSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -23,6 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Settings
         /// </summary>
         public bool IsSubscriptionStateCheckEnabled { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the Subscription is exempt from Subscription level checks.
+        /// </summary>
+        public bool IsSubscriptionExemptEnabled { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -44,6 +49,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Settings
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             var isFeatureEnabled = await SystemConfiguration.GetValueAsync("featureflag:enable-sub-state-check", logger, IsSubscriptionStateCheckEnabled);
+
+            return isFeatureEnabled;
+        }
+
+        /// <summary>
+        /// Get feature flag for Subscription State check.
+        /// </summary>
+        /// <param name="subscriptionId">Target subscription.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<bool> GetSubscriptionExemptFeatureFlagAsync(string subscriptionId, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var isFeatureEnabled = await SystemConfiguration.GetSubscriptionValueAsync("featureflag:enable-sub-exempt-sub-check", subscriptionId, logger, IsSubscriptionExemptEnabled);
 
             return isFeatureEnabled;
         }

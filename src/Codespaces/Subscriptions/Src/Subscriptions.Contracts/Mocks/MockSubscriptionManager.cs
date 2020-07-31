@@ -1,4 +1,4 @@
-﻿// <copyright file="MockSubscriptionManager.cs" company="Microsoft">
+// <copyright file="MockSubscriptionManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -44,7 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<Subscription> UpdateSubscriptionStateAsync(Subscription subscriptionId, SubscriptionStateEnum state, IDiagnosticsLogger logger)
+        public Task<Subscription> UpdateSubscriptionStateAsync(Subscription subscriptionId, SubscriptionStateEnum state, string resourceProvider, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
