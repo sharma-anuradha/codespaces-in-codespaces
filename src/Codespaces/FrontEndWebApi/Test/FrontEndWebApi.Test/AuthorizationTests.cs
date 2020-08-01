@@ -4,14 +4,19 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile.Contracts;
+using Moq;
 using Xunit;
 using Scopes = Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts.PlanAccessTokenScopes;
 
@@ -44,18 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(ListData))]
         public async Task ListEnvironments(AccessTest test)
         {
-            // TODO: elpadann - Move access tests to manager/action layer, as authorization check is no longer performed at controller layer.
-            _ = test;
-            await Task.CompletedTask;
-
-            /*
             string userId = "test-user";
             string planId = "test-plan";
-
-            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
-            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
-
-            var mockHttpContext = new DefaultHttpContext();
 
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
@@ -71,16 +66,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
+
+            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
+            var mockEnvironmentRepository = new MockCloudEnvironmentRepository();
+            await mockEnvironmentRepository.CreateAsync(mockEnv, logger);
+            var environmentManager = CreateEnvironmentManager(
+                mockEnvironmentRepository,
+                mockCurrentUserProvider);
+
+            var mockHttpContext = new DefaultHttpContext();
+
             if (test.IsOwner)
             {
                 mockEnv.OwnerId = mockCurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             }
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
-                environmentManager: mockEnvManager,
+                environmentManager: environmentManager,
                 currentUserProvider: mockCurrentUserProvider,
                 httpContext: mockHttpContext);
 
+            if (test.ExceptionType == null)
+            {
             var result = await environmentController.ListAsync(name: null, planId, logger);
             Assert.IsType(test.ExpectedResultType, result);
 
@@ -97,7 +104,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     Assert.Empty(resultsArray);
                 }
             }
-            */
+        }
+            else
+            {
+                await Assert.ThrowsAsync(
+                    test.ExceptionType,
+                    () => environmentController.ListAsync(name: null, planId, logger));
+            }
         }
 
         public static TheoryData<AccessTest> GetData = new TheoryData<AccessTest>
@@ -142,18 +155,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(GetData))]
         public async Task GetEnvironment(AccessTest test)
         {
-            // TODO: elpadann - Move access tests to manager/action layer, as authorization check is no longer performed at controller layer.
-            _ = test;
-            await Task.CompletedTask;
-
-            /*
             string userId = "test-user";
             string planId = "test-plan";
-
-            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
-            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
-
-            var mockHttpContext = new DefaultHttpContext();
 
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
@@ -169,19 +172,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
+
+            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
+            var mockEnvironmentRepository = new MockCloudEnvironmentRepository();
+            await mockEnvironmentRepository.CreateAsync(mockEnv, logger);
+            var environmentManager = CreateEnvironmentManager(
+                mockEnvironmentRepository,
+                mockCurrentUserProvider);
+
+            var mockHttpContext = new DefaultHttpContext();
+
             if (test.IsOwner)
             {
                 mockEnv.OwnerId = mockCurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             }
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
-                environmentManager: mockEnvManager,
+                environmentManager: environmentManager,
                 currentUserProvider: mockCurrentUserProvider,
                 httpContext: mockHttpContext);
 
+            if (test.ExceptionType == null)
+            {
             var result = await environmentController.GetAsync(Guid.Parse(mockEnv.Id), logger);
             Assert.IsType(test.ExpectedResultType, result);
-            */
+        }
+            else
+            {
+                await Assert.ThrowsAsync(
+                    test.ExceptionType,
+                    () => environmentController.GetAsync(Guid.Parse(mockEnv.Id), logger));
+            }
         }
 
         public static TheoryData<AccessTest> CreateInOwnedPlanData = new TheoryData<AccessTest>
@@ -330,11 +351,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             string userId = "test-user";
             string planId = "test-plan";
 
-            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
-            var mockEnvManager = MockUtil.MockEnvironmentManager(mockEnv);
-
-            var mockHttpContext = new DefaultHttpContext();
-
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
             var claimPlanId = default(string);
@@ -347,15 +363,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 claimPlanId = "not-" + planId;
             }
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
-
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
+
+            var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
+            var mockEnvironmentRepository = new MockCloudEnvironmentRepository();
+            await mockEnvironmentRepository.CreateAsync(mockEnv, logger);
+            var environmentManager = CreateEnvironmentManager(
+                mockEnvironmentRepository,
+                mockCurrentUserProvider);
+
+            var mockHttpContext = new DefaultHttpContext();
+
             if (test.IsOwner)
             {
                 mockEnv.OwnerId = mockCurrentUserProvider.CurrentUserIdSet?.PreferredUserId;
             }
 
             var environmentController = EnvironmentControllerTests.CreateTestEnvironmentsController(
-                environmentManager: mockEnvManager,
+                environmentManager: environmentManager,
                 currentUserProvider: mockCurrentUserProvider,
                 httpContext: mockHttpContext);
 
@@ -368,8 +393,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
             else
             {
-                await Assert.ThrowsAsync(test.ExceptionType, async () => await environmentController.UpdateSettingsAsync(mockEnv.Id, updateInput, logger));
+                await Assert.ThrowsAsync(
+                    test.ExceptionType,
+                    () => environmentController.UpdateSettingsAsync(mockEnv.Id, updateInput, logger));
             }
+            }
+
+        private static IEnvironmentManager CreateEnvironmentManager(
+            ICloudEnvironmentRepository environmentRepository,
+            ICurrentUserProvider currentUserProvider)
+        {
+            var getAction = new EnvironmentGetAction(
+                Mock.Of<IEnvironmentStateManager>(),
+                environmentRepository,
+                Mock.Of<ICurrentLocationProvider>(),
+                currentUserProvider,
+                Mock.Of<IControlPlaneInfo>(),
+                new EnvironmentAccessManager(currentUserProvider),
+                Mock.Of<ISkuCatalog>(),
+                Mock.Of<ISkuUtils>());
+            var listAction = new EnvironmentListAction(
+                environmentRepository,
+                Mock.Of<ICurrentLocationProvider>(),
+                currentUserProvider,
+                Mock.Of<IControlPlaneInfo>());
+            return new EnvironmentManager.EnvironmentManager(
+                environmentRepository,
+                Mock.Of<IResourceBrokerResourcesExtendedHttpContract>(),
+                MockUtil.MockSkuCatalog(),
+                Mock.Of<IEnvironmentContinuationOperations>(),
+                Mock.Of<EnvironmentManagerSettings>(),
+                Mock.Of<IPlanManager>(),
+                Mock.Of<PlanManagerSettings>(),
+                Mock.Of<IEnvironmentStateManager>(),
+                Mock.Of<IResourceStartManager>(),
+                getAction,
+                listAction,
+                Mock.Of<IEnvironmentUpdateStatusAction>(),
+                Mock.Of<IEnvironmentCreateAction>(),
+                Mock.Of<IEnvironmentResumeAction>(),
+                Mock.Of<IEnvironmentFinalizeResumeAction>(),
+                Mock.Of<IEnvironmentSuspendAction>(),
+                Mock.Of<IEnvironmentForceSuspendAction>(),
+                Mock.Of<IEnvironmentDeleteAction>()
+            );
         }
 
         public class AccessTest

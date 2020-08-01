@@ -41,10 +41,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             return new CloudEnvironment
             {
                 Id = MockEnvironmentId,
+                FriendlyName = "mock",
+                SkuName = "mock",
                 Location = AzureLocation.WestUs2,
                 OwnerId = ownerId ?? MockCurrentUserProvider().CurrentUserIdSet?.PreferredUserId,
                 PlanId = planId,
                 Connection = new EnvironmentManager.ConnectionInfo(),
+                State = CloudEnvironmentState.Shutdown,
             };
         }
 
