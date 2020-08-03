@@ -204,8 +204,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
                 (WorkspaceSessionDetails headers, WorkspaceSessionDetails host, null) when string.Equals(headers.WorkspaceId, host.WorkspaceId, StringComparison.InvariantCultureIgnoreCase) && headers.Port == host.Port => headers,
                 (WorkspaceSessionDetails headers, null, WorkspaceSessionDetails host) when string.Equals(headers.WorkspaceId, host.WorkspaceId, StringComparison.InvariantCultureIgnoreCase) && headers.Port == host.Port => headers,
                 (WorkspaceSessionDetails parameters, null, null) => parameters,
-                (null, WorkspaceSessionDetails parameters, null) => parameters,
-                (null, null, WorkspaceSessionDetails parameters) => parameters,
+                (null, WorkspaceSessionDetails parameters, _) => parameters,
+                (null, _, WorkspaceSessionDetails parameters) => parameters,
                 _ => default,
             };
 
