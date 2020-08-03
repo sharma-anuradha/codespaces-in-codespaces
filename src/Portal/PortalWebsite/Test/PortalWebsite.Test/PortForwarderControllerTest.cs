@@ -6,6 +6,7 @@ using Microsoft.VsCloudKernel.Services.Portal.WebSite;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Moq;
 using System;
@@ -285,7 +286,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortalWebsite.Test
                 httpContext.Request.Headers.Add(header.Key, header.Value);
             }
 
-            var controller = new PortForwarderController(MockAppSettings.Settings, hostUtils, cookieEncryptionProvider, hostEnvironment)
+            var codespacesApiClient = new Mock<ICodespacesApiClient>();
+
+            var controller = new PortForwarderController(MockAppSettings.Settings, hostUtils, cookieEncryptionProvider, codespacesApiClient.Object, hostEnvironment)
             {
                 ControllerContext = new ControllerContext
                 {

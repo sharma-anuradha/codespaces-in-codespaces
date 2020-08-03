@@ -46,7 +46,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             if (!string.IsNullOrEmpty(token))
             {
-                cascadeToken = await TokenExchangeUtil.ExchangeToken(AppSettings.LiveShareEndpoint + Constants.LiveShareTokenExchangeRoute, token);
+                cascadeToken = await TokenExchangeUtil.ExchangeTokenAsync(token);
             }
 
             CookieOptions option = CreateCookieOptions();
@@ -209,7 +209,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             // 2. If the token is an aad token, exchange it for cascade with liveshare.
             if (!string.IsNullOrEmpty(token))
             {
-                cascadeToken = await TokenExchangeUtil.ExchangeToken(AppSettings.LiveShareEndpoint + Constants.LiveShareTokenExchangeRoute, token);
+                cascadeToken = await TokenExchangeUtil.ExchangeTokenAsync(token);
             }
 
             if (cascadeToken == default)

@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
             catch (Exception ex)
             {
                 logger?.TryAddDuration(duration);
-                logger?.LogException("codespaces_client_get_codespace", ex);
+                logger?.LogException("codespaces_client_get_codespace_failed", ex);
             }
 
             return null;

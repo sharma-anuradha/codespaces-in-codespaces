@@ -4,6 +4,6 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils
 {
     public interface ILiveShareTokenExchangeUtil
     {
-        Task<string> ExchangeToken(string path, string externalToken);
+        Task<string> ExchangeTokenAsync(string externalToken);
     }
 }

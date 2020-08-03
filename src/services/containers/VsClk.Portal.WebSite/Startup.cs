@@ -98,7 +98,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
             services.AddSingleton<IWorkspaceInfo, WorkspaceInfo>();
             services.AddSingleton<ICookieEncryptionUtils, CookieEncryptionUtils>();
-            services.AddSingleton<ILiveShareTokenExchangeUtil, LiveShareTokenExchangeUtil>();
+            services.AddHttpClient<ILiveShareTokenExchangeUtil, LiveShareTokenExchangeUtil>();
 
             if (string.IsNullOrEmpty(AppSettings.AesKey)
                 || string.IsNullOrEmpty(AppSettings.AesIV)
