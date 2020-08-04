@@ -1,4 +1,4 @@
-﻿// <copyright file="AgentTelemetryController.cs" company="Microsoft">
+// <copyright file="AgentTelemetryController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -37,12 +37,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Initializes a new instance of the <see cref="AgentTelemetryController"/> class.
         /// </summary>
         /// <param name="currentUserProvider">The current user provider.</param>
-        public AgentTelemetryController(ICurrentUserProvider currentUserProvider)
+        /// <param name="defaultLogValues">Default log values.</param>
+        public AgentTelemetryController(ICurrentUserProvider currentUserProvider, LogValueSet defaultLogValues)
         {
             CurrentUserProvider = currentUserProvider;
+            DefaultLogValues = defaultLogValues;
         }
 
         private ICurrentUserProvider CurrentUserProvider { get; }
+
+        private LogValueSet DefaultLogValues { get; }
 
         /// <summary>
         /// Controller to recieve telemetry collection from VSO Agents.
@@ -71,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return Unauthorized();
             }
 
-            var telemetryLogger = new JsonStdoutLogger(new LogValueSet());
+            var telemetryLogger = new JsonStdoutLogger(DefaultLogValues);
             telemetryLogger.AddBaseValue("Service", "VsoAgent");
 
             var validationExceptions = new List<ValidationException>();
