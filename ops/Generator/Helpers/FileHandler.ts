@@ -12,7 +12,7 @@ export default abstract class FileHandler {
 
   public static GenerateJson(basePath: string, name: string, obj: any): void {
     this.CreateDirectory(basePath);
-    writeFileSync(path.join(basePath, name), JSON.stringify(obj, null, 2));
+    writeFileSync(path.join(basePath, name), JSON.stringify(obj, null, 2).replace(/\n/g, '\r\n'));
   }
 
   public static CreateDirectory(dir: string): string {
