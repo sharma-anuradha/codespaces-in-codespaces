@@ -21,6 +21,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// <param name="input">Target input.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from action.</returns>
-        Task<TResult> Run(TInput input, IDiagnosticsLogger logger);
+        Task<TResult> RunAsync(TInput input, IDiagnosticsLogger logger);
     }
 }

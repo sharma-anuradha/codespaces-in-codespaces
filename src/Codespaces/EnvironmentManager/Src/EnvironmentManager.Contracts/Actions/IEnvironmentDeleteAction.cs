@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="cloudEnvironmentId">Target cloud environment id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>True if the environment was deleted, otherwise false.</returns>
-        Task<bool> Run(Guid cloudEnvironmentId, IDiagnosticsLogger logger);
+        Task<bool> RunAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Delete given cloud environment and the resources which might not yet be persisted.
@@ -32,6 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="liveshareWorkspaceId">Target liveshare workspace id to be deleted.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>True if the environment was deleted, otherwise false.</returns>
-        Task<bool> Run(Guid cloudEnvironmentId, Guid? computeResourceId, Guid? storageResourceId, Guid? osDiskResourceId, string liveshareWorkspaceId, IDiagnosticsLogger logger);
+        Task<bool> RunAsync(Guid cloudEnvironmentId, Guid? computeResourceId, Guid? storageResourceId, Guid? osDiskResourceId, string liveshareWorkspaceId, IDiagnosticsLogger logger);
     }
 }

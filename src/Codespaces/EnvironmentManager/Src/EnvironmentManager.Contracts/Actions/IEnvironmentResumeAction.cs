@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="startEnvironmentParams">Target environment params.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the create action.</returns>
-        Task<CloudEnvironment> Run(
+        Task<CloudEnvironment> RunAsync(
             Guid environmentId,
             StartCloudEnvironmentParameters startEnvironmentParams,
             IDiagnosticsLogger logger);

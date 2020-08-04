@@ -346,7 +346,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var moq = new Mock<IEnvironmentCreateAction>();
             moq
-                .Setup(x => x.Run(
+                .Setup(x => x.RunAsync(
                     It.IsAny<EnvironmentCreateDetails>(),
                     It.IsAny<StartCloudEnvironmentParameters>(),
                     It.IsAny<MetricsInfo>(),
@@ -388,7 +388,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var moq = new Mock<IEnvironmentGetAction>();
             moq
-                .Setup(x => x.Run(
+                .Setup(x => x.RunAsync(
                     It.IsAny<Guid>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((

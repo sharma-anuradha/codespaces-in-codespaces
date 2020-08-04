@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// <param name="input">Target input.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the action.</returns>
-        public virtual async Task<TResult> Run(TInput input, IDiagnosticsLogger logger)
+        public virtual async Task<TResult> RunAsync(TInput input, IDiagnosticsLogger logger)
         {
             var result = default(TResult);
             var transientState = new TState();

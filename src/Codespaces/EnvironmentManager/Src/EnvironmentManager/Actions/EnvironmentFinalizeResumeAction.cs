@@ -53,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> Run(
+        public async Task<CloudEnvironment> RunAsync(
             Guid environmentId,
             Guid storageResourceId,
             Guid? archiveStorageResourceId,
@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 ArchiveStorageResourceId = archiveStorageResourceId,
             };
 
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>

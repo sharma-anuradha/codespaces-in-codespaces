@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> Run(Guid environmentId, StartCloudEnvironmentParameters startEnvironmentParams, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironment> RunAsync(Guid environmentId, StartCloudEnvironmentParameters startEnvironmentParams, IDiagnosticsLogger logger)
         {
             // Base Validation
             Requires.NotEmpty(environmentId, nameof(environmentId));
@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 StartEnvironmentParams = startEnvironmentParams,
             };
 
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
@@ -195,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Suspend the environment if the state is already changed to starting/queued
             if (transientState.CloudEnvironmentState == CloudEnvironmentState.Starting || transientState.CloudEnvironmentState == CloudEnvironmentState.Queued)
             {
-                await EnvironmentSuspendAction.Run(input.Id, transientState.AllocatedComputeId, logger.NewChildLogger());
+                await EnvironmentSuspendAction.RunAsync(input.Id, transientState.AllocatedComputeId, logger.NewChildLogger());
             }
             else if (transientState.AllocatedComputeId != default)
             {

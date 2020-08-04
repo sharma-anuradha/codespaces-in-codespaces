@@ -102,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 }
             }
 
-            return Run(input, logger);
+            return RunAsync(input, logger);
         }
 
         /// <inheritdoc/>

@@ -54,17 +54,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IWorkspaceManager WorkspaceManager { get; }
 
         /// <inheritdoc/>
-        public async Task<bool> Run(Guid cloudEnvironmentId, IDiagnosticsLogger logger)
+        public async Task<bool> RunAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
 
             var input = new EnvironmentDeleteActionInput(cloudEnvironmentId);
 
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
-        public async Task<bool> Run(
+        public async Task<bool> RunAsync(
             Guid cloudEnvironmentId,
             Guid? computeResourceId,
             Guid? storageResourceId,
@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 AllocatedLiveshareWorkspaceId = liveshareWorkspaceId,
             };
 
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>

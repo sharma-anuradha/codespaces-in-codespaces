@@ -129,7 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid id,
             IDiagnosticsLogger logger)
         {
-            return EnvironmentGetAction.Run(id, logger.NewChildLogger());
+            return EnvironmentGetAction.RunAsync(id, logger.NewChildLogger());
         }
 
         /// <inheritdoc/>
@@ -150,7 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string reason,
             IDiagnosticsLogger logger)
         {
-            return EnvironmentUpdateStatusAction.Run(cloudEnvironmentId, newState, trigger, reason, logger);
+            return EnvironmentUpdateStatusAction.RunAsync(cloudEnvironmentId, newState, trigger, reason, logger);
         }
 
         /// <inheritdoc/>
@@ -215,7 +215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             MetricsInfo metricsInfo,
             IDiagnosticsLogger logger)
         {
-            return EnvironmentCreateAction.Run(details, startEnvironmentParams, metricsInfo, logger);
+            return EnvironmentCreateAction.RunAsync(details, startEnvironmentParams, metricsInfo, logger);
         }
 
         /// <inheritdoc/>
@@ -226,7 +226,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNull(logger, nameof(logger));
 
-            return EnvironmentDeleteAction.Run(environmentId, logger);
+            return EnvironmentDeleteAction.RunAsync(environmentId, logger);
         }
 
         /// <inheritdoc/>
@@ -239,7 +239,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
             Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
 
-            return EnvironmentResumeAction.Run(environmentId, startCloudEnvironmentParameters, logger);
+            return EnvironmentResumeAction.RunAsync(environmentId, startCloudEnvironmentParameters, logger);
         }
 
         /// <inheritdoc/>
@@ -253,7 +253,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotEmpty(storageResourceId, nameof(storageResourceId));
             Requires.NotNull(logger, nameof(logger));
 
-            return EnvironmentFinalizeResumeAction.Run(environmentId, storageResourceId, archiveStorageResourceId, logger);
+            return EnvironmentFinalizeResumeAction.RunAsync(environmentId, storageResourceId, archiveStorageResourceId, logger);
         }
 
         /// <inheritdoc/>
@@ -264,7 +264,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNull(logger, nameof(logger));
 
-            return EnvironmentSuspendAction.Run(environmentId, logger);
+            return EnvironmentSuspendAction.RunAsync(environmentId, logger);
         }
 
         /// <inheritdoc/>
@@ -305,7 +305,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNull(logger, nameof(logger));
 
-            return EnvironmentForceSuspendAction.Run(environmentId, logger);
+            return EnvironmentForceSuspendAction.RunAsync(environmentId, logger);
         }
 
         /// <inheritdoc/>

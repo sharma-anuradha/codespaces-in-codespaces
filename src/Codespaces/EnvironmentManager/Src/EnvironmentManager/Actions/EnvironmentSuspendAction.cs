@@ -62,21 +62,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> Run(Guid environmentId, Guid computeResourceId, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironment> RunAsync(Guid environmentId, Guid computeResourceId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
 
             var input = new EnvironmentSuspendActionInput(environmentId, computeResourceId);
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> Run(Guid environmentId, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironment> RunAsync(Guid environmentId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
 
             var input = new EnvironmentSuspendActionInput(environmentId, default);
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
@@ -102,13 +102,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             {
                 // If the environment is not in an available state during shutdown,
                 // force clean the environment details, to put it in a recoverable state.
-                return await EnvironmentForceSuspendAction.Run(input.Id, logger.NewChildLogger());
+                return await EnvironmentForceSuspendAction.RunAsync(input.Id, logger.NewChildLogger());
             }
             else if (record.Value.Compute.ResourceId == default && input.AllocatedComputeResourceId == default)
             {
                 // If the allocated compute is missing for the environment,
                 // force clean the environment details, to put it in a recoverable state.
-                return await EnvironmentForceSuspendAction.Run(input.Id, logger.NewChildLogger());
+                return await EnvironmentForceSuspendAction.RunAsync(input.Id, logger.NewChildLogger());
             }
             else
             {

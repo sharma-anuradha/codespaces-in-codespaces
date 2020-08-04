@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="reason">Target reason.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the update status action.</returns>
-        Task<CloudEnvironment> Run(
+        Task<CloudEnvironment> RunAsync(
             Guid cloudEnvironmentId,
             CloudEnvironmentState newState,
             string trigger,

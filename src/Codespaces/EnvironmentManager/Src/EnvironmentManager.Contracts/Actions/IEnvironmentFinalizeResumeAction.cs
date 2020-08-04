@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="archiveStorageResourceId">Target archive storage resource id if waking from archive.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The resumed environment.</returns>
-        Task<CloudEnvironment> Run(
+        Task<CloudEnvironment> RunAsync(
             Guid environmentId,
             Guid storageResourceId,
             Guid? archiveStorageResourceId,

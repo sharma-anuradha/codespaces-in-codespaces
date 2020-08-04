@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="metricsInfo">Target metrics info.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the create action.</returns>
-        Task<CloudEnvironment> Run(
+        Task<CloudEnvironment> RunAsync(
             EnvironmentCreateDetails details,
             StartCloudEnvironmentParameters startEnvironmentParams,
             MetricsInfo metricsInfo,

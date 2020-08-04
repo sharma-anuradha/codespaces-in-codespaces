@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         protected override string LogBaseName => "environment_update_status_action";
 
         /// <inheritdoc/>
-        public Task<CloudEnvironment> Run(Guid cloudenvironmentId, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
+        public Task<CloudEnvironment> RunAsync(Guid cloudenvironmentId, CloudEnvironmentState newState, string trigger, string reason, IDiagnosticsLogger logger)
         {
             var input = new EnvironmentUpdateStatusActionInput(cloudenvironmentId)
             {
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 Reason = reason,
             };
 
-            return Run(input, logger);
+            return RunAsync(input, logger);
         }
 
         /// <inheritdoc/>

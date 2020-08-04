@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="computeResourceId">Target compute resource Id, allocated to the environment that is not persisted yet.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from action.</returns>
-        Task<CloudEnvironment> Run(Guid environmentId, Guid computeResourceId, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> RunAsync(Guid environmentId, Guid computeResourceId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Suspend an environment.
@@ -28,6 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="environmentId">Target environment Id.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from action.</returns>
-        Task<CloudEnvironment> Run(Guid environmentId, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> RunAsync(Guid environmentId, IDiagnosticsLogger logger);
     }
 }

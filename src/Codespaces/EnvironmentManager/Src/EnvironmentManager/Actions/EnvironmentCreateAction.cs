@@ -127,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IMapper Mapper { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> Run(
+        public async Task<CloudEnvironment> RunAsync(
             EnvironmentCreateDetails details,
             StartCloudEnvironmentParameters startEnvironmentParams,
             MetricsInfo metricsInfo,
@@ -154,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 StartEnvironmentParams = startEnvironmentParams,
             };
 
-            return await Run(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
@@ -239,7 +239,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             if (transientState.EnvironmentId != default)
             {
                 // Delete the environment
-                await EnvironmentDeleteAction.Run(
+                await EnvironmentDeleteAction.RunAsync(
                     transientState.EnvironmentId,
                     transientState.AllocatedComputeId,
                     transientState.AllocatedStorageId,
