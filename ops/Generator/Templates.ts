@@ -255,6 +255,9 @@ export default class Templates {
         for (const name in names) {
           const regex = new RegExp("{{{" + name + "}}}", "g");
           const value = namesObj.names[name];
+          if (!value) {
+            throw `error: property '${name}' is undefined in names object '${names.baseName}': template file '${namesObj.fileName}'`;
+          }
           const replaceValue = typeof value === 'string' ? value : JSON.stringify(value)?.replace(/\n/g, '\r\n');
           text = text.replace(regex, replaceValue);
         }
