@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Utils;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
@@ -77,6 +78,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             "auth.apps.codespaces.githubusercontent.com")]
         [Routing.AllowReferer("https://github.com")]
         [Consumes("application/x-www-form-urlencoded")]
+        [BrandedView]
         public IActionResult AuthenticateWorkspaceAsync(
             [FromRoute] string environmentId,
             [FromForm] string cascadeToken,

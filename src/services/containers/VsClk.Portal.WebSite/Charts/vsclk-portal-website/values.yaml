@@ -29,7 +29,14 @@ ingress:
 
 githubAuthEndpoint:
   enabled: true
-  annotations: {}
+  annotations: 
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location /site.css {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
+      location /spinner-dark.svg {
+        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+      }
   paths:
     - /authenticate-workspace
     - /authenticate-codespace

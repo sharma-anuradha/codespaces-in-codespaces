@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import { RouteComponentProps, Redirect } from 'react-router-dom';
 
 import { ApplicationState } from '../../reducers/rootReducer';
+import { PortalLayout } from '../portalLayout/portalLayout';
+import './portForwardingSignIn.css';
 
 type SignInProps = RouteComponentProps<{ environmentId: string }>;
 
@@ -36,10 +38,12 @@ export const PortFowardingSingInPage: React.SFC<SignInProps> = (props) => {
     }
 
     return (
-        <div>
+        <PortalLayout hideNavigation>
+            <p className='vsonline-port-forwarding__status'>Connecting to the forwarded port...</p>
+
             <form action={postUrl.href} method='POST' ref={formRef}>
                 <input type='hidden' name='token' value={token} />
             </form>
-        </div>
+        </PortalLayout>
     );
 };

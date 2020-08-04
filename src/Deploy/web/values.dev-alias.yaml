@@ -2,9 +2,10 @@
 port-forwarding-web-api:
   pods:
     minReplicaCount: 1
+    maxReplicaCount: 1
     agentMinReplicaCount: 1
-    livenessProbeDelaySeconds: 15
-    livenessProbeDelayTimeoutSeconds: 3600
+    livenessProbePath: 
+    readinessProbePath: 
   serviceBus:
     overrideDev: true
   config:

@@ -29,7 +29,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
     {
         private static AppSettings AppSettings { get; set; }
         private PortForwardingHostUtils HostUtils { get; }
-        public ICookieEncryptionUtils CookieEncryptionUtils { get; }
+        private ICookieEncryptionUtils CookieEncryptionUtils { get; }
         private ICodespacesApiClient CodespacesApiClient { get; }
         private IHostEnvironment HostEnvironment { get; }
 

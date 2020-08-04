@@ -1,21 +1,13 @@
 ﻿@model Microsoft.VsCloudKernel.Services.Portal.WebSite.Models.AuthenticateWorkspaceFormDetails
 
-@{ Layout = "~/Views/Shared/_EmptyLayout.cshtml"; }
+<p class="vsonline-port-forwarding__status">Connecting to the forwarded port...</p>
 
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-    <form action="@Model.Action" method="POST" id="tokenForm">
-        <input type="hidden" name="cascadeToken" value="@Model.CascadeToken" />
-        <input type="hidden" name="featureFlags" value="@Model.FeatureFlags" />
-    </form>
+<form action="@Model.Action" method="POST" id="tokenForm">
+    <input type="hidden" name="cascadeToken" value="@Model.CascadeToken" />
+    <input type="hidden" name="featureFlags" value="@Model.FeatureFlags" />
+</form>
 
-    <script>
-        const formElement = document.getElementById("tokenForm");
-        formElement.submit();
-    </script>
-</body>
-</html>
+<script>
+    const formElement = document.getElementById("tokenForm");
+    formElement.submit();
+</script>
