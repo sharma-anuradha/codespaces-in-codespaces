@@ -54,14 +54,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 errorCode = UnauthorizedComputeId;
                 errorMessage = "Authorized compute resource " +
-                    $"{CurrentUserProvider.Identity.AuthorizedComputeId} does not match target {computeResource}";
+                    $"'{CurrentUserProvider.Identity.AuthorizedComputeId}' does not match target '{computeResource}'";
             }
             else if (CurrentUserProvider.Identity.IsPlanAuthorized(environment.PlanId) == false)
             {
                 // Users with explicit access to a different plan do not have access to this plan.
                 errorCode = UnauthorizedPlanId;
                 errorMessage = "Authorized plan resource " +
-                    $"{CurrentUserProvider.Identity.AuthorizedPlan} does not match target {environment.PlanId}";
+                    $"'{CurrentUserProvider.Identity.AuthorizedPlan}' does not match target '{environment.PlanId}'";
             }
             else if (CurrentUserProvider.Identity.IsEnvironmentAuthorized(environment.Id) == false)
             {
@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     ", ", CurrentUserProvider.Identity.AuthorizedEnvironments ?? Array.Empty<string>());
                 errorCode = UnauthorizedEnvironmentId;
                 errorMessage = "Authorized environment(s) " +
-                    $"[{authorizedEnvironments}] do not include target {environment.Id}";
+                    $"'[{authorizedEnvironments}]' does not include target '{environment.Id}'";
             }
             else if (currentUserIdSet != default &&
                      currentUserIdSet.EqualsAny(environment.OwnerId) &&
@@ -96,12 +96,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var nonOwnerScopesList = string.Join(", ", nonOwnerScopes ?? Array.Empty<string>());
                 errorCode = UnauthorizedPlanScope;
                 errorMessage = "Authorized scopes " +
-                    $"[{authorizedScopes}] do not include any required scope [{nonOwnerScopesList}]";
+                    $"'[{authorizedScopes}]' does not include any required scope '[{nonOwnerScopesList}]'";
             }
             else
             {
                 errorCode = UnauthorizedEnvironmentUser;
-                errorMessage = $"User is not the owner of environment {environment.Id}.";
+                errorMessage = $"User is not the owner of environment '{environment.Id}'.";
             }
 
             logger.FluentAddValue("ErrorMessage", errorMessage).LogWarning(errorCode);
@@ -127,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Users with explicit access to a different plan do not have access to this plan.
                 errorCode = UnauthorizedPlanId;
                 errorMessage = "Authorized plan resource " +
-                    $"{CurrentUserProvider.Identity.AuthorizedPlan} does not match target {plan.Plan.ResourceId}";
+                    $"'{CurrentUserProvider.Identity.AuthorizedPlan}' does not match target '{plan.Plan.ResourceId}'";
             }
             else if (identity.IsEnvironmentAuthorized(null) == false)
             {
@@ -136,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     ", ", CurrentUserProvider.Identity.AuthorizedEnvironments ?? Array.Empty<string>());
                 errorCode = UnauthorizedEnvironmentId;
                 errorMessage = "User is authorized to access environment(s) " +
-                    $"[{authorizedEnvironments}] but not the plan.";
+                    $"'[{authorizedEnvironments}]' but not the plan '{plan.Plan.ResourceId}'";
             }
             else if (isScopeAuthorized == true)
             {
@@ -151,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var requiredScopesList = string.Join(", ", requiredScopes ?? Array.Empty<string>());
                 errorCode = UnauthorizedPlanScope;
                 errorMessage = "Authorized scopes " +
-                    $"[{authorizedScopes}] do not include any required scope [{requiredScopesList}]";
+                    $"'[{authorizedScopes}]' does not include any required scope '[{requiredScopesList}]'";
             }
             else if (plan.UserId != null)
             {
@@ -161,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 if (!currentUserIdSet.EqualsAny(plan.UserId))
                 {
                     errorCode = UnauthorizedPlanUser;
-                    errorMessage = $"User is not the owner of plan {plan.Plan.ResourceId}";
+                    errorMessage = $"User is not the owner of plan '{plan.Plan.ResourceId}'";
                 }
                 else
                 {
@@ -172,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 // Users must have explicit authorization for unowned plans.
                 errorCode = UnauthorizedPlanId;
-                errorMessage = $"No explicit authorization for plan {plan.Plan.ResourceId}";
+                errorMessage = $"No explicit authorization for plan '{plan.Plan.ResourceId}'";
             }
             else
             {
@@ -196,12 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 resourceId = environment.Id;
             }
 
-            if (resourceId != default)
-            {
-                return CurrentUserProvider.Identity.IsComputeAuthorized(resourceId);
-            }
-
-            return null;
+            return CurrentUserProvider.Identity.IsComputeAuthorized(resourceId);
         }
     }
 }
