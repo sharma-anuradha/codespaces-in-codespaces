@@ -16,6 +16,10 @@ export interface GitHubWorkbenchProps extends RouteComponentProps<Params> {
     repoId: string;
     commitId: string;
     filePath: string;
+    selectionLineStart: string;
+    selectionCharStart: string;
+    selectionLineEnd: string;
+    selectionCharEnd: string;
     richNavWebExtensionEndpoint: string;
 }
 
@@ -37,6 +41,10 @@ class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenc
                 repoId: this.props.repoId,
                 commitId: this.props.commitId,
                 filePath: this.props.filePath,
+                selectionLineStart: this.props.selectionLineStart,
+                selectionCharStart: this.props.selectionCharStart,
+                selectionLineEnd: this.props.selectionLineEnd,
+                selectionCharEnd: this.props.selectionCharEnd
             };
             const uriQueryString = JSON.stringify(uriQueryObj);
             folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
@@ -55,6 +63,14 @@ const getProps: (
 
     const fileParam = new URLSearchParams(props.location.search).get('filePath');
     const filePath = fileParam ? fileParam : '';
+    const selectionLineStartParam = new URLSearchParams(props.location.search).get('selectionLineStart');
+    const selectionCharStartParam = new URLSearchParams(props.location.search).get('selectionCharStart');
+    const selectionLineEndParam = new URLSearchParams(props.location.search).get('selectionLineEnd');
+    const selectionCharEndParam = new URLSearchParams(props.location.search).get('selectionCharEnd');
+    const selectionLineStart = selectionLineStartParam ? selectionLineStartParam : '';
+    const selectionCharStart = selectionCharStartParam ? selectionCharStartParam : '';
+    const selectionLineEnd = selectionLineEndParam ? selectionLineEndParam : '';
+    const selectionCharEnd = selectionCharEndParam ? selectionCharEndParam : '';
     const { richNavWebExtensionEndpoint } = state.configuration || defaultConfig;
 
     return {
@@ -62,6 +78,10 @@ const getProps: (
         repoId,
         commitId,
         filePath,
+        selectionLineStart,
+        selectionCharStart,
+        selectionLineEnd,
+        selectionCharEnd,
         richNavWebExtensionEndpoint,
     };
 };

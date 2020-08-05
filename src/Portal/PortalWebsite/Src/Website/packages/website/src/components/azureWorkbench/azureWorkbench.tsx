@@ -26,6 +26,10 @@ export interface AzureWorkbenchProps extends RouteComponentProps<Params>,  WithT
     repoName: string;
     commitId: string;
     filePath: string;
+    selectionLineStart: string;
+    selectionCharStart: string;
+    selectionLineEnd: string;
+    selectionCharEnd: string;
     richNavWebExtensionEndpoint: string;
 }
 
@@ -65,6 +69,10 @@ class AzureWorkbenchView extends Component<AzureWorkbenchProps, AzureWorkbenchSt
             repoName: this.props.repoName,
             filePath: this.props.filePath,
             commitId: this.props.commitId,
+            selectionLineStart: this.props.selectionLineStart,
+            selectionCharStart: this.props.selectionCharStart,
+            selectionLineEnd: this.props.selectionLineEnd,
+            selectionCharEnd: this.props.selectionCharEnd
         };
         const uriQueryString = JSON.stringify(uriQueryObj);
         const folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
@@ -82,6 +90,14 @@ const getProps = (state: ApplicationState, props: { match: { params: Params }
 
     const fileParam = new URLSearchParams(props.location.search).get('filePath');
     const filePath = fileParam ? fileParam : '';
+    const selectionLineStartParam = new URLSearchParams(props.location.search).get('selectionLineStart');
+    const selectionCharStartParam = new URLSearchParams(props.location.search).get('selectionCharStart');
+    const selectionLineEndParam = new URLSearchParams(props.location.search).get('selectionLineEnd');
+    const selectionCharEndParam = new URLSearchParams(props.location.search).get('selectionCharEnd');
+    const selectionLineStart = selectionLineStartParam ? selectionLineStartParam : '';
+    const selectionCharStart = selectionCharStartParam ? selectionCharStartParam : '';
+    const selectionLineEnd = selectionLineEndParam ? selectionLineEndParam : '';
+    const selectionCharEnd = selectionCharEndParam ? selectionCharEndParam : '';
     const { richNavWebExtensionEndpoint } = state.configuration || defaultConfig;
 
     return {
@@ -90,6 +106,10 @@ const getProps = (state: ApplicationState, props: { match: { params: Params }
         repoName,
         filePath,
         commitId,
+        selectionLineStart,
+        selectionCharStart,
+        selectionLineEnd,
+        selectionCharEnd,
         richNavWebExtensionEndpoint,
     };
 };
