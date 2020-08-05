@@ -15,9 +15,15 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy {{{baseInstanceName}}}-service",
+      "name": "Deploy {{{baseInstanceName}}}-arm",
       "targetType": "ServiceResource",
-      "targetName": "{{{baseInstanceName}}}-service",
+      "targetName": "{{{baseInstanceName}}}-arm",
+      "actions": [ "deploy" ]
+    },
+    {
+      "name": "Deploy {{{baseInstanceName}}}-script",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseInstanceName}}}-script",
       "actions": [ "deploy" ]
     }
   ]

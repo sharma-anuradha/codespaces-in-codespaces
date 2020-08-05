@@ -19,9 +19,15 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-dev-ctl-ci-service",
+      "name": "Deploy vscs-stub-dev-ctl-ci-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-dev-ctl-ci-service",
+      "targetName": "vscs-stub-dev-ctl-ci-arm",
+      "actions": [ "deploy" ]
+    },
+    {
+      "name": "Deploy vscs-stub-dev-ctl-ci-script",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-dev-ctl-ci-script",
       "actions": [ "deploy" ]
     }
   ]

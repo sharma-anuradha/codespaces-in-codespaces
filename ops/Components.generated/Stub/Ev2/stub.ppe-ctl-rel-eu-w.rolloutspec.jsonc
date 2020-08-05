@@ -19,9 +19,9 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-ppe-ctl-rel-eu-w-service",
+      "name": "Deploy vscs-stub-ppe-ctl-rel-eu-w-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-ppe-ctl-rel-eu-w-service",
+      "targetName": "vscs-stub-ppe-ctl-rel-eu-w-arm",
       "actions": [ "deploy" ]
     }
   ]

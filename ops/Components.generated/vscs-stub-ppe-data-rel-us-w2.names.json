@@ -9,6 +9,8 @@
   "component": "stub",
   "env": "ppe",
   "plane": "data",
+  "subscriptionName": "UNDEFINED",
+  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [

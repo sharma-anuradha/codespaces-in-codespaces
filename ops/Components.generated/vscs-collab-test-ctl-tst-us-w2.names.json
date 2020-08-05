@@ -9,6 +9,8 @@
   "component": "collab",
   "env": "test",
   "plane": "ctl",
+  "subscriptionName": "UNDEFINED",
+  "subscriptionId": "UNDEFINED",
   "instance": "tst",
   "instanceLocation": "WestUs2",
   "instanceRegions": [

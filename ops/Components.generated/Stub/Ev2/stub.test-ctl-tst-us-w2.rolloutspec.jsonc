@@ -19,9 +19,9 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-test-ctl-tst-us-w2-service",
+      "name": "Deploy vscs-stub-test-ctl-tst-us-w2-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-test-ctl-tst-us-w2-service",
+      "targetName": "vscs-stub-test-ctl-tst-us-w2-arm",
       "actions": [ "deploy" ]
     }
   ]

@@ -28,6 +28,10 @@ export default abstract class Names {
               plane.subscriptionName = firstSub.name;
               plane.subscriptionId = firstSub.subscriptionId;
           }
+          else {
+            plane.subscriptionName = "UNDEFINED";
+            plane.subscriptionId = "UNDEFINED";
+          }
 
           const planeJson = plane.generateNamesJson(env.outputNames)
           FileHandler.GenerateJson(outputDir, `${planeJson.baseName}.names.json`, planeJson);

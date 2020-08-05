@@ -16,7 +16,7 @@
       "name": "vscs-stub-ppe-ctl-rel-eu-w-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-ppe-ctl-rel-eu-w-stub",
+          "name": "vscs-stub-ppe-ctl-rel-eu-w-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.ppe-ctl-rel-eu-w.stub.jsonc",
@@ -36,8 +36,8 @@
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-ppe-ctl-rel-eu-w-service",
-          "instanceOf": "vscs-stub-ppe-ctl-rel-eu-w-stub"
+          "name": "vscs-stub-ppe-ctl-rel-eu-w-arm",
+          "instanceOf": "vscs-stub-ppe-ctl-rel-eu-w-arm"
         }
       ]
     }

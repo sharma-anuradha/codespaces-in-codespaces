@@ -16,7 +16,7 @@
       "name": "vscs-stub-test-ctl-tst-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-test-ctl-tst-us-w2-stub",
+          "name": "vscs-stub-test-ctl-tst-us-w2-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.test-ctl-tst-us-w2.stub.jsonc",
@@ -36,8 +36,8 @@
       "azureSubscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
       "serviceResources": [
         {
-          "name": "vscs-stub-test-ctl-tst-us-w2-service",
-          "instanceOf": "vscs-stub-test-ctl-tst-us-w2-stub"
+          "name": "vscs-stub-test-ctl-tst-us-w2-arm",
+          "instanceOf": "vscs-stub-test-ctl-tst-us-w2-arm"
         }
       ]
     }

@@ -5,5 +5,7 @@
   "prefix": "vscs",
   "component": "codesp",
   "env": "ppe",
-  "plane": "data"
+  "plane": "data",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

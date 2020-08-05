@@ -1,0 +1,86 @@
+// Auto-Generated From Template
+// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.rolloutparameters.jsonc (vscs-stub-prod-ctl-rel)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutParameters.json",
+  "contentVersion": "1.0.0.0",
+  "shellExtensions": [
+    {
+      "name": "stub-script",
+      "type": "scripts/stub-script",
+      "properties": {
+        "maxExecutionTime": "PT5M"
+      },
+      "package": {
+        "reference": { "path": "Scripts/scripts.zip" }
+      },
+      "launch": {
+        "command": ["stub-script.ps1"],
+        "environmentVariables": [
+          // {
+          //   "name": "myVariable",
+          //   "reference": {
+          //     "path": "Parameters\\ShellCustomPayload.json",
+          //     "enableScopeTagBindings": "true"
+          //   },
+          //   "asSecureValue": "true"
+          // },
+          // {
+          //   "name": "myValueVariable",
+          //   "value": "this is my plaintext value"
+          // },
+          // {
+          //   "name": "myEnvironmentVariable",
+          //   "value": "__MY_ENVIRONMENT_VARIABLE_VALUE__"
+          // }
+        ],
+        "secretVolumes": [
+          // {
+          //   "name": "secretsvolume1",
+          //   "mountPath": "/mnt/secrets",
+          //   "secrets": [
+          //     {
+          //       "name": "mypassword",
+          //       "reference": {
+          //         "provider": "AzureKeyVault",
+          //         "parameters": {
+          //           "secretId": "__SHELL_PASSWORD__"
+          //         }
+          //       }
+          //     },
+          //     {
+          //       "name": "myplaintextsecret",
+          //       "value": "MySecretPassword"
+          //     }
+          //   ]
+          // }
+        ],
+        "fileVolumes": [
+          // {
+          //   "name": "secretcopyshellft",
+          //   "mountPath": "/mnt/azurefile",
+          //   "azureFile": {
+          //     "storageAccountName": "<My-Storage-Account-Name>",
+          //     "storageAccountKey": {
+          //       "reference": {
+          //         "provider": "AzureKeyVault",
+          //         "parameters": {
+          //           "secretId": "https://azureservicedeploysample.vault.azure.net/secrets/<My-Storage-Account-Key>"
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
+        ]
+        //,
+        // "identity": {
+        //   "type": "userAssigned",
+        //   "userAssignedIdentities": [
+        //     "/subscriptions/<My-Sub-Id>/resourceGroups/<My-Resource-Group>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<My-User-Assigned-Identity-Name>"
+        //   ]
+        // }
+      }
+    }
+  ]
+}

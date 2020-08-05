@@ -7,6 +7,8 @@
   "component": "core",
   "env": "test",
   "plane": "ops",
+  "subscriptionName": "UNDEFINED",
+  "subscriptionId": "UNDEFINED",
   "instance": "tst",
   "instanceLocation": "WestUs2",
   "instanceRegions": [

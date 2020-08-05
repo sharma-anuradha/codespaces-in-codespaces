@@ -5,5 +5,7 @@
   "prefix": "vscs",
   "component": "collab",
   "env": "dev",
-  "plane": "ctl"
+  "plane": "ctl",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

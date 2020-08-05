@@ -9,6 +9,8 @@
   "component": "core",
   "env": "dev",
   "plane": "ctl",
+  "subscriptionName": "UNDEFINED",
+  "subscriptionId": "UNDEFINED",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [

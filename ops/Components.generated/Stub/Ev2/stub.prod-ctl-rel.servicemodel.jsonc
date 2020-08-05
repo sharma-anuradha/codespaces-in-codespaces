@@ -5,29 +5,52 @@
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
   "contentVersion": "0.0.0.1",
-
   "serviceMetadata": {
     "serviceGroup": "vscs-stub-prod-ctl-rel-service-group",
     "environment": "Test"
   },
-
   "serviceResourceGroupDefinitions": [
     {
       "name": "vscs-stub-prod-ctl-rel-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-prod-ctl-rel-stub",
+          "name": "vscs-stub-prod-ctl-rel-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.prod-ctl-rel.stub.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
+        },
+        {
+          "name": "vscs-stub-prod-ctl-rel-script",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\empty.template.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            },
+            "extension": {
+              "rolloutParametersPath": "stub.prod-ctl-rel.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/stub-script"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "sub-script",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v5"
+                  }
+                }
+              ]
+            }
+          }
         }
       ]
     }
   ],
-
   "serviceResourceGroups": [
     {
       "azureResourceGroupName": "vscs-stub-prod-ctl-rel",
@@ -36,8 +59,12 @@
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-prod-ctl-rel-service",
-          "instanceOf": "vscs-stub-prod-ctl-rel-stub"
+          "name": "vscs-stub-prod-ctl-rel-arm",
+          "instanceOf": "vscs-stub-prod-ctl-rel-arm"
+        },
+        {
+          "name": "vscs-stub-prod-ctl-rel-script",
+          "instanceOf": "vscs-stub-prod-ctl-rel-script"
         }
       ]
     }

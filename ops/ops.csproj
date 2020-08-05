@@ -17,6 +17,7 @@
     <GenerateComponentsOutputFolder>$([System.IO.Path]::Combine($(OpsFolder),$(GenerateComponentsOutputFolderName)))</GenerateComponentsOutputFolder>
     <ComponentsGeneratorFolder>$([System.IO.Path]::Combine($(OpsFolder),'Generator'))</ComponentsGeneratorFolder>
     <ComponentGeneratorScript>$([System.IO.Path]::Combine($(ComponentsGeneratorFolder),'index.ts'))</ComponentGeneratorScript>
+    <GenerateComponentsRealOutputFolder>$(OutputPath)\$(GenerateComponentsOutputFolderName)</GenerateComponentsRealOutputFolder>
   </PropertyGroup>
 
   <!-- Ensure static outputs are copied to the output directory. -->
@@ -26,6 +27,24 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <ItemGroup>
+    <ZipScriptFolder Include="$(GenerateComponentsInputFolder)\Core\Ev2\Scripts">
+      <DestinationFile>$(GenerateComponentsRealOutputFolder)\Core\Ev2\Scripts\scripts.zip</DestinationFile>
+    </ZipScriptFolder>
+    <ZipScriptFolder Include="$(GenerateComponentsInputFolder)\Stub\Ev2\Scripts">
+      <DestinationFile>$(GenerateComponentsRealOutputFolder)\Stub\Ev2\Scripts\scripts.zip</DestinationFile>
+    </ZipScriptFolder>
+  </ItemGroup>
+
+  <!-- Zip up the script sub directories -->
+  <Target Name="ZipOpsScriptFiles"
+    AfterTargets="AfterBuild" >
+    <ZipDirectory
+      SourceDirectory="%(ZipScriptFolder.FullPath)"
+      DestinationFile="%(ZipScriptFolder.DestinationFile)"
+      Overwrite="true"/>
+  </Target>
 
   <!-- Generate the Components.generated folder at build time if flag is set. -->
   <Target Name="GenerateComponentsOnBuild"

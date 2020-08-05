@@ -26,7 +26,7 @@ trap {
 
 # Utilities
 . ".\OpsUtilities.ps1"
-  
+
 # Preamble
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
@@ -51,6 +51,7 @@ if (!$SkipRegistrations) {
     (
         "Microsoft.Batch",
         "Microsoft.Compute",
+        "Microsoft.ContainerInstance",
         "Microsoft.ContainerRegistry",
         "Microsoft.DocumentDB",
         "Microsoft.Keyvault",
@@ -63,7 +64,7 @@ if (!$SkipRegistrations) {
         "Microsoft.SignalRService",
         "Microsoft.Storage",
         "Microsoft.VirtualMachineImages"
-    ) | ForEach-Object { 
+    ) | ForEach-Object {
         Write-Host $_ -ForegroundColor DarkGray
         Register-AzResourceProvider -ProviderNamespace $_ | Out-Null
     }
@@ -142,7 +143,7 @@ if ($opsSpId -and $Component -eq "core" -and $Plane -eq "ops") {
     $cert | Out-String | Write-Host -ForegroundColor DarkGray
     "Assigning core-ops service principal certificate credentials" | Out-String | Write-Host
     $creds = . "$PSScriptRoot\Assign-ServicePrincipalCert.ps1" -Prefix $Prefix -Component $Component -Env $Env -Plane $Plane
-    $creds | Out-String | Write-Host -ForegroundColor DarkGray    
+    $creds | Out-String | Write-Host -ForegroundColor DarkGray
 }
 
 # Check for remaining User role assignments

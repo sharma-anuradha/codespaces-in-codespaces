@@ -5,5 +5,7 @@
   "prefix": "vscs",
   "component": "comm",
   "env": "ppe",
-  "plane": "ctl"
+  "plane": "ctl",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

@@ -16,7 +16,7 @@
       "name": "vscs-stub-dev-ctl-ci-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-dev-ctl-ci-us-w2-stub",
+          "name": "vscs-stub-dev-ctl-ci-us-w2-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.dev-ctl-ci-us-w2.stub.jsonc",
@@ -36,8 +36,8 @@
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-dev-ctl-ci-us-w2-service",
-          "instanceOf": "vscs-stub-dev-ctl-ci-us-w2-stub"
+          "name": "vscs-stub-dev-ctl-ci-us-w2-arm",
+          "instanceOf": "vscs-stub-dev-ctl-ci-us-w2-arm"
         }
       ]
     }

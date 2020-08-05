@@ -12,7 +12,7 @@
       "name": "{{{baseRegionName}}}-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "{{{baseRegionName}}}-stub",
+          "name": "{{{baseRegionName}}}-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\{{{component}}}.{{{env}}}-ctl-{{{instance}}}-{{{region}}}.stub.jsonc",
@@ -32,8 +32,8 @@
       "azureSubscriptionId": "{{{subscriptionId}}}",
       "serviceResources": [
         {
-          "name": "{{{baseRegionName}}}-service",
-          "instanceOf": "{{{baseRegionName}}}-stub"
+          "name": "{{{baseRegionName}}}-arm",
+          "instanceOf": "{{{baseRegionName}}}-arm"
         }
       ]
     }

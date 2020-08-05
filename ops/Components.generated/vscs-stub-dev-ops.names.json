@@ -5,5 +5,7 @@
   "prefix": "vscs",
   "component": "stub",
   "env": "dev",
-  "plane": "ops"
+  "plane": "ops",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

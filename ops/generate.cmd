@@ -13,6 +13,7 @@ set OUTPUT=..\Components.generated\
 call npm install > NUL
 if errorlevel 1 (
     echo npm install failed
+    popd
     exit 1
 )
 
@@ -27,3 +28,5 @@ echo generating "%OUTPUT%"
 set CMD=ts-node-script index.ts %INPUT% %OUTPUT%
 echo %CMD%
 call %CMD%
+
+popd

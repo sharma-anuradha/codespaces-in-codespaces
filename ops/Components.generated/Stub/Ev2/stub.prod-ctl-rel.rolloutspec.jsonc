@@ -19,9 +19,15 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-prod-ctl-rel-service",
+      "name": "Deploy vscs-stub-prod-ctl-rel-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-prod-ctl-rel-service",
+      "targetName": "vscs-stub-prod-ctl-rel-arm",
+      "actions": [ "deploy" ]
+    },
+    {
+      "name": "Deploy vscs-stub-prod-ctl-rel-script",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-prod-ctl-rel-script",
       "actions": [ "deploy" ]
     }
   ]

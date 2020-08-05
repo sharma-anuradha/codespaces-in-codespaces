@@ -19,9 +19,9 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-prod-ctl-rel-ap-se-service",
+      "name": "Deploy vscs-stub-prod-ctl-rel-ap-se-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-prod-ctl-rel-ap-se-service",
+      "targetName": "vscs-stub-prod-ctl-rel-ap-se-arm",
       "actions": [ "deploy" ]
     }
   ]

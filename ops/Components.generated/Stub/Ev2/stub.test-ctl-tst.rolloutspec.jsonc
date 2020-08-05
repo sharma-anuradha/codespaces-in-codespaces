@@ -19,9 +19,15 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-test-ctl-tst-service",
+      "name": "Deploy vscs-stub-test-ctl-tst-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-test-ctl-tst-service",
+      "targetName": "vscs-stub-test-ctl-tst-arm",
+      "actions": [ "deploy" ]
+    },
+    {
+      "name": "Deploy vscs-stub-test-ctl-tst-script",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-test-ctl-tst-script",
       "actions": [ "deploy" ]
     }
   ]

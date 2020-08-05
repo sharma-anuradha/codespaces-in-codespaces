@@ -19,9 +19,15 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-ppe-ctl-rel-service",
+      "name": "Deploy vscs-stub-ppe-ctl-rel-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-ppe-ctl-rel-service",
+      "targetName": "vscs-stub-ppe-ctl-rel-arm",
+      "actions": [ "deploy" ]
+    },
+    {
+      "name": "Deploy vscs-stub-ppe-ctl-rel-script",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-ppe-ctl-rel-script",
       "actions": [ "deploy" ]
     }
   ]

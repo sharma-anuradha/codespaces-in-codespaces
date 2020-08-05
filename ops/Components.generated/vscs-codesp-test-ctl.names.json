@@ -5,5 +5,7 @@
   "prefix": "vscs",
   "component": "codesp",
   "env": "test",
-  "plane": "ctl"
+  "plane": "ctl",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

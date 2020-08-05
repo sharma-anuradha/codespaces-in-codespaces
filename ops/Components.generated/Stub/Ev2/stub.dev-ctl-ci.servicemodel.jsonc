@@ -5,29 +5,52 @@
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
   "contentVersion": "0.0.0.1",
-
   "serviceMetadata": {
     "serviceGroup": "vscs-stub-dev-ctl-ci-service-group",
     "environment": "Test"
   },
-
   "serviceResourceGroupDefinitions": [
     {
       "name": "vscs-stub-dev-ctl-ci-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-dev-ctl-ci-stub",
+          "name": "vscs-stub-dev-ctl-ci-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.dev-ctl-ci.stub.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
+        },
+        {
+          "name": "vscs-stub-dev-ctl-ci-script",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\empty.template.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            },
+            "extension": {
+              "rolloutParametersPath": "stub.dev-ctl-ci.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/stub-script"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "sub-script",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v5"
+                  }
+                }
+              ]
+            }
+          }
         }
       ]
     }
   ],
-
   "serviceResourceGroups": [
     {
       "azureResourceGroupName": "vscs-stub-dev-ctl-ci",
@@ -36,8 +59,12 @@
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-dev-ctl-ci-service",
-          "instanceOf": "vscs-stub-dev-ctl-ci-stub"
+          "name": "vscs-stub-dev-ctl-ci-arm",
+          "instanceOf": "vscs-stub-dev-ctl-ci-arm"
+        },
+        {
+          "name": "vscs-stub-dev-ctl-ci-script",
+          "instanceOf": "vscs-stub-dev-ctl-ci-script"
         }
       ]
     }

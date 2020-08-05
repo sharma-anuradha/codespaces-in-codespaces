@@ -1,29 +1,52 @@
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
   "contentVersion": "0.0.0.1",
-
   "serviceMetadata": {
     "serviceGroup": "{{{baseInstanceName}}}-service-group",
     "environment": "Test"
   },
-
   "serviceResourceGroupDefinitions": [
     {
       "name": "{{{baseInstanceName}}}-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "{{{baseInstanceName}}}-stub",
+          "name": "{{{baseInstanceName}}}-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\{{{component}}}.{{{env}}}-ctl-{{{instance}}}.stub.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
+        },
+        {
+          "name": "{{{baseInstanceName}}}-script",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\empty.template.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            },
+            "extension": {
+              "rolloutParametersPath": "{{{component}}}.{{{env}}}-ctl-{{{instance}}}.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/stub-script"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "sub-script",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v5"
+                  }
+                }
+              ]
+            }
+          }
         }
       ]
     }
   ],
-
   "serviceResourceGroups": [
     {
       "azureResourceGroupName": "{{{baseInstanceName}}}",
@@ -32,8 +55,12 @@
       "azureSubscriptionId": "{{{subscriptionId}}}",
       "serviceResources": [
         {
-          "name": "{{{baseInstanceName}}}-service",
-          "instanceOf": "{{{baseInstanceName}}}-stub"
+          "name": "{{{baseInstanceName}}}-arm",
+          "instanceOf": "{{{baseInstanceName}}}-arm"
+        },
+        {
+          "name": "{{{baseInstanceName}}}-script",
+          "instanceOf": "{{{baseInstanceName}}}-script"
         }
       ]
     }

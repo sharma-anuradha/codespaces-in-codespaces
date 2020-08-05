@@ -16,7 +16,7 @@
       "name": "vscs-stub-prod-ctl-rel-us-e-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-prod-ctl-rel-us-e-stub",
+          "name": "vscs-stub-prod-ctl-rel-us-e-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.prod-ctl-rel-us-e.stub.jsonc",
@@ -36,8 +36,8 @@
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-prod-ctl-rel-us-e-service",
-          "instanceOf": "vscs-stub-prod-ctl-rel-us-e-stub"
+          "name": "vscs-stub-prod-ctl-rel-us-e-arm",
+          "instanceOf": "vscs-stub-prod-ctl-rel-us-e-arm"
         }
       ]
     }

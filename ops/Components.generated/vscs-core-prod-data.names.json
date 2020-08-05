@@ -5,5 +5,7 @@
   "prefix": "vscs",
   "component": "core",
   "env": "prod",
-  "plane": "data"
+  "plane": "data",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }
