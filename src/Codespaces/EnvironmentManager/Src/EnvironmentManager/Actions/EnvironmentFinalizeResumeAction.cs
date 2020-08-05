@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -107,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                                 retryLogger.NewChildLogger());
 
                             // Switch out storage reference
-                            record.Value.Storage = new ResourceAllocationRecord
+                            var storageResource = new ResourceAllocationRecord
                             {
                                 ResourceId = input.StorageResourceId,
                                 Location = storageDetails.Location,
@@ -115,10 +116,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                                 Type = storageDetails.Type,
                                 Created = DateTime.UtcNow,
                             };
-                            record.Value.Transitions.Archiving.ResetStatus(true);
+                            record.PushTransition((environment) =>
+                            {
+                                environment.Storage = storageResource;
+                                environment.Transitions.Archiving.ResetStatus(true);
+                            });
 
                             // Update record
-                            var updatedEnvironment = await Repository.UpdateAsync(record.Value, retryLogger.NewChildLogger());
+                            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
                         });
 
                     // Delete archive blob once its not needed any more

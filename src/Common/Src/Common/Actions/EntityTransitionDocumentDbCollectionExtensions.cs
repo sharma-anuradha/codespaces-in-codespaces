@@ -1,4 +1,4 @@
-﻿// <copyright file="EntityTransitionDocumentDbCollectionExtensions.cs" company="Microsoft">
+// <copyright file="EntityTransitionDocumentDbCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
 {
@@ -17,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
     public static class EntityTransitionDocumentDbCollectionExtensions
     {
         /// <summary>
-        /// Constructs a new.
+        /// Build transition for an entity.
         /// </summary>
         /// <param name="documentDbCollection">Target document db colleciton.</param>
         /// <param name="name">Target name.</param>
@@ -51,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         }
 
         /// <summary>
-        /// Constructs a new.
+        /// Apply entity transition to the database document.
         /// </summary>
         /// <param name="documentDbCollection">Target document db colleciton.</param>
         /// <param name="name">Target name.</param>
@@ -87,6 +88,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
                     {
                         // Fetch latest record
                         newEntity = await documentDbCollection.GetAsync(entityTransition.Value.Id, logger.NewChildLogger());
+
+                        // Throw if entity transition is no longer valid.
+                        if (!entityTransition.IsValid(newEntity))
+                        {
+                            throw new ConflictException((int)CommonMessageCodes.ConcurrentModification);
+                        }
 
                         // Replay transitions
                         await entityTransition.ReplaceAndReplayTransitionsAsync(newEntity);

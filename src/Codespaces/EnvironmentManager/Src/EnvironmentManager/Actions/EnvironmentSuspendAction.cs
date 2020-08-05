@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -113,17 +114,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             else
             {
                 await EnvironmentStateManager.SetEnvironmentStateAsync(
-                    record.Value,
+                    record,
                     CloudEnvironmentState.ShuttingDown,
                     CloudEnvironmentStateUpdateTriggers.ShutdownEnvironment,
                     null,
                     null,
                     logger.NewChildLogger());
-                record.Value.Transitions.Resuming.ResetStatus(true);
+
+                record.PushTransition((environment) =>
+                {
+                    environment.Transitions.Resuming.ResetStatus(true);
+                });
 
                 // Update the database state.
-                var updatedEnvironment = await Repository.UpdateAsync(record.Value, logger.NewChildLogger());
-                record.ReplaceAndResetTransition(updatedEnvironment);
+                await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
                 // Start the cleanup operation to shutdown environment.
                 var resourceCleaningStatus = await ResourceBrokerClient.SuspendAsync(

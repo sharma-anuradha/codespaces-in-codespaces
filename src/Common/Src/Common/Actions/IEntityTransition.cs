@@ -1,4 +1,4 @@
-﻿// <copyright file="IEntityTransition.cs" company="Microsoft">
+// <copyright file="IEntityTransition.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -24,6 +24,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// Gets a value indicating whether entity transition is dirty.
         /// </summary>
         bool IsDirty { get; }
+
+        /// <summary>
+        /// Compare with the entity in database to determine whether it is
+        /// still in a valid state to apply transitions.
+        /// </summary>
+        /// <param name="persistedEntity">Entity in the database to compare against.</param>
+        /// <returns>True if the transition is valid, false otherwise.</returns>
+        bool IsValid(T persistedEntity);
+
+        /// <summary>
+        /// Adds transition to the list of transition actions and applies it
+        /// straight away.
+        /// </summary>
+        /// <param name="transition">Target transition.</param>
+        void PushTransition(Action<T> transition);
 
         /// <summary>
         /// Adds transition to the list of transition actions and applies it

@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseEntityTransition.cs" company="Microsoft">
+// <copyright file="BaseEntityTransition.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// Initializes a new instance of the <see cref="BaseEntityTransition{T}"/> class.
         /// </summary>
         /// <param name="value">Target entity value.</param>
-        public BaseEntityTransition(T value)
+        protected BaseEntityTransition(T value)
         {
             Value = value;
             Transitions = new List<Func<T, Task>>();
@@ -39,6 +39,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         private IList<Func<T, Task>> Transitions { get; set; }
 
         /// <inheritdoc/>
+        public abstract bool IsValid(T persistedEntity);
+
+        /// <inheritdoc/>
         public async Task PushTransitionAsync(Func<T, Task> transition)
         {
             // Add transition to the ordered play back list.
@@ -46,6 +49,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
 
             // Apply transition now so that down stream code will recieve the mutations.
             await transition(Value);
+        }
+
+        /// <inheritdoc/>
+        public void PushTransition(Action<T> transition)
+        {
+            // Add transition to the ordered play back list.
+            Transitions.Add((value) =>
+            {
+                transition(value);
+                return Task.CompletedTask;
+            });
+
+            // Apply transition now so that down stream code will recieve the mutations.
+            transition(Value);
         }
 
         /// <inheritdoc/>

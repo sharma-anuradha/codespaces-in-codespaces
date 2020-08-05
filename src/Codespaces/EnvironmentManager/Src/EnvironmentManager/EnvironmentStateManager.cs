@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
@@ -56,13 +56,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             bool? isUserError,
             IDiagnosticsLogger logger)
         {
-            // TODO: Need to switch over to be Entity Transition based.
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_set",
                 async (childLogger) =>
                 {
-                    var oldState = cloudEnvironment.State;
-                    var oldStateUpdated = cloudEnvironment.LastStateUpdated;
+                    var record = new EnvironmentTransition(cloudEnvironment);
+                    await SetEnvironmentStateAsync(
+                        record,
+                        newState,
+                        trigger,
+                        reason,
+                        isUserError,
+                        childLogger);
+                });
+        }
+
+        /// <inheritdoc/>
+        public Task SetEnvironmentStateAsync(
+            EnvironmentTransition record,
+            CloudEnvironmentState newState,
+            string trigger,
+            string reason,
+            bool? isUserError,
+            IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_set_with_transition",
+                async (childLogger) =>
+                {
+                    var oldState = record.Value.State;
+                    var oldStateUpdated = record.Value.LastStateUpdated;
                     string failedStateReason = string.Empty;
                     if (newState == CloudEnvironmentState.Failed)
                     {
@@ -73,11 +96,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
 
                     // Setup telemetry properties
-                    logger.AddCloudEnvironment(cloudEnvironment)
+                    logger.AddCloudEnvironment(record.Value)
                         .FluentAddBaseValue("CloudEnvironmentOldState", oldState)
                         .FluentAddBaseValue("CloudEnvironmentOldStateUpdated", oldStateUpdated)
-                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedTrigger", cloudEnvironment.LastStateUpdateTrigger)
-                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedReason", cloudEnvironment.LastStateUpdateReason)
+                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedTrigger", record.Value.LastStateUpdateTrigger)
+                        .FluentAddBaseValue("CloudEnvironmentOldStateUpdatedReason", record.Value.LastStateUpdateReason)
                         .FluentAddBaseValue("CloudEnvironmentNewState", newState)
                         .FluentAddBaseValue("CloudEnvironmentNewUpdatedTrigger", trigger)
                         .FluentAddBaseValue("CloudEnvironmentNewUpdatedReason", reason)
@@ -85,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                     // Get plan information
                     VsoPlanInfo plan;
-                    if (cloudEnvironment.PlanId == default)
+                    if (record.Value.PlanId == default)
                     {
                         // Use a temporary plan if the environment doesn't have one.
                         // TODO: Remove this; make the plan required after clients are updated to supply it.
@@ -99,17 +122,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     else
                     {
                         Requires.Argument(
-                            VsoPlanInfo.TryParse(cloudEnvironment.PlanId, out plan), nameof(cloudEnvironment.PlanId), "Invalid plan ID");
+                            VsoPlanInfo.TryParse(record.Value.PlanId, out plan), nameof(record.Value.PlanId), "Invalid plan ID");
 
-                        plan.Location = cloudEnvironment.Location;
+                        plan.Location = record.Value.Location;
                     }
 
                     // Create billing event
                     var environment = new EnvironmentBillingInfo
                     {
-                        Id = cloudEnvironment.Id,
-                        Name = cloudEnvironment.FriendlyName,
-                        Sku = new Sku { Name = cloudEnvironment.SkuName, Tier = string.Empty },
+                        Id = record.Value.Id,
+                        Name = record.Value.FriendlyName,
+                        Sku = new Sku { Name = record.Value.SkuName, Tier = string.Empty },
                     };
                     var stateChange = new BillingStateChange
                     {
@@ -120,22 +143,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
 
                     // Mutates environment state
-                    cloudEnvironment.State = newState;
-                    cloudEnvironment.LastStateUpdateTrigger = trigger;
-                    cloudEnvironment.LastStateUpdated = DateTime.UtcNow;
-                    cloudEnvironment.StateTimeout = null; // reset the state timeout as the transition has now occurred
-
-                    if (reason != null)
+                    var lastStateUpdated = DateTime.UtcNow;
+                    record.PushTransition((environment) =>
                     {
-                        cloudEnvironment.LastStateUpdateReason = reason;
-                    }
+                        environment.State = newState;
+                        environment.LastStateUpdateTrigger = trigger;
+                        environment.LastStateUpdated = lastStateUpdated;
+                        environment.StateTimeout = null; // reset the state timeout as the transition has now occurred
+
+                        if (reason != null)
+                        {
+                            environment.LastStateUpdateReason = reason;
+                        }
+                    });
 
                     // Posts metrics event
                     var stateSnapshot = new CloudEnvironmentStateSnapshot(oldState, oldStateUpdated);
-                    EnvironmentMetricsLogger.PostEnvironmentEvent(cloudEnvironment, stateSnapshot, logger.NewChildLogger());
+                    EnvironmentMetricsLogger.PostEnvironmentEvent(record.Value, stateSnapshot, logger.NewChildLogger());
 
                     // Log to operational telemetry (Do not alter - used by dashboards)
-                    logger.AddCloudEnvironment(cloudEnvironment)
+                    logger.AddCloudEnvironment(record.Value)
                         .LogInfo(GetType().FormatLogMessage(nameof(SetEnvironmentStateAsync)));
                 });
         }

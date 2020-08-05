@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -48,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="resourceStartManager">Target resource start manager.</param>
         /// <param name="environmentSuspendAction">Target environment force suspend action.</param>
         /// <param name="resourceBrokerClient">Target resource broker client.</param>
+        /// <param name="taskHelper">Target task helper.</param>
         public EnvironmentResumeAction(
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
@@ -67,7 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IResourceAllocationManager resourceAllocationManager,
             IResourceStartManager resourceStartManager,
             IEnvironmentSuspendAction environmentSuspendAction,
-            IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient)
+            IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient,
+            ITaskHelper taskHelper)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -81,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ResourceStartManager = Requires.NotNull(resourceStartManager, nameof(resourceStartManager));
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerClient, nameof(resourceBrokerClient));
+            TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
         }
 
         /// <inheritdoc/>
@@ -107,6 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
 
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
+
+        private ITaskHelper TaskHelper { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> RunAsync(Guid environmentId, StartCloudEnvironmentParameters startEnvironmentParams, IDiagnosticsLogger logger)
@@ -154,19 +160,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Add VNet information to environment
             var subnetId = plan.Properties?.VnetProperties?.SubnetId;
-            record.Value.SubnetResourceId = subnetId;
+            record.PushTransition((environment) =>
+            {
+                environment.SubnetResourceId = subnetId;
+            });
 
             var connectionWorkspaceRootId = record.Value.Connection?.WorkspaceId;
             if (!string.IsNullOrWhiteSpace(connectionWorkspaceRootId))
             {
                 // Delete the previous liveshare session from database.
                 // Do not block start process on delete of old workspace from liveshare db.
-                _ = Task.Run(() => WorkspaceManager.DeleteWorkspaceAsync(connectionWorkspaceRootId, logger.NewChildLogger()));
-                record.Value.Connection.ConnectionComputeId = null;
-                record.Value.Connection.ConnectionComputeTargetId = null;
-                record.Value.Connection.ConnectionServiceUri = null;
-                record.Value.Connection.ConnectionSessionId = null;
-                record.Value.Connection.WorkspaceId = null;
+                TaskHelper.RunBackground(
+                    "delete_workspace",
+                    (childLogger) => WorkspaceManager.DeleteWorkspaceAsync(connectionWorkspaceRootId, childLogger),
+                    logger,
+                    true);
+
+                record.PushTransition((environment) =>
+                {
+                    environment.Connection.ConnectionComputeId = null;
+                    environment.Connection.ConnectionComputeTargetId = null;
+                    environment.Connection.ConnectionServiceUri = null;
+                    environment.Connection.ConnectionSessionId = null;
+                    environment.Connection.WorkspaceId = null;
+                });
             }
 
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
@@ -221,7 +238,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IDiagnosticsLogger logger)
         {
             // Allocate Compute
-            record.Value.Compute = await AllocateComputeAsync(record.Value, logger.NewChildLogger());
+            var allocatedCompute = await AllocateComputeAsync(record.Value, logger.NewChildLogger());
+            record.PushTransition((environment) =>
+            {
+                environment.Compute = allocatedCompute;
+            });
 
             // Set compute id in to transientState object,
             // so that it can be used for deallocating in case of an exception.
@@ -231,15 +252,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             await EnvironmentMonitor.MonitorHeartbeatAsync(record.Value.Id, record.Value.Compute.ResourceId, logger.NewChildLogger());
 
             // Create the Live Share workspace
-            record.Value.Connection = await WorkspaceManager.CreateWorkspaceAsync(
-                EnvironmentType.CloudEnvironment,
-                record.Value.Id,
-                record.Value.Compute.ResourceId,
-                input.StartEnvironmentParams.ConnectionServiceUri,
-                record.Value.Connection?.ConnectionSessionPath,
-                input.StartEnvironmentParams.UserProfile.Email,
-                null,
-                logger.NewChildLogger());
+            var connectionInfo = await WorkspaceManager.CreateWorkspaceAsync(
+                            EnvironmentType.CloudEnvironment,
+                            record.Value.Id,
+                            record.Value.Compute.ResourceId,
+                            input.StartEnvironmentParams.ConnectionServiceUri,
+                            record.Value.Connection?.ConnectionSessionPath,
+                            input.StartEnvironmentParams.UserProfile.Email,
+                            null,
+                            logger.NewChildLogger());
+            record.PushTransition((environment) =>
+            {
+                environment.Connection = connectionInfo;
+            });
 
             // Setup variables for easier use
             var computerResource = record.Value.Compute;
@@ -254,7 +279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // At this point, if archive record is going to be switched in it will have been
             var startingStateReson = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
             await EnvironmentStateManager.SetEnvironmentStateAsync(
-                record.Value,
+                record,
                 CloudEnvironmentState.Starting,
                 CloudEnvironmentStateUpdateTriggers.StartEnvironment,
                 startingStateReson,
@@ -265,11 +290,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // so that it can be used to suspend/force suspend in case of an exception.
             transientState.CloudEnvironmentState = record.Value.State;
 
-            record.Value.Transitions.ShuttingDown.ResetStatus(true);
+            record.PushTransition((environment) =>
+            {
+                environment.Transitions.ShuttingDown.ResetStatus(true);
+            });
 
             // Persist updates made to date
-            var updatedEnvironment = await Repository.UpdateAsync(record.Value, logger.NewChildLogger());
-            record.ReplaceAndResetTransition(updatedEnvironment);
+            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
             // Provision new storage if environment has been archvied but don't switch until complete
             if (archiveStorageResource != null)
@@ -304,26 +331,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             EnvironmentResumeTransientState transientState,
             IDiagnosticsLogger logger)
         {
-            // Initialize connection, if it is null, client will fail to get environment list.
-            record.Value.Connection = new ConnectionInfo();
-
             await EnvironmentStateManager.SetEnvironmentStateAsync(
-                record.Value,
+                record,
                 CloudEnvironmentState.Queued,
                 CloudEnvironmentStateUpdateTriggers.StartEnvironment,
                 string.Empty,
                 null,
-                logger.NewChildLogger());
+                logger);
 
-            record.Value.Transitions.ShuttingDown.ResetStatus(true);
+            record.PushTransition((environment) =>
+            {
+                // Initialize connection, if it is null, client will fail to get environment list.
+                environment.Connection = new ConnectionInfo();
+
+                environment.Transitions.ShuttingDown.ResetStatus(true);
+            });
 
             // Set environment state in to transientState object,
             // so that it can be used to suspend/force suspend in case of an exception.
             transientState.CloudEnvironmentState = record.Value.State;
 
-            // Persist core cloud environment record
-            var updatedEnvironment = await Repository.UpdateAsync(record.Value, logger.NewChildLogger());
-            record.ReplaceAndResetTransition(updatedEnvironment);
+            // Apply transitions and persist the environment to database
+            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
             await EnvironmentContinuation.ResumeAsync(
                 Guid.Parse(record.Value.Id),

@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -85,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Set the state of the environment
             await EnvironmentStateManager.SetEnvironmentStateAsync(
-                record.Value,
+                record,
                 shutdownState,
                 CloudEnvironmentStateUpdateTriggers.ForceEnvironmentShutdown,
                 null,
@@ -93,11 +94,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 logger);
 
             var computeIdToken = record.Value.Compute?.ResourceId;
-            record.Value.Compute = null;
+
+            record.PushTransition((environment) =>
+            {
+                environment.Compute = null;
+            });
 
             // Update the database state.
-            var updatedEnvironment = await Repository.UpdateAsync(record.Value, logger.NewChildLogger());
-            record.ReplaceAndResetTransition(updatedEnvironment);
+            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
             // Delete the allocated resources.
             if (computeIdToken != null)

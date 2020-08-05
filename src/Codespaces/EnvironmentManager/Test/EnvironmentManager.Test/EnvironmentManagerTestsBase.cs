@@ -7,6 +7,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
@@ -151,6 +152,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             });
             this.mapper = config.CreateMapper();
 
+            var taskHelper = new Mock<ITaskHelper>().Object;
+
             var environmentListAction = new EnvironmentListAction(
                environmentRepository,
                MockUtil.MockCurrentLocationProvider(),
@@ -248,7 +251,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceAllocationManager,
                 resourceStartManager,
                 environmentSuspendAction,
-                resourceBroker
+                resourceBroker,
+                taskHelper
                 );
 
             var environmentFinalizeResumeAction = new EnvironmentFinalizeResumeAction(

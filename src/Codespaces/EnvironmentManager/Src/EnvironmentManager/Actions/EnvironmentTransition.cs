@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentTransition.cs" company="Microsoft">
+// <copyright file="EnvironmentTransition.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,6 +18,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         public EnvironmentTransition(CloudEnvironment environment)
             : base(environment)
         {
+            OriginalState = environment.State;
+        }
+
+        private CloudEnvironmentState OriginalState { get; }
+
+        /// <inheritdoc/>
+        public override bool IsValid(CloudEnvironment persistedEntity)
+        {
+            return OriginalState == persistedEntity.State;
         }
     }
 }
