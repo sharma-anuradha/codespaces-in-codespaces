@@ -1,4 +1,4 @@
-﻿// <copyright file="TokensController.cs" company="Microsoft">
+// <copyright file="TokensController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -91,11 +91,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             ValidationUtil.IsRequired(parameters, nameof(parameters));
             ValidationUtil.IsRequired(parameters.Claims, "claims");
 
-            var claims = parameters.Claims.Where((c) => c.Value != null).Select((c) => new Claim(
-                c.Key,
-                c.Value.ToString(),
-                c.Value is int || c.Value is long ? ClaimValueTypes.Integer : ClaimValueTypes.String));
-            var payload = new JwtPayload(claims);
+            var payload = new JwtPayload(parameters.Claims);
 
             var issuerSettings = ValidateIssueIssuer(payload.Iss);
             if (issuerSettings == null)

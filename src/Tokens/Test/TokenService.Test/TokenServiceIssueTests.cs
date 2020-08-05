@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
@@ -193,6 +193,28 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             {
                 await tokenClient.IssueAsync(payload, CancellationToken.None);
             });
+        }
+
+        [Fact]
+        public async Task IssueTokenWithMultiValueClaim()
+        {
+            var tokenClient = new TokenServiceClient(
+                new HttpClient { BaseAddress = TokenService.ServiceUri },
+                () => GetSPAuthHeaderAsync(TestAppId1));
+
+            var payload = new JwtPayload();
+            payload.AddClaim(new Claim(JwtRegisteredClaimNames.Aud, TestAudience1));
+            payload.AddClaim(new Claim("test", "1"));
+            payload.AddClaim(new Claim("test", "2"));
+            payload.AddClaim(new Claim("test", "3", ClaimValueTypes.Integer));
+
+            var token = await tokenClient.IssueAsync(payload, CancellationToken.None);
+            Assert.NotNull(token);
+
+            var result = DecodeToken(token);
+            var testClaims = result.Claims.Where((c) => c.Type == "test");
+            Assert.Equal(3, testClaims.Count());
+            Assert.Equal(ClaimValueTypes.Integer, testClaims.Last().ValueType);
         }
     }
 }

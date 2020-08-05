@@ -1,7 +1,8 @@
-﻿// <copyright file="ProblemDetails.cs" company="Microsoft">
+// <copyright file="ProblemDetails.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -31,5 +32,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Contracts
         /// </summary>
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string? Detail { get; set; }
+
+        /// <summary>
+        /// Gets or sets additional details about individual request properties.
+        /// </summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public IDictionary<string, string[]>? Errors { get; set; }
     }
 }

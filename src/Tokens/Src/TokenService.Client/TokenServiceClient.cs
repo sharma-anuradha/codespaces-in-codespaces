@@ -1,4 +1,4 @@
-﻿// <copyright file="TokenServiceClient.cs" company="Microsoft">
+// <copyright file="TokenServiceClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -143,6 +143,14 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
                         {
                             errorMessage = "Token service error: " +
                                 problemDetails!.Title + " " + problemDetails.Detail;
+                            if (problemDetails.Errors != null)
+                            {
+                                foreach (var error in problemDetails.Errors)
+                                {
+                                    var messages = string.Join(" ", error.Value);
+                                    errorMessage += $"\n{error.Key}: {messages}";
+                                }
+                            }
                         }
                     }
                     else if ((int)response.StatusCode >= 500)
@@ -209,7 +217,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
 
             var requestParameters = new IssueParameters
             {
-                Claims = claims,
+                Claims = claims.Claims.ToArray(),
             };
 
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();

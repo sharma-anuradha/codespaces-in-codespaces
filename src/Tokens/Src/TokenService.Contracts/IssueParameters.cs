@@ -2,8 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -16,12 +16,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Contracts
     public class IssueParameters
     {
         /// <summary>
-        /// Gets or sets the token claims.
+        /// Gets or sets the token claims, as an array of `Claim` objects.
         /// </summary>
-        /// <remarks>
-        /// Only string and integer claim values are supported.
-        /// </remarks>
         [JsonProperty(Required = Required.Always)]
-        public IDictionary<string, object> Claims { get; set; } = null!;
+        [JsonConverter(typeof(ClaimsConverter))]
+        public Claim[] Claims { get; set; } = null!;
     }
 }
