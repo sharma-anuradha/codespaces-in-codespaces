@@ -12,6 +12,9 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const rootFolder = path.resolve(__dirname, '..', '..');
 
+const getRepoInfo = require('git-repo-info');
+const gitRepoInfo = getRepoInfo();
+
 const paths = {
     tsConfig: path.join(rootFolder, 'tsconfig.json'),
     targetFolder: path.join(rootFolder, 'build'),
@@ -145,6 +148,8 @@ module.exports = [
         },
         plugins: [
             new webpack.DefinePlugin({
+                'process.env.VSCS_GIT_BRANCH': `"${gitRepoInfo.branch}"`,
+                'process.env.VSCS_GIT_SHA': `"${gitRepoInfo.sha}"`,
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
                 'process.env.PUBLIC_URL': `"${publicPath}"`,
                 'process.env.PORTAL_VERSION': `"${Date.now()}"`,

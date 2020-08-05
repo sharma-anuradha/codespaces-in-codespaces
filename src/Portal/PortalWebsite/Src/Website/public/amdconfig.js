@@ -2,7 +2,7 @@ const stableFlag = 'stable';
 const insiderFlag = 'insider';
 
 const params = new URLSearchParams(location.search);
-const paramsFeatureSet = params.get('dogfoodChannel');
+const paramsFeatureSet = params.get('vscodeChannel');
 
 const vsoFeatureSet = window.localStorage.getItem('vso-featureset');
 

@@ -4392,6 +4392,11 @@ getpass@^0.1.1:
   dependencies:
     assert-plus "^1.0.0"
 
+git-repo-info@^2.1.1:
+  version "2.1.1"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/git-repo-info/-/git-repo-info-2.1.1.tgz#220ffed8cbae74ef8a80e3052f2ccb5179aed058"
+  integrity sha1-Ig/+2MuudO+KgOMFLyzLUXmu0Fg=
+
 glob-base@^0.3.0:
   version "0.3.0"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/glob-base/-/glob-base-0.3.0.tgz#dbb164f6221b1c0b1ccf82aea328b497df0ea3c4"
@@ -9791,10 +9796,10 @@ vs-codespaces-authorization@^0.1.16:
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.16.tgz#f7d9658d2180574cff12fc493375e6d995f9abcd"
   integrity sha1-99lljSGAV0z/EvxJM3Xm2ZX5q80=
 
-vs-codespaces-authorization@^0.1.17:
-  version "0.1.17"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.17.tgz#757af36daf49eeb52f880276350ca1a58b125c21"
-  integrity sha1-dXrzba9J7rUviAJ2NQyhpYsSXCE=
+vs-codespaces-authorization@^0.1.18:
+  version "0.1.18"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/vs-codespaces-authorization/-/vs-codespaces-authorization-0.1.18.tgz#4ee716a7658166e68aca3a80bc2dbae950d3ad71"
+  integrity sha1-TucWp2WBZuaKyjqAvC266VDTrXE=
 
 vscode-jsonrpc@^4.0.0:
   version "4.0.0"

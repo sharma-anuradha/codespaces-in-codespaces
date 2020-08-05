@@ -1,0 +1,29 @@
+.vscs-workbench-page {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.vscs-workbench-page__dev-panel {
+    display: none;
+}
+
+.vscs-workbench-page__body {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    transition: top .15s ease-in-out;
+}
+
+.vscs-workbench-page.is-dev-panel .vscs-workbench-page__dev-panel {
+    display: block;
+}
+
+.vscs-workbench-page.is-dev-panel .vscs-workbench-page__body {
+    top: var(--dev-panel-height);
+}

@@ -14,8 +14,6 @@ echo "\n* Starting the DNS server.."
 docker stop $OLD_CONTAINER_NAME &> /dev/null
 docker rm $OLD_CONTAINER_NAME &> /dev/null
 
-CONFIGS_DIR="/Users/olegsolomka/repos/vsclk-core/src/Portal/PortalWebsite/Src/portal-local-dns"
-
 echo "* Starting the DNS server docker container.."
 
 docker-compose --env-file ../dev-local.env up --build -d

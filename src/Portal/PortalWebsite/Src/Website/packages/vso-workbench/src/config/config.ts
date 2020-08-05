@@ -95,8 +95,14 @@ const fetchLocations = async (apiEndpoint: string) => {
     return config;
 };
 
-class Config {
-    private isFetched = false;
+const IS_FETCHED_SYMBOL = Symbol();
+export class Config {
+    private [IS_FETCHED_SYMBOL] = false;
+
+    public get isFetched() {
+        return this[IS_FETCHED_SYMBOL];
+    }
+
     public props = CONFIG;
 
     public fetch = async () => {
@@ -117,7 +123,7 @@ class Config {
             ...locations,
         };
 
-        this.isFetched = true;
+        this[IS_FETCHED_SYMBOL] = true;
     };
 
     public getCodespaceRegionalApiEndpoint = (codespace: IEnvironment) => {

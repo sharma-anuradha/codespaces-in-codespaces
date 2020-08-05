@@ -1,0 +1,117 @@
+:root {
+    --grid-unit: 1rem;
+    --button-bg-color: #0278d5;
+    --dev-panel-height: 2.5rem;
+    --dev-panel-text-color: hsla(0,0%,100%,.5);
+    --dev-panel-border-color: #2a2a2a;
+    --dev-panel-bg-emphasis: #000;
+    --dev-panel-bg-emphasis-hover: #111;
+    --dev-panel-selection-color: #00FFFF;
+    --dev-panel--linkselection-color: #00BEFF;
+}
+
+.vscs-dev-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-sizing: border-box;
+    color: white;
+    font-family: Helvetica, Arial, sans-serif;
+    transition: height .1s ease-in-out;
+    letter-spacing: 0.5px;
+}
+
+.vscs-dev-panel.is-hidden {
+    height: var(--dev-panel-height);
+    box-shadow: none;
+}
+
+.vscs-dev-panel input:focus {
+    background-color: rgba(255, 255, 255, .1);;
+    outline: none;
+    border-color: white;
+    color: white;
+}
+
+.vscs-dev-panel__input[type='text'] {
+    height: calc(1 * var(--grid-unit));
+    border-radius: 0;
+    border: 1px solid var(--dev-panel-border-color);
+    color: inherit;
+    background-color: rgba(255, 255, 255, .05);
+    font-size: 12px;
+    --input-height: calc(2.5 * var(--grid-unit));
+    height: var(--input-height);
+    line-height: var(--input-height);
+    padding: calc(.5 * var(--grid-unit));
+    box-sizing: border-box;
+}
+
+.vscs-dev-panel__input--button {
+    cursor: pointer;
+    border: none;
+    padding: calc(.5 * var(--grid-unit)) calc(1 * var(--grid-unit));
+}
+
+.vscs-dev-panel__toggle-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: var(--dev-panel-height);
+    width: var(--dev-panel-height);
+    background: var(--dev-panel-bg-emphasis);
+    font-size: 12px;
+    line-height: calc(var(--dev-panel-height) + 2px);
+    cursor: pointer;
+    text-align: center;
+    border-left: 1px solid var(--dev-panel-border-color);
+    box-sizing: content-box;
+    z-index: 1;
+}
+
+.vscs-dev-panel__toggle-button:hover {
+    background-color: var(--dev-panel-bg-emphasis-hover);
+}
+
+.vscs-dev-panel__header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--dev-panel-height);
+    line-height: calc(var(--dev-panel-height) - 1px);
+    font-size: 12px;
+    background: #161818;
+    box-shadow: 0 5px 0 rgba(0,0,0,.25);
+    z-index: 0;
+}
+
+.vscs-dev-panel__body {
+    position: absolute;
+    top: var(--dev-panel-height);
+    right: 0;
+    width: calc(20 * var(--grid-unit));
+    padding: calc(1.5 * var(--grid-unit));
+    padding-bottom: calc(.5 * var(--grid-unit));
+    overflow: hidden;
+    overflow-y: auto;
+    background: #161818;
+    box-shadow: 5px 5px 0 rgba(0,0,0,.25),
+                inset 0 1px 0 var(--dev-panel-border-color);
+    max-height: calc(40 * var(--grid-unit));
+    z-index: 0;
+}
+
+.vscs-dev-panel.is-hidden .vscs-dev-panel__body {
+    display: none;
+}
+
+.vscs-dev-panel.is-hidden .vscs-dev-panel__header {
+    box-shadow: none;
+}
+
+.vso-button {
+    font-size: 13px;
+}

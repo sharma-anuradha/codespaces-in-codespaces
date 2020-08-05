@@ -81,6 +81,7 @@ export { TPostMessageChannelMessages } from './interfaces/TPostMessageChannelMes
 export { IPartnerInfo } from './interfaces/IPartnerInfo';
 export { EnvironmentType, EnvironmentErrorCodes } from './interfaces/IEnvironment';
 export { FeatureSet } from './interfaces/FeatureSet';
+export { TCodespaceInfo } from './interfaces/TCodespaceInfo';
 
 // logging & telemetry
 export { createTrace, maybePii, Trace } from './utils/createTrace';

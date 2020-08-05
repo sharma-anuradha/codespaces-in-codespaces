@@ -21,10 +21,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             HostEnvironment = hostEnvironment;
         }
 
-
         [HttpGet("~/codespace")]
         [HttpGet("~/workspace/{id}")]
-        [Routing.HttpGet("~/", "*.github.dev", "*.codespaces.visualstudio.com")]
+        [Routing.HttpGet("~/", "*.github.dev", "*.codespaces.visualstudio.com", "*.apps.codespaces.githubusercontent.com", "*.app.online.visualstudio.com")]
         public Task<ActionResult> Index() => FetchStaticAsset("workbench.html", "text/html");
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)

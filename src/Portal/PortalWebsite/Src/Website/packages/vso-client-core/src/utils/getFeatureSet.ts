@@ -9,7 +9,7 @@ export const setFeatureSet = (valueToSet: FeatureSet | null) => {
 
 export const getFeatureSet = (): FeatureSet => {
     const params = new URLSearchParams(location.search);
-    const paramsFeatureSet = params.get('dogfoodChannel');
+    const paramsFeatureSet = params.get('vscodeChannel');
 
     let vscodeQuality = FeatureSet.Stable;
     if (paramsFeatureSet === FeatureSet.Insider) {

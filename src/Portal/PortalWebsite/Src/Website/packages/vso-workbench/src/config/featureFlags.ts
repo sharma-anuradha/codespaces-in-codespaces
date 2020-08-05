@@ -8,7 +8,7 @@ class FeatureFlagsAccessor {
             return false;
         }
 
-        const { featureFlags = {} as Record<FeatureFlags, boolean> } = partnerInfo;
+        const { featureFlags = {} as Record<FeatureFlags, boolean | undefined> } = partnerInfo;
 
         return !!featureFlags[flagName];
     }

@@ -198,9 +198,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var themeColor = partnerInfoData.VSCodeSettings.LoadingScreenThemeColor ?? "light";
             var paramsTheme = HttpContext.Request.Query["loadingScreenThemeColor"];
 
-            if (!string.IsNullOrWhiteSpace(paramsTheme)) 
+            if (!string.IsNullOrWhiteSpace(paramsTheme))
             {
-                switch (paramsTheme) {
+                switch (paramsTheme)
+                {
                     case "dark":
                         themeColor = "dark";
                         break;
@@ -211,7 +212,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                         themeColor = partnerInfoData.VSCodeSettings.LoadingScreenThemeColor ?? "light";
                         break;
                 }
-            } 
+            }
 
             ViewData["shimmer-theme-color-class-name"] = (themeColor == "light")
                 ? "is-light-theme"
@@ -229,7 +230,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         private string GetFaviconUrl(PartnerInfo partnerInfoData)
         {
             // get favicon from the partner info if possible, if not set, use the vscode one
-            // per dogfoodChannel, otherwise use vscode stable one
+            // per vscodeChannel, otherwise use vscode stable one
             var stableUrl = "~/vscode-stable-favicon.ico";
             var insiderUrl = "~/vscode-insider-favicon.ico";
 
@@ -239,7 +240,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             var channel = partnerInfoData.VSCodeSettings.VSCodeChannel ?? "stable";
-            var favicon = partnerInfoData.Favicon ?? new Favicon {
+            var favicon = partnerInfoData.Favicon ?? new Favicon
+            {
                 Stable = stableUrl,
                 Insider = insiderUrl,
             };

@@ -7,7 +7,7 @@ export const trace = debug.default(PACKAGE_NAME);
 if (
     process.env.NODE_ENV === 'development' &&
     typeof localStorage !== 'undefined' &&
-    localStorage.getItem('debug') != null
+    localStorage.getItem('debug') == null
 ) {
     debug.enable('vscs:*');
 }

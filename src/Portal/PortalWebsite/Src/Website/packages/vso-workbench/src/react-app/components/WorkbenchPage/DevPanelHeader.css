@@ -1,0 +1,95 @@
+.vscs-dev-panel-header {
+    padding-right: calc(var(--dev-panel-height) + var(--grid-unit));
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    z-index: 0;
+}
+
+.vscs-dev-panel-header__section {
+    padding-right: calc(.5 * var(--grid-unit));
+    position: relative;
+    height: var(--dev-panel-height);
+    line-height: var(--dev-panel-height);
+    float: left;
+    overflow: hidden;
+}
+
+.vscs-dev-panel-header__section-title {
+    color: var(--dev-panel-text-color);
+    cursor: default;
+}
+
+.vscs-dev-panel-header__section-value {
+    padding: 0 calc(.5 * var(--grid-unit));
+    overflow: hidden;
+    position: relative;
+    display: inline;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+.vscs-dev-panel-header__section-value::selection,
+.vscs-dev-panel-header__section-value a::selection {
+    background-color: var(--dev-panel-selection-color);
+    color: black;
+}
+
+.vscs-dev-panel-header__section-value a::selection {
+    background-color: var(--dev-panel--linkselection-color);
+}
+
+.vscs-dev-panel-header__section-value::before,
+.vscs-dev-panel-header__section-value::after {
+    content: '/';
+    position: absolute;
+    top: calc(-.25 * var(--dev-panel-height));
+    height: var(--dev-panel-height);
+    width: calc(.5 * var(--grid-unit));
+    opacity: 0;
+}
+
+.vscs-dev-panel-header__section-value::before {
+    left: 0;
+}
+
+.vscs-dev-panel-header__section-value::after {
+    right: 0;
+}
+
+.vscs-dev-panel-header__section::selection {
+    background-color: var(--dev-panel-selection-color);
+}
+
+.vscs-dev-panel-header__emoji {
+    display: inline-block;
+    border-right: 1px solid var(--dev-panel-border-color);
+    margin-right: var(--grid-unit);
+    padding: 0 calc(.7 * var(--grid-unit));
+    height: 100%;
+}
+
+.vscs-dev-panel-header__git-info {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: calc(20 * var(--grid-unit));
+    cursor: pointer;
+}
+
+.vscs-dev-panel-header__git-info:hover {
+    max-width: inherit;
+}
+
+.vscs-dev-panel-header__git-info a {
+    text-decoration: none;
+    color: #0091FF;
+    padding: 0 calc(.5 * var(--grid-unit));
+}
+
+.vscs-dev-panel-header__git-info a:hover {
+    opacity: .85;
+    text-decoration: underline;
+}

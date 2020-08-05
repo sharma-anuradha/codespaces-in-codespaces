@@ -49,7 +49,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
         public const string CookieName = "__Host-vssaas.session";
 
         public const string JwtBearerAuthenticationSchemes =
-            JwtBearerDefaults.AuthenticationScheme + "," + VsoAuthenticationScheme;
+            JwtBearerDefaults.AuthenticationScheme + ","
+            + VsoAuthenticationScheme;
 
         public const string CookeAuthenticationSchemes =
             CookieAuthenticationDefaults.AuthenticationScheme + ","
@@ -135,15 +136,33 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
         private static AuthenticationBuilder AddAadAuthentication(
             this AuthenticationBuilder builder)
         {
+
+            /**
+             * 1. We sunset the VS Portal experience soon and the portal is in life support mode now,
+             *    moving forward we don't care about the management page running inside the codespaces.
+             * 2. The AAD authentication for the management pages relies on the keyvault access for
+             *    JWT validation.
+             * 3. Given the above, we won't try to fix the AAD keyvault dependencies but rather disable
+             *    the contrain when the Portal is running inside a Codespace. This allows the portal to
+             *    be easily shared across internal MS teams as well as the (internal)GitHub ones.
+             */
+
+            if (Environment.GetEnvironmentVariable("CODESPACES") == "true")
+            {
+                return builder.AddJwtBearer(
+                    JwtBearerDefaults.AuthenticationScheme,
+                    options => { });
+            }
+
             return builder.AddJwtBearerAuthentication2(
                 JwtBearerDefaults.AuthenticationScheme,
                 options =>
                 {
                     options.CompatibilityAudiences = new List<JwtBearerAuthenticationOptions2.Audience>
                     {
-                        #pragma warning disable CS0618 // Type or member is obsolete
-                        JwtBearerAuthenticationOptions2.Audience.VisualStudioServicesApiDev,
-                        #pragma warning restore CS0618 // Type or member is obsolete
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    JwtBearerAuthenticationOptions2.Audience.VisualStudioServicesApiDev,
+#pragma warning restore CS0618 // Type or member is obsolete
                     };
 
                     options.IsEmailClaimRequired = true;
@@ -176,7 +195,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                         OnTokenValidated = JwtTokenValidatedAsync,
                     };
 
-                    if (isBody) {
+                    if (isBody)
+                    {
                         options.Events.OnMessageReceived = OnVSOBodyAuthenticationMessage;
                     }
                 })
@@ -227,32 +247,40 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Authentication
                 var rawMessage = await reader.ReadToEndAsync();
                 context.Request.Body.Position = 0;
 
-                try {
+                try
+                {
                     var bodyParams = HttpUtility.ParseQueryString(rawMessage);
                     var codespaceToken = bodyParams.Get("codespaceToken");
-                    if (string.IsNullOrWhiteSpace(codespaceToken)) {
+                    if (string.IsNullOrWhiteSpace(codespaceToken))
+                    {
                         codespaceToken = bodyParams.Get("cascadeToken");
                     }
 
-                    if (!string.IsNullOrWhiteSpace(codespaceToken)) {
+                    if (!string.IsNullOrWhiteSpace(codespaceToken))
+                    {
                         context.Token = codespaceToken;
                         return;
                     }
-                } catch (Exception) {}
+                }
+                catch (Exception) { }
 
-                try {
+                try
+                {
                     var info = JsonConvert.DeserializeObject<PartnerInfo>(rawMessage);
                     var codespaceToken = info.CodespaceToken;
 
-                    if (string.IsNullOrWhiteSpace(codespaceToken)) {
+                    if (string.IsNullOrWhiteSpace(codespaceToken))
+                    {
                         codespaceToken = info.CascadeToken;
                     }
 
-                    if (!string.IsNullOrWhiteSpace(codespaceToken)) {
+                    if (!string.IsNullOrWhiteSpace(codespaceToken))
+                    {
                         context.Token = codespaceToken;
                         return;
                     }
-                } catch (Exception) {}
+                }
+                catch (Exception) { }
 
                 context.NoResult();
             }

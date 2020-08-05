@@ -11,6 +11,7 @@ import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { removeDefaultSplashScreen } from './utils/removeDefaultSplashScreen';
 
 export interface IWorkbenchPageRenderProps {
+    className?: string;
     environmentInfo: IEnvironment | null;
     platformInfo: IPartnerInfo | VSCodespacesPlatformInfo | null;
     environmentState: TEnvironmentState;
@@ -27,11 +28,11 @@ interface IWorkbenchPageRenderState {
 /**
  * Component to render VSCode Workbench or Splash Screen.
  */
-export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderProps, IWorkbenchPageRenderState> {
-    constructor(
-        props: IWorkbenchPageRenderProps,
-        state: IWorkbenchPageRenderState
-    ) {
+export class WorkbenchPageRender extends React.Component<
+    IWorkbenchPageRenderProps,
+    IWorkbenchPageRenderState
+> {
+    constructor(props: IWorkbenchPageRenderProps, state: IWorkbenchPageRenderState) {
         super(props, state);
 
         this.state = { isMounted: false };
@@ -45,37 +46,31 @@ export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderPro
             this.setState({ isMounted: true });
             requestAnimationFrame(removeDefaultSplashScreen);
         }, 200);
-    }
+    };
 
     public render() {
+        const { className = '' } = this.props;
+
         return (
-            <Fragment>
-                { this.getSplashScreen() }
-                { this.getWorkbench() }
-            </Fragment>
+            <div className={className}>
+                {this.getSplashScreen()}
+                {this.getWorkbench()}
+            </div>
         );
     }
 
     private getWorkbench = () => {
-        const {
-            environmentState,
-            handleAPIError,
-        } = this.props;
+        const { environmentState, handleAPIError } = this.props;
 
         if (environmentState === EnvironmentStateInfo.Available) {
             if (window.performance.mark) {
                 window.performance.mark(telemetryMarks.timeToInteractive);
             }
-            return (
-                <Workbench
-                    onError={handleAPIError}
-                    onMount={this.onMount}
-                />
-            );
+            return <Workbench onError={handleAPIError} onMount={this.onMount} />;
         }
 
         return null;
-    }
+    };
 
     private getSplashScreen = () => {
         // hide the splash screen when the workbench gets mounted
@@ -86,5 +81,5 @@ export class WorkbenchPageRender extends React.Component<IWorkbenchPageRenderPro
         requestAnimationFrame(removeDefaultSplashScreen);
 
         return <SplashScreenState {...this.props} platformInfo={this.props.platformInfo} />;
-    }
+    };
 }

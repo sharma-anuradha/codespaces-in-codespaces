@@ -3,8 +3,8 @@ import { IEnvironment } from 'vso-client-core';
 
 import { vscode } from '../../vscodeAssets/vscode';
 import { parseWorkspacePayload } from '../../../utils/parseWorkspacePayload';
-import { DOGFOOD_CHANNEL_QUERY_PARAM_NAME } from '../../../constants';
 import { getUriAuthority } from '../../../utils/getUriAuthority';
+import { PlatformQueryParams } from '../../../constants';
 
 const isUntitledWorkspace = (path: string) => {
     return !!path.match(/Untitled\-\d+\.code\-workspace/gim);
@@ -34,11 +34,9 @@ export class WorkspaceProvider implements IWorkspaceProvider {
              * If no schema present, use the remote authority one
              */
             if (workspaceUri.scheme === 'file') {
-                const scheme = (isUntitledWorkspace(workspace))
-                    ? 'vscode-userdata'
-                    : 'vscode-remote';
+                const scheme = isUntitledWorkspace(workspace) ? 'vscode-userdata' : 'vscode-remote';
 
-                const authority = (isUntitledWorkspace(workspace))
+                const authority = isUntitledWorkspace(workspace)
                     ? workspaceUri.authority
                     : `vsonline+${environmentInfo.id}`;
 
@@ -107,13 +105,12 @@ export class WorkspaceProvider implements IWorkspaceProvider {
          * since we need to change folder/workspace inside the iframe itself.
          * If planning to open a new tab, create the embedder URL.
          */
-        const targetUrl = (!options || (options.reuse === true))
-            ? defaultUrl
-            : this.getWorkspaceUrl(defaultUrl);
+        const targetUrl =
+            !options || options.reuse === true ? defaultUrl : this.getWorkspaceUrl(defaultUrl);
 
-        const dogfoodChannelParam = currentParams.get(DOGFOOD_CHANNEL_QUERY_PARAM_NAME)
-        if (typeof dogfoodChannelParam === 'string' && dogfoodChannelParam.trim()) {
-            targetUrl.searchParams.set(DOGFOOD_CHANNEL_QUERY_PARAM_NAME, dogfoodChannelParam);
+        const vscodeChannelParam = currentParams.get(PlatformQueryParams.VSCodeChannel);
+        if (typeof vscodeChannelParam === 'string' && vscodeChannelParam.trim()) {
+            targetUrl.searchParams.set(PlatformQueryParams.VSCodeChannel, vscodeChannelParam);
         }
 
         if (!workspace) {
