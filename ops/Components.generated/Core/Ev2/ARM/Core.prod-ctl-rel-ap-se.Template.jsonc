@@ -1,0 +1,161 @@
+// Auto-Generated From Template
+// ..\Components\Core\Ev2\ARM\Core.{Env}-[ctl]-{Instance}-{Geo}-{Region}.Template.jsonc (vscs-core-prod-ctl-rel-ap-se)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "variables": {
+    "baseResourceName": "vscs-core-prod-ctl-rel-ap-se",
+    "clusterName": "[concat(variables('baseResourceName'),'-cluster')]",
+    "location": "[resourceGroup().location]",
+    "nsgName": "[concat(variables('baseResourceName'),'-nsg')]",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "vnetName": "[concat(variables('baseResourceName'),'-vnet')]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+    "vnetSubnetIdDefault": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('vnetName'),variables('vnetSubnetNameDefault'))]",
+    "vnetSubnetNameDefault": "default",
+    "vnetSubnetNameVirtualNodeAci": "virtual-node-aci"
+  },
+
+  "resources": [
+    // Cluster Network Security Group
+    {
+      "apiVersion": "2019-07-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Http",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow HTTP",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "direction": "Inbound",
+              "priority": 500,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "Internet",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "Https",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow HTTPS",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "443",
+              "direction": "Inbound",
+              "priority": 501,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "Internet",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      }
+    },
+
+    // Cluster Virtual Network
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2018-10-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/8"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnetSubnetNameDefault')]",
+            "properties": {
+              "addressPrefix": "10.240.0.0/16",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('vnetSubnetNameVirtualNodeAci')]",
+            "properties": {
+              "addressPrefix": "10.241.0.0/16",
+              "delegations": [
+                {
+                  "name": "aciDelegation",
+                  "properties": {
+                    "serviceName": "Microsoft.ContainerInstance/containerGroups",
+                    "actions": [
+                      "Microsoft.Network/virtualNetworks/subnets/action"
+                    ]
+                  }
+                }
+              ],
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[variables('nsgId')]"
+      ]
+    },
+
+    // K8s Cluster
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "name": "[variables('clusterName')]",
+      "apiVersion": "2020-04-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "kubernetesVersion": "1.15.11",
+        "dnsPrefix": "[variables('clusterName')]",
+        "agentPoolProfiles": [
+          {
+            "mode": "System",
+            "name": "agentpool",
+            "count": 3,
+            "vmSize": "Standard_DS2_v2",
+            "osDiskSizeGB": 30,
+            "storageProfile": "ManagedDisks",
+            "vnetSubnetID": "[variables('vnetSubnetIdDefault')]",
+            "maxPods": 30,
+            "osType": "Linux"
+          }
+        ],
+        "addonProfiles": {
+          "aciConnectorLinux": {
+            "enabled": true,
+            "config": {
+              "SubnetName": "[variables('vnetSubnetNameVirtualNodeAci')]"
+            }
+          },
+          "httpApplicationRouting": {
+            "enabled": false
+          }
+        },
+        "enableRBAC": true,
+        "networkProfile": {
+          "networkPlugin": "azure",
+          "serviceCidr": "10.0.0.0/16",
+          "dnsServiceIP": "10.0.0.10",
+          "dockerBridgeCidr": "172.17.0.1/16"
+        }
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[variables('vnetId')]"
+      ]
+    }
+  ]
+}
