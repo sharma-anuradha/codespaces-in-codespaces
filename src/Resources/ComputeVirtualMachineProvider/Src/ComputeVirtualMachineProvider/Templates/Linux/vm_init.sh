@@ -15,6 +15,9 @@ SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL='__REPLACE_OUTPUT_QUEUE_URL__'
 SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN='__REPLACE_OUTPUT_QUEUE_SASTOKEN__'
 SCRIPT_PARAM_VM_PUBLIC_KEY_PATH='__REPLACE_VM_PUBLIC_KEY_PATH__'
 
+# wait for cloud-init to finish before proceeding.
+cloud-init status --wait
+
 echo "Increase file watcher limit"
 echo "fs.inotify.max_user_watches=524288" | tee -a /etc/sysctl.conf
 sysctl -p
