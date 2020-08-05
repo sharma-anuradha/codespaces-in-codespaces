@@ -108,6 +108,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             builder.AddEnvironmentVariables();
             builder.AddEnvironmentVariables(prefix: "VSCS_");
 
+            AddServiceSpecificAppConfigFiles(builder, settingsRelativePath, infix);
+
             Configuration = builder.Build();
         }
 
@@ -340,6 +342,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         }
 
         /// <summary>
+        /// Add settings file to a list so we can output the configuration for debugging purposes.
+        /// </summary>
+        /// <param name="path">The settings file path.</param>
+        /// <returns>The same settings file path.</returns>
+        protected string AddAppSettingsJsonFile(string path)
+        {
+            AppSettingsJsonFiles.Add(path);
+            return path;
+        }
+
+        /// <summary>
+        /// Extension point to add more service specific settings files. Used for example by port forwarding agent.
+        /// <param name="builder">The aspnet core configuration builder.</param>
+        /// <param name="settingsRelativePath">The relative path to settings files for current environment.</param>
+        /// <param name="infix">The environment infix.</param>
+        /// </summary>
+        protected virtual void AddServiceSpecificAppConfigFiles(IConfigurationBuilder builder, string settingsRelativePath, string infix)
+        {
+        }
+
+        /// <summary>
         /// Common application configuration.
         /// </summary>
         /// <param name="app">The application builder.</param>
@@ -484,12 +507,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 // Default location for localhost development.
                 return AzureLocation.WestUs2;
             }
-        }
-
-        private string AddAppSettingsJsonFile(string path)
-        {
-            AppSettingsJsonFiles.Add(path);
-            return path;
         }
     }
 }
