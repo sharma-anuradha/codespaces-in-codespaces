@@ -115,7 +115,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             VsoClaimsIdentity identity,
             IDiagnosticsLogger logger)
         {
-            identity ??= CurrentUserProvider.Identity;
+            bool identityFromCurrentUser = false;
+            if (identity == null)
+            {
+                identity = CurrentUserProvider.Identity;
+                identityFromCurrentUser = true;
+            }
 
             var isPlanAuthorized = identity.IsPlanAuthorized(plan.Plan.ResourceId);
             var isScopeAuthorized = identity.IsAnyScopeAuthorized(requiredScopes);
@@ -127,13 +132,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 // Users with explicit access to a different plan do not have access to this plan.
                 errorCode = UnauthorizedPlanId;
                 errorMessage = "Authorized plan resource " +
-                    $"'{CurrentUserProvider.Identity.AuthorizedPlan}' does not match target '{plan.Plan.ResourceId}'";
+                    $"'{identity.AuthorizedPlan}' does not match target '{plan.Plan.ResourceId}'";
             }
             else if (identity.IsEnvironmentAuthorized(null) == false)
             {
                 // Users with explicit access to env(s) do not have access to the whole plan.
                 var authorizedEnvironments = string.Join(
-                    ", ", CurrentUserProvider.Identity.AuthorizedEnvironments ?? Array.Empty<string>());
+                    ", ", identity.AuthorizedEnvironments ?? Array.Empty<string>());
                 errorCode = UnauthorizedEnvironmentId;
                 errorMessage = "User is authorized to access environment(s) " +
                     $"'[{authorizedEnvironments}]' but not the plan '{plan.Plan.ResourceId}'";
@@ -146,8 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             else if (isScopeAuthorized == false)
             {
                 // Users with a scoped access token must have the required scope.
-                var authorizedScopes = string.Join(
-                    ", ", CurrentUserProvider.Identity.Scopes ?? Array.Empty<string>());
+                var authorizedScopes = string.Join(", ", identity.Scopes ?? Array.Empty<string>());
                 var requiredScopesList = string.Join(", ", requiredScopes ?? Array.Empty<string>());
                 errorCode = UnauthorizedPlanScope;
                 errorMessage = "Authorized scopes " +
@@ -178,6 +182,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 return;
             }
+
+            errorMessage += identityFromCurrentUser ?
+                "\n(Using current user identity.)" : "\n(Using separate identity claims.)";
 
             logger.FluentAddValue("ErrorMessage", errorMessage).LogWarning(errorCode);
             throw new UnauthorizedAccessException(errorMessage);
