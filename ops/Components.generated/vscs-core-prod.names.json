@@ -1,7 +1,10 @@
 {
-  "baseName": "vscs-core-prod",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.prod",
   "baseEnvironmentName": "vscs-core-prod",
-  "prefix": "vscs",
+  "baseName": "vscs-core-prod",
   "component": "core",
-  "env": "prod"
+  "env": "prod",
+  "prefix": "vscs"
 }

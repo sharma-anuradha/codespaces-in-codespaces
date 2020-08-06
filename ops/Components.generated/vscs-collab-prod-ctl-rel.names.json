@@ -1,14 +1,15 @@
 {
-  "baseName": "vscs-collab-prod-ctl-rel",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.prod",
   "baseEnvironmentName": "vscs-collab-prod",
-  "basePlaneName": "vscs-collab-prod-ctl",
+  "baseInstanceFileName": "collab.prod-ctl-rel",
   "baseInstanceName": "vscs-collab-prod-ctl-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-collab-prod-ctl-rel",
+  "basePlaneFileName": "collab.prod-ctl",
+  "basePlaneName": "vscs-collab-prod-ctl",
   "component": "collab",
   "env": "prod",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -16,5 +17,9 @@
     "eu-w",
     "us-e",
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-collab-prod-data-rel-us-e",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.prod",
   "baseEnvironmentName": "vscs-collab-prod",
-  "basePlaneName": "vscs-collab-prod-data",
+  "baseInstanceFileName": "collab.prod-data-rel",
   "baseInstanceName": "vscs-collab-prod-data-rel",
+  "baseName": "vscs-collab-prod-data-rel-us-e",
+  "basePlaneFileName": "collab.prod-data",
+  "basePlaneName": "vscs-collab-prod-data",
+  "baseRegionFileName": "collab.prod-data-rel-us-e",
   "baseRegionName": "vscs-collab-prod-data-rel-us-e",
   "baseRegionStorageName": "collabproddatareluse",
-  "prefix": "vscs",
   "component": "collab",
   "env": "prod",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "data",
+  "prefix": "vscs",
   "region": "us-e",
-  "regionLocation": "EastUS"
+  "regionLocation": "EastUS",
+  "regionSuffix": "e",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

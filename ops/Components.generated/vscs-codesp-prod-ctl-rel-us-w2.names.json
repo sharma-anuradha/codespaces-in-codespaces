@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-codesp-prod-ctl-rel-us-w2",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.prod",
   "baseEnvironmentName": "vscs-codesp-prod",
-  "basePlaneName": "vscs-codesp-prod-ctl",
+  "baseInstanceFileName": "codesp.prod-ctl-rel",
   "baseInstanceName": "vscs-codesp-prod-ctl-rel",
+  "baseName": "vscs-codesp-prod-ctl-rel-us-w2",
+  "basePlaneFileName": "codesp.prod-ctl",
+  "basePlaneName": "vscs-codesp-prod-ctl",
+  "baseRegionFileName": "codesp.prod-ctl-rel-us-w2",
   "baseRegionName": "vscs-codesp-prod-ctl-rel-us-w2",
   "baseRegionStorageName": "codespprodctlrelusw2",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "prod",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

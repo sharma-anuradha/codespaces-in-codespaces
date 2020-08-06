@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-codesp-prod-ctl-rel-ap-se",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.prod",
   "baseEnvironmentName": "vscs-codesp-prod",
-  "basePlaneName": "vscs-codesp-prod-ctl",
+  "baseInstanceFileName": "codesp.prod-ctl-rel",
   "baseInstanceName": "vscs-codesp-prod-ctl-rel",
+  "baseName": "vscs-codesp-prod-ctl-rel-ap-se",
+  "basePlaneFileName": "codesp.prod-ctl",
+  "basePlaneName": "vscs-codesp-prod-ctl",
+  "baseRegionFileName": "codesp.prod-ctl-rel-ap-se",
   "baseRegionName": "vscs-codesp-prod-ctl-rel-ap-se",
   "baseRegionStorageName": "codespprodctlrelapse",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "prod",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "ap",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "ap",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "ap-se",
-  "regionLocation": "SoutheastAsia"
+  "regionLocation": "SoutheastAsia",
+  "regionSuffix": "se",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

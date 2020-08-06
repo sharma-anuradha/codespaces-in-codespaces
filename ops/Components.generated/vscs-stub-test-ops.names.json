@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-stub-test-ops",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.test",
   "baseEnvironmentName": "vscs-stub-test",
+  "baseName": "vscs-stub-test-ops",
+  "basePlaneFileName": "stub.test-ops",
   "basePlaneName": "vscs-stub-test-ops",
-  "prefix": "vscs",
   "component": "stub",
   "env": "test",
   "plane": "ops",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

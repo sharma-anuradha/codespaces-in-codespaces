@@ -1,14 +1,15 @@
 {
-  "baseName": "vscs-comm-prod-data-rel",
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.prod",
   "baseEnvironmentName": "vscs-comm-prod",
-  "basePlaneName": "vscs-comm-prod-data",
+  "baseInstanceFileName": "comm.prod-data-rel",
   "baseInstanceName": "vscs-comm-prod-data-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-comm-prod-data-rel",
+  "basePlaneFileName": "comm.prod-data",
+  "basePlaneName": "vscs-comm-prod-data",
   "component": "comm",
   "env": "prod",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -16,5 +17,9 @@
     "eu-w",
     "us-e",
     "us-w2"
-  ]
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

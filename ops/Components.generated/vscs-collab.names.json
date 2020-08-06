@@ -1,5 +1,7 @@
 {
-  "prefix": "vscs",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
   "baseName": "vscs-collab",
-  "component": "collab"
+  "component": "collab",
+  "prefix": "vscs"
 }

@@ -1,7 +1,10 @@
 {
-  "baseName": "vscs-codesp-prod",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.prod",
   "baseEnvironmentName": "vscs-codesp-prod",
-  "prefix": "vscs",
+  "baseName": "vscs-codesp-prod",
   "component": "codesp",
-  "env": "prod"
+  "env": "prod",
+  "prefix": "vscs"
 }

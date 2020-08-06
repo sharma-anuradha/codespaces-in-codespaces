@@ -1,22 +1,29 @@
 {
-  "baseName": "vscs-stub-test-ops-tst-us-w2",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.test",
   "baseEnvironmentName": "vscs-stub-test",
-  "basePlaneName": "vscs-stub-test-ops",
+  "baseInstanceFileName": "stub.test-ops-tst",
   "baseInstanceName": "vscs-stub-test-ops-tst",
+  "baseName": "vscs-stub-test-ops-tst-us-w2",
+  "basePlaneFileName": "stub.test-ops",
+  "basePlaneName": "vscs-stub-test-ops",
+  "baseRegionFileName": "stub.test-ops-tst-us-w2",
   "baseRegionName": "vscs-stub-test-ops-tst-us-w2",
   "baseRegionStorageName": "stubtestopststusw2",
-  "prefix": "vscs",
   "component": "stub",
   "env": "test",
-  "plane": "ops",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "tst",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ops",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

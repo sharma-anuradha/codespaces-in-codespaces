@@ -1,23 +1,30 @@
 {
-  "baseName": "vscs-core-ppe-data-rel-us-w2",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.ppe",
   "baseEnvironmentName": "vscs-core-ppe",
-  "basePlaneName": "vscs-core-ppe-data",
+  "baseInstanceFileName": "core.ppe-data-rel",
   "baseInstanceName": "vscs-core-ppe-data-rel",
+  "baseName": "vscs-core-ppe-data-rel-us-w2",
+  "basePlaneFileName": "core.ppe-data",
+  "basePlaneName": "vscs-core-ppe-data",
+  "baseRegionFileName": "core.ppe-data-rel-us-w2",
   "baseRegionName": "vscs-core-ppe-data-rel-us-w2",
   "baseRegionStorageName": "coreppedatarelusw2",
-  "prefix": "vscs",
   "component": "core",
   "env": "ppe",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "eu-w",
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "data",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

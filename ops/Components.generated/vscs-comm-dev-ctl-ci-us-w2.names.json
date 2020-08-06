@@ -1,22 +1,29 @@
 {
-  "baseName": "vscs-comm-dev-ctl-ci-us-w2",
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.dev",
   "baseEnvironmentName": "vscs-comm-dev",
-  "basePlaneName": "vscs-comm-dev-ctl",
+  "baseInstanceFileName": "comm.dev-ctl-ci",
   "baseInstanceName": "vscs-comm-dev-ctl-ci",
+  "baseName": "vscs-comm-dev-ctl-ci-us-w2",
+  "basePlaneFileName": "comm.dev-ctl",
+  "basePlaneName": "vscs-comm-dev-ctl",
+  "baseRegionFileName": "comm.dev-ctl-ci-us-w2",
   "baseRegionName": "vscs-comm-dev-ctl-ci-us-w2",
   "baseRegionStorageName": "commdevctlciusw2",
-  "prefix": "vscs",
   "component": "comm",
   "env": "dev",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

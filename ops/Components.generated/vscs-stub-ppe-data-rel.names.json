@@ -1,18 +1,23 @@
 {
-  "baseName": "vscs-stub-ppe-data-rel",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.ppe",
   "baseEnvironmentName": "vscs-stub-ppe",
-  "basePlaneName": "vscs-stub-ppe-data",
+  "baseInstanceFileName": "stub.ppe-data-rel",
   "baseInstanceName": "vscs-stub-ppe-data-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-stub-ppe-data-rel",
+  "basePlaneFileName": "stub.ppe-data",
+  "basePlaneName": "vscs-stub-ppe-data",
   "component": "stub",
   "env": "ppe",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "eu-w",
     "us-w2"
-  ]
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

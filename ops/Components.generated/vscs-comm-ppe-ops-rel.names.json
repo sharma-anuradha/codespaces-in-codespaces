@@ -1,18 +1,23 @@
 {
-  "baseName": "vscs-comm-ppe-ops-rel",
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.ppe",
   "baseEnvironmentName": "vscs-comm-ppe",
-  "basePlaneName": "vscs-comm-ppe-ops",
+  "baseInstanceFileName": "comm.ppe-ops-rel",
   "baseInstanceName": "vscs-comm-ppe-ops-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-comm-ppe-ops-rel",
+  "basePlaneFileName": "comm.ppe-ops",
+  "basePlaneName": "vscs-comm-ppe-ops",
   "component": "comm",
   "env": "ppe",
-  "plane": "ops",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "eu-w",
     "us-w2"
-  ]
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

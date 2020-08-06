@@ -1,22 +1,29 @@
 {
-  "baseName": "vscs-core-dev-data-ci-us-w2",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.dev",
   "baseEnvironmentName": "vscs-core-dev",
-  "basePlaneName": "vscs-core-dev-data",
+  "baseInstanceFileName": "core.dev-data-ci",
   "baseInstanceName": "vscs-core-dev-data-ci",
+  "baseName": "vscs-core-dev-data-ci-us-w2",
+  "basePlaneFileName": "core.dev-data",
+  "basePlaneName": "vscs-core-dev-data",
+  "baseRegionFileName": "core.dev-data-ci-us-w2",
   "baseRegionName": "vscs-core-dev-data-ci-us-w2",
   "baseRegionStorageName": "coredevdataciusw2",
-  "prefix": "vscs",
   "component": "core",
   "env": "dev",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "data",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

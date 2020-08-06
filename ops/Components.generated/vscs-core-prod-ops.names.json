@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-core-prod-ops",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.prod",
   "baseEnvironmentName": "vscs-core-prod",
+  "baseName": "vscs-core-prod-ops",
+  "basePlaneFileName": "core.prod-ops",
   "basePlaneName": "vscs-core-prod-ops",
-  "prefix": "vscs",
   "component": "core",
   "env": "prod",
   "plane": "ops",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

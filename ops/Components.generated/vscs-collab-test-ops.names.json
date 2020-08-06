@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-collab-test-ops",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.test",
   "baseEnvironmentName": "vscs-collab-test",
+  "baseName": "vscs-collab-test-ops",
+  "basePlaneFileName": "collab.test-ops",
   "basePlaneName": "vscs-collab-test-ops",
-  "prefix": "vscs",
   "component": "collab",
   "env": "test",
   "plane": "ops",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

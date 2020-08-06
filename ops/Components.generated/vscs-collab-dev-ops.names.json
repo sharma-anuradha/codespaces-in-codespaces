@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-collab-dev-ops",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.dev",
   "baseEnvironmentName": "vscs-collab-dev",
+  "baseName": "vscs-collab-dev-ops",
+  "basePlaneFileName": "collab.dev-ops",
   "basePlaneName": "vscs-collab-dev-ops",
-  "prefix": "vscs",
   "component": "collab",
   "env": "dev",
   "plane": "ops",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

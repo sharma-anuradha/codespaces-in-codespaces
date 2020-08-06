@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-collab-prod-data",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.prod",
   "baseEnvironmentName": "vscs-collab-prod",
+  "baseName": "vscs-collab-prod-data",
+  "basePlaneFileName": "collab.prod-data",
   "basePlaneName": "vscs-collab-prod-data",
-  "prefix": "vscs",
   "component": "collab",
   "env": "prod",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

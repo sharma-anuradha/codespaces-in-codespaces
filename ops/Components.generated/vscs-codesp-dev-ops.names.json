@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-codesp-dev-ops",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.dev",
   "baseEnvironmentName": "vscs-codesp-dev",
+  "baseName": "vscs-codesp-dev-ops",
+  "basePlaneFileName": "codesp.dev-ops",
   "basePlaneName": "vscs-codesp-dev-ops",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "dev",
   "plane": "ops",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-stub-dev-data-ci",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.dev",
   "baseEnvironmentName": "vscs-stub-dev",
-  "basePlaneName": "vscs-stub-dev-data",
+  "baseInstanceFileName": "stub.dev-data-ci",
   "baseInstanceName": "vscs-stub-dev-data-ci",
-  "prefix": "vscs",
+  "baseName": "vscs-stub-dev-data-ci",
+  "basePlaneFileName": "stub.dev-data",
+  "basePlaneName": "vscs-stub-dev-data",
   "component": "stub",
   "env": "dev",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

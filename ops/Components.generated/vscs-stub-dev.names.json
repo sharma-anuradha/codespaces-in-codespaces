@@ -1,7 +1,10 @@
 {
-  "baseName": "vscs-stub-dev",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.dev",
   "baseEnvironmentName": "vscs-stub-dev",
-  "prefix": "vscs",
+  "baseName": "vscs-stub-dev",
   "component": "stub",
-  "env": "dev"
+  "env": "dev",
+  "prefix": "vscs"
 }

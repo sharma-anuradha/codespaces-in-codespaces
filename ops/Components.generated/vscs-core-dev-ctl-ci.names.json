@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-core-dev-ctl-ci",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.dev",
   "baseEnvironmentName": "vscs-core-dev",
-  "basePlaneName": "vscs-core-dev-ctl",
+  "baseInstanceFileName": "core.dev-ctl-ci",
   "baseInstanceName": "vscs-core-dev-ctl-ci",
-  "prefix": "vscs",
+  "baseName": "vscs-core-dev-ctl-ci",
+  "basePlaneFileName": "core.dev-ctl",
+  "basePlaneName": "vscs-core-dev-ctl",
   "component": "core",
   "env": "dev",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

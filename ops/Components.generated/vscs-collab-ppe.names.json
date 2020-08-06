@@ -1,7 +1,10 @@
 {
-  "baseName": "vscs-collab-ppe",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.ppe",
   "baseEnvironmentName": "vscs-collab-ppe",
-  "prefix": "vscs",
+  "baseName": "vscs-collab-ppe",
   "component": "collab",
-  "env": "ppe"
+  "env": "ppe",
+  "prefix": "vscs"
 }

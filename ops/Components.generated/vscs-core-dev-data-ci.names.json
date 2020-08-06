@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-core-dev-data-ci",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.dev",
   "baseEnvironmentName": "vscs-core-dev",
-  "basePlaneName": "vscs-core-dev-data",
+  "baseInstanceFileName": "core.dev-data-ci",
   "baseInstanceName": "vscs-core-dev-data-ci",
-  "prefix": "vscs",
+  "baseName": "vscs-core-dev-data-ci",
+  "basePlaneFileName": "core.dev-data",
+  "basePlaneName": "vscs-core-dev-data",
   "component": "core",
   "env": "dev",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

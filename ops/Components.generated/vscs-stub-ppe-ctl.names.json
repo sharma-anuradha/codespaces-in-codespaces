@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-stub-ppe-ctl",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.ppe",
   "baseEnvironmentName": "vscs-stub-ppe",
+  "baseName": "vscs-stub-ppe-ctl",
+  "basePlaneFileName": "stub.ppe-ctl",
   "basePlaneName": "vscs-stub-ppe-ctl",
-  "prefix": "vscs",
   "component": "stub",
   "env": "ppe",
   "plane": "ctl",
+  "prefix": "vscs",
   "subscriptionId": "00000000-0000-0000-0000-000000000000",
   "subscriptionName": "vscs-stub-ppe-ctl"
 }

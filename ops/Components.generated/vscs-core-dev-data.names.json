@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-core-dev-data",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.dev",
   "baseEnvironmentName": "vscs-core-dev",
+  "baseName": "vscs-core-dev-data",
+  "basePlaneFileName": "core.dev-data",
   "basePlaneName": "vscs-core-dev-data",
-  "prefix": "vscs",
   "component": "core",
   "env": "dev",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

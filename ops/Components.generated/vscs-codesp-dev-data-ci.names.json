@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-codesp-dev-data-ci",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.dev",
   "baseEnvironmentName": "vscs-codesp-dev",
-  "basePlaneName": "vscs-codesp-dev-data",
+  "baseInstanceFileName": "codesp.dev-data-ci",
   "baseInstanceName": "vscs-codesp-dev-data-ci",
-  "prefix": "vscs",
+  "baseName": "vscs-codesp-dev-data-ci",
+  "basePlaneFileName": "codesp.dev-data",
+  "basePlaneName": "vscs-codesp-dev-data",
   "component": "codesp",
   "env": "dev",
-  "plane": "data",
-  "subscriptionName": "vscs-codesp-dev-data-compute-ap-001",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-codesp-dev-data-compute-ap-001"
 }

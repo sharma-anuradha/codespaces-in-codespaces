@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-core-ppe-data",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.ppe",
   "baseEnvironmentName": "vscs-core-ppe",
+  "baseName": "vscs-core-ppe-data",
+  "basePlaneFileName": "core.ppe-data",
   "basePlaneName": "vscs-core-ppe-data",
-  "prefix": "vscs",
   "component": "core",
   "env": "ppe",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

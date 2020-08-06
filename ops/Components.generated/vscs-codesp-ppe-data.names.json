@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-codesp-ppe-data",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.ppe",
   "baseEnvironmentName": "vscs-codesp-ppe",
+  "baseName": "vscs-codesp-ppe-data",
+  "basePlaneFileName": "codesp.ppe-data",
   "basePlaneName": "vscs-codesp-ppe-data",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "ppe",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

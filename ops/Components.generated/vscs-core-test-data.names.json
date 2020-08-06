@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-core-test-data",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.test",
   "baseEnvironmentName": "vscs-core-test",
+  "baseName": "vscs-core-test-data",
+  "basePlaneFileName": "core.test-data",
   "basePlaneName": "vscs-core-test-data",
-  "prefix": "vscs",
   "component": "core",
   "env": "test",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

@@ -1,14 +1,15 @@
 {
-  "baseName": "vscs-core-prod-ctl-rel",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.prod",
   "baseEnvironmentName": "vscs-core-prod",
-  "basePlaneName": "vscs-core-prod-ctl",
+  "baseInstanceFileName": "core.prod-ctl-rel",
   "baseInstanceName": "vscs-core-prod-ctl-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-core-prod-ctl-rel",
+  "basePlaneFileName": "core.prod-ctl",
+  "basePlaneName": "vscs-core-prod-ctl",
   "component": "core",
   "env": "prod",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -16,5 +17,9 @@
     "eu-w",
     "us-e",
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

@@ -1,23 +1,30 @@
 {
-  "baseName": "vscs-stub-ppe-ctl-rel-us-w2",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.ppe",
   "baseEnvironmentName": "vscs-stub-ppe",
-  "basePlaneName": "vscs-stub-ppe-ctl",
+  "baseInstanceFileName": "stub.ppe-ctl-rel",
   "baseInstanceName": "vscs-stub-ppe-ctl-rel",
+  "baseName": "vscs-stub-ppe-ctl-rel-us-w2",
+  "basePlaneFileName": "stub.ppe-ctl",
+  "basePlaneName": "vscs-stub-ppe-ctl",
+  "baseRegionFileName": "stub.ppe-ctl-rel-us-w2",
   "baseRegionName": "vscs-stub-ppe-ctl-rel-us-w2",
   "baseRegionStorageName": "stubppectlrelusw2",
-  "prefix": "vscs",
   "component": "stub",
   "env": "ppe",
-  "plane": "ctl",
-  "subscriptionName": "vscs-stub-ppe-ctl",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "eu-w",
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-stub-ppe-ctl"
 }

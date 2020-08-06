@@ -1,14 +1,15 @@
 {
-  "baseName": "vscs-stub-prod-ctl-rel",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.prod",
   "baseEnvironmentName": "vscs-stub-prod",
-  "basePlaneName": "vscs-stub-prod-ctl",
+  "baseInstanceFileName": "stub.prod-ctl-rel",
   "baseInstanceName": "vscs-stub-prod-ctl-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-stub-prod-ctl-rel",
+  "basePlaneFileName": "stub.prod-ctl",
+  "basePlaneName": "vscs-stub-prod-ctl",
   "component": "stub",
   "env": "prod",
-  "plane": "ctl",
-  "subscriptionName": "vscs-stub-ppe-ctl",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -16,5 +17,9 @@
     "eu-w",
     "us-e",
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-stub-ppe-ctl"
 }

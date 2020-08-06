@@ -1,23 +1,30 @@
 {
-  "baseName": "vscs-core-ppe-ctl-rel-us-w2",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.ppe",
   "baseEnvironmentName": "vscs-core-ppe",
-  "basePlaneName": "vscs-core-ppe-ctl",
+  "baseInstanceFileName": "core.ppe-ctl-rel",
   "baseInstanceName": "vscs-core-ppe-ctl-rel",
+  "baseName": "vscs-core-ppe-ctl-rel-us-w2",
+  "basePlaneFileName": "core.ppe-ctl",
+  "basePlaneName": "vscs-core-ppe-ctl",
+  "baseRegionFileName": "core.ppe-ctl-rel-us-w2",
   "baseRegionName": "vscs-core-ppe-ctl-rel-us-w2",
   "baseRegionStorageName": "coreppectlrelusw2",
-  "prefix": "vscs",
   "component": "core",
   "env": "ppe",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "eu-w",
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

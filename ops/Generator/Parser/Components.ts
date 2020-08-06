@@ -1,4 +1,3 @@
-import { AssertionError } from "assert";
 import ResourceNames, { ComponentNames } from "./ResourceNames";
 import { Environment } from "./Environments";
 
@@ -20,14 +19,15 @@ export class ComponentsDeployment {
       comp.displayName = jsonComp.displayName;
       comp.dependsOn = jsonComp.dependsOn;
       for (const subJson of jsonComp.subscriptions) {
-        comp.subscriptions.push(this.parseSubscriptionJson(subJson));
+        comp.subscriptions.push(this.parseSubscriptionJson(subJson, comp.prefix));
       }
       this.components.push(comp);
     }
   }
 
-  parseSubscriptionJson(subscription): Subscription {
+  parseSubscriptionJson(subscription, component: string): Subscription {
     const sub = new Subscription();
+    sub.component = component;
     sub.nameTemplate = subscription.nameTemplate;
     sub.plane = subscription.plane;
     sub.env = subscription.env;
@@ -64,14 +64,8 @@ export class Component {
   outputNames: ComponentNames;
 
   generateNamesJson(prefix: string): ComponentNames {
-    const baseComponentName = ResourceNames.makeResourceName(prefix, this.prefix);
-    const baseName = baseComponentName;
-
-    return this.outputNames = {
-      prefix: prefix,
-      baseName: baseName,
-      component: this.prefix
-    };
+    this.outputNames = ResourceNames.sortKeys(new ComponentNames(prefix, this.prefix));
+    return this.outputNames;
   }
 
   getSubscription(env: string, plane:string): Subscription[] {
@@ -81,35 +75,11 @@ export class Component {
 
 export class Subscription {
   nameTemplate: string;
-  plane: string;
-  env: string;
-  count: number;
-  provisioned: Provisioned[] = [];
-  outputName: SubscriptionName;
-
-  generateNamesJson(prefix: string, env: string, compPrefix: string) : SubscriptionName {
-    const baseEnvName = ResourceNames.makeResourceName(prefix, compPrefix, env);
-    const basePlaneName = ResourceNames.makeResourceName(prefix, compPrefix, env, this.plane);
-    const baseName = basePlaneName;
-
-    return this.outputName = {
-      baseName: baseName,
-      baseEnvName: baseEnvName,
-      basePlaneName: basePlaneName,
-      component: compPrefix,
-      env: env,
-      plane: this.plane,
-    };
-  }
-}
-
-export class SubscriptionName {
-  baseName: string;
-  baseEnvName: string;
-  basePlaneName: string;
   component: string;
   env: string;
   plane: string;
+  count: number;
+  provisioned: Provisioned[] = [];
 }
 
 export class Provisioned {

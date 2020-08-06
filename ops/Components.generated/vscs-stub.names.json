@@ -1,5 +1,7 @@
 {
-  "prefix": "vscs",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
   "baseName": "vscs-stub",
-  "component": "stub"
+  "component": "stub",
+  "prefix": "vscs"
 }

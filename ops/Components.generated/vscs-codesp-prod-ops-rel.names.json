@@ -1,14 +1,15 @@
 {
-  "baseName": "vscs-codesp-prod-ops-rel",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.prod",
   "baseEnvironmentName": "vscs-codesp-prod",
-  "basePlaneName": "vscs-codesp-prod-ops",
+  "baseInstanceFileName": "codesp.prod-ops-rel",
   "baseInstanceName": "vscs-codesp-prod-ops-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-codesp-prod-ops-rel",
+  "basePlaneFileName": "codesp.prod-ops",
+  "basePlaneName": "vscs-codesp-prod-ops",
   "component": "codesp",
   "env": "prod",
-  "plane": "ops",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -16,5 +17,9 @@
     "eu-w",
     "us-e",
     "us-w2"
-  ]
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

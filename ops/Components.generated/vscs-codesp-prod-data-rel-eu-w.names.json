@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-codesp-prod-data-rel-eu-w",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.prod",
   "baseEnvironmentName": "vscs-codesp-prod",
-  "basePlaneName": "vscs-codesp-prod-data",
+  "baseInstanceFileName": "codesp.prod-data-rel",
   "baseInstanceName": "vscs-codesp-prod-data-rel",
+  "baseName": "vscs-codesp-prod-data-rel-eu-w",
+  "basePlaneFileName": "codesp.prod-data",
+  "basePlaneName": "vscs-codesp-prod-data",
+  "baseRegionFileName": "codesp.prod-data-rel-eu-w",
   "baseRegionName": "vscs-codesp-prod-data-rel-eu-w",
   "baseRegionStorageName": "codespproddatareleuw",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "prod",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "eu",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "eu",
+  "plane": "data",
+  "prefix": "vscs",
   "region": "eu-w",
-  "regionLocation": "WestEurope"
+  "regionLocation": "WestEurope",
+  "regionSuffix": "w",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

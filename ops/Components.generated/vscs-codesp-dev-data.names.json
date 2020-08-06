@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-codesp-dev-data",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.dev",
   "baseEnvironmentName": "vscs-codesp-dev",
+  "baseName": "vscs-codesp-dev-data",
+  "basePlaneFileName": "codesp.dev-data",
   "basePlaneName": "vscs-codesp-dev-data",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "dev",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "00000000-0000-0000-0000-000000000000",
   "subscriptionName": "vscs-codesp-dev-data-compute-ap-001"
 }

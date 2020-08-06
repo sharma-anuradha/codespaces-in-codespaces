@@ -1,4 +1,4 @@
-import { find } from "lodash";
+import { find, cloneDeep } from "lodash";
 import ResourceNames, { EnvironmentNames, InstanceNames, RegionNames, PlaneNames, ComponentNames } from "./ResourceNames";
 
 export class EnvironmentsDeployment implements IEnvironmentsDeployment {
@@ -105,27 +105,12 @@ export class Plane {
     }
 
     generateNamesJson(environmentNames: EnvironmentNames): PlaneNames {
-        const baseName = ResourceNames.makeResourceName(environmentNames.prefix, environmentNames.component, environmentNames.env, this.name);
-
-        return this.outputNames = {
-            baseName: baseName,
-            baseEnvironmentName: environmentNames.baseEnvironmentName,
-            basePlaneName: baseName,
-            prefix: environmentNames.prefix,
-            component: environmentNames.component,
-            env: environmentNames.env,
-            plane: this.name,
-            subscriptionId: this.subscriptionId,
-            subscriptionName: this.subscriptionName
-        }
+        this.outputNames = ResourceNames.sortKeys(new PlaneNames(environmentNames, this.name, this.subscriptionName, this.subscriptionId));
+        return this.outputNames;
     }
 
     clone() : Plane {
-        const obj = new Plane(this.name);
-        obj.instances = this.instances.map(i => i.clone());
-        obj.subscriptionName = this.subscriptionName;
-        obj.subscriptionId = this.subscriptionId;
-        return obj;
+        return cloneDeep<Plane>(this);
     }
 }
 
@@ -136,23 +121,12 @@ export class Environment {
     outputNames: EnvironmentNames;
 
     generateNamesJson(componentNames: ComponentNames): EnvironmentNames {
-        const baseName = ResourceNames.makeResourceName(componentNames.prefix, componentNames.component, this.name);
-
-        return this.outputNames = {
-            baseName: baseName,
-            baseEnvironmentName: baseName,
-            prefix: componentNames.prefix,
-            component: componentNames.component,
-            env: this.name,
-        }
+        this.outputNames = ResourceNames.sortKeys(new EnvironmentNames(componentNames, this.name));
+        return this.outputNames;
     }
 
     clone() : Environment {
-        const obj = new Environment();
-        obj.name = this.name;
-        obj.pme = this.pme;
-        obj.planes = this.planes.map(p => p.clone());
-        return obj;
+        return cloneDeep<Environment>(this);
     }
 }
 
@@ -163,30 +137,13 @@ export class Instance {
     outputNames: InstanceNames;
 
     generateNamesJson(planeNames: PlaneNames, regions: DataLocation[]): InstanceNames {
-        const baseName = ResourceNames.makeResourceName(planeNames.prefix, planeNames.component, planeNames.env, planeNames.plane, this.name);
-        return this.outputNames = {
-            baseName: baseName,
-            baseEnvironmentName: planeNames.baseEnvironmentName,
-            basePlaneName: planeNames.basePlaneName,
-            baseInstanceName: baseName,
-            prefix: planeNames.prefix,
-            component: planeNames.component,
-            env: planeNames.env,
-            plane: planeNames.plane,
-            subscriptionName: planeNames.subscriptionName,
-            subscriptionId: planeNames.subscriptionId,
-            instance: this.name,
-            instanceLocation: this.location,
-            instanceRegions: regions.map(n => `${n.geography.name}-${n.region.name}`),
-        }
+        const instanceRegions = regions.map(n => `${n.geography.name}-${n.region.name}`);
+        this.outputNames = ResourceNames.sortKeys(new InstanceNames(planeNames, this.name, this.location, instanceRegions));
+        return this.outputNames;
     }
 
     clone(): Instance {
-        const obj = new Instance();
-        obj.name = this.name;
-        obj.location = this.location;
-        obj.stamps = this.stamps.map(s => s.clone());
-        return obj;
+        return cloneDeep<Instance>(this);
     }
 }
 
@@ -196,11 +153,7 @@ export class Stamp {
     dataLocations: DataLocation[] = [];
 
     clone(): Stamp {
-        const obj = new Stamp();
-        obj.name = this.name;
-        obj.location = this.location.clone();
-        obj.dataLocations = this.dataLocations.map(dl => dl.clone());
-        return obj;
+        return cloneDeep<Stamp>(this);
     }
 }
 
@@ -210,34 +163,15 @@ export class DataLocation {
     outputNames: RegionNames;
 
     generateNamesJson(instanceNames: InstanceNames): RegionNames {
-        const baseName = ResourceNames.makeResourceName(instanceNames.prefix, instanceNames.component, instanceNames.env, instanceNames.plane, instanceNames.instance, this.geography.name, this.region.name);
-        const baseStorageName = ResourceNames.convertToStorageResourceName(instanceNames.prefix, baseName);
-        return this.outputNames = {
-            baseName: baseName,
-            baseEnvironmentName: instanceNames.baseEnvironmentName,
-            basePlaneName: instanceNames.basePlaneName,
-            baseInstanceName: instanceNames.baseInstanceName,
-            baseRegionName: baseName,
-            baseRegionStorageName: baseStorageName,
-            prefix: instanceNames.prefix,
-            component: instanceNames.component,
-            env: instanceNames.env,
-            plane: instanceNames.plane,
-            subscriptionName: instanceNames.subscriptionName,
-            subscriptionId: instanceNames.subscriptionId,
-            instance: instanceNames.instance,
-            instanceLocation: instanceNames.instanceLocation,
-            instanceRegions: instanceNames.instanceRegions,
-            geo: this.geography.name,
-            region: `${this.geography.name}-${this.region.name}`,
-            regionLocation: this.region.fullName
-        }
+        const geo = this.geography.name;
+        const regionSuffix = this.region.name;
+        const regionName = `${geo}-${regionSuffix}`;
+        const regionLocation = this.region.fullName;
+        this.outputNames = ResourceNames.sortKeys(new RegionNames(instanceNames, regionName, geo, regionSuffix, regionLocation));
+        return this.outputNames;
     }
 
     clone(): DataLocation {
-        const obj = new DataLocation();
-        obj.geography = this.geography;
-        obj.region = this.region;
-        return obj;
+        return cloneDeep<DataLocation>(this);
     }
 }

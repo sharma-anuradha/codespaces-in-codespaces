@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-core-prod-data-rel-us-e",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.prod",
   "baseEnvironmentName": "vscs-core-prod",
-  "basePlaneName": "vscs-core-prod-data",
+  "baseInstanceFileName": "core.prod-data-rel",
   "baseInstanceName": "vscs-core-prod-data-rel",
+  "baseName": "vscs-core-prod-data-rel-us-e",
+  "basePlaneFileName": "core.prod-data",
+  "basePlaneName": "vscs-core-prod-data",
+  "baseRegionFileName": "core.prod-data-rel-us-e",
   "baseRegionName": "vscs-core-prod-data-rel-us-e",
   "baseRegionStorageName": "coreproddatareluse",
-  "prefix": "vscs",
   "component": "core",
   "env": "prod",
-  "plane": "data",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "data",
+  "prefix": "vscs",
   "region": "us-e",
-  "regionLocation": "EastUS"
+  "regionLocation": "EastUS",
+  "regionSuffix": "e",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

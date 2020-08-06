@@ -1,7 +1,10 @@
 {
-  "baseName": "vscs-stub-ppe",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.ppe",
   "baseEnvironmentName": "vscs-stub-ppe",
-  "prefix": "vscs",
+  "baseName": "vscs-stub-ppe",
   "component": "stub",
-  "env": "ppe"
+  "env": "ppe",
+  "prefix": "vscs"
 }

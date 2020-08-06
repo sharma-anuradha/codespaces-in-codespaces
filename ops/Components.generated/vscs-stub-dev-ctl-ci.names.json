@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-stub-dev-ctl-ci",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.dev",
   "baseEnvironmentName": "vscs-stub-dev",
-  "basePlaneName": "vscs-stub-dev-ctl",
+  "baseInstanceFileName": "stub.dev-ctl-ci",
   "baseInstanceName": "vscs-stub-dev-ctl-ci",
-  "prefix": "vscs",
+  "baseName": "vscs-stub-dev-ctl-ci",
+  "basePlaneFileName": "stub.dev-ctl",
+  "basePlaneName": "vscs-stub-dev-ctl",
   "component": "stub",
   "env": "dev",
-  "plane": "ctl",
-  "subscriptionName": "vscs-stub-dev-ctl",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-stub-dev-ctl"
 }

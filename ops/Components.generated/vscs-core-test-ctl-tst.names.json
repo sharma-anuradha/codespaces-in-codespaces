@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-core-test-ctl-tst",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.test",
   "baseEnvironmentName": "vscs-core-test",
-  "basePlaneName": "vscs-core-test-ctl",
+  "baseInstanceFileName": "core.test-ctl-tst",
   "baseInstanceName": "vscs-core-test-ctl-tst",
-  "prefix": "vscs",
+  "baseName": "vscs-core-test-ctl-tst",
+  "basePlaneFileName": "core.test-ctl",
+  "basePlaneName": "vscs-core-test-ctl",
   "component": "core",
   "env": "test",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "tst",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

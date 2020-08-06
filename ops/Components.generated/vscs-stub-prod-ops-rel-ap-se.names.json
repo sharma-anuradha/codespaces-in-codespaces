@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-stub-prod-ops-rel-ap-se",
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.prod",
   "baseEnvironmentName": "vscs-stub-prod",
-  "basePlaneName": "vscs-stub-prod-ops",
+  "baseInstanceFileName": "stub.prod-ops-rel",
   "baseInstanceName": "vscs-stub-prod-ops-rel",
+  "baseName": "vscs-stub-prod-ops-rel-ap-se",
+  "basePlaneFileName": "stub.prod-ops",
+  "basePlaneName": "vscs-stub-prod-ops",
+  "baseRegionFileName": "stub.prod-ops-rel-ap-se",
   "baseRegionName": "vscs-stub-prod-ops-rel-ap-se",
   "baseRegionStorageName": "stubprodopsrelapse",
-  "prefix": "vscs",
   "component": "stub",
   "env": "prod",
-  "plane": "ops",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "ap",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "ap",
+  "plane": "ops",
+  "prefix": "vscs",
   "region": "ap-se",
-  "regionLocation": "SoutheastAsia"
+  "regionLocation": "SoutheastAsia",
+  "regionSuffix": "se",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

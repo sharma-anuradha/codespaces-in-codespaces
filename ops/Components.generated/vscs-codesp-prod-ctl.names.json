@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-codesp-prod-ctl",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.prod",
   "baseEnvironmentName": "vscs-codesp-prod",
+  "baseName": "vscs-codesp-prod-ctl",
+  "basePlaneFileName": "codesp.prod-ctl",
   "basePlaneName": "vscs-codesp-prod-ctl",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "prod",
   "plane": "ctl",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

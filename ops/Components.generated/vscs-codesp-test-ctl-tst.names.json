@@ -1,17 +1,22 @@
 {
-  "baseName": "vscs-codesp-test-ctl-tst",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.test",
   "baseEnvironmentName": "vscs-codesp-test",
-  "basePlaneName": "vscs-codesp-test-ctl",
+  "baseInstanceFileName": "codesp.test-ctl-tst",
   "baseInstanceName": "vscs-codesp-test-ctl-tst",
-  "prefix": "vscs",
+  "baseName": "vscs-codesp-test-ctl-tst",
+  "basePlaneFileName": "codesp.test-ctl",
+  "basePlaneName": "vscs-codesp-test-ctl",
   "component": "codesp",
   "env": "test",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "tst",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
-  ]
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

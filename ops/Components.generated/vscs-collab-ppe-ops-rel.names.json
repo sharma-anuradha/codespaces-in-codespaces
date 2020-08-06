@@ -1,18 +1,23 @@
 {
-  "baseName": "vscs-collab-ppe-ops-rel",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.ppe",
   "baseEnvironmentName": "vscs-collab-ppe",
-  "basePlaneName": "vscs-collab-ppe-ops",
+  "baseInstanceFileName": "collab.ppe-ops-rel",
   "baseInstanceName": "vscs-collab-ppe-ops-rel",
-  "prefix": "vscs",
+  "baseName": "vscs-collab-ppe-ops-rel",
+  "basePlaneFileName": "collab.ppe-ops",
+  "basePlaneName": "vscs-collab-ppe-ops",
   "component": "collab",
   "env": "ppe",
-  "plane": "ops",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "eu-w",
     "us-w2"
-  ]
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

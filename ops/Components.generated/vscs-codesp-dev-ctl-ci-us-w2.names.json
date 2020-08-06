@@ -1,22 +1,29 @@
 {
-  "baseName": "vscs-codesp-dev-ctl-ci-us-w2",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.dev",
   "baseEnvironmentName": "vscs-codesp-dev",
-  "basePlaneName": "vscs-codesp-dev-ctl",
+  "baseInstanceFileName": "codesp.dev-ctl-ci",
   "baseInstanceName": "vscs-codesp-dev-ctl-ci",
+  "baseName": "vscs-codesp-dev-ctl-ci-us-w2",
+  "basePlaneFileName": "codesp.dev-ctl",
+  "basePlaneName": "vscs-codesp-dev-ctl",
+  "baseRegionFileName": "codesp.dev-ctl-ci-us-w2",
   "baseRegionName": "vscs-codesp-dev-ctl-ci-us-w2",
   "baseRegionStorageName": "codespdevctlciusw2",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "dev",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "ci",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

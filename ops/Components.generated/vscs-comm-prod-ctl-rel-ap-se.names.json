@@ -1,16 +1,19 @@
 {
-  "baseName": "vscs-comm-prod-ctl-rel-ap-se",
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.prod",
   "baseEnvironmentName": "vscs-comm-prod",
-  "basePlaneName": "vscs-comm-prod-ctl",
+  "baseInstanceFileName": "comm.prod-ctl-rel",
   "baseInstanceName": "vscs-comm-prod-ctl-rel",
+  "baseName": "vscs-comm-prod-ctl-rel-ap-se",
+  "basePlaneFileName": "comm.prod-ctl",
+  "basePlaneName": "vscs-comm-prod-ctl",
+  "baseRegionFileName": "comm.prod-ctl-rel-ap-se",
   "baseRegionName": "vscs-comm-prod-ctl-rel-ap-se",
   "baseRegionStorageName": "commprodctlrelapse",
-  "prefix": "vscs",
   "component": "comm",
   "env": "prod",
-  "plane": "ctl",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "ap",
   "instance": "rel",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
@@ -19,7 +22,11 @@
     "us-e",
     "us-w2"
   ],
-  "geo": "ap",
+  "plane": "ctl",
+  "prefix": "vscs",
   "region": "ap-se",
-  "regionLocation": "SoutheastAsia"
+  "regionLocation": "SoutheastAsia",
+  "regionSuffix": "se",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

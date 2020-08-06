@@ -1,11 +1,15 @@
 {
-  "baseName": "vscs-comm-prod-data",
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.prod",
   "baseEnvironmentName": "vscs-comm-prod",
+  "baseName": "vscs-comm-prod-data",
+  "basePlaneFileName": "comm.prod-data",
   "basePlaneName": "vscs-comm-prod-data",
-  "prefix": "vscs",
   "component": "comm",
   "env": "prod",
   "plane": "data",
+  "prefix": "vscs",
   "subscriptionId": "UNDEFINED",
   "subscriptionName": "UNDEFINED"
 }

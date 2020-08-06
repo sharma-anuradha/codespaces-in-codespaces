@@ -1,22 +1,29 @@
 {
-  "baseName": "vscs-codesp-test-ops-tst-us-w2",
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.test",
   "baseEnvironmentName": "vscs-codesp-test",
-  "basePlaneName": "vscs-codesp-test-ops",
+  "baseInstanceFileName": "codesp.test-ops-tst",
   "baseInstanceName": "vscs-codesp-test-ops-tst",
+  "baseName": "vscs-codesp-test-ops-tst-us-w2",
+  "basePlaneFileName": "codesp.test-ops",
+  "basePlaneName": "vscs-codesp-test-ops",
+  "baseRegionFileName": "codesp.test-ops-tst-us-w2",
   "baseRegionName": "vscs-codesp-test-ops-tst-us-w2",
   "baseRegionStorageName": "codesptestopststusw2",
-  "prefix": "vscs",
   "component": "codesp",
   "env": "test",
-  "plane": "ops",
-  "subscriptionName": "UNDEFINED",
-  "subscriptionId": "UNDEFINED",
+  "geo": "us",
   "instance": "tst",
   "instanceLocation": "WestUs2",
   "instanceRegions": [
     "us-w2"
   ],
-  "geo": "us",
+  "plane": "ops",
+  "prefix": "vscs",
   "region": "us-w2",
-  "regionLocation": "WestUs2"
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "UNDEFINED",
+  "subscriptionName": "UNDEFINED"
 }

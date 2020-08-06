@@ -1,7 +1,10 @@
 {
-  "baseName": "vscs-collab-prod",
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.prod",
   "baseEnvironmentName": "vscs-collab-prod",
-  "prefix": "vscs",
+  "baseName": "vscs-collab-prod",
   "component": "collab",
-  "env": "prod"
+  "env": "prod",
+  "prefix": "vscs"
 }

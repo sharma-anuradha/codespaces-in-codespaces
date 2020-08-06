@@ -1,5 +1,7 @@
 {
-  "prefix": "vscs",
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
   "baseName": "vscs-core",
-  "component": "core"
+  "component": "core",
+  "prefix": "vscs"
 }
