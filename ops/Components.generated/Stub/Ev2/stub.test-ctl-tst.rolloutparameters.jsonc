@@ -16,7 +16,11 @@
         "reference": { "path": "Scripts/scripts.zip" }
       },
       "launch": {
-        "command": ["stub-script.ps1"],
+        "command": [
+          "/bin/bash",
+          "-c",
+          "pwsh stub-script.ps1"
+        ],
         "environmentVariables": [
           // {
           //   "name": "myVariable",

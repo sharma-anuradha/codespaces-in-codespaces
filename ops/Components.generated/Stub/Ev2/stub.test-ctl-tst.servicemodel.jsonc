@@ -41,7 +41,7 @@
                   "type": "sub-script",
                   "properties": {
                     "imageName": "adm-ubuntu-1804-l",
-                    "imageVersion": "v5"
+                    "imageVersion": "v14"
                   }
                 }
               ]

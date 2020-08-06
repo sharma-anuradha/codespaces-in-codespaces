@@ -13,7 +13,7 @@
           "name": "{{{baseInstanceName}}}-arm",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\{{{component}}}.{{{env}}}-ctl-{{{instance}}}.stub.jsonc",
+              "templatePath": "ARM\\{{{baseInstanceFileName}}}.stub.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
@@ -26,7 +26,7 @@
               "parametersPath": "ARM\\empty.parameters.jsonc"
             },
             "extension": {
-              "rolloutParametersPath": "{{{component}}}.{{{env}}}-ctl-{{{instance}}}.rolloutparameters.jsonc",
+              "rolloutParametersPath": "{{{baseInstanceFileName}}}.rolloutparameters.jsonc",
               "allowedTypes": [
                 {
                   "Type": "scripts/stub-script"
@@ -37,7 +37,7 @@
                   "type": "sub-script",
                   "properties": {
                     "imageName": "adm-ubuntu-1804-l",
-                    "imageVersion": "v5"
+                    "imageVersion": "v14"
                   }
                 }
               ]
