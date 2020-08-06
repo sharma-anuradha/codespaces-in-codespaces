@@ -57,46 +57,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <summary>
         /// Gets the min input count on this queue.
         /// </summary>
-        public int MinInputCount { get; }
+        int MinInputCount { get; }
 
         /// <summary>
         /// Gets the max input count on this queue.
         /// </summary>
-        public int MaxInputCount { get; }
+        int MaxInputCount { get; }
 
         /// <summary>
         /// Gets the accumulated job handler process time so far.
         /// </summary>
-        public TimeSpan ProcessTime { get; }
+        TimeSpan ProcessTime { get; }
 
         /// <summary>
         /// Gets all the job process times.
         /// </summary>
-        public IReadOnlyCollection<TimeSpan> ProcessTimes { get; }
+        IReadOnlyCollection<TimeSpan> ProcessTimes { get; }
 
         /// <summary>
         /// Gets the number of jobs processed so far.
         /// </summary>
-        public int Processed { get; }
+        int Processed { get; }
 
         /// <summary>
         /// Gets the number of failures.
         /// </summary>
-        public int Failures { get; }
+        int Failures { get; }
 
         /// <summary>
         /// Gets the number of retries.
         /// </summary>
-        public int Retries { get; }
+        int Retries { get; }
 
         /// <summary>
         /// Gets the number of cancellations.
         /// </summary>
-        public int Cancelled { get; }
+        int Cancelled { get; }
 
         /// <summary>
         /// Gets the number of expired jobs.
         /// </summary>
-        public int Expired { get; }
+        int Expired { get; }
+
+        /// <summary>
+        /// Gets the count of request to keep job payloads invisible.
+        /// </summary>
+        int KeepInvisibleCount { get; }
     }
 }

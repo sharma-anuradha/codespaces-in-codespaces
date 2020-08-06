@@ -34,6 +34,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent;
@@ -362,6 +363,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Add HeartBeat data handlers
             services.AddHeartBeatDataHandlers();
+
+            // Job Queue consumer telemetry
+            services.AddJobQueueTelemetrySummary();
 
             services.AddTokenProvider(appSettings.AuthenticationSettings);
 

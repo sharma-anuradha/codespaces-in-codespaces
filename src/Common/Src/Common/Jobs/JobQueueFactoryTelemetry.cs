@@ -69,11 +69,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                                 .FluentAddValue(JobQueueLoggerConst.JobQueueMinInputCount, jobPayloadHandlerMetrics.MinInputCount)
                                                 .FluentAddValue(JobQueueLoggerConst.JobQueueMaxInputCount, jobPayloadHandlerMetrics.MaxInputCount)
                                                 .FluentAddValue(JobQueueLoggerConst.JobProcessedCount, jobPayloadHandlerMetrics.Processed)
-                                                .FluentAddValue(JobQueueLoggerConst.JobAverageProcessTime, Math.Round(jobPayloadHandlerMetrics.ProcessTime.TotalMilliseconds / jobPayloadHandlerMetrics.Processed, 2).ToString())
+                                                .FluentAddValue(JobQueueLoggerConst.JobAverageProcessTime, jobPayloadHandlerMetrics.Processed == 0 ? string.Empty : Math.Round(jobPayloadHandlerMetrics.ProcessTime.TotalMilliseconds / jobPayloadHandlerMetrics.Processed, 2).ToString())
                                                 .FluentAddValue(JobQueueLoggerConst.JobFailuresCount, jobPayloadHandlerMetrics.Failures)
                                                 .FluentAddValue(JobQueueLoggerConst.JobRetriesCount, jobPayloadHandlerMetrics.Retries)
                                                 .FluentAddValue(JobQueueLoggerConst.JobCancelledCount, jobPayloadHandlerMetrics.Cancelled)
                                                 .FluentAddValue(JobQueueLoggerConst.JobExpiredCount, jobPayloadHandlerMetrics.Expired)
+                                                .FluentAddValue(JobQueueLoggerConst.JobKeepInvisibleCount, jobPayloadHandlerMetrics.KeepInvisibleCount)
                                                 .FluentAddValue(JobQueueLoggerConst.JobPercentile50Time, GetPercentile(jobProcessTimes, 0.5))
                                                 .FluentAddValue(JobQueueLoggerConst.JobPercentile90Time, GetPercentile(jobProcessTimes, 0.9))
                                                 .FluentAddValue(JobQueueLoggerConst.JobPercentile99Time, GetPercentile(jobProcessTimes, 0.99));
@@ -112,6 +113,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         private static double GetPercentile(IEnumerable<double> seq, double percentile)
         {
             var elements = seq.ToArray();
+            if (elements.Length == 0)
+            {
+                return 0;
+            }
+
             Array.Sort(elements);
             double realIndex = percentile * (elements.Length - 1);
             int index = (int)realIndex;

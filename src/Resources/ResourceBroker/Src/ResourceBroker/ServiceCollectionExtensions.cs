@@ -174,32 +174,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
         }
 
-        private class JobSchedulerLeaseProvider : IJobSchedulerLeaseProvider
+        private class JobSchedulerLeaseProvider : JobSchedulerLeaseProviderBase
         {
             public JobSchedulerLeaseProvider(
                 IClaimedDistributedLease claimedDistributedLease,
-                ResourceBrokerSettings resourceBrokerSettings,
-                IResourceNameBuilder resourceNameBuilder)
+                IResourceNameBuilder resourceNameBuilder,
+                ResourceBrokerSettings resourceBrokerSettings)
+                : base(claimedDistributedLease, resourceNameBuilder)
             {
-                ClaimedDistributedLease = Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
                 ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
-                ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
             }
 
-            private IClaimedDistributedLease ClaimedDistributedLease { get; }
+            protected override string LeaseContainerName => ResourceBrokerSettings.LeaseContainerName;
 
             private ResourceBrokerSettings ResourceBrokerSettings { get; }
-
-            private IResourceNameBuilder ResourceNameBuilder { get; }
-
-            public Task<IDisposable> ObtainAsync(string jobName, TimeSpan timeSpan, IDiagnosticsLogger logger, CancellationToken cancellationToken)
-            {
-                return ClaimedDistributedLease.Obtain(
-                    ResourceBrokerSettings.LeaseContainerName,
-                    ResourceNameBuilder.GetLeaseName($"schedule-{jobName}-lease"),
-                    timeSpan,
-                    logger);
-            }
         }
     }
 }

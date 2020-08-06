@@ -1,4 +1,4 @@
-﻿// <copyright file="IJob.cs" company="Microsoft">
+// <copyright file="IJob.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// <summary>
     /// Job interface base definition.
     /// </summary>
-    public interface IJob : IAsyncDisposable
+    public interface IJob
     {
         /// <summary>
         /// Gets the unique job id.

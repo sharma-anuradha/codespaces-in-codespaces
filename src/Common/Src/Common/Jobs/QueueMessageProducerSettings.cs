@@ -1,4 +1,4 @@
-﻿// <copyright file="QueueMessageProducerSettings.cs" company="Microsoft">
+// <copyright file="QueueMessageProducerSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <summary>
         /// Gets the default visibility timeout.
         /// </summary>
-        public static readonly TimeSpan DefaultVisibilityTimeout = TimeSpan.FromSeconds(30);
+        public static readonly TimeSpan DefaultVisibilityTimeout = TimeSpan.FromMinutes(5);
 
         /// <summary>
         /// Gets the default settings.

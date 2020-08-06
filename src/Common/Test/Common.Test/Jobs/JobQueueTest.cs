@@ -1,6 +1,8 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Xunit;
@@ -77,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         await Task.Delay(payload.Content, ct);
                         await payloadsProcessed.SendAsync(payload);
                     });
-                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), new JobPayloadOptions() { HandlerTimout = TimeSpan.FromMilliseconds(50) });
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), new JobPayloadOptions() { HandlerTimeout = TimeSpan.FromMilliseconds(50) });
                 await Assert.ThrowsAsync<TimeoutException>(() => payloadsProcessed.ReceiveAsync(TimeSpan.FromMilliseconds(100)));
             });
         }
@@ -95,7 +97,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         ++retries;
                         throw new NotSupportedException();
                     });
-                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(-1), new JobPayloadOptions() { MaxHandlerRetries = 2 });
+
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(-1), new JobPayloadOptions() { MaxHandlerRetries = 2, InvisibleThreshold = TimeSpan.Zero });
                 await Task.Delay(TimeSpan.FromSeconds(5));
                 Assert.Equal(2, retries);
             }, new QueueMessageProducerSettings(5, TimeSpan.FromSeconds(1), QueueMessageProducerSettings.DefaultTimeout));
@@ -129,6 +132,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 var throwOnData = 50;
                 var jobRetries = 0;
 
+                var jobPayloadOptions = new JobPayloadOptions() { InvisibleThreshold = TimeSpan.Zero };
+
                 jobQueueConsumer.RegisterJobHandler<JobContentPayload<int>>(
                     async (job, logger, ct) =>
                     {
@@ -140,14 +145,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         jobRetries = job.Retries;
                         await payloadsProcessed.SendAsync(job.Payload);
                     });
-                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(100));
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(100), jobPayloadOptions);
                 var payloadReceived = await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
                 Assert.Equal(100, payloadReceived.Content);
 
                 // this will force an exception on the job handler.
-                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(50));
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(50), jobPayloadOptions);
 
-                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200));
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), jobPayloadOptions);
                 payloadReceived = await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
                 Assert.Equal(200, payloadReceived.Content);
                 throwOnData = -1;
@@ -215,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         await job.UpdateAsync(TimeSpan.FromSeconds(60), ct);
                         await payloadsProcessed.SendAsync(job.Payload);
                     });
-                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), new JobPayloadOptions() { HandlerTimout = TimeSpan.FromMilliseconds(50) });
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), new JobPayloadOptions() { HandlerTimeout = TimeSpan.FromMilliseconds(50) });
 
                 var payloadReceived = await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
                 Assert.Equal(200, payloadReceived.Content);
@@ -306,6 +311,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 Assert.Equal(200, Convert.ToInt32(jobPayloadReceived.LoggerProperties["property1"]));
                 Assert.Equal("hi", jobPayloadReceived.LoggerProperties["property2"]);
             });
+        }
+
+        [Fact]
+        public Task DoubleProcessAsync()
+        {
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                int count = 0;
+                var payloadsProcessed = new BufferBlock<JobContentPayload<int>>();
+                jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
+                    async (payload, logger, ct) =>
+                    {
+                        ++count;
+                        if (count == 1)
+                        {
+                            await Task.Delay(10000); // 10 secs
+                        }
+                        await payloadsProcessed.SendAsync(payload);
+                    }, JobHandlerBase.NoParallelismDataflowBlockOptions);
+                var jobPayload = new JobContentPayload<int>(100);
+                await jobQueueProducer.AddJobAsync(jobPayload);
+                await jobQueueProducer.AddJobAsync(jobPayload);
+                await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                await Task.Delay(2000);
+                Assert.Equal(2, count);
+            }, new QueueMessageProducerSettings(5, TimeSpan.FromSeconds(8), TimeSpan.FromMilliseconds(500)));
         }
 
         protected Task RunJobQueueTest(Func<JobQueueProducer, JobQueueConsumer, IQueue, Task> testCallback,

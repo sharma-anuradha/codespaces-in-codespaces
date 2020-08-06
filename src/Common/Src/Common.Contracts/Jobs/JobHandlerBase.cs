@@ -73,10 +73,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 #pragma warning restore SA1402 // File may only contain a single type
         where T : JobPayload
     {
-        private static readonly TimeSpan DefaultJobWaiting = TimeSpan.FromSeconds(5);
-
-        private static readonly TimeSpan DefaultJobUpdate = TimeSpan.FromSeconds(10);
-
         /// <summary>
         /// Initializes a new instance of the <see cref="JobHandlerBase{T}"/> class.
         /// </summary>
@@ -88,6 +84,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             Options = options;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JobHandlerBase{T}"/> class.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">Parameter to control the TPL data flow execution options.</param>
+        /// <param name="options">Job handler options.</param>
+        protected JobHandlerBase(int maxDegreeOfParallelism, JobHandlerOptions options = null)
+            : this(WithValues(maxDegreeOfParallelism), options)
+        {
+        }
+
         /// <inheritdoc/>
         public virtual ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
 
@@ -95,40 +101,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         public JobHandlerOptions Options { get; }
 
         /// <inheritdoc/>
-        public async Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
-        {
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-            {
-                int updateCount = 0;
-                var updateTask = Task.Run(async () =>
-                {
-                    while (!cts.Token.IsCancellationRequested)
-                    {
-                        await Task.Delay(DefaultJobWaiting, cts.Token);
-                        await job.UpdateAsync(DefaultJobUpdate, cts.Token);
-                        ++updateCount;
-                    }
-                });
-                try
-                {
-                    await HandleJobInternalAsync(job, logger, cancellationToken);
-                    await job.DisposeAsync();
-                }
-                finally
-                {
-                    logger.FluentAddValue("UpdateCount", updateCount);
-                    cts.Cancel();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Process the payload.
-        /// </summary>
-        /// <param name="job">The job instance.</param>
-        /// <param name="logger">Logger instance.</param>
-        /// <param name="cancellationToken">Optional cancellation token.</param>
-        /// <returns>Completion task.</returns>
-        protected abstract Task HandleJobInternalAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken);
+        public abstract Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken);
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="BufferBlockQueue.cs" company="Microsoft">
+// <copyright file="BufferBlockQueue.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -27,11 +27,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         {
             this.invisibleMessagesTask = Task.Run(async () =>
             {
-                while (true)
+                while (!DisposeToken.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, DisposeToken);
+                    await Task.Delay(500, DisposeToken);
                     var now = DateTime.Now;
-                    foreach (var item in InvisibleMessages.Values.Where(i => now > i.Item2).ToArray())
+                    var messagesToAdd = InvisibleMessages.Values.Where(i => now > i.Item2).ToArray();
+                    foreach (var item in messagesToAdd)
                     {
                         InvisibleMessages.TryRemove(item.Item1.Id, out var removed);
                         await AddMessageAsync(item.Item1, DisposeToken);
@@ -80,7 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     {
                         if (visibilityTimeout.HasValue)
                         {
-                            InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(queueMessage, DateTime.Now.Add(visibilityTimeout.Value));
+                            var visibilityExpired = DateTime.Now.Add(visibilityTimeout.Value);
+                            InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(queueMessage, visibilityExpired);
                         }
 
                         queueMessages.Add(queueMessage);

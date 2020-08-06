@@ -173,7 +173,7 @@ export class Actions {
         {
             type: CardType.LogViewer,
             name: "Job Producer",
-            description: "Shows the job consumers",
+            description: "Shows the job producers",
             options: {
                 filterList: [
                     {
@@ -200,7 +200,7 @@ export class Actions {
                         placeHolder: "",
                     },
                 ],
-                columnSettings: "JobId,JobType,JobDuration,JobQueueDuration,JobHandlerDuration,JobDidCancel,JobRetries,time",
+                columnSettings: "JobId,JobType,JobDuration,JobQueueDuration,JobHandlerDuration,JobDequeuedDuration,JobDidCancel,JobRetries,time",
             },
             id: "",
         },
@@ -217,7 +217,7 @@ export class Actions {
                         placeHolder: "",
                     },
                 ],
-                columnSettings: "Queue,JobType,JobProcessedCount,JobFailuresCount,time",
+                columnSettings: "Service,Queue,JobType,JobProcessedCount,JobFailuresCount,time",
             },
             id: "",
         },
@@ -234,7 +234,7 @@ export class Actions {
                         placeHolder: "",
                     },
                 ],
-                columnSettings: "Queue,JobType,JobQueueMinInputCount,JobQueueMaxInputCount,JobProcessedCount,JobAverageProcessTime,JobPercentile50Time,JobPercentile90Time,JobPercentile99Time,JobFailuresCount,JobRetriesCount,JobCancelledCount,JobExpiredCount,time",
+                columnSettings: "Service,Queue,JobType,JobQueueMinInputCount,JobQueueMaxInputCount,JobProcessedCount,JobAverageProcessTime,JobPercentile50Time,JobPercentile90Time,JobPercentile99Time,JobFailuresCount,JobRetriesCount,JobCancelledCount,JobExpiredCount,JobKeepInvisibleCount,time",
             },
             id: "",
         },

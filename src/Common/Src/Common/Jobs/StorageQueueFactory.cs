@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageQueueFactory.cs" company="Microsoft">
+// <copyright file="StorageQueueFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -129,7 +129,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         }
 
                         childLogger.FluentAddValue("QueueFoundItems", results.Count());
-                        return results.Select(m => new QueueMessageAdapter(m) as QueueMessage);
+                        return results.Select(m => new QueueMessageAdapter(m) as QueueMessage).ToArray() as IEnumerable<QueueMessage>;
                     });
             }
 
@@ -141,7 +141,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     async (childLogger) =>
                     {
                         var queue = await GetQueueAsync();
-                        await queue.DeleteMessageAsync(QueueMessageAdapter.AsCloudQueueMessage(queueMessage), cancellationToken);
+                        var cloudQueueMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
+                        await queue.DeleteMessageAsync(cloudQueueMessage, cancellationToken);
                     },
                     swallowException: true);
             }
@@ -157,9 +158,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         MessageUpdateFields messageUpdateFields =
                             MessageUpdateFields.Visibility | (updateContent ? MessageUpdateFields.Content : 0);
 
-                        var cloudMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
+                        var cloudQueueMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
                         await queue.UpdateMessageAsync(
-                            cloudMessage,
+                            cloudQueueMessage,
                             visibilityTimeout,
                             messageUpdateFields);
                     },

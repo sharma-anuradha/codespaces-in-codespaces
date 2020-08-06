@@ -28,6 +28,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         private readonly Dictionary<string, JobHandlerMetrics> jobHandlerMetricsByTypeTag = new Dictionary<string, JobHandlerMetrics>();
         private readonly object lockJobHandlerMetrics = new object();
 
+        // dequeued jobs
+        private readonly HashSet<Job> dequeuedJobs = new HashSet<Job>();
+        private readonly object lockDequeuedJobs = new object();
+        private readonly Task keepInvisibleJobsTask;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="JobQueueConsumer"/> class.
         /// </summary>
@@ -42,7 +47,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             {
                 var payloadTuple = CreateJobPayload(queueMessageInfo.Item1);
                 var jobType = typeof(Job<>).MakeGenericType(payloadTuple.Item2.GetType());
-                return (IJob)Activator.CreateInstance(jobType, queueMessageProducer.Queue, queueMessageInfo, payloadTuple.Item1, payloadTuple.Item2);
+                var job = (Job)Activator.CreateInstance(jobType, queueMessageProducer.Queue, queueMessageInfo, payloadTuple.Item1, payloadTuple.Item2);
+                AddDequeuedJob(job);
+                return job;
             });
 
             queueMessageProducer.Messages.LinkTo(jobTransformerBlock);
@@ -51,8 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             // register default JobPayloadError handler
             JobQueueConsumerHelpers.RegisterJobHandler<JobPayloadError>(this, async (job, logger, ct) =>
             {
-                await job.DisposeAsync();
+                await ((Job)job).DisposeAsync(ct);
             });
+
+            this.keepInvisibleJobsTask = Task.Run(() => KeepInvisibleJobsAsync());
         }
 
         /// <inheritdoc/>
@@ -74,9 +83,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             Func<IJob, Task> actionWrapper = async (job) =>
             {
                 var jobInstance = (Job)job;
-                var jobPayloadOptions = jobInstance.JobPayloadInfo.PayloadOptions;
 
-                var handlerTimout = jobHandlerOptions != null ? jobHandlerOptions.HandlerTimout : jobPayloadOptions?.HandlerTimout;
+                Func<Task> jobInstanceDispose = () =>
+                {
+                    RemoveDequeuedJob(jobInstance);
+                    return jobInstance.DisposeAsync(DisposeToken);
+                };
+
+                var jobPayloadOptions = jobInstance.PayloadOptions;
+
+                var handlerTimout = jobHandlerOptions != null ? jobHandlerOptions.HandlerTimeout : jobPayloadOptions?.HandlerTimeout;
                 var maxHandlerRetries = jobHandlerOptions != null ? jobHandlerOptions.MaxHandlerRetries : jobPayloadOptions?.MaxHandlerRetries;
 
                 var failed = false;
@@ -89,22 +105,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     "job_queue_consumer",
                     async (childLogger) =>
                     {
-                        var now = DateTime.UtcNow;
-                        childLogger.FluentAddValue(JobQueueLoggerConst.JobId, job.Id)
-                            .FluentAddValue(JobQueueLoggerConst.JobType, typeTag)
-                            .FluentAddValue(JobQueueLoggerConst.JobQueueDuration, now - job.Created);
+                        var nowUtc = DateTime.UtcNow;
+                        childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, job.Id)
+                            .FluentAddBaseValue(JobQueueLoggerConst.JobType, typeTag);
+
                         var jobTyped = (IJob<T>)job;
 
                         // pass deserialized logger properties from the producer.
                         foreach (var kvp in jobTyped.Payload.LoggerProperties)
                         {
-                            childLogger.FluentAddValue(kvp.Key, kvp.Value.ToString());
+                            childLogger.FluentAddBaseValue(kvp.Key, kvp.Value.ToString());
                         }
 
                         if (jobPayloadOptions?.ExpireTimeout.HasValue == true &&
-                            now > job.Created.Add(jobPayloadOptions.ExpireTimeout.Value))
+                            nowUtc > job.Created.Add(jobPayloadOptions.ExpireTimeout.Value))
                         {
-                            await jobInstance.DisposeAsync();
+                            await jobInstanceDispose();
                             childLogger.FluentAddValue(JobQueueLoggerConst.JobDidExpired, true);
                             expired = true;
                         }
@@ -123,9 +139,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                     }))
                                 {
                                     await jobHandler.HandleJobAsync(jobTyped, childLogger, cts.Token);
-                                    childLogger.FluentAddValue(JobQueueLoggerConst.JobHandlerDuration, start.Elapsed);
                                     var jobDuration = DateTime.UtcNow - job.Created;
-                                    childLogger.FluentAddValue(JobQueueLoggerConst.JobDuration, jobDuration);
+                                    childLogger.FluentAddValue(JobQueueLoggerConst.JobHandlerDuration, start.Elapsed)
+                                        .FluentAddValue(JobQueueLoggerConst.JobDuration, jobDuration)
+                                        .FluentAddValue(JobQueueLoggerConst.JobQueueDuration, nowUtc - job.Created)
+                                        .FluentAddValue(JobQueueLoggerConst.JobDequeuedDuration, nowUtc - jobInstance.DequeueTime);
+                                    await jobInstanceDispose();
                                 }
                             }
                         }
@@ -142,7 +161,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                             if (maxHandlerRetries.HasValue == true &&
                                 jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries.Value)
                             {
-                                await jobInstance.DisposeAsync();
+                                await jobInstanceDispose();
                             }
                             else
                             {
@@ -209,6 +228,64 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
         }
 
+        /// <inheritdoc/>
+        protected override async Task DisposeInternalAsync()
+        {
+            try
+            {
+                await this.keepInvisibleJobsTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            await base.DisposeInternalAsync();
+        }
+
+        private async Task KeepInvisibleJobsAsync()
+        {
+            while (!DisposeToken.IsCancellationRequested)
+            {
+                await Task.Delay(1000, DisposeToken);
+
+                // Note: we assume the jobs won't throw and swallow any error that could end this method.
+                var keepInvisibleJobTaskInfoFactories = GetKeepInvisibleJobTaskInfoFactories();
+
+                // update metrics
+                foreach (var item in keepInvisibleJobTaskInfoFactories.GroupBy(ti => ti.Item2))
+                {
+                    UpdateJobHandlerMetrics(item.Key, (jobHandlerMetrics) => jobHandlerMetrics.KeepInvisibleCount += item.Count());
+                }
+
+                await Task.WhenAll(keepInvisibleJobTaskInfoFactories.Select(ti => ti.Item1()));
+            }
+        }
+
+        private void AddDequeuedJob(Job job)
+        {
+            lock (this.lockDequeuedJobs)
+            {
+                this.dequeuedJobs.Add(job);
+            }
+        }
+
+        private void RemoveDequeuedJob(Job job)
+        {
+            lock (this.lockDequeuedJobs)
+            {
+                this.dequeuedJobs.Remove(job);
+            }
+        }
+
+        private (Func<Task>, string)[] GetKeepInvisibleJobTaskInfoFactories()
+        {
+            lock (this.lockDequeuedJobs)
+            {
+                var now = DateTime.Now;
+                return this.dequeuedJobs.Select(job => job.GetKeepInvisibleTaskInfoFactory(now, this.logger, DisposeToken)).Where(ti => ti.Item1 != null).ToArray();
+            }
+        }
+
         private void UpdateJobHandlerMetrics(string typeTag, Action<JobHandlerMetrics> updateCallback)
         {
             lock (this.lockJobHandlerMetrics)
@@ -248,22 +325,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
         }
 
-        private class Job : IJob
+        private abstract class Job : IJob
         {
             private readonly IQueue queue;
-            private readonly QueueMessage message;
+            private readonly QueueMessage queueMessage;
             private bool disposed;
+            private DateTime invisibleTimeout;
 
             public Job(IQueue queue, (QueueMessage, TimeSpan) messageInfo, JobPayloadInfo jobPayloadInfo)
             {
                 this.queue = queue;
-                this.message = messageInfo.Item1;
+                this.queueMessage = messageInfo.Item1;
                 VisibilityTimeout = messageInfo.Item2;
                 JobPayloadInfo = jobPayloadInfo;
+                InvisibleThreshold = PayloadOptions?.InvisibleThreshold.HasValue == true ? PayloadOptions.InvisibleThreshold.Value : TimeSpan.FromSeconds(60);
+                UpdateInvisibleTimeout(DateTime.Now);
             }
 
             /// <inheritdoc/>
-            public string Id => this.message.Id;
+            public string Id => this.queueMessage.Id;
 
             /// <inheritdoc/>
             public TimeSpan VisibilityTimeout { get; }
@@ -276,24 +356,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             public JobPayloadInfo JobPayloadInfo { get; }
 
-            public async ValueTask DisposeAsync()
-            {
-                if (!this.disposed)
-                {
-                    this.disposed = true;
-                    await this.queue.DeleteMessageAsync(this.message, default);
-                }
-            }
+            internal DateTime DequeueTime { get; } = DateTime.UtcNow;
+
+            internal abstract string TypeTag { get; }
+
+            internal JobPayloadOptions PayloadOptions => JobPayloadInfo.PayloadOptions;
+
+            private TimeSpan InvisibleThreshold { get; }
 
             public Task UpdateAsync(TimeSpan visibilityTimeout, CancellationToken cancellationToken)
             {
-                return this.queue.UpdateMessageAsync(this.message, false, visibilityTimeout, cancellationToken);
+                return this.queue.UpdateMessageAsync(this.queueMessage, false, visibilityTimeout, cancellationToken);
             }
 
             public Task UpdateContentAsync(CancellationToken cancellationToken)
             {
-                this.message.Content = Encoding.UTF8.GetBytes(JobPayloadInfo.ToJson());
-                return this.queue.UpdateMessageAsync(this.message, true, VisibilityTimeout, cancellationToken);
+                this.queueMessage.Content = Encoding.UTF8.GetBytes(JobPayloadInfo.ToJson());
+                return this.queue.UpdateMessageAsync(this.queueMessage, true, VisibilityTimeout, cancellationToken);
+            }
+
+            internal async Task DisposeAsync(CancellationToken cancellationToken)
+            {
+                if (!this.disposed)
+                {
+                    this.disposed = true;
+                    await this.queue.DeleteMessageAsync(this.queueMessage, cancellationToken);
+                }
+            }
+
+            internal (Func<Task>, string) GetKeepInvisibleTaskInfoFactory(DateTime now, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            {
+                // either we pass the invisible timeout or we are at leaset 1 min closer.
+                if (InvisibleThreshold != TimeSpan.Zero && (now >= this.invisibleTimeout || (this.invisibleTimeout - now) < InvisibleThreshold))
+                {
+                    return (() => logger.OperationScopeAsync(
+                        "job_keep_invisible",
+                        async (childLogger) =>
+                        {
+                            childLogger.FluentAddValue(JobQueueLoggerConst.JobId, Id);
+                            await UpdateAsync(VisibilityTimeout, cancellationToken);
+                            UpdateInvisibleTimeout(now);
+                        },
+                        swallowException: true),
+                        TypeTag);
+                }
+
+                return (null, null);
+            }
+
+            private void UpdateInvisibleTimeout(DateTime now)
+            {
+                this.invisibleTimeout = now.Add(VisibilityTimeout);
             }
         }
 
@@ -308,6 +421,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             /// <inheritdoc/>
             public T Payload { get; }
+
+            internal override string TypeTag => JobPayloadHelpers.GetTypeTag(typeof(T));
         }
 
         private class JobHandlerMetrics : IJobHandlerMetrics
@@ -329,6 +444,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             public int Cancelled { get; set; }
 
             public int Expired { get; set; }
+
+            public int KeepInvisibleCount { get; set; }
 
             public IReadOnlyCollection<TimeSpan> ProcessTimes => this.jobProcessTimes;
 

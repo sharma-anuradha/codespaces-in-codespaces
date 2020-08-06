@@ -35,6 +35,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         public const string JobQueueDuration = "JobQueueDuration";
 
         /// <summary>
+        /// Job dequeue duration.
+        /// </summary>
+        public const string JobDequeuedDuration = "JobDequeuedDuration";
+
+        /// <summary>
         /// Job handler duration.
         /// </summary>
         public const string JobHandlerDuration = "JobHandlerDuration";
@@ -113,5 +118,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Percentile 99 of process time.
         /// </summary>
         public const string JobPercentile99Time = "JobPercentile99Time";
+
+        /// <summary>
+        /// Keep invisible count.
+        /// </summary>
+        public const string JobKeepInvisibleCount = "JobKeepInvisibleCount";
     }
 }

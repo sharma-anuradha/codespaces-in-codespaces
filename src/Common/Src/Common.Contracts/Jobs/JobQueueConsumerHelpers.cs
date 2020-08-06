@@ -163,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 this.handleJobCallback = handleJobCallback;
             }
 
-            protected override Task HandleJobInternalAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            public override Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
             {
                 return this.handleJobCallback(job, logger, cancellationToken);
             }

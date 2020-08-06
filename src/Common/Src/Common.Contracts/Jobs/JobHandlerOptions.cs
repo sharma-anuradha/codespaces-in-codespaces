@@ -14,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <summary>
         /// Gets or sets the handler timeout value.
         /// </summary>
-        public TimeSpan? HandlerTimout { get; set; }
+        public TimeSpan? HandlerTimeout { get; set; }
 
         /// <summary>
         /// Gets or sets the max retries when processed by a job handler.
