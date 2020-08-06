@@ -164,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("https://*.github.dev");
                     currentOrigins.Add("https://*.ppe.github.dev");
                     currentOrigins.Add("https://*.dev.github.dev");
-                    currentOrigins.Add("https://*.local.github.dev");
+                    currentOrigins.Add("https://*.github.localhost");
 
                     options.AddPolicy(
                         "ProdCORSPolicy",

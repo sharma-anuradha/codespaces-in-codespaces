@@ -23,7 +23,14 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
         [HttpGet("~/codespace")]
         [HttpGet("~/workspace/{id}")]
-        [Routing.HttpGet("~/", "*.github.dev", "*.codespaces.visualstudio.com", "*.apps.codespaces.githubusercontent.com", "*.app.online.visualstudio.com")]
+        [Routing.HttpGet(
+            "~/",
+            "*.github.dev",
+            "*.github.localhost",
+            "*.codespaces.visualstudio.com",
+            "*.apps.codespaces.githubusercontent.com",
+            "*.app.online.visualstudio.com"
+        )]
         public Task<ActionResult> Index() => FetchStaticAsset("workbench.html", "text/html");
 
         private async Task<ActionResult> FetchStaticAsset(string path, string mediaType)
@@ -71,14 +78,16 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             HttpClient client = new HttpClient();
 
             Request.Headers.TryGetValue("authorization", out var authHeader);
-            if (string.IsNullOrWhiteSpace(authHeader)) {
+            if (string.IsNullOrWhiteSpace(authHeader))
+            {
                 return BadRequest("No 'authorization' header set.");
             }
 
             client.DefaultRequestHeaders.Add("authorization", authHeader.ToString());
 
             Request.Headers.TryGetValue("x-account-type", out var accountType);
-            if (string.IsNullOrWhiteSpace(accountType)) {
+            if (string.IsNullOrWhiteSpace(accountType))
+            {
                 return BadRequest("No 'x-account-type' header set.");
             }
 

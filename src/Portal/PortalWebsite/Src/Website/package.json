@@ -31,6 +31,7 @@
     "vscode:download": "node --unhandled-rejections=strict scripts/npm/download-vscode.js",
     "vscode:update": "node --unhandled-rejections=strict scripts/npm/update-vscode.js",
     "start": "yarn start:dns && run-p watch:portal watch:client",
+    "start:bare": "run-p watch:portal watch:client",
     "start:portal": "dotnet run --launch-profile Local --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj",
     "start:webpack-dev-server": "webpack-dev-server --config config/webpack/webpack.config.js",
     "setup": "yarn setup:get-dev-ssl-cert && yarn setup:get-service-principal && yarn setup:update-github-secret",
