@@ -20,6 +20,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// </summary>
     public class EnvironmentSuspendAction : EnvironmentItemAction<EnvironmentSuspendActionInput, object>, IEnvironmentSuspendAction
     {
+        private static readonly TimeSpan RegularSuspendTimeout = TimeSpan.FromMinutes(3);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentSuspendAction"/> class.
         /// </summary>
@@ -99,6 +101,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 return record.Value;
             }
 
+            // If the environment is already suspending, allow it to finish or timeout, before triggering force suspend
+            if (IsSuspending(record.Value))
+            {
+                return record.Value;
+            }
+
             if (record.Value.State != CloudEnvironmentState.Available)
             {
                 // If the environment is not in an available state during shutdown,
@@ -144,6 +152,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
                 return record.Value;
             }
+        }
+
+        private bool IsSuspending(CloudEnvironment environment)
+        {
+            return environment.State == CloudEnvironmentState.ShuttingDown &&
+                environment.LastStateUpdated.Add(RegularSuspendTimeout) >= DateTime.UtcNow;
         }
 
         private void ValidateEnvironment(CloudEnvironment environment)
