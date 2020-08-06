@@ -172,6 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Core Validation
             ValidateInput(input, logger);
             ValidateTargetLocation(input.Plan.Plan.Location, logger);
+            await ValidateEnvironmentAsync(input, logger);
             await ValidateSubscriptionAndPlanAsync(input, logger);
 
             // Build Transition
