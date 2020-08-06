@@ -15,12 +15,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <inheritdoc/>
     public class EnvironmentAccessManager : IEnvironmentAccessManager
     {
-        private const string UnauthorizedPlanId = "unauthorized_plan_id";
-        private const string UnauthorizedEnvironmentId = "unauthorized_environment_id";
-        private const string UnauthorizedPlanScope = "unauthorized_plan_scope";
-        private const string UnauthorizedPlanUser = "unauthorized_plan_user";
-        private const string UnauthorizedEnvironmentUser = "unauthorized_environment_user";
-        private const string UnauthorizedComputeId = "unauthorized_environment_compute_id";
+#pragma warning disable SA1600 // Elements should be documented
+        internal const string UnauthorizedPlanId = "unauthorized_plan_id";
+        internal const string UnauthorizedEnvironmentId = "unauthorized_environment_id";
+        internal const string UnauthorizedPlanScope = "unauthorized_plan_scope";
+        internal const string UnauthorizedPlanUser = "unauthorized_plan_user";
+        internal const string UnauthorizedEnvironmentUser = "unauthorized_environment_user";
+        internal const string UnauthorizedComputeId = "unauthorized_environment_compute_id";
+#pragma warning restore SA1600 // Elements should be documented
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentAccessManager"/> class.

@@ -289,9 +289,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.Details.SkuName, out var sku);
 
-            var environmentsInPlan = await EnvironmentListAction.RunAsync(input.Details.PlanId, null, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
-
             // Validate against existing environments
+            var environmentsInPlan = await EnvironmentListAction.RunAsync(
+                input.Details.PlanId, name: null, identity: null, userIdSet: null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
             if (environmentsInPlan.Any((env) => string.Equals(env.FriendlyName, input.Details.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
             {
                 // TODO: elpadann - when multiple users can access a plan, this should include an ownership check

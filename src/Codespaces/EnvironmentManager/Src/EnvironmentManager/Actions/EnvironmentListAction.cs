@@ -49,9 +49,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> RunAsync(
-            string planId, string name, UserIdSet userIdSet, EnvironmentListType environmentListType, IDiagnosticsLogger logger)
+            string planId,
+            string name,
+            VsoClaimsIdentity identity,
+            UserIdSet userIdSet,
+            EnvironmentListType environmentListType,
+            IDiagnosticsLogger logger)
         {
-            var identity = CurrentUserProvider.Identity;
+            identity ??= CurrentUserProvider.Identity;
 
             // Build input
             var input = new ListEnvironmentActionInput { Name = name, EnvironmentListType = environmentListType };
@@ -65,7 +70,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 // Users with explicit access to a different plan do not have access to this plan.
                 if (identity.IsPlanAuthorized(input.PlanId) == false)
                 {
-                    throw new UnauthorizedAccessException(VsoClaimsIdentity.IsPlanAuthorizedErrorCode);
+                    string errorMessage = "Authorized plan resource " +
+                        $"'{identity.AuthorizedPlan}' does not match target '{input.PlanId}'";
+                    logger.FluentAddValue("ErrorMessage", errorMessage)
+                        .LogWarning(EnvironmentAccessManager.UnauthorizedPlanId);
+                    throw new UnauthorizedAccessException(errorMessage);
                 }
 
                 // Determine user id set
@@ -87,7 +96,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 else
                 {
                     // NOTE: This is a weird case... need to talk about better ways of doing this.
-                    throw new UnauthorizedAccessException(VsoClaimsIdentity.IsScopeAuthorizedErrorCode);
+                    var authorizedScopes = string.Join(
+                        ", ", CurrentUserProvider.Identity.Scopes ?? Array.Empty<string>());
+                    string errorMessage = $"Authorized scopes '[{authorizedScopes}]' do not " +
+                        "grant access to list codespaces in the plan.'";
+                    logger.FluentAddValue("ErrorMessage", errorMessage)
+                        .LogWarning(EnvironmentAccessManager.UnauthorizedPlanScope);
+                    throw new UnauthorizedAccessException(errorMessage);
                 }
             }
             else
@@ -104,7 +119,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 }
                 else
                 {
-                    throw new UnauthorizedAccessException(VsoClaimsIdentity.IsScopeAuthorizedErrorCode);
+                    string errorMessage = "Missing current user identity.";
+                    logger.FluentAddValue("ErrorMessage", errorMessage)
+                        .LogWarning(EnvironmentAccessManager.UnauthorizedEnvironmentUser);
+                    throw new UnauthorizedAccessException(errorMessage);
                 }
             }
 

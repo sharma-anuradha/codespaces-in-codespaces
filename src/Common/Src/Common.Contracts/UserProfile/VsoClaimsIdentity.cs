@@ -13,21 +13,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     /// </summary>
     public class VsoClaimsIdentity : ClaimsIdentity
     {
-        /// <summary>
-        /// Error code for IsScopeAuthorized errors.
-        /// </summary>
-        public const string IsScopeAuthorizedErrorCode = "IsScopeAuthorizedError";
-
-        /// <summary>
-        /// Error code for IsEnvironmentAuthorized errors.
-        /// </summary>
-        public const string IsEnvironmentAuthorizedErrorCode = "IsEnvironmentAuthorizedError";
-
-        /// <summary>
-        /// Error code for IsPlanAuthorized errors.
-        /// </summary>
-        public const string IsPlanAuthorizedErrorCode = "IsPlanAuthorizedError";
-
         private const string NameIdentifierClaimName = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
 
         /// <summary>

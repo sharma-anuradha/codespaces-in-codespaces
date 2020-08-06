@@ -149,7 +149,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentListType environmentListType,
             IDiagnosticsLogger logger)
         {
-            return await EnvironmentListAction.RunAsync(planId, environmentName, userIdSet, environmentListType, logger);
+            return await EnvironmentListAction.RunAsync(
+                planId, environmentName, identity: null, userIdSet, environmentListType, logger);
         }
 
         /// <inheritdoc/>
@@ -737,7 +738,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var validationErrors = new List<MessageCodes>();
 
                 var destinationName = cloudEnvironment.FriendlyName;
-                var environmentsInPlan = await ListAsync(update.Plan.Plan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
+                var environmentsInPlan = await EnvironmentListAction.RunAsync(
+                    update.Plan.Plan.ResourceId,
+                    name: null,
+                    update.PlanAccessIdentity,
+                    userIdSet: null,
+                    EnvironmentListType.ActiveEnvironments,
+                    logger.NewChildLogger());
 
                 // Rename is handled specially when combined with moving, because the new name availability
                 // must be checked in the new plan instead of the current plan.

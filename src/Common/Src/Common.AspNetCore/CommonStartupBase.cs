@@ -354,10 +354,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
         /// <summary>
         /// Extension point to add more service specific settings files. Used for example by port forwarding agent.
+        /// </summary>
         /// <param name="builder">The aspnet core configuration builder.</param>
         /// <param name="settingsRelativePath">The relative path to settings files for current environment.</param>
         /// <param name="infix">The environment infix.</param>
-        /// </summary>
         protected virtual void AddServiceSpecificAppConfigFiles(IConfigurationBuilder builder, string settingsRelativePath, string infix)
         {
         }

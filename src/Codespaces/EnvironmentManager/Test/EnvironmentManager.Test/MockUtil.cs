@@ -370,12 +370,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 .Setup(x => x.RunAsync(
                     It.IsAny<string>(),
                     It.IsAny<string>(),
+                    It.IsAny<VsoClaimsIdentity>(),
                     It.IsAny<UserIdSet>(),
                     It.IsAny<EnvironmentListType>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     string planId,
                     string name,
+                    VsoClaimsIdentity identity,
                     UserIdSet userIdSet,
                     EnvironmentListType environmentListType,
                     IDiagnosticsLogger logger) =>

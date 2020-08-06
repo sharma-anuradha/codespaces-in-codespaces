@@ -18,12 +18,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <summary>
         /// Run environment list action.
         /// </summary>
-        /// <param name="planId">Target plan Id.</param>
-        /// <param name="name">Target name.</param>
+        /// <param name="planId">Target plan Id, or null to list across all plans.</param>
+        /// <param name="name">Target name, or null to list all names.</param>
+        /// <param name="identity">The identity to use for plan list access, or null to use the current user identity.</param>
         /// <param name="userIdSet">The owner's user id set. Required unless plan ID is specified.</param>
         /// <param name="deletedFilter">The enum of how deleted environments should be filtered.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the list action.</returns>
-        Task<IEnumerable<CloudEnvironment>> RunAsync(string planId, string name, UserIdSet userIdSet, EnvironmentListType deletedFilter, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> RunAsync(
+            string planId,
+            string name,
+            VsoClaimsIdentity identity,
+            UserIdSet userIdSet,
+            EnvironmentListType deletedFilter,
+            IDiagnosticsLogger logger);
     }
 }

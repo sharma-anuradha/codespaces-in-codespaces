@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyModel;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -20,10 +20,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
 using Xunit;
 
@@ -328,12 +330,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var update = new CloudEnvironmentUpdate
             {
                 Plan = new VsoPlan { Plan = plan2 },
+                PlanAccessIdentity = new VsoClaimsIdentity(
+                    authorizedPlan: plan2.ResourceId,
+                    scopes: new[] { PlanAccessTokenScopes.WriteEnvironments },
+                    authorizedEnvironments: null,
+                    new ClaimsIdentity()),
             };
+
+            var currentUserProvider = MockUtil.MockCurrentUserProvider(
+                identity: new VsoClaimsIdentity(
+                    authorizedPlan: plan1.ResourceId,
+                    scopes: new[] { PlanAccessTokenScopes.WriteEnvironments },
+                    authorizedEnvironments: null,
+                    new ClaimsIdentity()));
 
             var manager = CreateManager(
                 environmentRepository: environmentRepository,
                 skuCatalog: skuCatalog,
-                billingEventRepository: billingEventRepository);
+                billingEventRepository: billingEventRepository,
+                currentUserProvider: currentUserProvider);
 
             var subscription = new Subscription
             {
@@ -499,6 +514,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             ISkuCatalog skuCatalog = null,
             IPlanRepository planRepository = null,
             IBillingEventRepository billingEventRepository = null,
+            ICurrentUserProvider currentUserProvider = null,
             EnvironmentManagerSettings environmentSettings = null,
             int[] autoShutdownDelayOptions = null)
         {
@@ -522,6 +538,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
 
+            currentUserProvider ??= MockUtil.MockCurrentUserProvider();
             environmentRepository = environmentRepository ?? new MockCloudEnvironmentRepository();
             planRepository ??= new MockPlanRepository();
             billingEventRepository ??= new MockBillingEventRepository();
@@ -546,7 +563,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
             var environmentCreateAction = new Mock<IEnvironmentCreateAction>().Object;
             var environmentDeleteRestoreAction = new Mock<IEnvironmentDeleteRestoreAction>().Object;
-            var environmentListAction = new EnvironmentListAction(environmentRepository, MockUtil.MockCurrentLocationProvider(), MockUtil.MockCurrentUserProvider(), MockUtil.MockControlPlaneInfo(), environmentSettings);
+            var environmentListAction = new EnvironmentListAction(
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                currentUserProvider,
+                MockUtil.MockControlPlaneInfo(),
+                environmentSettings);
             var environmentResumeAction = new Mock<IEnvironmentResumeAction>().Object;
             var environmentFinalizeResumeAction = new Mock<IEnvironmentFinalizeResumeAction>().Object;
             var environmentDeleteAction = new Mock<IEnvironmentHardDeleteAction>().Object;

@@ -446,6 +446,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             VsoPlan plan = null;
+            VsoClaimsIdentity planAccessIdentity = null;
             Subscription subscription = null;
             if (!string.IsNullOrEmpty(updateEnvironmentInput.PlanId))
             {
@@ -458,14 +459,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidationUtil.IsTrue(
                     plan != null, $"Plan {updateEnvironmentInput.PlanId} not found.");
 
-                VsoClaimsIdentity planAccessClaims = null;
                 var accessToken = updateEnvironmentInput.PlanAccessToken;
                 if (!string.IsNullOrEmpty(accessToken))
                 {
                     try
                     {
                         var principal = AccessTokenReader.ReadTokenPrincipal(accessToken, logger);
-                        planAccessClaims = new VsoClaimsIdentity(principal.Identities.Single());
+                        planAccessIdentity = new VsoClaimsIdentity(principal.Identities.Single());
                     }
                     catch (SecurityTokenException)
                     {
@@ -481,7 +481,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     PlanAccessTokenScopes.WriteEnvironments,
                     PlanAccessTokenScopes.WriteCodespaces,
                 };
-                EnvironmentAccessManager.AuthorizePlanAccess(plan, requiredScopes, planAccessClaims, logger);
+                EnvironmentAccessManager.AuthorizePlanAccess(plan, requiredScopes, planAccessIdentity, logger);
 
                 subscription = await SubscriptionManager.GetSubscriptionAsync(planInfo.Subscription, logger.NewChildLogger());
                 if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
@@ -495,6 +495,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var updateRequest = Mapper.Map<CloudEnvironmentUpdate>(updateEnvironmentInput);
             updateRequest.Plan = plan;
+            updateRequest.PlanAccessIdentity = planAccessIdentity;
 
             var result = await EnvironmentManager.UpdateSettingsAsync(environment, updateRequest, subscription, logger);
 

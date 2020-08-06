@@ -88,23 +88,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             if (test.ExceptionType == null)
             {
-            var result = await environmentController.ListAsync(name: null, planId, logger);
-            Assert.IsType(test.ExpectedResultType, result);
+                var result = await environmentController.ListAsync(name: null, planId, logger);
+                Assert.IsType(test.ExpectedResultType, result);
 
-            if (test.ExpectedResultType == typeof(OkObjectResult))
-            {
-                var resultsArray = (CloudEnvironmentResult[])((OkObjectResult)result).Value;
-                if (test.IsMatchingPlan != false &&
-                    (test.Environments == null || test.Environments.Contains(MockUtil.MockEnvironmentId)))
+                if (test.ExpectedResultType == typeof(OkObjectResult))
                 {
-                    Assert.Single(resultsArray, (e) => e.Id == MockUtil.MockEnvironmentId);
-                }
-                else
-                {
-                    Assert.Empty(resultsArray);
+                    var resultsArray = (CloudEnvironmentResult[])((OkObjectResult)result).Value;
+                    if (test.IsMatchingPlan != false &&
+                        (test.Environments == null || test.Environments.Contains(MockUtil.MockEnvironmentId)))
+                    {
+                        Assert.Single(resultsArray, (e) => e.Id == MockUtil.MockEnvironmentId);
+                    }
+                    else
+                    {
+                        Assert.Empty(resultsArray);
+                    }
                 }
             }
-        }
             else
             {
                 await Assert.ThrowsAsync(
@@ -194,9 +194,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             if (test.ExceptionType == null)
             {
-            var result = await environmentController.GetAsync(Guid.Parse(mockEnv.Id), logger);
-            Assert.IsType(test.ExpectedResultType, result);
-        }
+                var result = await environmentController.GetAsync(Guid.Parse(mockEnv.Id), logger);
+                Assert.IsType(test.ExpectedResultType, result);
+            }
             else
             {
                 await Assert.ThrowsAsync(

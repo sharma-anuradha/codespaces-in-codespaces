@@ -1,7 +1,8 @@
-﻿// <copyright file="CloudEnvironmentUpdate.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentUpdate.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
@@ -30,5 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets the plan to move to, or null if the plan is not to be changed.
         /// </summary>
         public VsoPlan Plan { get; set; }
+
+        /// <summary>
+        /// Gets or sets an identity that has access to the target plan, or null if
+        /// the plan is not to be changed.
+        /// </summary>
+        public VsoClaimsIdentity PlanAccessIdentity { get; set; }
     }
 }

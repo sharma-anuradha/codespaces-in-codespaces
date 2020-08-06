@@ -120,7 +120,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     // Core Validation
                     ValidateTargetLocation(cloudEnvironment.Location, logger);
 
-                    var environmentsInPlan = await EnvironmentListAction.RunAsync(record.Value.PlanId, null, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
+                    var environmentsInPlan = await EnvironmentListAction.RunAsync(
+                        record.Value.PlanId,
+                        name: null,
+                        identity: null,
+                        userIdSet: null,
+                        EnvironmentListType.ActiveEnvironments,
+                        logger.NewChildLogger());
                     await ValidateSubscriptionAndPlanAsync(cloudEnvironment, planDetails, environmentsInPlan, logger);
 
                     if (record.Value.IsDeleted != true)
