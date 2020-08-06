@@ -43,6 +43,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string errorMessage;
             var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
 
+            if (CurrentUserProvider.Identity.IsSuperuser())
+            {
+                // Granting automatic access to SuperUser
+                // This is needed to grant access to the environment actions
+                // originating from background workers, continuation handlers, etc.
+                return;
+            }
+
             bool? isComputeAuthorized = IsComputeAuthorized(environment, out string computeResource);
             if (isComputeAuthorized != null)
             {
