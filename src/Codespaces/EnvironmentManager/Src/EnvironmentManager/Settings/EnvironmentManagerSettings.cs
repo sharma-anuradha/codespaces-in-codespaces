@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentManagerSettings.cs" company="Microsoft">
+// <copyright file="EnvironmentManagerSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -22,10 +22,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public int DefaultMaxEnvironmentsPerPlan { get; set; }
 
         /// <summary>
-        /// Gets or sets the default environment archive cutoff hours.
+        /// Gets or sets the default suspended environment archive cutoff hours.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public double DefaultEnvironmentArchiveCutoffHours { get; set; }
+        public double DefaultSuspendedEnvironmentArchiveCutoffHours { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default soft-deleted environment archive cutoff hours.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public double DefaultSoftDeletedEnvironmentArchiveCutoffHours { get; set; }
 
         /// <summary>
         /// Gets or sets the default environment archive batch size.
@@ -44,6 +50,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public bool DefaultEnvironmentArchiveEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default soft deleted environment hard delete cutoff hours.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public double DefaultEnvironmentHardDeleteCutoffHours { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the environment failed worker shoudl be enabled.
@@ -67,6 +79,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// Gets or sets a value indicating whether the Windows OS compute quota check is enabled.
         /// </summary>
         public bool DefaultWindowsComputeCheckEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the environment soft delete is enabled.
+        /// </summary>
+        public bool DefaultEnvironmentSoftDeleteEnabled { get; set; }
 
         private ISystemConfiguration SystemConfiguration { get; set; }
 
@@ -97,15 +114,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         }
 
         /// <summary>
-        /// Gets or sets the Max Environments Per Plan.
+        /// Gets or sets the Suspended Environment Archive Cutoff Hours.
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public Task<double> EnvironmentArchiveCutoffHours(IDiagnosticsLogger logger)
+        public Task<double> SuspendedEnvironmentArchiveCutoffHours(IDiagnosticsLogger logger)
         {
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
-            return SystemConfiguration.GetValueAsync("setting:environment-archive-cuttoff-hours", logger, DefaultEnvironmentArchiveCutoffHours);
+            return SystemConfiguration.GetValueAsync("setting:environment-archive-cuttoff-hours", logger, DefaultSuspendedEnvironmentArchiveCutoffHours);
+        }
+
+        /// <summary>
+        /// Gets or sets the Soft Deleted Environment Archive Cutoff Hours.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<double> SoftDeletedEnvironmentArchiveCutoffHours(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("setting:deleted-environment-archive-cuttoff-hours", logger, DefaultSoftDeletedEnvironmentArchiveCutoffHours);
         }
 
         /// <summary>
@@ -130,6 +159,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("setting:environment-archive-max-active-count", logger, DefaultEnvironmentArchiveMaxActiveCount);
+        }
+
+        /// <summary>
+        /// Gets or sets the Soft Deleted Environment Full Delete Cutoff Hours.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<double> EnvironmentHardDeleteCutoffHours(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("setting:soft-deleted-environment-terminate-cuttoff-hours", logger, DefaultEnvironmentHardDeleteCutoffHours);
         }
 
         /// <summary>
@@ -190,6 +231,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:windows-compute-check-enabled", logger, DefaultWindowsComputeCheckEnabled);
+        }
+
+        /// <summary>
+        /// Gets or sets the environment soft delete feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> EnvironmentSoftDeleteEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:environment-soft-delete-enabled", logger, DefaultEnvironmentSoftDeleteEnabled);
         }
     }
 }

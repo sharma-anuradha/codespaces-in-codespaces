@@ -116,9 +116,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockEnvManager = new Mock<IEnvironmentManager>();
             mockEnvManager
-                .Setup(x => x.ListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UserIdSet>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.ListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UserIdSet>(), It.IsAny<bool>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(new[] { mockEnv })
-                .Callback((IDiagnosticsLogger logger, string planId, string name, UserIdSet userIdSet) =>
+                .Callback((IDiagnosticsLogger logger, string planId, string name, UserIdSet userIdSet, bool deleted) =>
                 {
                     Assert.Equal(expectedPlanId, planId);
                 });

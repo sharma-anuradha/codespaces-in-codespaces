@@ -367,15 +367,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var moq = new Mock<IEnvironmentListAction>();
             moq
-                .Setup(x => x.Run(
+                .Setup(x => x.RunAsync(
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<UserIdSet>(),
+                    It.IsAny<EnvironmentListType>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     string planId,
                     string name,
                     UserIdSet userIdSet,
+                    EnvironmentListType environmentListType,
                     IDiagnosticsLogger logger) =>
                 {
                     return Enumerable.Empty<CloudEnvironment>();

@@ -1,4 +1,4 @@
-﻿// <copyright file="IEnvironmentContinuationOperations.cs" company="Microsoft">
+// <copyright file="IEnvironmentContinuationOperations.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     public interface IEnvironmentContinuationOperations
     {
         /// <summary>
-        /// Create compute resource by invoking the continution activator.
+        /// Archive the environment by invoking the continution activator.
         /// </summary>
         /// <param name="environmentId">Target resource id.</param>
         /// <param name="lastStateUpdated">Target last state updated.</param>

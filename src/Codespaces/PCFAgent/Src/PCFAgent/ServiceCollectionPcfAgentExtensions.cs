@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionPcfAgentExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionPcfAgentExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.PrivacyServices.CommandFeed.Client;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
@@ -28,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
             services.AddHostedService<PcfAgentWorker>();
             services.AddSingleton<IPrivacyDataManager, PrivacyDataManager>();
             services.AddSingleton<IPrivacyDataAgent, DataAgent>();
-            services.AddSingleton<IContinuationTaskMessageHandler, EnvironmentDeletionContinuationHandler>();
+            services.AddSingleton<IContinuationTaskMessageHandler, SoftDeleteEnvironmentContinuationHandler>();
             services.AddTransient<CommandFeedLogger, DiagnosticsCommandFeedLogger>();
 
             if (useMocksForLocalDevelopment)

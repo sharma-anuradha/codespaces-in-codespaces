@@ -1,4 +1,4 @@
-// <copyright file="IEnvironmentDeleteAction.cs" company="Microsoft">
+// <copyright file="IEnvironmentHardDeleteAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,10 +12,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Environment Delete Action.
     /// </summary>
-    public interface IEnvironmentDeleteAction : IEnvironmentBaseItemAction<EnvironmentDeleteActionInput, object, bool>
+    public interface IEnvironmentHardDeleteAction : IEnvironmentBaseItemAction<EnvironmentHardDeleteActionInput, object, bool>
     {
         /// <summary>
-        /// Delete cloud environment by id.
+        /// Hard Delete cloud environment by id.
         /// </summary>
         /// <param name="cloudEnvironmentId">Target cloud environment id.</param>
         /// <param name="logger">Target logger.</param>
@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         Task<bool> RunAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Delete given cloud environment and the resources which might not yet be persisted.
+        /// Hard Delete given cloud environment and the resources which might not yet be persisted.
         /// </summary>
         /// <param name="cloudEnvironmentId">Target cloud environment id.</param>
         /// <param name="computeResourceId">Target compute id to be de-allocated.</param>

@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             // 20 environments exist
             var listEnvironments = await this.environmentManager.ListAsync(
-                testPlan.ResourceId, null, null, logger);
+                testPlan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger);
 
             Assert.Equal(20, listEnvironments.Count());
 
@@ -30,8 +30,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var ex = await Assert.ThrowsAsync<ForbiddenException>(async () => await CreateTestEnvironmentAsync("Test21"));
             Assert.Equal((int)MessageCodes.ExceededQuota, ex.MessageCode);
 
-            // Delete 1 environment.
-            var deleteResult = await this.environmentManager.DeleteAsync(Guid.Parse(environmentToDelete.Id), logger);
+            // Soft Delete 1 environment.
+            var deleteResult = await this.environmentManager.SoftDeleteAsync(Guid.Parse(environmentToDelete.Id), logger);
             Assert.True(deleteResult);
 
             // User should be allowed to create environment.
@@ -46,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             // Compute Core per SKU = 1
             await CreateEnvironmentsAsync(10, "Round1", "windows");
 
-            var listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, logger);
+            var listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger);
 
             // Subscription is at Max Compute Cores
             Assert.Equal(10, listEnvironments.Count());
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             // Create 10 more cores
             await CreateEnvironmentsAsync(10, "Round2", "windows");
 
-            listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, logger);
+            listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger);
 
             // Subscription is allowed to go over Default Max Compute cores
             Assert.Equal(20, listEnvironments.Count());
@@ -70,7 +70,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             await CreateEnvironmentsAsync(10, "windows", "windows");
 
-            var listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, logger);
+            var listEnvironments = await this.environmentManager.ListAsync(planId: testPlan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger);
 
             // Subscription is over Max Compute Cores
             Assert.Equal(11, listEnvironments.Count());

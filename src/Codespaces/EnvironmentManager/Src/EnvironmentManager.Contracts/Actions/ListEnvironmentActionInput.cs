@@ -1,4 +1,4 @@
-﻿// <copyright file="ListEnvironmentActionInput.cs" company="Microsoft">
+// <copyright file="ListEnvironmentActionInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets the user id set.
         /// </summary>
         public UserIdSet UserIdSet { get; set; }
+
+        /// <summary>
+        /// Gets or sets the environment list type.
+        /// </summary>
+        public EnvironmentListType EnvironmentListType { get; set; }
     }
 }

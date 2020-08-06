@@ -1,10 +1,9 @@
-﻿// <copyright file="EnvironmentMonitor.cs" company="Microsoft">
+// <copyright file="EnvironmentMonitor.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -12,7 +11,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager

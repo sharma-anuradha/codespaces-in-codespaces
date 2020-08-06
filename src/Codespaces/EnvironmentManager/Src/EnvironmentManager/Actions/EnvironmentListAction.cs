@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -29,26 +30,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="systemActionGetProvider">Target system action get provider.</param>
+        /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         public EnvironmentListAction(
             ICloudEnvironmentRepository repository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,
-            IControlPlaneInfo controlPlaneInfo)
+            IControlPlaneInfo controlPlaneInfo,
+            EnvironmentManagerSettings environmentManagerSettings)
             : base(repository, currentLocationProvider, currentUserProvider, controlPlaneInfo)
         {
+            EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
         }
 
         /// <inheritdoc/>
         protected override string LogBaseName => "environment_list_action";
 
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> Run(
-            string planId, string name, UserIdSet userIdSet, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<CloudEnvironment>> RunAsync(
+            string planId, string name, UserIdSet userIdSet, EnvironmentListType environmentListType, IDiagnosticsLogger logger)
         {
             var identity = CurrentUserProvider.Identity;
 
             // Build input
-            var input = new ListEnvironmentActionInput { Name = name };
+            var input = new ListEnvironmentActionInput { Name = name, EnvironmentListType = environmentListType };
 
             // Determine plan id
             // In the case of a authentication using a plan access token, infer the plan from the token if not set
@@ -102,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 }
             }
 
-            return RunAsync(input, logger);
+            return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
@@ -184,7 +190,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 environments = environments.Where((e) => environmentIds.Contains(e.Id));
             }
 
-            return environments;
+            return await ApplyDeletedFilter(environments, input.EnvironmentListType, logger);
+        }
+
+        private async Task<IEnumerable<CloudEnvironment>> ApplyDeletedFilter(IEnumerable<CloudEnvironment> environments, EnvironmentListType environmentListType, IDiagnosticsLogger logger)
+        {
+            if (environmentListType == EnvironmentListType.AllEnvironments)
+            {
+                return environments;
+            }
+
+            var environmentSoftDeleteEnabled = await EnvironmentManagerSettings.EnvironmentSoftDeleteEnabled(logger.NewChildLogger());
+
+            // Return all environments if the soft delete feature flag is not enabled.
+            if (environmentSoftDeleteEnabled != true)
+            {
+                return environments;
+            }
+
+            if (environmentListType == EnvironmentListType.DeletedEnvironments)
+            {
+                return environments.Where(x => x.IsDeleted == true);
+            }
+            else
+            {
+                return environments.Where(x => x.IsDeleted != true);
+            }
         }
     }
 }

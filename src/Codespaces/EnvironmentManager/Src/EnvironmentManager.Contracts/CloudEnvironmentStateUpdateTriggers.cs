@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentStateUpdateTriggers.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentStateUpdateTriggers.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -45,9 +45,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         public const string StartEnvironment = "StartEnvironment";
 
         /// <summary>
-        /// Start environment.
+        /// Hard Delete environment.
         /// </summary>
-        public const string DeleteEnvironment = "DeleteEnvironment";
+        public const string HardDeleteEnvironment = "HardDeleteEnvironment";
+
+        /// <summary>
+        /// Soft Delete environment.
+        /// </summary>
+        public const string SoftDeleteEnvironment = "SoftDeleteEnvironment";
 
         /// <summary>
         /// Heartbeat triggered state change.

@@ -338,11 +338,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<UserIdSet>(),
+                    It.IsAny<EnvironmentListType>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     string planId,
                     string name,
                     UserIdSet userIdSet,
+                    EnvironmentListType environmentListType,
                     IDiagnosticsLogger logger) =>
                 {
                     var mockEnv = MockCloudEnvironment();

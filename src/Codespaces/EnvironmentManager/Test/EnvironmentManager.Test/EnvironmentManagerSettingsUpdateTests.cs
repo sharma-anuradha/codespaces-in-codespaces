@@ -22,7 +22,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks;
 using Moq;
@@ -546,12 +545,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentGetAction = new Mock<IEnvironmentGetAction>().Object;
             var environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
             var environmentCreateAction = new Mock<IEnvironmentCreateAction>().Object;
-            var environmentListAction = new EnvironmentListAction(environmentRepository, MockUtil.MockCurrentLocationProvider(), MockUtil.MockCurrentUserProvider(), MockUtil.MockControlPlaneInfo());
+            var environmentDeleteRestoreAction = new Mock<IEnvironmentDeleteRestoreAction>().Object;
+            var environmentListAction = new EnvironmentListAction(environmentRepository, MockUtil.MockCurrentLocationProvider(), MockUtil.MockCurrentUserProvider(), MockUtil.MockControlPlaneInfo(), environmentSettings);
             var environmentResumeAction = new Mock<IEnvironmentResumeAction>().Object;
             var environmentFinalizeResumeAction = new Mock<IEnvironmentFinalizeResumeAction>().Object;
-            var environmentDeleteAction = new Mock<IEnvironmentDeleteAction>().Object;
+            var environmentDeleteAction = new Mock<IEnvironmentHardDeleteAction>().Object;
             var environmentSuspendAction = new Mock<IEnvironmentSuspendAction>().Object;
             var environmentForceSuspendAction = new Mock<IEnvironmentForceSuspendAction>().Object;
+            var environmentSoftDeleteAction = new Mock<IEnvironmentSoftDeleteAction>().Object;
 
             skuCatalog = skuCatalog ?? MockSkuCatalog();
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
@@ -571,11 +572,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentListAction,
                 environmentUpdateStatusAction,
                 environmentCreateAction,
+                environmentDeleteRestoreAction,
                 environmentResumeAction,
                 environmentFinalizeResumeAction,
                 environmentSuspendAction,
                 environmentForceSuspendAction,
-                environmentDeleteAction);
+                environmentDeleteAction,
+                environmentSoftDeleteAction);
         }
 
         private static ICloudEnvironmentSku MockSku(

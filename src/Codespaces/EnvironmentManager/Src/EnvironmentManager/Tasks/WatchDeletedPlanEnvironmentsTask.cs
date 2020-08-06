@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     childLogger.AddVsoPlan(plan);
 
                     var environments = await EnvManager.ListAsync(
-                        plan.Plan.ResourceId, null, null, childLogger.NewChildLogger());
+                        plan.Plan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, childLogger.NewChildLogger());
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
                     {
@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         foreach (var environment in nonDeletedEnvironments)
                         {
                             childLogger.AddCloudEnvironment(environment);
-                            var result = await EnvManager.DeleteAsync(Guid.Parse(environment.Id), childLogger.NewChildLogger());
+                            var result = await EnvManager.SoftDeleteAsync(Guid.Parse(environment.Id), childLogger.NewChildLogger());
                             if (result)
                             {
                                 deletedEnvironmentCount++;

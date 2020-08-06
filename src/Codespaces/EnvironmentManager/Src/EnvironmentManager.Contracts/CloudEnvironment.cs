@@ -122,6 +122,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public DateTime? StateTimeout { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the code space is marked as deleted.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "isDeleted")]
+        public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the code space is marked as deleted.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "lastDeleted")]
+        public DateTime? LastDeleted { get; set; }
+
+        /// <summary>
         /// Gets or sets the updated date and time for state change.
         /// </summary>
         [GDPR(Action = GDPRAction.Export)]

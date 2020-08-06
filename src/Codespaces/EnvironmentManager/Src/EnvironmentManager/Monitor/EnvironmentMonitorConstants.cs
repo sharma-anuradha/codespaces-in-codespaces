@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentMonitorConstants.cs" company="Microsoft">
+// <copyright file="EnvironmentMonitorConstants.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -23,5 +23,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
         /// Maximum Interval between heartbeats sent from VSO Agent.
         /// </summary>
         public const int HeartbeatIntervalInSeconds = 70;
+
+        /// <summary>
+        /// Suspend state monitor time for soft delete.
+        /// </summary>
+        public const int SoftDeleteStateMonitorTimeoutInSeconds = 15;
+
+        /// <summary>
+        /// Number of attempts before forced suspend for soft delete.
+        /// </summary>
+        public const int SoftDeleteStateMonitorMaxAttempts = 8;
     }
 }

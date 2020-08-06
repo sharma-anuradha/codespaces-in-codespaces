@@ -1,10 +1,10 @@
-﻿// <copyright file="EnvironmentContinuationInput.cs" company="Microsoft">
+// <copyright file="EnvironmentContinuationInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models
 {
     /// <summary>
     /// Environment deletion input for continuation framework.

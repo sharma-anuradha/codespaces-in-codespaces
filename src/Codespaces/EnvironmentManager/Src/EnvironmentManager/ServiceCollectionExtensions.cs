@@ -131,11 +131,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentGetAction, EnvironmentGetAction>();
             services.AddSingleton<IEnvironmentUpdateStatusAction, EnvironmentUpdateStatusAction>();
             services.AddSingleton<IEnvironmentListAction, EnvironmentListAction>();
-            services.AddSingleton<IEnvironmentDeleteAction, EnvironmentDeleteAction>();
+            services.AddSingleton<IEnvironmentHardDeleteAction, EnvironmentHardDeleteAction>();
+            services.AddSingleton<IEnvironmentDeleteRestoreAction, EnvironmentDeleteRestoreAction>();
             services.AddSingleton<IEnvironmentResumeAction, EnvironmentResumeAction>();
             services.AddSingleton<IEnvironmentFinalizeResumeAction, EnvironmentFinalizeResumeAction>();
             services.AddSingleton<IEnvironmentSuspendAction, EnvironmentSuspendAction>();
             services.AddSingleton<IEnvironmentForceSuspendAction, EnvironmentForceSuspendAction>();
+            services.AddSingleton<IEnvironmentSoftDeleteAction, EnvironmentSoftDeleteAction>();
+
+            // The environment manager action validator
+            services.AddSingleton<IEnvironmentActionValidator, EnvironmentActionValidator>();
 
             // The environment metrics
             services.AddSingleton<IEnvironmentMetricsManager, EnvironmentMetricsManager>();
@@ -143,10 +148,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Register background tasks
             services.AddSingleton<IWatchOrphanedSystemEnvironmentsTask, WatchOrphanedSystemEnvironmentsTask>();
             services.AddSingleton<IWatchFailedEnvironmentTask, WatchFailedEnvironmentTask>();
-            services.AddSingleton<IWatchSuspendedEnvironmentsToBeArchivedTask, WatchSuspendedEnvironmentsToBeArchivedTask>();
+            services.AddSingleton<IWatchEnvironmentsToBeArchivedTask, WatchEnvironmentsToBeArchivedTask>();
             services.AddSingleton<ILogCloudEnvironmentStateTask, LogCloudEnvironmentStateTask>();
             services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
             services.AddSingleton<IWatchDeletedPlanEnvironmentsTask, WatchDeletedPlanEnvironmentsTask>();
+            services.AddSingleton<IWatchSoftDeletedEnvironmentToBeHardDeletedTask, WatchEnvironmentsToBeHardDeleteTask>();
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();

@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentLoggingConstants.cs" company="Microsoft">
+// <copyright file="EnvironmentLoggingConstants.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -38,6 +38,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Log Subscription Statistics Task.
         /// </summary>
         public const string LogSubscriptionStatisticsTask = "log_subscription_statistics_task";
+
+        /// <summary>
+        /// Watch Soft Deleted Environments to be terminated Task.
+        /// </summary>
+        public const string WatchSoftDeletedEnvironmentToBeHardDeletedTask = "watch_soft_deleted_environments_to_be_hard_deleted_task";
 
         /// <summary>
         /// Continuation Task Message Handler Archive.

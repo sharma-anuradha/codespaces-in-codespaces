@@ -1,8 +1,9 @@
-// <copyright file="EnvironmentDeleteAction.cs" company="Microsoft">
+// <copyright file="EnvironmentHardDeleteAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -16,12 +17,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 {
     /// <summary>
-    /// Environment Delete Action.
+    /// Environment Hard Delete Action Beyond Recovery.
     /// </summary>
-    public class EnvironmentDeleteAction : EnvironmentBaseItemAction<EnvironmentDeleteActionInput, object, bool>, IEnvironmentDeleteAction
+    public class EnvironmentHardDeleteAction : EnvironmentBaseItemAction<EnvironmentHardDeleteActionInput, object, bool>, IEnvironmentHardDeleteAction
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnvironmentDeleteAction"/> class.
+        /// Initializes a new instance of the <see cref="EnvironmentHardDeleteAction"/> class.
         /// </summary>
         /// <param name="environmentStateManager">Target environment state manager.</param>
         /// <param name="repository">Target repository.</param>
@@ -31,7 +32,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentAccessManager">Target environment access manager.</param>
         /// /// <param name="resourceBrokerHttpClient">Target resource broker http client.</param>
         /// <param name="workspaceManager">Target workspace manager.</param>
-        public EnvironmentDeleteAction(
+        /// <param name="environmentListAction">Target environment list action.</param>
+        public EnvironmentHardDeleteAction(
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
             ICurrentLocationProvider currentLocationProvider,
@@ -39,26 +41,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IControlPlaneInfo controlPlaneInfo,
             IEnvironmentAccessManager environmentAccessManager,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
-            IWorkspaceManager workspaceManager)
+            IWorkspaceManager workspaceManager,
+            IEnvironmentListAction environmentListAction)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager)
         {
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
+            EnvironmentListAction = Requires.NotNull(environmentListAction, nameof(environmentListAction));
         }
 
         /// <inheritdoc/>
-        protected override string LogBaseName => "environment_delete_action";
+        protected override string LogBaseName => "environment_hard_delete_action";
 
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         private IWorkspaceManager WorkspaceManager { get; }
+
+        private IEnvironmentListAction EnvironmentListAction { get; }
 
         /// <inheritdoc/>
         public async Task<bool> RunAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
 
-            var input = new EnvironmentDeleteActionInput(cloudEnvironmentId);
+            var input = new EnvironmentHardDeleteActionInput(cloudEnvironmentId);
 
             return await RunAsync(input, logger);
         }
@@ -74,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             Requires.NotEmpty(cloudEnvironmentId, nameof(cloudEnvironmentId));
 
-            var input = new EnvironmentDeleteActionInput(cloudEnvironmentId)
+            var input = new EnvironmentHardDeleteActionInput(cloudEnvironmentId)
             {
                 AllocatedComputeId = computeResourceId,
                 AllocatedStorageId = storageResourceId,
@@ -87,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         /// <inheritdoc/>
         protected override async Task<bool> RunCoreAsync(
-            EnvironmentDeleteActionInput input,
+            EnvironmentHardDeleteActionInput input,
             object transientState,
             IDiagnosticsLogger logger)
         {
@@ -129,7 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             if (record?.Value != null)
             {
                 // Attempt delete only if the environment exists.
-                await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.DeleteEnvironment, null, null, logger.NewChildLogger());
+                await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.HardDeleteEnvironment, null, null, logger.NewChildLogger());
                 return await Repository.DeleteAsync(record.Value.Id, logger.NewChildLogger());
             }
 

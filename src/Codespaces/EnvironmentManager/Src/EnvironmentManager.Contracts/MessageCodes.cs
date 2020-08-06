@@ -1,4 +1,4 @@
-﻿// <copyright file="MessageCodes.cs" company="Microsoft">
+// <copyright file="MessageCodes.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -130,5 +130,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// An environment cannot be moved to a different location.
         /// </summary>
         InvalidLocationChange = 23,
+
+        /// <summary>
+        /// Cannot find the requested plan.
+        /// </summary>
+        PlanDoesNotExist = 24,
+
+        /// <summary>
+        /// Unable to resolve the environment name conflict in restore.
+        /// </summary>
+        UnableToResolveEnvironmentNameConflict = 25,
     }
 }

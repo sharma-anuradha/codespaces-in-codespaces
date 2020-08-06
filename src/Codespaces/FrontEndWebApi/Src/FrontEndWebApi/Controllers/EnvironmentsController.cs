@@ -171,6 +171,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="name">Target name.</param>
         /// <param name="planId">Target plan id.</param>
         /// <param name="logger">Target logger.</param>
+        /// <param name="deleted">Indicates whether list is active/deleted environments.</param>
         /// <returns>An object result containing the list of <see cref="CloudEnvironmentResult"/>.</returns>
         [HttpGet]
         [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(ListAsync))]
@@ -182,11 +183,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public async Task<IActionResult> ListAsync(
             [FromQuery] string name,
             [FromQuery] string planId,
-            [FromServices] IDiagnosticsLogger logger)
+            [FromServices] IDiagnosticsLogger logger,
+            [FromQuery] bool deleted = false)
         {
             AuditAttribute.SetTargetResourceId(HttpContext, CurrentUserProvider?.CurrentUserIdSet?.PreferredUserId);
-
-            var environmentsList = await EnvironmentManager.ListAsync(planId, name, null, logger);
+            var deletedFilter = deleted ? EnvironmentListType.DeletedEnvironments : EnvironmentListType.ActiveEnvironments;
+            var environmentsList = await EnvironmentManager.ListAsync(planId, name, null, deletedFilter, logger.NewChildLogger());
 
             return Ok(Mapper.Map<CloudEnvironmentResult[]>(environmentsList));
         }
@@ -315,9 +317,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            await EnvironmentManager.DeleteAsync(environmentId, logger.NewChildLogger());
+            // Have to change the signatu
+            await EnvironmentManager.SoftDeleteAsync(environmentId, logger.NewChildLogger());
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Restore a deleted cloud environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Status code <see cref="HttpStatusCode.NoContent"/> if deleted, otherwise <see cref="HttpStatusCode.NotFound"/>.</returns>
+        [HttpPatch("{environmentId}/restore")]
+        [ThrottlePerUserHigh(nameof(EnvironmentsController), nameof(RestoreAsync))]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpOperationalScope("restore")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
+        public IActionResult RestoreAsync(
+            [FromRoute] string environmentId,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            // The restore feature is complete and tested. However, we want to resolve the billing questions
+            // before making it public. When we are ready to make the restore feature available to users
+            // we will move the code from the private "RestoreEnvironmentAsync" method to this method.
+            // It is intentionally not behind feature flag as billing will require code changes.
+            return Unauthorized();
         }
 
         /// <summary>
@@ -711,6 +740,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 UserAuthToken = CurrentUserProvider.BearerToken,
                 CurrentUserIdSet = CurrentUserProvider.CurrentUserIdSet,
             };
+        }
+
+        private async Task<IActionResult> RestoreEnvironmentAsync(Guid environmentId, IDiagnosticsLogger logger)
+        {
+            var cloudEnvironment = await EnvironmentManager.DeleteRestoreAsync(environmentId, logger.NewChildLogger());
+            return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
         }
     }
 }

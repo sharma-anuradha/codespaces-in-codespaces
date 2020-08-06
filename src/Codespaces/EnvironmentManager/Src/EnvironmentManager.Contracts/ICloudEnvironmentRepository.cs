@@ -1,4 +1,4 @@
-﻿// <copyright file="ICloudEnvironmentRepository.cs" company="Microsoft">
+// <copyright file="ICloudEnvironmentRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -57,14 +57,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="idShard">Pool Code.</param>
         /// <param name="count">Limit count.</param>
-        /// <param name="cutoffTime">Target cutoff time.</param>
+        /// <param name="shutdownCutoffTime">Target cutoff time for the enviroment with shutdown state.</param>
+        /// <param name="softDeleteCutoffTime">Target cutoff time for the soft deleted enviroment.</param>
         /// <param name="controlPlaneLocation">Target control plane location.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns>Returns a list of failed environments.</returns>
+        /// <returns>Returns a list of environments ready for archive.</returns>
         Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(
             string idShard,
             int count,
-            DateTime cutoffTime,
+            DateTime shutdownCutoffTime,
+            DateTime softDeleteCutoffTime,
             AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger);
 
@@ -86,6 +88,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The number of active jobs.</returns>
         Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(
             string subscriptionId,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Fetch a list of environments that have are ready for terminating. Filter to the target
+        /// environments. Specifically where:
+        ///     Shard matches target, deleted flag is set, we have not also started
+        ///     termination, that the time from last deleted is past our cut off.
+        /// </summary>
+        /// <param name="idShard">Pool Code.</param>
+        /// <param name="cutoffTime">Target cutoff time.</param>
+        /// <param name="controlPlaneLocation">Target control plane location.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns a list of environments ready for terminate.</returns>
+        Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForHardDeleteAsync(
+            string idShard,
+            DateTime cutoffTime,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger);
     }
 }

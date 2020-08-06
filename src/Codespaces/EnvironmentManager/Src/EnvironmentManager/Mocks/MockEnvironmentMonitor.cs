@@ -1,4 +1,4 @@
-﻿// <copyright file="MockEnvironmentMonitor.cs" company="Microsoft">
+// <copyright file="MockEnvironmentMonitor.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

@@ -1,4 +1,4 @@
-// <copyright file="EnvironmentDeletionContinuationHandler.cs" company="Microsoft">
+// <copyright file="SoftDeleteEnvironmentContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,15 +8,15 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
 {
     /// <summary>
-    /// Delete environments handler.
+    /// Soft Delete environments handler.
     /// </summary>
-    public class EnvironmentDeletionContinuationHandler : IContinuationTaskMessageHandler
+    public class SoftDeleteEnvironmentContinuationHandler : IContinuationTaskMessageHandler
     {
         /// <summary>
         /// Gets default target name for item on queue.
@@ -24,22 +24,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         public const string DefaultQueueTarget = "EnvironmentDeletionHandler";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnvironmentDeletionContinuationHandler"/> class.
+        /// Initializes a new instance of the <see cref="SoftDeleteEnvironmentContinuationHandler"/> class.
         /// </summary>
-        /// <param name="environmentDeleteAction">Target environment delete action.</param>
+        /// <param name="environmentManager">Environment Manager.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
-        public EnvironmentDeletionContinuationHandler(
-            IEnvironmentDeleteAction environmentDeleteAction,
+        public SoftDeleteEnvironmentContinuationHandler(
+            IEnvironmentManager environmentManager,
             ICurrentIdentityProvider currentIdentityProvider,
             VsoSuperuserClaimsIdentity superuserIdentity)
         {
-            EnvironmentDeleteAction = environmentDeleteAction;
+            EnvironmentManager = environmentManager;
             CurrentIdentityProvider = currentIdentityProvider;
             SuperuserIdentity = superuserIdentity;
         }
 
-        private IEnvironmentDeleteAction EnvironmentDeleteAction { get; }
+        private IEnvironmentManager EnvironmentManager { get; }
 
         private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 
@@ -54,20 +54,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// <inheritdoc/>
         public async Task<ContinuationResult> Continue(ContinuationInput input, IDiagnosticsLogger logger)
         {
-            return await logger.OperationScopeAsync("handle_environment_deletion", async (childLogger) =>
+            return await logger.OperationScopeAsync("handle_environment_soft_delete", async (childLogger) =>
             {
                 using (CurrentIdentityProvider.SetScopedIdentity(SuperuserIdentity))
                 {
-                    if (input is EnvironmentContinuationInput environmentDeletionInput)
+                    if (input is EnvironmentContinuationInput environmentSoftDeleteInput)
                     {
-                        childLogger.AddEnvironmentId(environmentDeletionInput.EnvironmentId);
-                        var isDeleted = await EnvironmentDeleteAction.RunAsync(Guid.Parse(environmentDeletionInput.EnvironmentId), logger.NewChildLogger());
+                        childLogger.AddEnvironmentId(environmentSoftDeleteInput.EnvironmentId);
+                        var cloudEnvironment = await EnvironmentManager.GetAsync(Guid.Parse(environmentSoftDeleteInput.EnvironmentId), logger.NewChildLogger());
+
+                        if (cloudEnvironment == null)
+                        {
+                            return CreateFinalResult(OperationState.Cancelled, "EnvironmentNotFound");
+                        }
+
+                        if (cloudEnvironment.IsDeleted == true)
+                        {
+                            return CreateFinalResult(OperationState.Succeeded, "EnvironmentAlreadySoftDeleted");
+                        }
+
+                        var isDeleted = await EnvironmentManager.SoftDeleteAsync(Guid.Parse(cloudEnvironment.Id), logger.NewChildLogger());
                         if (isDeleted)
                         {
                             return CreateFinalResult(OperationState.Succeeded);
                         }
 
-                        return CreateFinalResult(OperationState.Failed, "DeletionFailed");
+                        return CreateFinalResult(OperationState.Failed, "SoftDeletionFailed");
                     }
 
                     return CreateFinalResult(OperationState.Failed, "InvalidInputType");

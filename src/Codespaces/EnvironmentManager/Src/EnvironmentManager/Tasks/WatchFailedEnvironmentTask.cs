@@ -1,9 +1,8 @@
-﻿// <copyright file="WatchFailedEnvironmentTask.cs" company="Microsoft">
+// <copyright file="WatchFailedEnvironmentTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -68,10 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         return !Disposed;
                     }
 
-                    // Basic shard by starting resource id character
-                    // NOTE: If over time we needed an additional dimention, we could add region
-                    //       and do a cross product with it.
-                    var idShards = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
+                    var idShards = ScheduledTaskHelpers.GetIdShards();
 
                     // Run through found resources in the background
                     await TaskHelper.RunConcurrentEnumerableAsync(

@@ -43,11 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentListAction">Target environment listaction.</param>
         /// <param name="environmentUpdateStatusAction">Target environment update status action.</param>
         /// <param name="environmentCreateAction">Target environment create action.</param>
-        /// <param name="environmentResumeAction">Target environment resume action.</param>
+        /// <param name="environmentDeleteRestoreAction">Target environment restore action.</param>        /// <param name="environmentResumeAction">Target environment resume action.</param>
         /// <param name="environmentFinalizeResumeAction">Target environment resume finalize action.</param>
         /// <param name="environmentSuspendAction">Target environment suspend action.</param>
         /// <param name="environmentForceSuspendAction">Target environment force suspend action.</param>
-        /// <param name="environmentDeleteAction">Target environment delete action.</param>
+        /// <param name="environmentHardDeleteAction">Target environment hard delete action.</param>
+        /// <param name="environmentSoftDeleteAction">Target environment soft delete action.</param>
         public EnvironmentManager(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
@@ -62,11 +63,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentListAction environmentListAction,
             IEnvironmentUpdateStatusAction environmentUpdateStatusAction,
             IEnvironmentCreateAction environmentCreateAction,
+            IEnvironmentDeleteRestoreAction environmentDeleteRestoreAction,
             IEnvironmentResumeAction environmentResumeAction,
             IEnvironmentFinalizeResumeAction environmentFinalizeResumeAction,
             IEnvironmentSuspendAction environmentSuspendAction,
             IEnvironmentForceSuspendAction environmentForceSuspendAction,
-            IEnvironmentDeleteAction environmentDeleteAction)
+            IEnvironmentHardDeleteAction environmentHardDeleteAction,
+            IEnvironmentSoftDeleteAction environmentSoftDeleteAction)
         {
             CloudEnvironmentRepository = Requires.NotNull(cloudEnvironmentRepository, nameof(cloudEnvironmentRepository));
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
@@ -81,11 +84,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentListAction = Requires.NotNull(environmentListAction, nameof(environmentListAction));
             EnvironmentUpdateStatusAction = Requires.NotNull(environmentUpdateStatusAction, nameof(environmentUpdateStatusAction));
             EnvironmentCreateAction = Requires.NotNull(environmentCreateAction, nameof(environmentCreateAction));
+            EnvironmentDeleteRestoreAction = Requires.NotNull(environmentDeleteRestoreAction, nameof(environmentDeleteRestoreAction));
             EnvironmentResumeAction = Requires.NotNull(environmentResumeAction, nameof(environmentResumeAction));
             EnvironmentFinalizeResumeAction = Requires.NotNull(environmentFinalizeResumeAction, nameof(environmentFinalizeResumeAction));
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
-            EnvironmentDeleteAction = Requires.NotNull(environmentDeleteAction, nameof(environmentDeleteAction));
+            EnvironmentHardDeleteAction = Requires.NotNull(environmentHardDeleteAction, nameof(environmentHardDeleteAction));
+            EnvironmentSoftDeleteAction = Requires.NotNull(environmentSoftDeleteAction, nameof(environmentSoftDeleteAction));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -114,6 +119,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IEnvironmentCreateAction EnvironmentCreateAction { get; }
 
+        private IEnvironmentDeleteRestoreAction EnvironmentDeleteRestoreAction { get; }
+
         private IEnvironmentResumeAction EnvironmentResumeAction { get; }
 
         private IEnvironmentFinalizeResumeAction EnvironmentFinalizeResumeAction { get; }
@@ -122,7 +129,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
 
-        private IEnvironmentDeleteAction EnvironmentDeleteAction { get; }
+        private IEnvironmentHardDeleteAction EnvironmentHardDeleteAction { get; }
+
+        private IEnvironmentSoftDeleteAction EnvironmentSoftDeleteAction { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -133,13 +142,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> ListAsync(
+        public async Task<IEnumerable<CloudEnvironment>> ListAsync(
             string planId,
             string environmentName,
             UserIdSet userIdSet,
+            EnvironmentListType environmentListType,
             IDiagnosticsLogger logger)
         {
-            return EnvironmentListAction.Run(planId, environmentName, userIdSet, logger);
+            return await EnvironmentListAction.RunAsync(planId, environmentName, userIdSet, environmentListType, logger);
         }
 
         /// <inheritdoc/>
@@ -219,14 +229,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteAsync(
+        public Task<bool> HardDeleteAsync(
             Guid environmentId,
             IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNull(logger, nameof(logger));
 
-            return EnvironmentDeleteAction.RunAsync(environmentId, logger);
+            return EnvironmentHardDeleteAction.RunAsync(environmentId, logger);
         }
 
         /// <inheritdoc/>
@@ -240,6 +250,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
 
             return EnvironmentResumeAction.RunAsync(environmentId, startCloudEnvironmentParameters, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> SoftDeleteAsync(
+            Guid environmentId,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            Requires.NotNull(logger, nameof(logger));
+
+            var environmentSoftDeleteEnabled = await EnvironmentManagerSettings.EnvironmentSoftDeleteEnabled(logger.NewChildLogger());
+
+            // Run full delete if the soft delete feature flag is not enabled.
+            if (environmentSoftDeleteEnabled != true)
+            {
+                return await HardDeleteAsync(environmentId, logger.NewChildLogger());
+            }
+
+            return await EnvironmentSoftDeleteAction.RunAsync(environmentId, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task<CloudEnvironment> DeleteRestoreAsync(
+            Guid environmentId,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            Requires.NotNull(logger, nameof(logger));
+
+            return await EnvironmentDeleteRestoreAction.RunAsync(environmentId, logger);
         }
 
         /// <inheritdoc/>
@@ -697,7 +737,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var validationErrors = new List<MessageCodes>();
 
                 var destinationName = cloudEnvironment.FriendlyName;
-                var environmentsInPlan = await ListAsync(update.Plan.Plan.ResourceId, null, null, logger.NewChildLogger());
+                var environmentsInPlan = await ListAsync(update.Plan.Plan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
 
                 // Rename is handled specially when combined with moving, because the new name availability
                 // must be checked in the new plan instead of the current plan.
@@ -748,7 +788,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
             else if (!string.IsNullOrWhiteSpace(update.FriendlyName) && update.FriendlyName != cloudEnvironment.FriendlyName)
             {
-                var duplicateNamesInPlan = await ListAsync(cloudEnvironment.PlanId, update.FriendlyName, null, logger.NewChildLogger());
+                var duplicateNamesInPlan = await ListAsync(cloudEnvironment.PlanId, update.FriendlyName, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
                 if (!duplicateNamesInPlan.Any())
                 {
                     return (null, (cloudEnvironment) =>

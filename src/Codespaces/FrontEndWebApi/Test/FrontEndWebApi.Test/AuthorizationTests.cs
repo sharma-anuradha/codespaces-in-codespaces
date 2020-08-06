@@ -403,6 +403,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             ICloudEnvironmentRepository environmentRepository,
             ICurrentUserProvider currentUserProvider)
         {
+            var environmentManagerSettings = MockEnvironmentManagerSettings();
+
             var getAction = new EnvironmentGetAction(
                 Mock.Of<IEnvironmentStateManager>(),
                 environmentRepository,
@@ -416,13 +418,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 environmentRepository,
                 Mock.Of<ICurrentLocationProvider>(),
                 currentUserProvider,
-                Mock.Of<IControlPlaneInfo>());
+                Mock.Of<IControlPlaneInfo>(),
+                environmentManagerSettings);
             return new EnvironmentManager.EnvironmentManager(
                 environmentRepository,
                 Mock.Of<IResourceBrokerResourcesExtendedHttpContract>(),
                 MockUtil.MockSkuCatalog(),
                 Mock.Of<IEnvironmentContinuationOperations>(),
-                Mock.Of<EnvironmentManagerSettings>(),
+                environmentManagerSettings,
                 Mock.Of<IPlanManager>(),
                 Mock.Of<PlanManagerSettings>(),
                 Mock.Of<IEnvironmentStateManager>(),
@@ -431,12 +434,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 listAction,
                 Mock.Of<IEnvironmentUpdateStatusAction>(),
                 Mock.Of<IEnvironmentCreateAction>(),
+                Mock.Of<IEnvironmentDeleteRestoreAction>(),
                 Mock.Of<IEnvironmentResumeAction>(),
                 Mock.Of<IEnvironmentFinalizeResumeAction>(),
                 Mock.Of<IEnvironmentSuspendAction>(),
                 Mock.Of<IEnvironmentForceSuspendAction>(),
-                Mock.Of<IEnvironmentDeleteAction>()
+                Mock.Of<IEnvironmentHardDeleteAction>(),
+                Mock.Of<IEnvironmentSoftDeleteAction>()
             );
+        }
+
+        private static EnvironmentManagerSettings MockEnvironmentManagerSettings()
+        {
+            var environmentSettings = new EnvironmentManagerSettings()
+            {
+                DefaultEnvironmentSoftDeleteEnabled = true,
+            };
+
+            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
+                .Returns(Task.FromResult(true));
+
+            environmentSettings.Init(mockSystemConfiguration.Object);
+            return environmentSettings;
         }
 
         public class AccessTest

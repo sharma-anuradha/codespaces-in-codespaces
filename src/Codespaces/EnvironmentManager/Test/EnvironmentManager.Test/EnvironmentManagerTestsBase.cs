@@ -88,6 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             logger = loggerFactory.New();
 
             var defaultCount = 20;
+            var softDeleteFeatureFlagKey = "featureflag:environment-soft-delete-enabled";
             var planSettings = new PlanManagerSettings()
             {
                 DefaultMaxPlansPerSubscription = defaultCount,
@@ -97,12 +98,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             {
                 DefaultMaxEnvironmentsPerPlan = defaultCount,
                 DefaultComputeCheckEnabled = false,
+                DefaultEnvironmentSoftDeleteEnabled = true,
             };
 
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
             mockSystemConfiguration
                 .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), defaultCount))
                 .Returns(Task.FromResult(defaultCount));
+
+            mockSystemConfiguration
+                .Setup(x => x.GetValueAsync(softDeleteFeatureFlagKey, It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
+                .Returns(Task.FromResult(true));
 
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
@@ -153,14 +159,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.mapper = config.CreateMapper();
 
             var taskHelper = new Mock<ITaskHelper>().Object;
-
+            var environmentActionValidator = new EnvironmentActionValidator(
+                MockUtil.MockSubscriptionManager(),
+                MockUtil.MockSkuCatalog(),
+                environmentSubscriptionManager,
+                environmentSettings
+                );
             var environmentListAction = new EnvironmentListAction(
                environmentRepository,
                MockUtil.MockCurrentLocationProvider(),
                MockUtil.MockCurrentUserProvider(),
-               MockUtil.MockControlPlaneInfo());
+               MockUtil.MockControlPlaneInfo(),
+               environmentSettings);
 
-            var environmentDeleteAction = new EnvironmentDeleteAction(
+            var environmentDeleteAction = new EnvironmentHardDeleteAction(
                 environmentStateManager,
                 environmentRepository,
                 MockUtil.MockCurrentLocationProvider(),
@@ -168,7 +180,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockControlPlaneInfo(),
                 environmentAccessManager,
                 resourceBroker,
-                workspaceManager
+                workspaceManager,
+                environmentListAction
                 );
 
             var environmentCreateAction = new EnvironmentCreateAction(
@@ -183,9 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentContinuationOperations.Object,
                 resourceAllocationManager,
                 resourceStartManager,
-                MockUtil.MockSubscriptionManager(),
                 MockUtil.MockResourceSelectorFactory(),
-                environmentSubscriptionManager,
                 environmentStateManager,
                 environmentRepository,
                 MockUtil.MockCurrentLocationProvider(),
@@ -193,7 +204,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockControlPlaneInfo(),
                 environmentAccessManager,
                 environmentDeleteAction,
-                mapper);
+                mapper,
+                environmentActionValidator);
 
             var environmentGetAction = new EnvironmentGetAction(
                 environmentStateManager,
@@ -205,7 +217,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true));
 
-            var environmentForceSuspendAction = new EnvironmentForceSuspendAction(
+            var environmentDeleteRestoreAction = new EnvironmentDeleteRestoreAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                environmentListAction,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                environmentActionValidator,
+                environmentSettings);
+            
+              var environmentForceSuspendAction = new EnvironmentForceSuspendAction(
                 environmentStateManager,
                 environmentRepository,
                 MockUtil.MockCurrentLocationProvider(),
@@ -267,6 +291,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceBroker
                 );
 
+            var environmentSoftDeleteAction = new EnvironmentSoftDeleteAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                environmentSuspendAction);
+
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
@@ -281,11 +314,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentListAction,
                 this.environmentUpdateStatusAction,
                 environmentCreateAction,
+                environmentDeleteRestoreAction,
                 environmentResumeAction,
                 environmentFinalizeResumeAction,
                 environmentSuspendAction,
                 environmentForceSuspendAction,
-                environmentDeleteAction
+                environmentDeleteAction,
+                environmentSoftDeleteAction
                 );
         }
 

@@ -43,8 +43,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentContinuation">Target environment continuation.</param>
         /// <param name="resourceAllocationManager">Target resource allocation manager.</param>
         /// <param name="resourceStartManager">Target resource start manager.</param>
-        /// <param name="subscriptionManager">Target subscription Manager.</param>
-        /// <param name="environmentSubscriptionManager">Target Environment Subscription Manager.</param>
         /// <param name="resourceSelectorFactory">The resource selector factory.</param>
         /// <param name="environmentStateManager">Target environment state manager.</param>
         /// <param name="repository">Target repository.</param>
@@ -54,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentAccessManager">Target environment access manager.</param>
         /// <param name="environmentDeleteAction">Target environment delete action.</param>
         /// <param name="mapper">The auto mapper.</param>
+        /// <param name="environmentActionValidator">Environment action validator.</param>
         public EnvironmentCreateAction(
             IPlanManager planManager,
             ISkuCatalog skuCatalog,
@@ -66,17 +65,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentContinuationOperations environmentContinuation,
             IResourceAllocationManager resourceAllocationManager,
             IResourceStartManager resourceStartManager,
-            ISubscriptionManager subscriptionManager,
             IResourceSelectorFactory resourceSelectorFactory,
-            IEnvironmentSubscriptionManager environmentSubscriptionManager,
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,
             IControlPlaneInfo controlPlaneInfo,
             IEnvironmentAccessManager environmentAccessManager,
-            IEnvironmentDeleteAction environmentDeleteAction,
-            IMapper mapper)
+            IEnvironmentHardDeleteAction environmentDeleteAction,
+            IMapper mapper,
+            IEnvironmentActionValidator environmentActionValidator)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -88,11 +86,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             EnvironmentContinuation = Requires.NotNull(environmentContinuation, nameof(environmentContinuation));
             ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
             ResourceStartManager = Requires.NotNull(resourceStartManager, nameof(resourceStartManager));
-            SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
             ResourceSelectorFactory = Requires.NotNull(resourceSelectorFactory, nameof(resourceSelectorFactory));
-            EnvironmentSubscriptionManager = Requires.NotNull(environmentSubscriptionManager, nameof(environmentSubscriptionManager));
             EnvironmentDeleteAction = Requires.NotNull(environmentDeleteAction, nameof(environmentDeleteAction));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
+            EnvironmentActionValidator = Requires.NotNull(environmentActionValidator, nameof(environmentActionValidator));
         }
 
         /// <inheritdoc/>
@@ -116,15 +113,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         private IResourceStartManager ResourceStartManager { get; }
 
-        private ISubscriptionManager SubscriptionManager { get; }
-
         private IResourceSelectorFactory ResourceSelectorFactory { get; }
 
-        private IEnvironmentSubscriptionManager EnvironmentSubscriptionManager { get; }
-
-        private IEnvironmentDeleteAction EnvironmentDeleteAction { get; }
+        private IEnvironmentHardDeleteAction EnvironmentDeleteAction { get; }
 
         private IMapper Mapper { get; }
+
+        private IEnvironmentActionValidator EnvironmentActionValidator { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> RunAsync(
@@ -294,54 +289,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.Details.SkuName, out var sku);
 
+            var environmentsInPlan = await EnvironmentListAction.RunAsync(input.Details.PlanId, null, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
+
             // Validate against existing environments
-            var environmentsInPlan = await EnvironmentListAction.Run(input.Details.PlanId, null, null, logger.NewChildLogger());
             if (environmentsInPlan.Any((env) => string.Equals(env.FriendlyName, input.Details.FriendlyName, StringComparison.InvariantCultureIgnoreCase)))
             {
                 // TODO: elpadann - when multiple users can access a plan, this should include an ownership check
                 throw new ConflictException((int)MessageCodes.EnvironmentNameAlreadyExists);
             }
 
-            // Check invalid subscription
-            var subscription = await SubscriptionManager.GetSubscriptionAsync(input.Plan.Plan.Subscription, logger.NewChildLogger());
-            if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
-            {
-                throw new ForbiddenException((int)MessageCodes.SubscriptionCannotPerformAction);
-            }
-
-            // Check banned subscription
-            if (subscription.IsBanned)
-            {
-                throw new ForbiddenException((int)MessageCodes.SubscriptionIsBanned);
-            }
-
-            var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(logger.NewChildLogger());
-            var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(logger.NewChildLogger());
-            if (sku.ComputeOS == ComputeOS.Windows)
-            {
-                computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
-            }
-
-            if (computeCheckEnabled)
-            {
-                // Check subscription quota
-                var reachedComputeLimit = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
-                if (reachedComputeLimit)
-                {
-                    throw new ForbiddenException((int)MessageCodes.ExceededQuota);
-                }
-            }
-            else
-            {
-                // Validate environment quota
-                var countOfEnvironmentsInPlan = environmentsInPlan.Count();
-                var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(input.Plan.Plan.Subscription, logger.NewChildLogger());
-                if (countOfEnvironmentsInPlan >= maxEnvironmentsForPlan)
-                {
-                    logger.LogError($"{LogBaseName}_create_maxenvironmentsforplan_error");
-                    throw new ForbiddenException((int)MessageCodes.ExceededQuota);
-                }
-            }
+            await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(input.Details.SkuName, environmentsInPlan, input.Plan.Plan.Subscription, logger.NewChildLogger());
 
             // Validate suspend timeout
             if (input.Details.Type != EnvironmentType.StaticEnvironment)

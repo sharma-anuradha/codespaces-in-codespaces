@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, string name, UserIdSet userIdSet, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, string name, UserIdSet userIdSet, EnvironmentListType environmentListType, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -114,7 +114,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<bool> DeleteAsync(Guid environmentId, IDiagnosticsLogger logger)
+        public Task<bool> HardDeleteAsync(Guid environmentId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<bool> SoftDeleteAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> DeleteRestoreAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

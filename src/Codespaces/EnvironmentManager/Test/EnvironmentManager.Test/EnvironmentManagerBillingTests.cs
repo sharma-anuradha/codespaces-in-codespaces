@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Xunit;
 
@@ -81,19 +82,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         }
 
         [Fact]
-        public async Task DeleteEnvironmentUpdatesBillingState()
+        public async Task HardDeleteEnvironmentUpdatesBillingState()
         {
             await planRepository.CreateAsync(testVsoPlan, logger);
             var testEnvironment = await CreateTestEnvironmentAsync();
             await MakeTestEnvironmentAvailableAsync(testEnvironment);
             billingEventRepository.Clear();
 
-            await this.environmentManager.DeleteAsync(Guid.Parse(testEnvironment.Id), this.logger);
+            await this.environmentManager.HardDeleteAsync(Guid.Parse(testEnvironment.Id), this.logger);
 
             Assert.Collection(
                 billingEventRepository.Values,
                 (billingEvent) => VerifyEnvironmentStateChange(
                     testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.Deleted));
+        }
+
+        [Fact]
+        public async Task SoftDeleteEnvironmentUpdatesBillingState()
+        {
+            await planRepository.CreateAsync(testVsoPlan, logger);
+            var testEnvironment = (await CreateTestEnvironmentAsync());
+            await MakeTestEnvironmentAvailableAsync(testEnvironment);
+            billingEventRepository.Clear();
+
+            await this.environmentManager.SoftDeleteAsync(Guid.Parse(testEnvironment.Id), this.logger);
+
+            var billingEvents = billingEventRepository.Values.OrderBy(x => x.Time);
+
+            Assert.Collection(
+                billingEvents,
+                (billingEvent) => VerifyEnvironmentStateChange(
+                    testEnvironment, billingEvent, CloudEnvironmentState.Available, CloudEnvironmentState.ShuttingDown),
+                (billingEvent) => VerifyEnvironmentStateChange(
+                    testEnvironment, billingEvent, CloudEnvironmentState.ShuttingDown, CloudEnvironmentState.Deleted));
         }
     }
 }

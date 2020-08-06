@@ -30,7 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(string idShard, int count, DateTime cutoffTime, AzureLocation locaiton, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(string idShard, int count, DateTime shutdownCutoffTime, DateTime softDeleteCutoffTime, AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -51,6 +51,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
             return GetWhereAsync(t => t.PlanId.Contains(subscriptionId), logger.NewChildLogger());
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForHardDeleteAsync(string idShard, DateTime cutoffTime, AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
         }
     }
 }

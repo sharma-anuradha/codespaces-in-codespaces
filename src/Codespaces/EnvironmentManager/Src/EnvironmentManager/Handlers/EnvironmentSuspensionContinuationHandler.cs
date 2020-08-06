@@ -9,9 +9,10 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
 {
     /// <summary>
     /// Suspension environments handler.

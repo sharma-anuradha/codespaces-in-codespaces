@@ -21,8 +21,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="planId">Target plan Id.</param>
         /// <param name="name">Target name.</param>
         /// <param name="userIdSet">The owner's user id set. Required unless plan ID is specified.</param>
+        /// <param name="deletedFilter">The enum of how deleted environments should be filtered.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from the list action.</returns>
-        Task<IEnumerable<CloudEnvironment>> Run(string planId, string name, UserIdSet userIdSet, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> RunAsync(string planId, string name, UserIdSet userIdSet, EnvironmentListType deletedFilter, IDiagnosticsLogger logger);
     }
 }

@@ -384,7 +384,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     using (CurrentUserProvider.SetScopedIdentity(SuperuserIdentity))
                     {
-                        var environments = await EnvironmentManager.ListAsync(planInfo.ResourceId, null, null, logger);
+                        var environments = await EnvironmentManager.ListAsync(planInfo.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, logger);
                         var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                         if (nonDeletedEnvironments.Any())
                         {
@@ -396,7 +396,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                                     {
                                         try
                                         {
-                                            var result = await EnvironmentManager.DeleteAsync(Guid.Parse(environment.Id), childLogger);
+                                            var result = await EnvironmentManager.SoftDeleteAsync(Guid.Parse(environment.Id), childLogger);
                                             if (!result)
                                             {
                                                 childLogger.AddCloudEnvironment(environment)

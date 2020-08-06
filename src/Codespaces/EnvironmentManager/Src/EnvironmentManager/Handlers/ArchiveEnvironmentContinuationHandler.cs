@@ -139,9 +139,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     operationInput.EnvironmentId, operationInput.ArchiveResource.ResourceId, logger.NewChildLogger());
 
                 return new ContinuationResult
-                    {
-                        Status = successful ? OperationState.Succeeded : OperationState.Failed,
-                    };
+                {
+                    Status = successful ? OperationState.Succeeded : OperationState.Failed,
+                };
             }
 
             return await base.FailOperationCleanupCoreAsync(operationInput, record, trigger, logger);
@@ -195,10 +195,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 operationInput.ArchiveResource = blobResult;
                 operationInput.ArchiveStatus = ArchiveEnvironmentContinuationInputState.StartStorageBlob;
                 return new ContinuationResult
-                    {
-                        NextInput = operationInput,
-                        Status = OperationState.InProgress,
-                    };
+                {
+                    NextInput = operationInput,
+                    Status = OperationState.InProgress,
+                };
             }
 
             return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidBlobStorageAllocate" };
@@ -221,10 +221,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             {
                 operationInput.ArchiveStatus = ArchiveEnvironmentContinuationInputState.CheckStartStorageBlob;
                 return new ContinuationResult
-                    {
-                        NextInput = operationInput,
-                        Status = OperationState.InProgress,
-                    };
+                {
+                    NextInput = operationInput,
+                    Status = OperationState.InProgress,
+                };
             }
 
             return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidBlobStorageStart" };
@@ -242,10 +242,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 {
                     operationInput.ArchiveStatus = ArchiveEnvironmentContinuationInputState.CleanupUnneededStorage;
                     return new ContinuationResult
-                        {
-                            NextInput = operationInput,
-                            Status = OperationState.InProgress,
-                        };
+                    {
+                        NextInput = operationInput,
+                        Status = OperationState.InProgress,
+                    };
                 }
                 else if (statusResponse.StartingStatus == OperationState.Initialized
                     || statusResponse.StartingStatus == OperationState.InProgress)

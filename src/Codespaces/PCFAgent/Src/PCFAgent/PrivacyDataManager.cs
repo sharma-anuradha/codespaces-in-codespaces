@@ -1,4 +1,4 @@
-﻿// <copyright file="PrivacyDataManager.cs" company="Microsoft">
+// <copyright file="PrivacyDataManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,7 +11,8 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
@@ -112,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
                         map?.ProfileId ?? userIdSet.ProfileId,
                         map?.ProfileProviderId ?? userIdSet.ProfileProviderId);
 
-                    var environments = await EnvironmentManager.ListAsync(null, null, updatedUserIdSet, logger.NewChildLogger());
+                    var environments = await EnvironmentManager.ListAsync(null, null, updatedUserIdSet, EnvironmentListType.AllEnvironments, logger.NewChildLogger());
                     allEnvironments.AddRange(environments);
                 }
 
@@ -135,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
                     affectedEntitiesCount += 1;
                 }
 
-                var environments = await EnvironmentManager.ListAsync(null, null, userIdSet, logger.NewChildLogger());
+                var environments = await EnvironmentManager.ListAsync(null, null, userIdSet, EnvironmentListType.AllEnvironments, logger.NewChildLogger());
                 if (environments.Any())
                 {
                     exportObject.Add("environments", CreateExport(environments));
@@ -163,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
             {
                 childLogger.AddCloudEnvironment(environment);
                 var continuationInput = new EnvironmentContinuationInput { EnvironmentId = environment.Id };
-                await CrossRegionActivator.ExecuteForDataPlane(EnvironmentDeletionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
+                await CrossRegionActivator.ExecuteForDataPlane(SoftDeleteEnvironmentContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
             });
         }
     }

@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -34,12 +35,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="planId">Optional plan ResourceId to query for.</param>
         /// <param name="name">Optional environment FriendlyName to query for (case-insensitive).</param>
         /// <param name="userIdSet">The owner's user id set. Required unless plan ID is specified.</param>
+        /// <param name="environmentListType">Indicates whether list is active/deleted/all environments.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A task whose result is the list of <see cref="CloudEnvironment"/>.</returns>
         Task<IEnumerable<CloudEnvironment>> ListAsync(
             string planId,
             string name,
             UserIdSet userIdSet,
+            EnvironmentListType environmentListType,
             IDiagnosticsLogger logger);
 
         /// <summary>
@@ -103,12 +106,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger);
 
         /// <summary>
-        /// Deletes an environment.
+        /// Soft Deletes an environment.
+        /// </summary>
+        /// <param name="cloudEnvironmentId">The environment Id.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>True if the environment was soft-deleted, otherwise false.</returns>
+        Task<bool> SoftDeleteAsync(Guid cloudEnvironmentId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Hard Deletes an environment.
         /// </summary>
         /// <param name="environmentId">Target environment Id.</param>
         /// <param name="logger">The diagnostics logger.</param>
-        /// <returns>True if the environment was deleted, otherwise false.</returns>
-        Task<bool> DeleteAsync(Guid environmentId, IDiagnosticsLogger logger);
+        /// <returns>True if the environment was hard-deleted, otherwise false.</returns>
+        Task<bool> HardDeleteAsync(Guid environmentId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Restores an environment.
+        /// </summary>
+        /// <param name="cloudEnvironmentId">The environment ID.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud Environment.</returns>
+        Task<CloudEnvironment> DeleteRestoreAsync(
+            Guid cloudEnvironmentId,
+            IDiagnosticsLogger logger);
 
         /// <summary>
         /// Starts a shutdown environment.

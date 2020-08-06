@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentRegisterJobs.cs" company="Microsoft">
+// <copyright file="EnvironmentRegisterJobs.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -28,16 +28,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cleanDeletedPlanEnvironmentsTask">Clean Deleted Environments task.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
+        /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
             IWatchFailedEnvironmentTask watchFailedEnvironmentTask,
-            IWatchSuspendedEnvironmentsToBeArchivedTask watchSuspendedEnvironmentsToBeArchivedTask,
+            IWatchEnvironmentsToBeArchivedTask watchSuspendedEnvironmentsToBeArchivedTask,
             ILogCloudEnvironmentStateTask logCloudEnvironmentStateTask,
             ILogSubscriptionStatisticsTask logSubscriptionStatisticsTask,
             IWatchDeletedPlanEnvironmentsTask cleanDeletedPlanEnvironmentsTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
+            IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -48,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             CleanDeletedPlanEnvironmentsTask = cleanDeletedPlanEnvironmentsTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
+            WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -56,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IWatchFailedEnvironmentTask WatchFailedEnvironmentTask { get; }
 
-        private IWatchSuspendedEnvironmentsToBeArchivedTask WatchSuspendedEnvironmentsToBeArchivedTask { get; }
+        private IWatchEnvironmentsToBeArchivedTask WatchSuspendedEnvironmentsToBeArchivedTask { get; }
 
         private ILogCloudEnvironmentStateTask LogCloudEnvironmentStateTask { get; }
 
@@ -67,6 +70,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
+
+        private IWatchSoftDeletedEnvironmentToBeHardDeletedTask WatchSoftDeletedEnvironmentToBeHardDeletedTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -136,6 +141,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchDeletedPlanEnvironmentsTask}_run",
                 (childLogger) => CleanDeletedPlanEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                TimeSpan.FromMinutes(10));
+
+            // Job: Watch Soft Deleted Environments to be Hard Deleted
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchSoftDeletedEnvironmentToBeHardDeletedTask}_run",
+                (childLogger) => WatchSoftDeletedEnvironmentToBeHardDeletedTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(10));
         }
     }

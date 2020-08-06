@@ -1,4 +1,4 @@
-// <copyright file="EnvironmentDeleteActionInput.cs" company="Microsoft">
+// <copyright file="EnvironmentHardDeleteActionInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,15 +8,15 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions
 {
     /// <summary>
-    /// Environment Delete Action Input.
+    /// Environment Hard Delete Action Input.
     /// </summary>
-    public class EnvironmentDeleteActionInput : IEntityActionIdInput
+    public class EnvironmentHardDeleteActionInput : IEntityActionIdInput
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnvironmentDeleteActionInput"/> class.
+        /// Initializes a new instance of the <see cref="EnvironmentHardDeleteActionInput"/> class.
         /// </summary>
         /// <param name="environmentId">Target environment Id.</param>
-        public EnvironmentDeleteActionInput(Guid environmentId)
+        public EnvironmentHardDeleteActionInput(Guid environmentId)
         {
             Id = environmentId;
         }

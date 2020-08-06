@@ -12,7 +12,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Contracts;
@@ -324,7 +325,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 var continuationInput = new EnvironmentContinuationInput { EnvironmentId = environment.Id };
 
                 // TODO: Create these activators through a more common pattern.
-                await CrossRegionActivator.ExecuteForDataPlane(EnvironmentDeletionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
+                await CrossRegionActivator.ExecuteForDataPlane(SoftDeleteEnvironmentContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
             });
         }
     }

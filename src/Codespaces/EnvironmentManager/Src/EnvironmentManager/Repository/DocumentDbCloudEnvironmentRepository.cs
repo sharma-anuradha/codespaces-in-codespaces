@@ -178,7 +178,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(
             string idShard,
             int count,
-            DateTime cutoffTime,
+            DateTime shutdownCutoffTime,
+            DateTime softDeleteCutoffTime,
             AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
@@ -188,7 +189,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 WHERE STARTSWITH(c.id, @idShard)
                     AND c.storage != null
                     AND c.state = @stateShutdown
-                    AND c.lastStateUpdated < @cutoffTime
+                    AND ((c.lastStateUpdated < @shutdownCutoffTime) OR 
+                        (c.isDeleted = true
+                         AND c.lastDeleted < @softDeleteCutoffTime))
                     AND (
                         IS_DEFINED(c.transitions) = false
                         OR (c.transitions.archiving.status = null
@@ -203,7 +206,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@count", Value = count },
                     new SqlParameter { Name = "@idShard", Value = idShard },
                     new SqlParameter { Name = "@stateShutdown", Value = CloudEnvironmentState.Shutdown.ToString() },
-                    new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
+                    new SqlParameter { Name = "@shutdownCutoffTime", Value = shutdownCutoffTime },
+                    new SqlParameter { Name = "@softDeleteCutoffTime", Value = softDeleteCutoffTime },
                     new SqlParameter { Name = "@targetSku", Value = "Linux" },
                     new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                     new SqlParameter { Name = "@attemptCountLimit", Value = 5 },
@@ -237,6 +241,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
             var count = items.FirstOrDefault();
             return count;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForHardDeleteAsync(
+            string idShard,
+            DateTime cutoffTime,
+            AzureLocation controlPlaneLocation,
+            IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT VALUE c FROM c
+                WHERE STARTSWITH(c.id, @idShard)
+                    AND (c.isDeleted = true
+                         AND c.lastDeleted < @cutoffTime)
+                    AND (c.state != @deletedState)
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@idShard", Value = idShard },
+                    new SqlParameter { Name = "@deletedState", Value = CloudEnvironmentState.Deleted.ToString() },
+                    new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
+                });
+
+            var items = await QueryAsync(
+                (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return items;
         }
 
         /// <inheritdoc />
