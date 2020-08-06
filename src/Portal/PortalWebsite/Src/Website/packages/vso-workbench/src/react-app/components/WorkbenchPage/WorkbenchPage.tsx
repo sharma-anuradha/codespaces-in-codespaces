@@ -239,7 +239,7 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
             return false;
         }
 
-        return ['local', 'development'].includes(config.environment);
+        return config.environment !== 'production';
     };
 
     public render() {
