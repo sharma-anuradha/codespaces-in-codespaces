@@ -269,7 +269,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return await HardDeleteAsync(environmentId, logger.NewChildLogger());
             }
 
-            return await EnvironmentSoftDeleteAction.RunAsync(environmentId, logger);
+            var cloudEnvironment = await EnvironmentSoftDeleteAction.RunAsync(environmentId, logger);
+
+            // TODO: Return 'CloudEnvironment' instead of 'Bool' after we remove the feature flag check.
+            return cloudEnvironment.IsDeleted;
         }
 
         /// <inheritdoc/>

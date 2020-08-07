@@ -7,11 +7,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts.Actions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -20,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Environment Soft Delete Action Beyond Recovery.
     /// </summary>
-    public class EnvironmentSoftDeleteAction : EnvironmentBaseItemAction<Guid, object, bool>, IEnvironmentSoftDeleteAction
+    public class EnvironmentSoftDeleteAction : EnvironmentBaseItemAction<Guid, object, CloudEnvironment>, IEnvironmentSoftDeleteAction
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentSoftDeleteAction"/> class.
@@ -54,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
 
         /// <inheritdoc/>
-        protected override Task<bool> RunCoreAsync(
+        protected override Task<CloudEnvironment> RunCoreAsync(
             Guid input,
             object transientState,
             IDiagnosticsLogger logger)
@@ -78,22 +76,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     };
                     EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes, logger);
 
-                    var cloudEnvironment = record.Value;
-                    if (cloudEnvironment.IsDeleted == true)
+                    if (record.Value.IsDeleted == true)
                     {
-                        return true;
+                        return record.Value;
                     }
 
-                    cloudEnvironment.IsDeleted = true;
-                    cloudEnvironment.LastDeleted = DateTime.UtcNow;
+                    var lastDeleted = DateTime.UtcNow;
+                    record.PushTransition((environment) =>
+                    {
+                        environment.IsDeleted = true;
+                        environment.LastDeleted = lastDeleted;
+                    });
 
-                    cloudEnvironment = await Repository.UpdateAsync(record.Value, logger.NewChildLogger());
-                    record.ReplaceAndResetTransition(cloudEnvironment);
+                    await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
 
-                    if (cloudEnvironment.Type == EnvironmentType.StaticEnvironment)
+                    if (record.Value.Type == EnvironmentType.StaticEnvironment)
                     {
                         // Return after setting the delete flag for static environment.
-                        return true;
+                        return record.Value;
                     }
 
                     // Added the actual suspend action call in the "try" block so that we always emit "Deleted" billing event even if
@@ -102,17 +102,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     try
                     {
                         await EnvironmentSuspendAction.RunAsync(
-                            Guid.Parse(cloudEnvironment.Id),
-                            cloudEnvironment.Compute.ResourceId,
+                            Guid.Parse(record.Value.Id),
+                            record.Value.Compute.ResourceId,
                             logger.NewChildLogger());
                     }
                     finally
                     {
-                        await EnvironmentStateManager.SetEnvironmentStateAsync(cloudEnvironment, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.SoftDeleteEnvironment, null, null, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.SoftDeleteEnvironment, null, null, childLogger.NewChildLogger());
                     }
 
                     // Return true if the environment is already deleted or if the delete is attempted before the record is persisted (ex: Cleanup attempt in response to creation failure)
-                    return true;
+                    return record.Value;
                 });
         }
     }
