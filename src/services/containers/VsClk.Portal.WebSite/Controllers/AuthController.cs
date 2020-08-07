@@ -232,7 +232,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             }
 
             var flags = !string.IsNullOrEmpty(featureFlags) ? JsonConvert.DeserializeObject<FeatureFlags>(featureFlags) : new FeatureFlags();
-            if (AppSettings.PortForwardingServiceEnabled == "true" && (partner == Partners.VSOnline || flags.PortForwardingServiceEnabled))
+            if (flags.PortForwardingServiceEnabled || (AppSettings.PortForwardingServiceEnabled == "true" && partner == Partners.VSOnline))
             {
                 Response.Cookies.Append(Constants.PFSCookieName, Constants.PFSCookieValue);
             }
