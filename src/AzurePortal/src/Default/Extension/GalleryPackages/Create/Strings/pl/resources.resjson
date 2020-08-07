@@ -1,7 +1,0 @@
-{
-  "displayName": "Plany usługi Codespaces",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Hostowane w chmurze środowiska deweloperskie dostępne z dowolnego miejsca",
-  "longSummary": "Niezależnie od tego, czy rozwijasz długoterminowy projekt, pracujesz nad krótkotrwałą gałęzią funkcji, czy chcesz szybko przejrzeć żądanie ściągnięcia, usługa Visual Studio Codespaces pomoże Ci zwiększyć produktywność przez zapewnienie w pełni skonfigurowanego środowiska deweloperskiego w kilka minut.",
-  "description": "<p>Usługa Visual Studio Codespaces ma oparty na przeglądarce edytor z obsługą repozytoriów GIT, rozszerzeniami i wbudowanym interfejsem wiersza polecenia, dzięki czemu możesz edytować, uruchamiać i debugować aplikacje z dowolnego urządzenia.</p><li>Hostowanie w chmurze</li><li>Zastosuj własne</li><li>Dowolny język</li><li>Platforma handlowa rozszerzeń</li>"
-}

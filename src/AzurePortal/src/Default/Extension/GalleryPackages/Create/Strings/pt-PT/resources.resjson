@@ -1,7 +1,0 @@
-{
-  "displayName": "Planos do Codespaces",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Ambientes de desenvolvimento alojados na cloud acessíveis a partir de qualquer lugar",
-  "longSummary": "Quer esteja a trabalhar num projeto de longo prazo, num ramo de funcionalidades de curta duração, ou queira rever rapidamente um pedido Pull, o Visual Studio Codespaces pode ajudá-lo a ser mais produtivo ao fornecer-lhe um ambiente de desenvolvimento totalmente configurado numa questão de minutos.",
-  "description": "<p>O Visual Studio Codespaces tem um editor baseado no browser com suporte para repositórios Git, extensões e uma interface de linha de comandos incorporada para que possa editar, executar e depurar as suas aplicações a partir de qualquer dispositivo.</p> <li>Alojado na cloud</li><li>Traga o seu próprio</li><li>Qualquer idioma</li><li>Extensão do Marketplace</li>"
-}

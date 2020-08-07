@@ -1,7 +1,0 @@
-{
-  "displayName": "Codespaces Planları",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Bulutta barındırılan, her yerden erişilebilen geliştirme ortamları",
-  "longSummary": "Visual Studio Codespaces, uzun vadeli bir proje ya da kısa ömürlü bir özellik dalı üzerinde çalışıyor olmanızdan veya bir çekme isteğini hızla gözden geçirmek istemenizden bağımsız olarak dakikalar içinde tam olarak yapılandırılmış bir geliştirme ortamı sağlar ve daha üretken olmanıza yardımcı olabilir.",
-  "description": "<p>Visual Studio Codespaces, tüm cihazlardan uygulamalarınızı düzenleyebilmeniz, çalıştırabilmeniz ve hatalarını ayıklayabilmeniz için Git depoları, uzantılar ve yerleşik komut satırı arabirimi desteğiyle tarayıcı tabanlı bir düzenleyiciye sahiptir.</p><li>Bulutta barındırılan</li><li>Kendin getir</li><li>Herhangi bir dil</li><li>Uzantı Marketi</li>"
-}

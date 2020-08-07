@@ -1,8 +1,0 @@
-{
-  "extensionHostingServiceName": "codespaces",
-  "extensionNameInPortalRegistration": "Microsoft_Codespaces",
-  "port": 1339,
-  "extensionServableContentPath": "./obj/Debug",
-  "bundlerPath": "../../packages/Microsoft.Portal.Tools.6.317.0.5/build/bundle.exe",
-  "extensionContentSource": "./Output"
-}

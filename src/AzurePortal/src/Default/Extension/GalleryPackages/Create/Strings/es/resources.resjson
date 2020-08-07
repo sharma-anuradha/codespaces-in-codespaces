@@ -1,7 +1,0 @@
-{
-  "displayName": "Planes de Codespaces",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Entornos de desarrollo hospedados en la nube y accesibles desde cualquier lugar",
-  "longSummary": "Tanto si está trabajando en un proyecto a largo plazo como si lo hace en la rama de una característica de corta duración, o bien quiere revisar rápidamente una solicitud de incorporación de cambios \"pull request\", Visual Studio Codespaces puede ayudarle a ser más productivo, ya que le proporciona un entorno de desarrollo totalmente configurado en cuestión de minutos.",
-  "description": "<p>Visual Studio Codespaces tiene un editor basado en explorador que admite repositorios GIT, extensiones y una interfaz de la línea de comandos integrada para que pueda editar, ejecutar y depurar sus aplicaciones desde cualquier dispositivo.</p> <li>Hospedaje en la nube</li><li>Traiga su entorno</li><li>Cualquier lenguaje</li><li>Marketplace de extensiones</li>"
-}

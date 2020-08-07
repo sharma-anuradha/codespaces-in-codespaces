@@ -1,7 +1,0 @@
-{
-  "displayName": "Codespaces-plannen",
-  "publisherDisplayName": "Microsoft",
-  "summary": "In de cloud gehoste ontwikkelomgevingen die vanaf elke locatie toegankelijk zijn",
-  "longSummary": "Of u nu aan een langetermijnproject werkt, een functie met een korte levensduur hebt of snel een pull-aanvraag wilt beoordelen, Visual Studio Codespaces kan u helpen snel productiever te zijn dankzij een volledig geconfigureerde ontwikkelomgeving.",
-  "description": "<p>Visual Studio Codespaces heeft een browsereditor met ondersteuning voor Git-opslagplaatsen en -extensies en een ingebouwde opdrachtregelinterface zodat u uw toepassingen vanaf elk apparaat kunt bewerken, uitvoeren en opsporen.</p><li>Gehost in de cloud</li><li>Neem uw eigen infrastructuur mee</li><li>Alle talen</li><li>Marketplace voor extensies</li>"
-}

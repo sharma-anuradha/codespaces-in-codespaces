@@ -23,14 +23,6 @@ if "%EX%" neq "0" (
     echo Failed to restore correctly.
 	exit /b %EX%
 )
-
-call cd "src\AzurePortal\src\Default\Extension"
-call dir
-nuget restore -PackagesDirectory "..\..\packages"
-echo "Restoring reactviews npm"
-call cd .\Client\ReactViews
-call dir
-call npm i
 popd
 
 echo.

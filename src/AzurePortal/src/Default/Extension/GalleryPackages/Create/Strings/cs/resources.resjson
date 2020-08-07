@@ -1,7 +1,0 @@
-{
-  "displayName": "Plány Codespaces",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Vývojová prostředí, která se hostují v cloudu a jsou dostupná odkudkoli",
-  "longSummary": "Ať už pracujete na dlouhodobém projektu, krátkodobé větvi funkcí nebo chcete rychle zkontrolovat žádost o přijetí změn, Visual Studio Codespaces vám pomůže být produktivnější. Nabídne vám k tomu vývojové prostředí, které se dá plně nakonfigurovat během minut.",
-  "description": "<p>Visual Studio Codespaces obsahuje editor založený na prohlížeči, který podporuje úložiště Git, rozšíření a integrované rozhraní příkazového řádku, abyste mohli upravovat, spouštět a ladit  své aplikace z jakéhokoli zařízení.</p> <li>Hostováno v cloudu</li><li>Používání vlastních prostředků</li><li>Jakýkoli jazyk</li><li>Marketplace s rozšířeními</li>"
-}

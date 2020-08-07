@@ -1,7 +1,0 @@
-{
-  "displayName": "Codespaces-csomagok",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Bárhonnan elérhető felhőalapú fejlesztői környezetek",
-  "longSummary": "Akár egy hosszú távú projekten, akár egy rövid életű funkcióágon dolgozik, vagy egy lekéréses kérelmet szeretne gyorsan ellenőrizni, a Visual Studio Codespaces szolgáltatással növelheti hatékonyságát, mivel az percek alatt biztosít egy teljes körűen konfigurált fejlesztői környezetet.",
-  "description": "<p>A Visual Studio Codespaces rendelkezik egy böngészőalapú szerkesztővel, amely támogatja a Git-adattárakat, és bővítményekkel és egy beépített parancssori felülettel rendelkezik, így bármilyen eszközön szerkesztheti és futtathatja az alkalmazásokat, és elvégezheti azok hibaelhárítását.</p> <li>Felhőalapú</li><li>Saját eszközök használata</li><li>Tetszőleges nyelv</li><li>Bővítménypiactér</li>"
-}

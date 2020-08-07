@@ -1,7 +1,0 @@
-{
-  "displayName": "Codespaces-planer",
-  "publisherDisplayName": "Microsoft",
-  "summary": "Molnbaserade utvecklingsmiljöer som kan nås överallt",
-  "longSummary": "Oavsett om du jobbar på ett långsiktigt projekt, har kortsiktiga uppgifter eller snabbt vill granska en pull-begäran kan Visual Studio Codespaces hjälpa dig att bli mer produktiv genom att skapa en helt konfigurerad utvecklingsmiljö på några minuter.",
-  "description": "<p>Visual Studio Codespaces har ett webbläsarbaserat redigeringsprogram med stöd för Git-lagringsplatser, tillägg och ett inbyggt kommandoradsgränssnitt så att du kan redigera, köra och felsöka dina program från vilken enhet som helst.</p> <li>Molnbaserat</li><li>Använd din egen</li><li>Valfritt språk</li><li>Tillägg från Marketplace</li>"
-}

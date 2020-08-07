@@ -1,7 +1,0 @@
-{
-  "displayName": "Codespaces 方案",
-  "publisherDisplayName": "Microsoft",
-  "summary": "可從任何地方存取的雲端裝載開發環境",
-  "longSummary": "不論您在進行長期專案、短期功能分支，或想要快速檢閱提取要求，Visual Studio Codespaces 都可以在短短幾分鐘內提供設定完整的開發環境，來提高您的生產力。",
-  "description": "<p>Visual Studio Codespaces 具有以瀏覽器為基礎的編輯器，支援 Git 存放庫、延伸模組及內建命令列介面，讓您可以從任何裝置編輯、執行及偵錯應用程式。</p> <li>雲端裝載</li><li>自備</li><li>任何語言</li><li>延伸模組 Marketplace</li>"
-}

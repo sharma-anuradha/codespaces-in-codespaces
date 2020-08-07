@@ -1,7 +1,0 @@
-{
-  "displayName": "Codespaces-Pläne",
-  "publisherDisplayName": "Microsoft",
-  "summary": "In der Cloud gehostete Entwicklungsumgebungen, die von überall aus zugänglich sind",
-  "longSummary": "Unabhängig davon, ob Sie an einem langfristigen Projekt sitzen, kurzfristig einen Featurebranch bearbeiten oder schnell einen Pull Request überprüfen möchten – mit Visual Studio Codespaces können Sie innerhalb weniger Minuten eine vollständig konfigurierte Entwicklungsumgebung bereitstellen und sofort produktiv arbeiten.",
-  "description": "<p>Visual Studio Codespaces verfügt über einen browserbasierten Editor mit Unterstützung für Git-Repositorys, Erweiterungen und eine integrierte Befehlszeilenschnittstelle, damit Sie Ihre Anwendungen von jedem Gerät aus bearbeiten, ausführen und debuggen können. </p> <li>In der Cloud gehostet</li><li>BYO (Bring Your Own)</li><li>Beliebige Sprache</li><li>Erweiterungs-Marketplace</li>"
-}

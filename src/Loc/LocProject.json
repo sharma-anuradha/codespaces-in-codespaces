@@ -10,26 +10,6 @@
                     "LclFile": "src\\Loc\\Loc\\{Lang}\\WebsiteStringResources.json.lcl"
                 }
             ]
-        },
-        {
-            "LanguageSet": "Azure_Languages",
-            "LocItems": [
-                {
-                    "SourceFile": "src\\AzurePortal\\src\\Default\\Extension\\Client\\ClientResources.resx",
-                    "CopyOption": "LangIDOnName",
-                    "OutputPath": "src\\AzurePortal\\src\\Default\\Extension\\Client\\"
-                },
-                {
-                    "SourceFile": "src\\AzurePortal\\src\\Default\\Extension\\Client\\UiDef\\CodespacesPlans\\Strings.resjson",
-                    "CopyOption": "LangIDOnName",
-                    "OutputPath": "src\\AzurePortal\\src\\Default\\Extension\\Client\\UiDef\\CodespacesPlans\\"
-                },
-                {
-                    "SourceFile": "src\\AzurePortal\\src\\Default\\Extension\\GalleryPackages\\Create\\Strings\\resources.resjson",
-                    "CopyOption": "LangIDOnPath",
-                    "OutputPath": "src\\AzurePortal\\src\\Default\\Extension\\GalleryPackages\\Create\\Strings\\"
-                }
-            ]
         }
     ]
 }

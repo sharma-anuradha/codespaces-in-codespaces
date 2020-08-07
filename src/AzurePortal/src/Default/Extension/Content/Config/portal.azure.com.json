@@ -1,6 +1,0 @@
-{
-    "armEndpoint": "https://management.azure.com",
-    "features":{
-        "regionSegments": true
-    }
-}
