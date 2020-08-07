@@ -32,7 +32,7 @@ githubAuthEndpoint:
         - "*.apps.workspaces.githubusercontent.com"
       secretName: ssl-cert-github-pf
     - hosts:
-        - "*.apps.workspaces.githubusercontent.com"
+        - "*.apps.codespaces.githubusercontent.com"
       secretName: ssl-cert-github-cs-pf
 
 pfingress:

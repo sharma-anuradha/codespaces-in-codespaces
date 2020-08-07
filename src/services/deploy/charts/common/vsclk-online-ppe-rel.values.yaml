@@ -27,7 +27,7 @@ ingress:
 githubAuthEndpoint:
   hosts:
     - "auth.apps.ppe.workspaces.githubusercontent.com"
-    - "auth.apps.ppe.workspaces.githubusercontent.com"
+    - "auth.apps.ppe.codespaces.githubusercontent.com"
   tls:
     - hosts:
         - "*.apps.ppe.workspaces.githubusercontent.com"
