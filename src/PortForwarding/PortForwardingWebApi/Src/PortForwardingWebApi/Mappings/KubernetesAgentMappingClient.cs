@@ -31,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
             ["kubernetes.io/ingress.class"] = "nginx",
             ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
             ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin?cid=$request_id",
+            ["nginx.ingress.kubernetes.io/upstream-vhost"] = "localhost",
             ["nginx.ingress.kubernetes.io/configuration-snippet"] = @"
                 set $new_cookie $http_cookie;
 
@@ -46,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 if ($new_cookie ~ "";\s*(.+);?\s*"") {
                     set $new_cookie $1;
                 }
-                
+
                 proxy_set_header Cookie $new_cookie;
             ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '),
             ["nginx.ingress.kubernetes.io/server-snippet"] = @"
