@@ -25,7 +25,7 @@ if exist "%OUTPUT%" (
 
 ::Generate
 echo generating "%OUTPUT%"
-set CMD=ts-node-script index.ts %INPUT% %OUTPUT%
+set CMD=ts-node-script index.ts -i %INPUT% -o %OUTPUT%
 echo %CMD%
 call %CMD%
 

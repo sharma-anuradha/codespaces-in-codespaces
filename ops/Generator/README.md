@@ -14,9 +14,9 @@ ts-node-script index.ts (Input Directory) (Output Directory)
 
 In VS Code, launch with `Run Program`. This should automatically launch `ts-node-script` with the default Components folder and `Components.Generated` as Output.
 
-Else, run `ts-node-script index.ts (Input Directory) (Output Directory)`
+Else, run `ts-node-script index.ts -i (Input Directory) -o (Output Directory)`
 
-ex. `ts-node-script index.ts ..\Components\ ..\Components.Generated\`
+ex. `ts-node-script index.ts -i ..\Components\ -o ..\Components.Generated\`
 
 
 
