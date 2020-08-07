@@ -81,6 +81,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
             services.AddSingleton<ICrossRegionContinuationTaskMessagePump, CrossRegionContinuationTaskMessagePump>();
             services.AddSingleton<ICrossRegionContinuationTaskActivator, CrossRegionContinuationTaskActivator>();
+            services.AddSingleton<IContinuationTaskMessageHandler, SoftDeleteEnvironmentContinuationHandler>();
+            services.AddSingleton<IContinuationTaskMessageHandler, EnvironmentSuspensionContinuationHandler>();
 
             // Handlers
             services.AddSingleton<ILatestHeartbeatMonitor, LatestHeartbeatMonitor>();

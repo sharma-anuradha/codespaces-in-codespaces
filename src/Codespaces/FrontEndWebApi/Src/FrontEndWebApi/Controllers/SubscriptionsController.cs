@@ -1116,7 +1116,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("InvalidSubscriptionState", "InvalidSubscriptionState", HttpStatusCode.BadRequest);
                     }
 
-                    var subscription = await SubscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger());
+                    var resourceProvider = providerNamespace == VsoPlanInfo.CodespacesProviderNamespace ? VsoPlanInfo.CodespacesProviderNamespace : null;
+                    var subscription = await SubscriptionManager.GetSubscriptionAsync(subscriptionId, logger.NewChildLogger(), resourceProvider);
 
                     subscription = await SubscriptionManager.UpdateSubscriptionStateAsync(subscription, subscriptionStateEnum, providerNamespace, logger);
 

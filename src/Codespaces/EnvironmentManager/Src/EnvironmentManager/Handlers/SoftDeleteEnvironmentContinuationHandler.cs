@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
@@ -26,20 +27,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Initializes a new instance of the <see cref="SoftDeleteEnvironmentContinuationHandler"/> class.
         /// </summary>
-        /// <param name="environmentManager">Environment Manager.</param>
+        /// <param name="serviceProvider">Dependency Injection service provider.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
         public SoftDeleteEnvironmentContinuationHandler(
-            IEnvironmentManager environmentManager,
+            IServiceProvider serviceProvider,
             ICurrentIdentityProvider currentIdentityProvider,
             VsoSuperuserClaimsIdentity superuserIdentity)
         {
-            EnvironmentManager = environmentManager;
             CurrentIdentityProvider = currentIdentityProvider;
             SuperuserIdentity = superuserIdentity;
+            ServiceProvider = serviceProvider;
+    }
+
+        private IEnvironmentManager EnvironmentManager
+        {
+            // Workaround for circular dependency that prevents constructor injection of EnvironmentManager.
+            get { return ServiceProvider.GetRequiredService<IEnvironmentManager>(); }
         }
 
-        private IEnvironmentManager EnvironmentManager { get; }
+        private IServiceProvider ServiceProvider { get; }
 
         private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 

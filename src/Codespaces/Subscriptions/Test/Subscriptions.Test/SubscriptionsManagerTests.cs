@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             mockStandardLinux.Setup(sku => sku.ComputeSkuFamily).Returns("standardDSv3Family");
             var mockPremiumLinux = new Mock<ICloudEnvironmentSku>();
             mockPremiumLinux.Setup(sku => sku.ComputeSkuFamily).Returns("standardFSv2Family");
-
+            var mockPlanManager = new Mock<IPlanManager>();
             var skus = new Dictionary<string, ICloudEnvironmentSku>
             {
                 ["standardLinux"] = mockStandardLinux.Object,
@@ -69,7 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
                                     subscriptionOfferManager,
                                     crossRegionActivator, 
                                     httpClient.Object,
-                                    skuCatalog.Object);
+                                    skuCatalog.Object,
+                                    mockPlanManager.Object);
         }
 
         [Fact]

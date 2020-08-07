@@ -15,7 +15,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Settings;
@@ -42,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// <param name="crossRegionActivator">The CrossRegionContinuationTaskActivator.</param>
         /// <param name="rpaasHttpProvider">HttpProvider for accessing RPaas's registered subscriptions endpoint.</param>
         /// <param name="skuCatalog">the sku catalog.</param>
+        /// <param name="planManager">The plan manager.</param>
         public SubscriptionManager(
             SubscriptionManagerSettings options,
             ISubscriptionRepository subscriptionRepository,
@@ -50,7 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             ISubscriptionOfferManager subscriptionOfferManager,
             ICrossRegionContinuationTaskActivator crossRegionActivator,
             IRPaaSMetaRPHttpClient rpaasHttpProvider,
-            ISkuCatalog skuCatalog)
+            ISkuCatalog skuCatalog,
+            IPlanManager planManager)
         {
             SubscriptionRepository = Requires.NotNull(subscriptionRepository, nameof(Susbscriptions.SubscriptionRepository));
             Settings = Requires.NotNull(options, nameof(options));
@@ -59,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             SubscriptionOfferManager = Requires.NotNull(subscriptionOfferManager, nameof(subscriptionOfferManager));
             CrossRegionActivator = Requires.NotNull(crossRegionActivator, nameof(crossRegionActivator));
             RPaaSHttpProvider = rpaasHttpProvider;
+            PlanManager = planManager;
             skuFamilies = skuCatalog.CloudEnvironmentSkus.Select(x => x.Value.ComputeSkuFamily).Distinct();
         }
 
@@ -75,6 +77,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         private ICrossRegionContinuationTaskActivator CrossRegionActivator { get; }
 
         private IRPaaSMetaRPHttpClient RPaaSHttpProvider { get; }
+
+        private IPlanManager PlanManager { get; }
 
         /// <inheritdoc/>
         public async Task<Subscription> AddBannedSubscriptionAsync(string subscriptionId, BannedReason bannedReason, string byIdentity, IDiagnosticsLogger logger)
@@ -95,45 +99,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// <inheritdoc/>
         public async Task<Subscription> GetSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger, string resourceProvider = null)
         {
-            var subscription = await SubscriptionRepository.GetAsync(subscriptionId, logger.NewChildLogger());
+            return await logger.OperationScopeAsync(
+              $"{LoggingBaseName}_get_subscription_async",
+              async (childLogger) =>
+              {
+                  var subscription = await SubscriptionRepository.GetAsync(subscriptionId, logger.NewChildLogger());
 
-            if (subscription == null)
-            {
-                // Need to create a new subscription.
-                subscription = new Subscription()
-                {
-                    Id = subscriptionId,
-                    QuotaId = "FreeTrial_2014-09-01",  // Default is the trial bucket
-                    SubscriptionState = SubscriptionStateEnum.Registered,
-                    ResourceProvider = resourceProvider,
-                };
+                  if (subscription == null)
+                  {
+                      // Need to create a new subscription.
+                      subscription = new Subscription()
+                      {
+                          Id = subscriptionId,
+                          QuotaId = "FreeTrial_2014-09-01",  // Default is the trial bucket
+                          SubscriptionState = SubscriptionStateEnum.Registered,
+                          ResourceProvider = resourceProvider,
+                      };
 
-                var details = await GetSubscriptionDetailsFromExternalSourceAsync(subscription, logger.NewChildLogger());
+                      var details = await GetSubscriptionDetailsFromExternalSourceAsync(subscription, logger.NewChildLogger());
 
-                if (details != null)
-                {
-                    subscription.QuotaId = details.QuotaId;
-                    if (Enum.TryParse(details.State, true, out SubscriptionStateEnum subscriptionStateEnum))
-                    {
-                        subscription.SubscriptionState = subscriptionStateEnum;
-                    }
-                }
+                      if (details != null)
+                      {
+                          subscription.QuotaId = details.QuotaId;
+                          if (Enum.TryParse(details.State, true, out SubscriptionStateEnum subscriptionStateEnum))
+                          {
+                              subscription.SubscriptionState = subscriptionStateEnum;
+                          }
+                      }
 
-                // add the subscription to our repository as it's a new subscription.
-                subscription = await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger.NewChildLogger());
-            }
+                      // add the subscription to our repository as it's a new subscription.
+                      subscription = await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger.NewChildLogger());
+                  }
 
-            // update subscription record if using the new RP: Microsoft.Codespaces
-            if (!string.IsNullOrEmpty(resourceProvider) && subscription.ResourceProvider != VsoPlanInfo.CodespacesProviderNamespace)
-            {
-                subscription.ResourceProvider = VsoPlanInfo.CodespacesProviderNamespace;
-                subscription = await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger.NewChildLogger());
-            }
+                  // update subscription record if using the new RP: Microsoft.Codespaces
+                  if (!string.IsNullOrEmpty(resourceProvider) && subscription.ResourceProvider != VsoPlanInfo.CodespacesProviderNamespace)
+                  {
+                      subscription.ResourceProvider = VsoPlanInfo.CodespacesProviderNamespace;
+                      subscription = await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger.NewChildLogger());
+                  }
 
-            // Set the current quota on the subscription.
-            subscription.CurrentMaximumQuota = await GetCurrentQuota(subscription, logger.NewChildLogger());
-            subscription.CanCreateEnvironmentsAndPlans = await CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger());
-            return subscription;
+                  childLogger.AddSubscriptionId(subscriptionId);
+                  childLogger.AddValue("SubscriptionState", subscription.SubscriptionState.ToString());
+                  childLogger.AddValue("ResourceProvider", subscription.ResourceProvider == null ? VsoPlanInfo.VsoProviderNamespace : VsoPlanInfo.CodespacesProviderNamespace);
+
+                  // Set the current quota on the subscription.
+                  subscription.CurrentMaximumQuota = await GetCurrentQuota(subscription, logger.NewChildLogger());
+                  subscription.CanCreateEnvironmentsAndPlans = await CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger());
+                  return subscription;
+              }, swallowException: true);
         }
 
         /// <inheritdoc/>
@@ -171,11 +184,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                         return subscription;
                     }
 
-                    if (subscription.SubscriptionState == state)
-                    {
-                        // no work to do, new state and current state are the same
-                        return subscription;
-                    }
+                    var requiresUpdate = subscription.SubscriptionState != state;
+
+                    childLogger.AddSubscriptionId(subscription.Id)
+                    .FluentAddValue("CurrentSubscriptionState", subscription.SubscriptionState)
+                    .FluentAddValue("DesiredSubscriptionState", state);
 
                     subscription.SubscriptionState = state;
                     subscription.SubscriptionStateUpdateDate = DateTime.UtcNow;
@@ -196,7 +209,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                         await ApplyDeletedRulesToResources(subscription, logger);
                     }
 
-                    return await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger);
+                    // only write to the DB if something actually changed.
+                    if (requiresUpdate)
+                    {
+                        return await SubscriptionRepository.CreateOrUpdateAsync(subscription, logger);
+                    }
+
+                    return subscription;
                 }, swallowException: true);
         }
 
@@ -216,6 +235,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                     {
                         return true;
                     }
+
+                    childLogger.AddSubscriptionId(subscription.Id)
+                               .FluentAddValue("CurrentSubscriptionState", subscription.SubscriptionState);
 
                     return subscription.SubscriptionState == SubscriptionStateEnum.Registered;
                 }, swallowException: true);
@@ -239,6 +261,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_update_quota",
                 async (childLogger) =>
                 {
+                    childLogger.AddSubscriptionId(subscription.Id)
+                                .FluentAddValue("QuotaId", quotaId);
                     var currentSub = await SubscriptionRepository.GetAsync(subscription.Id, childLogger.NewChildLogger());
                     currentSub.QuotaId = quotaId;
                     return await SubscriptionRepository.UpdateAsync(currentSub, childLogger.NewChildLogger());
@@ -300,8 +324,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_apply_warned_deleted_rules_to_resources",
                 async (childLogger) =>
                 {
-                    var environments = await EnvironmentSubscriptionManager.ListBySubscriptionAsync(subscription, logger.NewChildLogger());
-                    environments.ToList().ForEach(async environment => await QueueEnvironmentForDeletion(environment, logger.NewChildLogger()));
+                    var plans = await PlanManager.ListAsync(null, null, subscription.Id, null, null, childLogger.NewChildLogger());
+                    foreach (var plan in plans)
+                    {
+                        childLogger.AddVsoPlan(plan);
+                        await PlanManager.DeleteAsync(plan, childLogger.NewChildLogger());
+                    }
                 }, swallowException: true);
         }
 
@@ -314,18 +342,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
 
                 // TODO: Create these activators through a more common pattern.
                 await CrossRegionActivator.ExecuteForDataPlane(EnvironmentSuspensionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
-            });
-        }
-
-        private async Task QueueEnvironmentForDeletion(CloudEnvironment environment, IDiagnosticsLogger logger)
-        {
-            await logger.OperationScopeAsync($"{LoggingBaseName}_queue_environment_for_deletion", async (childLogger) =>
-            {
-                childLogger.AddCloudEnvironment(environment);
-                var continuationInput = new EnvironmentContinuationInput { EnvironmentId = environment.Id };
-
-                // TODO: Create these activators through a more common pattern.
-                await CrossRegionActivator.ExecuteForDataPlane(SoftDeleteEnvironmentContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
             });
         }
     }

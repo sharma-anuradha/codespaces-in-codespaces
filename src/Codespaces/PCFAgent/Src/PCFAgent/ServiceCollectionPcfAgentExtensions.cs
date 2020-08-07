@@ -28,7 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent
             services.AddHostedService<PcfAgentWorker>();
             services.AddSingleton<IPrivacyDataManager, PrivacyDataManager>();
             services.AddSingleton<IPrivacyDataAgent, DataAgent>();
-            services.AddSingleton<IContinuationTaskMessageHandler, SoftDeleteEnvironmentContinuationHandler>();
             services.AddTransient<CommandFeedLogger, DiagnosticsCommandFeedLogger>();
 
             if (useMocksForLocalDevelopment)
