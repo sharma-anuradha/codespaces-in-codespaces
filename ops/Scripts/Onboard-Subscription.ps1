@@ -44,35 +44,7 @@ Write-Host "Onboarding subscription '$($sub.Subscription.Name)'" -ForegroundColo
 Assert-SignedInUserIsOwner | Out-Null
 
 if (!$SkipRegistrations) {
-    Write-Host
-    Write-Host "Registering resource providers and features..."
-    # Register Resource Providers
-    # TODO: how to make these specific to Component and Plane?
-    (
-        "Microsoft.Batch",
-        "Microsoft.Compute",
-        "Microsoft.ContainerInstance",
-        "Microsoft.ContainerRegistry",
-        "Microsoft.DocumentDB",
-        "Microsoft.Keyvault",
-        "Microsoft.Kubernetes",
-        "Microsoft.ManagedIdentity",
-        "Microsoft.Maps",
-        "Microsoft.Network",
-        "Microsoft.Relay",
-        "Microsoft.ServiceBus",
-        "Microsoft.SignalRService",
-        "Microsoft.Storage",
-        "Microsoft.VirtualMachineImages"
-    ) | ForEach-Object {
-        Write-Host $_ -ForegroundColor DarkGray
-        Register-AzResourceProvider -ProviderNamespace $_ | Out-Null
-    }
-
-    # Enable Partitioned DNS to get the new quota limit of 5k storage accounts per subscription per region.
-    # See https://microsoft.sharepoint.com/teams/AzureStorage/SitePages/Partitioned-DNS.aspx#how-can-you-enable-partitioned-dns-for-your-subscription-1
-    "Microsoft.Storage/PartitionedData" | Write-Host -ForegroundColor DarkGray
-    Register-AzProviderFeature -FeatureName "PartitionedDns" -ProviderNamespace "Microsoft.Storage" | Out-Null
+    Register-DefaultProvidersAndFeatures
 }
 
 # Get or create the ops service principal, needed for subscription RBAC.

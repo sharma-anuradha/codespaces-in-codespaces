@@ -96,7 +96,7 @@ function Get-AzureSubscriptionName(
     else {
       throw "Both geo and regioncode are requied for data subscriptions."
     }
-   
+
     $countSuffix = "{0:d3}" -f $count
     $subscriptionName += "-$countSuffix"
   }
@@ -226,10 +226,10 @@ function Get-ServicePrincipal(
       & az ad sp create-for-rbac --skip-assignment --name $servicePrincipalName
       Assert-LastExitCodeSuccess -Message "az ad sp create-for-rbac failed"
       $sp = Get-AzADServicePrincipal -DisplayName $servicePrincipalName
- 
+
       if (!$sp) {
         throw "failed to create service principal $servicePrincipalName"
-      }  
+      }
     }
     else {
       throw "could not find service principal $servicePrincipalName"
@@ -290,4 +290,56 @@ function Select-AzureSubscription(
   & az account set --subscription $subscriptionName | Out-Null
   Assert-LastExitCodeSuccess -Message "az account set failed"
   $sub
+}
+
+function Register-DefaultProvidersAndFeatures(
+  [bool]$PartitionedData = $true) {
+  Write-Host
+  Write-Host "Registering resource providers and features..."
+  # Register Resource Providers
+  # TODO: how to make these specific to Component and Plane?
+  (
+      "Microsoft.Batch",
+      "Microsoft.Compute",
+      "Microsoft.ContainerInstance",
+      "Microsoft.ContainerRegistry",
+      "Microsoft.DocumentDB",
+      "Microsoft.Keyvault",
+      "Microsoft.Kubernetes",
+      "Microsoft.ManagedIdentity",
+      "Microsoft.Maps",
+      "Microsoft.Network",
+      "Microsoft.Relay",
+      "Microsoft.ServiceBus",
+      "Microsoft.SignalRService",
+      "Microsoft.Storage",
+      "Microsoft.VirtualMachineImages"
+  ) | ForEach-Object {
+      Write-Host $_ -ForegroundColor DarkGray
+      Register-AzResourceProvider -ProviderNamespace $_ | Out-Null
+  }
+
+  if ($PartitionedData) {
+    # Enable Partitioned DNS to get the new quota limit of 5k storage accounts per subscription per region.
+    # See https://microsoft.sharepoint.com/teams/AzureStorage/SitePages/Partitioned-DNS.aspx#how-can-you-enable-partitioned-dns-for-your-subscription-1
+    "Microsoft.Storage/PartitionedData" | Write-Host -ForegroundColor DarkGray
+    Register-AzProviderFeature -FeatureName "PartitionedDns" -ProviderNamespace "Microsoft.Storage" | Out-Null
+  }
+}
+
+function New-SubscriptionRoleAssignment(
+  [string]$RoleDefinitionName,
+  [object]$Assignee) {
+  $subscription = (get-azcontext).Subscription
+  $subscriptionId = $subscription.Id
+  $subscriptionName = $subscription.Name
+  $scope = "/subscriptions/$subscriptionId"
+  $assigneeObjectId = $Assignee.Id
+  $assigneeDisplayName = $Assignee.DisplayName
+  "Assigning $RoleDefinitionName to $assigneeDisplayName in $subscriptionName" | Write-Host -ForegroundColor DarkGray
+  $role = Get-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
+  if (!$role) {
+    $role = New-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
+  }
+  $role
 }
