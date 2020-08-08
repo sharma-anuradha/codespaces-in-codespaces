@@ -48,6 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                     set $new_cookie $1;
                 }
 
+                # Enable webpack-dev-server live reload without allowing PF host on dev side.
+                proxy_set_header origin ""http://localhost"";
                 proxy_set_header Cookie $new_cookie;
             ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '),
             ["nginx.ingress.kubernetes.io/server-snippet"] = @"
