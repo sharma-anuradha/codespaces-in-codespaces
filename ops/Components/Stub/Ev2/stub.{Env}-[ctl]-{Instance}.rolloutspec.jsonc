@@ -21,10 +21,10 @@
       "actions": [ "deploy" ]
     },
     {
-      "name": "Deploy {{{baseInstanceName}}}-script",
+      "name": "Deploy and Run {{{baseInstanceName}}}-script",
       "targetType": "ServiceResource",
       "targetName": "{{{baseInstanceName}}}-script",
-      "actions": [ "deploy" ]
+      "actions": [ "Shell/stub-script" ]
     }
   ]
 }

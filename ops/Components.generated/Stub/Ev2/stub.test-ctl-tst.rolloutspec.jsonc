@@ -25,10 +25,10 @@
       "actions": [ "deploy" ]
     },
     {
-      "name": "Deploy vscs-stub-test-ctl-tst-script",
+      "name": "Deploy and Run vscs-stub-test-ctl-tst-script",
       "targetType": "ServiceResource",
       "targetName": "vscs-stub-test-ctl-tst-script",
-      "actions": [ "deploy" ]
+      "actions": [ "Shell/stub-script" ]
     }
   ]
 }

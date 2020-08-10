@@ -8,7 +8,7 @@
   "shellExtensions": [
     {
       "name": "stub-script",
-      "type": "scripts/stub-script",
+      "type": "sub-script",
       "properties": {
         "maxExecutionTime": "PT5M"
       },

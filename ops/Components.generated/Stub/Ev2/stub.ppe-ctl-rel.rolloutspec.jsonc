@@ -25,10 +25,10 @@
       "actions": [ "deploy" ]
     },
     {
-      "name": "Deploy vscs-stub-ppe-ctl-rel-script",
+      "name": "Deploy and Run vscs-stub-ppe-ctl-rel-script",
       "targetType": "ServiceResource",
       "targetName": "vscs-stub-ppe-ctl-rel-script",
-      "actions": [ "deploy" ]
+      "actions": [ "Shell/stub-script" ]
     }
   ]
 }
