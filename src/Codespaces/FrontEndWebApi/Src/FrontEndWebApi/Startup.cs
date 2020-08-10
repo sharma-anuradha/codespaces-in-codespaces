@@ -85,6 +85,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             var appSettings = ConfigureAppSettings(services);
             var frontEndAppSettings = appSettings.FrontEnd;
             var mdmMetricSettings = frontEndAppSettings.MdmMetricSettings;
+
+            mdmMetricSettings.IsRunningInAzure = IsRunningInAzure();
+
+            MdmMetricAttribute.GetSettingsCallback = (context) =>
+            {
+                var resourceId = context.HttpContext.RequestServices.GetService<ICurrentUserProvider>()?.Identity?.AuthorizedPlan;
+                mdmMetricSettings.CustomerResourceId = resourceId != null ? resourceId : "CustomerResourceIdNotAvailable";
+                return mdmMetricSettings;
+            };
+
             var mdmMetricClient = new MdmMetricClient(mdmMetricSettings.GenevaSvc, mdmMetricSettings.Port, IsRunningInAzure(), logger);
 
             // Enabling metrics publication, only if its turned on at service level.
