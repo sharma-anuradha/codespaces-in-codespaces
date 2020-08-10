@@ -14,7 +14,6 @@ class StaticMatch {
   env: string;
   plane: string;
   instance: string;
-  geo: string;
   region: string;
 }
 
@@ -128,13 +127,13 @@ export default class Templates {
     const instanceFilter = function (i: Instance) {
       return hasInstances && (staticMatch.instance == null || i.name == staticMatch.instance);
     }
-    const hasStamps = (staticMatch.geo && staticMatch.region) || (this.containsMatch(match, ["{Geo}"]) && this.containsMatch(match, ["{Region}"]));
-    const staticStampName = staticMatch.geo && staticMatch.region ? `${staticMatch.geo}-${staticMatch.region}` : null;
+    const hasRegions = (staticMatch.region) || this.containsMatch(match, ["{Region}"]);
+    const staticRegionName = staticMatch.region ? staticMatch.region : null;
     const stampFilter = function (s: Stamp) {
-      return hasStamps && (staticStampName == null || s.name == staticStampName);
+      return hasRegions && (staticRegionName == null || s.name == staticRegionName);
     }
 
-    if (!hasEnvironments && !hasPlanes && !hasInstances && !hasStamps) {
+    if (!hasEnvironments && !hasPlanes && !hasInstances && !hasRegions) {
       // no replacement pattern match;
       console.log(`warning: the file pattern ${compComponentsTemplate} is not valid: ${fileName}`)
       return [];
@@ -195,13 +194,12 @@ export default class Templates {
                   const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
                   const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
                   const staticInstance = new RegExp(`\\[${instance.name}\\]`, "gi");
-                  const staticGeo = new RegExp(`\\[${stamp.location.geography.name}\\]`, "gi");
-                  const staticRegion = new RegExp(`\\[${stamp.location.region.name}\\]`, "gi");
+                  const staticRegion = new RegExp(`\\[${stamp.name}\\]`, "gi");
                   const outputName = fileName
                     .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
                     .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name)
                     .replace(/{Instance}/gi, instance.name).replace(staticInstance, instance.name)
-                    .replace(/{Geo}-{Region}/gi, stamp.name).replace(staticGeo, stamp.location.geography.name).replace(staticRegion, stamp.location.region.name)
+                    .replace(/{Region}/gi, stamp.name).replace(staticRegion, stamp.name)
                   names.push({
                     fileName: fileName,
                     outputName: outputName,
@@ -300,10 +298,10 @@ export default class Templates {
         case 2:
           staticMatch.instance = value;
           break;
+        // case 3:
+        //   staticMatch.geo = value;
+        //   break;
         case 3:
-          staticMatch.geo = value;
-          break;
-        case 4:
           staticMatch.region = value;
           break;
       }
