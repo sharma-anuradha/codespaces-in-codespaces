@@ -63,5 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Continuation Task Message Pump.
         /// </summary>
         public const string ContinuationTaskMessagePump = "continuation_task_message_pump";
+
+        /// <summary>
+        /// Migrate cloud environments to their regional location task.
+        /// </summary>
+        public const string CloudEnvironmentRegionalMigrationTask = "cloud_environment_regional_migration_task";
     }
 }

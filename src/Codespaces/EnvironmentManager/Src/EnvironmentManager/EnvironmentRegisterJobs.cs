@@ -28,7 +28,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cleanDeletedPlanEnvironmentsTask">Clean Deleted Environments task.</param>
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
-        /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
+        /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask">Target watch soft deleted environments to be terminated task.</param>
+        /// <param name="cloudEnvironmentRegionalMigrationTask">Migration task for cloud environments.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
@@ -40,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
+            ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -51,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
+            CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -72,6 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
         private IWatchSoftDeletedEnvironmentToBeHardDeletedTask WatchSoftDeletedEnvironmentToBeHardDeletedTask { get; }
+
+        private ICloudEnvironmentRegionalMigrationTask CloudEnvironmentRegionalMigrationTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -97,6 +102,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
             (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
             TimeSpan.FromMinutes(10));
+
+            // Job: Migrate cloud environments to the appropriate regional database
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.CloudEnvironmentRegionalMigrationTask}_run",
+                (childLogger) => CloudEnvironmentRegionalMigrationTask.RunAsync(TimeSpan.FromHours(24), childLogger),
+                TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));

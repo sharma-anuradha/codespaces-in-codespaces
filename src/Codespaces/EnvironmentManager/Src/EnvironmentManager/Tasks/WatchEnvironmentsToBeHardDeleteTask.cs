@@ -32,7 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
-        /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="environmentManager">Target Environment Manager.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
@@ -43,14 +42,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IControlPlaneInfo controlPlaneInfo,
             IEnvironmentManager environmentManager,
             ICurrentIdentityProvider currentIdentityProvider,
             VsoSuperuserClaimsIdentity superuserIdentity)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             EnvironmentContinuationOperations = environmentContinuationOperations;
-            ControlPlaneInfo = controlPlaneInfo;
             EnvironmentManager = environmentManager;
             CurrentIdentityProvider = currentIdentityProvider;
             SuperuserIdentity = superuserIdentity;
@@ -61,8 +58,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private string LogBaseName => EnvironmentLoggingConstants.WatchSoftDeletedEnvironmentToBeHardDeletedTask;
 
         private IEnvironmentContinuationOperations EnvironmentContinuationOperations { get; }
-
-        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private IEnvironmentManager EnvironmentManager { get; }
 
@@ -115,12 +110,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         {
             logger.FluentAddValue("TaskEnvironmentIdShard", idShard);
 
-            // Pickup current region
-            var controlPlaneRegion = ControlPlaneInfo.Stamp.Location;
-
             // Get environments to be deleted permanently.
             var records = await CloudEnvironmentRepository.GetEnvironmentsReadyForHardDeleteAsync(
-                idShard, cutoffTime, controlPlaneRegion, logger.NewChildLogger());
+                idShard, cutoffTime, logger.NewChildLogger());
 
             logger.FluentAddValue("TaskFoundItems", records.Count());
 

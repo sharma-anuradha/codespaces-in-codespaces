@@ -49,14 +49,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (useMockCloudEnvironmentRepository)
             {
-                services.AddSingleton<ICloudEnvironmentRepository, MockCloudEnvironmentRepository>();
+                services.AddSingleton<IGlobalCloudEnvironmentRepository, MockGlobalCloudEnvironmentRepository>();
                 services.AddSingleton<IRegionalCloudEnvironmentRepository, MockRegionalCloudEnvironmentRepository>();
                 services.AddSingleton<ICloudEnvironmentCosmosContainer, MockCloudEnvironmentCosmosContainer>();
                 services.AddSingleton<IContinuationJobQueueRepository, MockEnvironmentMonitorQueueRepository>();
             }
             else
             {
-                services.AddVsoDocumentDbCollection<CloudEnvironment, ICloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<CloudEnvironment, IGlobalCloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
                 services.AddVsoDocumentDbCollection<CloudEnvironment, IRegionalCloudEnvironmentRepository, RegionalCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
                 services.AddVsoCosmosContainer<CloudEnvironment, ICloudEnvironmentCosmosContainer, CloudEnvironmentCosmosContainer>(CloudEnvironmentCosmosContainer.ConfigureOptions);
                 services.AddSingleton<IContinuationJobQueueRepository, FrontendJobQueueRepository>();
@@ -65,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
             }
 
+            services.AddSingleton<ICloudEnvironmentRepository, CloudEnvironmentRepository>();
             services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();
 
             // Continuation
@@ -155,6 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
             services.AddSingleton<IWatchDeletedPlanEnvironmentsTask, WatchDeletedPlanEnvironmentsTask>();
             services.AddSingleton<IWatchSoftDeletedEnvironmentToBeHardDeletedTask, WatchEnvironmentsToBeHardDeleteTask>();
+            services.AddSingleton<ICloudEnvironmentRegionalMigrationTask, CloudEnvironmentRegionalMigrationTask>();
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();

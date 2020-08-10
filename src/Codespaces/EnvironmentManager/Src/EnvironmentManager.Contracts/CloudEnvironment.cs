@@ -314,6 +314,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public string SubnetResourceId { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the cloud-environment record exists in the regional database.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "existsInRegionalDb")]
+        public bool ExistsInRegionalDb { get; set; }
+
+        /// <summary>
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>

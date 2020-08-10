@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// <typeparam name="TEntityTransition">Type of entity transition being targeted.</typeparam>
         /// <returns>Populated entity transition object.</returns>
         public static Task<TEntityTransition> BuildTransitionAsync<TEntity, TEntityTransition>(
-            this IDocumentDbCollection<TEntity> documentDbCollection,
+            this IEntityRepository<TEntity> documentDbCollection,
             string name,
             DocumentDbKey key,
             Func<TEntity, TEntityTransition> factory,
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// <typeparam name="TEntity">Type of entity being targeted.</typeparam>
         /// <returns>Populated entity transition object.</returns>
         public static Task UpdateTransitionAsync<TEntity>(
-            this IDocumentDbCollection<TEntity> documentDbCollection,
+            this IEntityRepository<TEntity> documentDbCollection,
             string name,
             IEntityTransition<TEntity> entityTransition,
             IDiagnosticsLogger logger)

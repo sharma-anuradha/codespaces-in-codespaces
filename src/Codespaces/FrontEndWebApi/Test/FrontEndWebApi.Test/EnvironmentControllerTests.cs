@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environme
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
@@ -770,12 +771,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var metrics = MockUtil.MockMetricsManager();
             var subManager = MockUtil.MockSubscriptionManager();
             var environmentAccessManager = new EnvironmentAccessManager(currentUserProvider);
-            var environmentRepository = new MockCloudEnvironmentRepository();
+            var globalRepository = new MockGlobalCloudEnvironmentRepository();
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository();
+            var environmentRepositoryManager = new CloudEnvironmentRepository(globalRepository, regionalRepository);
             var billingEventManager = new BillingEventManager(new MockBillingEventRepository(),
                                                                 new MockBillingOverrideRepository());
             var workspaceManager = new WorkspaceManager(new MockClientWorkspaceRepository());
             var metricsLogger = new MockEnvironmentMetricsLogger();
-            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, metricsLogger);
+            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepositoryManager, billingEventManager, metricsLogger);
             var settings = new FrontEndAppSettings
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,

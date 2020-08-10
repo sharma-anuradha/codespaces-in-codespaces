@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <summary>
     /// A regional repository of <see cref="CloudEnvironment"/>.
     /// </summary>
-    public interface IRegionalCloudEnvironmentRepository : ICloudEnvironmentRepository
+    public interface IRegionalCloudEnvironmentRepository : IGlobalCloudEnvironmentRepository
     {
     }
 }

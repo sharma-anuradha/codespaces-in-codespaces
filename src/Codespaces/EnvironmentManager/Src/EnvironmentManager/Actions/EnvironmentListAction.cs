@@ -29,7 +29,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="currentLocationProvider">Target current location provider.</param>
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
-        /// <param name="systemActionGetProvider">Target system action get provider.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         public EnvironmentListAction(
             ICloudEnvironmentRepository repository,
@@ -141,22 +140,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // The code is written like this to optimize the CosmosDB lookups - consider that optimization if modifying it.
             if (input.UserIdSet == null)
             {
-                if (input.PlanId != null)
+                // Query by planId
+                if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    // Query by planId
-                    if (!string.IsNullOrEmpty(environmentNameInLowerCase))
-                    {
-                        environments = await Repository.GetWhereAsync(
-                            (cloudEnvironment) => cloudEnvironment.PlanId == input.PlanId &&
-                                cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
-                            logger.NewChildLogger());
-                    }
-                    else
-                    {
-                        environments = await Repository.GetWhereAsync(
-                            (cloudEnvironment) => cloudEnvironment.PlanId == input.PlanId,
-                            logger.NewChildLogger());
-                    }
+                    environments = await Repository.ListAsync(input.PlanId, environmentNameInLowerCase, logger);
+                }
+                else
+                {
+                    environments = await Repository.ListAsync(input.PlanId, logger);
                 }
             }
             else if (input.PlanId == null)
@@ -164,18 +155,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 // Query by userIdSet
                 if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    environments = await Repository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == input.UserIdSet.CanonicalUserId ||
-                                cloudEnvironment.OwnerId == input.UserIdSet.ProfileId) &&
-                            cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
-                        logger.NewChildLogger());
+                    environments = await Repository.ListAsync(input.UserIdSet, environmentNameInLowerCase, logger);
                 }
                 else
                 {
-                    environments = await Repository.GetWhereAsync(
-                        (cloudEnvironment) => cloudEnvironment.OwnerId == input.UserIdSet.CanonicalUserId ||
-                            cloudEnvironment.OwnerId == input.UserIdSet.ProfileId,
-                        logger.NewChildLogger());
+                    environments = await Repository.ListAsync(input.UserIdSet, logger);
                 }
             }
             else
@@ -183,20 +167,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 // Query by planId and userIdSet
                 if (!string.IsNullOrEmpty(environmentNameInLowerCase))
                 {
-                    environments = await Repository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == input.UserIdSet.CanonicalUserId ||
-                                cloudEnvironment.OwnerId == input.UserIdSet.ProfileId) &&
-                            cloudEnvironment.PlanId == input.PlanId &&
-                            cloudEnvironment.FriendlyNameInLowerCase == environmentNameInLowerCase,
-                        logger.NewChildLogger());
+                    environments = await Repository.ListAsync(input.PlanId, input.UserIdSet, environmentNameInLowerCase, logger);
                 }
                 else
                 {
-                    environments = await Repository.GetWhereAsync(
-                        (cloudEnvironment) => (cloudEnvironment.OwnerId == input.UserIdSet.CanonicalUserId ||
-                                cloudEnvironment.OwnerId == input.UserIdSet.ProfileId) &&
-                            cloudEnvironment.PlanId == input.PlanId,
-                        logger.NewChildLogger());
+                    environments = await Repository.ListAsync(input.PlanId, input.UserIdSet, logger);
                 }
             }
 
