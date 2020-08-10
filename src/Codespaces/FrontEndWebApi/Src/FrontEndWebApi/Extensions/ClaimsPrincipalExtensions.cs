@@ -1,9 +1,10 @@
-﻿// <copyright file="ClaimsPrincipalExtensions.cs" company="Microsoft">
+// <copyright file="ClaimsPrincipalExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Security.Claims;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Common.Identity;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
 {
@@ -19,9 +20,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions
         /// <returns>The user id or null if the correct claims aren't provided.</returns>
         public static string GetUserIdFromClaims(this ClaimsPrincipal principal)
         {
-            var tid = principal.FindFirstValue(CustomClaims.TenantId);
-            var oid = principal.FindFirstValue(CustomClaims.OId);
-
+            var identity = principal.Identities.First();
+            var tid = identity.GetTenantId();
+            var oid = identity.GetObjectId();
             if (string.IsNullOrEmpty(tid) || string.IsNullOrEmpty(oid))
             {
                 return null;

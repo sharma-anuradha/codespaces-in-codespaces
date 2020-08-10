@@ -112,6 +112,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         Task<(string, string)> GetStampStorageAccountForBillingSubmission(AzureLocation billingSubmissionLocation);
 
         /// <summary>
+        ///  Gets all stamp-level storage account used for github.
+        /// </summary>
+        /// <param name="partnerId">A two character string to distinguish partner storage accounts.</param>
+        /// <returns>A list of tuple of the resource group name, account name and the account key.</returns>
+        Task<IEnumerable<(string, string, string)>> GetAllStampStorageAccountForPartner(string partnerId);
+
+        /// <summary>
         /// Gets the stamp-level storage account used for github.
         /// </summary>
         /// <param name="billingSubmissionLocation">The azure location of the billing submission data.</param>

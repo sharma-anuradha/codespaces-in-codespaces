@@ -140,5 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             throw new NotImplementedException();
         }
+
+        public Task<IEnumerable<(string, string, string)>> GetAllStampStorageAccountForPartner(string partnerId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

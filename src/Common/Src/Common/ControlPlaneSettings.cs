@@ -23,6 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string SubscriptionId { get; set; }
 
         /// <summary>
+        /// Gets or sets the github sp id.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string GithubSpId { get; set; }
+
+        /// <summary>
         /// Gets or sets the name prefix.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
