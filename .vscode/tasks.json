@@ -4,7 +4,7 @@
         {
             "label": "buildServices",
             "command": "dotnet",
-            "type": "process",
+            "type": "shell",
             "args": [
                 "build",
                 "${workspaceFolder}/src/dirs.proj"
@@ -12,6 +12,7 @@
             "problemMatcher": "$msCompile",
             "group": {
                 "kind": "build",
+                "isDefault": true
             }
         },
         {
@@ -31,9 +32,7 @@
                 "${workspaceFolder}/src/dirs.proj",
             ],
             "problemMatcher": "$msCompile",
-            "group": {
-                "kind": "build",
-            }
+            "group": "build"
         },
         {
             "type": "docker-build",
@@ -50,9 +49,29 @@
             "netCore": {
                 "appProject": "${workspaceFolder}/src/VSOnline/PortForwardingAgent/PortForwardingAgent.csproj"
             },
-            "group": {
-                "kind": "build",
-            }
+            "group": "build"
         },
+        {
+            "label": "buildVsoUtil",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/src/Common/Src/VsoUtil/VsoUtil.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        },
+        {
+            "type": "shell",
+            "label": "Prepare Dev CLI",
+            "command": "${workspaceFolder}/src/Common/Src/VsoUtil/PrepareDevCLICommandRunner.sh",
+            "dependsOn": "buildVsoUtil",
+            "options": {
+                "cwd": "${workspaceFolder}/bin/debug/VsoUtil",
+                "shell": { "executable": "/bin/bash"}
+            },
+            "problemMatcher": []
+        }
     ]
 }

@@ -36,8 +36,7 @@ namespace DiagnosticsServer
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>()
-                        .UseUrls("http://localhost:59330", "http://0.0.0.0:59330");
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }

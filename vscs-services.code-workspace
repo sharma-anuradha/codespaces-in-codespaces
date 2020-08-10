@@ -1,0 +1,62 @@
+{
+	"folders": [
+		{
+			"path": "src/Resources"
+		},
+		{
+			"path": "src/Codespaces"
+		},
+		{
+			"path": "src/Diagnostics"
+		},
+		{
+			"path": "src/Common"
+		},
+		{
+			"path": "src/Settings"
+		},
+		{
+			"path": "src/PortForwarding"
+		},
+		{
+			"path": "src/PortForwarding"
+		},
+		{
+			// This is to allow Omnisharp to find the main CloudEnvironmentServices.sln
+			"path": "src"
+		}
+	],
+	"settings": {},
+	"launch": {
+		"version": "0.2.0",
+		"compounds": [
+			{
+				"name": "Launch FrontEnd + Backend Web APIs",
+				"configurations": [
+					"FrontEnd Web Api Launch",
+					"BackEnd Web Api Launch",
+					"Diagnostics Launch"
+				]
+			}
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "buildServices",
+				"command": "dotnet",
+				"type": "shell",
+				"args": [
+					"build",
+					"${workspaceFolder}/../dirs.proj"
+				],
+				"problemMatcher": "$msCompile",
+				"group": {
+					"kind": "build",
+					"isDefault": true
+				}
+			}
+		]
+	}
+}

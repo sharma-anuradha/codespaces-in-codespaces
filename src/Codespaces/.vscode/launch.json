@@ -8,22 +8,15 @@
             "name": "FrontEnd Web Api Launch",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "buildFrontEndSln",
+            "preLaunchTask": "buildFrontEndService",
             "program": "${workspaceFolder}/../../bin/debug/FrontEndWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.dll",
             "args": [],
             "cwd": "${workspaceFolder}/FrontEndWebApi/Src/FrontEndWebApi",
+            "console": "integratedTerminal",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
             }
-        },
-        {
-            "name": "Local Process with Kubernetes (Preview)",
-            "type": "dev-spaces-connect-configuration",
-            "request": "launch"
         }
     ]
  }

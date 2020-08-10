@@ -10,8 +10,21 @@ echo export VSS_NUGET_EXTERNAL_FEED_ENDPOINTS=\`eval \"printf %s \''$(cat ~/.nug
 
 source ~/.bashrc
 
+# Install ngrok (all npm commands should be executed before placing user npmrc)
+npm i -g ngrok
+
 # Create user .npmrc file
 cp .devcontainer/user_npmrc ~/.npmrc
+
+# Create CEDev directory
+mkdir ~/CEDev
+
+# Install libssl1 - Omnisharp needs this, please refer below links for details
+# https://github.com/dotnet/Nerdbank.GitVersioning/issues/417#issuecomment-569142862
+# https://askubuntu.com/questions/1173587/e-package-libssl1-0-0-has-no-installation-candidate/1208625#1208625
+echo "deb http://security.debian.org/debian-security jessie/updates main" | sudo tee -a /etc/apt/sources.list
+sudo apt-get update -y
+sudo apt-get install -y --no-install-recommends libssl1.0.0
 
 # Install .NET Core 3.1.200 SDK. Need to use the user-local install, not the package manager install.
 # TODO: Remove once 3.1.200 is included in the Oryx base image

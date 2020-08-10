@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "buildVsoUtil",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "${workspaceFolder}/Src/VsoUtil/VsoUtil.csproj"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": "build"
+        },
+        {
+            "type": "shell",
+            "label": "Prepare Dev CLI",
+            "command": "${workspaceFolder}/Src/VsoUtil/PrepareDevCLICommandRunner.sh",
+            "dependsOn": "buildVsoUtil",
+            "options": {
+                "cwd": "${workspaceFolder}/../../bin/debug/VsoUtil",
+                "shell": {
+                    "executable": "/bin/bash"
+                }
+            },
+            "problemMatcher": []
+        }
+    ]
+}

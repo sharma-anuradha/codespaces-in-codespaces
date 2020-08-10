@@ -25,6 +25,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class AppSettings
     {
+        public string DeveloperAlias { get; set; }
+
         public SkuCatalogSettings SkuCatalogSettings { get; set; }
 
         public bool DeveloperPersonalStamp { get; set; } = true;
