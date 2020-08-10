@@ -19,5 +19,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public ImageKind ImageKind { get; set; }
+
+        /// <summary>
+        /// Gets or sets the VS IDE version.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string VsVersion { get; set; }
     }
 }

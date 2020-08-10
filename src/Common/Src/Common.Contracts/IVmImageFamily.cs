@@ -29,6 +29,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string DefaultImageVersion { get; }
 
         /// <summary>
+        /// Gets the VS version installed in the image.
+        /// </summary>
+        string VsVersion { get; }
+
+        /// <summary>
         /// Gets the image URL for the specified location.
         /// </summary>
         /// <param name="location">The azure location.</param>

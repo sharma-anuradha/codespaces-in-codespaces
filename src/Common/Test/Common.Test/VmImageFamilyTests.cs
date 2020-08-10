@@ -52,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     ImageKind.Custom,
                     "NexusWindowsImage",
                     "2019.1111.001",
+                    "16.7.1",
                     subscriptionId,
                     currentImageInfoProvider.Object
                     );

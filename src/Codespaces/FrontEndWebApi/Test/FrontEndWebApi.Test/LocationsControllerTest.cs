@@ -65,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                         ImageKind.Canonical,
                         "vmImageName",
                         "vmImageVersion",
+                        "vsVersion",
                         "vmImageSubscriptionId",
                         currentImageInfoProvider.Object),
                     "storageSkuName",

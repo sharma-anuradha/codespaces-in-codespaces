@@ -267,6 +267,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 imageFamilySettings.ImageKind,
                 imageFamilySettings.ImageName,
                 imageFamilySettings.ImageVersion,
+                imageFamilySettings.VsVersion,
                 vmImageSubscriptionId,
                 currentImageInfoProvider);
 

@@ -22,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="imageKind">The image kind.</param>
         /// <param name="defaultImageName">The default full image url.</param>
         /// <param name="defaultImageVersion">The default image version.</param>
+        /// <param name="vsVersion">The VS version included in the image.</param>
         /// <param name="vmImageSubscriptionId">The vm image subscription id.</param>
         /// <param name="currentImageInfoProvider">The current image info provider.</param>
         public VmImageFamily(
@@ -30,6 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ImageKind imageKind,
             string defaultImageName,
             string defaultImageVersion,
+            string vsVersion,
             string vmImageSubscriptionId,
             ICurrentImageInfoProvider currentImageInfoProvider)
         {
@@ -49,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ImageKind = imageKind;
             DefaultImageName = defaultImageName;
             DefaultImageVersion = defaultImageVersion;
+            VsVersion = vsVersion;
             VmImageSubscriptionId = vmImageSubscriptionId;
             StampInfo = stampInfo;
             CurrentImageInfoProvider = currentImageInfoProvider;
@@ -68,6 +71,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public string DefaultImageVersion { get; }
+
+        /// <inheritdoc/>
+        public string VsVersion { get; }
 
         private string VmImageSubscriptionId { get; }
 
