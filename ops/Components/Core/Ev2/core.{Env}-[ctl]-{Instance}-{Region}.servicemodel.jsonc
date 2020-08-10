@@ -1,0 +1,41 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "{{{baseRegionName}}}-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{baseRegionName}}}-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{baseRegionName}}}-arm",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\{{{baseRegionFileName}}}.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{baseRegionName}}}",
+      "location": "{{{regionLocation}}}",
+      "instanceOf": "{{{baseRegionName}}}-rg",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{baseRegionName}}}-arm",
+          "instanceOf": "{{{baseRegionName}}}-arm"
+        }
+      ]
+    }
+  ]
+}

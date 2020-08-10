@@ -1,0 +1,45 @@
+// Auto-Generated From Template
+// ..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc (vscs-core-dev-ctl-ci-us-w2)
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "vscs-core-dev-ctl-ci-us-w2-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-core-dev-ctl-ci-us-w2-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-core-dev-ctl-ci-us-w2-arm",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.dev-ctl-ci-us-w2.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-core-dev-ctl-ci-us-w2",
+      "location": "WestUs2",
+      "instanceOf": "vscs-core-dev-ctl-ci-us-w2-rg",
+      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "serviceResources": [
+        {
+          "name": "vscs-core-dev-ctl-ci-us-w2-arm",
+          "instanceOf": "vscs-core-dev-ctl-ci-us-w2-arm"
+        }
+      ]
+    }
+  ]
+}

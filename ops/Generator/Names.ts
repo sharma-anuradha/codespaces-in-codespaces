@@ -30,7 +30,7 @@ export default abstract class Names {
           }
           else {
             plane.subscriptionName = "UNDEFINED";
-            plane.subscriptionId = "UNDEFINED";
+            plane.subscriptionId = "00000000-0000-0000-0000-000000000000";
           }
 
           const planeJson = plane.generateNamesJson(env.outputNames)

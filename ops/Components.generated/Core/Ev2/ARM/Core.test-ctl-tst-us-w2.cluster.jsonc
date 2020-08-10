@@ -1,5 +1,5 @@
 // Auto-Generated From Template
-// ..\Components\Core\Ev2\ARM\Core.{Env}-[ctl]-{Instance}-{Region}.Template.jsonc (vscs-core-ppe-ctl-rel-eu-w)
+// ..\Components\Core\Ev2\ARM\Core.{Env}-[ctl]-{Instance}-{Region}.cluster.jsonc (vscs-core-test-ctl-tst-us-w2)
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -7,7 +7,7 @@
   "contentVersion": "1.0.0.0",
 
   "variables": {
-    "baseResourceName": "vscs-core-ppe-ctl-rel-eu-w",
+    "baseResourceName": "vscs-core-test-ctl-tst-us-w2",
     "clusterName": "[concat(variables('baseResourceName'),'-cluster')]",
     "location": "[resourceGroup().location]",
     "nsgName": "[concat(variables('baseResourceName'),'-nsg')]",
