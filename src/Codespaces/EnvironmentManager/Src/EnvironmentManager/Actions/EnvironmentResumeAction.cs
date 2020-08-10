@@ -387,6 +387,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 throw new CodedValidationException((int)MessageCodes.StartStaticEnvironment);
             }
 
+            // Cannot resume an environment that is soft-deleted.
+            if (environment.IsDeleted == true)
+            {
+                var environmentSoftDeleteEnabled = await EnvironmentManagerSettings.EnvironmentSoftDeleteEnabled(logger.NewChildLogger());
+                if (environmentSoftDeleteEnabled == true)
+                {
+                    throw new EntityNotFoundException((int)MessageCodes.EnvironmentDoesNotExist);
+                }
+            }
+
             // Cannot resume an environment that is not suspended
             if (!environment.IsShutdown())
             {

@@ -158,6 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await EnvironmentManager.GetAsync(environmentId, logger);
+            await ValidateEnvironmentIsNotSoftDeleted(environment, logger);
 
             // Normalize state
             environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, logger.NewChildLogger());
@@ -213,6 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
+            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
 
             var result = await EnvironmentManager.SuspendAsync(
                 environmentId, logger.NewChildLogger());
@@ -241,6 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
+            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
 
             var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
 
@@ -317,7 +320,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            // Have to change the signatu
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
+
             await EnvironmentManager.SoftDeleteAsync(environmentId, logger.NewChildLogger());
 
             return NoContent();
@@ -375,7 +380,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(callbackBody?.Payload?.SessionId, nameof(callbackBody.Payload.SessionId));
             ValidationUtil.IsRequired(callbackBody?.Payload?.SessionPath, nameof(callbackBody.Payload.SessionPath));
 
-            var environment = await GetEnvironmentAsync(environmentId, logger);
+            var environment = await GetEnvironmentAsync(environmentId, true, logger);
 
             var currentUserIdSet = CurrentUserProvider.CurrentUserIdSet;
             if (!currentUserIdSet.EqualsAny(environment.OwnerId))
@@ -434,7 +439,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(updateEnvironmentInput, nameof(updateEnvironmentInput));
             ValidationUtil.IsRequired(logger, nameof(logger));
 
-            var environment = await GetEnvironmentAsync(environmentId, logger);
+            var environment = await GetEnvironmentAsync(environmentId, true, logger);
 
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
@@ -531,7 +536,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var environment = await GetEnvironmentAsync(environmentId, logger);
+            var environment = await GetEnvironmentAsync(environmentId, true, logger);
 
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
@@ -612,7 +617,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ValidationUtil.IsRequired(folderPathInput, nameof(folderPathInput));
             ValidationUtil.IsRequired(logger, nameof(logger));
 
-            var environment = await GetEnvironmentAsync(environmentId, logger);
+            var environment = await GetEnvironmentAsync(environmentId, true, logger);
 
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
@@ -652,7 +657,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromRoute] string environmentId,
             [FromServices] IDiagnosticsLogger logger)
         {
-            var environment = await GetEnvironmentAsync(environmentId, logger);
+            var environment = await GetEnvironmentAsync(environmentId, false, logger);
 
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(environment, nonOwnerScopes: null, logger);
 
@@ -684,12 +689,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
         private async Task<CloudEnvironment> GetEnvironmentAsync(
             string environmentId,
+            bool validateSoftDeletedEnvironment,
             IDiagnosticsLogger logger)
         {
             logger.AddEnvironmentId(environmentId);
             ValidationUtil.IsRequired(environmentId, nameof(environmentId));
 
             var environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentId), logger);
+
+            if (validateSoftDeletedEnvironment)
+            {
+                await ValidateEnvironmentIsNotSoftDeleted(environment, logger);
+            }
 
             // Normalize state
             environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, logger.NewChildLogger());
@@ -747,6 +758,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             var cloudEnvironment = await EnvironmentManager.DeleteRestoreAsync(environmentId, logger.NewChildLogger());
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(cloudEnvironment));
+        }
+
+        private async Task ValidateEnvironmentIsNotSoftDeleted(Guid environmentId, IDiagnosticsLogger logger)
+        {
+            await GetEnvironmentAsync(environmentId.ToString(), true, logger);
+        }
+
+        private async Task ValidateEnvironmentIsNotSoftDeleted(CloudEnvironment environment, IDiagnosticsLogger logger)
+        {
+            if (environment == null)
+            {
+                return;
+            }
+
+            if (environment.IsDeleted == true)
+            {
+                var environmentSoftDeleteEnabled = await FrontEndAppSettings.EnvironmentManagerSettings.EnvironmentSoftDeleteEnabled(logger.NewChildLogger());
+
+                if (environmentSoftDeleteEnabled == true)
+                {
+                    throw new EntityNotFoundException((int)MessageCodes.EnvironmentDoesNotExist);
+                }
+            }
         }
     }
 }
