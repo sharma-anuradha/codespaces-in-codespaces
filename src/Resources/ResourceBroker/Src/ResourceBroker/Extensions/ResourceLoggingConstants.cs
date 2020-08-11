@@ -150,6 +150,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string ContinuationTaskMessageHandlerCleanup = "continuation_task_message_handler_cleanup";
 
         /// <summary>
+        /// Refresh key vault secret cache task.
+        /// </summary>
+        public const string RefreshKeyVaultSecretCacheTask = "refresh_key_vault_secret_cache_task";
+
+        /// <summary>
         /// Environment id.
         /// </summary>
         public const string EnvironmentId = "EnvironmentId";

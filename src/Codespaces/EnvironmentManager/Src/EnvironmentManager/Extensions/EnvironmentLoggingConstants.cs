@@ -63,5 +63,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Continuation Task Message Pump.
         /// </summary>
         public const string ContinuationTaskMessagePump = "continuation_task_message_pump";
+
+        /// <summary>
+        /// Refresh key vault secret cache task.
+        /// </summary>
+        public const string RefreshKeyVaultSecretCacheTask = "refresh_key_vault_secret_cache_task";
     }
 }

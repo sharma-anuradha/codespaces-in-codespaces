@@ -1,4 +1,4 @@
-﻿// <copyright file="IFirstPartyCertificateReader.cs" company="Microsoft">
+// <copyright file="IFirstPartyCertificateReader.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

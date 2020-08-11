@@ -278,6 +278,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
                 CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
             services.AddSingleton<ISystemConfiguration, PersistedSystemConfiguration>();
+            services.AddSingleton<CertificateKeyVaultSecretCache>();
+            services.AddSingleton<ICertificateKeyVaultSecretCache>(x => x.GetRequiredService<CertificateKeyVaultSecretCache>());
+            services.AddSingleton<IRefreshKeyVaultSecretCache>(x => x.GetRequiredService<CertificateKeyVaultSecretCache>());
 
             // Use TryAddSingleton to allow callers to override this implementation by calling AddSingleton before calling this method
             services.TryAddSingleton<ICurrentImageInfoProvider, CurrentImageInfoProvider>();

@@ -131,6 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<WatchOrphanedVmAgentImagesTask>();
             services.AddSingleton<WatchOrphanedStorageImagesTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
+            services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
 
             // deprecated job handlers
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();

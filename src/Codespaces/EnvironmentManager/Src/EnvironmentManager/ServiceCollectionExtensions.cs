@@ -5,7 +5,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -155,6 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
             services.AddSingleton<IWatchDeletedPlanEnvironmentsTask, WatchDeletedPlanEnvironmentsTask>();
             services.AddSingleton<IWatchSoftDeletedEnvironmentToBeHardDeletedTask, WatchEnvironmentsToBeHardDeleteTask>();
+            services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();

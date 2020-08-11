@@ -3,11 +3,9 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -44,6 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="watchPoolVersionTask">Target watch pool version job interface.</param>
         /// <param name="watchPoolStateTask">Target watch pool state task.</param>
         /// <param name="watchFailedResourcesTask">Target watch failed resources job.</param>
+        /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
         public ResourceRegisterJobs(
             IDeleteResourceGroupDeploymentsTask deleteResourceGroupDeploymentsTask,
             IEnumerable<IJobSchedulerRegister> jobSchedulersRegisters,
@@ -62,7 +61,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolSizeTask watchPoolSizeJob,
             IWatchPoolVersionTask watchPoolVersionTask,
             IWatchPoolStateTask watchPoolStateTask,
-            IWatchFailedResourcesTask watchFailedResourcesTask)
+            IWatchFailedResourcesTask watchFailedResourcesTask,
+            IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask)
         {
             DeleteResourceGroupDeploymentsTask = deleteResourceGroupDeploymentsTask;
             JobSchedulersRegisters = jobSchedulersRegisters;
@@ -85,6 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchOrphanedPoolTask = watchOrphanedPoolTask;
             WatchPoolStateTask = watchPoolStateTask;
             WatchFailedResourcesTask = watchFailedResourcesTask;
+            RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
         }
 
         private IDeleteResourceGroupDeploymentsTask DeleteResourceGroupDeploymentsTask { get; }
@@ -114,6 +115,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IEnumerable<IJobHandler> JobHandlers { get; }
 
         private ISystemConfiguration SystemConfiguration { get; }
+
+        private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
 
         private Random Random { get; }
 
@@ -257,6 +260,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{ResourceLoggingConstants.WatchOrphanedPoolTask}_run",
                 (childLogger) => WatchOrphanedPoolTask.RunAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromHours(1));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+
+            // Job: Refresh Key Vault Secret Cache Task
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.RefreshKeyVaultSecretCacheTask}_run",
+                (childLogger) => RefreshKeyVaultSecretCacheTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                TimeSpan.FromHours(4));
         }
     }
 }

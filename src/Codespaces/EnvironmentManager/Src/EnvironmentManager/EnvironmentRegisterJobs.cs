@@ -29,6 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
+        /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
@@ -40,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
+            IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -51,6 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
+            RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -72,6 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IContinuationTaskWorkerPoolManager ContinuationTaskWorkerPoolManager { get; }
 
         private IWatchSoftDeletedEnvironmentToBeHardDeletedTask WatchSoftDeletedEnvironmentToBeHardDeletedTask { get; }
+
+        private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -137,11 +142,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));
 
+            // Job: Refresh Key Vault Secret Cache Task
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.RefreshKeyVaultSecretCacheTask}_run",
+                (childLogger) => RefreshKeyVaultSecretCacheTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                TimeSpan.FromHours(4));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
             // Job: Delete Environments in deleted plans
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchDeletedPlanEnvironmentsTask}_run",
                 (childLogger) => CleanDeletedPlanEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
 
             // Job: Watch Soft Deleted Environments to be Hard Deleted
             TaskHelper.RunBackgroundLoop(
