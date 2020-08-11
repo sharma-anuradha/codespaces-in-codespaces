@@ -31,6 +31,15 @@
             ]
         },
         {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to Hot Reload Debug Instance",
+            "protocol": "inspector",
+            "port": 4321,
+            "restart": true,
+            "cwd": "${workspaceRoot}"
+        },
+        {
             "name": "Current TS File",
             "type": "node",
             "request": "launch",

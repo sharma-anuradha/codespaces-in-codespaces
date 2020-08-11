@@ -16,10 +16,12 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^3.6.1",
     "@typescript-eslint/parser": "^3.6.1",
-    "eslint": "^7.4.0"
+    "eslint": "^7.4.0",
+    "ts-node-dev": "^1.0.0-pre.56"
   },
   "scripts": {
-    "script": "ts-node-script index.ts",
+    "build": "ts-node-dev --inspect=4321 --script-mode --respawn index.ts",
+    "hot-reload": "ts-node-dev --inspect=4321 --script-mode --respawn index.ts --hot-reload",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .ts"
   },

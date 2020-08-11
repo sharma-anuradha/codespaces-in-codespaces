@@ -76,6 +76,11 @@ class Main {
 }
 
 const main = new Main(program.input, program.output);
+main.GenerateNames();
+main.GenerateTemplates();
+console.info(`info: Done, check ${main.outputDir}`);
+
+// If running JSON Hot Reload command, set up file watch to check for new changes.
 if (program.hotReload) {
   console.info(
     `info: Hot Reload Enabled, File Watcher set up on '${main.inputDir}'...`
@@ -89,8 +94,4 @@ if (program.hotReload) {
     main.GenerateTemplates();
     console.info(`info: Done, check ${main.outputDir}`);
   });
-} else {
-  main.GenerateNames();
-  main.GenerateTemplates();
-  console.info(`info: Done, check ${main.outputDir}`);
 }
