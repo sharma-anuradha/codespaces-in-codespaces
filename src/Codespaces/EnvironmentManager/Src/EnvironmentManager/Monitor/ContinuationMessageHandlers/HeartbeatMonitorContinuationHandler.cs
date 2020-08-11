@@ -1,4 +1,4 @@
-﻿// <copyright file="HeartbeatMonitorContinuationHandler.cs" company="Microsoft">
+// <copyright file="HeartbeatMonitorContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -105,6 +105,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
 
             if (environment.Type != EnvironmentType.StaticEnvironment)
             {
+                if (environment.State == CloudEnvironmentState.Unavailable)
+                {
+                    var unavailableTimeout = await EnvironmentMonitorSettings.UnavailableEnvironmentTimeout(logger);
+
+                    if (environment.LastStateUpdated + unavailableTimeout < DateTime.UtcNow)
+                    {
+                        // environment has been stuck in unavailable (for more than an hour by default)
+                        if (await EnvironmentMonitorSettings.EnableUnavailableEnvironmentHeartbeatMonitoring(logger))
+                        {
+                            await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
+                            return CreateFinalResult(OperationState.Failed, "UnhealthyUnavailableHeartbeat");
+                        }
+                    }
+                }
+
                 if (StateToProcess.Contains(environment.State) && hasHeartbeatTimeExpired)
                 {
                     await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
@@ -126,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                 }
             }
 
-            // Starts the delete workflow on the resource
+            // Starts the next monitoring cycle
             await environmentMonitor.MonitorHeartbeatAsync(environment.Id, environment.Compute?.ResourceId, logger.NewChildLogger());
 
             // compute has healthy heartbeat, return next input

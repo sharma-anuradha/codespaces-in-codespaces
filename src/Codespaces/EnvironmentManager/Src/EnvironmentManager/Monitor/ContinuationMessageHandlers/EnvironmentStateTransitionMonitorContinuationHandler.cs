@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentStateTransitionMonitorContinuationHandler.cs" company="Microsoft">
+// <copyright file="EnvironmentStateTransitionMonitorContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -103,7 +103,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 case CloudEnvironmentState.Starting:
                 case CloudEnvironmentState.ShuttingDown:
-                case CloudEnvironmentState.Unavailable:
                     // Timeout Kick off force shutdown to repair environment.
                     await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
 

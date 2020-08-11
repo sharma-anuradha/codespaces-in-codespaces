@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentMonitorSettings.cs" company="Microsoft">
+// <copyright file="EnvironmentMonitorSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,6 +18,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// Gets or sets a value indicating whether environment heatbeat monitor is enabled.
         /// </summary>
         public bool EnableEnvironmentHeartbeatMonitor { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether unavailable heartbeats are suspended.
+        /// </summary>
+        public bool EnableUnavailableEnvironmentHeartbeatMonitor { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether environment state transition monitor is enabled.
@@ -122,6 +127,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-environment-heartbeat-monitoring", logger, EnableEnvironmentHeartbeatMonitor);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether to suspend unavailable environments from the hearbeat monitor.
+        /// </summary>
+        /// <param name="logger">Logger.</param>
+        /// <returns>Feature flag state.</returns>
+        public Task<bool> EnableUnavailableEnvironmentHeartbeatMonitoring(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync<bool>("featureflag:enable-unavailable-environment-heartbeat-monitoring", logger, EnableUnavailableEnvironmentHeartbeatMonitor);
         }
 
         /// <summary>
