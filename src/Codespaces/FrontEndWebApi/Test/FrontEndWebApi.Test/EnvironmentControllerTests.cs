@@ -20,7 +20,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environme
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
@@ -773,16 +772,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var metrics = MockUtil.MockMetricsManager();
             var subManager = MockUtil.MockSubscriptionManager();
             var environmentAccessManager = new EnvironmentAccessManager(currentUserProvider);
-            var globalRepository = new MockGlobalCloudEnvironmentRepository();
-            var regionalRepository = new MockRegionalCloudEnvironmentRepository();
-            var environmentRepositoryManager = new CloudEnvironmentRepository(globalRepository, regionalRepository);
+            var environmentRepository = new MockCloudEnvironmentRepository();
             var billingEventManager = new BillingEventManager(new MockBillingEventRepository(),
                                                                 new MockBillingOverrideRepository());
             var workspaceManager = new WorkspaceManager(new MockClientWorkspaceRepository());
             var metricsLogger = new MockEnvironmentMetricsLogger();
             var environmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>().Object;
-            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepositoryManager, billingEventManager, environmentStateChangeManager, metricsLogger);
-            var settings = new FrontEndAppSettings                                                                                                                                      
+            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, environmentStateChangeManager, metricsLogger);
+            var settings = new FrontEndAppSettings
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
             };

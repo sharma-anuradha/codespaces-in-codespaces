@@ -33,19 +33,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="controlPlaneInfo">Target control plane info.</param>
         public WatchFailedEnvironmentTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IControlPlaneInfo controlPlaneInfo)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
+            ControlPlaneInfo = controlPlaneInfo;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchFailedEnvironmentTask)}Lease");
 
         private string LogBaseName => EnvironmentLoggingConstants.WatchFailedEnvironmentTask;
+
+        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -82,9 +87,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         {
             logger.FluentAddValue("TaskEnvironmentIdShard", idShard);
 
+            // Pickup current region
+            var controlPlaneRegion = ControlPlaneInfo.Stamp.Location;
+
             // Get failed environments
             var records = await CloudEnvironmentRepository.GetFailedOperationAsync(
-                idShard, RequestedItems, logger.NewChildLogger());
+                idShard, RequestedItems, controlPlaneRegion, logger.NewChildLogger());
 
             logger.FluentAddValue("TaskRequestedItems", RequestedItems)
                 .FluentAddValue("TaskFoundItems", records.Count());

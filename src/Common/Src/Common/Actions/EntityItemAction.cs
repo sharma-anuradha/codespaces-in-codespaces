@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -24,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
     public abstract class EntityItemAction<TInput, TState, TResult, TEntityTransition, TRepository, TRepositoryModel> : EntityAction<TInput, TState, TResult, TEntityTransition, TRepository, TRepositoryModel>
         where TRepositoryModel : TaggedEntity
         where TEntityTransition : class, IEntityTransition<TRepositoryModel>
-        where TRepository : class, IEntityRepository<TRepositoryModel>
+        where TRepository : class, IDocumentDbCollection<TRepositoryModel>
         where TState : class, new()
     {
         /// <summary>
@@ -34,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
         /// <param name="currentLocationProvider">Target current location provider.</param>
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
+        /// <param name="systemActionGetProvider">Target system action get provider.</param>
         protected EntityItemAction(
             TRepository repository,
             ICurrentLocationProvider currentLocationProvider,

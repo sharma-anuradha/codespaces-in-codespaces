@@ -15,7 +15,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
@@ -24,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     [DocumentDbCollectionId(CloudEnvironmentsCollectionId)]
     public class DocumentDbCloudEnvironmentRepository
-        : DocumentDbCollection<CloudEnvironment>, IGlobalCloudEnvironmentRepository
+        : DocumentDbCollection<CloudEnvironment>, ICloudEnvironmentRepository
     {
         /// <summary>
         /// The models collection id.
@@ -36,14 +35,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// </summary>
         /// <param name="options">The collection options snapshot.</param>
         /// <param name="clientProvider">The client provider.</param>
-        /// <param name="controlPlaneInfo">The control-plane information.</param>
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public DocumentDbCloudEnvironmentRepository(
                 IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
-                IControlPlaneInfo controlPlaneInfo,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
@@ -54,10 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                   loggerFactory,
                   defaultLogValues)
         {
-            ControlPlaneLocation = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo)).Stamp.Location;
         }
-
-        private AzureLocation ControlPlaneLocation { get; }
 
         /// <summary>
         /// Configures the standard options for this repository.
@@ -110,20 +104,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             IDiagnosticsLogger logger)
         {
             // c.planID is a fully qualified Azure resource path. The values substringed below extract the subscription field. A future suggestion could be to always log the subscriptionID on the Cloud Environment to make it easier to query for this.
-            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
             var query = new SqlQuerySpec(
-                @"SELECT VALUE SUM(1)
-                FROM (
-                    SELECT DISTINCT VALUE SUBSTRING(c.planId,15,36)
-                    FROM c
-                    WHERE (((
-                        IS_DEFINED(c.controlPlaneLocation) = false
-                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
-                        OR c.controlPlaneLocation = @controlPlaneLocation)) d",
-                new SqlParameterCollection
-                {
-                    new SqlParameter { Name = "controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
-                });
+                @"SELECT VALUE SUM(1) 
+                  FROM (
+                    SELECT DISTINCT VALUE SUBSTRING(c.planId,15,36) FROM c) d");
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
             var count = items.FirstOrDefault();
@@ -134,20 +118,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public async Task<int> GetCloudEnvironmentPlanCountAsync(
             IDiagnosticsLogger logger)
         {
-            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
             var query = new SqlQuerySpec(
-                @"SELECT VALUE SUM(1)
-                FROM (
-                    SELECT DISTINCT VALUE c.planId
-                    FROM c
-                    WHERE(((
-                        IS_DEFINED(c.controlPlaneLocation) = false
-                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
-                        OR c.controlPlaneLocation = @controlPlaneLocation)) d",
-                new SqlParameterCollection
-                {
-                    new SqlParameter { Name = "controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
-                });
+              @"SELECT VALUE SUM(1) 
+                  FROM (
+                    SELECT DISTINCT VALUE c.planId FROM c) d");
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
             var count = items.FirstOrDefault();
@@ -158,13 +132,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public async Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(
             string idShard,
             int count,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
             // Look for failed resources, or resources that are stuck in a temporary state for too long.
             // Special case: For resources that are stuck/failed in the "Starting" state, only consider
             // the VM resource type. Storage resources should not be considered because they contain user
             // data that we do not want to clean up until the user has explicitly asked for deletion.
-            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c
                 FROM c
@@ -191,7 +165,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@operationStateInitialized", Value = OperationState.Initialized.ToString() },
                     new SqlParameter { Name = "@operationStateInProgress", Value = OperationState.InProgress.ToString() },
                     new SqlParameter { Name = "@operationFailedTimeLimit", Value = DateTime.UtcNow.AddHours(-1.25) },
-                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync(
@@ -206,9 +180,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             int count,
             DateTime shutdownCutoffTime,
             DateTime softDeleteCutoffTime,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
-            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
             var query = new SqlQuerySpec(
                 @"SELECT TOP @count VALUE c
                 FROM c
@@ -235,7 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@shutdownCutoffTime", Value = shutdownCutoffTime },
                     new SqlParameter { Name = "@softDeleteCutoffTime", Value = softDeleteCutoffTime },
                     new SqlParameter { Name = "@targetSku", Value = "Linux" },
-                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                     new SqlParameter { Name = "@attemptCountLimit", Value = 5 },
                 });
 
@@ -247,9 +221,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
         /// <inheritdoc/>
         public async Task<int> GetEnvironmentsArchiveJobActiveCountAsync(
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
-            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
             var query = new SqlQuerySpec(
                 @"SELECT VALUE COUNT(1)
                 FROM c
@@ -261,7 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@activeStatus", Value = OperationState.InProgress.ToString() },
-                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
@@ -273,6 +247,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public async Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForHardDeleteAsync(
             string idShard,
             DateTime cutoffTime,
+            AzureLocation controlPlaneLocation,
             IDiagnosticsLogger logger)
         {
             var query = new SqlQuerySpec(
@@ -290,7 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@idShard", Value = idShard },
                     new SqlParameter { Name = "@deletedState", Value = CloudEnvironmentState.Deleted.ToString() },
                     new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
-                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = controlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync(
@@ -303,7 +278,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public async Task<IEnumerable<CloudEnvironment>> GetAllEnvironmentsInSubscriptionAsync(string subscriptionId, IDiagnosticsLogger logger)
         {
             // TODO: Make this query a direct match on a non-existant subscription field.
-            // FIXME: should this filter on control-plane location as well?
             var query = new SqlQuerySpec(
                 @"SELECT *
                 FROM c

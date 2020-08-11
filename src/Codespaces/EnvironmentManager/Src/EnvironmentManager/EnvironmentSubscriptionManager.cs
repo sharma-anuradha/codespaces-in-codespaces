@@ -1,4 +1,4 @@
-// <copyright file="EnvironmentSubscriptionManager.cs" company="Microsoft">
+﻿// <copyright file="EnvironmentSubscriptionManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

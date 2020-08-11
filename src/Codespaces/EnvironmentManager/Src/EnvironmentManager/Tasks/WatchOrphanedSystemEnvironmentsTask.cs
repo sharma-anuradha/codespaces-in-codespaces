@@ -6,6 +6,7 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.OData.Edm;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -90,9 +91,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             logger.FluentAddBaseValue("TaskResourceIdShard", idShard);
 
             // Get record so we can tell if it exists
-            return CloudEnvironmentRepository.ForEachEnvironmentWithComputeOrStorageAsync(
-                controlPlaneLocation,
-                idShard,
+            return CloudEnvironmentRepository.ForEachAsync(
+                x => x.Id.StartsWith(idShard)
+                    && x.Location == controlPlaneLocation // TODO: It needs to be updated to ControlPlaneLocation field, once data migration happens.
+                    && (x.Storage != null || x.Compute != null || x.OSDisk != null),
                 logger.NewChildLogger(),
                 (environment, innerLogger) =>
                 {

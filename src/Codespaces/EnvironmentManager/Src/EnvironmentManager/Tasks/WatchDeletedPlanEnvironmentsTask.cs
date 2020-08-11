@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
-        /// <param name="environmentManager">the environment manager needed to delete environments.</param>
+        /// <param name="envManager">the environment manager needed to delete environments.</param>
         /// <param name="controlPlaneInfo"> The control plane info used to figure out locations to run from.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
@@ -45,14 +45,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IEnvironmentManager environmentManager,
+            IEnvironmentManager envManager,
             IControlPlaneInfo controlPlaneInfo,
             ICurrentIdentityProvider currentIdentityProvider,
             VsoSuperuserClaimsIdentity superuserIdentity)
              : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             PlanRepository = planRepository;
-            EnvironmentManager = environmentManager;
+            EnvManager = envManager;
             ControlPlaneInfo = controlPlaneInfo;
             CurrentIdentityProvider = currentIdentityProvider;
             SuperuserIdentity = superuserIdentity;
@@ -60,7 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
         private IPlanRepository PlanRepository { get; }
 
-        private IEnvironmentManager EnvironmentManager { get; }
+        private IEnvironmentManager EnvManager { get; }
 
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
@@ -119,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                 {
                     childLogger.AddVsoPlan(plan);
 
-                    var environments = await EnvironmentManager.ListAsync(
+                    var environments = await EnvManager.ListAsync(
                         plan.Plan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, childLogger.NewChildLogger());
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     if (nonDeletedEnvironments.Any())
@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                         foreach (var environment in nonDeletedEnvironments)
                         {
                             childLogger.AddCloudEnvironment(environment);
-                            var result = await EnvironmentManager.SoftDeleteAsync(Guid.Parse(environment.Id), childLogger.NewChildLogger());
+                            var result = await EnvManager.SoftDeleteAsync(Guid.Parse(environment.Id), childLogger.NewChildLogger());
                             if (result)
                             {
                                 deletedEnvironmentCount++;

@@ -19,6 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// </summary>
     public class LogSubscriptionStatisticsTask : EnvironmentTaskBase, ILogSubscriptionStatisticsTask, IDisposable
     {
+        private readonly IPlanRepository planRepository;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LogSubscriptionStatisticsTask"/> class.
         /// </summary>
@@ -37,14 +39,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IResourceNameBuilder resourceNameBuilder)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
-            PlanRepository = Requires.NotNull(planRepository, nameof(planRepository));
+            this.planRepository = planRepository;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogSubscriptionStatisticsTask)}Lease");
 
         private string LogBaseName => EnvironmentLoggingConstants.LogSubscriptionStatisticsTask;
-
-        private IPlanRepository PlanRepository { get; }
 
         /// <inheritdoc />
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         {
             var activeEnvironmentPlanCount = await CloudEnvironmentRepository.GetCloudEnvironmentPlanCountAsync(itemLogger);
             var activeEnvironmentSubscriptionCount = await CloudEnvironmentRepository.GetCloudEnvironmentSubscriptionCountAsync(itemLogger);
-            var uniqueSubscriptionCount = await PlanRepository.GetPlanSubscriptionCountAsync(itemLogger);
+            var uniqueSubscriptionCount = await planRepository.GetPlanSubscriptionCountAsync(itemLogger);
 
             itemLogger.FluentAddValue($"UniqueSubscriptionCount", uniqueSubscriptionCount)
                           .FluentAddValue($"UniqueSubscriptionWithEnvCount", activeEnvironmentSubscriptionCount)

@@ -1,4 +1,4 @@
-// <copyright file="LogCloudEnvironmentStateTask.cs" company="Microsoft">
+﻿// <copyright file="LogCloudEnvironmentStateTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -22,6 +22,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// </summary>
     public class LogCloudEnvironmentStateTask : EnvironmentTaskBase, ILogCloudEnvironmentStateTask
     {
+        private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LogCloudEnvironmentStateTask"/> class.
         /// </summary>
@@ -47,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             ControlPlane = Requires.NotNull(controlPlane, nameof(controlPlane));
-            SkuDictionary = Requires.NotNull(skuCatalog, nameof(skuCatalog)).CloudEnvironmentSkus;
+            skuDictionary = Requires.NotNull(skuCatalog, nameof(skuCatalog)).CloudEnvironmentSkus;
             EnvironmentMetricsLogger = Requires.NotNull(environmentMetricsLogger, nameof(environmentMetricsLogger));
             CloudEnvironmentCosmosContainer = Requires.NotNull(cloudEnvironmentCosmosContainer, nameof(cloudEnvironmentCosmosContainer));
         }
@@ -61,8 +63,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private IEnvironmentMetricsManager EnvironmentMetricsLogger { get; }
 
         private ICloudEnvironmentCosmosContainer CloudEnvironmentCosmosContainer { get; }
-
-        private IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary { get; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)

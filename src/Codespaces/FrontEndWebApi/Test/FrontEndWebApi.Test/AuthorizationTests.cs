@@ -11,7 +11,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -50,9 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(ListData))]
         public async Task ListEnvironments(AccessTest test)
         {
-            string notPlanId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/MyResourceGroup/providers/Microsoft.VSOnline/plans/not-test-plan";
-            string planId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/MyResourceGroup/providers/Microsoft.VSOnline/plans/test-plan";
             string userId = "test-user";
+            string planId = "test-plan";
 
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
@@ -63,19 +61,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
             else if (test.IsMatchingPlan == false)
             {
-                claimPlanId = notPlanId;
+                claimPlanId = "not-" + planId;
             }
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
-            var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
-            var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            await mockGlobalEnvironmentRepository.CreateAsync(mockEnv, logger);
+            var mockEnvironmentRepository = new MockCloudEnvironmentRepository();
+            await mockEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
-                mockGlobalEnvironmentRepository,
-                mockRegionalEnvironmentRepository,
+                mockEnvironmentRepository,
                 mockCurrentUserProvider);
 
             var mockHttpContext = new DefaultHttpContext();
@@ -178,12 +174,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
-            var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
-            var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            await mockGlobalEnvironmentRepository.CreateAsync(mockEnv, logger);
+            var mockEnvironmentRepository = new MockCloudEnvironmentRepository();
+            await mockEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
-                mockGlobalEnvironmentRepository,
-                mockRegionalEnvironmentRepository,
+                mockEnvironmentRepository,
                 mockCurrentUserProvider);
 
             var mockHttpContext = new DefaultHttpContext();
@@ -354,9 +348,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(UpdateSettingsData))]
         public async Task UpdateEnvironmentSettings(AccessTest test)
         {
-            string notPlanId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/MyResourceGroup/providers/Microsoft.VSOnline/plans/not-test-plan";
-            string planId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/MyResourceGroup/providers/Microsoft.VSOnline/plans/test-plan";
             string userId = "test-user";
+            string planId = "test-plan";
 
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
@@ -367,18 +360,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
             else if (test.IsMatchingPlan == false)
             {
-                claimPlanId = notPlanId;
+                claimPlanId = "not-" + planId;
             }
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
-            var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
-            var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            await mockGlobalEnvironmentRepository.CreateAsync(mockEnv, logger);
+            var mockEnvironmentRepository = new MockCloudEnvironmentRepository();
+            await mockEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
-                mockGlobalEnvironmentRepository,
-                mockRegionalEnvironmentRepository,
+                mockEnvironmentRepository,
                 mockCurrentUserProvider);
 
             var mockHttpContext = new DefaultHttpContext();
@@ -409,11 +400,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
 
         private static IEnvironmentManager CreateEnvironmentManager(
-            IGlobalCloudEnvironmentRepository globalRepository,
-            IRegionalCloudEnvironmentRepository regionalRepository,
+            ICloudEnvironmentRepository environmentRepository,
             ICurrentUserProvider currentUserProvider)
         {
-            var environmentRepository = new CloudEnvironmentRepository(globalRepository, regionalRepository);
             var environmentManagerSettings = MockEnvironmentManagerSettings();
 
             var getAction = new EnvironmentGetAction(

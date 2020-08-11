@@ -1,4 +1,4 @@
-// <copyright file="RegionalCloudEnvironmentRepository.cs" company="Microsoft">
+﻿// <copyright file="RegionalCloudEnvironmentRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
@@ -20,21 +19,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// </summary>
         /// <param name="options">The collection options snapshot.</param>
         /// <param name="clientProvider">The client provider.</param>
-        /// <param name="controlPlaneInfo">The control-plane information.</param>
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
         public RegionalCloudEnvironmentRepository(
                 IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IRegionalDocumentDbClientProvider clientProvider,
-                IControlPlaneInfo controlPlaneInfo,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
                 LogValueSet defaultLogValues)
             : base(
                   options,
                   clientProvider,
-                  controlPlaneInfo,
                   healthProvider,
                   loggerFactory,
                   defaultLogValues)

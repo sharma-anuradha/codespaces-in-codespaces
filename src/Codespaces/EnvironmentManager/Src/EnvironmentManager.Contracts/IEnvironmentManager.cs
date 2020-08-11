@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Get environment by id without any ownership validation.
         /// </summary>
-        /// <param name="environmentId">The environment id.</param>
+        /// <param name="environmentId">The environment by id.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         Task<CloudEnvironment> GetAsync(
