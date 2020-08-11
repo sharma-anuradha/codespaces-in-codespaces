@@ -5,6 +5,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
@@ -17,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     {
         private readonly IQueueMessageProducerFactory queueMessageProducerFactory;
         private readonly IDiagnosticsLogger logger;
-        private readonly ConcurrentDictionary<string, JobQueueConsumer> jobQueueConsumers = new ConcurrentDictionary<string, JobQueueConsumer>();
+        private readonly ConcurrentDictionary<(string, AzureLocation?), JobQueueConsumer> jobQueueConsumers = new ConcurrentDictionary<(string, AzureLocation?), JobQueueConsumer>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JobQueueConsumerFactory"/> class.
@@ -31,13 +32,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         }
 
         /// <inheritdoc/>
-        public IJobQueueConsumer GetOrCreate(string queueId)
+        public IJobQueueConsumer GetOrCreate(string queueId, AzureLocation? azureLocation)
         {
-            return this.jobQueueConsumers.GetOrAdd(queueId, (id) => new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId), this.logger));
+            return this.jobQueueConsumers.GetOrAdd((queueId, azureLocation), (id) => new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId, azureLocation), this.logger));
         }
 
         /// <inheritdoc/>
-        public Dictionary<string, Dictionary<string, IJobHandlerMetrics>> GetMetrics()
+        public Dictionary<(string, AzureLocation?), Dictionary<string, IJobHandlerMetrics>> GetMetrics()
         {
             return this.jobQueueConsumers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetMetrics());
         }

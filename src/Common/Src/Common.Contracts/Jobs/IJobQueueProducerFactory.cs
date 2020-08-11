@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -17,14 +18,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Retrieve the job queue producer metrics by each queue id.
         /// </summary>
         /// <returns>Dictionary of metrics for each queue id.</returns>
-        Dictionary<string, Dictionary<string, IJobQueueProducerMetrics>> GetMetrics();
+        Dictionary<(string, AzureLocation?), Dictionary<string, IJobQueueProducerMetrics>> GetMetrics();
 
         /// <summary>
         /// Gets an existing or create a job producer.
         /// </summary>
         /// <param name="queueId">The queue id.</param>
+        /// <param name="azureLocation">An optional Azure location.</param>
         /// <returns>A job producer instance.</returns>
-        IJobQueueProducer GetOrCreate(string queueId);
+        IJobQueueProducer GetOrCreate(string queueId, AzureLocation? azureLocation = null);
     }
 
     /// <summary>

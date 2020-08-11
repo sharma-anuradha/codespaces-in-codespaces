@@ -134,6 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
 
             BufferBlock.Complete();
+            BufferBlock.TryReceiveAll(out var items);
             await BufferBlock.Completion;
         }
 

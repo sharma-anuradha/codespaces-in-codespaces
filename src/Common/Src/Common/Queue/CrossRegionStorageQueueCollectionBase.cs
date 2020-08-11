@@ -1,4 +1,4 @@
-﻿// <copyright file="CrossRegionStorageQueueCollectionBase.cs" company="Microsoft">
+// <copyright file="CrossRegionStorageQueueCollectionBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Start initialization in the background.
             // Invoking GetClientAsync will ensure initialization is complete.
-            InitializeQueueTask = InitializeQueue(clientProvider, healthProvider, controlPlaneInfo, logger);
+            InitializeQueueTask = clientProvider.InitializeQueue(QueueId, healthProvider, controlPlaneInfo, logger);
         }
 
         /// <summary>
@@ -77,34 +77,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             var queueClients = await InitializeQueueTask;
             return queueClients[controlPlaneRegion];
-        }
-
-        private Task<ReadOnlyDictionary<AzureLocation, CloudQueue>> InitializeQueue(
-            ICrossRegionStorageQueueClientProvider clientProvider,
-            IHealthProvider healthProvider,
-            IControlPlaneInfo controlPlaneInfo,
-            IDiagnosticsLogger logger)
-        {
-            return logger.OperationScopeAsync(
-                "queue_initialization",
-                async (childLogger) =>
-                {
-                    var queueClients = new Dictionary<AzureLocation, CloudQueue>();
-                    foreach (var controlPlaneRegion in controlPlaneInfo.AllStamps.Keys)
-                    {
-                        var queueClient = await clientProvider.GetQueueAsync(QueueId, controlPlaneRegion);
-                        queueClients.Add(controlPlaneRegion, queueClient);
-                    }
-
-                    return new ReadOnlyDictionary<AzureLocation, CloudQueue>(queueClients);
-                },
-                (e, childLogger) =>
-                {
-                    // We cannot use the service at this point. Mark it as unhealthy to request a restart.
-                    healthProvider.MarkUnhealthy(e, logger);
-
-                    return Task.FromResult(default(ReadOnlyDictionary<AzureLocation, CloudQueue>));
-                });
         }
     }
 }

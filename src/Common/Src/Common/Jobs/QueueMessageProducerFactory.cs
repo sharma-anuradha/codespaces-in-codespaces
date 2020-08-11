@@ -1,7 +1,8 @@
-﻿// <copyright file="QueueMessageProducerFactory.cs" company="Microsoft">
+// <copyright file="QueueMessageProducerFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
@@ -27,9 +28,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         private QueueMessageProducerSettings Settings { get; }
 
         /// <inheritdoc/>
-        public IQueueMessageProducer Create(string queueId)
+        public IQueueMessageProducer Create(string queueId, AzureLocation? azureLocation)
         {
-            return new QueueMessageProducer(QueueFactory.GetOrCreate(queueId), Settings);
+            return new QueueMessageProducer(QueueFactory.GetOrCreate(queueId, azureLocation), Settings);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
 {
 #if false
     public class StorageQueueFactoryTest : QueueFactoryTest

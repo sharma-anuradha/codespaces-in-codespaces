@@ -1,9 +1,10 @@
-﻿// <copyright file="IQueueMessageProducerFactory.cs" company="Microsoft">
+// <copyright file="IQueueMessageProducerFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -16,8 +17,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Create a queue message producer.
         /// </summary>
         /// <param name="queueId">The queue id.</param>
+        /// <param name="azureLocation">An optional Azure location.</param>
         /// <returns>Instance of a queue message producer.</returns>
-        IQueueMessageProducer Create(string queueId);
+        IQueueMessageProducer Create(string queueId, AzureLocation? azureLocation = null);
     }
 
     /// <summary>

@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <param name="logger">Logger instance.</param>
         public JobQueueConsumer(IQueueMessageProducer queueMessageProducer, IDiagnosticsLogger logger)
         {
-            Requires.NotNull(queueMessageProducer, nameof(queueMessageProducer));
+            QueueMessageProducer = Requires.NotNull(queueMessageProducer, nameof(queueMessageProducer));
             this.logger = Requires.NotNull(logger, nameof(logger));
 
             var jobTransformerBlock = new TransformBlock<(QueueMessage, TimeSpan), IJob>((queueMessageInfo) =>
@@ -63,6 +63,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             this.keepInvisibleJobsTask = Task.Run(() => KeepInvisibleJobsAsync());
         }
+
+        /// <summary>
+        /// Gets the underlying queue message producer.
+        /// </summary>
+        public IQueueMessageProducer QueueMessageProducer { get; }
 
         /// <inheritdoc/>
         public void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions, JobHandlerOptions jobHandlerOptions = null)

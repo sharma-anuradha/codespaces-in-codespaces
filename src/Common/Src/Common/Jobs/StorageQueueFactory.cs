@@ -9,10 +9,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage.Queue;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
@@ -22,65 +24,77 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     /// </summary>
     public class StorageQueueFactory : IQueueFactory
     {
-        private readonly ConcurrentDictionary<string, StorageQueue> storageQueues = new ConcurrentDictionary<string, StorageQueue>();
+        private readonly ConcurrentDictionary<(string, AzureLocation?), StorageQueue> storageQueues = new ConcurrentDictionary<(string, AzureLocation?), StorageQueue>();
         private readonly Func<string, StorageQueue> createCallback;
+        private readonly Func<string, AzureLocation, StorageQueue> createRegionCallback;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StorageQueueFactory"/> class.
         /// </summary>
         /// <param name="clientProvider">The client provider.</param>
+        /// <param name="crossRegionClientProvider">The cross region client provider.</param>
+        /// <param name="controlPlaneInfo">The control plane info.</param>
         /// <param name="healthProvider">The health provider.</param>
-        /// <param name="loggerFactory">The logger factory.</param>
-        /// <param name="resourceNameBuilder">The resource name builder.</param>
-        /// <param name="defaultLogValues">The default log values.</param>
+        /// <param name="logger">The logger instance.</param>
         public StorageQueueFactory(
             IStorageQueueClientProvider clientProvider,
+            ICrossRegionStorageQueueClientProvider crossRegionClientProvider,
+            IControlPlaneInfo controlPlaneInfo,
             IHealthProvider healthProvider,
-            IDiagnosticsLoggerFactory loggerFactory,
-            IResourceNameBuilder resourceNameBuilder,
-            LogValueSet defaultLogValues)
+            IDiagnosticsLogger logger)
         {
-            this.createCallback = (queueId) => new StorageQueue(this, queueId, clientProvider, healthProvider, loggerFactory, resourceNameBuilder, defaultLogValues);
+            this.createCallback = (queueId) =>
+                new StorageQueue(
+                    this,
+                    () => clientProvider.InitializeQueue(queueId, healthProvider, logger),
+                    logger);
+            this.createRegionCallback = (queueId, controlPlaneRegion) =>
+            {
+                var initializeQueueTask = crossRegionClientProvider.InitializeQueue(queueId, healthProvider, controlPlaneInfo, logger);
+                return new StorageQueue(
+                    this,
+                    async () =>
+                    {
+                        var queueClients = await initializeQueueTask;
+                        return queueClients[controlPlaneRegion];
+                    },
+                    logger);
+            };
         }
 
         /// <inheritdoc/>
-        public IQueue GetOrCreate(string queueId)
+        public IQueue GetOrCreate(string queueId, AzureLocation? azureLocation)
         {
             Requires.NotNullOrEmpty(queueId, nameof(queueId));
-            return this.storageQueues.GetOrAdd(queueId, (id) => this.createCallback(queueId));
+            return this.storageQueues.GetOrAdd((queueId, azureLocation), (id) => azureLocation.HasValue ? this.createRegionCallback(queueId, azureLocation.Value) : this.createCallback(queueId));
         }
 
-        private class StorageQueue : StorageQueueCollectionBase, IQueue, IAsyncDisposable
+        private class StorageQueue : IQueue, IAsyncDisposable
         {
             private const string LoggingPrefix = "azurequeue_storage_queue";
 
-            private readonly Func<IDiagnosticsLogger> loggerFactoryCallback;
+            private readonly Func<Task<CloudQueue>> cloudQueueFactoryCallback;
+            private IDiagnosticsLogger logger;
 
             public StorageQueue(
                 IQueueFactory queueFactory,
-                string queueId,
-                IStorageQueueClientProvider clientProvider,
-                IHealthProvider healthProvider,
-                IDiagnosticsLoggerFactory loggerFactory,
-                IResourceNameBuilder resourceNameBuilder,
-                LogValueSet defaultLogValues)
-            : base(clientProvider, healthProvider, loggerFactory, resourceNameBuilder, defaultLogValues, () => resourceNameBuilder.GetQueueName(queueId))
+                Func<Task<CloudQueue>> cloudQueueFactoryCallback,
+                IDiagnosticsLogger logger)
             {
                 Factory = queueFactory;
-                this.loggerFactoryCallback = () => loggerFactory.New(defaultLogValues);
+                this.cloudQueueFactoryCallback = cloudQueueFactoryCallback;
+                this.logger = logger;
             }
 
             public IQueueFactory Factory { get; }
 
-            protected override string QueueId => throw new NotImplementedException();
-
             public async ValueTask DisposeAsync()
             {
-                await CreateLogger().OperationScopeAsync(
+                await this.logger.OperationScopeAsync(
                     $"{LoggingPrefix}_dispose",
                     async (childLogger) =>
                     {
-                        var queue = await GetQueueAsync();
+                        var queue = await this.cloudQueueFactoryCallback();
                         await queue.DeleteAsync();
                     });
             }
@@ -88,11 +102,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             /// <inheritdoc/>
             public Task<QueueMessage> AddMessageAsync(byte[] content, TimeSpan? initialVisibilityDelay, CancellationToken cancellationToken)
             {
-                return CreateLogger().OperationScopeAsync(
+                return this.logger.OperationScopeAsync(
                     $"{LoggingPrefix}_add",
                     async (childLogger) =>
                     {
-                        var queue = await GetQueueAsync();
+                        var queue = await this.cloudQueueFactoryCallback();
                         var message = new CloudQueueMessage(content);
 
                         await queue.AddMessageAsync(message, null, initialVisibilityDelay, null, null, cancellationToken);
@@ -103,11 +117,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             /// <inheritdoc/>
             public Task<IEnumerable<QueueMessage>> GetMessagesAsync(int messageCount, TimeSpan? visibilityTimeout, TimeSpan timeout, CancellationToken cancellationToken)
             {
-                return CreateLogger().OperationScopeAsync(
+                return this.logger.OperationScopeAsync(
                     $"{LoggingPrefix}_get",
                     async (childLogger) =>
                     {
-                        var queue = await GetQueueAsync();
+                        var queue = await this.cloudQueueFactoryCallback();
 
                         childLogger.FluentAddValue("MessageCount", messageCount)
                             .FluentAddValue("VisibilityTimeout", visibilityTimeout);
@@ -136,11 +150,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             /// <inheritdoc/>
             public Task DeleteMessageAsync(QueueMessage queueMessage, CancellationToken cancellationToken)
             {
-                return CreateLogger().OperationScopeAsync(
+                return this.logger.OperationScopeAsync(
                     $"{LoggingPrefix}_delete",
                     async (childLogger) =>
                     {
-                        var queue = await GetQueueAsync();
+                        var queue = await this.cloudQueueFactoryCallback();
                         var cloudQueueMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
                         await queue.DeleteMessageAsync(cloudQueueMessage, cancellationToken);
                     },
@@ -150,11 +164,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             /// <inheritdoc/>
             public Task UpdateMessageAsync(QueueMessage queueMessage, bool updateContent, TimeSpan visibilityTimeout, CancellationToken cancellationToken)
             {
-                return CreateLogger().OperationScopeAsync(
+                return this.logger.OperationScopeAsync(
                     $"{LoggingPrefix}_update",
                     async (childLogger) =>
                     {
-                        var queue = await GetQueueAsync();
+                        var queue = await this.cloudQueueFactoryCallback();
                         MessageUpdateFields messageUpdateFields =
                             MessageUpdateFields.Visibility | (updateContent ? MessageUpdateFields.Content : 0);
 
@@ -166,8 +180,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     },
                     swallowException: true);
             }
-
-            private IDiagnosticsLogger CreateLogger() => this.loggerFactoryCallback();
         }
 
         private class QueueMessageAdapter : QueueMessage

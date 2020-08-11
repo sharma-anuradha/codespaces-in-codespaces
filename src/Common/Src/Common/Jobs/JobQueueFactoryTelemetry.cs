@@ -64,7 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                         "job_queue_consumer_summary_item",
                                         (childLogger3) =>
                                         {
-                                            childLogger3.FluentAddValue("Queue", kvp.Key)
+                                            childLogger3.FluentAddValue("Queue", kvp.Key.Item1)
+                                                .FluentAddValue("Location", kvp.Key.Item2)
                                                 .FluentAddValue(JobQueueLoggerConst.JobType, jobPayloadHandlerMetricsKvp.Key)
                                                 .FluentAddValue(JobQueueLoggerConst.JobQueueMinInputCount, jobPayloadHandlerMetrics.MinInputCount)
                                                 .FluentAddValue(JobQueueLoggerConst.JobQueueMaxInputCount, jobPayloadHandlerMetrics.MaxInputCount)
@@ -94,7 +95,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                         "job_queue_factory_summary_item",
                                         (childLogger3) =>
                                         {
-                                            childLogger3.FluentAddValue("Queue", kvp.Key)
+                                            childLogger3.FluentAddValue("Queue", kvp.Key.Item1)
+                                                .FluentAddValue("Location", kvp.Key.Item2)
                                                 .FluentAddValue(JobQueueLoggerConst.JobType, jobQueueProducerMetricsKvp.Key)
                                                 .FluentAddValue(JobQueueLoggerConst.JobProcessedCount, jobQueueProducerMetrics.Processed)
                                                 .FluentAddValue(JobQueueLoggerConst.JobFailuresCount, jobQueueProducerMetrics.Failures);

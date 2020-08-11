@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// Implements IJobSchedulerLeaseFactory interface.
+    /// Implements IJobSchedulerLease interface.
     /// </summary>
     public class JobSchedulerLease : IJobSchedulerLease
     {

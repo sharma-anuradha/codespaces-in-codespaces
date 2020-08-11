@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageQueueCollectionBase.cs" company="Microsoft">
+// <copyright file="StorageQueueCollectionBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -26,14 +26,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="loggerFactory">The logger factory.</param>
         /// <param name="resourceNameBuilder">The resource name builder.</param>
         /// <param name="defaultLogValues">The default log values.</param>
-        /// <param name="queueIdCallback">Callback to evaulate for the queueId.</param>
         public StorageQueueCollectionBase(
             IStorageQueueClientProvider clientProvider,
             IHealthProvider healthProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             IResourceNameBuilder resourceNameBuilder,
-            LogValueSet defaultLogValues,
-            Func<string> queueIdCallback = null)
+            LogValueSet defaultLogValues)
         {
             Requires.NotNull(clientProvider, nameof(clientProvider));
             Requires.NotNull(healthProvider, nameof(healthProvider));
@@ -44,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             // Start initialization in the background.
             // Invoking GetClientAsync will ensure initialization is complete.
-            InitializeQueueTask = InitializeQueue(queueIdCallback != null ? queueIdCallback() : QueueId, clientProvider, healthProvider, logger);
+            InitializeQueueTask = clientProvider.InitializeQueue(QueueId, healthProvider, logger);
         }
 
         /// <summary>
@@ -72,34 +70,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         protected async Task<CloudQueue> GetQueueAsync()
         {
             return await InitializeQueueTask;
-        }
-
-        private static async Task<CloudQueue> InitializeQueue(
-            string queueId,
-            IStorageQueueClientProvider clientProvider,
-            IHealthProvider healthProvider,
-            IDiagnosticsLogger logger)
-        {
-            var initializationDuration = logger.StartDuration();
-            try
-            {
-                var client = await clientProvider.GetQueueAsync(queueId);
-
-                logger.AddDuration(initializationDuration)
-                    .LogInfo("queue_initialization_success");
-
-                return client;
-            }
-            catch (Exception e)
-            {
-                logger.AddDuration(initializationDuration)
-                    .LogException($"queue_initalization_error", e);
-
-                // We cannot use the service at this point. Mark it as unhealthy to request a restart.
-                healthProvider.MarkUnhealthy(e, logger);
-
-                throw;
-            }
         }
     }
 }

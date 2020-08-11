@@ -1,10 +1,15 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Moq;
 using Xunit;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
@@ -338,6 +343,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 await Task.Delay(2000);
                 Assert.Equal(2, count);
             }, new QueueMessageProducerSettings(5, TimeSpan.FromSeconds(8), TimeSpan.FromMilliseconds(500)));
+        }
+
+        [Fact]
+        public async Task AddJobAllAsync()
+        {
+            var mockControlPlaneInfo = new Mock<IControlPlaneInfo>();
+            mockControlPlaneInfo.SetupGet(x => x.AllStamps).Returns(() =>
+                new Dictionary<AzureLocation, IControlPlaneStampInfo>()
+                {
+                    { AzureLocation.WestUs2, null },
+                    { AzureLocation.WestEurope, null }
+                });
+            var jobQueueProducerFactory = new JobQueueProducerFactory(QueueFactory, new NullLogger());
+            var jobQueueProducerFactoryHelpers = new JobQueueProducerFactoryHelpers(jobQueueProducerFactory, mockControlPlaneInfo.Object);
+
+            var disposables = new List<IAsyncDisposable>();
+
+            var queueMessageProducer = new QueueMessageProducerFactory(QueueFactory);
+            var jobQueueConsumerFactory = new JobQueueConsumerFactory(queueMessageProducer, new NullLogger());
+
+            var queueId = Guid.NewGuid().ToString();
+
+            var payloadsProcessed = new BufferBlock<(JobContentPayload<int>, AzureLocation)>();
+            foreach (var location in new AzureLocation[] { AzureLocation.WestUs2, AzureLocation.WestEurope })
+            {
+                var jobQueueConsumer = (JobQueueConsumer)jobQueueConsumerFactory.GetOrCreate(queueId, location);
+                disposables.Add(jobQueueConsumer);
+                disposables.Add(jobQueueConsumer.QueueMessageProducer as IAsyncDisposable);
+
+                jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
+                    async (payload, logger, ct) =>
+                    {
+                        await payloadsProcessed.SendAsync((payload, location));
+                    });
+            }
+
+            var jobPayload = new JobContentPayload<int>(100);
+            await jobQueueProducerFactoryHelpers.AddJobAllAsync(queueId, jobPayload, null, default);
+            disposables.AddRange(jobQueueProducerFactoryHelpers.GetOrCreateAll(queueId).Cast<IAsyncDisposable>());
+
+            var payloadsReceived = new List<(JobContentPayload<int>, AzureLocation)>();
+
+            payloadsReceived.Add(await payloadsProcessed.ReceiveAsync(ReceiveTimeout));
+            payloadsReceived.Add(await payloadsProcessed.ReceiveAsync(ReceiveTimeout));
+            Assert.Equal(1, payloadsReceived.Count(i => i.Item2 == AzureLocation.WestUs2));
+            Assert.Equal(1, payloadsReceived.Count(i => i.Item2 == AzureLocation.WestEurope));
+
+            await Task.WhenAll(disposables.Select(i => i.DisposeAsync().AsTask()));
         }
 
         protected Task RunJobQueueTest(Func<JobQueueProducer, JobQueueConsumer, IQueue, Task> testCallback,

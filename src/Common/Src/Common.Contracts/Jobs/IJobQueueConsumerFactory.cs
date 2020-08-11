@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -17,14 +18,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Retrieve the current job consumer metrics.
         /// </summary>
         /// <returns>Dictionary of metrics for each queue id.</returns>
-        Dictionary<string, Dictionary<string, IJobHandlerMetrics>> GetMetrics();
+        Dictionary<(string, AzureLocation?), Dictionary<string, IJobHandlerMetrics>> GetMetrics();
 
         /// <summary>
         /// Create a new instance of a job queue consumer.
         /// </summary>
         /// <param name="queueId">The job queue id.</param>
+        /// <param name="azureLocation">An optional Azure location.</param>
         /// <returns>Instance of anew job queue consumer.</returns>
-        IJobQueueConsumer GetOrCreate(string queueId);
+        IJobQueueConsumer GetOrCreate(string queueId, AzureLocation? azureLocation = null);
     }
 
     /// <summary>

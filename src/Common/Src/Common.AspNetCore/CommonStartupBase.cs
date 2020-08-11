@@ -330,6 +330,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddSingleton<IJobQueueProducerFactory, JobQueueProducerFactory>();
             services.AddSingleton<IQueueMessageProducerFactory, QueueMessageProducerFactory>();
             services.AddSingleton<IJobQueueConsumerFactory, JobQueueConsumerFactory>();
+            services.AddSingleton<IJobQueueProducerFactoryHelpers, JobQueueProducerFactoryHelpers>();
         }
 
         /// <summary>

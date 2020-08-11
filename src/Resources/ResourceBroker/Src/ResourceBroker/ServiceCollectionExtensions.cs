@@ -173,6 +173,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             // SDK provider
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
+            services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
+            services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
         }
 
         private class JobSchedulerLeaseProvider : JobSchedulerLeaseProviderBase

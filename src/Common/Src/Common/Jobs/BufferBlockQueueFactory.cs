@@ -1,10 +1,11 @@
-﻿// <copyright file="BufferBlockQueueFactory.cs" company="Microsoft">
+// <copyright file="BufferBlockQueueFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
@@ -14,13 +15,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     /// </summary>
     public class BufferBlockQueueFactory : DisposableBase, IQueueFactory
     {
-        private readonly ConcurrentDictionary<string, BufferBlockQueue> bufferBlockQueues = new ConcurrentDictionary<string, BufferBlockQueue>();
+        private readonly ConcurrentDictionary<(string, AzureLocation?), BufferBlockQueue> bufferBlockQueues = new ConcurrentDictionary<(string, AzureLocation?), BufferBlockQueue>();
 
         /// <inheritdoc/>
-        public IQueue GetOrCreate(string queueId)
+        public IQueue GetOrCreate(string queueId, AzureLocation? azureLocation)
         {
             Requires.NotNullOrEmpty(queueId, nameof(queueId));
-            return this.bufferBlockQueues.GetOrAdd(queueId, (id) => new BufferBlockQueue());
+            return this.bufferBlockQueues.GetOrAdd((queueId, azureLocation), (id) => new BufferBlockQueue());
         }
 
         /// <inheritdoc/>
