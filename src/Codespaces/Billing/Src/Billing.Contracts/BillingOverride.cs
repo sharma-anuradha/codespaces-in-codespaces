@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingOverride.cs" company="Microsoft">
+// <copyright file="BillingOverride.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,6 +15,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public class BillingOverride : TaggedEntity
     {
         /// <summary>
+        /// Gets or sets the planId the billing override applies to.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "planId")]
+        public Guid? PlanId { get; set; }
+
+        /// <summary>
         /// Gets or sets UTC time when the billing override started (on an hour boundary).
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "startTime")]
@@ -29,13 +35,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Gets or sets the ID of the subscription that the billing override applies to.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull, PropertyName = "subscription")]
+        [JsonProperty(Required = Required.Default, PropertyName = "subscription")]
         public string Subscription { get; set; }
 
         /// <summary>
         /// Gets or sets the SkuPlan the billing override applies to.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull, PropertyName = "plan")]
+        [JsonProperty(Required = Required.Default, PropertyName = "plan")]
         public VsoPlanInfo Plan { get; set; }
 
         /// <summary>
@@ -47,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Gets or sets the SKU that the billing override applies to. Optional as it could apply globally.
         /// </summary>
-        [JsonProperty(Required = Required.AllowNull, PropertyName = "sku")]
+        [JsonProperty(Required = Required.Default, PropertyName = "sku")]
         public Sku Sku { get; set; }
 
         /// <summary>

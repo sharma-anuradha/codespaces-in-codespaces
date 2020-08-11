@@ -69,8 +69,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             Name = "testEnvironment3",
             Sku = new Sku { Name = standardLinuxSkuName, Tier = "test" },
         };
+
         public readonly IBillingEventRepository repository;
         public readonly IBillingOverrideRepository overrideRepository;
+        public readonly ICurrentLocationProvider currentLocationProvider;
         public readonly PlanManagerSettings planManagerSettings;
         public readonly IPlanRepository planRepository;
         public readonly ISubscriptionManager subscriptionManager;
@@ -92,7 +94,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             planRepository = new MockPlanRepository();
             planManagerSettings = new PlanManagerSettings();
             subscriptionManager = new MockSubscriptionManager();
-            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object);
+            currentLocationProvider = new Mock<ICurrentLocationProvider>().Object;
+            planManager = new PlanManager(planRepository, planManagerSettings, GetMockSKuCatalog().Object, currentLocationProvider);
             
             serializer = JsonSerializer.CreateDefault();
         }

@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.ResourceBroker.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
@@ -50,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private readonly IWorkspaceManager workspaceManager;
         public readonly IEnvironmentMonitor environmentMonitor;
         public readonly IEnvironmentStateManager environmentStateManager;
+        public readonly ICurrentLocationProvider currentLocationProvider;
         public readonly Mock<IEnvironmentContinuationOperations> environmentContinuationOperations = new Mock<IEnvironmentContinuationOperations>(MockBehavior.Loose);
         private IEnvironmentAccessManager environmentAccessManager;
         private IEnvironmentSubscriptionManager environmentSubscriptionManager;
@@ -145,9 +147,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var skuCatalogMock = new Mock<ISkuCatalog>(MockBehavior.Strict);
             skuCatalogMock.Setup((sc) => sc.CloudEnvironmentSkus).Returns(skuDictionary);
             this.skuCatalog = skuCatalogMock.Object;
-            var planManager = new PlanManager(this.planRepository, planSettings, this.skuCatalog);
             this.workspaceManager = new WorkspaceManager(this.workspaceRepository);
-            this.environmentStateManager = new EnvironmentStateManager(workspaceManager, this.environmentRepository, billingEventManager, metricsLogger);
+            this.currentLocationProvider = new Mock<ICurrentLocationProvider>().Object;
+            var planManager = new PlanManager(this.planRepository, planSettings, this.skuCatalog, currentLocationProvider);
+            var environmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>().Object;
+
+            this.environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, environmentStateChangeManager, metricsLogger);
+
             var serviceProvider = new Mock<IServiceProvider>().Object;
             this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, this.environmentRepository, serviceProvider) };
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);

@@ -28,6 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
         private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(1);
         private readonly ISkuCatalog skuCatalog;
+        private readonly ICurrentLocationProvider currentLocationProvider;
         private int cachedTotalPlansCount;
 
         /// <summary>
@@ -36,14 +37,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <param name="planRepository">Target plan repository.</param>
         /// <param name="planManagerSettings">Target plan manager settings.</param>
         /// <param name="skuCatalog">The sku catalog.</param>
+        /// <param name="currentLocationProvider">The current location provider.</param>
         public PlanManager(
             IPlanRepository planRepository,
             PlanManagerSettings planManagerSettings,
-            ISkuCatalog skuCatalog)
+            ISkuCatalog skuCatalog,
+            ICurrentLocationProvider currentLocationProvider)
         {
             this.planRepository = planRepository;
             this.planManagerSettings = Requires.NotNull(planManagerSettings, nameof(planManagerSettings));
             this.skuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
+            this.currentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
         }
 
         /// <inheritdoc/>
@@ -339,6 +343,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             var plans = (await planRepository.GetBillablePlansByShardAsync(planShard, pagingDelay, logger)).Where(plan => locations.Contains(plan.Plan.Location));
 
             return plans;
+        }
+
+        /// <inheritdoc/>
+        public Task GetBillablePlansByShardAsync(string planShard, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, TimeSpan pageDelay, IDiagnosticsLogger logger)
+        {
+            return planRepository.ForEachAsync(
+                (plan) => plan.Plan.Subscription.StartsWith(planShard) && plan.Plan.Location == this.currentLocationProvider.CurrentLocation,
+                logger,
+                itemCallback,
+                (_, __) => Task.Delay(pageDelay));
+        }
+
+        /// <inheritdoc/>
+        public Task GetBillablePlansByShardAsync(string planShard, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<VsoPlan>, IDiagnosticsLogger, Task> pageResultsCallback, IDiagnosticsLogger logger)
+        {
+            return planRepository.ForEachAsync(
+                (plan) => plan.Id.StartsWith(planShard) && plan.Plan.Location == this.currentLocationProvider.CurrentLocation,
+                logger,
+                itemCallback,
+                pageResultsCallback);
         }
 
         /// <inheritdoc/>

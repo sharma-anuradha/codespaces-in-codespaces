@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
@@ -53,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var planSettings = new PlanManagerSettings() { DefaultMaxPlansPerSubscription = 20 };
             var mockSkuUtils = new Mock<ISkuUtils>();
             var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            var currentLocationProvider = new Mock<ICurrentLocationProvider>().Object;
 
             mockSystemConfiguration
                 .Setup(x => x.GetValueAsync<int>(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), planSettings.DefaultMaxPlansPerSubscription))
@@ -62,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             accountRepository = new MockPlanRepository();
             subscriptionManager = new MockSubscriptionManager();
-            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog());
+            accountManager = new PlanManager(accountRepository, planSettings, MockUtil.MockSkuCatalog(), currentLocationProvider);
         }
 
         [Fact]
@@ -778,8 +780,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                                                                 new MockBillingOverrideRepository());
             var workspaceManager = new WorkspaceManager(new MockClientWorkspaceRepository());
             var metricsLogger = new MockEnvironmentMetricsLogger();
-            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepositoryManager, billingEventManager, metricsLogger);
-            var settings = new FrontEndAppSettings
+            var environmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>().Object;
+            var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepositoryManager, billingEventManager, environmentStateChangeManager, metricsLogger);
+            var settings = new FrontEndAppSettings                                                                                                                                      
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
             };

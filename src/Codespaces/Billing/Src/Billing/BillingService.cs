@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingService.cs" company="Microsoft">
+// <copyright file="BillingService.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,6 +8,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -308,7 +309,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     RollupUsage(usageByState, usageBySkuByState);
                 }
 
-                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, childLogger);
+                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, environmentUsageDetails[environmentEvents.Key].ResourceUsage, childLogger);
                 CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
             }
 
@@ -477,7 +478,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
 
                 // Telemeter the environment bill data
-                LogEnvironmentUsageDetails(end, region, envUsageDetail.Sku.Name, usageByState, childLogger);
+                LogEnvironmentUsageDetails(end, region, envUsageDetail.Sku.Name, usageByState, usageDetail.ResourceUsage, childLogger);
                 CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
 
                 if (currentSummary.Usage.ContainsKey(meterId))
@@ -657,7 +658,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             };
         }
 
-        private void LogEnvironmentUsageDetails(DateTime end, AzureLocation region, string sku, UsageDictionary usageStateTimes, IDiagnosticsLogger logger)
+        private void LogEnvironmentUsageDetails(DateTime end, AzureLocation region, string sku, UsageDictionary usageStateTimes, ResourceUsageDetail resourceUsage, IDiagnosticsLogger logger)
         {
             if (usageStateTimes.ContainsKey(BillingWindowBillingState.Active.ToString()))
             {
@@ -667,6 +668,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             if (usageStateTimes.ContainsKey(BillingWindowBillingState.Inactive.ToString()))
             {
                 logger.AddValue("BillableInactiveSeconds", usageStateTimes[BillingWindowBillingState.Inactive.ToString()].ToString());
+            }
+
+            if (resourceUsage?.Compute != default)
+            {
+                foreach (var compute in resourceUsage.Compute)
+                {
+                    logger.FluentAddValue("BillableComputeSeconds", compute.Usage.ToString())
+                        .FluentAddValue("BillableComputeSku", compute.Sku);
+                }
+            }
+
+            if (resourceUsage?.Storage != default)
+            {
+                foreach (var storage in resourceUsage.Storage)
+                {
+                    logger.FluentAddValue("BillableStorageSeconds", storage.Usage.ToString())
+                        .FluentAddValue("BillableStorageSku", storage.Sku);
+                }
             }
 
             logger.FluentAddValue("EnvironmentSku", sku.ToString())

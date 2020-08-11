@@ -1,8 +1,12 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Repository;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Repository.AzureCosmosDb;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -16,10 +20,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Add the <see cref="IBillingEventRepository"/> and <see cref="IBillingEventManager"/> to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
+        /// <param name="billingSettings">The billing settings.</param>
+        /// <param name="billingMeterSettings">The billing meter settings.</param>
         /// <param name="useMockCloudEnvironmentRepository">A value indicating whether to use a mock repository.</param>
         /// <returns>The <paramref name="services"/> instance.</returns>
         public static IServiceCollection AddBillingEventManager(
             this IServiceCollection services,
+            BillingSettings billingSettings,
+            BillingMeterSettings billingMeterSettings,
             bool useMockCloudEnvironmentRepository)
         {
             if (useMockCloudEnvironmentRepository)
@@ -31,9 +39,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 services.AddVsoDocumentDbCollection<BillingEvent, IBillingEventRepository, BillingEventRepository>(BillingEventRepository.ConfigureOptions);
                 services.AddVsoDocumentDbCollection<BillingOverride, IBillingOverrideRepository, BillingOverrideRepository>(BillingOverrideRepository.ConfigureOptions);
+
+                services.AddVsoDocumentDbCollection<BillSummary, IBillSummaryRepository, CosmosDbBillSummaryRepository>(CosmosDbBillSummaryRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<EnvironmentStateChange, IEnvironmentStateChangeRepository, CosmosDbEnvironmentStateChangeRepository>(CosmosDbEnvironmentStateChangeRepository.ConfigureOptions);
+
+                services.AddVsoDocumentDbCollection<BillSummary, IBillSummaryArchiveRepository, CosmosDbBillSummaryArchiveRepository>(CosmosDbBillSummaryArchiveRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<EnvironmentStateChange, IEnvironmentStateChangeArchiveRepository, CosmosDbEnvironmentStateChangeArchiveRepository>(CosmosDbEnvironmentStateChangeArchiveRepository.ConfigureOptions);
             }
 
+            // Job warmup
+            services.AddSingleton<IAsyncBackgroundWarmup, BillingRegisterJobs>();
+            services.AddSingleton<IBillingManagementConsumer, BillingManagementConsumer>();
+            services.AddSingleton<IBillingManagementProducer, BillingManagementProducer>();
+            services.AddSingleton<IBillingPlanBatchConsumer, BillingPlanBatchConsumer>();
+            services.AddSingleton<IBillingPlanBatchProducer, BillingPlanBatchProducer>();
+            services.AddSingleton<IBillingPlanSummaryConsumer, BillingPlanSummaryConsumer>();
+            services.AddSingleton<IBillingPlanSummaryProducer, BillingPlanSummaryProducer>();
+            services.AddSingleton<IBillingPlanCleanupProducer, BillingPlanCleanupProducer>();
+            services.AddSingleton<IBillingPlanCleanupConsumer, BillingPlanCleanupConsumer>();
+
+            // Add the Billing Meter catalog
+            services.Configure<BillingMeterSettings>(
+                options =>
+                {
+                    options.MetersByLocation = billingMeterSettings.MetersByLocation;
+
+                    options.MetersByResource = billingMeterSettings.MetersByResource;
+                });
+            services.AddSingleton(billingSettings);
+
+            services.AddSingleton<IBillingMeterCatalog, BillingMeterCatalog>();
             services.AddSingleton<IBillingEventManager, BillingEventManager>();
+            services.AddSingleton<IBillSummaryGenerator, BillSummaryGenerator>();
+            services.AddSingleton<IBillSummaryScrubber, BillSummaryScrubber>();
+            services.AddSingleton<IBillSummaryManager, BillSummaryManager>();
+            services.AddSingleton<IBillingArchivalManager, BillingArchivalManager>();
+            services.AddSingleton<IEnvironmentStateChangeManager, EnvironmentStateChangeManager>();
+            services.AddSingleton<IBillingMeterService, BillingMeterService>();
+            services.AddSingleton<IBillingSubmissionCloudStorageFactory, BillingSubmissionCloudStorageFactory>();
 
             return services;
         }

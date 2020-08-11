@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -26,16 +28,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="workspaceManager">Target workspace manager.</param>
         /// <param name="cloudEnvironmentRepository">Target cloud environment repository.</param>
         /// <param name="billingEventManager">target billing manager.</param>
+        /// <param name="environmentStateChangeManager">the environment state change manager.</param>
         /// <param name="environmentMetricsLogger">The metrics logger.</param>
         public EnvironmentStateManager(
             IWorkspaceManager workspaceManager,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IBillingEventManager billingEventManager,
+            IEnvironmentStateChangeManager environmentStateChangeManager,
             IEnvironmentMetricsManager environmentMetricsLogger)
         {
             WorkspaceManager = workspaceManager;
             CloudEnvironmentRepository = cloudEnvironmentRepository;
             BillingEventManager = billingEventManager;
+            EnvironmentStateChangeManager = environmentStateChangeManager;
             EnvironmentMetricsLogger = environmentMetricsLogger;
         }
 
@@ -44,6 +49,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
 
         private IBillingEventManager BillingEventManager { get; }
+
+        private IEnvironmentStateChangeManager EnvironmentStateChangeManager { get; }
+
+        private IPlanManager PlanManager { get; }
 
         private IEnvironmentMetricsManager EnvironmentMetricsLogger { get; }
 
@@ -127,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         plan.Location = record.Value.Location;
                     }
 
-                    // Create billing event
+                    // Create billing event (legacy)
                     var environment = new EnvironmentBillingInfo
                     {
                         Id = record.Value.Id,
@@ -141,6 +150,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     };
                     await BillingEventManager.CreateEventAsync(
                         plan, environment, BillingEventTypes.EnvironmentStateChange, stateChange, logger.NewChildLogger());
+
+                    // Create the new billing state change
+                    await EnvironmentStateChangeManager.CreateAsync(plan, environment, oldState, newState, logger.NewChildLogger());
 
                     // Mutates environment state
                     var lastStateUpdated = DateTime.UtcNow;

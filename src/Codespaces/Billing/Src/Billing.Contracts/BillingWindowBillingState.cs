@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingWindowBillingState.cs" company="Microsoft">
+// <copyright file="BillingWindowBillingState.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,5 +20,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// amount for this BillingWindow.
         /// </summary>
         Inactive,
+
+        /// <summary>
+        /// Environment is Archived and should be charged the Inactive
+        /// amount for this BillingWindow.
+        /// The distinction between Shutdown and Archived is made for
+        /// logging purposes only.
+        /// </summary>
+        Archived,
     }
 }

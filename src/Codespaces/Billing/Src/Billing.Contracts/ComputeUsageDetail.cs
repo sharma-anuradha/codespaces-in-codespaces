@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// <summary>
     /// Compute usage details.
     /// </summary>
-    public class ComputeUsageDetail : IEquatable<ComputeUsageDetail>
+    public class ComputeUsageDetail : IEquatable<ComputeUsageDetail>, IUsageDetail
     {
         /// <summary>
         /// Gets or sets the compute time in seconds.

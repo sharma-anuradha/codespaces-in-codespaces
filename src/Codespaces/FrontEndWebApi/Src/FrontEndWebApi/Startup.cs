@@ -212,7 +212,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddPlanManager(frontEndAppSettings.PlanManagerSettings, frontEndAppSettings.UseMocksForLocalDevelopment);
 
             // Add the billing event manager and the billing event repository
-            services.AddBillingEventManager(frontEndAppSettings.UseMocksForLocalDevelopment);
+            services.AddBillingEventManager(
+                frontEndAppSettings.BillingSettings,
+                frontEndAppSettings.BillingMeterSettings,
+                frontEndAppSettings.UseMocksForLocalDevelopment);
 
             // Add the subscription managers
             services.AddSubscriptionManagers(
@@ -461,6 +464,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
             frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
             frontEndAppSettings.SubscriptionManagerSettings.Init(systemConfig);
+            frontEndAppSettings.BillingSettings.Init(systemConfig);
 
             app.UseEndpoints(x =>
             {

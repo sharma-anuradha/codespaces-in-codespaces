@@ -11,7 +11,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// <summary>
     /// Storage usage details.
     /// </summary>
-    public class StorageUsageDetail : IEquatable<StorageUsageDetail>
+    public class StorageUsageDetail : IEquatable<StorageUsageDetail>, IUsageDetail
     {
         /// <summary>
         /// Gets or sets storage time in milliseconds.

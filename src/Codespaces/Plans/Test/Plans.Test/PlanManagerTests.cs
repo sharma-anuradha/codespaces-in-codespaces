@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
         private readonly ISubscriptionManager subscriptionManager;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
         private readonly IDiagnosticsLogger logger;
+        private readonly ICurrentLocationProvider currentLocationProvider;
         private static readonly string subscriptionId = Guid.NewGuid().ToString();
         private readonly decimal standardLinuxComputeUnitPerHr = 125;
         private readonly decimal premiumLinuxComputeUnitPerHr = 242;
@@ -54,7 +55,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Tests
 
             planRepository = new MockPlanRepository();
             subscriptionManager = new MockSubscriptionManager();
-            planManager = new PlanManager(planRepository, settings, skuCatalog);
+            currentLocationProvider = new Mock<ICurrentLocationProvider>().Object;
+
+            planManager = new PlanManager(planRepository, settings, skuCatalog, currentLocationProvider);
         }
 
         private Mock<ISkuCatalog> GetMockSKuCatalog()

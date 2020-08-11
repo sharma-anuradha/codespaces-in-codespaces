@@ -1,4 +1,4 @@
-﻿// <copyright file="PlanWorker.cs" company="Microsoft">
+// <copyright file="PlanWorker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -52,8 +52,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
                     await planManager.RefreshTotalPlansCountAsync(logger);
 
                     logger.AddDuration(duration).LogInfo(GetType().FormatLogMessage(nameof(ExecuteAsync)));
-
-                    await Task.Delay(PlanCountRefreshInterval - duration.Elapsed, cancellationToken);
+                    var delay = PlanCountRefreshInterval - duration.Elapsed;
+                    await Task.Delay(delay.TotalMilliseconds > 0 ? (int)delay.TotalMilliseconds : 0, cancellationToken);
                 }
                 catch (OperationCanceledException oce)
                 when (cancellationToken.Equals(oce.CancellationToken))

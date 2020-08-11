@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceUsageDetail.cs" company="Microsoft">
+// <copyright file="ResourceUsageDetail.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,13 +18,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Gets or sets compute usage.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "compute", NullValueHandling = NullValueHandling.Ignore)]
-        public IList<ComputeUsageDetail> Compute { get; set; }
+        public IList<ComputeUsageDetail> Compute { get; set; } = new List<ComputeUsageDetail>();
 
         /// <summary>
         /// Gets or sets storage usage.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "storage")]
-        public IList<StorageUsageDetail> Storage { get; set; }
+        public IList<StorageUsageDetail> Storage { get; set; } = new List<StorageUsageDetail>();
 
         /// <summary>
         /// Test for equality.

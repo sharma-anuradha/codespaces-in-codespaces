@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -115,5 +116,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the Mdm metric settings.
         /// </summary>
         public MdmMetricSettings MdmMetricSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Billing Settings.
+        /// </summary>
+        public BillingSettings BillingSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Billing Meter settings.
+        /// </summary>
+        public BillingMeterSettings BillingMeterSettings { get; set; }
     }
 }
