@@ -101,17 +101,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     // it will ensure that billing is always stopped when we mark the environment as deleted.
                     try
                     {
-                        await EnvironmentSuspendAction.RunAsync(
-                            Guid.Parse(record.Value.Id),
-                            record.Value.Compute.ResourceId,
-                            logger.NewChildLogger());
+                        if (record.Value.Compute != null)
+                        {
+                            await EnvironmentSuspendAction.RunAsync(
+                                Guid.Parse(record.Value.Id),
+                                record.Value.Compute.ResourceId,
+                                logger.NewChildLogger());
+                        }
                     }
                     finally
                     {
-                        await EnvironmentStateManager.SetEnvironmentStateAsync(record.Value, CloudEnvironmentState.Deleted, CloudEnvironmentStateUpdateTriggers.SoftDeleteEnvironment, null, null, childLogger.NewChildLogger());
+                        await EnvironmentStateManager.SetEnvironmentStateAsync(
+                            record.Value,
+                            CloudEnvironmentState.Deleted,
+                            CloudEnvironmentStateUpdateTriggers.SoftDeleteEnvironment,
+                            null,
+                            null,
+                            childLogger.NewChildLogger());
                     }
 
-                    // Return true if the environment is already deleted or if the delete is attempted before the record is persisted (ex: Cleanup attempt in response to creation failure)
                     return record.Value;
                 });
         }
