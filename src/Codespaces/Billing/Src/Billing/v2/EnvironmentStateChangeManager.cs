@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
@@ -40,9 +41,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private IPlanManager PlanManager { get; }
 
         /// <inheritdoc />
-        public async Task CreateAsync(EnvironmentStateChange change, IDiagnosticsLogger logger)
+        public Task CreateAsync(EnvironmentStateChange change, IDiagnosticsLogger logger)
         {
-            await EnvironmentStateChangeRepository.CreateOrUpdateAsync(change, logger.NewChildLogger());
+            // retries up to three times, spaced out by 500ms
+            return logger.RetryOperationScopeAsync(
+                $"{LogBaseName}_create",
+                async (childLogger) =>
+                {
+                    await EnvironmentStateChangeRepository.CreateOrUpdateAsync(change, logger.NewChildLogger());
+                });
         }
 
         /// <inheritdoc />

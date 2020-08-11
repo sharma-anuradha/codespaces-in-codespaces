@@ -1,4 +1,4 @@
-﻿// <copyright file="BillSummaryManager.cs" company="Microsoft">
+// <copyright file="BillSummaryManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -58,7 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <inheritdoc />
         public Task<BillSummary> CreateOrUpdateAsync(BillSummary billingSummary, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            // retries up to three times, spaced out by 500ms
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_create_or_update",
                 async (childLogger) =>
                 {
