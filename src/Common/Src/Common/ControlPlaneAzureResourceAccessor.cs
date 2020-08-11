@@ -170,7 +170,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 string.IsNullOrEmpty(RegionalCosmosDbAccount.Item2))
             {
                 RegionalCosmosDbAccount = await GetCosmosDbAccountAsync(
-                    ControlPlaneInfo.InstanceResourceGroupName,
+                    ControlPlaneInfo.Stamp.StampResourceGroupName,
                     ControlPlaneInfo.RegionalCosmosDbAccountName);
             }
 
