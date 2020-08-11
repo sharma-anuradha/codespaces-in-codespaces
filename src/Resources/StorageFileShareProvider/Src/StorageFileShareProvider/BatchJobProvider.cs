@@ -174,7 +174,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     var storageAccountName = storageAccount.Name;
                     var storageAccountKey = await StorageFileShareProviderHelper.GetStorageAccountKey(storageAccount);
                     var storageCreds = new StorageCredentials(storageAccountName, storageAccountKey);
-                    var cloudStorageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
+
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.Blob, UriKind.Absolute, out var blobEndpoint);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.Queue, UriKind.Absolute, out var queueEndpoint);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.Table, UriKind.Absolute, out var tableEndpoint);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.File, UriKind.Absolute, out var fileEndpoint);
+
+                    var cloudStorageAccount = new CloudStorageAccount(storageCreds, blobEndpoint, queueEndpoint, tableEndpoint, fileEndpoint);
                     var fileClient = cloudStorageAccount.CreateCloudFileClient();
                     var fileShare = fileClient.GetShareReference(StorageFileShareProviderHelper.GetStorageMountableShareName());
 

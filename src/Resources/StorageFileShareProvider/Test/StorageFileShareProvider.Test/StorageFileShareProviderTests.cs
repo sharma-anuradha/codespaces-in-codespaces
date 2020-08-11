@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private const string MockStorageAccountKey = "SecretKey";
         private const string MockStorageShareName = "cloudenvdata";
         private const string MockStorageFileName = "dockerlib";
+        private const string MockStorageFileServiceHost = "vsoce123.z01.file.storage.azure.net";
         private const string MockStorageSrcFileShareUriWithSas = "https://source.file.core.windows.net/cloudenvdata/dockerlib";
         private const string MockStorageDestBlobUriWithSas = "https://archivesas.blob.core.windows.net/containername/blobname";
         private const StorageType MockStorageBlobType = StorageType.Linux;
@@ -258,7 +259,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 MockStorageAccountName,
                 MockStorageAccountKey,
                 MockStorageShareName,
-                MockStorageFileName);
+                MockStorageFileName,
+                MockStorageFileServiceHost);
             providerHelperMoq
                 .Setup(x => x.GetConnectionInfoAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<StorageType>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(mockConnInfo));

@@ -228,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             return new VirtualMachineProviderStartComputeInput(
                 ResourceInfo,
-                new ShareConnectionInfo("val1", "val2", "val3", "val4"),
+                new ShareConnectionInfo("val1", "val2", "val3", "val4", "val5"),
                 new Dictionary<string, string>(),
                 new HashSet<UserSecretData>(),
                 ComputeOS.Linux,

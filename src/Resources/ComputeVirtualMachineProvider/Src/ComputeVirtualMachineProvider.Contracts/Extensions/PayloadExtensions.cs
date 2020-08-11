@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         private const string StorageAccountKeyTag = "storageAccountKey";
         private const string StorageShareNameTag = "storageShareName";
         private const string StorageFileNameTag = "storageFileName";
+        private const string StorageFileServiceHostTag = "storageFileServiceHost";
         private const string SkuNameTag = "skuName";
 
         private const string RefreshVMCommand = "RefreshVM";
@@ -109,6 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 jobParameters.Add(StorageAccountKeyTag, startComputeInput.FileShareConnection.StorageAccountKey);
                 jobParameters.Add(StorageShareNameTag, startComputeInput.FileShareConnection.StorageShareName);
                 jobParameters.Add(StorageFileNameTag, startComputeInput.FileShareConnection.StorageFileName);
+                jobParameters.Add(StorageFileServiceHostTag, startComputeInput.FileShareConnection.StorageFileServiceHost);
             }
 
             // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.

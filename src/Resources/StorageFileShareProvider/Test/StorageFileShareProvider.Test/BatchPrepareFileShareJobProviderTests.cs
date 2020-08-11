@@ -27,28 +27,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
     public class BatchPrepareFileShareJobProviderTests
     {
         // Azure subscription to be used for tests
-        private static readonly string azureSubscriptionId = "86642df6-843e-4610-a956-fdd497102261";
-        // Prefix for Azure resource group that will be created (then cleaned-up) by the test
-        private static readonly string azureResourceGroupPrefix = "test-storage-file-share-";
-        // File share template info (storage account should be in same Azure subscription as above)
-        private static readonly string fileShareTemplateStorageAccount = "vsodevciusw2siusw2";
-        private static readonly string fileShareTemplateContainerName = "templates";
+        private static readonly string srcAzureSubscriptionId = "86642df6-843e-4610-a956-fdd497102261";
 
-        private static readonly string fileShareTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.2089-g1dc5bc293ef42efa683585df9031b92ba7cd1a75.release765";
-        // The name of the Windows blob is implied by the name of the Linux blob.
-        // This is a limitation of the current schema for appsettings.images.json where only the image name is specified without knowledge of platform.
-        // This works because both the Windows and Linux blobs are pushed at the same time with the same version, the Windows blob just has the ".disk.vhdx" postfix.
-        private static readonly string fileShareTemplateBlobNameWindows = $"{fileShareTemplateBlobNameLinux}.disk.vhdx";
+        // File share template info (storage account should be in same Azure subscription as above)
+        private static readonly string srcTemplateStorageAccount = "vsodevciusw2siusw2";
+
+        // Blob container name that holds the file share templates.
+        private static readonly string srcTemplateStorageContainerName = "templates";
+
+        // Blob container name that holds the file share templates.
+        private static readonly string srcTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.2583-g656088a7fb87cca16ccdc6cc8686f34342a71260.release1104";
+        
+        // Azure subscription that the storage accounts will be created in.
+        private static readonly string destAzureSubscriptionId = "391ef925-0b71-4920-8e81-93cb44d896c0";
+
+        // Prefix for Azure resource group that will be created (then cleaned-up) by the test
+        private static readonly string destResourceGroupPrefix = "test-storage-file-share-";
+
+        private static readonly string destFileShareStorageSkuName = "Premium_LRS";
+
+        // Resource group of the batch account in the control-plane subscription
         private static readonly string batchAccountResourceGroup = "vsclk-online-dev-ci-usw2";
+
+        // Account name of the batch account in the control-plane subscription
         private static readonly string batchAccountName = "vsodevciusw2bausw2";
+
+        // Pool id of the batch account in the control-plane subscription
         private static readonly string batchPoolId = "storage-worker-devstamp-pool";
         private static readonly string azureLocationStr = "westus2";
         private static readonly AzureLocation azureLocation = AzureLocation.WestUs2;
-        private static readonly string azureSkuName = "Premium_LRS";
         private static readonly string azureSubscriptionName = "ignorethis";
         private static readonly int PREPARE_TIMEOUT_MINS = 30;
         private static readonly int STORAGE_SIZE_IN_GB = 64;
-        private static readonly int NUM_STORAGE_TO_CREATE = 2;
+        private static readonly int NUM_STORAGE_TO_CREATE = 1;
 
         private static IConfiguration InitConfiguration()
         {
@@ -58,9 +69,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return config;
         }
 
-        private static string GetResourceGroupName()
+        private static string GetFileShareStorageResourceGroupName()
         {
-            return azureResourceGroupPrefix + Environment.UserName;
+            return destResourceGroupPrefix + Environment.UserName;
         }
 
         private static IServicePrincipal GetServicePrincipal()
@@ -81,8 +92,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static Mock<ISystemCatalog> GetMockSystemCatalog(IServicePrincipal servicePrincipal)
         {
             var catalogMoq = new Mock<ISystemCatalog>();
-            var testSubscription = new AzureSubscription(
-                azureSubscriptionId,
+            var infraSubscription = new AzureSubscription(
+                srcAzureSubscriptionId,
+                azureSubscriptionName,
+                servicePrincipal,
+                true,
+                new[] { azureLocation },
+                null,
+                null,
+                null);
+            var dataPlaneSubscription = new AzureSubscription(
+                destAzureSubscriptionId,
                 azureSubscriptionName,
                 servicePrincipal,
                 true,
@@ -93,11 +113,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             catalogMoq
                 .Setup(x => x.AzureSubscriptionCatalog.AzureSubscriptions)
                 .Returns(new[] {
-                    testSubscription
+                    dataPlaneSubscription
                 });
             catalogMoq
                 .Setup(x => x.AzureSubscriptionCatalog.InfrastructureSubscription)
-                .Returns(testSubscription);
+                .Returns(infraSubscription);
             return catalogMoq;
         }
 
@@ -114,9 +134,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return resourceAccessor;
         }
 
-        private static async Task<IAzure> GetAzureClient(IAzureClientFactory azureClientFactory)
+        private static async Task<IAzure> GetAzureClient(IAzureClientFactory azureClientFactory, string subscriptionId)
         {
-            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
+            var azure = await azureClientFactory.GetAzureClientAsync(new Guid(subscriptionId));
             return azure;
         }
 
@@ -124,14 +144,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             // Get storage account key
             var storageAccountsInSubscription = await azure.StorageAccounts.ListAsync();
-            var srcStorageAccount = storageAccountsInSubscription.Single(sa => sa.Name == fileShareTemplateStorageAccount);
+            var srcStorageAccount = storageAccountsInSubscription.Single(sa => sa.Name == srcTemplateStorageAccount);
             var srcStorageAccountKey = (await srcStorageAccount.GetKeysAsync())[0].Value;
 
             // Create blob sas url
             var storageCreds = new StorageCredentials(srcStorageAccount.Name, srcStorageAccountKey);
             var blobRef = new CloudStorageAccount(storageCreds, useHttps: true)
                 .CreateCloudBlobClient()
-                .GetContainerReference(fileShareTemplateContainerName)
+                .GetContainerReference(srcTemplateStorageContainerName)
                 .GetBlobReference(srcBlobName);
             var blobSas = blobRef.GetSharedAccessSignature(new SharedAccessBlobPolicy
             {
@@ -152,13 +172,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         {
             var logger = new DefaultLoggerFactory().New();
 
-            var resourceGroupName = GetResourceGroupName();
             var servicePrincipal = GetServicePrincipal();
             var catalogMoq = GetMockSystemCatalog(servicePrincipal);
             var azureClientFactory = new AzureClientFactory(catalogMoq.Object.AzureSubscriptionCatalog);
-            var azure = await GetAzureClient(azureClientFactory);
             var storageProviderSettings = new StorageProviderSettings() { WorkerBatchPoolId = batchPoolId };
-            var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(azure);
+            var srcAzureClient = await GetAzureClient(azureClientFactory, srcAzureSubscriptionId);
+            var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(srcAzureClient);
             var batchClientFactory = new BatchClientFactory(resourceAccessorMoq.Object);
 
             // construct the real StorageFileShareProviderHelper
@@ -169,13 +188,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 providerHelper, batchClientFactory, azureClientFactory, storageProviderSettings);
 
             // Create storage accounts
+            var fileShareStorageResourceGroupName = GetFileShareStorageResourceGroupName();
             var storageAccounts = await Task.WhenAll(
                 Enumerable.Range(0, NUM_STORAGE_TO_CREATE)
                     .Select(x => providerHelper.CreateStorageAccountAsync(
-                        azureSubscriptionId,
+                        destAzureSubscriptionId,
                         azureLocationStr,
-                        resourceGroupName,
-                        azureSkuName,
+                        fileShareStorageResourceGroupName,
+                        destFileShareStorageSkuName,
                         new Dictionary<string, string> { { "ResourceTag", "GeneratedFromTest" }, },
                         logger))
             );
@@ -187,17 +207,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
 
                 var linuxCopyItem = new StorageCopyItem()
                 {
-                    SrcBlobUrl = await GetSrcBlobUrlAsync(azure, fileShareTemplateBlobNameLinux),
+                    SrcBlobUrl = await GetSrcBlobUrlAsync(srcAzureClient, srcTemplateBlobNameLinux),
                     StorageType = StorageType.Linux,
                 };
 
-                var windowsCopyItem = new StorageCopyItem()
-                {
-                    SrcBlobUrl = await GetSrcBlobUrlAsync(azure, fileShareTemplateBlobNameWindows),
-                    StorageType = StorageType.Windows,
-                };
-
-                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => batchPrepareFileShareJobProvider.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem, windowsCopyItem }, STORAGE_SIZE_IN_GB, logger)));
+                var prepareFileShareTaskInfos = await Task.WhenAll(storageAccounts.Select(sa => batchPrepareFileShareJobProvider.StartPrepareFileShareAsync(sa, new[] { linuxCopyItem }, STORAGE_SIZE_IN_GB, logger)));
 
                 var fileShareStatus = new BatchTaskStatus[NUM_STORAGE_TO_CREATE];
                 var taskMaxWaitTime = TimeSpan.FromMinutes(30);

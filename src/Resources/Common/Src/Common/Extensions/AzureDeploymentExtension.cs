@@ -144,31 +144,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common
         }
 
         /// <summary>
-        /// Get CloudFile client.
-        /// </summary>
-        /// <param name="azure">azure client object.</param>
-        /// <param name="resourceGroupName">existing azure resource group name.</param>
-        /// <param name="storageAccountName">existing azure storage account name.</param>
-        /// <returns>cloud file client.</returns>
-        public static async Task<CloudFileClient> GetCloudFileClientAsync(this IAzure azure, string resourceGroupName, string storageAccountName)
-        {
-            var storageAccount = await azure.StorageAccounts.GetByResourceGroupAsync(resourceGroupName, storageAccountName);
-            if (storageAccount == null)
-            {
-                // storage account does not exist
-                throw new ArgumentException($"Could not find storage account {storageAccountName} in resource group {resourceGroupName}");
-            }
-
-            var csa = await GetStorageClient(storageAccount);
-
-            // Create the file client.
-            var client = csa.CreateCloudFileClient();
-
-            // Retrieve a reference to a container.
-            return client;
-        }
-
-        /// <summary>
         /// Deletes azure queue.
         /// </summary>
         /// <param name="azure">azure client object.</param>

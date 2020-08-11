@@ -119,7 +119,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageResult.StorageAccountName,
                     storageResult.StorageAccountKey,
                     storageResult.StorageShareName,
-                    storageResult.StorageFileName);
+                    storageResult.StorageFileName,
+                    storageResult.StorageFileServiceHost);
             }
 
             return new VirtualMachineProviderStartComputeInput(

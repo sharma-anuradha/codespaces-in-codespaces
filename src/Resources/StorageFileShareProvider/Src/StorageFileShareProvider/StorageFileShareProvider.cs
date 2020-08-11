@@ -138,7 +138,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                         info.StorageAccountName,
                         info.StorageAccountKey,
                         info.StorageShareName,
-                        info.StorageFileName)
+                        info.StorageFileName,
+                        info.StorageFileServiceHost)
                     { Status = OperationState.Succeeded };
                     childLogger.FluentAddValue(nameof(r.RetryAfter), r.RetryAfter.ToString())
                         .FluentAddValue(nameof(r.Status), r.Status.ToString());

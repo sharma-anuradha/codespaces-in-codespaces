@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             });
 
             return logger.OperationScopeAsync(
-                "file_share_storage_provider_helper_connection_info",
+                "file_share_storage_provider_helper_create_storage_account",
                 async (childLogger) =>
                 {
                     var azure = await azureClientFactory.GetAzureClientAsync(new Guid(azureSubscriptionId));
@@ -151,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             logger = logger.WithValue("AzureStorageAccountName", azureResourceInfo.Name);
 
             return logger.OperationScopeAsync(
-                "file_share_storage_provider_helper_connection_info",
+                "file_share_storage_provider_helper_create_file_share",
                 async (childLogger) =>
                 {
                     var cloudStorageAccount = await GetCloudStorageAccount(azureResourceInfo, null, childLogger);
@@ -178,11 +178,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     var storageAccount = await GetStorageAccount(azureResourceInfo, childLogger);
                     var storageAccountName = storageAccount.Name;
                     var storageAccountKey = await GetStorageAccountKey(storageAccount);
+
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.File, UriKind.Absolute, out var storageFileEndpoint);
+                    var storageFileServiceHost = storageFileEndpoint?.Host;
+
                     var shareConnectionInfo = new ShareConnectionInfo(
                         storageAccountName,
                         storageAccountKey,
                         StorageMountableShareName,
-                        GetStorageMountableFileName(storageType));
+                        GetStorageMountableFileName(storageType),
+                        storageFileServiceHost);
                     return shareConnectionInfo;
                 });
         }
@@ -222,14 +227,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 {
                     childLogger.FluentAddValue("AzureStorageAccountName", azureResourceInfo.Name);
 
+                    var storageAccount = await GetStorageAccount(azureResourceInfo, childLogger);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.Blob, UriKind.Absolute, out var blobEndpoint);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.Queue, UriKind.Absolute, out var queueEndpoint);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.Table, UriKind.Absolute, out var tableEndpoint);
+                    Uri.TryCreate(storageAccount.EndPoints.Primary.File, UriKind.Absolute, out var fileEndpoint);
+
                     if (string.IsNullOrEmpty(storageAccountKey))
                     {
-                        var storageAccount = await GetStorageAccount(azureResourceInfo, childLogger);
                         storageAccountKey = await GetStorageAccountKey(storageAccount);
                     }
 
                     var storageCreds = new StorageCredentials(azureResourceInfo.Name, storageAccountKey);
-                    return new CloudStorageAccount(storageCreds, useHttps: true);
+                    return new CloudStorageAccount(storageCreds, blobEndpoint, queueEndpoint, tableEndpoint, fileEndpoint);
                 });
         }
 

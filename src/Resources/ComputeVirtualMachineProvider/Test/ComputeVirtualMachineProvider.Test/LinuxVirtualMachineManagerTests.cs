@@ -108,11 +108,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             var logger = new DefaultLoggerFactory().New();
             var storageAccountName = GetConfigOrDefault("FILE_STORE_ACCOUNT", "teststorageaccount");
             var storageAccountKey = GetConfigOrDefault("FILE_STORE_KEY", "teststorageaccountkey");
+            var storageFileServiceHost = GetConfigOrDefault("FILE_STORE_HOST", "teststorageaccount.z01.file.storage.azure.net");
 
             var fileShareInfo = new ShareConnectionInfo(storageAccountName,
                                                        storageAccountKey,
                                                        "cloudenvdata",
-                                                       "dockerlib");
+                                                       "dockerlib",
+                                                       storageFileServiceHost);
 
             var startComputeInput = new VirtualMachineProviderStartComputeInput(
                 vmResourceInfo,
