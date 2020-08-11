@@ -79,7 +79,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // delete the source
                     await source.DeleteAsync(originalKey, childLogger);
-                });
+                },
+                swallowException: true);
         }
     }
 }

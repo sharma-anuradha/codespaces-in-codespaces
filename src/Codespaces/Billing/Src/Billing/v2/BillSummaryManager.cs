@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <inheritdoc/>
         public Task<IEnumerable<BillSummary>> GetAllSummaries(string planId, DateTime endTime, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_get_all_bill_summaries",
                 async (childLogger) =>
                 {
@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <inheritdoc />
         public Task<BillSummary> GetLatestBillSummaryAsync(string planId, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_get_latest_bill_summary",
                 async (childLogger) =>
                 {

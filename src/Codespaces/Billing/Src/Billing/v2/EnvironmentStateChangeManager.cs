@@ -76,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             Requires.NotNullOrEmpty(planId, nameof(planId));
 
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_get_all_recent_environment_events",
                 async (childLogger) =>
                 {
@@ -93,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             Requires.NotNullOrEmpty(planId, nameof(planId));
 
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_get_all_state_changes",
                 async (childLogger) =>
                 {
