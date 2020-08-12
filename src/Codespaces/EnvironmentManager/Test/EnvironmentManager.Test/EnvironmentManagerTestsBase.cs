@@ -15,6 +15,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveshareAuthentication;
@@ -29,7 +30,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 {
     public class EnvironmentManagerTestsBase
     {
-        public readonly MockCloudEnvironmentRepository environmentRepository;
+        public readonly MockGlobalCloudEnvironmentRepository globalEnvironmentRepository;
+        public readonly MockRegionalCloudEnvironmentRepository regionalEnvironmentRepository;
+        public readonly CloudEnvironmentRepository environmentRepository;
         public readonly MockPlanRepository planRepository;
         public readonly MockBillingEventRepository billingEventRepository;
         public readonly MockClientWorkspaceRepository workspaceRepository;
@@ -115,14 +118,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
 
-            this.environmentRepository = new MockCloudEnvironmentRepository();
+            this.globalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
+            this.regionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
+            this.environmentRepository = new CloudEnvironmentRepository(this.globalEnvironmentRepository, this.regionalEnvironmentRepository);
             this.planRepository = new MockPlanRepository();
             this.billingEventRepository = new MockBillingEventRepository();
             this.billingEventManager = new BillingEventManager(this.billingEventRepository,
                                                                 new MockBillingOverrideRepository());
-            workspaceRepository = new MockClientWorkspaceRepository();
-            tokenProvider = MockUtil.MockTokenProvider();
-            resourceBroker = new MockResourceBrokerClient();
+            this.workspaceRepository = new MockClientWorkspaceRepository();
+            this.tokenProvider = MockUtil.MockTokenProvider();
+            this.resourceBroker = new MockResourceBrokerClient();
             this.environmentMonitor = new MockEnvironmentMonitor();
             var metricsLogger = new MockEnvironmentMetricsLogger();
 
@@ -150,11 +155,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepository, billingEventManager, environmentStateChangeManager, metricsLogger);
 
             var serviceProvider = new Mock<IServiceProvider>().Object;
-            this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, environmentRepository, serviceProvider) };
+            this.environmentRepairWorkflows = new List<IEnvironmentRepairWorkflow>() { new ForceSuspendEnvironmentWorkflow(this.environmentStateManager, resourceBroker, this.environmentRepository, serviceProvider) };
             this.resourceAllocationManager = new ResourceAllocationManager(this.resourceBroker);
             this.resourceStartManager = new Mock<IResourceStartManager>().Object;
             this.environmentAccessManager = new Mock<IEnvironmentAccessManager>().Object;
-            this.environmentSubscriptionManager = new EnvironmentSubscriptionManager(environmentRepository, skuCatalog);
+            this.environmentSubscriptionManager = new EnvironmentSubscriptionManager(this.environmentRepository, skuCatalog);
 
             this.environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
 
@@ -172,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentSettings
                 );
             var environmentListAction = new EnvironmentListAction(
-               environmentRepository,
+               this.environmentRepository,
                MockUtil.MockCurrentLocationProvider(),
                MockUtil.MockCurrentUserProvider(),
                MockUtil.MockControlPlaneInfo(),

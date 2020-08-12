@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// <summary>
     /// A mock cloud environment repository.
     /// </summary>
-    public class MockRegionalCloudEnvironmentRepository : MockCloudEnvironmentRepository, IRegionalCloudEnvironmentRepository
+    public class MockRegionalCloudEnvironmentRepository : MockGlobalCloudEnvironmentRepository, IRegionalCloudEnvironmentRepository
     {
     }
 }

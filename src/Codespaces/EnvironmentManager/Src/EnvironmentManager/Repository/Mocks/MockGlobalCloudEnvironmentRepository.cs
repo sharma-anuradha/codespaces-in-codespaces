@@ -1,11 +1,10 @@
-// <copyright file="MockCloudEnvironmentRepository.cs" company="Microsoft">
+// <copyright file="MockGlobalCloudEnvironmentRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -15,7 +14,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// <summary>
     /// A mock cloud environment repository.
     /// </summary>
-    public class MockCloudEnvironmentRepository : MockRepository<CloudEnvironment>, ICloudEnvironmentRepository
+    public class MockGlobalCloudEnvironmentRepository : MockRepository<CloudEnvironment>, IGlobalCloudEnvironmentRepository
     {
         /// <inheritdoc/>
         public Task<int> GetCloudEnvironmentPlanCountAsync(IDiagnosticsLogger logger)
@@ -30,19 +29,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(string idShard, int count, DateTime shutdownCutoffTime, DateTime softDeleteCutoffTime, AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForArchiveAsync(string idShard, int count, DateTime shutdownCutoffTime, DateTime softDeleteCutoffTime, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(string idShard, int count, AzureLocation locaiton, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudEnvironment>> GetFailedOperationAsync(string idShard, int count, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public Task<int> GetEnvironmentsArchiveJobActiveCountAsync(AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
+        public Task<int> GetEnvironmentsArchiveJobActiveCountAsync(IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -54,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForHardDeleteAsync(string idShard, DateTime cutoffTime, AzureLocation controlPlaneLocation, IDiagnosticsLogger logger)
+        public Task<IEnumerable<CloudEnvironment>> GetEnvironmentsReadyForHardDeleteAsync(string idShard, DateTime cutoffTime, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

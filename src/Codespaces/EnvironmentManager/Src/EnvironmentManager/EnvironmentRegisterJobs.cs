@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
         /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
+        /// <param name="cloudEnvironmentRegionalMigrationTask">Migration task for cloud environments.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
@@ -42,6 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
             IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
+            ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -54,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
+            CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -77,6 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IWatchSoftDeletedEnvironmentToBeHardDeletedTask WatchSoftDeletedEnvironmentToBeHardDeletedTask { get; }
 
         private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
+
+        private ICloudEnvironmentRegionalMigrationTask CloudEnvironmentRegionalMigrationTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -102,6 +107,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
             (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
             TimeSpan.FromMinutes(10));
+
+            // Job: Migrate cloud environments to the appropriate regional database
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.CloudEnvironmentRegionalMigrationTask}_run",
+                (childLogger) => CloudEnvironmentRegionalMigrationTask.RunAsync(TimeSpan.FromHours(24), childLogger),
+                TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));

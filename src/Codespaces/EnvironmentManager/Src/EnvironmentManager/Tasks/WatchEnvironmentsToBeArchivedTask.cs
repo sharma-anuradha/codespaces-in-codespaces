@@ -38,12 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IEnvironmentContinuationOperations environmentContinuationOperations,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder,
-            IControlPlaneInfo controlPlaneInfo)
+            IResourceNameBuilder resourceNameBuilder)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
             EnvironmentContinuationOperations = environmentContinuationOperations;
-            ControlPlaneInfo = controlPlaneInfo;
         }
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchEnvironmentsToBeArchivedTask)}Lease");
@@ -51,8 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private string LogBaseName => EnvironmentLoggingConstants.WatchSuspendedEnvironmentsToBeArchivedTask;
 
         private IEnvironmentContinuationOperations EnvironmentContinuationOperations { get; }
-
-        private IControlPlaneInfo ControlPlaneInfo { get; }
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -104,12 +100,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         {
             logger.FluentAddValue("TaskEnvironmentIdShard", idShard);
 
-            // Pickup current region
-            var controlPlaneRegion = ControlPlaneInfo.Stamp.Location;
-
             // Check to see how many jobs are currently running
-            var activeCount = await CloudEnvironmentRepository.GetEnvironmentsArchiveJobActiveCountAsync(
-                controlPlaneRegion, logger.NewChildLogger());
+            var activeCount = await CloudEnvironmentRepository.GetEnvironmentsArchiveJobActiveCountAsync(logger.NewChildLogger());
 
             logger.FluentAddValue("TaskEnvironmentActiveCount", activeCount);
 
@@ -123,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
                 // Get environments to be archived
                 var records = await CloudEnvironmentRepository.GetEnvironmentsReadyForArchiveAsync(
-                    idShard, batchSize, cutoffTimeForShutdown, cutoffTimeForSoftDeleted, controlPlaneRegion, logger.NewChildLogger());
+                    idShard, batchSize, cutoffTimeForShutdown, cutoffTimeForSoftDeleted, logger.NewChildLogger());
 
                 logger.FluentAddValue("TaskFoundItems", records.Count());
 

@@ -144,13 +144,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> ListAsync(
             string planId,
-            string environmentName,
+            string name,
             UserIdSet userIdSet,
             EnvironmentListType environmentListType,
             IDiagnosticsLogger logger)
         {
             return await EnvironmentListAction.RunAsync(
-                planId, environmentName, identity: null, userIdSet, environmentListType, logger);
+                planId, name, identity: null, userIdSet, environmentListType, logger);
         }
 
         /// <inheritdoc/>
