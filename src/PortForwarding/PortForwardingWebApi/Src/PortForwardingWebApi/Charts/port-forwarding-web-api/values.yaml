@@ -33,7 +33,7 @@ image:
   repositoryName: port-forwarding-web-api
   tag:
   agentRepositoryName: port-forwarding-agent
-  agentTag: 1.0.2612-g2afc2c6e6131218c51efaf4948a057f61b3e5278-release1121
+  agentTag: 1.0.2633-gc1981bac584a5702ffac6476351c8d712dc9bd0c-release1131
   imagePullSecret:
 
 serviceAccount:
