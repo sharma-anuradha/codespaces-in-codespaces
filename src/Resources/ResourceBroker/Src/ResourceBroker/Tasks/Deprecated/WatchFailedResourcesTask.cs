@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchFailedResourcesTask.cs" company="Microsoft">
+// <copyright file="WatchFailedResourcesTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -35,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         public WatchFailedResourcesTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceContinuationOperations resourceContinuationOperations,
@@ -42,8 +43,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceRepository resourceRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
-            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags)
         {
             ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;

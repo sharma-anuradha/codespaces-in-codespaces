@@ -15,31 +15,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     public class WatchPoolJobScheduleRegister : IJobSchedulerRegister
     {
         /// <summary>
+        /// Feature flag to control wheather the job pools are enabled.
+        /// </summary>
+        public const string WatchPoolJobsEnabledFeatureFlagName = "watch-pool-jobs-enabled";
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="WatchPoolJobScheduleRegister"/> class.
         /// </summary>
-        /// <param name="jobSchedulerLease"> A job scheduler lease instance.</param>
         /// <param name="watchPoolPayloadFactory">A watch pool payload factory instance.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         public WatchPoolJobScheduleRegister(
-            IJobSchedulerLease jobSchedulerLease,
-            WatchPoolPayloadFactory watchPoolPayloadFactory)
+            WatchPoolPayloadFactory watchPoolPayloadFactory,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
-            JobSchedulerLease = jobSchedulerLease;
             WatchPoolPayloadFactory = watchPoolPayloadFactory;
+            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
-        private IJobSchedulerLease JobSchedulerLease { get; }
-
         private WatchPoolPayloadFactory WatchPoolPayloadFactory { get; }
+
+        private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
         /// <inheritdoc/>
         public void RegisterScheduleJob()
         {
-            JobSchedulerLease.AddRecurringJobPayload(
+            JobSchedulerFeatureFlags.AddRecurringJobPayload(
                 "* * * * *",
                 $"{ResourceLoggingConstants.WatchPoolProducerTask}_run",
                 ResourceJobQueueConstants.GenericQueueName,
                 claimSpan: TimeSpan.FromMinutes(1),
-                WatchPoolPayloadFactory);
+                WatchPoolPayloadFactory,
+                WatchPoolJobsEnabledFeatureFlagName);
         }
     }
 }

@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.TokenService
             }
 
             // Add front-end/back-end/port-forwarding common services -- secrets, service principal, control-plane resources.
-            ConfigureCommonServices(services, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings, null, out var loggingBaseValues);
 
             services.AddVsSaaSHosting(
                 HostingEnvironment,

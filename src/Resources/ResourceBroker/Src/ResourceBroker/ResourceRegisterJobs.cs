@@ -147,59 +147,57 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));
 
-            if (await SystemConfiguration.GetValueAsync("featureflag:job-queues-enabled", logger, false))
+            // Register job handlers
+            JobQueueConsumerFactory
+                .GetOrCreate(ResourceJobQueueConstants.GenericQueueName)
+                .RegisterJobHandlers(JobHandlers);
+
+            // register all the job schedulers
+            foreach (var jobSchedulersRegister in JobSchedulersRegisters)
             {
-                // Register job handlers
-                JobQueueConsumerFactory
-                    .GetOrCreate(ResourceJobQueueConstants.GenericQueueName)
-                    .RegisterJobHandlers(JobHandlers);
-
-                // register all the job schedulers
-                foreach (var jobSchedulersRegister in JobSchedulersRegisters)
-                {
-                    jobSchedulersRegister.RegisterScheduleJob();
-                }
+                jobSchedulersRegister.RegisterScheduleJob();
             }
-            else
-            {
-                // Job: Watch Pool Size
-                var watchPoolSizeTaskTimeSpan = TimeSpan.FromMinutes(1);
-                TaskHelper.RunBackgroundLoop(
-                    $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
-                    (childLogger) => WatchPoolSizeJob.RunAsync(watchPoolSizeTaskTimeSpan, childLogger),
-                    watchPoolSizeTaskTimeSpan);
 
-                // Offset to help distribute inital load of recuring tasks
-                await Task.Delay(Random.Next(5000, 7500));
+// Note: this next section will be eventually deprecated and removed
+#if true
+            // Job: Watch Pool Size
+            var watchPoolSizeTaskTimeSpan = TimeSpan.FromMinutes(1);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
+                (childLogger) => WatchPoolSizeJob.RunAsync(watchPoolSizeTaskTimeSpan, childLogger),
+                watchPoolSizeTaskTimeSpan);
 
-                // Job: Watch Pool Version
-                var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(1);
-                TaskHelper.RunBackgroundLoop(
-                    $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
-                    (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
-                    watchPoolVersionTaskSpan);
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(5000, 7500));
 
-                // Offset to help distribute inital load of recuring tasks
-                await Task.Delay(Random.Next(5000, 7500));
+            // Job: Watch Pool Version
+            var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(1);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
+                (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
+                watchPoolVersionTaskSpan);
 
-                // Job: Watch Pool State
-                var watchPoolStateTaskSpan = TimeSpan.FromMinutes(1);
-                TaskHelper.RunBackgroundLoop(
-                    $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
-                    (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
-                    watchPoolStateTaskSpan);
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(5000, 7500));
 
-                await Task.Delay(Random.Next(5000, 7500));
+            // Job: Watch Pool State
+            var watchPoolStateTaskSpan = TimeSpan.FromMinutes(1);
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
+                (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
+                watchPoolStateTaskSpan);
 
-                // Job: Watch Failed Resources
-                TaskHelper.RunBackgroundLoop(
-                    $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
-                    (childLogger) => WatchFailedResourcesTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
-                    TimeSpan.FromMinutes(5));
+            await Task.Delay(Random.Next(5000, 7500));
 
-                // Offset to help distribute inital load of recurring tasks
-                await Task.Delay(Random.Next(5000, 7500));
-            }
+            // Job: Watch Failed Resources
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
+                (childLogger) => WatchFailedResourcesTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
+                TimeSpan.FromMinutes(5));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+#endif
 
             // Job: Watch Orphaned Azure Resources
             TaskHelper.RunBackgroundLoop(

@@ -116,6 +116,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         public AgentSettings AgentSettings { get; set; }
 
         /// <summary>
+        /// Gets or sets the container name used for the claim distributed.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public string ClaimDistributedContainerName { get; set; }
+
+        /// <summary>
         /// Gets or sets the build Id of this build. Used for troubleshooting.
         /// </summary>
         [JsonProperty(Required = Required.Default)]

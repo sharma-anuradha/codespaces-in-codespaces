@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchPoolVersionTask.cs" company="Microsoft">
+// <copyright file="WatchPoolVersionTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -33,6 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="claimedDistributedLease">Target distributed lease.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         public WatchPoolVersionTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
@@ -40,8 +41,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourcePoolDefinitionStore resourceScalingStore,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
-            IResourceNameBuilder resourceNameBuilder)
-            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags)
         {
             ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;

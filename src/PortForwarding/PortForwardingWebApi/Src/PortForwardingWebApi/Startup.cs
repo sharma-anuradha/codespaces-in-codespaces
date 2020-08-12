@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             services.AddSingleton(portForwardingSettings);
 
             // Add front-end/back-end/port-forwarding common services -- secrets, service principal, control-plane resources.
-            ConfigureCommonServices(services, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings, null, out var loggingBaseValues);
 
             services.AddCors(options =>
             {

@@ -217,11 +217,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// Add various DI services common to all VSO services.
         /// </summary>
         /// <param name="services">The service collection.</param>
+        /// <param name="appSettings">App setting base.</param>
         /// <param name="kustoStreamLogging">Kusto stream logging for dev stamps..</param>
         /// <param name="loggingBaseValues">The common logging base values.</param>
-        protected void ConfigureCommonServices(IServiceCollection services, bool kustoStreamLogging, out LoggingBaseValues loggingBaseValues)
+        protected void ConfigureCommonServices(IServiceCollection services, AppSettingsBase appSettings, bool? kustoStreamLogging, out LoggingBaseValues loggingBaseValues)
         {
-            if (kustoStreamLogging)
+            services.AddSingleton(appSettings);
+
+            if (!kustoStreamLogging.HasValue)
+            {
+                kustoStreamLogging = AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto;
+            }
+
+            if (kustoStreamLogging == true)
             {
                 services.AddSingleton<IDiagnosticsLoggerFactory, DeveloperStampDiagnosticsLoggerFactory>();
             }
@@ -303,7 +311,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Enable common Standard Out to Logs support.
             if (AppSettings.RedirectStandardOutToLogsDirectory)
             {
-                if (kustoStreamLogging)
+                if (kustoStreamLogging == true)
                 {
                     throw new InvalidOperationException("Only enable DeveloperKusto or RedirectStandardOutToLogsDirectory");
                 }
@@ -324,6 +332,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             // Job Scheduler support
             services.AddJobScheduler();
+
+            // Job scheduler lease support
+            services.AddSingleton<IJobSchedulerLease, JobSchedulerLease>();
+            services.AddSingleton<IJobSchedulerLeaseProvider, JobSchedulerLeaseProvider>();
+
+            // Job Scheduler Feature Flags
+            services.AddSingleton<IJobSchedulerFeatureFlags, JobSchedulerFeatureFlags>();
 
             // Job Queues support
             services.AddSingleton<IQueueFactory, StorageQueueFactory>();
@@ -511,6 +526,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 // Default location for localhost development.
                 return AzureLocation.WestUs2;
             }
+        }
+
+        private class JobSchedulerLeaseProvider : JobSchedulerLeaseProviderBase
+        {
+            public JobSchedulerLeaseProvider(
+                IClaimedDistributedLease claimedDistributedLease,
+                IResourceNameBuilder resourceNameBuilder,
+                AppSettingsBase appSettingsBase)
+                : base(claimedDistributedLease, resourceNameBuilder)
+            {
+                AppSettings = Requires.NotNull(appSettingsBase, nameof(appSettingsBase));
+            }
+
+            protected override string LeaseContainerName => AppSettings.ClaimDistributedContainerName;
+
+            private AppSettingsBase AppSettings { get; }
         }
     }
 }

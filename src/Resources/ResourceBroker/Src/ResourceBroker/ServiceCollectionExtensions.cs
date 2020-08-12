@@ -112,10 +112,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<ICreateComponentStrategy, CreateNetworkInterfaceStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateQueueStrategy>();
 
-            // Job scheduler lease support
-            services.AddSingleton<IJobSchedulerLease, JobSchedulerLease>();
-            services.AddSingleton<IJobSchedulerLeaseProvider, JobSchedulerLeaseProvider>();
-
             // Job payload factories
             services.AddSingleton<WatchPoolPayloadFactory>();
 
@@ -175,22 +171,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IStorageQueueClientProvider, StorageQueueClientProvider>();
             services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
             services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
-        }
-
-        private class JobSchedulerLeaseProvider : JobSchedulerLeaseProviderBase
-        {
-            public JobSchedulerLeaseProvider(
-                IClaimedDistributedLease claimedDistributedLease,
-                IResourceNameBuilder resourceNameBuilder,
-                ResourceBrokerSettings resourceBrokerSettings)
-                : base(claimedDistributedLease, resourceNameBuilder)
-            {
-                ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
-            }
-
-            protected override string LeaseContainerName => ResourceBrokerSettings.LeaseContainerName;
-
-            private ResourceBrokerSettings ResourceBrokerSettings { get; }
         }
     }
 }

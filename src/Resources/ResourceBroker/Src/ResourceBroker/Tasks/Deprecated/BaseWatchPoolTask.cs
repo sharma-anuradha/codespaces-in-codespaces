@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseWatchPoolTask.cs" company="Microsoft">
+// <copyright file="BaseWatchPoolTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -29,18 +29,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="claimedDistributedLease">Cleaimed distributed lease.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         public BaseWatchPoolTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourcePoolDefinitionStore resourceScalingStore,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             ResourceScalingStore = resourceScalingStore;
             ClaimedDistributedLease = claimedDistributedLease;
             TaskHelper = taskHelper;
             ResourceNameBuilder = resourceNameBuilder;
+            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
         /// <summary>
@@ -71,6 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
         private IClaimedDistributedLease ClaimedDistributedLease { get; }
+
+        private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
         private bool Disposed { get; set; }
 
@@ -141,9 +146,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             return (await ResourceScalingStore.RetrieveDefinitionsAsync()).Shuffle();
         }
 
-        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            return ClaimedDistributedLease.Obtain(
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(WatchPoolJobScheduleRegister.WatchPoolJobsEnabledFeatureFlagName))
+            {
+                return null;
+            }
+
+            return await ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
     }

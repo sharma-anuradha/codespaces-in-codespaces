@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchPoolStateTask.cs" company="Microsoft">
+// <copyright file="WatchPoolStateTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -32,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="claimedDistributedLease">Distributed lease.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="resourceNameBuilder">Target resource name builder.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         public WatchPoolStateTask(
             IResourcePoolManager resourcePoolManager,
             IResourceRepository resourceRepository,
@@ -40,8 +41,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourcePoolDefinitionStore resourceScalingStore,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
-            IResourceNameBuilder resourceNameBuilder)
-            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags)
         {
             ResourcePoolManager = resourcePoolManager;
             ResourceRepository = resourceRepository;
