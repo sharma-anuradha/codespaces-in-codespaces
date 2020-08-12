@@ -3,6 +3,7 @@ param(
     [string]$AppSettingsFile,
     [Parameter(Mandatory)]
     [string]$ImageVersion,
+    [string]$VsVersion,
     [switch]$InternalImage,
     [switch]$IsPromotion,
     [switch]$UseServerOs
@@ -24,6 +25,9 @@ Write-Host "Updating $Pattern in $AppSettingsFile"
 for ($Index = 0; $Index -lt $Content.Count;) {
     if ($Content[$Index++] -match """imageName"": ""$Pattern"",") {
         $Content[$Index] = $Content[$Index] -replace '(\d{4}\.){2}\d{3}', $ImageVersion
+        if ($VsVersion) {
+            $Content[$Index+1] = $Content[$Index+1] -replace ': "[^"]*"', ": ""$VsVersion"""
+        }
     }
 }
 # Strip the final newline that Get-Content adds before writing to file
