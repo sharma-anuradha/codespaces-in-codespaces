@@ -3,6 +3,8 @@ port-forwarding-web-api:
   config:
     aspNetEnv: Production
     overrideAppSettingsJson: false
+  pods:
+    agentMinReplicaCount: 20
   ingress:
     hosts:
       - '*.app.online.visualstudio.com'
