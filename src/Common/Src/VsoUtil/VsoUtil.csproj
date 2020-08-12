@@ -21,6 +21,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Codespaces\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\Billing\Src\Billing\Billing.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\EnvironmentManager\Src\EnvironmentManager\EnvironmentManager.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\FrontEndWebApi\Src\FrontEndWebApi\FrontEndWebApi.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\Plans\Src\Plans.Contracts\Plans.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\Plans\Src\Plans\Plans.csproj" />
+    <ProjectReference Include="..\..\..\Codespaces\Subscriptions\Src\Subscriptions\Subscriptions.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\Common.AspNetCore\Common.AspNetCore.csproj" />

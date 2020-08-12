@@ -186,6 +186,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             await writer.WriteLineAsync(msg);
         }
 
+        /// <summary>
+        /// Creates the web host.
+        /// </summary>
+        /// <param name="webHostArgs">THe web host arguments.</param>
+        /// <returns>The built web host.</returns>
+        protected virtual IWebHost CreateWebHost(string[] webHostArgs)
+        {
+            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
+                .UseStartup<Startup>()
+                .Build();
+
+            Startup.Services = webHost.Services;
+
+            return webHost;
+        }
+
         private IWebHost BuildWebHost()
         {
             System.Environment.SetEnvironmentVariable(EnvironmentNameEnvVarName, Environment, EnvironmentVariableTarget.Process);
@@ -211,12 +227,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             }
 
             var webHostArgs = new string[0];
-            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
-                .UseStartup<Startup>()
-                .Build();
+            var webHost = CreateWebHost(webHostArgs);
 
             // Mini-hack. Ends up that Startup.Configure(IApplicationBuilder) is never called.
-            Startup.Services = webHost.Services;
             ApplicationServicesProvider.TrySetServiceProvider(webHost.Services);
 
             return webHost;

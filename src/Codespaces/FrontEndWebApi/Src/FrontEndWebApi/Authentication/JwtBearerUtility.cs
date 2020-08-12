@@ -48,7 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Configure the <see cref="JwtBearerAuthenticationOptions2"/> object for AAD auth.
         /// </summary>
         /// <param name="jwtBearerOptions">The options instance.</param>
-        internal static void ConfigureAadOptions(JwtBearerAuthenticationOptions2 jwtBearerOptions)
+        public static void ConfigureAadOptions(JwtBearerAuthenticationOptions2 jwtBearerOptions)
         {
             jwtBearerOptions.IsEmailClaimRequired = AuthenticationConstants.IsEmailClaimRequired;
 
@@ -86,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Add VSO (Cascade token) JWT bearer authentication.
         /// </summary>
         /// <param name="builder">Authentication builder.</param>
-        internal static void AddVsoJwtBearerAuthentication(this AuthenticationBuilder builder)
+        public static void AddVsoJwtBearerAuthentication(this AuthenticationBuilder builder)
         {
             var jwtReader = new JwtReader();
 

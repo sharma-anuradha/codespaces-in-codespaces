@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         }
 
         /// <summary>
-        /// // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         /// </summary>
         /// <param name="app">The application builder used to set up the pipeline.</param>
         /// <param name="env">The hosting environment for the server.</param>
@@ -134,7 +134,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         private void ConfigureSecretsProvider(IServiceCollection services)
         {
             // KeyVaultSecretProvider uses logged in identity to get the secrets, with that one could access JIT'ed subscriptions without having to
-            // copy secrets out of the keyvalut manually. However, it doesn't work for all - by setting "UseSecretFromAppConfig = 1" the default secret
+            // copy secrets out of the keyvault manually. However, it doesn't work for all - by setting "UseSecretFromAppConfig = 1" the default secret
             // from the appconfig will be used - enough for devstamp.
             var appConfigSecret = Environment.GetEnvironmentVariable(CommandBase.UseSecretFromAppConfigEnvVarName);
             if (appConfigSecret != "1")
