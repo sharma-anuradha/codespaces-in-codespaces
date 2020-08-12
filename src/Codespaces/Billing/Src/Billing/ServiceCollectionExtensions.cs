@@ -95,6 +95,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
+        /// Add the <see cref="BillingEventToBillingWindowMapper"/> to the service collection.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <returns>service instance.</returns>
+        public static IServiceCollection AddBillingEventToBillingWindowMapper(
+            this IServiceCollection services)
+        {
+            services.AddSingleton<IBillingEventToBillingWindowMapper, BillingEventToBillingWindowMapper>();
+            return services;
+        }
+
+        /// <summary>
         /// Adds the BillingSubmissionService as a HostedService to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>

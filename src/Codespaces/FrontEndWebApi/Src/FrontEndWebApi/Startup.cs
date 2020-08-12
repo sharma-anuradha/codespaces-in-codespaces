@@ -41,6 +41,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.PcfAgent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UsageAnalytics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -216,6 +217,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                 frontEndAppSettings.BillingSettings,
                 frontEndAppSettings.BillingMeterSettings,
                 frontEndAppSettings.UseMocksForLocalDevelopment);
+
+            services.AddBillingEventToBillingWindowMapper();
+            services.AddEnvironmentArchivalCalculator();
 
             // Add the subscription managers
             services.AddSubscriptionManagers(

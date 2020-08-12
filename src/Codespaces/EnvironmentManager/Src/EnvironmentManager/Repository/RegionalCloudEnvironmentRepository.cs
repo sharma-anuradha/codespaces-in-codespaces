@@ -7,6 +7,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
@@ -24,12 +25,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
+        /// <param name="environmentManagerSettings">The Environment Manager settings.</param>
         public RegionalCloudEnvironmentRepository(
                 IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IRegionalDocumentDbClientProvider clientProvider,
                 IControlPlaneInfo controlPlaneInfo,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
+                EnvironmentManagerSettings environmentManagerSettings,
                 LogValueSet defaultLogValues)
             : base(
                   options,
@@ -37,7 +40,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                   controlPlaneInfo,
                   healthProvider,
                   loggerFactory,
-                  defaultLogValues)
+                  defaultLogValues,
+                  environmentManagerSettings)
         {
         }
     }

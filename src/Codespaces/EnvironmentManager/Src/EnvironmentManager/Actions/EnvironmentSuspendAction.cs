@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -36,6 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="resourceBrokerClient">Target resource broker client.</param>
         /// <param name="environmentMonitor">Target environment monitor.</param>
         /// <param name="environmentForceSuspendAction">Target environment force suspend action.</param>
+        /// <param name="environmentManagerSettings">Target enviornment manager settings.</param>
+        /// <param name="environmentArchivalTimeCalculator">Target enviornment archival time calculator.</param>
         public EnvironmentSuspendAction(
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
@@ -47,12 +50,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ISkuUtils skuUtils,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient,
             IEnvironmentMonitor environmentMonitor,
-            IEnvironmentForceSuspendAction environmentForceSuspendAction)
+            IEnvironmentForceSuspendAction environmentForceSuspendAction,
+            EnvironmentManagerSettings environmentManagerSettings,
+            IEnvironmentArchivalTimeCalculator environmentArchivalTimeCalculator)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             ResourceBrokerClient = Requires.NotNull(resourceBrokerClient, nameof(resourceBrokerClient));
             EnvironmentMonitor = Requires.NotNull(environmentMonitor, nameof(environmentMonitor));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
+            EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
+            EnvironmentArchivalTimeCalculator = Requires.NotNull(environmentArchivalTimeCalculator, nameof(environmentArchivalTimeCalculator));
         }
 
         /// <inheritdoc/>
@@ -63,6 +70,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IEnvironmentMonitor EnvironmentMonitor { get; }
 
         private IEnvironmentForceSuspendAction EnvironmentForceSuspendAction { get; }
+
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+
+        private IEnvironmentArchivalTimeCalculator EnvironmentArchivalTimeCalculator { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> RunAsync(Guid environmentId, Guid computeResourceId, IDiagnosticsLogger logger)
@@ -133,6 +144,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 {
                     environment.Transitions.Resuming.ResetStatus(true);
                 });
+
+                if (await EnvironmentManagerSettings.DynamicEnvironmentArchivalTimeEnabled(logger.NewChildLogger()))
+                {
+                    var hoursToArchive = await EnvironmentArchivalTimeCalculator.ComputeHoursToArchival(record.Value, logger.NewChildLogger());
+                    record.Value.ScheduledArchival = DateTime.UtcNow.AddHours(hoursToArchive);
+                }
 
                 // Update the database state.
                 await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);

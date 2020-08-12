@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingWindowSlice.cs" company="Microsoft">
+// <copyright file="BillingWindowSlice.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

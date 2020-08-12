@@ -85,6 +85,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         public bool DefaultEnvironmentSoftDeleteEnabled { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether environments' dynamic archival time should be set or not.
+        /// </summary>
+        public bool DefaultDynamicEnvironmentArchivalTimeEnabled { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -243,6 +248,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:environment-soft-delete-enabled", logger, DefaultEnvironmentSoftDeleteEnabled);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether environments' dynamic archival time should be set or not.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> DynamicEnvironmentArchivalTimeEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:dynamic-environment-archival-time-enabled", logger, DefaultDynamicEnvironmentArchivalTimeEnabled);
         }
     }
 }

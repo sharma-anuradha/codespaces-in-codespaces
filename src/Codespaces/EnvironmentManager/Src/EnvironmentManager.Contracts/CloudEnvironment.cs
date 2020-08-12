@@ -157,6 +157,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public string LastStateUpdateReason { get; set; }
 
         /// <summary>
+        /// Gets or sets the scheduled archival date, after which the environment will be queued up for archival.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName ="scheduledArchival")]
+        public DateTime? ScheduledArchival { get; set; }
+
+        /// <summary>
         /// Gets or sets the continer image name.
         /// </summary>
         [GDPR(Action = GDPRAction.Export)]

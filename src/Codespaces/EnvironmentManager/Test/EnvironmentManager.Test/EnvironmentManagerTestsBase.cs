@@ -56,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         private IEnvironmentAccessManager environmentAccessManager;
         private IEnvironmentSubscriptionManager environmentSubscriptionManager;
         private IMapper mapper;
+        private IEnvironmentArchivalTimeCalculator environmentArchivalTimeCalculator;
         public const string testUserId = "test-user";
         public static readonly UserIdSet testUserIdSet = new UserIdSet(testUserId, testUserId, testUserId);
         public const string testAccessToken = "test-token";
@@ -162,6 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.environmentSubscriptionManager = new EnvironmentSubscriptionManager(this.environmentRepository, skuCatalog);
 
             this.environmentUpdateStatusAction = new Mock<IEnvironmentUpdateStatusAction>().Object;
+            this.environmentArchivalTimeCalculator = new Mock<IEnvironmentArchivalTimeCalculator>().Object;
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -264,7 +266,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockSkuUtils(true),
                 resourceBroker,
                 environmentMonitor,
-                environmentForceSuspendAction
+                environmentForceSuspendAction,
+                environmentSettings,
+                environmentArchivalTimeCalculator
                 );
 
             var environmentResumeAction = new EnvironmentResumeAction(

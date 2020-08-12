@@ -1,4 +1,4 @@
-﻿// <copyright file="ShutdownEnvironmentContinuationHandler.cs" company="Microsoft">
+// <copyright file="ShutdownEnvironmentContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
 {
@@ -27,16 +28,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <param name="resourceBrokerHttpClient">Resource broker httpclient.</param>
         /// <param name="environmentStateManager">Environment state manager.</param>
         /// <param name="serviceProvider">Service provider.</param>
+        /// <param name="environmentManagerSettings">Environment Manager settings.</param>
+        /// <param name="archivalTimeCalculator">Archival Time Calculator.</param>
         public ShutdownEnvironmentContinuationHandler(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IEnvironmentStateManager environmentStateManager,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            EnvironmentManagerSettings environmentManagerSettings,
+            IEnvironmentArchivalTimeCalculator archivalTimeCalculator)
             : base(cloudEnvironmentRepository)
         {
             ResourceBrokerHttpClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             ServiceProvider = Requires.NotNull(serviceProvider, nameof(serviceProvider));
+            EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
+            ArchivalTimeCalculator = Requires.NotNull(archivalTimeCalculator, nameof(archivalTimeCalculator));
         }
 
         /// <summary>
@@ -58,6 +65,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         private IEnvironmentStateManager EnvironmentStateManager { get; }
 
         private IServiceProvider ServiceProvider { get; }
+
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+
+        private IEnvironmentArchivalTimeCalculator ArchivalTimeCalculator { get; }
 
         /// <inheritdoc/>
         protected override TransitionState FetchOperationTransition(ShutdownEnvironmentContinuationInput input, EnvironmentRecordRef record, IDiagnosticsLogger logger)
@@ -172,12 +183,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             var didUpdate = await UpdateRecordAsync(
                     operationInput,
                     record,
-                    (environment, innerLogger) =>
+                    async (environment, innerLogger) =>
                     {
                         record.Value.State = CloudEnvironmentState.Shutdown;
                         record.Value.Compute = null;
 
-                        return Task.FromResult(true);
+                        if (await EnvironmentManagerSettings.DynamicEnvironmentArchivalTimeEnabled(logger.NewChildLogger()))
+                        {
+                            double hoursToArchive = await ArchivalTimeCalculator.ComputeHoursToArchival(record.Value, logger.NewChildLogger());
+                            record.Value.ScheduledArchival = DateTime.UtcNow.AddHours(hoursToArchive);
+                        }
+
+                        return true;
                     },
                     logger);
 

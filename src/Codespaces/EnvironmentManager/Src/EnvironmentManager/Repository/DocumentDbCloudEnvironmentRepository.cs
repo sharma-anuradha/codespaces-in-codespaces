@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Diagnostics.Health;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
 {
@@ -40,13 +41,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="loggerFactory">The diagnostics logger factory.</param>
         /// <param name="defaultLogValues">The default log values.</param>
+        /// <param name="environmentManagerSettings">The Environment Manager Settings.</param>
         public DocumentDbCloudEnvironmentRepository(
                 IOptionsMonitor<DocumentDbCollectionOptions> options,
                 IDocumentDbClientProvider clientProvider,
                 IControlPlaneInfo controlPlaneInfo,
                 IHealthProvider healthProvider,
                 IDiagnosticsLoggerFactory loggerFactory,
-                LogValueSet defaultLogValues)
+                LogValueSet defaultLogValues,
+                EnvironmentManagerSettings environmentManagerSettings)
             : base(
                   options,
                   clientProvider,
@@ -55,7 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                   defaultLogValues)
         {
             ControlPlaneLocation = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo)).Stamp.Location;
+            EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
         }
+
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         private AzureLocation ControlPlaneLocation { get; }
 
@@ -208,26 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             DateTime softDeleteCutoffTime,
             IDiagnosticsLogger logger)
         {
-            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
-            var query = new SqlQuerySpec(
-                @"SELECT TOP @count VALUE c
-                FROM c
-                WHERE STARTSWITH(c.id, @idShard)
-                    AND c.storage != null
-                    AND c.state = @stateShutdown
-                    AND ((c.lastStateUpdated < @shutdownCutoffTime) OR 
-                        (c.isDeleted = true
-                         AND c.lastDeleted < @softDeleteCutoffTime))
-                    AND (
-                        IS_DEFINED(c.transitions) = false
-                        OR (c.transitions.archiving.status = null
-                            AND c.transitions.archiving.attemptCount <= @attemptCountLimit))
-                    AND CONTAINS(c.skuName, @targetSku)
-                    AND (((
-                        IS_DEFINED(c.controlPlaneLocation) = false
-                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
-                        OR c.controlPlaneLocation = @controlPlaneLocation)",
-                new SqlParameterCollection
+            var queryParams = new SqlParameterCollection
                 {
                     new SqlParameter { Name = "@count", Value = count },
                     new SqlParameter { Name = "@idShard", Value = idShard },
@@ -237,10 +224,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@targetSku", Value = "Linux" },
                     new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
                     new SqlParameter { Name = "@attemptCountLimit", Value = 5 },
-                });
+                };
+
+            // FIXME: Once we migrate cloud environments to a regional DB, we won't need the control-plane location filtering logic.
+            var query = new SqlQuerySpec(
+                @"SELECT TOP @count VALUE c
+                FROM c
+                WHERE STARTSWITH(c.id, @idShard)
+                    AND c.storage != null
+                    AND c.state = @stateShutdown
+                    AND ((c.lastStateUpdated < @shutdownCutoffTime) OR 
+                        (c.isDeleted = true
+                            AND c.lastDeleted < @softDeleteCutoffTime))
+                    AND (
+                        IS_DEFINED(c.transitions) = false
+                        OR (c.transitions.archiving.status = null
+                            AND c.transitions.archiving.attemptCount <= @attemptCountLimit))
+                    AND CONTAINS(c.skuName, @targetSku)
+                    AND (((
+                        IS_DEFINED(c.controlPlaneLocation) = false
+                            OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                        OR c.controlPlaneLocation = @controlPlaneLocation)",
+                queryParams);
+
+            if (await EnvironmentManagerSettings.DynamicEnvironmentArchivalTimeEnabled(logger.NewChildLogger()))
+            {
+                query = new SqlQuerySpec(
+                    @"SELECT TOP @count VALUE c
+                    FROM c
+                    WHERE STARTSWITH(c.id, @idShard)
+                        AND c.storage != null
+                        AND c.state = @stateShutdown
+                        AND (
+                            c.scheduledArchival < GetCurrentDateTime()
+                            OR c.lastStateUpdated < @shutdownCutoffTime
+                            OR (c.isDeleted = true
+                                AND c.lastDeleted < @softDeleteCutoffTime))
+                        AND (
+                            IS_DEFINED(c.transitions) = false
+                            OR (c.transitions.archiving.status = null
+                                AND c.transitions.archiving.attemptCount <= @attemptCountLimit))
+                        AND CONTAINS(c.skuName, @targetSku)
+                        AND (((
+                            IS_DEFINED(c.controlPlaneLocation) = false
+                                OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
+                            OR c.controlPlaneLocation = @controlPlaneLocation)",
+                    queryParams);
+            }
 
             var items = await QueryAsync(
-                (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
+               (client, uri, feedOptions) => client.CreateDocumentQuery<CloudEnvironment>(uri, query, feedOptions).AsDocumentQuery(), logger);
 
             return items;
         }

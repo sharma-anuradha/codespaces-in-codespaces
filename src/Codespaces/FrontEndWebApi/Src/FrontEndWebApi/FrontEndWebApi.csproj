@@ -51,6 +51,7 @@
     <ProjectReference Include="..\..\..\SecretStoreManager\Src\SecretStoreManager\SecretStoreManager.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions.Contracts\Subscriptions.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Subscriptions\Src\Subscriptions\Subscriptions.csproj" />
+    <ProjectReference Include="..\..\..\UsageAnalytics\Src\UsageAnalytics.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile.Contracts\UserProfile.Contracts.csproj" />
     <ProjectReference Include="..\..\..\UserProfile\Src\UserProfile\UserProfile.csproj" />
   </ItemGroup>
