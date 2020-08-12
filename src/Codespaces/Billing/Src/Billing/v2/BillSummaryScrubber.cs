@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -52,9 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_scrub_bill_summaries_for_plan",
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddValue(BillingLoggingConstants.PlanId, request.PlanId);
-                    childLogger.FluentAddValue("DesiredEndTime", request.DesiredEndTime);
-
+                    childLogger.FluentAddBaseValue(BillingLoggingConstants.PlanId, request.PlanId)
+                               .FluentAddBaseValue("DesiredEndTime", request.DesiredEndTime);
                     var allSummaries = await BillSummaryManager.GetAllSummaries(request.PlanId, request.DesiredEndTime, childLogger.NewChildLogger());
                     var allEnvironmentStateChanges = await EnvironmentStateChangeManager.GetAllStateChanges(request.PlanId, request.DesiredEndTime, childLogger.NewChildLogger());
                     var latestSummary = allSummaries.OrderBy(x => x.PeriodEnd).LastOrDefault();
@@ -64,7 +64,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             1.1 Get the most recent summary.
                             1.2 Go through all environments. Find ones that are not in the most recent summary.
                         */
+
+                        childLogger.AddVsoPlanInfo(latestSummary.Plan);
+
                         var changed = await CheckForMissingEnvironmentsAsync(latestSummary, latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
+                        childLogger.FluentAddValue("AddedMissingEnvironment", changed);
                         if (changed)
                         {
                             await BillSummaryManager.CreateOrUpdateAsync(latestSummary, childLogger.NewChildLogger());
@@ -72,13 +76,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                         // Archive old summaries.
                         var olderSummaries = allSummaries.OrderByDescending(x => x.PeriodEnd).Skip(NumberOfBillSummariesToKeep);
+                        childLogger.FluentAddValue("NumberOfSummariesBeingArchived", olderSummaries.Count());
                         foreach (var summary in olderSummaries)
                         {
                             await BillingArchivalManager.MigrateBillSummary(summary, childLogger.NewChildLogger());
                         }
 
-                        // Archive old summaries.
-                        var olderEnvironmentStateChanges = await FindOlderEnvironmentStateChangesAsync(latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger);
+                        // Archive old state changes.
+                        var olderEnvironmentStateChanges = await FindOlderEnvironmentStateChangesAsync(latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
+                        childLogger.FluentAddValue("NumberOfStateChangesBeingArchived", olderEnvironmentStateChanges.Count())
+                            .FluentAddValue("NumberOfEnvironmentsArchived", olderEnvironmentStateChanges.GroupBy(x => x.Environment.Id).Count());
                         foreach (var olderStateChanges in olderEnvironmentStateChanges)
                         {
                             await BillingArchivalManager.MigrateEnvironmentStateChange(olderStateChanges, childLogger.NewChildLogger());
@@ -138,6 +145,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             Usage = new Dictionary<string, double>(),
                             Id = env.Key,
                         };
+
+                        logger.FluentAddValue("EndState", envUsageDetails.EndState)
+                            .FluentAddValue("Sku", envUsageDetails.Sku.ToString())
+                            .FluentAddValue("Id", envUsageDetails.Id)
+                            .LogInfo($"{LogBaseName}_missing_environment");
 
                         // Add the lost environnment to the summary for future tracking.
                         billingSummary.UsageDetail.Add(envUsageDetails);

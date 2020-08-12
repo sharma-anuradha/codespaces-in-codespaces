@@ -418,23 +418,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             if (usageDetail.ResourceUsage.Compute.Count > 0)
             {
-                foreach (var compute in usageDetail.ResourceUsage.Compute)
-                {
-                    logger.FluentAddValue("BillableComputeSeconds", compute.Usage.ToString())
-                        .FluentAddValue("BillableComputeSku", compute.Sku);
-                }
+                logger.FluentAddValue("BillableComputeSeconds", usageDetail.ResourceUsage.Compute.Sum(x => x.Usage).ToString());
             }
 
             if (usageDetail.ResourceUsage.Storage.Count > 0)
             {
-                foreach (var storage in usageDetail.ResourceUsage.Storage)
-                {
-                    logger.FluentAddValue("BillableStorageSeconds", storage.Usage.ToString())
-                        .FluentAddValue("BillableStorageSku", storage.Sku);
-                }
+                logger.FluentAddValue("BillableStorageSeconds", usageDetail.ResourceUsage.Storage.Sum(x => x.Usage).ToString());
             }
 
-            logger.FluentAddValue("EnvironmentSku", usageDetail.Sku.ToString())
+            logger.FluentAddValue("EnvironmentSku", usageDetail.Sku.Name.ToString())
                   .FluentAddValue("Location", region.ToString())
                   .FluentAddValue("CloudEnvironmentId", usageDetail.Id)
                   .FluentAddValue("BillEndingTime", end.ToString())
