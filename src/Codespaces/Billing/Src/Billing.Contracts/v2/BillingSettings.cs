@@ -34,6 +34,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         public bool EnableV2Transmission { get; set; }
 
         /// <summary>
+        /// Gets or sets the value of concurrent job consumers.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int ConcurrentJobConsumerCount { get; set; }
+
+        /// <summary>
         /// Initializes the class.
         /// </summary>
         /// <param name="systemConfiguration">System Configuration.</param>

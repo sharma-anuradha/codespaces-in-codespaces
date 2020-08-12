@@ -20,9 +20,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingPlanCleanupConsumer"/> class.
         /// </summary>
+        /// <param name="billingSettings">Billing settings.</param>
         /// <param name="billSummaryScrubber">Target Bill Summary scrubber.</param>
-        public BillingPlanCleanupConsumer(IBillSummaryScrubber billSummaryScrubber)
-            : base(BillingJobConstants.ConcurrentConsumerCount)
+        public BillingPlanCleanupConsumer(
+            BillingSettings billingSettings,
+            IBillSummaryScrubber billSummaryScrubber)
+            : base(billingSettings.ConcurrentJobConsumerCount)
         {
             BillSummaryScrubber = billSummaryScrubber;
         }

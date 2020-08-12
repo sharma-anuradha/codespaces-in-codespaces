@@ -20,9 +20,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingPlanSummaryConsumer"/> class.
         /// </summary>
+        /// <param name="billingSettings">Billing Settings.</param>
         /// <param name="billSummaryGenerator">Target Bill Summary Generator.</param>
-        public BillingPlanSummaryConsumer(IBillSummaryGenerator billSummaryGenerator)
-            : base(BillingJobConstants.ConcurrentConsumerCount)
+        public BillingPlanSummaryConsumer(
+            BillingSettings billingSettings,
+            IBillSummaryGenerator billSummaryGenerator)
+            : base(billingSettings.ConcurrentJobConsumerCount)
         {
             BillSummaryGenerator = billSummaryGenerator;
         }
