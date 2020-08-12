@@ -309,7 +309,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     RollupUsage(usageByState, usageBySkuByState);
                 }
 
-                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, environmentUsageDetails[environmentEvents.Key].ResourceUsage, childLogger);
+                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, environmentUsageDetails[environmentEvents.Key].ResourceUsage, environmentEvents.Key, childLogger);
                 CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
             }
 
@@ -478,7 +478,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 currentSummary.UsageDetail.Environments.Add(environment.Key, usageDetail);
 
                 // Telemeter the environment bill data
-                LogEnvironmentUsageDetails(end, region, envUsageDetail.Sku.Name, usageByState, usageDetail.ResourceUsage, childLogger);
+                LogEnvironmentUsageDetails(end, region, envUsageDetail.Sku.Name, usageByState, usageDetail.ResourceUsage, environment.Key, childLogger);
                 CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
 
                 if (currentSummary.Usage.ContainsKey(meterId))
@@ -658,7 +658,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             };
         }
 
-        private void LogEnvironmentUsageDetails(DateTime end, AzureLocation region, string sku, UsageDictionary usageStateTimes, ResourceUsageDetail resourceUsage, IDiagnosticsLogger logger)
+        private void LogEnvironmentUsageDetails(DateTime end, AzureLocation region, string sku, UsageDictionary usageStateTimes, ResourceUsageDetail resourceUsage, string environmentId, IDiagnosticsLogger logger)
         {
             if (usageStateTimes.ContainsKey(BillingWindowBillingState.Active.ToString()))
             {
@@ -691,6 +691,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             logger.FluentAddValue("EnvironmentSku", sku.ToString())
                   .FluentAddValue("Location", region.ToString())
                   .FluentAddValue("BillEndingTime", end.ToString())
+                  .FluentAddValue("CloudEnvironmentId", environmentId)
                   .LogInfo("billing_aggregate_environment_summary");
         }
 

@@ -436,8 +436,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
             logger.FluentAddValue("EnvironmentSku", usageDetail.Sku.ToString())
                   .FluentAddValue("Location", region.ToString())
+                  .FluentAddValue("CloudEnvironmentId", usageDetail.Id)
                   .FluentAddValue("BillEndingTime", end.ToString())
-                  .LogInfo("billing_aggregate_environment_summary");
+                  .LogInfo("billing_summary_aggregate_environment_summary");
         }
 
         private void MergeUsageWithEnvUsage(IDictionary<string, double> envUsageDictionary, IDictionary<string, double> usage)
