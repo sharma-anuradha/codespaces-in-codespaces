@@ -10,6 +10,7 @@ import { DevPanelDefaultExtensionsSection } from './DevPanelDefaultExtensionsSec
 import { PLATFORM_REQUIRED_EXTENSIONS } from '../../../constants';
 import { VSCodeExtension } from 'vs-codespaces-authorization';
 import { DevPanelToggleComponent } from './DevPanelToggleComponent';
+import { DevPanelSuspendSection } from './DevPanelSuspendSection';
 
 import './DevPanel.css';
 
@@ -66,6 +67,7 @@ export class DevPanel extends DevPanelToggleComponent<IDevPanelProps, IDevPanelS
                 <div className='vscs-dev-panel__body'>
                     <DevPanelConnectSection codespaceInfo={codespaceInfo} />
                     <DevPanelDefaultExtensionsSection defaultExtensions={requiredExtensions} />
+                    <DevPanelSuspendSection codespaceInfo={codespaceInfo} />
                 </div>
 
                 <div

@@ -11,6 +11,12 @@ const headerNames = {
     acceptRedirects: 'X-Can-Accept-Redirects',
 };
 
+function isFakeRedirectResponse(respose: Response) {
+    // Browsers won't allow CORS redirects so we use custom status code 333
+    // to do a "fake" redirect from our services.
+    return respose.status === 333;
+}
+
 export class VsoAPI {
     public getEnvironmentInfo = async (id: string, token: string): Promise<IEnvironment> => {
         const key = `${id}_${token}`;
@@ -39,7 +45,7 @@ export class VsoAPI {
 
         let environmentInfoResponse = await fetch(url, { headers });
 
-        if (environmentInfoResponse.status === 333) {
+        if (isFakeRedirectResponse(environmentInfoResponse)) {
             const { location: redirectLocation } = await environmentInfoResponse.json();
             if (redirectLocation) {
                 environmentInfoResponse = await fetch(redirectLocation, { headers });
@@ -82,21 +88,51 @@ export class VsoAPI {
             Authorization: `Bearer ${token}`,
             [headerNames.acceptRedirects]: 'false',
         };
-
-        let envStartResponse = await fetch(url.toString(), {
+        const options = {
             method: 'POST',
             headers,
-        });
+        };
 
-        if (envStartResponse.status === 333) {
+        let envStartResponse = await fetch(url.toString(), options);
+
+        if (isFakeRedirectResponse(envStartResponse)) {
             const { location: redirectLocation } = await envStartResponse.json();
             if (redirectLocation) {
-                envStartResponse = await fetch(redirectLocation, { method: 'POST', headers });
+                envStartResponse = await fetch(redirectLocation, options);
             }
         }
 
         if (!envStartResponse.ok) {
-            throw new Error(`${envStartResponse.status} ${envStartResponse.statusText}`);
+            throw new HttpError(envStartResponse.status, envStartResponse.statusText);
+        }
+    };
+
+    public suspendCodespace = async (codespace: IEnvironment, token: string) => {
+        // all write operations should go to the region the codespace is in
+        const apiEndpoint = config.getCodespaceRegionalApiEndpoint(codespace);
+
+        const url = new URL(`${apiEndpoint}/environments/${codespace.id}/shutdown`);
+
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            [headerNames.acceptRedirects]: 'false',
+        };
+        const options = {
+            method: 'POST',
+            headers,
+        };
+
+        let response = await fetch(url.toString(), options);
+
+        if (isFakeRedirectResponse(response)) {
+            const { location: redirectLocation } = await response.json();
+            if (redirectLocation) {
+                response = await fetch(redirectLocation, options);
+            }
+        }
+
+        if (!response.ok) {
+            throw new HttpError(response.status, response.statusText);
         }
     };
 }

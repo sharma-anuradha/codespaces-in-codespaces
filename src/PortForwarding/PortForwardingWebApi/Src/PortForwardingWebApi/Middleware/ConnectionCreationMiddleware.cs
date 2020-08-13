@@ -29,6 +29,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
     /// </summary>
     public class ConnectionCreationMiddleware
     {
+        private const string AuthCookieName = "__Host-vso-pf";
+
         private readonly JsonSerializerOptions serializationOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
         /// <summary>
@@ -190,6 +192,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                     case (null, ErrorMessage message):
                         logger.LogErrorWithDetail("connection_creation_middleware_agent_error", message.Detail);
                         context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+
+                        // Invalidate PF auth cookie so next time user goes through auth flow.
+                        context.Response.Cookies.Append(AuthCookieName, "expired", new CookieOptions { Expires = DateTimeOffset.Now.Subtract(TimeSpan.FromHours(2)) });
 
                         if (hostEnvironment.IsDevelopment())
                         {

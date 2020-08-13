@@ -295,6 +295,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 RedirectUrl = GetAuthRedirectUrl(redirectUrl),
             };
 
+            // Invalidate PF auth cookie so next time user goes through auth flow.
+            Response.Cookies.Append(Constants.PFCookieName, "expired", new CookieOptions { Expires = DateTimeOffset.Now.Subtract(TimeSpan.FromHours(2)) });
+
             var response = View("exception", details);
             response.StatusCode = failureReason == PortForwardingFailure.Unknown
                 ? StatusCodes.Status400BadRequest
@@ -414,6 +417,27 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 if (TryGetCookiePayload(logger, out var cookiePayload) &&
                     string.Equals(cookiePayload.EnvironmentId, envDetails.EnvironmentId, StringComparison.InvariantCultureIgnoreCase))
                 {
+                    // We only want to check whether workspace id changed since the cookie has been minted if we are allowed to.
+                    // In VSCS Portal we use tokens that don't allow us to call Codespaces API. GitHub tokens do allow us to check.
+                    if (IsAuthorizedToAccessCodespace(envDetails.EnvironmentId, cookiePayload.CascadeToken))
+                    {
+                        var codespace = await CodespacesApiClient.WithAuthToken(cookiePayload.CascadeToken).GetCodespaceAsync(envDetails.EnvironmentId, logger);
+                        if (codespace == default)
+                        {
+                            logger.AddValue("reason", "cannot_get_codespace");
+                            logger.LogInfo("portforwarding_get_session_details_failed");
+
+                            throw new InvalidOperationException("Couldn't verify connection session id (no codespace record).");
+                        }
+                        else if (!string.Equals(cookiePayload.ConnectionSessionId, codespace.Connection.ConnectionSessionId, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            logger.AddValue("reason", "workspace_id_mismatch");
+                            logger.LogInfo("portforwarding_get_session_details_failed");
+
+                            throw new InvalidOperationException("Couldn't verify connection session id.");
+                        }
+                    }
+
                     // Since we don't get the WorkspaceId from the host, we'll take it from the cookie.
                     sessionDetails = new EnvironmentSessionDetails(cookiePayload.ConnectionSessionId, envDetails.EnvironmentId, envDetails.Port);
                 }
@@ -456,6 +480,27 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             return sessionDetails;
         }
 
+        private bool IsAuthorizedToAccessCodespace(string codespaceId, string cascadeToken)
+        {
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var token = handler.ReadToken(cascadeToken) as JwtSecurityToken;
+
+                return IsAuthorizedToAccessCodespace(codespaceId, token);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsAuthorizedToAccessCodespace(string codespaceId, JwtSecurityToken token)
+        {
+            var environmentIds = GetAllTokenClaims(CustomClaims.Environments, token);
+            return environmentIds.Contains(codespaceId);
+        }
+
         private async Task<bool> CheckUserAccessAsync(string cascadeToken, string sessionId, string codespaceId, IWorkspaceInfo workspaceInfo, IDiagnosticsLogger logger)
         {
             string userId;
@@ -464,8 +509,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 var handler = new JwtSecurityTokenHandler();
                 var token = handler.ReadToken(cascadeToken) as JwtSecurityToken;
 
-                var environmentIds = GetAllTokenClaims(CustomClaims.Environments, token);
-                if (environmentIds.Any(id => id == codespaceId))
+                if (IsAuthorizedToAccessCodespace(codespaceId, token))
                 {
                     return true;
                 }
