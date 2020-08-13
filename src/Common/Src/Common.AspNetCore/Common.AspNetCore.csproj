@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Common.Developer\Common.Developer.csproj" />
     <ProjectReference Include="..\Common.Metrics\Common.Metrics.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\HttpContracts\HttpContracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

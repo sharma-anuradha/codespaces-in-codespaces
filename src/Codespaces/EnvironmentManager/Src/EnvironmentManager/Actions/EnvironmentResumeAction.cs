@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
@@ -153,7 +154,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Validate
             ValidateInput(input);
             await ValidateEnvironmentAsync(record.Value, plan, logger);
-            await ValidatePlanAndSubscriptionAsync(record.Value, plan, logger);
+            var subscriptionComputeData = await ValidatePlanAndSubscriptionAsync(record.Value, plan, logger);
 
             // Authorize
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes: null, logger);
@@ -196,6 +197,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             {
                 await ResumeEnvironmentAsync(input, record, transientState, logger.NewChildLogger());
             }
+
+            // Add Subscription quota data
+            record.Value.SubscriptionData = new SubscriptionData
+            {
+                SubscriptionId = plan.Plan.Subscription,
+                ComputeUsage = subscriptionComputeData.ComputeUsage,
+                ComputeQuota = subscriptionComputeData.ComputeQuota,
+            };
 
             return record.Value;
         }
@@ -411,9 +420,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidationUtil.IsTrue(isVnetInjectionEnabled, "The requested vnet injection feature is disabled.");
         }
 
-        private async Task ValidatePlanAndSubscriptionAsync(CloudEnvironment environment, VsoPlan plan, IDiagnosticsLogger logger)
+        private async Task<SubscriptionComputeData> ValidatePlanAndSubscriptionAsync(CloudEnvironment environment, VsoPlan plan, IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(environment.SkuName, out var sku);
+            var subscriptionComputeData = new SubscriptionComputeData();
 
             // Validate whether or not the subscription is allowed to create plans and environments.
             var subscription = await SubscriptionManager.GetSubscriptionAsync(plan.Plan.Subscription, logger.NewChildLogger());
@@ -437,14 +447,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
             }
 
-            if (computeCheckEnabled)
+            subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
+            if (computeCheckEnabled && subscriptionComputeData.HasReachedQuota)
             {
-                var reachedComputeLimit = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
-                if (reachedComputeLimit)
-                {
-                    throw new ForbiddenException((int)MessageCodes.ExceededQuota);
-                }
+                throw new ForbiddenException((int)MessageCodes.ExceededQuota);
             }
+
+            return subscriptionComputeData;
         }
 
         private Task<ResourceAllocationRecord> AllocateComputeAsync(

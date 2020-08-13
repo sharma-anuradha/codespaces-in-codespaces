@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
@@ -333,6 +334,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "isMigrated")]
         public bool IsMigrated { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Subscription Data.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "subscriptionData")]
+        public SubscriptionData SubscriptionData { get; set; }
 
         /// <summary>
         /// Indicates whether the environment is in a shutdown state.

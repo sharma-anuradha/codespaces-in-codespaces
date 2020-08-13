@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 {
@@ -20,8 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentsInPlan">Existing active environments in the plan.</param>
         /// <param name="planSubscriptionId">Plan subscripton ID.</param>
         /// <param name="logger">Target logger.</param>
-        /// <returns>The async task.</returns>
-        public Task ValidateSubscriptionAndQuotaAsync(
+        /// <returns>The async task with result SubscriptionComputeData object.</returns>
+        public Task<SubscriptionComputeData> ValidateSubscriptionAndQuotaAsync(
             string cloudEnvironmentSkuName,
             IEnumerable<CloudEnvironment> environmentsInPlan,
             string planSubscriptionId,

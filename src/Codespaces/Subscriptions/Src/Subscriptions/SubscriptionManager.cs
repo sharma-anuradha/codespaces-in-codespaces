@@ -313,6 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_apply_warned_suspended_rules_to_resources",
                 async (childLogger) =>
                 {
+                    logger.AddSubscriptionId(subscription.Id);
                     var environments = await EnvironmentSubscriptionManager.ListBySubscriptionAsync(subscription, logger.NewChildLogger());
                     environments.ToList().ForEach(async environment => await QueueEnvironmentForSuspension(environment, logger.NewChildLogger()));
                 }, swallowException: true);
@@ -324,6 +325,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
                 $"{LoggingBaseName}_apply_warned_deleted_rules_to_resources",
                 async (childLogger) =>
                 {
+                    logger.AddSubscriptionId(subscription.Id);
                     var plans = await PlanManager.ListAsync(null, null, subscription.Id, null, null, childLogger.NewChildLogger());
                     foreach (var plan in plans)
                     {

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
@@ -129,5 +130,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// </summary>
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         public bool HasUnpushedGitChanges { get; set; }
+
+        /// <summary>
+        /// Gets or sets subscription information.
+        /// </summary>
+        public SubscriptionData SubscriptionData { get; set; }
     }
 }

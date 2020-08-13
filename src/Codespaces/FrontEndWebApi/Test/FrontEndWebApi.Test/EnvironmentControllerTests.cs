@@ -4,6 +4,10 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Common;
@@ -737,6 +741,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
                 Assert.Equal(expectedCode, actualCode);
             }
+        }
+
+        [Fact]
+        public void QuotaHeaderAttribute_ResponseContainsQuotaHeaders()
+        {
+            var computeUsage = 100;
+            var computeQuota = 200;
+            var subscription = Guid.NewGuid().ToString();
+            var subscriptionState = SubscriptionStateEnum.Registered.ToString();
+            var computeUsageText = "x-codespaces-core-usage";
+            var computeQuotaText = "x-codespaces-core-limit";
+            var results = new CloudEnvironmentResult
+            {
+                SubscriptionData = new HttpContracts.Subscriptions.SubscriptionData
+                {
+                    ComputeUsage = computeUsage,
+                    ComputeQuota = computeQuota,
+                    SubscriptionId = subscription,
+                    SubscriptionState = subscriptionState
+                }
+            };
+            var httpContextMock = new DefaultHttpContext();
+            var loggerFactory = new DefaultLoggerFactory();
+            var logger = loggerFactory.New();
+            httpContextMock.SetLogger(logger);
+            var actionContext = new ActionContext(
+            httpContextMock,
+            Mock.Of<RouteData>(),
+            Mock.Of<ActionDescriptor>(),
+            new ModelStateDictionary());
+
+            var actionExecutingContext = new ActionExecutedContext(
+                actionContext,
+                new List<IFilterMetadata>(),
+                Mock.Of<Controller>()
+            )
+            {
+                Result = new OkObjectResult(results)
+            };
+
+            var quotaAttribute = new QuotaHeaderAttribute();
+            quotaAttribute.OnActionExecuted(actionExecutingContext);
+
+            var responseHttpContext = actionExecutingContext.HttpContext;
+            responseHttpContext.Response.Headers.TryGetValue(computeUsageText, out var computeUsageValue);
+            responseHttpContext.Response.Headers.TryGetValue(computeQuotaText, out var computeQuotaValue);
+            
+            Assert.Equal(computeUsage.ToString(), computeUsageValue);
+            Assert.Equal(computeQuota.ToString(), computeQuotaValue);
         }
 
         private async Task<CreateCloudEnvironmentBody> CreateBodyAsync(string skuName)

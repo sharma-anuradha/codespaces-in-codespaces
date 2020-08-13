@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
@@ -38,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ISkuCatalog SkuCatalog { get; }
 
         /// <inheritdoc/>
-        public async Task<bool> HasReachedMaxComputeUsedForSubscriptionAsync(
+        public async Task<SubscriptionComputeData> HasReachedMaxComputeUsedForSubscriptionAsync(
             Subscription subscription,
             ICloudEnvironmentSku desiredSku,
             IDiagnosticsLogger logger)
@@ -56,7 +57,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 logger.LogError($"{LogBaseName}_create_exceed_compute_quota");
             }
 
-            return hasMaxComputeUsed;
+            var computeData = new SubscriptionComputeData
+            {
+                HasReachedQuota = hasMaxComputeUsed,
+                ComputeUsage = currentComputeUsed,
+                ComputeQuota = currentMaxQuota,
+            };
+
+            return computeData;
         }
 
         /// <inheritdoc/>

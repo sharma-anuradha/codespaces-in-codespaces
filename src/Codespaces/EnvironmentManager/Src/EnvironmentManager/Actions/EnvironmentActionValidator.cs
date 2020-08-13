@@ -5,11 +5,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.ServiceBus;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
@@ -53,13 +55,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         /// <inheritdoc/>
-        public async Task ValidateSubscriptionAndQuotaAsync(
+        public async Task<SubscriptionComputeData> ValidateSubscriptionAndQuotaAsync(
             string cloudEnvironmentSkuName,
             IEnumerable<CloudEnvironment> environmentsInPlan,
             string planSubscriptionId,
             IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironmentSkuName, out var sku);
+            var subscriptionComputeData = new SubscriptionComputeData();
 
             // Check invalid subscription
             var subscription = await SubscriptionManager.GetSubscriptionAsync(planSubscriptionId, logger.NewChildLogger());
@@ -81,11 +84,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
             }
 
+            // Check subscription quota
+            subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
+
             if (computeCheckEnabled)
             {
-                // Check subscription quota
-                var reachedComputeLimit = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
-                if (reachedComputeLimit)
+                if (subscriptionComputeData.HasReachedQuota)
                 {
                     throw new ForbiddenException((int)MessageCodes.ExceededQuota);
                 }
@@ -101,6 +105,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     throw new ForbiddenException((int)MessageCodes.ExceededQuota);
                 }
             }
+
+            return subscriptionComputeData;
         }
     }
 }

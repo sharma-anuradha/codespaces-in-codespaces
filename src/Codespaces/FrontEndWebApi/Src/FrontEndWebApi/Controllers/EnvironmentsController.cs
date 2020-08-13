@@ -32,6 +32,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
@@ -238,6 +239,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("start")]
         [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
+        [QuotaHeader]
         public async Task<IActionResult> ResumeAsync(
             [FromRoute] Guid environmentId,
             [FromServices] IDiagnosticsLogger logger)
@@ -274,6 +276,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         [HttpOperationalScope("create")]
         [Audit(AuditEventCategory.ResourceManagement)]
         [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
+        [QuotaHeader]
         public async Task<IActionResult> CreateAsync(
             [FromBody] CreateCloudEnvironmentBody createEnvironmentInput,
             [FromServices] IDiagnosticsLogger logger)

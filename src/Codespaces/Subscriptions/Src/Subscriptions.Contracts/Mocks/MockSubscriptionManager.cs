@@ -78,5 +78,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Mocks
         {
             throw new NotImplementedException();
         }
+
+        /// <inheritdoc/>
+        public Task<int> GetCurrentComputeUsageForSubscriptionAsync(Subscription subscription, ICloudEnvironmentSku desiredSku, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

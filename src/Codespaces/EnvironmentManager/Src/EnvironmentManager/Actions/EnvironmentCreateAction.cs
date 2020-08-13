@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
@@ -173,7 +174,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidateInput(input, logger);
             ValidateTargetLocation(input.Plan.Plan.Location, logger);
             await ValidateEnvironmentAsync(input, logger);
-            await ValidateSubscriptionAndPlanAsync(input, logger);
+            var subscriptionComputeData = await ValidateSubscriptionAndPlanAsync(input, logger);
 
             // Build Transition
             var cloudEnvironment = Mapper.Map<EnvironmentCreateDetails, CloudEnvironment>(input.Details);
@@ -219,6 +220,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     await RunCoreEnvironmentAsync(input, record, environmentOptions, transientState, logger);
                 }
             }
+
+            // Add Subscription quota data
+            record.Value.SubscriptionData = new SubscriptionData
+            {
+                SubscriptionId = input.Plan.Plan.Subscription,
+                ComputeUsage = subscriptionComputeData.ComputeUsage,
+                ComputeQuota = subscriptionComputeData.ComputeQuota,
+            };
 
             return record.Value;
         }
@@ -285,7 +294,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidationUtil.IsTrue(isVnetInjectionEnabled, "The requested vnet injection feature is disabled.");
         }
 
-        private async Task ValidateSubscriptionAndPlanAsync(
+        private async Task<SubscriptionComputeData> ValidateSubscriptionAndPlanAsync(
             EnvironmentCreateActionInput input, IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(input.Details.SkuName, out var sku);
@@ -299,7 +308,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 throw new ConflictException((int)MessageCodes.EnvironmentNameAlreadyExists);
             }
 
-            await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(input.Details.SkuName, environmentsInPlan, input.Plan.Plan.Subscription, logger.NewChildLogger());
+            var subscriptionComputeData = await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(input.Details.SkuName, environmentsInPlan, input.Plan.Plan.Subscription, logger.NewChildLogger());
 
             // Validate suspend timeout
             if (input.Details.Type != EnvironmentType.StaticEnvironment)
@@ -307,6 +316,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 var isValidTimeout = PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions.Contains(input.Details.AutoShutdownDelayMinutes);
                 ValidationUtil.IsTrue(isValidTimeout, $"'{input.Details.AutoShutdownDelayMinutes}' is not a valid AutoShutdownDelayMinutes. Valid options are:  {string.Join(',', PlanManagerSettings.DefaultAutoSuspendDelayMinutesOptions)}");
             }
+
+            return subscriptionComputeData;
         }
 
         private async Task RunCoreStaticEnvironmentAsync(
