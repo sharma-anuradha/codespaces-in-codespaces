@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineDeploymentManager.cs" company="Microsoft">
+// <copyright file="VirtualMachineDeploymentManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Strategies;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
 using Newtonsoft.Json;
 
@@ -31,7 +32,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     public class VirtualMachineDeploymentManager : IDeploymentManager
     {
         private const string LogBase = "virtual_machine_manager";
-        private const string VnetInjected = "vNetInjection";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VirtualMachineDeploymentManager"/> class.
@@ -210,11 +210,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var nicResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.NetworkInterface).SingleOrDefault()?.AzureResourceInfo;
                 if (nicResourceInfo != null)
                 {
-                    nicResourceInfo.Properties = new Dictionary<string, string>()
-                    {
-                        { VnetInjected, "1" },
-                    };
+                    var nicInfoProperties = new AzureResourceInfoNetworkInterfaceProperties(nicResourceInfo.Properties);
+
                     phase1Resources.Add(VirtualMachineConstants.NicNameKey, (nicResourceInfo, OperationState.NotStarted));
+
+                    if (!nicInfoProperties.IsVNetInjected)
+                    {
+                        phase2Resources.Add(VirtualMachineConstants.NsgNameKey, (new AzureResourceInfo() { Name = nicInfoProperties.Nsg, ResourceGroup = nicResourceInfo.ResourceGroup, SubscriptionId = nicResourceInfo.SubscriptionId }, OperationState.NotStarted));
+                        phase2Resources.Add(VirtualMachineConstants.VnetNameKey, (new AzureResourceInfo() { Name = nicInfoProperties.VNet, ResourceGroup = nicResourceInfo.ResourceGroup, SubscriptionId = nicResourceInfo.SubscriptionId }, OperationState.NotStarted));
+                    }
                 }
                 else
                 {
@@ -357,11 +361,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             }
         }
 
-        private static string CreateVmDeletionTrackingId(AzureLocation computeVmLocation, Dictionary<string, VmResourceState> resourcesToBeDeleted)
-        {
-            return JsonConvert.SerializeObject((computeVmLocation, resourcesToBeDeleted));
-        }
-
         private static OperationState GetFinalState(Dictionary<string, VmResourceState> resourcesToBeDeleted)
         {
             if (resourcesToBeDeleted.Any(r => r.Value.State == OperationState.InProgress || r.Value.State == OperationState.NotStarted))
@@ -474,14 +473,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 resourceDeletionStatus[resource.Key] = (resource.Value.ResourceInfo.Name, resourceToBeDeleted[resource.Key].ResourceState);
                 var resourceGroup = resource.Value.ResourceInfo.ResourceGroup;
                 var subscriptionId = resource.Value.ResourceInfo.SubscriptionId;
-                var vNetInjected = "0";
-                resource.Value.ResourceInfo.Properties?.TryGetValue(VnetInjected, out vNetInjected);
-                var isVnetInjected = vNetInjected == "1";
+
+                var nicProperties = new AzureResourceInfoNetworkInterfaceProperties(resource.Value.ResourceInfo.Properties);
+                var isVnetInjected = nicProperties.IsVNetInjected;
+
                 var azureClient = resource.Key == VirtualMachineConstants.InputQueueNameKey ?
                     default :
                     isVnetInjected ?
                     await ClientFPAFactory.GetAzureClientAsync(subscriptionId, logger.NewChildLogger()) :
                     await ClientFactory.GetAzureClientAsync(subscriptionId, logger.NewChildLogger());
+
                 switch (resource.Key)
                 {
                     case VirtualMachineConstants.VmNameKey:

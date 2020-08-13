@@ -1,10 +1,11 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeNetworkInterfaceProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Strategies;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
 {
@@ -34,6 +35,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider
             // Core services
             services.AddSingleton<INetworkInterfaceDeploymentManager, NetworkInterfaceDeploymentManager>();
             services.AddSingleton<INetworkInterfaceProvider, NetworkInterfaceProvider>();
+            services.AddSingleton<ICreateNetworkInterfaceStrategy, CreateNetworkInterfaceAndVNetStrategy>();
+            services.AddSingleton<ICreateNetworkInterfaceStrategy, CreateNetworkInterfaceStrategy>();
             return services;
         }
     }

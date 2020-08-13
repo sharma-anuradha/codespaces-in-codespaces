@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateNetworkInterfaceStrategy.cs" company="Microsoft">
+// <copyright file="CreateNetworkInterfaceStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -38,6 +38,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
         {
             var resourceTags = resource.Value.GetResourceTags(input.Reason);
 
+            if (!(input is CreateNetworkInterfaceContinuationInput networkInterfaceInput))
+            {
+                throw new NotSupportedException($"Input is the wrong type - {input.GetType()}");
+            }
+
             if (!(input.ResourcePoolDetails is ResourcePoolComputeDetails computeDetails))
             {
                 throw new NotSupportedException($"Pool compute details type is not selected - {input.ResourcePoolDetails.GetType()}");
@@ -45,25 +50,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.St
 
             if (!(input.Options is CreateComputeContinuationInputOptions computeOption))
             {
-                throw new NotSupportedException($"Pool compute options is not provided - {input.Options?.GetType()}");
+                throw new NotSupportedException($"Compute options is not provided - {input.Options?.GetType()}");
             }
 
-            var subnetResourceId = Requires.NotNull(computeOption.SubnetResourceId, nameof(computeOption.SubnetResourceId));
-            var subnetSubscription = ResourceId.FromString(subnetResourceId)?.SubscriptionId;
-            var subnetResourceGroup = ResourceId.FromString(subnetResourceId)?.ResourceGroupName;
-            if (string.IsNullOrEmpty(subnetSubscription))
-            {
-                throw new NotSupportedException($"Subnet resource id is not valid - {subnetResourceId}");
-            }
-
-            // TODO:: Check for network interface capacity in subnetSubscription
             var result = new NetworkInterfaceProviderCreateInput
             {
-                SubnetAzureResourceId = subnetResourceId,
-                SubnetSubscription = Guid.Parse(subnetSubscription),
-                ResourceGroup = subnetResourceGroup,
                 Location = computeDetails.Location,
                 ResourceTags = resourceTags,
+                SubnetSubscription = networkInterfaceInput.SubscriptionId,
+                ResourceGroup = networkInterfaceInput.ResourceGroup,
+                SubnetAzureResourceId = computeOption.SubnetResourceId,
             };
 
             return Task.FromResult<ContinuationInput>(result);

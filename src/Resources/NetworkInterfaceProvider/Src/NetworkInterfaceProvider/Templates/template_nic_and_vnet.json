@@ -1,0 +1,127 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nsgName": {
+      "type": "string"
+    },
+    "vnetName": {
+      "type": "string"
+    },
+    "niName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "resourceTags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "nsgId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+    "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', 'default')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('niName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-07-01",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[variables('nsgId')]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('nsgName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-02-01",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Restrict-Outbound-Udp-Rule",
+            "properties": {
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 200,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Allow-Outbound-Udp-Skype-Rule",
+            "properties": {
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 199,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [
+                "3478",
+                "3479",
+                "3480",
+                "3481"
+              ],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": [
+                "13.107.64.0/18",
+                "52.112.0.0/14",
+                "52.120.0.0/14"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-09-01",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [ "172.16.5.0/24" ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "172.16.5.0/24"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

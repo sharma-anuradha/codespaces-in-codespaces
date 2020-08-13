@@ -1,4 +1,4 @@
-﻿// <copyright file="NetworkInterfaceProviderCreateInput.cs" company="Microsoft">
+// <copyright file="NetworkInterfaceProviderCreateInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.C
     public class NetworkInterfaceProviderCreateInput : ContinuationInput
     {
         /// <summary>
-        /// Gets or sets the Subnet azure resource id.
+        /// Gets or sets the Subnet azure resource id.  If not specified, the Subnet and VNet will be created.
         /// </summary>
         public string SubnetAzureResourceId { get; set; }
 

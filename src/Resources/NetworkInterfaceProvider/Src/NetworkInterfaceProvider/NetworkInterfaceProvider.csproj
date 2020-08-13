@@ -6,9 +6,13 @@
 
   <ItemGroup>
     <None Remove="Templates\template_nic.json" />
+    <None Remove="Templates\template_nic_and_vnet.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Templates\template_nic_and_vnet.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Templates\template_nic.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>

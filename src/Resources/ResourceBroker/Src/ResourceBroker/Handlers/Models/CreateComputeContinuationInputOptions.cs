@@ -1,8 +1,6 @@
-﻿// <copyright file="CreateComputeContinuationInputOptions.cs" company="Microsoft">
+// <copyright file="CreateComputeContinuationInputOptions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
-
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {
@@ -35,5 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets a value indicating whether the OS disk record should be created if it doesn't exist already.
         /// </summary>
         public bool CreateOSDiskRecord { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the network resources (vnet, nsg, nic) should be created in the same subscription as the VM.
+        /// </summary>
+        public bool SeparateNetworkAndComputeSubscriptions { get; set; }
     }
 }

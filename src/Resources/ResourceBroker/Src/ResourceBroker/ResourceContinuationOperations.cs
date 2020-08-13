@@ -32,17 +32,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="activator">Target activator.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
+        /// <param name="systemConfiguration">System configuration settings.</param>
         public ResourceContinuationOperations(
             IContinuationTaskActivator activator,
-            IResourceRepository resourceRepository)
+            IResourceRepository resourceRepository,
+            ISystemConfiguration systemConfiguration)
         {
             Activator = activator;
             ResourceRepository = resourceRepository;
+            SystemConfiguration = systemConfiguration;
         }
 
         private IContinuationTaskActivator Activator { get; }
 
         private IResourceRepository ResourceRepository { get; }
+
+        private ISystemConfiguration SystemConfiguration { get; }
 
         /// <inheritdoc/>
         public async Task<ContinuationResult> CreateAsync(
@@ -55,15 +60,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         {
             var consolidatedloggerProperties = BuildLoggingProperties(resourceId, type, details, reason, loggingProperties);
 
-            var options = default(CreateComputeContinuationInputOptions);
+            var options = default(CreateResourceContinuationInputOptions);
 
-            if (type == ResourceType.ComputeVM &&
-                details is ResourcePoolComputeDetails computeDetails &&
-                computeDetails.OS == ComputeOS.Windows)
+            if (type == ResourceType.ComputeVM)
             {
+                var separateNetworkAndComputeSubscriptions = await SystemConfiguration.GetValueAsync("featureflag:separate-network-and-compute-subscriptions", logger, false);
+
+                var createOSDiskRecord = details is ResourcePoolComputeDetails computeDetails && computeDetails.OS == ComputeOS.Windows;
+
                 options = new CreateComputeContinuationInputOptions()
                 {
-                    CreateOSDiskRecord = true,
+                    SeparateNetworkAndComputeSubscriptions = separateNetworkAndComputeSubscriptions,
+                    CreateOSDiskRecord = createOSDiskRecord,
                 };
             }
 

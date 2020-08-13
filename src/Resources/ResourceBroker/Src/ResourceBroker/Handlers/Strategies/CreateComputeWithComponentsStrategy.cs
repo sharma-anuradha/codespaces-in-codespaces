@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateComputeWithComponentsStrategy.cs" company="Microsoft">
+// <copyright file="CreateComputeWithComponentsStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -90,9 +91,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             var componentInputs = new Dictionary<string, ComponentInput>();
             var resourceLocation = default(IAzureResourceLocation);
 
+            // Set up the selection criteria and select a subscription/location.
+            var subscriptionCriteria = new List<AzureResourceCriterion>();
+
             if (input.Options is CreateComputeContinuationInputOptions computeOption)
             {
-                resourceLocation = await HandleComputeOptionsAsync(input, resource, components, componentInputs, computeOption, logger);
+                resourceLocation = await HandleComputeOptionsAsync(input, resource, components, componentInputs, computeOption, subscriptionCriteria, logger);
             }
 
             await CreateQueueComponentIfNeededAsync(input, componentInputs, components, logger);
@@ -105,16 +109,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     throw new NotSupportedException($"Pool compute details type is not selected - {input.ResourcePoolDetails.GetType()}");
                 }
 
-                // Set up the selection criteria and select a subscription/location.
-                var criteria = new List<AzureResourceCriterion>
-                        {
-                            // SkuFamily must be first as the primary criterion for ordering candidate subscriptions.
-                            new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = computeDetails.SkuFamily, Required = computeDetails.Cores },
-                            new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 },
-                        };
+                subscriptionCriteria.Add(new AzureResourceCriterion { ServiceType = ServiceType.Compute, Quota = computeDetails.SkuFamily, Required = computeDetails.Cores });
 
                 resourceLocation = await CapacityManager.SelectAzureResourceLocation(
-                    criteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
+                    subscriptionCriteria, input.ResourcePoolDetails.Location, logger.NewChildLogger());
             }
 
             var result = new CreateResourceWithComponentInput
@@ -457,6 +455,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             List<ResourceComponent> components,
             Dictionary<string, ComponentInput> componentInputs,
             CreateComputeContinuationInputOptions computeOption,
+            List<AzureResourceCriterion> subscriptionCriteria,
             IDiagnosticsLogger logger)
         {
             var osDiskId = computeOption.OSDiskResourceId;
@@ -494,15 +493,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 components.Add(queueComponent);
             }
 
-            if (!string.IsNullOrEmpty(computeOption.SubnetResourceId))
+            var networkCriteria = new AzureResourceCriterion { ServiceType = ServiceType.Network, Quota = "VirtualNetworks", Required = 1 };
+
+            if (computeOption.SeparateNetworkAndComputeSubscriptions || !string.IsNullOrEmpty(computeOption.SubnetResourceId))
             {
-                var nicInput = new CreateResourceContinuationInput()
+                Guid networkSubscriptionId;
+                string networkResourceGroup;
+                if (!string.IsNullOrEmpty(computeOption.SubnetResourceId))
+                {
+                    // TODO:: Check for network interface capacity in subnetSubscription (which is owned by the user)
+                    var subnetSubscription = ResourceId.FromString(computeOption.SubnetResourceId)?.SubscriptionId;
+                    if (string.IsNullOrEmpty(subnetSubscription) || !Guid.TryParse(subnetSubscription, out networkSubscriptionId))
+                    {
+                        throw new NotSupportedException($"Subnet resource id is not valid - {computeOption.SubnetResourceId}");
+                    }
+
+                    var subnetResourceGroup = ResourceId.FromString(computeOption.SubnetResourceId)?.ResourceGroupName;
+                    if (string.IsNullOrEmpty(subnetResourceGroup))
+                    {
+                        throw new NotSupportedException($"Subnet resource id is not valid - {computeOption.SubnetResourceId}");
+                    }
+
+                    networkResourceGroup = subnetResourceGroup;
+                }
+                else
+                {
+                    var networkSubscription = await CapacityManager.SelectAzureResourceLocation(
+                        new[] { networkCriteria }, input.ResourcePoolDetails.Location, logger.NewChildLogger());
+
+                    networkSubscriptionId = Guid.Parse(networkSubscription.Subscription.SubscriptionId);
+                    networkResourceGroup = networkSubscription.ResourceGroup;
+                }
+
+                var nicInput = new CreateNetworkInterfaceContinuationInput()
                 {
                     Type = ResourceType.NetworkInterface,
                     ResourcePoolDetails = input.ResourcePoolDetails,
                     Reason = input.Reason,
                     Options = input.Options,
                     IsAssigned = true,
+                    SubscriptionId = networkSubscriptionId,
+                    ResourceGroup = networkResourceGroup,
                 };
                 var nicStrategy = CreationStrategies.Where(s => s.CanHandle(nicInput)).Single();
                 nicInput.OperationInput = await nicStrategy.BuildCreateOperationInputAsync(nicInput, resource, logger.NewChildLogger());
@@ -513,6 +544,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     Status = OperationState.NotStarted,
                 };
                 componentInputs[componentInput.ComponentId] = componentInput;
+            }
+            else
+            {
+                // Legacy behavior where vnet and VM go into the same subscription - add the criteria for the vnet
+                subscriptionCriteria.Add(networkCriteria);
             }
 
             return resourceLocation;
