@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 tasks,
                 (task, childLogger) => task,
                 childLogger,
-                concurrentLimit: 25,
+                concurrentLimit: 3,
                 successDelay: 0);
         }
 
