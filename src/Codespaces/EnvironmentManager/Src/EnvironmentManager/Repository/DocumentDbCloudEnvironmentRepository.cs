@@ -128,7 +128,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                         OR c.controlPlaneLocation = @controlPlaneLocation)) d",
                 new SqlParameterCollection
                 {
-                    new SqlParameter { Name = "controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);
@@ -152,7 +152,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                         OR c.controlPlaneLocation = @controlPlaneLocation)) d",
                 new SqlParameterCollection
                 {
-                    new SqlParameter { Name = "controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
+                    new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
                 });
 
             var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<int>(uri, query, feedOptions).AsDocumentQuery(), logger);

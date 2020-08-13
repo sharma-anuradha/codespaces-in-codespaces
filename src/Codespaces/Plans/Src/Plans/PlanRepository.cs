@@ -97,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             // FIXME: would this be more efficient expressed as an ARRAY_CONTAINS() statement?
             foreach (var dataPlaneLocation in ControlPlaneInfo.Stamp.DataPlaneLocations)
             {
-                parameters.Add(new SqlParameter($"location{index}", dataPlaneLocation.ToString()));
+                parameters.Add(new SqlParameter($"@location{index}", dataPlaneLocation.ToString()));
 
                 if (index > 0)
                 {
