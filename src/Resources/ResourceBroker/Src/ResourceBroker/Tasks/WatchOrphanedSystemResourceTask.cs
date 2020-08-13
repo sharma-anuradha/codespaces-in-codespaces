@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchOrphanedSystemResourceTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedSystemResourceTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -31,18 +31,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
+        /// <param name="resourcePoolDefinitionStore">Target resource pool definition store.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         public WatchOrphanedSystemResourceTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
+            IResourcePoolDefinitionStore resourcePoolDefinitionStore,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             ResourceRepository = resourceRepository;
+            ResourcePoolDefinitionStore = resourcePoolDefinitionStore;
             TaskHelper = taskHelper;
             ClaimedDistributedLease = claimedDistributedLease;
             ResourceNameBuilder = resourceNameBuilder;
@@ -55,6 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private ResourceBrokerSettings ResourceBrokerSettings { get; }
 
         private IResourceRepository ResourceRepository { get; }
+
+        private IResourcePoolDefinitionStore ResourcePoolDefinitionStore { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -100,7 +105,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             logger.FluentAddBaseValue("TaskResourceIdShard", idShard);
 
-            var cutoffTime = DateTime.UtcNow.AddDays(-7);
+            var flagCutoffTime = DateTime.UtcNow.AddDays(-1);
+            var deleteCutoffTime = DateTime.UtcNow.AddDays(-7);
 
             // Get record so we can tell if it exists
             // Note: On the filter - we select records based on the filter below.
@@ -110,34 +116,62 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             return ResourceRepository.ForEachAsync(
                 x => x.KeepAlives != default &&
                      x.Id.StartsWith(idShard) &&
-                     x.Created < cutoffTime &&
+                     x.Created < flagCutoffTime &&
                      (x.Type == ResourceType.ComputeVM || x.Type == ResourceType.OSDisk || x.Type == ResourceType.StorageArchive || x.Type == ResourceType.StorageFileShare) &&
-                     ((x.IsAssigned && x.Assigned < cutoffTime && (x.KeepAlives.EnvironmentAlive == default || x.KeepAlives.EnvironmentAlive < cutoffTime)) ||
-                      (!x.IsAssigned && (x.KeepAlives.AzureResourceAlive == default || x.KeepAlives.AzureResourceAlive < cutoffTime))),
+                     ((x.IsAssigned && x.Assigned < flagCutoffTime && (x.KeepAlives.EnvironmentAlive == default || x.KeepAlives.EnvironmentAlive < flagCutoffTime)) ||
+                      (!x.IsAssigned && (x.KeepAlives.AzureResourceAlive == default || x.KeepAlives.AzureResourceAlive < flagCutoffTime))),
                 logger.NewChildLogger(),
                 (resource, innerLogger) =>
                 {
-                    innerLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resource.Id);
-
                     // Log each item
                     return innerLogger.OperationScopeAsync(
                         $"{LogBaseName}_process_record",
                         async (childLogger)
                         =>
                         {
-                            childLogger
-                                .FluentAddValue("ResourceCutoffTime", cutoffTime)
+                            // Determine if we are over the delete cutoff time
+                            var timeToDeletion = resource.Created - deleteCutoffTime;
+                            var shouldDelete = resource.Created < deleteCutoffTime;
+
+                            // Take care of logging
+                            childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, resource.Id)
+                                .FluentAddValue("ResourceCutoffTime", flagCutoffTime)
                                 .FluentAddValue("ResourceIsAssigned", resource.IsAssigned)
                                 .FluentAddValue("ResourceAssigned", resource.Assigned)
                                 .FluentAddValue("ResourceEnvironmentAliveDate", resource.KeepAlives?.EnvironmentAlive)
                                 .FluentAddValue("ResourceAzureResourceAliveDate", resource.KeepAlives?.AzureResourceAlive)
-                                .FluentAddValue("ResourceCreatedDate", resource.Created);
+                                .FluentAddValue("ResourceCreatedDate", resource.Created)
+                                .FluentAddValue(ResourceLoggingPropertyConstants.PoolResourceType, resource.Type)
+                                .FluentAddValue("ResourceProvisioningStatus", resource.ProvisioningStatus)
+                                .FluentAddValue("ResourceProvisioningReason", resource.ProvisioningReason)
+                                .FluentAddValue("ResourceStartingStatus", resource.StartingStatus)
+                                .FluentAddValue("ResourceStartingReason", resource.StartingReason)
+                                .FluentAddValue("ResourceDeletingStatus", resource.DeletingStatus)
+                                .FluentAddValue("ResourceDeletingReason", resource.DeletingReason)
+                                .FluentAddValue("ResourceCleanupStatus", resource.CleanupStatus)
+                                .FluentAddValue("ResourceCleanupReason", resource.CleanupReason)
+                                .FluentAddValue("OrphanShouldDelete", shouldDelete)
+                                .FluentAddValue("OrphanDaysToDeletion", shouldDelete ? 0 : timeToDeletion.TotalDays);
 
-                            // Trigger delete
-                            // await childLogger.OperationScopeAsync(
-                            //     $"{LogBaseName}_delete_record",
-                            //     (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
-                            childLogger.LogError($"{LogBaseName}_orphaned_resource_detected");
+                            var poolDefinition = await ResourcePoolDefinitionStore.MapPoolCodeToResourceSku(resource.PoolReference.Code);
+                            if (poolDefinition != null)
+                            {
+                                childLogger.FluentAddValue(ResourceLoggingPropertyConstants.PoolSkuName, poolDefinition.Details.SkuName);
+                            }
+
+                            // Delete if needed
+                            if (shouldDelete)
+                            {
+                                // Trigger delete
+                                // await childLogger.OperationScopeAsync(
+                                //     $"{LogBaseName}_delete_record",
+                                //     (deleteLogger) => DeleteResourceAsync(resource.Id, deleteLogger));
+                                childLogger.NewChildLogger().LogError($"{LogBaseName}_orphaned_resource_deleted");
+                            }
+                            else
+                            {
+                                childLogger.NewChildLogger().LogWarning($"{LogBaseName}_orphaned_resource_detected");
+                            }
 
                             // Pause to rate limit ourselves
                             await Task.Delay(QueryDelay);
