@@ -67,9 +67,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                         childLogger.AddVsoPlanInfo(latestSummary.Plan);
 
-                        var changed = await CheckForMissingEnvironmentsAsync(latestSummary, latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
-                        childLogger.FluentAddValue("AddedMissingEnvironment", changed);
-                        if (changed)
+                        var addedMissingEnvironments = await CheckForMissingEnvironmentsAsync(latestSummary, latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
+                        childLogger.FluentAddValue("AddedMissingEnvironment", addedMissingEnvironments);
+
+                        var adjustedFinalStates = await CheckAllEnvironmentFinalStatesAreCorrect(latestSummary, latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
+                        childLogger.FluentAddValue("AdjustedFinalStates", adjustedFinalStates);
+
+                        if (addedMissingEnvironments || adjustedFinalStates)
                         {
                             await BillSummaryManager.CreateOrUpdateAsync(latestSummary, childLogger.NewChildLogger());
                         }
@@ -91,6 +95,63 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             await BillingArchivalManager.MigrateEnvironmentStateChange(olderStateChanges, childLogger.NewChildLogger());
                         }
                     }
+                });
+        }
+
+        private Task<bool> CheckAllEnvironmentFinalStatesAreCorrect(BillSummary billingSummary, DateTime end, IEnumerable<EnvironmentStateChange> allEnvironmentEvents, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_check_for_correct_final_states",
+                (childLogger) =>
+                {
+                    childLogger.FluentAddValue(BillingLoggingConstants.PlanId, billingSummary.PlanId);
+                    childLogger.FluentAddValue("BillSummaryId", billingSummary.Id);
+                    childLogger.FluentAddValue("BillGenerationTime", billingSummary.BillGenerationTime);
+                    childLogger.FluentAddValue("PeriodStart", billingSummary.PeriodStart);
+                    childLogger.FluentAddValue("PeriodEnd", billingSummary.PeriodEnd);
+                    childLogger.FluentAddValue("IsFinalBill", billingSummary.IsFinalBill);
+                    childLogger.FluentAddValue("PlanIsDeleted", billingSummary.PlanIsDeleted);
+                    childLogger.FluentAddValue("SubmissionState", billingSummary.SubmissionState);
+
+                    // Get all the events that happened before the current billing cycle.
+                    var allOlderEnvironmentEvents = allEnvironmentEvents.Where(x => x.Time < end);
+                    var hasChanged = false;
+
+                    // Group all events by their env id
+                    var envsGroupedByEnvironments = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id).ToDictionary(x => x.Key);
+                    foreach (var env in billingSummary.UsageDetail)
+                    {
+                        var environmentEvents = envsGroupedByEnvironments[env.Id];
+
+                        if (!environmentEvents.Any())
+                        {
+                            continue;
+                        }
+
+                        var lastEnvEventChange = BillingUtilities.GetLastBillableEventStateChange(environmentEvents);
+                        if (lastEnvEventChange is null)
+                        {
+                            // If we get this far, we could not find an appropriate billing event. Perhaps it never became available after this time range started. If so, do nothing.
+                            continue;
+                        }
+
+                        // We have the latest billable state. Let's see if it differs from the previous state.
+                        var lastState = lastEnvEventChange.NewValue;
+                        if (lastState == env.EndState)
+                        {
+                            continue;
+                        }
+
+                        childLogger.FluentAddValue("CorrectedFinalState", true)
+                                   .FluentAddValue("CloudEnvironmentId", env.Id)
+                                   .LogError($"{LogBaseName}_check_for_correct_final_states_env_error");
+
+                        // correct the final state.
+                        env.EndState = lastState;
+                        hasChanged = true;
+                    }
+
+                    return Task.FromResult(hasChanged);
                 });
         }
 
