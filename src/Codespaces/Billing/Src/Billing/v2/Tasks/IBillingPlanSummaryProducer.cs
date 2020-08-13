@@ -1,4 +1,4 @@
-﻿// <copyright file="IBillingPlanSummaryProducer.cs" company="Microsoft">
+// <copyright file="IBillingPlanSummaryProducer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
 {
@@ -28,6 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         /// <param name="jobPayloadOptions">Target Job Payload Options.</param>
         /// <param name="logger">Target Logger.</param>
         /// <param name="cancellationToken">Target Cancellation Token.</param>
+        /// <param name="partner">Target Partner.</param>
         /// <returns>Running task.</returns>
         Task PublishJobAsync(
             string planId,
@@ -36,6 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
             IEnumerable<BillingPlanSummaryOverrideJobPayload> billingOverrides,
             JobPayloadOptions jobPayloadOptions,
             IDiagnosticsLogger logger,
-            CancellationToken cancellationToken);
+            CancellationToken cancellationToken,
+            Partner? partner = null);
     }
 }

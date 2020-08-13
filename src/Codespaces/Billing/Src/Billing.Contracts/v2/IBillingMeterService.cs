@@ -1,4 +1,4 @@
-﻿// <copyright file="IBillingMeterService.cs" company="Microsoft">
+// <copyright file="IBillingMeterService.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
 {
@@ -23,7 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// <param name="plan">the plan.</param>
         /// <param name="end">the end time that we should base meters from.</param>
         /// <param name="logger">the logger.</param>
+        /// <param name="partner">the Partner <see cref="Partner"/>.</param>
         /// <returns>a dictionary of meters and the usage charges for those meters.</returns>
-        IDictionary<string, double> GetUsageBasedOnResources(ResourceUsageDetail resourceUsageDetail, VsoPlanInfo plan, DateTime end, IDiagnosticsLogger logger);
+        IDictionary<string, double> GetUsageBasedOnResources(ResourceUsageDetail resourceUsageDetail, VsoPlanInfo plan, DateTime end, IDiagnosticsLogger logger, Partner? partner = null);
     }
 }

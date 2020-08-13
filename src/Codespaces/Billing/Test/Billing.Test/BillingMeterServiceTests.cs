@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         }
 
         [Fact]
-        public void GetUsageBasedOnResourcesMeters()
+        public void GetUsageBasedOnResourcesMeters_GitHubOnly()
         {
             var detail = new ResourceUsageDetail()
             {
@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var billingMeterCatalog = GetMockBillMeterCatalog(false);
             var billingMtrService = new BillingMeterService(skuCatalog.Object, billingMeterCatalog);
             
-            var result = billingMtrService.GetUsageBasedOnResources(detail, testPlan, DateTime.UtcNow, logger);
+            var result = billingMtrService.GetUsageBasedOnResources(detail, testPlan, DateTime.UtcNow, logger, Plans.Contracts.Partner.GitHub);
 
             // 2 meters should exist
             Assert.Equal(2, result.Count);

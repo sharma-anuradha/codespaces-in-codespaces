@@ -98,6 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 var nextFullHour = TimeSpan.FromHours(Math.Ceiling(currentTimeOfDay.TotalHours));
                 var initialVisibilityDelay = nextFullHour - currentTimeOfDay;
                 var nextHour = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0).AddHours(1);
+                var partner = plan.Partner;
 
                 tasks.Add(BillingPlanSummaryProducer.PublishJobAsync(
                             plan.Id,
@@ -106,7 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                             BuildOverrides(Guid.Parse(plan.Id), plan.Plan.Subscription, globalOverrides, planOverrides, subscriptionOverrides),
                             new JobPayloadOptions { InitialVisibilityDelay = initialVisibilityDelay, ExpireTimeout = initialVisibilityDelay + ExpireDelay },
                             childLogger.NewChildLogger(),
-                            cancellationToken));
+                            cancellationToken,
+                            partner));
 
                 // also queue cleanup and archiving job
                 var cleanupDelay = initialVisibilityDelay.Add(TimeSpan.FromMinutes(20));

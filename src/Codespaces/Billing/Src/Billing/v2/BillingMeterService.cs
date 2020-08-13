@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -38,10 +39,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <inheritdoc />
-        public IDictionary<string, double> GetUsageBasedOnResources(ResourceUsageDetail resourceUsageDetail, VsoPlanInfo plan, DateTime end, IDiagnosticsLogger logger)
+        public IDictionary<string, double> GetUsageBasedOnResources(ResourceUsageDetail resourceUsageDetail, VsoPlanInfo plan, DateTime end, IDiagnosticsLogger logger, Partner? partner = null)
         {
             var metersByCompute = billingMeterCatalog.MetersByResource.Compute;
             var metersByStorage = billingMeterCatalog.MetersByResource.Storage;
+
             foreach (var skuName in skuDictionary.Keys)
             {
                 var skuComputeNameGroups = resourceUsageDetail.Compute.Where(t => t.Sku == skuName);
@@ -53,7 +55,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 var storageMeter = metersByStorage.FirstOrDefault(t => t.SkuName == skuName && t.Region == plan.Location);
 
                 if (computeMeter != default && computeMeter.EnabledOnDate.Date < end &&
-                    storageMeter != default && storageMeter.EnabledOnDate.Date < end)
+                    storageMeter != default && storageMeter.EnabledOnDate.Date < end &&
+                    partner != null && partner == Partner.GitHub)
                 {
                     return GetUsage(resourceUsageDetail, computeMeter.MeterId, storageMeter.MeterId, logger);
                 }

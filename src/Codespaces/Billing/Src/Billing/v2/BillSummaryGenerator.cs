@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -70,9 +71,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 {
                     var billEndTime = billingSummaryRequest.DesiredEndTime;
                     var planId = billingSummaryRequest.PlanId;
+                    var partner = billingSummaryRequest.Partner;
                     childLogger.AddVsoPlanInfo(billingSummaryRequest.PlanInformation)
                                .FluentAddBaseValue("PlanId", planId)
-                               .FluentAddBaseValue("BillEndingTime", billingSummaryRequest.DesiredEndTime);
+                               .FluentAddBaseValue("BillEndingTime", billingSummaryRequest.DesiredEndTime)
+                               .FluentAddBaseValue("Partner", partner);
 
                     // Get the last one billing summary for the planId.
                     var lastBillSummary = await BillSummaryManager.GetLatestBillSummaryAsync(planId, childLogger);
@@ -121,10 +124,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     };
 
                     // Update the bill with environments thate had state changes
-                    await UpdateBillSummaryWithEnvironmentStateChangesAsync(billSummary, allRecentEnvironmentStateChanges, lastBillSummary, billEndTime, billingSummaryRequest.BillingOverrides, childLogger.NewChildLogger());
+                    await UpdateBillSummaryWithEnvironmentStateChangesAsync(billSummary, allRecentEnvironmentStateChanges, lastBillSummary, billEndTime, billingSummaryRequest.BillingOverrides, childLogger.NewChildLogger(), partner);
 
                     // Update the bill with environments that did not have state changes
-                    await UpdateBillSummaryWithEnvironmentsWithNoStateChanges(billSummary, allRecentEnvironmentStateChanges, lastBillSummary, billEndTime, billingSummaryRequest.BillingOverrides, childLogger.NewChildLogger());
+                    await UpdateBillSummaryWithEnvironmentsWithNoStateChanges(billSummary, allRecentEnvironmentStateChanges, lastBillSummary, billEndTime, billingSummaryRequest.BillingOverrides, childLogger.NewChildLogger(), partner);
 
                     // Add the bill
                     billSummary = await BillSummaryManager.CreateOrUpdateAsync(billSummary, childLogger.NewChildLogger());
@@ -145,6 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="endTime">The desired bill end time.</param>
         /// <param name="overrides">any billing overrides if they are present for this plan.</param>
         /// <param name="logger"> the logger.</param>
+        /// <param name="partner">The Partner <see cref="Partner"/>.</param>
         /// <returns>The task indicating completion of this.</returns>
         public async Task UpdateBillSummaryWithEnvironmentStateChangesAsync(
             BillSummary currentBillSummary,
@@ -152,7 +156,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             BillSummary lastSummary,
             DateTime endTime,
             IEnumerable<BillingPlanSummaryOverrideJobPayload> overrides,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            Partner? partner = null)
         {
             // Get events per environment
             var billingEventsPerEnvironment = events.GroupBy(b => b.Environment.Id);
@@ -212,7 +217,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             slices.AddRange(allSlices);
                         }
 
-                        AddEnvironmentToBillSummary(currentBillSummary, endTime, seqEvents, environmentDetails.Id, slices, currState, childLogger);
+                        AddEnvironmentToBillSummary(currentBillSummary, endTime, seqEvents, environmentDetails.Id, slices, currState, childLogger, partner);
 
                         return Task.CompletedTask;
                     });
@@ -231,6 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="end">The desired bill end time.</param>
         /// <param name="overrides">any billing overrides if they are present for this plan.</param>
         /// <param name="logger"> the logger.</param>
+        /// <param name="partner">The Partner <see cref="Partner"/>.</param>
         /// <returns>a task.</returns>
         public async Task UpdateBillSummaryWithEnvironmentsWithNoStateChanges(
             BillSummary currentBillSummary,
@@ -238,7 +244,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             BillSummary lastSummary,
             DateTime end,
             IEnumerable<BillingPlanSummaryOverrideJobPayload> overrides,
-            IDiagnosticsLogger logger)
+            IDiagnosticsLogger logger,
+            Partner? partner = null)
         {
             IDictionary<string, EnvironmentUsage> currentPeriodEnvironments = currentBillSummary.UsageDetail.ToDictionary(x => x.Id);
 
@@ -285,14 +292,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // Get the remainder or the entire window if there were no events.
                         var (allSlices, currState) = GenerateWindowSlices(end, endState, null, overrides);
 
-                        AddEnvironmentToBillSummary(currentBillSummary, end, seqEvents, environment.Key, allSlices, currState, childLogger);
+                        AddEnvironmentToBillSummary(currentBillSummary, end, seqEvents, environment.Key, allSlices, currState, childLogger, partner);
 
                         return Task.CompletedTask;
                     });
             }
         }
 
-        private void AddEnvironmentToBillSummary(BillSummary currentBillSummary, DateTime endTime, IOrderedEnumerable<EnvironmentStateChange> seqEvents, string environmentId, IEnumerable<BillingWindowSlice> slices, BillingWindowSlice.NextState finalState, IDiagnosticsLogger childLogger)
+        private void AddEnvironmentToBillSummary(BillSummary currentBillSummary, DateTime endTime, IOrderedEnumerable<EnvironmentStateChange> seqEvents, string environmentId, IEnumerable<BillingWindowSlice> slices, BillingWindowSlice.NextState finalState, IDiagnosticsLogger childLogger, Partner? partner = null)
         {
             // We might not have any billable slices. If we don't, let's not do anything
             if (slices.Any())
@@ -325,7 +332,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     childLogger.FluentAddValue("HasIncorrectBillingState", true);
                 }
 
-                var envUsageDictionary = BillingMeterService.GetUsageBasedOnResources(resourceUsageDetail, currentBillSummary.Plan, endTime, childLogger);
+                var envUsageDictionary = BillingMeterService.GetUsageBasedOnResources(resourceUsageDetail, currentBillSummary.Plan, endTime, childLogger, partner);
 
                 var envUsageDetail = new EnvironmentUsage
                 {

@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -74,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             // Set up the mocks            
@@ -84,7 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(new Dictionary<string, double>());
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(new Dictionary<string, double>());
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -121,6 +123,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var lastSummary = new BillSummary()
@@ -138,7 +141,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(new Dictionary<string, double>());
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(new Dictionary<string, double>());
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -175,6 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var alreadyGeneratedBill = new BillSummary()
@@ -192,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(new Dictionary<string, double>());
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(new Dictionary<string, double>());
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -226,6 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(-24),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var lastSummary = new BillSummary()
@@ -243,7 +248,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(new Dictionary<string, double>());
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(new Dictionary<string, double>());
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -277,6 +282,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -306,7 +312,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -347,6 +353,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -376,7 +383,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -416,6 +423,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -445,7 +453,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -485,6 +493,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -514,7 +523,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -551,6 +560,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -582,7 +592,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -623,6 +633,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -654,7 +665,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -694,6 +705,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -739,7 +751,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -780,6 +792,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -825,7 +838,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -866,6 +879,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -911,7 +925,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -951,6 +965,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -996,7 +1011,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1037,6 +1052,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1082,7 +1098,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1123,6 +1139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1168,7 +1185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1208,6 +1225,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1253,7 +1271,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1294,6 +1312,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1339,7 +1358,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1379,6 +1398,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1424,7 +1444,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1464,6 +1484,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1517,7 +1538,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeAvailableToShutdown, stateChangeShutdownToAvailable })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1558,6 +1579,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -1597,7 +1619,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeToAvailable, stateChangeAvailableToDeleted })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1638,6 +1660,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -1678,7 +1701,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeToAvailable, stateChangeAvailableToShutdown })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1719,6 +1742,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -1766,7 +1790,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeToAvailable, stateChangeAvailableToShutdown, stateChangeShutdownToDeleted })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1807,6 +1831,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -1846,7 +1871,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeToShutdown, stateChangeShutdownToDeleted })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1886,6 +1911,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -1931,7 +1957,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -1972,6 +1998,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2017,7 +2044,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2058,6 +2085,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2103,7 +2131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2144,6 +2172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2189,7 +2218,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { newEnvironmentState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2230,6 +2259,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2283,7 +2313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeShutdownToAvailable, stateChangeAvailableToShutdown })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2324,6 +2354,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var newEnvironment = new EnvironmentBillingInfo()
@@ -2363,7 +2394,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeToAvailable, stateChangeAvailableToDeleted })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2404,6 +2435,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2457,7 +2489,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeAvailableToShutdown, stateChangeShutdownToAvailable })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2498,6 +2530,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2558,7 +2591,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeAvailableToShutdown, stateChangeShutdownToAvailableNewSku })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2605,6 +2638,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2665,7 +2699,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeAvailableToShutdown, stateChangeShutdownToAvailableNewSku })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2712,6 +2746,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2757,7 +2792,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { changeToNewSku })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2800,6 +2835,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2868,7 +2904,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeAvailableToShutdown, skuChangeShutdown, stateChangeShutdownToAvailable })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -2916,6 +2952,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -2984,7 +3021,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeAvailableToShutdown, skuChangeShutdown, stateChangeShutdownToAvailable })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3032,6 +3069,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3092,7 +3130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { skuChangeToPremium, skuChangeToStandard })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3136,6 +3174,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3196,7 +3235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { skuChangeToStandard, skuChangeToPremium })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3240,6 +3279,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3316,7 +3356,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { stateChangeStandardAvailableToShutdown, skuChangeToPremiumShutdownToAvailable, stateChangePremiumAvailableToShutdown, skuChangeToStandardShutdownToAvailable })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3366,6 +3406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3449,7 +3490,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                     skuChangeToStandardShutdownToAvailable
                 }));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3499,6 +3540,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3535,7 +3577,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3581,6 +3623,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3617,7 +3660,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3661,6 +3704,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -3697,7 +3741,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             // Set up an empty environment table
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(Enumerable.Empty<EnvironmentStateChange>()));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3742,6 +3786,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var oneEnvironment = new EnvironmentBillingInfo()
@@ -3788,7 +3833,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentOneState, environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3833,6 +3878,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var oneEnvironment = new EnvironmentBillingInfo()
@@ -3879,7 +3925,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentOneState, environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -3922,6 +3968,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             var oneEnvironment = new EnvironmentBillingInfo()
@@ -3968,7 +4015,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentOneState, environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -4012,6 +4059,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -4057,7 +4105,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -4103,6 +4151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -4148,7 +4197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -4191,6 +4240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -4236,7 +4286,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 
@@ -4280,6 +4330,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 DesiredEndTime = topOfCurrHour.AddHours(1),
                 PlanId = planId,
                 PlanInformation = planInfo,
+                Partner = Partner.GitHub,
             };
 
             EnvironmentUsage oneActive = new EnvironmentUsage()
@@ -4325,7 +4376,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager.Setup(x => x.GetAllRecentEnvironmentEvents(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>()))
                .Returns(Task.FromResult((IEnumerable<EnvironmentStateChange>)(new List<EnvironmentStateChange>() { environmentTwoState })));
             // Set up the Billing meter Service
-            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>())).Returns(usage);
+            BillingMeterService.Setup(x => x.GetUsageBasedOnResources(It.IsAny<ResourceUsageDetail>(), planInfo, It.IsAny<DateTime>(), It.IsAny<IDiagnosticsLogger>(), Partner.GitHub)).Returns(usage);
             // Set up the PA billing storage 
             var storageClient = new Mock<IBillingSubmissionCloudStorageClient>();
 

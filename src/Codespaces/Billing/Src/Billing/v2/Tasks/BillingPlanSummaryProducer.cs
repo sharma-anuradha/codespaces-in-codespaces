@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingPlanSummaryProducer.cs" company="Microsoft">
+// <copyright file="BillingPlanSummaryProducer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
 {
@@ -40,14 +41,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
             IEnumerable<BillingPlanSummaryOverrideJobPayload> billingOverrides,
             JobPayloadOptions jobPayloadOptions,
             IDiagnosticsLogger logger,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            Partner? partner = null)
         {
             return logger.OperationScopeAsync(
                 $"{BillingLoggingConstants.BillingPlanSummaryTask}_publish",
                 async (childLogger) =>
                 {
                     // Push job onto queue
-                    await JobQueueProducer.AddJobAsync(new BillingSummaryRequest() { PlanId = planId, BillingOverrides = billingOverrides, DesiredEndTime = desiredBillEndingTime, PlanInformation = planInfo }, jobPayloadOptions, cancellationToken);
+                    await JobQueueProducer.AddJobAsync(
+                        new BillingSummaryRequest()
+                        {
+                            PlanId = planId,
+                            BillingOverrides = billingOverrides,
+                            DesiredEndTime = desiredBillEndingTime,
+                            PlanInformation = planInfo,
+                            Partner = partner,
+                        },
+                        jobPayloadOptions,
+                        cancellationToken);
                 });
         }
     }
