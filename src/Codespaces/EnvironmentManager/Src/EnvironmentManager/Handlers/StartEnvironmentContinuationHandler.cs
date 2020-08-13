@@ -293,6 +293,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 resourceList.Add(record.Value.OSDisk.ResourceId);
             }
+            else if (record.Value.OSDiskSnapshot != default)
+            {
+                resourceList.Add(record.Value.OSDiskSnapshot.ResourceId);
+            }
 
             if (record.Value.Storage != default)
             {
@@ -306,11 +310,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var storageStatus = record.Value.Storage == default ? default : statusResponse.SingleOrDefault(x => x.Type == record.Value.Storage.Type);
             var osDiskStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk);
+            var osDiskSnapshotStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.Snapshot);
 
             // Check if we got all the resources
             if (record.Value.OSDisk != default && osDiskStatus == default)
             {
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToGetOSDiskResource" };
+            }
+            else if (record.Value.OSDiskSnapshot != default && osDiskSnapshotStatus == default)
+            {
+                return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToGetOSDiskSnapshotResource" };
             }
             else if (record.Value.Storage != default && storageStatus == default)
             {
@@ -330,15 +339,53 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
              EnvironmentRecordRef record,
              IDiagnosticsLogger logger)
         {
+            var resultResponse = new List<ResourceAllocationRecord>();
+
             var requests = await ResourceSelector.CreateAllocationRequestsAsync(
                 record.Value,
                 operationInput.CloudEnvironmentOptions,
                 logger);
 
-            var resultResponse = await ResourceAllocationManager.AllocateResourcesAsync(
-                Guid.Parse(record.Value.Id),
-                requests,
-                logger.NewChildLogger());
+            if (record.Value.OSDiskSnapshot != default)
+            {
+                // Make sure we don't get a OSDisk allocation request if resuming from a snapshot
+                if (record.Value.OSDiskSnapshot != default && requests.Any(x => x.Type == ResourceType.OSDisk))
+                {
+                    return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "UnexpectedOSDiskAllocationRequested" };
+                }
+
+                // When recovering from a snapshot, do separate request for the disk and compute
+                var diskRequest = new AllocateRequestBody
+                {
+                    Type = ResourceType.OSDisk,
+                    SkuName = record.Value.SkuName,
+                    Location = record.Value.Location,
+                    QueueCreateResource = operationInput.CloudEnvironmentOptions.QueueResourceAllocation,
+                    ExtendedProperties = new AllocateExtendedProperties { OSDiskSnapshotResourceID = record.Value.OSDiskSnapshot.ResourceId.ToString() },
+                };
+
+                var responses = await Task.WhenAll(
+                    ResourceAllocationManager.AllocateResourcesAsync(
+                        Guid.Parse(record.Value.Id),
+                        new List<AllocateRequestBody> { diskRequest },
+                        logger.NewChildLogger()),
+                    ResourceAllocationManager.AllocateResourcesAsync(
+                        Guid.Parse(record.Value.Id),
+                        requests,
+                        logger.NewChildLogger()));
+
+                foreach (var response in responses)
+                {
+                    resultResponse.AddRange(response);
+                }
+            }
+            else
+            {
+                resultResponse.AddRange(await ResourceAllocationManager.AllocateResourcesAsync(
+                    Guid.Parse(record.Value.Id),
+                    requests,
+                    logger.NewChildLogger()));
+            }
 
             var computeResponse = resultResponse.Single(x => x.Type == ResourceType.ComputeVM);
             var osDiskResponse = resultResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk);
@@ -389,6 +436,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             if (hasOSDiskResource)
                             {
                                 record.Value.OSDisk = osDiskResource;
+                                record.Value.OSDiskSnapshot = null;
                             }
 
                             // For archived environments, dont switch storage resource.

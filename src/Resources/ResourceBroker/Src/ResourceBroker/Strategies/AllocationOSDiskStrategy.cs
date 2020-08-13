@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         /// </summary>
         /// <param name="resourceRepository">Resource repository.</param>
         /// <param name="resourcePool">Resource pool.</param>
-        /// <param name="resourceScalingStore">resource scaling store.</param>
+        /// <param name="resourceScalingStore">Resource scaling store.</param>
         /// <param name="resourceContinuationOperations">Resource continuation operations.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="mapper">Mapper.</param>

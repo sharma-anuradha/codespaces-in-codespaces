@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         /// <summary>
-        /// Gets the underling image name.
+        /// Gets the storage size in GB.
         /// </summary>
         public int SizeInGB
         {

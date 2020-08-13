@@ -119,7 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                             if (backingResources.Count == 2 || backingResources.Count == 3)
                             {
-                                // Select target resorces
+                                // Select target resources
                                 var computeResource = backingResources.Single(x => x.Record.Type == ResourceType.ComputeVM);
                                 var osDiskResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.OSDisk);
                                 var storageResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.StorageFileShare);
@@ -152,17 +152,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             }
                             else
                             {
-                                throw new NotSupportedException($"Start compute action expects 2 resource and {resources.Count()} was supplied.");
+                                throw new NotSupportedException($"Start compute action expects 2 or 3 resources and {backingResources.Count} were supplied.");
                             }
 
                             break;
                         case StartAction.StartArchive:
                             if (backingResources.Count == 2)
                             {
-                                // Select target resorces
+                                // Select target resources
                                 var blobResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageArchive);
                                 var storageResource = backingResources.Single(x => x.Record.Type == ResourceType.StorageFileShare);
 
+                                // Perform archiving in blob storage
                                 childLogger.FluentAddBaseValue("StorageResourceId", storageResource.Resource.ResourceId)
                                     .FluentAddBaseValue("ArchiveStorageResourceId", blobResource.Resource.ResourceId);
 
@@ -176,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                             }
                             else
                             {
-                                throw new NotSupportedException($"Archive stroage action expects 2 resource and {resources.Count()} was supplied.");
+                                throw new NotSupportedException($"Archive storage action expects 2 resources but {backingResources.Count} were supplied.");
                             }
 
                             break;

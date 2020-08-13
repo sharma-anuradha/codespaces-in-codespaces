@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
@@ -31,15 +32,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Initializes a new instance of the <see cref="ArchiveEnvironmentContinuationHandler"/> class.
         /// </summary>
+        /// <param name="environmentManagerSettings">Environment manager settings.</param>
         /// <param name="environmentStateManager">Target environment manager.</param>
         /// <param name="cloudEnvironmentRepository">Cloud Environment Repository to be used.</param>
         /// <param name="resourceBrokerHttpClient">Target Resource Broker Http Client.</param>
         public ArchiveEnvironmentContinuationHandler(
+            EnvironmentManagerSettings environmentManagerSettings,
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient)
             : base(cloudEnvironmentRepository)
         {
+            EnvironmentManagerSettings = environmentManagerSettings;
             ResourceBrokerHttpClient = resourceBrokerHttpClient;
             EnvironmentStateManager = environmentStateManager;
         }
@@ -52,6 +56,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
         /// <inheritdoc/>
         protected override EnvironmentOperation Operation => EnvironmentOperation.Archiving;
+
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         private IEnvironmentStateManager EnvironmentStateManager { get; }
 
@@ -88,17 +94,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             switch (operationInput.ArchiveStatus)
             {
                 case ArchiveEnvironmentContinuationInputState.AllocateStorageBlob:
-                    // Trigger blob allocate by calling allocate endpoint
+                    // Trigger resource allocation by calling allocate endpoint
+                    if (record.Value.OSDisk != default)
+                    {
+                        // Only archive OS disks if feature is enabled
+                        if (await EnvironmentManagerSettings.EnvironmentOSDiskArchiveEnabled(logger))
+                        {
+                            // Trigger snapshot allocation
+                            return await RunAllocateStorageSnapshot(operationInput, record, logger);
+                        }
+
+                        return new ContinuationResult { Status = OperationState.Succeeded };
+                    }
+
                     return await RunAllocateStorageBlob(operationInput, record, logger);
                 case ArchiveEnvironmentContinuationInputState.StartStorageBlob:
                     // Trigger blob copy by calling start endpoint
                     return await RunStartStorageBlob(operationInput, record, logger);
                 case ArchiveEnvironmentContinuationInputState.CheckStartStorageBlob:
                     // Trigger blob copy check by calling start check endpoint
-                    return await RunCheckStartStorageBlob(operationInput, record, logger);
+                    return await RunCheckArchiveStatus(operationInput, record, logger);
                 case ArchiveEnvironmentContinuationInputState.CleanupUnneededStorage:
                     // Trigger storage delete by calling delete endpoint
-                    return await RunCleanupUnneededStorage(operationInput, record, logger);
+                    return await RunCleanupUnneededResources(operationInput, record, logger);
             }
 
             return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidArchiveState" };
@@ -119,9 +137,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             string trigger,
             IDiagnosticsLogger logger)
         {
-            // If we didn't get as far as switching the blob, then we need to delete the blob
-            if (record.Value.Storage != null
-                && record.Value.Storage?.Type != ResourceType.StorageArchive
+            // If we didn't get as far as switching the record, then we need to delete the allocated resource
+            if (((record.Value.Storage != null
+                && record.Value.Storage?.Type != ResourceType.StorageArchive)
+                || record.Value.OSDisk != null)
                 && operationInput.ArchiveResource != null)
             {
                 // Make sure we update the archive state to cleanup
@@ -163,6 +182,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return isEnvironmentStateValidForArchive;
         }
 
+        private async Task<ContinuationResult> RunAllocateStorageSnapshot(
+            ArchiveEnvironmentContinuationInput operationInput,
+            EnvironmentRecordRef record,
+            IDiagnosticsLogger logger)
+        {
+            // Setup request object
+            var allocateRequest = new AllocateRequestBody
+            {
+                Type = ResourceType.Snapshot,
+                SkuName = record.Value.SkuName,
+                Location = record.Value.Location,
+            };
+            allocateRequest.ExtendedProperties = new AllocateExtendedProperties
+            {
+                OSDiskResourceID = record.Value.OSDisk.ResourceId.ToString(),
+            };
+
+            return await RunAllocateRequest(
+                operationInput,
+                record,
+                allocateRequest,
+                ArchiveEnvironmentContinuationInputState.CheckStartStorageBlob,
+                "InvalidSnapshotAllocate",
+                logger);
+        }
+
         private async Task<ContinuationResult> RunAllocateStorageBlob(
             ArchiveEnvironmentContinuationInput operationInput,
             EnvironmentRecordRef record,
@@ -176,13 +221,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 Location = record.Value.Location,
             };
 
+            return await RunAllocateRequest(
+                operationInput,
+                record,
+                allocateRequest,
+                ArchiveEnvironmentContinuationInputState.StartStorageBlob,
+                "InvalidBlobStorageAllocate",
+                logger);
+        }
+
+        private async Task<ContinuationResult> RunAllocateRequest(
+            ArchiveEnvironmentContinuationInput operationInput,
+            EnvironmentRecordRef record,
+            AllocateRequestBody allocateRequest,
+            ArchiveEnvironmentContinuationInputState archiveStatusIfSuccessful,
+            string errorReason,
+            IDiagnosticsLogger logger)
+        {
             // Make request to allocate storage
             var allocateResponse = await ResourceBrokerHttpClient.AllocateAsync(
                 operationInput.EnvironmentId, allocateRequest, logger.NewChildLogger());
             if (allocateResponse != null)
             {
                 // Map across details
-                var blobResult = new EnvironmentContinuationInputResource
+                var archiveResource = new EnvironmentContinuationInputResource
                 {
                     ResourceId = allocateResponse.ResourceId,
                     SkuName = allocateResponse.SkuName,
@@ -192,8 +254,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 };
 
                 // Setup result
-                operationInput.ArchiveResource = blobResult;
-                operationInput.ArchiveStatus = ArchiveEnvironmentContinuationInputState.StartStorageBlob;
+                operationInput.ArchiveResource = archiveResource;
+                operationInput.ArchiveStatus = archiveStatusIfSuccessful;
                 return new ContinuationResult
                 {
                     NextInput = operationInput,
@@ -201,7 +263,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 };
             }
 
-            return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidBlobStorageAllocate" };
+            return new ContinuationResult { Status = OperationState.Failed, ErrorReason = errorReason };
         }
 
         private async Task<ContinuationResult> RunStartStorageBlob(
@@ -210,9 +272,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             IDiagnosticsLogger logger)
         {
             // Setup request object
-            var blobId = new StartRequestBody { ResourceId = operationInput.ArchiveResource.ResourceId };
-            var storageId = new StartRequestBody { ResourceId = record.Value.Storage.ResourceId };
-            var startIds = new List<StartRequestBody> { blobId, storageId };
+            var startIds = new List<StartRequestBody>()
+            {
+                new StartRequestBody { ResourceId = operationInput.ArchiveResource.ResourceId },
+                new StartRequestBody { ResourceId = record.Value.Storage.ResourceId },
+            };
 
             // Make request to start archive
             var successful = await ResourceBrokerHttpClient.StartAsync(
@@ -230,7 +294,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidBlobStorageStart" };
         }
 
-        private async Task<ContinuationResult> RunCheckStartStorageBlob(
+        private async Task<ContinuationResult> RunCheckArchiveStatus(
             ArchiveEnvironmentContinuationInput operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
         {
             // Make request to check on start status
@@ -240,6 +304,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             {
                 if (statusResponse.StartingStatus == OperationState.Succeeded)
                 {
+                    // Pass to next continuation
                     operationInput.ArchiveStatus = ArchiveEnvironmentContinuationInputState.CleanupUnneededStorage;
                     return new ContinuationResult
                     {
@@ -262,12 +327,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidBlobStorageStartStatus" };
         }
 
-        private async Task<ContinuationResult> RunCleanupUnneededStorage(
+        private async Task<ContinuationResult> RunCleanupUnneededResources(
             ArchiveEnvironmentContinuationInput operationInput,
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
         {
-            var originalStorageId = record.Value.Storage.ResourceId;
+            var resourceToDelete = operationInput.ArchiveResource.Type == ResourceType.Snapshot ? record.Value.OSDisk.ResourceId : record.Value.Storage.ResourceId;
 
             // Switch old fileshare for new blob
             var switchedStorage = await UpdateRecordAsync(
@@ -281,8 +346,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                         return false;
                     }
 
-                    // Switch out old storage for archived storage
-                    environment.Storage = new ResourceAllocationRecord
+                    var updatedRecord = new ResourceAllocationRecord
                     {
                         Created = operationInput.ArchiveResource.Created,
                         Location = operationInput.ArchiveResource.Location,
@@ -290,6 +354,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                         SkuName = operationInput.ArchiveResource.SkuName,
                         Type = operationInput.ArchiveResource.Type,
                     };
+
+                    if (operationInput.ArchiveResource.Type == ResourceType.Snapshot)
+                    {
+                        // Remove osDisk reference and add OS disk snapshot
+                        environment.OSDisk = null;
+                        environment.OSDiskSnapshot = updatedRecord;
+                    }
+                    else
+                    {
+                        // Switch out old storage for archived storage
+                        environment.Storage = updatedRecord;
+                    }
 
                     // Update state to be archived
                     await EnvironmentStateManager.SetEnvironmentStateAsync(
@@ -306,8 +382,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             }
 
             // Make request to delete original storage
-            var successful = await ResourceBrokerHttpClient.DeleteAsync(
-                operationInput.EnvironmentId, originalStorageId, logger.NewChildLogger());
+            var successful = await ResourceBrokerHttpClient.DeleteAsync(operationInput.EnvironmentId, resourceToDelete, logger.NewChildLogger());
             if (successful)
             {
                 return new ContinuationResult { Status = OperationState.Succeeded };

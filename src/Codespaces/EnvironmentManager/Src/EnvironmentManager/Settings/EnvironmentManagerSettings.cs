@@ -57,6 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         [JsonProperty(Required = Required.Always)]
         public double DefaultEnvironmentHardDeleteCutoffHours { get; set; }
 
+        /// Gets or sets a value indicating whether OS disk archiving is enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool DefaultEnvironmentOSDiskArchiveEnabled { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether the environment failed worker shoudl be enabled.
         /// </summary>
@@ -200,6 +205,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:environment-archive-enabled", logger, DefaultEnvironmentArchiveEnabled);
+        }
+
+        /// <summary>
+        /// Gets whether OS disk archiving is enabled.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> EnvironmentOSDiskArchiveEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:environment-osdisk-archive-enabled", logger, DefaultEnvironmentOSDiskArchiveEnabled);
         }
 
         /// <summary>

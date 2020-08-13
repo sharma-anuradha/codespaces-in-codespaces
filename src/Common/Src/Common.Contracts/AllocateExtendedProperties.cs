@@ -17,6 +17,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public string OSDiskResourceID { get; set; }
 
         /// <summary>
+        /// Gets or sets the OS disk snapshot resource id.
+        /// </summary>
+        public string OSDiskSnapshotResourceID { get; set; }
+
+        /// <summary>
         /// Gets or sets the Azure subnet.
         /// </summary>
         public string SubnetResourceId { get; set; }

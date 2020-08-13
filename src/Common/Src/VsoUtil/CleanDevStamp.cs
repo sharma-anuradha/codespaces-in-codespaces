@@ -41,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         private const string CloudEnvironmentDbName = "cloud-environments";
         private const string VirtualMachineResourceType = "Microsoft.Compute/virtualMachines";
         private const string DiskResourceType = "Microsoft.Compute/disks";
+        private const string SnapshotResourceType = "Microsoft.Compute/snapshots";
         private const string NetworkInterfaceResourceType = "Microsoft.Network/networkInterfaces";
         private const string NetworkSecurityGroupResourceType = "Microsoft.Network/networkSecurityGroups";
         private const string VirtualNetworksResourceType = "Microsoft.Network/virtualNetworks";
@@ -50,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             new[]
             {
                 (DiskResourceType, "-disk"),
+                (SnapshotResourceType, "-snapshot"),
                 (NetworkInterfaceResourceType, "-nic"),
                 (NetworkSecurityGroupResourceType, "-nsg"),
                 (VirtualNetworksResourceType, "-vnet"),
@@ -507,58 +509,56 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 }
             }
 
-            var disks = resources.Where(resource => resource.Type == DiskResourceType);
-            if (disks.Any())
+            var snapshots = resources.Where(resource => resource.Type == SnapshotResourceType);
+            foreach (var snapshot in snapshots)
             {
-                foreach (var disk in disks)
-                {
-                    await TryDeleteResourceAsync(
-                            disk,
-                            () => computeManagementClient.Disks.DeleteAsync(resourceGroupName, disk.Name),
-                            stdout,
-                            stderr);
-                }
+                await TryDeleteResourceAsync(
+                    snapshot,
+                    () => computeManagementClient.Snapshots.DeleteAsync(resourceGroupName, snapshot.Name),
+                    stdout,
+                    stderr);
+            }
+
+            var disks = resources.Where(resource => resource.Type == DiskResourceType);
+            foreach (var disk in disks)
+            {
+                await TryDeleteResourceAsync(
+                        disk,
+                        () => computeManagementClient.Disks.DeleteAsync(resourceGroupName, disk.Name),
+                        stdout,
+                        stderr);
             }
 
             var logger = GetServiceProvider().GetRequiredService<IDiagnosticsLogger>();
             var networkManagementClient = await azureClientFactory.GetNetworkManagementClient(Guid.Parse(azureSubscription.SubscriptionId), logger);
             var networkInterfaces = resources.Where(resource => resource.Type == NetworkInterfaceResourceType);
-            if (networkInterfaces.Any())
+            foreach (var networkInterface in networkInterfaces)
             {
-                foreach (var networkInterface in networkInterfaces)
-                {
-                    await TryDeleteResourceAsync(
-                            networkInterface,
-                            () => networkManagementClient.NetworkInterfaces.DeleteAsync(resourceGroupName, networkInterface.Name),
-                            stdout,
-                            stderr);
-                }
+                await TryDeleteResourceAsync(
+                        networkInterface,
+                        () => networkManagementClient.NetworkInterfaces.DeleteAsync(resourceGroupName, networkInterface.Name),
+                        stdout,
+                        stderr);
             }
 
             var networkSecurityGroups = resources.Where(resource => resource.Type == NetworkSecurityGroupResourceType);
-            if (networkSecurityGroups.Any())
+            foreach (var networkSecurityGroup in networkSecurityGroups)
             {
-                foreach (var networkSecurityGroup in networkSecurityGroups)
-                {
-                    await TryDeleteResourceAsync(
-                            networkSecurityGroup,
-                            () => networkManagementClient.NetworkSecurityGroups.DeleteAsync(resourceGroupName, networkSecurityGroup.Name),
-                            stdout,
-                            stderr);
-                }
+                await TryDeleteResourceAsync(
+                        networkSecurityGroup,
+                        () => networkManagementClient.NetworkSecurityGroups.DeleteAsync(resourceGroupName, networkSecurityGroup.Name),
+                        stdout,
+                        stderr);
             }
 
             var virtualNetworks = resources.Where(resource => resource.Type == VirtualNetworksResourceType);
-            if (virtualNetworks.Any())
+            foreach (var virtualNetwork in virtualNetworks)
             {
-                foreach (var virtualNetwork in virtualNetworks)
-                {
-                    await TryDeleteResourceAsync(
-                            virtualNetwork,
-                            () => networkManagementClient.VirtualNetworks.DeleteAsync(resourceGroupName, virtualNetwork.Name),
-                            stdout,
-                            stderr);
-                }
+                await TryDeleteResourceAsync(
+                        virtualNetwork,
+                        () => networkManagementClient.VirtualNetworks.DeleteAsync(resourceGroupName, virtualNetwork.Name),
+                        stdout,
+                        stderr);
             }
         }
 

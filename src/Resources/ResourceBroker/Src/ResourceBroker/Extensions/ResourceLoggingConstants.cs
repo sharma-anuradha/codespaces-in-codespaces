@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         public const string ResourceBrokerAllocatorOSDisk = "resource_broker_allocator_osdisk_strategy";
 
         /// <summary>
+        /// OS Disk Allocator Strategy for OS disk and Compute.
+        /// </summary>
+        public const string ResourceBrokerAllocatorOSDiskSnapshot = "resource_broker_allocator_osdisk_snapshot_strategy";
+
+        /// <summary>
         /// Resource Pool Manager.
         /// </summary>
         public const string ResourcePoolManager = "resource_pool_manager";

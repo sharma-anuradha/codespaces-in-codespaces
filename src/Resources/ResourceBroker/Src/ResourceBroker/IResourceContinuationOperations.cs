@@ -66,7 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
-        /// Starts arhive of storage by invoking the continution activator.
+        /// Starts archive of storage by invoking the continuation activator.
         /// </summary>
         /// <param name="environmentId">The environment id.</param>
         /// <param name="blobResourceId">Target blob resource id.</param>

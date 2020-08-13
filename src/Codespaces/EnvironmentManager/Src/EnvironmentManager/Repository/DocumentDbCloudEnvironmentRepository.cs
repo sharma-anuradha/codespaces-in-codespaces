@@ -221,7 +221,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     new SqlParameter { Name = "@stateShutdown", Value = CloudEnvironmentState.Shutdown.ToString() },
                     new SqlParameter { Name = "@shutdownCutoffTime", Value = shutdownCutoffTime },
                     new SqlParameter { Name = "@softDeleteCutoffTime", Value = softDeleteCutoffTime },
-                    new SqlParameter { Name = "@targetSku", Value = "Linux" },
                     new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
                     new SqlParameter { Name = "@attemptCountLimit", Value = 5 },
                 };
@@ -231,7 +230,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 @"SELECT TOP @count VALUE c
                 FROM c
                 WHERE STARTSWITH(c.id, @idShard)
-                    AND c.storage != null
+                    AND (c.storage != null OR c.osDisk != null)
                     AND c.state = @stateShutdown
                     AND ((c.lastStateUpdated < @shutdownCutoffTime) OR 
                         (c.isDeleted = true
@@ -240,7 +239,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                         IS_DEFINED(c.transitions) = false
                         OR (c.transitions.archiving.status = null
                             AND c.transitions.archiving.attemptCount <= @attemptCountLimit))
-                    AND CONTAINS(c.skuName, @targetSku)
                     AND (((
                         IS_DEFINED(c.controlPlaneLocation) = false
                             OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
@@ -253,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     @"SELECT TOP @count VALUE c
                     FROM c
                     WHERE STARTSWITH(c.id, @idShard)
-                        AND c.storage != null
+                        AND (c.storage != null OR c.osDisk != null)
                         AND c.state = @stateShutdown
                         AND (
                             c.scheduledArchival < GetCurrentDateTime()
@@ -264,7 +262,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                             IS_DEFINED(c.transitions) = false
                             OR (c.transitions.archiving.status = null
                                 AND c.transitions.archiving.attemptCount <= @attemptCountLimit))
-                        AND CONTAINS(c.skuName, @targetSku)
                         AND (((
                             IS_DEFINED(c.controlPlaneLocation) = false
                                 OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)

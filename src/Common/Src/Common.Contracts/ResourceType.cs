@@ -43,5 +43,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Input queue for the VM.
         /// </summary>
         InputQueue = 7,
+
+        /// <summary>
+        /// VM's disk snapshots.
+        /// </summary>
+        Snapshot = 8,
     }
 }

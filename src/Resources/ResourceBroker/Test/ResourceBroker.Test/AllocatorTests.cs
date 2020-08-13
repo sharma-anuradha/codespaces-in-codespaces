@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies;
 using Moq;
+using System;
 using System.Collections.Generic;
 using Xunit;
 using ResourceType = Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts.ResourceType;
@@ -88,6 +90,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputVM }));
 
             Assert.False(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputVM, allocateInputOSDisk, allocateInputVM }));
+        }
+
+        [Fact]
+        public void OSDiskSnapshotAllocate_CanHandle()
+        {
+            var resourceRepository = new Mock<IResourceRepository>().Object;
+            var clientFactory = new Mock<IAzureClientFactory>().Object;
+            var taskHelper = new Mock<ITaskHelper>().Object;
+            var mapper = new Mock<IMapper>().Object;
+
+            var allocStrategy = new AllocationOSDiskSnapshotStrategy(
+                resourceRepository,
+                clientFactory,
+                taskHelper,
+                mapper);
+
+            var extendedProperties = new AllocateExtendedProperties();
+
+            var allocateInputOSDisk = new AllocateInput
+            {
+                Type = ResourceType.OSDisk,
+                Location = VsSaaS.Common.AzureLocation.WestUs2,
+                ExtendedProperties = extendedProperties,
+            };
+
+            var allocateInputSnapshot = new AllocateInput
+            {
+                Type = ResourceType.Snapshot,
+                Location = VsSaaS.Common.AzureLocation.WestUs2,
+                ExtendedProperties = extendedProperties,
+            };
+
+            // Should fail if no source resource ID is given
+            Assert.False(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk }));
+            Assert.False(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputSnapshot }));
+            Assert.False(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputSnapshot }));
+
+            // Should succeed if correct resource type and ID are sent
+            allocateInputOSDisk.ExtendedProperties.OSDiskResourceID = Guid.NewGuid().ToString();
+            allocateInputSnapshot.ExtendedProperties.OSDiskSnapshotResourceID = Guid.NewGuid().ToString();
+            Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk }));
+            Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputSnapshot }));
+            Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputSnapshot }));
         }
     }
 }

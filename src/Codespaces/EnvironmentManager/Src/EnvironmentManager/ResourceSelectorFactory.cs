@@ -90,16 +90,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             if (isOsDiskAllocationRequired)
             {
-                var osDiskRequest = new AllocateRequestBody
+                // Only allocate a new disk if we don't have a snapshot
+                if (cloudEnvironment.OSDiskSnapshot == default)
                 {
-                    Type = ResourceType.OSDisk,
-                    SkuName = cloudEnvironment.SkuName,
-                    Location = cloudEnvironment.Location,
-                    QueueCreateResource = queueComputeRequest,
-                    ExtendedProperties = properties,
-                };
+                    var osDiskRequest = new AllocateRequestBody
+                    {
+                        Type = ResourceType.OSDisk,
+                        SkuName = cloudEnvironment.SkuName,
+                        Location = cloudEnvironment.Location,
+                        QueueCreateResource = queueComputeRequest,
+                        ExtendedProperties = properties,
+                    };
 
-                requests.Add(osDiskRequest);
+                    requests.Add(osDiskRequest);
+                }
             }
 
             if (!(isOsDiskAllocationRequired || isStorageAllocated))

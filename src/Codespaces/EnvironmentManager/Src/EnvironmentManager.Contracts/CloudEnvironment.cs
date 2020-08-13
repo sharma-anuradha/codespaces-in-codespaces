@@ -264,6 +264,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public ResourceAllocationRecord OSDisk { get; set; }
 
         /// <summary>
+        /// Gets or sets the environment OS disk snapshot.
+        /// </summary>
+        /// <remarks>
+        /// Returned by back-end resource broker AllocateResult.
+        /// </remarks>
+        [JsonProperty(Required = Required.Default, PropertyName = "osDiskSnapshot")]
+        public ResourceAllocationRecord OSDiskSnapshot { get; set; }
+
+        /// <summary>
         /// Gets or sets the last time the record is updated based on heartbeat.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]
