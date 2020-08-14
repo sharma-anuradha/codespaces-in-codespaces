@@ -40,6 +40,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         public int ConcurrentJobConsumerCount { get; set; }
 
         /// <summary>
+        /// Gets or sets the value of concurrent job consumers.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public int ConcurrentJobProducerCount { get; set; }
+
+        /// <summary>
         /// Initializes the class.
         /// </summary>
         /// <param name="systemConfiguration">System Configuration.</param>
@@ -53,7 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public virtual Task<bool> V2BillingManagementProducerIsEnabled(IDiagnosticsLogger logger)
+        public virtual Task<bool> V2BillingManagementProducerIsEnabledAsync(IDiagnosticsLogger logger)
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
@@ -65,11 +71,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public virtual Task<bool> V2TransmissionIsEnabled(IDiagnosticsLogger logger)
+        public virtual Task<bool> V2TransmissionIsEnabledAsync(IDiagnosticsLogger logger)
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
             return systemConfiguration.GetValueAsync("featureflag:enable-billing-v2-transmission", logger, EnableV2Transmission);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<int> V2ConcurrentJobProducerCountAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:billing-v2-concurrent-job-producer-count", logger, ConcurrentJobProducerCount);
         }
     }
 }

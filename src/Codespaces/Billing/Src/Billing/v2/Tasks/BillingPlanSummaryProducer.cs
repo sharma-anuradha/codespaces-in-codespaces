@@ -38,11 +38,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
             string planId,
             VsoPlanInfo planInfo,
             DateTime desiredBillEndingTime,
+            Partner? partner,
             IEnumerable<BillingPlanSummaryOverrideJobPayload> billingOverrides,
             JobPayloadOptions jobPayloadOptions,
             IDiagnosticsLogger logger,
-            CancellationToken cancellationToken,
-            Partner? partner = null)
+            CancellationToken cancellationToken)
         {
             return logger.OperationScopeAsync(
                 $"{BillingLoggingConstants.BillingPlanSummaryTask}_publish",

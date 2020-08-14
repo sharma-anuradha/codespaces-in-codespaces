@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 $"{BillingLoggingConstants.BillingManagementTask}_publish",
                 async (childLogger) =>
                 {
-                    if (await BillingSettings.V2BillingManagementProducerIsEnabled(childLogger))
+                    if (await BillingSettings.V2BillingManagementProducerIsEnabledAsync(childLogger))
                     {
                         // Obtain lease so trigger task is only added once
                         using (var lease = await ObtainLeaseAsync($"{BillingLoggingConstants.BillingManagementTask}-lease", TimeSpan.FromHours(1), childLogger))

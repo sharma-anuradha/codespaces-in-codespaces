@@ -53,5 +53,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Plan ID (Guid) field, not the resource ID.
         /// </summary>
         public const string PlanId = "PlanId";
+
+        /// <summary>
+        /// The shard value.
+        /// </summary>
+        public const string Shard = "Shard";
     }
 }

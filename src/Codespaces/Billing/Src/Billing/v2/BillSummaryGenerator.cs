@@ -741,7 +741,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         private async Task<int> TransmitBillSummaryToPushAgent(BillSummary billingSummary, VsoPlanInfo plan, IDiagnosticsLogger logger)
         {
-            bool enableTransmission = await billingSettings.V2TransmissionIsEnabled(logger);
+            bool enableTransmission = await billingSettings.V2TransmissionIsEnabledAsync(logger);
             if (!enableTransmission)
             {
                 // bail out early

@@ -25,20 +25,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         /// <param name="planId">Target Plan Id.</param>
         /// <param name="planInfo">Target Plan Info.</param>
         /// <param name="desiredEndTime">The desired bill ending time.</param>
+        /// <param name="partner">Target Partner.</param>
         /// <param name="billingOverrides">Target Billing Overrides.</param>
         /// <param name="jobPayloadOptions">Target Job Payload Options.</param>
         /// <param name="logger">Target Logger.</param>
         /// <param name="cancellationToken">Target Cancellation Token.</param>
-        /// <param name="partner">Target Partner.</param>
         /// <returns>Running task.</returns>
         Task PublishJobAsync(
             string planId,
             VsoPlanInfo planInfo,
             DateTime desiredEndTime,
+            Partner? partner,
             IEnumerable<BillingPlanSummaryOverrideJobPayload> billingOverrides,
             JobPayloadOptions jobPayloadOptions,
             IDiagnosticsLogger logger,
-            CancellationToken cancellationToken,
-            Partner? partner = null);
+            CancellationToken cancellationToken);
     }
 }

@@ -6,12 +6,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
@@ -29,24 +29,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingPlanBatchConsumer"/> class.
         /// </summary>
+        /// <param name="billingSettings">The billing settings.</param>
         /// <param name="planManager">Target Plan Manager.</param>
         /// <param name="billingOverrideRepository">Target Billing Override Repository.</param>
         /// <param name="billingPlanSummaryProducer">Target Billing Plan Summary Producer.</param>
         /// <param name="billingPlanCleanupProducer">Target Billing Plan Cleanup Producer.</param>
-        /// <param name="taskHelper">Task Helper.</param>
         public BillingPlanBatchConsumer(
+            BillingSettings billingSettings,
             IPlanManager planManager,
             IBillingOverrideRepository billingOverrideRepository,
             IBillingPlanSummaryProducer billingPlanSummaryProducer,
-            IBillingPlanCleanupProducer billingPlanCleanupProducer,
-            ITaskHelper taskHelper)
+            IBillingPlanCleanupProducer billingPlanCleanupProducer)
         {
+            BillingSettings = billingSettings;
             PlanManager = planManager;
             BillingOverrideRepository = billingOverrideRepository;
             BillingPlanSummaryProducer = billingPlanSummaryProducer;
             BillingPlanCleanupProducer = billingPlanCleanupProducer;
-            TaskHelper = taskHelper;
         }
+
+        private BillingSettings BillingSettings { get; }
 
         private IPlanManager PlanManager { get; }
 
@@ -56,8 +58,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
 
         private IBillingPlanCleanupProducer BillingPlanCleanupProducer { get; }
 
-        private ITaskHelper TaskHelper { get; }
-
         /// <inheritdoc/>
         protected override Task HandleJobAsync(BillingPlanBatchJobPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
@@ -65,69 +65,111 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 $"{BillingLoggingConstants.BillingPlanBatchTask}_handle",
                 async (childLogger) =>
                 {
-                    // Fetch list of plans overrides
-                    var overrides = await BillingOverrideRepository.QueryAsync(q => q, logger);
-                    var globalOverrides = overrides.Where(x => x.PlanId == null && x.Subscription == null).Select(SelectOverridePayload);
-                    var planOverrides = overrides.Where(x => x.PlanId != null).GroupBy(x => x.PlanId).ToDictionary(x => x.Key.Value, x => x.ToList().Select(SelectOverridePayload));
-                    var subscriptionOverrides = overrides.Where(x => x.Subscription != null).GroupBy(x => x.Subscription).ToDictionary(x => x.Key, x => x.ToList().Select(SelectOverridePayload));
+                    childLogger.FluentAddValue(BillingLoggingConstants.Shard, payload.PlanShard);
 
-                    // Fetch list of plans
-                    await PlanManager.GetBillablePlansByShardAsync(
-                        payload.PlanShard,
-                        async (plan, childLogger) =>
-                        {
-                            // nothing to be done per item
-                            await Task.CompletedTask;
-                        },
-                        async (IEnumerable<VsoPlan> plans, IDiagnosticsLogger childLogger) =>
-                        {
-                            await QueueJobs(plans, globalOverrides, planOverrides, subscriptionOverrides, childLogger, cancellationToken);
-                        },
-                        logger);
+                    int producerCount = await BillingSettings.V2ConcurrentJobProducerCountAsync(childLogger);
+
+                    if (producerCount > 1)
+                    {
+                        await QueuePlansParallel(payload.PlanShard, producerCount, childLogger, cancellationToken);
+                    }
+                    else
+                    {
+                        await QueuePlansSequential(payload.PlanShard, childLogger, cancellationToken);
+                    }
                 });
         }
 
-        private async Task QueueJobs(IEnumerable<VsoPlan> plans, IEnumerable<BillingPlanSummaryOverrideJobPayload> globalOverrides, Dictionary<Guid, IEnumerable<BillingPlanSummaryOverrideJobPayload>> planOverrides, Dictionary<string, IEnumerable<BillingPlanSummaryOverrideJobPayload>> subscriptionOverrides, IDiagnosticsLogger childLogger, CancellationToken cancellationToken)
+        private async Task QueuePlansSequential(string shard, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
-            var tasks = new List<Task>();
+            // Fetch list of plans overrides
+            var overrides = (await BillingOverrideRepository.QueryAsync(q => q, logger)).ToList();
+            var globalOverrides = overrides.Where(x => x.PlanId == null && x.Subscription == null).Select(SelectOverridePayload).ToList();
+            var planOverrides = overrides.Where(x => x.PlanId != null).GroupBy(x => x.PlanId).ToDictionary(x => x.Key.Value, x => x.ToList().Select(SelectOverridePayload));
+            var subscriptionOverrides = overrides.Where(x => x.Subscription != null).GroupBy(x => x.Subscription).ToDictionary(x => x.Key, x => x.ToList().Select(SelectOverridePayload));
 
-            foreach (var plan in plans)
+            await PlanManager.GetBillablePlansByShardAsync(
+                shard,
+                async (plan, childLogger) =>
+                {
+                    childLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);
+
+                    await QueueJob(plan, globalOverrides, planOverrides, subscriptionOverrides, childLogger, cancellationToken);
+                },
+                null,
+                logger);
+        }
+
+        private async Task QueuePlansParallel(string shard, int concurrentJobProducerCount, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            // Fetch list of plans overrides
+            var overrides = (await BillingOverrideRepository.QueryAsync(q => q, logger)).ToList();
+            var globalOverrides = overrides.Where(x => x.PlanId == null && x.Subscription == null).Select(SelectOverridePayload).ToList();
+            var planOverrides = overrides.Where(x => x.PlanId != null).GroupBy(x => x.PlanId).ToDictionary(x => x.Key.Value, x => x.ToList().Select(SelectOverridePayload));
+            var subscriptionOverrides = overrides.Where(x => x.Subscription != null).GroupBy(x => x.Subscription).ToDictionary(x => x.Key, x => x.ToList().Select(SelectOverridePayload));
+
+            // queue the summary jobs
+            var queueJobBlock = new ActionBlock<VsoPlan>(
+                async plan => await QueueJob(plan, globalOverrides, planOverrides, subscriptionOverrides, logger, cancellationToken),
+                new ExecutionDataflowBlockOptions { BoundedCapacity = 1000, MaxDegreeOfParallelism = concurrentJobProducerCount });
+
+            // the producer which retrieves the plans within the shard
+            async Task Producer()
             {
-                // Set messages to become visable at the time of the hour
-                var currentTimeOfDay = DateTime.UtcNow.TimeOfDay;
-                var nextFullHour = TimeSpan.FromHours(Math.Ceiling(currentTimeOfDay.TotalHours));
-                var initialVisibilityDelay = nextFullHour - currentTimeOfDay;
-                var nextHour = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0).AddHours(1);
-                var partner = plan.Partner;
+                // Fetch list of plans
+                await PlanManager.GetBillablePlansByShardAsync(
+                    shard,
+                    async (plan, childLogger) =>
+                    {
+                        childLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);
 
-                tasks.Add(BillingPlanSummaryProducer.PublishJobAsync(
-                            plan.Id,
-                            plan.Plan,
-                            nextHour,
-                            BuildOverrides(Guid.Parse(plan.Id), plan.Plan.Subscription, globalOverrides, planOverrides, subscriptionOverrides),
-                            new JobPayloadOptions { InitialVisibilityDelay = initialVisibilityDelay, ExpireTimeout = initialVisibilityDelay + ExpireDelay },
-                            childLogger.NewChildLogger(),
-                            cancellationToken,
-                            partner));
+                        await queueJobBlock.SendAsync(plan);
+                    },
+                    null,
+                    logger);
 
-                // also queue cleanup and archiving job
-                var cleanupDelay = initialVisibilityDelay.Add(TimeSpan.FromMinutes(20));
-
-                tasks.Add(BillingPlanCleanupProducer.PublishJobAsync(
-                    plan.Id,
-                    nextHour,
-                    new JobPayloadOptions { InitialVisibilityDelay = cleanupDelay, ExpireTimeout = cleanupDelay + ExpireDelay },
-                    childLogger.NewChildLogger(),
-                    cancellationToken));
+                queueJobBlock.Complete();
             }
 
-            await TaskHelper.RunConcurrentEnumerableAsync(
-                $"{BillingLoggingConstants.BillingPlanBatchTask}_queue",
-                tasks,
-                (task, childLogger) => task,
-                childLogger,
-                concurrentLimit: 3,
-                successDelay: 0);
+            // start the dataflow
+            await Task.WhenAll(Producer(), queueJobBlock.Completion);
+        }
+
+        private Task QueueJob(VsoPlan plan, IEnumerable<BillingPlanSummaryOverrideJobPayload> globalOverrides, Dictionary<Guid, IEnumerable<BillingPlanSummaryOverrideJobPayload>> planOverrides, Dictionary<string, IEnumerable<BillingPlanSummaryOverrideJobPayload>> subscriptionOverrides, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            return logger.OperationScopeAsync(
+                $"{BillingLoggingConstants.BillingPlanBatchTask}_queue_job",
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);
+
+                    // Set messages to become visable at the time of the hour
+                    var currentTimeOfDay = DateTime.UtcNow.TimeOfDay;
+                    var nextFullHour = TimeSpan.FromHours(Math.Ceiling(currentTimeOfDay.TotalHours));
+                    var initialVisibilityDelay = nextFullHour - currentTimeOfDay;
+                    var nextHour = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0).AddHours(1);
+                    var partner = plan.Partner;
+
+                    await BillingPlanSummaryProducer.PublishJobAsync(
+                        plan.Id,
+                        plan.Plan,
+                        nextHour,
+                        partner,
+                        BuildOverrides(Guid.Parse(plan.Id), plan.Plan.Subscription, globalOverrides, planOverrides, subscriptionOverrides),
+                        new JobPayloadOptions { InitialVisibilityDelay = initialVisibilityDelay, ExpireTimeout = initialVisibilityDelay + ExpireDelay },
+                        childLogger.NewChildLogger(),
+                        cancellationToken);
+
+                    // also queue cleanup and archiving job
+                    var cleanupDelay = initialVisibilityDelay.Add(TimeSpan.FromMinutes(20));
+
+                    await BillingPlanCleanupProducer.PublishJobAsync(
+                        plan.Id,
+                        nextHour,
+                        new JobPayloadOptions { InitialVisibilityDelay = cleanupDelay, ExpireTimeout = cleanupDelay + ExpireDelay },
+                        childLogger.NewChildLogger(),
+                        cancellationToken);
+                });
         }
 
         private IEnumerable<BillingPlanSummaryOverrideJobPayload> BuildOverrides(
