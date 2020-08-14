@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts
         /// <summary>
         /// A scope allowing the user to read all codespaces in a plan.
         /// </summary>
-        public const string ReadCodespaces = "read:allcodespacess";
+        public const string ReadCodespaces = "read:allcodespaces";
 
         /// <summary>
         /// A scope allowing the user to perform CRUD operations on and connect to codespaces they own in a plan.
