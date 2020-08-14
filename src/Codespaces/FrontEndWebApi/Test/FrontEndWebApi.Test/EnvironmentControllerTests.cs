@@ -28,6 +28,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace;
@@ -841,6 +842,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
             var tokenProvider = new Mock<ITokenProvider>();
             accessTokenReader ??= new Mock<ICascadeTokenReader>().Object;
+            var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings);
 
             var environmentController = new EnvironmentsController(
                 environmentManager,
@@ -858,7 +860,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 subManager,
                 accessTokenReader,
                 environmentAccessManager,
-                environmentStateManager);
+                environmentStateManager,
+                gitHubFixedPlansMapper);
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             httpContext ??= MockHttpContext.Create();

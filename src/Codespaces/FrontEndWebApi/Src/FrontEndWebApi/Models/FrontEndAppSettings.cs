@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -126,5 +127,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models
         /// Gets or sets the Billing Meter settings.
         /// </summary>
         public BillingMeterSettings BillingMeterSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the GitHub Proxy Settings by locations Dictionary.
+        /// </summary>
+        public Dictionary<string, GitHubProxySettings> GitHubProxySettingsByLocation { get; set; }
     }
 }

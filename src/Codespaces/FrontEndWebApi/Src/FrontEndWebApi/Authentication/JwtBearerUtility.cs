@@ -39,10 +39,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         public const string VsoAuthenticationScheme = "vso";
 
         /// <summary>
+        /// The authentication scheme for GitHub tokens.
+        /// </summary>
+        public const string GithubAuthenticationScheme = "github";
+
+        /// <summary>
         /// List of supported schemes for authenticating users.
         /// </summary>
         public const string UserAuthenticationSchemes =
-            AadAuthenticationScheme + "," + VsoAuthenticationScheme;
+            AadAuthenticationScheme + "," + VsoAuthenticationScheme + "," + GithubAuthenticationScheme;
 
         /// <summary>
         /// Configure the <see cref="JwtBearerAuthenticationOptions2"/> object for AAD auth.
@@ -86,7 +91,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Add VSO (Cascade token) JWT bearer authentication.
         /// </summary>
         /// <param name="builder">Authentication builder.</param>
-        public static void AddVsoJwtBearerAuthentication(this AuthenticationBuilder builder)
+        /// <returns>The AuthenticationBuilder to enable chaining.</returns>
+        public static AuthenticationBuilder AddVsoJwtBearerAuthentication(this AuthenticationBuilder builder)
         {
             var jwtReader = new JwtReader();
 
@@ -105,6 +111,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 .Services
                 .AddSingleton<ICascadeTokenReader>(new CascadeTokenReader(jwtReader))
                 .AddTokenSettingsToJwtReader(jwtReader, (authSettings) => authSettings.VsSaaSTokenSettings);
+
+            return builder;
         }
 
         /// <summary>

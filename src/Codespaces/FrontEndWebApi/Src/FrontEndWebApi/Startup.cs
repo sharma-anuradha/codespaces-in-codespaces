@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
@@ -31,6 +32,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Providers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
@@ -295,6 +297,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             // Add ClaimedDistributedLease
             services.AddSingleton<IClaimedDistributedLease, ClaimedDistributedLease>();
 
+            // Add GitHub Client & Related Attributes
+            services.AddSingleton<IGithubApiHttpClientProvider, GithubApiHttpClientProvider>();
+            services.AddSingleton<GitHubFixedPlansMapper>();
+
             // VS SaaS services with first party app JWT authentication.
             services.AddVsSaaSHostingWithJwtBearerAuthentication2(
                 HostingEnvironment,
@@ -317,7 +323,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddAuthentication((options) =>
             {
                 options.DefaultForbidScheme = JwtBearerUtility.VsoAuthenticationScheme;
-            }).AddVsoJwtBearerAuthentication();
+            }).AddScheme<AuthenticationSchemeOptions, GitHubAuthenticationHandler>(
+                    JwtBearerUtility.GithubAuthenticationScheme, (options) => { })
+              .AddVsoJwtBearerAuthentication();
 
             // Add custom authentication (rpaas, VM tokens) and VM token validator.
             services.AddCustomFrontEndAuthentication(

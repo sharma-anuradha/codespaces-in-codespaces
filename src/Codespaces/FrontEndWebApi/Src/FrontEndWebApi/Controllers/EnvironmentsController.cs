@@ -71,6 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="accessTokenReader">JWT reader configured for access tokens.</param>
         /// <param name="environmentAccessManager">The environment access manager.</param>
         /// <param name="environmentStateManager">The environment state manager.</param>
+        /// <param name="gitHubFixedPlansMapper">The GitHub plan mapper.</param>
         public EnvironmentsController(
             IEnvironmentManager environmentManager,
             IPlanManager planManager,
@@ -87,7 +88,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ISubscriptionManager subscriptionManager,
             ICascadeTokenReader accessTokenReader,
             IEnvironmentAccessManager environmentAccessManager,
-            IEnvironmentStateManager environmentStateManager)
+            IEnvironmentStateManager environmentStateManager,
+            GitHubFixedPlansMapper gitHubFixedPlansMapper)
         {
             EnvironmentManager = Requires.NotNull(environmentManager, nameof(environmentManager));
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -105,6 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             AccessTokenReader = Requires.NotNull(accessTokenReader, nameof(accessTokenReader));
             EnvironmentAccessManager = Requires.NotNull(environmentAccessManager, nameof(environmentAccessManager));
             EnvironmentStateManager = environmentStateManager;
+            GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
         }
 
         private IEnvironmentManager EnvironmentManager { get; }
@@ -138,6 +141,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IEnvironmentAccessManager EnvironmentAccessManager { get; }
 
         private IEnvironmentStateManager EnvironmentStateManager { get; }
+
+        private GitHubFixedPlansMapper GitHubFixedPlansMapper { get; }
 
         /// <summary>
         /// Get an environment by id.
@@ -281,6 +286,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromBody] CreateCloudEnvironmentBody createEnvironmentInput,
             [FromServices] IDiagnosticsLogger logger)
         {
+            // Apply values if we're authenticating using a GitHub token.
+            GitHubFixedPlansMapper.ApplyValuesWhenGitHubTokenIsUsed(createEnvironmentInput, this.Request);
+
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
             logger.AddSkuName(environmentCreateDetails.SkuName);
 
