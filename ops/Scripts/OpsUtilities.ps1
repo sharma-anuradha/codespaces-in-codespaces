@@ -223,9 +223,7 @@ function Get-ServicePrincipal(
   if (!$sp) {
 
     if ($Create) {
-      & az ad sp create-for-rbac --skip-assignment --name $servicePrincipalName
-      Assert-LastExitCodeSuccess -Message "az ad sp create-for-rbac failed"
-      $sp = Get-AzADServicePrincipal -DisplayName $servicePrincipalName
+      $sp = New-AzADServicePrincipal -DisplayName $servicePrincipalName -SkipAssignment
 
       if (!$sp) {
         throw "failed to create service principal $servicePrincipalName"
@@ -336,8 +334,9 @@ function New-SubscriptionRoleAssignment(
   $scope = "/subscriptions/$subscriptionId"
   $assigneeObjectId = $Assignee.Id
   $assigneeDisplayName = $Assignee.DisplayName
-  "Assigning $RoleDefinitionName to $assigneeDisplayName in $subscriptionName" | Write-Host -ForegroundColor DarkGray
+  "Assigning $RoleDefinitionName to $assigneeDisplayName in subscription/$subscriptionName" | Write-Host -ForegroundColor DarkGray
   $role = Get-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
+  $role | Out-String | Write-Host -ForegroundColor DarkGray
   if (!$role) {
     $role = New-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
   }
