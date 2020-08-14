@@ -27,18 +27,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillSummaryScrubber"/> class.
         /// </summary>
+        /// <param name="billingSettings">The billing settings.</param>
         /// <param name="billSummaryManager">the bill summary manager used for getting bill summaires.</param>
         /// <param name="environmentStateChangeManager">the environment state change manager used for getting previous billing state changes.</param>
         /// <param name="billingArchivalManager">the archival manager.</param>
         public BillSummaryScrubber(
+            BillingSettings billingSettings,
             IBillSummaryManager billSummaryManager,
             IEnvironmentStateChangeManager environmentStateChangeManager,
             IBillingArchivalManager billingArchivalManager)
         {
+            BillingSettings = billingSettings;
             BillSummaryManager = billSummaryManager;
             EnvironmentStateChangeManager = environmentStateChangeManager;
             BillingArchivalManager = billingArchivalManager;
         }
+
+        private BillingSettings BillingSettings { get; }
 
         private IBillSummaryManager BillSummaryManager { get; }
 
@@ -107,7 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_check_for_correct_final_states",
-                (childLogger) =>
+                async (childLogger) =>
                 {
                     childLogger.FluentAddValue(BillingLoggingConstants.PlanId, billingSummary.PlanId);
                     childLogger.FluentAddValue("BillSummaryId", billingSummary.Id);
@@ -117,6 +122,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     childLogger.FluentAddValue("IsFinalBill", billingSummary.IsFinalBill);
                     childLogger.FluentAddValue("PlanIsDeleted", billingSummary.PlanIsDeleted);
                     childLogger.FluentAddValue("SubmissionState", billingSummary.SubmissionState);
+
+                    bool isEnabled = await BillingSettings.V2EnableV2CheckForFinalStatesAsync(logger);
+
+                    childLogger.FluentAddValue("IsEnabled", isEnabled);
+
+                    if (!isEnabled)
+                    {
+                        return false;
+                    }
 
                     // Get all the events that happened before the current billing cycle.
                     var allOlderEnvironmentEvents = allEnvironmentEvents.Where(x => x.Time < end);
@@ -167,7 +181,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         billingSummary.UsageDetail.Remove(envToRemove);
                     }
 
-                    return Task.FromResult(hasChanged);
+                    return hasChanged;
                 });
         }
 
@@ -175,7 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_check_for_missing_environments",
-                (childLogger) =>
+                async (childLogger) =>
                 {
                     childLogger.FluentAddValue(BillingLoggingConstants.PlanId, billingSummary.PlanId);
                     childLogger.FluentAddValue("BillSummaryId", billingSummary.Id);
@@ -185,6 +199,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     childLogger.FluentAddValue("IsFinalBill", billingSummary.IsFinalBill);
                     childLogger.FluentAddValue("PlanIsDeleted", billingSummary.PlanIsDeleted);
                     childLogger.FluentAddValue("SubmissionState", billingSummary.SubmissionState);
+
+                    bool isEnabled = await BillingSettings.V2EnableV2CheckForMissingEnvironmentsAsync(logger);
+
+                    childLogger.FluentAddValue("IsEnabled", isEnabled);
+
+                    if (!isEnabled)
+                    {
+                        return false;
+                    }
 
                     // Get all the events that happened before the current billing cycle.
                     var allOlderEnvironmentEvents = allEnvironmentEvents.Where(x => x.Time < end);
@@ -233,7 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         hasChanged = true;
                     }
 
-                    return Task.FromResult(hasChanged);
+                    return hasChanged;
                 });
         }
 

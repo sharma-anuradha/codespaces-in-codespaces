@@ -6,6 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
@@ -20,6 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingRegisterJobs"/> class.
         /// </summary>
+        /// <param name="billingSettings">Billing Settings..</param>
         /// <param name="billingManagementConsumer">Target Billing Management Consumer.</param>
         /// <param name="billingPlanBatchConsumer">Target Billing Plan Batch Consumer.</param>
         /// <param name="billingPlanSummaryConsumer">Target Billing Plan Summary Consumer.</param>
@@ -28,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="jobQueueConsumerFactory">Target Job Queue Consumer Factory.</param>
         /// <param name="taskHelper">Target Task Helper.</param>
         public BillingRegisterJobs(
+            BillingSettings billingSettings,
             IBillingManagementConsumer billingManagementConsumer,
             IBillingPlanBatchConsumer billingPlanBatchConsumer,
             IBillingPlanSummaryConsumer billingPlanSummaryConsumer,
@@ -36,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IJobQueueConsumerFactory jobQueueConsumerFactory,
             ITaskHelper taskHelper)
         {
+            BillingSettings = billingSettings;
             BillingManagementConsumer = billingManagementConsumer;
             BillingPlanBatchConsumer = billingPlanBatchConsumer;
             BillingPlanSummaryConsumer = billingPlanSummaryConsumer;
@@ -44,6 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             JobQueueConsumerFactory = jobQueueConsumerFactory;
             TaskHelper = taskHelper;
         }
+
+        private BillingSettings BillingSettings { get; }
 
         private IBillingManagementConsumer BillingManagementConsumer { get; }
 
@@ -60,33 +66,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private ITaskHelper TaskHelper { get; }
 
         /// <inheritdoc/>
-        public Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
+        public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
         {
-            // Register: Queue handlers
-            JobQueueConsumerFactory
-                .GetOrCreate(BillingLoggingConstants.BillingManagermentQueue)
-                .RegisterJobHandler(BillingManagementConsumer);
-            JobQueueConsumerFactory
-                .GetOrCreate(BillingLoggingConstants.BillingPlanBatchQueue)
-                .RegisterJobHandler(BillingPlanBatchConsumer);
-            JobQueueConsumerFactory
-                .GetOrCreate(BillingLoggingConstants.BillingPlanSummaryQueue)
-                .RegisterJobHandler(BillingPlanSummaryConsumer);
-            JobQueueConsumerFactory
-                .GetOrCreate(BillingLoggingConstants.BillingPlanCleanupQueue)
-                .RegisterJobHandler(BillingPlanCleanupConsumer);
+            if (await BillingSettings.V2BillingManagementProducerIsEnabledAsync(logger))
+            {
+                // Register: Queue handlers
+                JobQueueConsumerFactory
+                    .GetOrCreate(BillingLoggingConstants.BillingManagermentQueue)
+                    .RegisterJobHandler(BillingManagementConsumer);
+                JobQueueConsumerFactory
+                    .GetOrCreate(BillingLoggingConstants.BillingPlanBatchQueue)
+                    .RegisterJobHandler(BillingPlanBatchConsumer);
+                JobQueueConsumerFactory
+                    .GetOrCreate(BillingLoggingConstants.BillingPlanSummaryQueue)
+                    .RegisterJobHandler(BillingPlanSummaryConsumer);
+                JobQueueConsumerFactory
+                    .GetOrCreate(BillingLoggingConstants.BillingPlanCleanupQueue)
+                    .RegisterJobHandler(BillingPlanCleanupConsumer);
 
-            // Job: Delete orphaned pools.
-            TaskHelper.RunBackgroundLoop(
-                $"{BillingLoggingConstants.BillingManagementTask}_run",
-                async (childLogger) =>
-                {
-                    await BillingManagementProducer.PublishJobAsync(childLogger, CancellationToken.None);
-                    return true;
-                },
-                TimeSpan.FromMinutes(5));
-
-            return Task.CompletedTask;
+                // Job: Start Billing Management Producer
+                TaskHelper.RunBackgroundLoop(
+                    $"{BillingLoggingConstants.BillingManagementTask}_run",
+                    async (childLogger) =>
+                    {
+                        await BillingManagementProducer.PublishJobAsync(childLogger, CancellationToken.None);
+                        return true;
+                    },
+                    TimeSpan.FromMinutes(5));
+            }
         }
     }
 }

@@ -34,6 +34,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         public bool EnableV2Transmission { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to archive old summaries and state changes.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV2Archiving { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to correct for missing environments.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV2CheckForMissingEnvironments { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to correct for missing environments.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV2CheckForFinalStates { get; set; }
+
+        /// <summary>
         /// Gets or sets the value of concurrent job consumers.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -87,7 +105,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
-            return systemConfiguration.GetValueAsync("featureflag:billing-v2-concurrent-job-producer-count", logger, ConcurrentJobProducerCount);
+            return systemConfiguration.GetValueAsync("setting:billing-v2-concurrent-job-producer-count", logger, ConcurrentJobProducerCount);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V2EnableArchivingAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:billing-v2-enable-archiving", logger, EnableV2Archiving);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V2EnableV2CheckForMissingEnvironmentsAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:billing-v2-enable-check-for-missing-environments", logger, EnableV2CheckForMissingEnvironments);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V2EnableV2CheckForFinalStatesAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:billing-v2-enable-check-for-final-states", logger, EnableV2CheckForFinalStates);
         }
     }
 }

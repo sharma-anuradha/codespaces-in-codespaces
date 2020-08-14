@@ -12,22 +12,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Billing Management Queue.
         /// </summary>
-        public const string BillingManagermentQueue = "billing-management-queue";
+        public const string BillingManagermentQueue = "billing-v2-management-queue";
 
         /// <summary>
         /// Billing Plan Batch Queue.
         /// </summary>
-        public const string BillingPlanBatchQueue = "billing-plan-batch-queue";
+        public const string BillingPlanBatchQueue = "billing-v2-plan-batch-queue";
 
         /// <summary>
         /// Billing Plan Summary Queue.
         /// </summary>
-        public const string BillingPlanSummaryQueue = "billing-plan-summary-queue";
+        public const string BillingPlanSummaryQueue = "billing-v2-plan-summary-queue";
 
         /// <summary>
         /// Billing Plan Cleanup Queue.
         /// </summary>
-        public const string BillingPlanCleanupQueue = "billing-plan-cleanup-queue";
+        public const string BillingPlanCleanupQueue = "billing-v2-plan-cleanup-queue";
 
         /// <summary>
         /// Billing Task.

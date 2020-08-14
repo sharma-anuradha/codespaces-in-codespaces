@@ -351,7 +351,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public Task GetBillablePlansByShardAsync(string planShard, AzureLocation location, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<VsoPlan>, IDiagnosticsLogger, Task> pageResultsCallback, IDiagnosticsLogger logger)
         {
             return planRepository.ForEachAsync(
-                (plan) => plan.Id.StartsWith(planShard) && (plan.IsFinalBillSubmitted != true || plan.IsFinalBillSubmitted.IsDefined()) && plan.Plan.Location == location,
+                (plan) => plan.Id.StartsWith(planShard) && (plan.IsFinalBillSubmitted != true || !plan.IsFinalBillSubmitted.IsDefined()) && plan.Plan.Location == location,
                 logger,
                 itemCallback,
                 pageResultsCallback);

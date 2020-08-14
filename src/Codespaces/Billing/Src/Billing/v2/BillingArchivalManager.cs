@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public class BillingArchivalManager : IBillingArchivalManager
     {
         private const string BaseLogName = "billing_archival_manager";
-
+        private readonly BillingSettings billingSettings;
         private readonly IBillSummaryRepository billSummaryRepository;
         private readonly IBillSummaryArchiveRepository billSummaryArchiveRepository;
         private readonly IEnvironmentStateChangeRepository stateChangeRepository;
@@ -31,16 +31,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingArchivalManager"/> class.
         /// </summary>
+        /// <param name="billingSettings">Billing Settings.</param>
         /// <param name="billSummaryRepository">bill Summary Repository.</param>
         /// <param name="billSummaryArchiveRepository">bill Summary Archive Repository.</param>
         /// <param name="stateChangeRepository">state Change Repository.</param>
         /// <param name="stateChangeArchiveRepository">environment State Change Archive Repository.</param>
         public BillingArchivalManager(
+            BillingSettings billingSettings,
             IBillSummaryRepository billSummaryRepository,
             IBillSummaryArchiveRepository billSummaryArchiveRepository,
             IEnvironmentStateChangeRepository stateChangeRepository,
             IEnvironmentStateChangeArchiveRepository stateChangeArchiveRepository)
         {
+            this.billingSettings = billingSettings;
             this.billSummaryRepository = billSummaryRepository;
             this.billSummaryArchiveRepository = billSummaryArchiveRepository;
             this.stateChangeRepository = stateChangeRepository;
@@ -50,13 +53,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <inheritdoc/>
         public Task MigrateEnvironmentStateChange(EnvironmentStateChange stateChange, IDiagnosticsLogger logger)
         {
-            return MigrateAsync(stateChangeRepository, stateChangeArchiveRepository, stateChange, logger);
+            return logger.OperationScopeAsync(
+                $"{BaseLogName}_migrate_environment_state_change",
+                async (childLogger) =>
+                {
+                    bool enableArchiving = await billingSettings.V2EnableArchivingAsync(logger.NewChildLogger());
+                    childLogger.FluentAddValue("EnableArchiving", enableArchiving);
+
+                    if (enableArchiving)
+                    {
+                        await MigrateAsync(stateChangeRepository, stateChangeArchiveRepository, stateChange, logger);
+                    }
+                });
         }
 
         /// <inheritdoc/>
         public Task MigrateBillSummary(BillSummary billSummary, IDiagnosticsLogger logger)
         {
-            return MigrateAsync(billSummaryRepository, billSummaryArchiveRepository, billSummary, logger);
+            return logger.OperationScopeAsync(
+                $"{BaseLogName}_migrate_bill_summary",
+                async (childLogger) =>
+                {
+                    bool enableArchiving = await billingSettings.V2EnableArchivingAsync(logger.NewChildLogger());
+                    childLogger.FluentAddValue("EnableArchiving", enableArchiving);
+
+                    if (enableArchiving)
+                    {
+                        await MigrateAsync(billSummaryRepository, billSummaryArchiveRepository, billSummary, logger);
+                    }
+                });
         }
 
         private static Task MigrateAsync<T>(IDocumentDbCollection<T> source, IDocumentDbCollection<T> destination, T entity, IDiagnosticsLogger logger)
