@@ -199,12 +199,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
 
             // Add Subscription quota data
-            record.Value.SubscriptionData = new SubscriptionData
+            var subscriptionData = new SubscriptionData
             {
                 SubscriptionId = plan.Plan.Subscription,
                 ComputeUsage = subscriptionComputeData.ComputeUsage,
                 ComputeQuota = subscriptionComputeData.ComputeQuota,
             };
+            record.PushTransition((environment) =>
+            {
+                environment.SubscriptionData = subscriptionData;
+            });
 
             return record.Value;
         }
