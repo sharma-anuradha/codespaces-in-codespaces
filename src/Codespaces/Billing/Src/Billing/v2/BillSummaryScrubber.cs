@@ -81,7 +81,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // Archive old summaries.
                         var olderSummaries = allSummaries.OrderByDescending(x => x.PeriodEnd).Skip(NumberOfBillSummariesToKeep);
                         childLogger.FluentAddValue("NumberOfSummariesBeingArchived", olderSummaries.Count());
-                        foreach (var summary in olderSummaries)
+
+                        // Archive from oldest to newest.
+                        foreach (var summary in olderSummaries.OrderBy(x => x.BillGenerationTime))
                         {
                             await BillingArchivalManager.MigrateBillSummary(summary, childLogger.NewChildLogger());
                         }
@@ -90,12 +92,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         var olderEnvironmentStateChanges = await FindOlderEnvironmentStateChangesAsync(latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
                         childLogger.FluentAddValue("NumberOfStateChangesBeingArchived", olderEnvironmentStateChanges.Count())
                             .FluentAddValue("NumberOfEnvironmentsArchived", olderEnvironmentStateChanges.GroupBy(x => x.Environment.Id).Count());
-                        foreach (var olderStateChanges in olderEnvironmentStateChanges)
+
+                        // Archive from oldest to newest.
+                        foreach (var olderStateChanges in olderEnvironmentStateChanges.OrderBy(x => x.Time))
                         {
                             await BillingArchivalManager.MigrateEnvironmentStateChange(olderStateChanges, childLogger.NewChildLogger());
                         }
                     }
-                });
+                },
+                swallowException: true);
         }
 
         private Task<bool> CheckAllEnvironmentFinalStatesAreCorrect(BillSummary billingSummary, DateTime end, IEnumerable<EnvironmentStateChange> allEnvironmentEvents, IDiagnosticsLogger logger)

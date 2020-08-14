@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private static Task MigrateAsync<T>(IDocumentDbCollection<T> source, IDocumentDbCollection<T> destination, T entity, IDiagnosticsLogger logger)
             where T : CosmosDbEntity
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{BaseLogName}_migrate",
                 async (childLogger) =>
                 {
@@ -79,8 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // delete the source
                     await source.DeleteAsync(originalKey, childLogger);
-                },
-                swallowException: true);
+                });
         }
     }
 }
