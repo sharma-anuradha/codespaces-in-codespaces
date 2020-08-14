@@ -124,12 +124,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // Group all events by their env id
                     var envsGroupedByEnvironments = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id).ToDictionary(x => x.Key);
+                    var environmentsToRemove = new List<EnvironmentUsage>();
+
                     foreach (var env in billingSummary.UsageDetail)
                     {
                         var environmentEvents = envsGroupedByEnvironments[env.Id];
 
                         if (!environmentEvents.Any())
                         {
+                            // We probably deleted this environment or archived it's bits. We need to remove this environment from the bill.
+                            environmentsToRemove.Add(env);
+                            hasChanged = true;
                             continue;
                         }
 
@@ -154,6 +159,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         // correct the final state.
                         env.EndState = lastState;
                         hasChanged = true;
+                    }
+
+                    // Remove any environments from the bill that should not be there. (no events have been found for it, so the state change table is inconsistent and we should lose sight of that environment)
+                    foreach (var envToRemove in environmentsToRemove)
+                    {
+                        billingSummary.UsageDetail.Remove(envToRemove);
                     }
 
                     return Task.FromResult(hasChanged);
