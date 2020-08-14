@@ -12,8 +12,8 @@
     "lint": "tslint -c ../tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
   },
   "vscodeCommit": {
-    "insider": "db40434f562994116e5b21c24015a2e40b2504e6",
-    "stable": "91899dcef7b8110878ea59626991a18c8a6a1b3e"
+    "insider": "bd08768fd310d34cdd4423a53e5f3ca77340fea5",
+    "stable": "db40434f562994116e5b21c24015a2e40b2504e6"
   },
   "husky": {
     "hooks": {
