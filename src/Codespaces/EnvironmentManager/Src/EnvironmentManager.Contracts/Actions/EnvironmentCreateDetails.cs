@@ -1,10 +1,11 @@
-﻿// <copyright file="EnvironmentCreateDetails.cs" company="Microsoft">
+// <copyright file="EnvironmentCreateDetails.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
@@ -68,5 +69,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets the auto shutdown time the user specified.
         /// </summary>
         public int AutoShutdownDelayMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the secrets from Create/Resume request.
+        /// </summary>
+        public IEnumerable<SecretDataBody> Secrets { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="StartInput.cs" company="Microsoft">
+// <copyright file="StartInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -27,5 +27,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// Gets or sets data required for computing applicable secrets for the environment.
         /// </summary>
         public FilterSecretsInput FilterSecrets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the secrets from Create/Resume request payload.
+        /// </summary>
+        public IEnumerable<UserSecretData> Secrets { get; set; }
     }
 }

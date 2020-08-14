@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -37,6 +39,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -51,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     public class EnvironmentsController : ControllerBase /* TODO add this later IEnvironmentsHttpContract */
     {
         private const string LoggingBaseName = "environments_controller";
+        private const int MaxEnvironmentVariablesSecrets = 10;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
@@ -252,7 +256,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             Requires.NotEmpty(environmentId, nameof(environmentId));
             await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
 
+            // Manually read the request body
+            ResumeCloudEnvironmentBody requestBody;
+            try
+            {
+                StreamReader bodyReader = new StreamReader(Request.Body);
+                requestBody = JsonConvert.DeserializeObject<ResumeCloudEnvironmentBody>(await bodyReader.ReadToEndAsync());
+            }
+            catch
+            {
+                logger.AddReason($"{HttpStatusCode.BadRequest}: The request body was not able to be parsed.");
+                return BadRequest();
+            }
+
+            IsSecretQuotaReached(requestBody?.Secrets);
+
             var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
+            startEnvParams.Secrets = requestBody?.Secrets;
 
             var result = await EnvironmentManager.ResumeAsync(
                 environmentId,
@@ -292,11 +312,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
             logger.AddSkuName(environmentCreateDetails.SkuName);
 
+            IsSecretQuotaReached(createEnvironmentInput.Secrets);
+
             // Build metrics manager
             var metricsInfo = await GetMetricsInfoAsync(logger);
 
             // Get start environment parameters
             var startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
+            startEnvironmentParams.Secrets = environmentCreateDetails.Secrets;
 
             // Create environment
             var cloudEnvironment = await EnvironmentManager.CreateAsync(
@@ -791,6 +814,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     throw new EntityNotFoundException((int)MessageCodes.EnvironmentDoesNotExist);
                 }
+            }
+        }
+
+        private void IsSecretQuotaReached(IEnumerable<SecretDataBody> secrets)
+        {
+            if (secrets != null && secrets.Count(x => x.Type == SecretType.EnvironmentVariable) > MaxEnvironmentVariablesSecrets)
+            {
+                throw new ForbiddenException(
+                            (int)MessageCodes.ExceededSecretsQuota,
+                            message: $"Quota reached for the secrets type '{SecretType.EnvironmentVariable}'");
             }
         }
     }

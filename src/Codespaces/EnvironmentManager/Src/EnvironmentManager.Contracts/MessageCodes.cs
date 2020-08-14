@@ -140,5 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Unable to resolve the environment name conflict in restore.
         /// </summary>
         UnableToResolveEnvironmentNameConflict = 25,
+
+        /// <summary>
+        /// Exceeded secrets quota.
+        /// </summary>
+        ExceededSecretsQuota = 26,
     }
 }

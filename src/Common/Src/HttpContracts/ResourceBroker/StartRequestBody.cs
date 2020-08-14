@@ -1,4 +1,4 @@
-﻿// <copyright file="StartRequestBody.cs" company="Microsoft">
+// <copyright file="StartRequestBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -29,5 +29,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Gets or sets data required for computing applicable secrets for the environment.
         /// </summary>
         public FilterSecretsBody FilterSecrets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the secrets from Create/Resume request payload.
+        /// </summary>
+        public IEnumerable<SecretDataBody> Secrets { get; set; }
     }
 }

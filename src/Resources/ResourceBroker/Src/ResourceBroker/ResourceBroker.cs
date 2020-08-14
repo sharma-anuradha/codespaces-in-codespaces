@@ -131,7 +131,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource.Resource?.ResourceId);
 
                                 var userSecrets = default(IEnumerable<UserSecretData>);
-                                if (computeResource.Resource.FilterSecrets?.PrioritizedSecretStoreResources != null &&
+
+                                // If secrets are sent from Create/Resume request payload
+                                if (computeResource.Resource.Secrets?.Any() == true)
+                                {
+                                    userSecrets = computeResource.Resource.Secrets;
+                                }
+                                else if (computeResource.Resource.FilterSecrets?.PrioritizedSecretStoreResources != null &&
                                     computeResource.Resource.FilterSecrets.PrioritizedSecretStoreResources.Any())
                                 {
                                     userSecrets = await SecretManager.GetApplicableSecretsAndValuesAsync(computeResource.Resource.FilterSecrets, childLogger);

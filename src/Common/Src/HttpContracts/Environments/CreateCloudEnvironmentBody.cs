@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environments
@@ -83,5 +84,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the auto shutdown time the user specified.
         /// </summary>
         public int AutoShutdownDelayMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the secrets from Create/Resume request.
+        /// </summary>
+        public IEnumerable<SecretDataBody> Secrets { get; set; }
     }
 }
