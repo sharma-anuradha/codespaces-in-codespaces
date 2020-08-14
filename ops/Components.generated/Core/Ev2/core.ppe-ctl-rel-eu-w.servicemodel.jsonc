@@ -33,7 +33,7 @@
       "azureResourceGroupName": "vscs-core-ppe-ctl-rel-eu-w",
       "location": "WestEurope",
       "instanceOf": "vscs-core-ppe-ctl-rel-eu-w-rg",
-      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
       "serviceResources": [
         {
           "name": "vscs-core-ppe-ctl-rel-eu-w-arm",

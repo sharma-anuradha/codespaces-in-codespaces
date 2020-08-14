@@ -33,7 +33,7 @@
       "azureResourceGroupName": "vscs-core-prod-ctl-rel-us-w2",
       "location": "WestUs2",
       "instanceOf": "vscs-core-prod-ctl-rel-us-w2-rg",
-      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
       "serviceResources": [
         {
           "name": "vscs-core-prod-ctl-rel-us-w2-arm",

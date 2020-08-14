@@ -10,6 +10,6 @@
   "env": "dev",
   "plane": "ctl",
   "prefix": "vscs",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED"
+  "subscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c",
+  "subscriptionName": "vscs-core-dev-ctl"
 }

@@ -19,39 +19,38 @@ export class ComponentsDeployment {
       comp.displayName = jsonComp.displayName;
       comp.dependsOn = jsonComp.dependsOn;
       for (const subJson of jsonComp.subscriptions) {
-        comp.subscriptions.push(this.parseSubscriptionJson(subJson, comp.prefix));
+        const subscriptions = this.parseSubscriptionsJson(subJson, comp.prefix);
+        comp.subscriptions = comp.subscriptions.concat(subscriptions);
       }
       this.components.push(comp);
     }
   }
 
-  parseSubscriptionJson(subscription, component: string): Subscription {
-    const sub = new Subscription();
-    sub.component = component;
-    sub.nameTemplate = subscription.nameTemplate;
-    sub.plane = subscription.plane;
-    sub.env = subscription.env;
-    sub.count = subscription.count;
-    const templateNames = subscription.nameTemplate.match(
+  parseSubscriptionsJson(subJson: any, component: string): Subscription[] {
+    const templateNames = subJson.nameTemplate.match(
       this.nameTemplate
     ) as string[];
-    const testSplit = subscription.nameTemplate.split("-");
+    const testSplit = subJson.nameTemplate.split("-");
     const splitKeyValue = templateNames.map((n) => {
       return { key: n, value: testSplit.indexOf(`{${n}}`) };
     }) as any[];
-    for (const proName in subscription.provisioned) {
-      const pro = new Provisioned();
-      const proJson = subscription.provisioned[proName];
-      pro.name = proName;
-      const splitName = pro.name.split("-");
+
+    const subs = [];
+
+    for (const proName in subJson.provisioned) {
+      const proJson = subJson.provisioned[proName];
+      const sub = new Subscription();
+      subs.push(sub);
+      sub.component = component;
+      sub.name = proName;
+      sub.subscriptionId = proJson.subscriptionId;
+      const splitName = proName.split("-");
       for (const item of splitKeyValue) {
-        pro[item.key] = splitName[item.value];
+        sub[item.key] = splitName[item.value];
       }
-      pro.subscriptionId = proJson.subscriptionId;
-      sub.provisioned.push(pro);
     }
 
-    return sub;
+    return subs;
   }
 }
 
@@ -69,25 +68,17 @@ export class Component {
   }
 
   getSubscription(env: string, plane:string): Subscription[] {
-    return this.subscriptions.filter(s => s.env === env && s.plane === plane)
+    return this.subscriptions.filter(s => s.env === env && s.plane === plane && !s.type)
   }
 }
 
 export class Subscription {
-  nameTemplate: string;
+  name: string;
+  subscriptionId: string;
+  prefix: string;
   component: string;
   env: string;
   plane: string;
-  count: number;
-  provisioned: Provisioned[] = [];
-}
-
-export class Provisioned {
-  name: string;
-  globalPrefix: string;
-  prefix: string;
-  env: string;
-  plane: string;
+  type: string;
   geo: string;
-  subscriptionId: string;
 }

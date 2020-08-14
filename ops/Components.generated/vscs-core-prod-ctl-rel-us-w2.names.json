@@ -27,6 +27,6 @@
   "region": "us-w2",
   "regionLocation": "WestUs2",
   "regionSuffix": "w2",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED"
+  "subscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
+  "subscriptionName": "vscs-core-prod-ctl"
 }

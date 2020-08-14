@@ -10,6 +10,6 @@
   "env": "prod",
   "plane": "ctl",
   "prefix": "vscs",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED"
+  "subscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce",
+  "subscriptionName": "vscs-codesp-prod-ctl"
 }

@@ -22,8 +22,8 @@ export default abstract class Names {
 
         for (const plane of env.planes) {
 
-          const subscription = comp.getSubscription(env.name, plane.name)[0];
-          const firstSub = subscription?.provisioned[0];
+          const subscriptions = comp.getSubscription(env.name, plane.name);
+          const firstSub = subscriptions[0];
           if (firstSub) {
               plane.subscriptionName = firstSub.name;
               plane.subscriptionId = firstSub.subscriptionId;

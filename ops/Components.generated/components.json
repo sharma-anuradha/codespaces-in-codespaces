@@ -7,42 +7,13 @@
       "dependsOn": [],
       "subscriptions": [
         {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "env": "test",
-          "plane": "ctl",
+          "nameTemplate": "{prefix}-{component}-{env}-{plane}",
           "provisioned": {
-            "vscs-core-test": {
+            "vscs-core-test-ops": {
               "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "env": "dev",
-          "plane": "ctl",
-          "provisioned": {
-            "vscs-stub-dev-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "env": "ppe",
-          "plane": "ctl",
-          "provisioned": {
-            "vscs-stub-ppe-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "env": "prod",
-          "plane": "ctl",
-          "provisioned": {
-            "vscs-stub-ppe-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+            },
+            "vscs-core-test-ctl": {
+              "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2"
             }
           }
         }
@@ -54,47 +25,25 @@
       "dependsOn": [],
       "subscriptions": [
         {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "plane": "ctl",
+          "nameTemplate": "{prefix}-{component}-{env}-{plane}",
           "provisioned": {
             "vscs-core-dev-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c"
             },
             "vscs-core-ppe-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2"
             },
             "vscs-core-prod-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "plane": "ops",
-          "provisioned": {
+              "subscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34"
+            },
             "vscs-core-dev-ops": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "03f9b555-3a9a-44c4-b410-a53acc2a32eb"
             },
             "vscs-core-ppe-ops": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "b37129d5-ec65-4920-bd6c-42aa7a4bdd73"
             },
             "vscs-core-prod-ops": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-monitoring",
-          "plane": "ops",
-          "provisioned": {
-            "vscs-core-dev-ops-monitoring": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-core-ppe-ops-monitoring": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-core-prod-ops-monitoring": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "b5e134ee-9729-42cf-b4c1-6371f7e2afa7"
             }
           }
         }
@@ -107,54 +56,6 @@
         "core"
       ],
       "subscriptions": [
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "plane": "ctl",
-          "provisioned": {
-            "vscs-comm-dev-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-ppe-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-prod-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
-          "plane": "data",
-          "provisioned": {
-            "vscs-comm-dev-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-dev-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-dev-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-ppe-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-ppe-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-ppe-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-prod-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-prod-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-comm-prod-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        }
       ]
     },
     "collab": {
@@ -165,54 +66,6 @@
         "comm"
       ],
       "subscriptions": [
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "plane": "ctl",
-          "provisioned": {
-            "vscs-collab-dev-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-ppe-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-prod-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
-          "plane": "data",
-          "provisioned": {
-            "vscs-collab-dev-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-dev-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-dev-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-ppe-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-ppe-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-ppe-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-prod-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-prod-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-collab-prod-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        }
       ]
     },
     "codesp": {
@@ -224,118 +77,29 @@
       ],
       "subscriptions": [
         {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}",
-          "plane": "ctl",
+          "nameTemplate": "{prefix}-{component}-{env}-{plane}",
           "provisioned": {
+            "vscs-codesp-dev-ops": {
+              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+            },
             "vscs-codesp-dev-ctl": {
               "subscriptionId": "00000000-0000-0000-0000-000000000000"
             },
+            "vscs-codesp-ppe-ops": {
+              "subscriptionId": "4b957fae-cce2-4865-9570-3add886016a4"
+            },
             "vscs-codesp-ppe-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd"
+            },
+            "vscs-codesp-prod-ops": {
+              "subscriptionId": "5f625617-0786-46cc-815e-c969b3f01e12"
             },
             "vscs-codesp-prod-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-github",
-          "plane": "ctl",
-          "provisioned": {
-            "vscs-codesp-dev-ctl-github": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-ppe-ctl-github": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-prod-ctl-github": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-images",
-          "plane": "data",
-          "provisioned": {
-            "vscs-codesp-dev-data-images": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-ppe-data-images": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-prod-data-images": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-{geo}",
-          "plane": "data",
-          "provisioned": {
-            "vscs-codesp-dev-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-ppe-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-ppe-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-ppe-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-prod-data-ap": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-prod-data-eu": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-prod-data-us": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-compute-{geo}-{count}",
-          "plane": "data",
-          "env": "dev",
-          "count": 1,
-          "provisioned": {
-            "vscs-codesp-dev-data-compute-ap-001": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-data-compute-eu-001": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-data-compute-us-001": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        },
-        {
-          "nameTemplate": "{globalPrefix}-{prefix}-{env}-{plane}-storage-{geo}-{count}",
-          "plane": "data",
-          "env": "dev",
-          "count": 1,
-          "provisioned": {
-            "vscs-codesp-dev-data-storage-ap-001": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-data-storage-eu-001": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-data-storage-us-001": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
+              "subscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce"
             }
           }
         }
-      ]
+     ]
     }
   }
 }
