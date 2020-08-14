@@ -34,6 +34,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Mode
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UsageAnalytics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.AzureClient;
 
@@ -94,6 +95,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 frontEndAppSettings.BillingSettings,
                 frontEndAppSettings.BillingMeterSettings,
                 frontEndAppSettings.UseMocksForLocalDevelopment);
+
+            services.AddBillingEventToBillingWindowMapper();
+            services.AddEnvironmentArchivalCalculator();
 
             // Add the subscription manager
             services.AddSubscriptionManagers(

@@ -44,7 +44,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(ListDevStamps),
                     typeof(GetSkuImageVersionCommand),
                     typeof(CleanResourceGroups),
-                    typeof(ManagePreviewUsersCommand))
+                    typeof(ManagePreviewUsersCommand),
+                    typeof(DeleteEnvironmentCommand))
                 .WithParsed<ShowDbAccountInfoCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CreatePortForwardingConnection>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<PortForwardingConnectionEstablished>(command => command.Execute(Console.Out, Console.Error))
@@ -64,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<GetSkuImageVersionCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CleanResourceGroups>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ManagePreviewUsersCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<DeleteEnvironmentCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithNotParsed(errs => { exitCode = 1; });
             }
             catch (Exception ex)
