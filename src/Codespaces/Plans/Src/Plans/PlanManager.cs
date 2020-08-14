@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
+using Microsoft.Azure.Documents.SystemFunctions;
+using Microsoft.Azure.Management.CosmosDB.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -346,20 +348,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         }
 
         /// <inheritdoc/>
-        public Task GetBillablePlansByShardAsync(string planShard, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, TimeSpan pageDelay, IDiagnosticsLogger logger)
+        public Task GetBillablePlansByShardAsync(string planShard, AzureLocation location, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<VsoPlan>, IDiagnosticsLogger, Task> pageResultsCallback, IDiagnosticsLogger logger)
         {
             return planRepository.ForEachAsync(
-                (plan) => plan.Plan.Subscription.StartsWith(planShard) && plan.Plan.Location == this.currentLocationProvider.CurrentLocation,
-                logger,
-                itemCallback,
-                (_, __) => Task.Delay(pageDelay));
-        }
-
-        /// <inheritdoc/>
-        public Task GetBillablePlansByShardAsync(string planShard, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<VsoPlan>, IDiagnosticsLogger, Task> pageResultsCallback, IDiagnosticsLogger logger)
-        {
-            return planRepository.ForEachAsync(
-                (plan) => plan.Id.StartsWith(planShard) && plan.Plan.Location == this.currentLocationProvider.CurrentLocation,
+                (plan) => plan.Id.StartsWith(planShard) && (plan.IsFinalBillSubmitted != true || plan.IsFinalBillSubmitted.IsDefined()) && plan.Plan.Location == location,
                 logger,
                 itemCallback,
                 pageResultsCallback);

@@ -9,11 +9,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 
@@ -34,18 +36,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         /// <param name="billingOverrideRepository">Target Billing Override Repository.</param>
         /// <param name="billingPlanSummaryProducer">Target Billing Plan Summary Producer.</param>
         /// <param name="billingPlanCleanupProducer">Target Billing Plan Cleanup Producer.</param>
+        /// <param name="controlPlaneInfo">The control plane used for getting locations.</param>
         public BillingPlanBatchConsumer(
             BillingSettings billingSettings,
             IPlanManager planManager,
             IBillingOverrideRepository billingOverrideRepository,
             IBillingPlanSummaryProducer billingPlanSummaryProducer,
-            IBillingPlanCleanupProducer billingPlanCleanupProducer)
+            IBillingPlanCleanupProducer billingPlanCleanupProducer,
+            IControlPlaneInfo controlPlaneInfo)
         {
             BillingSettings = billingSettings;
             PlanManager = planManager;
             BillingOverrideRepository = billingOverrideRepository;
             BillingPlanSummaryProducer = billingPlanSummaryProducer;
             BillingPlanCleanupProducer = billingPlanCleanupProducer;
+            ControlPlaneInfo = controlPlaneInfo;
         }
 
         private BillingSettings BillingSettings { get; }
@@ -58,6 +63,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
 
         private IBillingPlanCleanupProducer BillingPlanCleanupProducer { get; }
 
+        private IControlPlaneInfo ControlPlaneInfo { get; }
+
         /// <inheritdoc/>
         protected override Task HandleJobAsync(BillingPlanBatchJobPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
@@ -69,18 +76,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
 
                     int producerCount = await BillingSettings.V2ConcurrentJobProducerCountAsync(childLogger);
 
-                    if (producerCount > 1)
+                    foreach (var location in ControlPlaneInfo.Stamp.DataPlaneLocations)
                     {
-                        await QueuePlansParallel(payload.PlanShard, producerCount, childLogger, cancellationToken);
-                    }
-                    else
-                    {
-                        await QueuePlansSequential(payload.PlanShard, childLogger, cancellationToken);
+                        if (producerCount > 1)
+                        {
+                            await QueuePlansParallel(payload.PlanShard, producerCount, location, childLogger, cancellationToken);
+                        }
+                        else
+                        {
+                            await QueuePlansSequential(payload.PlanShard, location, childLogger, cancellationToken);
+                        }
                     }
                 });
         }
 
-        private async Task QueuePlansSequential(string shard, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        private async Task QueuePlansSequential(string shard, AzureLocation location, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Fetch list of plans overrides
             var overrides = (await BillingOverrideRepository.QueryAsync(q => q, logger)).ToList();
@@ -90,6 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
 
             await PlanManager.GetBillablePlansByShardAsync(
                 shard,
+                location,
                 async (plan, childLogger) =>
                 {
                     childLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);
@@ -100,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 logger);
         }
 
-        private async Task QueuePlansParallel(string shard, int concurrentJobProducerCount, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        private async Task QueuePlansParallel(string shard, int concurrentJobProducerCount, AzureLocation location, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Fetch list of plans overrides
             var overrides = (await BillingOverrideRepository.QueryAsync(q => q, logger)).ToList();
@@ -119,6 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 // Fetch list of plans
                 await PlanManager.GetBillablePlansByShardAsync(
                     shard,
+                    location,
                     async (plan, childLogger) =>
                     {
                         childLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);

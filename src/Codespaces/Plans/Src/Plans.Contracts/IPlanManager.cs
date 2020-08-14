@@ -128,23 +128,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// <summary>
         /// Gets only the billable plans by shard.
         /// </summary>
-        /// <typeparam name="VsoPlan">Target plan type.</typeparam>
         /// <param name="planShard">The plan shard.</param>
-        /// <param name="itemCallback">Target Item Callback.</param>
-        /// <param name="pageDelay">Target Page Delay.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Running Task.</returns>
-        Task GetBillablePlansByShardAsync(string planShard, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, TimeSpan pageDelay, IDiagnosticsLogger logger);
-
-        /// <summary>
-        /// Gets only the billable plans by shard.
-        /// </summary>
-        /// <param name="planShard">The plan shard.</param>
+        /// <param name="location"> the azure location.</param>
         /// <param name="itemCallback">Target Item Callback.</param>
         /// <param name="pageResultsCallback">Page Result Callback.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Running Task.</returns>
-        Task GetBillablePlansByShardAsync(string planShard, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<VsoPlan>, IDiagnosticsLogger, Task> pageResultsCallback, IDiagnosticsLogger logger);
+        Task GetBillablePlansByShardAsync(string planShard, AzureLocation location, Func<VsoPlan, IDiagnosticsLogger, Task> itemCallback, Func<IEnumerable<VsoPlan>, IDiagnosticsLogger, Task> pageResultsCallback, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Returns the SkuPlan sharding mechanism. We have currently sharing by SubscriptionId so the returned list
