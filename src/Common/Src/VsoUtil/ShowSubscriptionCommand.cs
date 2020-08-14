@@ -103,15 +103,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             IAzureSubscriptionCapacityProvider subscriptionCapacityProvider,
             IAzureSubscription subscription)
         {
-            var computUsageTask = subscriptionCapacityProvider.GetAzureResourceUsageAsync(subscription, location, ServiceType.Compute, new NullLogger());
+            var computeUsageTask = subscriptionCapacityProvider.GetAzureResourceUsageAsync(subscription, location, ServiceType.Compute, new NullLogger());
             var networkUsageTask = subscriptionCapacityProvider.GetAzureResourceUsageAsync(subscription, location, ServiceType.Network, new NullLogger());
             var storageUsageTask = subscriptionCapacityProvider.GetAzureResourceUsageAsync(subscription, location, ServiceType.Storage, new NullLogger());
-            await Task.WhenAll(computUsageTask, networkUsageTask, storageUsageTask);
+            await Task.WhenAll(computeUsageTask, networkUsageTask, storageUsageTask);
 
             var usages = new List<AzureResourceUsage>();
 
-            var computUsage = computUsageTask.Result;
-            usages.AddRange(computUsage);
+            var computeUsage = computeUsageTask.Result;
+            usages.AddRange(computeUsage);
 
             var networkUsage = networkUsageTask.Result;
             usages.AddRange(networkUsage);

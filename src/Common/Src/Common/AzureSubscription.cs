@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="computeQuotas">The compute quotas.</param>
         /// <param name="storageQuotas">The storage quotas.</param>
         /// <param name="networkQuotas">The network quotas.</param>
+        /// <param name="serviceType">The service type supported for this subscription.</param>
         public AzureSubscription(
             string subscriptionId,
             string displayName,
@@ -38,7 +39,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IReadOnlyCollection<AzureLocation> locations,
             IReadOnlyDictionary<string, int> computeQuotas,
             IReadOnlyDictionary<string, int> storageQuotas,
-            IReadOnlyDictionary<string, int> networkQuotas)
+            IReadOnlyDictionary<string, int> networkQuotas,
+            ServiceType? serviceType)
         {
             Requires.NotNullOrEmpty(subscriptionId, nameof(subscriptionId));
             Requires.NotNullOrEmpty(displayName, nameof(displayName));
@@ -53,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputeQuotas = computeQuotas ?? EmptyQuotas.Value;
             StorageQuotas = storageQuotas ?? EmptyQuotas.Value;
             NetworkQuotas = networkQuotas ?? EmptyQuotas.Value;
+            ServiceType = serviceType;
         }
 
         /// <inheritdoc/>
@@ -79,5 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IReadOnlyDictionary<string, int> NetworkQuotas { get; }
+
+        /// <inheritdoc/>
+        public ServiceType? ServiceType { get; }
     }
 }

@@ -125,9 +125,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 SecretProvider,
                 servicePrincipalSettings.ObjectId);
 
-            var computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
-            var storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);
-            var networkQuotas = defaultQuotas.Network.Combine(azureSubscriptionSettings.Quotas?.Network);
+            Dictionary<string, int> computeQuotas = default;
+            Dictionary<string, int> storageQuotas = default;
+            Dictionary<string, int> networkQuotas = default;
+
+            switch (azureSubscriptionSettings.ServiceType)
+            {
+                case ServiceType.Compute:
+                    computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
+                    break;
+                case ServiceType.Storage:
+                    storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);
+                    break;
+                case ServiceType.Network:
+                    networkQuotas = defaultQuotas.Network.Combine(azureSubscriptionSettings.Quotas?.Network);
+                    break;
+                case ServiceType.KeyVault:
+                    break;
+                default:
+                    computeQuotas = defaultQuotas.Compute.Combine(azureSubscriptionSettings.Quotas?.Compute);
+                    storageQuotas = defaultQuotas.Storage.Combine(azureSubscriptionSettings.Quotas?.Storage);
+                    networkQuotas = defaultQuotas.Network.Combine(azureSubscriptionSettings.Quotas?.Network);
+                    break;
+            }
 
             var azureSubscription = new AzureSubscription(
                 azureSubscriptionSettings.SubscriptionId,
@@ -137,7 +157,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 locations,
                 computeQuotas,
                 storageQuotas,
-                networkQuotas);
+                networkQuotas,
+                azureSubscriptionSettings.ServiceType);
             return azureSubscription;
         }
     }

@@ -100,6 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 new[] { azureLocation },
                 null,
                 null,
+                null,
                 null);
             var dataPlaneSubscription = new AzureSubscription(
                 destAzureSubscriptionId,
@@ -107,6 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 servicePrincipal,
                 true,
                 new[] { azureLocation },
+                null,
                 null,
                 null,
                 null);

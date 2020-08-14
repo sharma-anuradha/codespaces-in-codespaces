@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -52,5 +53,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public AzureSubscriptionQuotaSettings Quotas { get; set; }
+
+        /// <summary>
+        /// Gets or sets the service type supported by this Azure subscription.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public ServiceType? ServiceType { get; set; } = null;
     }
 }

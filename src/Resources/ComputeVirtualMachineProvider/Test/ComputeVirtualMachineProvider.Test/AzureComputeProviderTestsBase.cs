@@ -97,6 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                         new[] {azureLocation},
                         null,
                         null,
+                        null,
                         null)
                 });
             return catalogMoq;

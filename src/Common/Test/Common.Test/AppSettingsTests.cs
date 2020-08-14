@@ -136,9 +136,41 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.NotNull(subscription.ComputeQuotas);
                 Assert.NotNull(subscription.NetworkQuotas);
                 Assert.NotNull(subscription.StorageQuotas);
-                Assert.True(subscription.ComputeQuotas.ContainsKey("standardFSv2Family"));
-                Assert.True(subscription.NetworkQuotas.ContainsKey("VirtualNetworks"));
-                Assert.True(subscription.StorageQuotas.ContainsKey("StorageAccounts"));
+
+                // service specific subscriptions should only have their respective quota type set
+                // and should only have a single location specified.
+                switch (subscription.ServiceType)
+                    {
+                        case ServiceType.Compute:
+                            Assert.NotEmpty(subscription.ComputeQuotas);
+                            Assert.Empty(subscription.NetworkQuotas);
+                            Assert.Empty(subscription.StorageQuotas);
+                            Assert.Single(subscription.Locations);
+                            break;
+                        case ServiceType.Network:
+                            Assert.NotEmpty(subscription.NetworkQuotas);
+                            Assert.Empty(subscription.ComputeQuotas);
+                            Assert.Empty(subscription.StorageQuotas);
+                            Assert.Single(subscription.Locations);
+                            break;
+                        case ServiceType.Storage:
+                            Assert.NotEmpty(subscription.StorageQuotas);
+                            Assert.Empty(subscription.ComputeQuotas);
+                            Assert.Empty(subscription.NetworkQuotas);
+                            Assert.Single(subscription.Locations);
+                            break;
+                        case ServiceType.KeyVault:
+                            Assert.Empty(subscription.ComputeQuotas);
+                            Assert.Empty(subscription.StorageQuotas);
+                            Assert.Empty(subscription.NetworkQuotas);
+                            Assert.Single(subscription.Locations);
+                            break;
+                        default:
+                            Assert.True(subscription.ComputeQuotas.ContainsKey("standardFSv2Family"));
+                            Assert.True(subscription.NetworkQuotas.ContainsKey("VirtualNetworks"));
+                            Assert.True(subscription.StorageQuotas.ContainsKey("StorageAccounts"));
+                            break;
+                    }
             }
         }
 

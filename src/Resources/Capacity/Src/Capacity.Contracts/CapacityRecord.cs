@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;

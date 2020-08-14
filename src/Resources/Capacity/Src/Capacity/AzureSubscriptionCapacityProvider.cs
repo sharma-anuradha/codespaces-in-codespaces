@@ -304,6 +304,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             AzureLocation location,
             IEnumerable<string> quotas)
         {
+            // If service type of this subscription isn't "Compute" return empty.
+            if (subscription.ServiceType != null && subscription.ServiceType != ServiceType.Compute)
+            {
+                return new List<AzureResourceUsage>();
+            }
+
             using (var computeClient = await CreateComputeManagementAsync(subscription))
             {
                 var usage = await computeClient.Usage.ListAsync(location.ToString());
@@ -329,6 +335,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             AzureLocation location,
             IEnumerable<string> quotas)
         {
+            // If service type of this subscription isn't "Network" return empty.
+            if (subscription.ServiceType != null && subscription.ServiceType != ServiceType.Network)
+            {
+                return new List<AzureResourceUsage>();
+            }
+
             using (var networkClient = await CreateNetworkManagementClientAsync(subscription))
             {
                 try
@@ -370,6 +382,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             AzureLocation location,
             IEnumerable<string> quotas)
         {
+            // If service type of this subscription isn't "Storage" return empty.
+            if (subscription.ServiceType != null && subscription.ServiceType != ServiceType.Storage)
+            {
+                return new List<AzureResourceUsage>();
+            }
+
             using (var storageClient = await CreateStorageManagementClientAsync(subscription))
             {
                 try

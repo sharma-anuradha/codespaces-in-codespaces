@@ -97,13 +97,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
         [MemberData(nameof(GoodLocations))]
         public async Task SelectAzureResourceLocation_OverCapacity_0(AzureLocation location)
         {
-            // *-0 subscriptions report 100% full, *-1 subscriptions retport 80% full
+            // *-0 subscriptions report 100% full, *-1 subscriptions report 80% full
             var capacityManager = CreateTestCapacityManager(0.8, fillZero: true);
             var criteria = CoresCriteria();
             var logger = new Mock<IDiagnosticsLogger>().Object;
 
             var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
             var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-1";
+            Assert.Equal(expectedSubscriptionNamePrefix, result.Subscription.DisplayName);
+            Assert.Equal(result.Location, location);
+            Assert.True(result.Subscription.Enabled);
+        }
+
+        [Fact]
+        public async Task SelectAzureResourceLocation_ServiceType()
+        {
+            var location = AzureLocation.WestUs2;
+            var capacityManager = CreateTestCapacityManager(0.10, fillZero: false);
+            var criteria = CoresCriteria();
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+
+            var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
+            var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-1";
+            Assert.Equal(ServiceType.Compute, result.Subscription.ServiceType);
             Assert.Equal(expectedSubscriptionNamePrefix, result.Subscription.DisplayName);
             Assert.Equal(result.Location, location);
             Assert.True(result.Subscription.Enabled);
@@ -136,17 +152,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                     MockAzureSubscription(AzureLocation.EastUs, 1),
                     MockAzureSubscription(AzureLocation.SouthEastAsia, 1),
                     MockAzureSubscription(AzureLocation.WestEurope, 1),
-                    MockAzureSubscription(AzureLocation.WestUs2, 1),
+                    MockAzureSubscription(AzureLocation.WestUs2, 1, true, ServiceType.Compute),
                     MockAzureSubscription(AzureLocation.EastUs, 2, false),
                     MockAzureSubscription(AzureLocation.SouthEastAsia, 2, false),
                     MockAzureSubscription(AzureLocation.WestEurope, 2, false),
+                    MockAzureSubscription(AzureLocation.WestUs2, 2, false),
                     MockAzureSubscription(AzureLocation.WestUs2, 2, false),
                 });
 
             return mockAzureSubscriptionCatalog.Object;
         }
 
-        private static AzureSubscription MockAzureSubscription(AzureLocation location, int instance = 0, bool enabled = true)
+        private static AzureSubscription MockAzureSubscription(AzureLocation location, int instance = 0, bool enabled = true, ServiceType? serviceType = null)
         {
             return new AzureSubscription(
                 Guid.NewGuid().ToString(),
@@ -169,7 +186,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                 new ReadOnlyDictionary<string, int>(new Dictionary<string, int>
                 {
                     { VirtualNetworksQuota, 100 }
-                })
+                }),
+                serviceType
             );
         }
 

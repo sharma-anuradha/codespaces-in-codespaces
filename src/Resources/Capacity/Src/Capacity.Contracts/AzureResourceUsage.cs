@@ -3,11 +3,12 @@
 // </copyright>
 
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
 {
     /// <summary>
-    /// Specifies the the quota limit and current uage.
+    /// Specifies the the quota limit and current usage.
     /// </summary>
     public class AzureResourceUsage
     {
@@ -56,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         public ServiceType ServiceType { get; }
 
         /// <summary>
-        /// Gets the auzre quota name.
+        /// Gets the azure quota name.
         /// </summary>
         public string Quota { get; }
 

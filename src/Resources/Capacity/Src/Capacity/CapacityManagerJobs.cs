@@ -332,7 +332,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                         .FluentAddBaseValue(nameof(location), location.ToString())
                         .FluentAddBaseValue(nameof(serviceType), serviceType.ToString());
 
-                    var aggregate = new Dictionary<string, (long, long)>();
+                    var aggregate = new Dictionary<string, (long, long, long, long, long, long)>();
 
                     // Report subscription-location quota thresholds
                     foreach (var subscription in subscriptions)
@@ -348,7 +348,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
                             foreach (var resourceUsage in resourceUsages)
                             {
-                                UpdateAggregate(aggregate, resourceUsage);
+                                var isMixedSubscription = subscription.ServiceType == null;
+                                UpdateAggregate(aggregate, resourceUsage, isMixedSubscription);
                                 LogCapacityAlert(
                                     innerLogger,
                                     subscription.DisplayName,
@@ -357,7 +358,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                                     resourceUsage.CurrentValue,
                                     resourceUsage.SubscriptionId,
                                     resourceUsage.Location,
-                                    subscription.Enabled);
+                                    subscription.Enabled,
+                                    subscription.ServiceType?.ToString());
                             }
                         }
                         catch (Exception ex)
@@ -369,7 +371,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                     // Report aggregate location quota threshold
                     foreach (var quota in aggregate.Keys)
                     {
-                        var (limit, current) = aggregate[quota];
+                        var (limit, current, limitForMixedSubs, currentForMixedSubs, limitForServiceTypeSpecificSubs, currentForServiceTypeSpecificSubs) = aggregate[quota];
+                        innerLogger
+                            .FluentAddValue(nameof(limitForMixedSubs), limitForMixedSubs)
+                            .FluentAddValue(nameof(currentForMixedSubs), currentForMixedSubs)
+                            .FluentAddValue(nameof(limitForServiceTypeSpecificSubs), limitForServiceTypeSpecificSubs)
+                            .FluentAddValue(nameof(currentForServiceTypeSpecificSubs), currentForServiceTypeSpecificSubs);
                         LogCapacityAlert(innerLogger, "aggregate", quota, limit, current);
                     }
                 },
@@ -398,20 +405,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 logger);
         }
 
-        private void UpdateAggregate(Dictionary<string, (long, long)> aggregate, AzureResourceUsage resourceUsage)
+        private void UpdateAggregate(
+            Dictionary<string, (long, long, long, long, long, long)> aggregate,
+            AzureResourceUsage resourceUsage,
+            bool isMixedSubscription)
         {
             var quota = resourceUsage.Quota;
 
             // update aggregate
             if (!aggregate.ContainsKey(quota))
             {
-                aggregate[quota] = (0, 0);
+                aggregate[quota] = (0, 0, 0, 0, 0, 0);
             }
 
-            var (limit, current) = aggregate[quota];
+            var (limit, current, limitForMixedSubs, currentForMixedSubs, limitForServiceTypeSpecificSubs, currentForServiceTypeSpecificSubs) = aggregate[quota];
             limit += resourceUsage.Limit;
             current += resourceUsage.CurrentValue;
-            aggregate[quota] = (limit, current);
+            if (isMixedSubscription)
+            {
+                limitForMixedSubs += resourceUsage.Limit;
+                currentForMixedSubs += resourceUsage.CurrentValue;
+            }
+            else
+            {
+                limitForServiceTypeSpecificSubs += resourceUsage.Limit;
+                currentForServiceTypeSpecificSubs += resourceUsage.CurrentValue;
+            }
+
+            aggregate[quota] = (limit, current, limitForMixedSubs, currentForMixedSubs, limitForServiceTypeSpecificSubs, currentForServiceTypeSpecificSubs);
         }
 
         private void LogCapacityAlert(
@@ -422,14 +443,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             long currentValue,
             string subscriptionId = default,
             AzureLocation? location = default,
-            bool? enabled = default)
+            bool? enabled = default,
+            string subscriptionServiceType = default)
         {
             var usedPercent = limit > 0 ? (double)currentValue / (double)limit : 0.0;
+
+            subscriptionServiceType = subscriptionServiceType ?? "all";
 
             IDiagnosticsLogger AddLoggerValues()
             {
                 return logger
                     .FluentAddValue(nameof(subscriptionName), subscriptionName)
+                    .FluentAddValue(nameof(subscriptionServiceType), subscriptionServiceType)
                     .FluentAddValue(nameof(quota), quota)
                     .FluentAddValue(nameof(limit), limit)
                     .FluentAddValue(nameof(currentValue), currentValue)

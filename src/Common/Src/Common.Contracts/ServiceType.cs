@@ -1,11 +1,11 @@
-﻿// <copyright file="ServiceType.cs" company="Microsoft">
+// <copyright file="ServiceType.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
 {
     /// <summary>
-    /// The Auzre serice type for capacity quotas.
+    /// The Azure service type supported by the subscription.
     /// </summary>
     public enum ServiceType
     {
@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         Storage = 2,
 
         /// <summary>
-        /// Azure KeyVault.
+        /// Azure KeyVault
         /// </summary>
         KeyVault = 3,
     }

@@ -41,6 +41,46 @@
             }
         },
         {
+            "name": "BackEndWebApi Launch",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildServices",
+            "program": "${workspaceFolder}/bin/debug/BackEndWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Resources/BackEndWebApi/Src/BackEndWebApi",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": "FrontEndWebApi Launch",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildServices",
+            "program": "${workspaceFolder}/bin/debug/FrontEndWebApi/Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Codespaces/FrontEndWebApi/Src/FrontEndWebApi",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "^\\s*Now listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
             "name": "PortForwardingWebApi Launch",
             "type": "coreclr",
             "request": "launch",

@@ -96,6 +96,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                         .Where(c => !string.IsNullOrEmpty(c.Quota))
                         .Where(c => c.Required > 0))
                     {
+                        // If subscription has a supported service type, criterion must match this service type.
+                        if (subscription.ServiceType != null
+                            && subscription.ServiceType != criterion.ServiceType)
+                        {
+                            allRequiredCriteria = false;
+                            break;
+                        }
+
                         // Get all usage data for this subscription/location
                         var azureResourceUsages = await AzureSubscriptionCapacity.LoadAzureResourceUsageAsync(
                             subscription,
@@ -112,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                             select usage)
                             .FirstOrDefault();
 
-                        // If no match, bail out. Note that all crtieria must match.
+                        // If no match, bail out. Note that all criteria must match.
                         if (match == null)
                         {
                             allRequiredCriteria = false;
@@ -130,11 +138,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 }
                 catch (CapacityNotFoundException ex)
                 {
-                    logger.LogException("capacity_manager_capcity_not_found", ex);
+                    logger.LogException("capacity_manager_capacity_not_found", ex);
 
                     // Ignore this subscription if we couldn't read the capacity, but keep trying...
                     continue;
                 }
+            }
+
+            var matchedServiceSpecificSubscriptions = subscriptionsWithAllCriteria.Any(s => s.Key.ServiceType != null);
+            if (matchedServiceSpecificSubscriptions)
+            {
+                // If there are matched service type specific subscriptions only use those.
+                subscriptionsWithAllCriteria = subscriptionsWithAllCriteria
+                                                .Where(s => s.Key.ServiceType != null)
+                                                .ToDictionary(s => s.Key, s => s.Value);
             }
 
             // Couldn't find one that meets all criteria.

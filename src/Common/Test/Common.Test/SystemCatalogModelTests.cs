@@ -165,6 +165,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
         }
 
         [Fact]
+        public void SystemCatalog_ServiceTypeDataPlaneSubscriptions_OK()
+        {
+            var dataPlaneSettings = CreateDataPlaneSettings();
+            foreach (var s in CreateServiceTypeSpecificSubscriptions())
+            {
+                dataPlaneSettings.Subscriptions.Add(s.Key, s.Value);
+            }
+            var provider = CreateTestSystemCatalogProvider(dataPlaneSettings);
+            Assert.Equal(provider.AzureSubscriptionCatalog.AzureSubscriptions.Count(), dataPlaneSettings.Subscriptions.Count);
+        }
+
+
+        [Fact]
         public void EnabledInternalHardwareSelectsApplicableSkus()
         {
             var provider = CreateTestSystemCatalogProvider();
@@ -534,7 +547,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             Locations = locations,
                         }
                     },
-                    {  "test-subscription-display-name-2",
+                    {
+                        "test-subscription-display-name-2",
                         new AzureSubscriptionSettings
                         {
                             SubscriptionId = "22222222-2222-2222-2222-222222222222",
@@ -562,6 +576,49 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 },
             };
             return azureSubscriptionCatalogSettings;
+        }
+
+        private static Dictionary<string, AzureSubscriptionSettings> CreateServiceTypeSpecificSubscriptions()
+        {
+            var sharedServicePrincipal = new ServicePrincipalSettings
+            {
+                ClientId = "test-client-id-3",
+                ClientSecretName = "test-client-secret-id-3",
+                TenantId = "test-tenant-id-3"
+            };
+            var subscriptions = new Dictionary<string, AzureSubscriptionSettings>() {
+                {
+                    "test-subscription-display-name-3",
+                    new AzureSubscriptionSettings
+                    {
+                        SubscriptionId = "33333333-3333-3333-3333-333333333333",
+                        ServicePrincipal = sharedServicePrincipal,
+                        ServiceType = ServiceType.Storage,
+                        Locations = new List<AzureLocation>() { AzureLocation.WestUs2 }
+                    }
+                },
+                {
+                    "test-subscription-display-name-4",
+                    new AzureSubscriptionSettings
+                    {
+                        SubscriptionId = "44444444-4444-4444-4444-444444444444",
+                        ServicePrincipal = sharedServicePrincipal,
+                        ServiceType = ServiceType.Compute,
+                        Locations = new List<AzureLocation>() { AzureLocation.WestUs2 }
+                    }
+                },
+                {
+                    "test-subscription-display-name-5",
+                    new AzureSubscriptionSettings
+                    {
+                        SubscriptionId = "55555555-5555-5555-5555-555555555555",
+                        ServicePrincipal = sharedServicePrincipal,
+                        ServiceType = ServiceType.Network,
+                        Locations = new List<AzureLocation>() { AzureLocation.WestEurope }
+                    }
+                }
+            };
+            return subscriptions;
         }
 
         private static ServicePrincipalSettings CreateServicePrincipalSettings()

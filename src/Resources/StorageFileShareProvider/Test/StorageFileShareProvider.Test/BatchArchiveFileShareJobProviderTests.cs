@@ -211,6 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                         new[] {azureLocation},
                         null,
                         null,
+                        null,
                         null)
                 });
             return catalogMoq;

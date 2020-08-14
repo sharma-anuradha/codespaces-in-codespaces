@@ -51,5 +51,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the network quotas for this subscription.
         /// </summary>
         IReadOnlyDictionary<string, int> NetworkQuotas { get; }
+
+        /// <summary>
+        /// Gets or sets the service type supported by this Azure subscription.
+        /// </summary>
+        ServiceType? ServiceType { get; }
     }
 }
