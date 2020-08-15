@@ -142,37 +142,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     foreach (var env in billingSummary.UsageDetail)
                     {
-                        var environmentEvents = envsGroupedByEnvironments[env.Id];
+                        await childLogger.OperationScopeAsync(
+                            $"{LogBaseName}_check_for_correct_final_states_environment",
+                            (innerLogger) =>
+                            {
+                                var environmentEvents = envsGroupedByEnvironments[env.Id];
+                                innerLogger.FluentAddValue("CloudEnvironmentId", env.Id);
+                                if (!environmentEvents.Any())
+                                {
+                                    // We probably deleted this environment or archived it's bits. We need to remove this environment from the bill.
+                                    environmentsToRemove.Add(env);
+                                    hasChanged = true;
+                                    innerLogger.FluentAddValue("MissingAllEnvironmentStates", true);
+                                    return Task.CompletedTask;
+                                }
 
-                        if (!environmentEvents.Any())
-                        {
-                            // We probably deleted this environment or archived it's bits. We need to remove this environment from the bill.
-                            environmentsToRemove.Add(env);
-                            hasChanged = true;
-                            continue;
-                        }
+                                var lastEnvEventChange = BillingUtilities.GetLastBillableEventStateChange(environmentEvents);
+                                if (lastEnvEventChange is null)
+                                {
+                                    // If we get this far, we could not find an appropriate billing event. Perhaps it never became available after this time range started. If so, do nothing.
+                                    innerLogger.FluentAddValue("NoFinalBillableState", true);
+                                    return Task.CompletedTask;
+                                }
 
-                        var lastEnvEventChange = BillingUtilities.GetLastBillableEventStateChange(environmentEvents);
-                        if (lastEnvEventChange is null)
-                        {
-                            // If we get this far, we could not find an appropriate billing event. Perhaps it never became available after this time range started. If so, do nothing.
-                            continue;
-                        }
+                                // We have the latest billable state. Let's see if it differs from the previous state.
+                                var lastState = lastEnvEventChange.NewValue;
+                                innerLogger.FluentAddValue("NewFinalState", lastState)
+                                           .FluentAddValue("OriginalFinalState", env.EndState);
 
-                        // We have the latest billable state. Let's see if it differs from the previous state.
-                        var lastState = lastEnvEventChange.NewValue;
-                        if (lastState == env.EndState)
-                        {
-                            continue;
-                        }
+                                if (lastState == env.EndState)
+                                {
+                                    return Task.CompletedTask;
+                                }
 
-                        childLogger.FluentAddValue("CorrectedFinalState", true)
-                                   .FluentAddValue("CloudEnvironmentId", env.Id)
-                                   .LogError($"{LogBaseName}_check_for_correct_final_states_env_error");
+                                innerLogger.FluentAddValue("CorrectedFinalState", true);
 
-                        // correct the final state.
-                        env.EndState = lastState;
-                        hasChanged = true;
+                                // correct the final state.
+                                env.EndState = lastState;
+                                hasChanged = true;
+                                return Task.CompletedTask;
+                            });
                     }
 
                     // Remove any environments from the bill that should not be there. (no events have been found for it, so the state change table is inconsistent and we should lose sight of that environment)

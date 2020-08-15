@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingUtilities.cs" company="Microsoft">
+// <copyright file="BillingUtilities.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -26,14 +26,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 var newValue = billEvent.NewValue;
 
-                if (newValue.Equals(nameof(CloudEnvironmentState.Deleted)))
+                if (newValue.Equals(nameof(CloudEnvironmentState.Deleted)) ||
+                    newValue.Equals(nameof(CloudEnvironmentState.Moved)))
                 {
                     return billEvent; // The environment was deleted. We are done and shouldn't consider other states. Deleted is the terminal state.
                 }
 
                 if (newValue.Equals(nameof(CloudEnvironmentState.Available)) ||
                     newValue.Equals(nameof(CloudEnvironmentState.Shutdown)) ||
-                    newValue.Equals(nameof(CloudEnvironmentState.Moved)))
+                    newValue.Equals(nameof(CloudEnvironmentState.Archived)))
                 {
                     lastState = billEvent;
                 }
