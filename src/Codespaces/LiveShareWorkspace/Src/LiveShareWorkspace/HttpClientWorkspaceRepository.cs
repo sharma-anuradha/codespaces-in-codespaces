@@ -1,4 +1,4 @@
-﻿// <copyright file="HttpClientWorkspaceRepository.cs" company="Microsoft">
+// <copyright file="HttpClientWorkspaceRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -37,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// <inheritdoc/>
         public Task<WorkspaceResponse> CreateAsync(WorkspaceRequest workspace, string authToken, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_create",
                 async (childLogger) =>
                 {
@@ -67,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// <inheritdoc/>
         public Task DeleteAsync(string workspaceId, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_delete",
                 async (childLogger) =>
                 {
@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// <inheritdoc/>
         public Task<string> GetInvitationLinkAsync(SharedInvitationLinkInfo invitationLinkInfo, string authToken, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_create_invitation_id",
                 async (childLogger) =>
                 {
@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace
         /// <inheritdoc/>
         public Task<WorkspaceResponse> GetStatusAsync(string workspaceId, IDiagnosticsLogger logger)
         {
-            return logger.OperationScopeAsync(
+            return logger.RetryOperationScopeAsync(
                 $"{LogBaseName}_getstatus",
                 async (childLogger) =>
                 {
