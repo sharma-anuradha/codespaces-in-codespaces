@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VsSaaS.AspNetCore.Diagnostics;
+using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Audit;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -529,6 +530,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     logger.AddSubscriptionId(planInfo.Subscription);
                     logger.AddReason(message);
                     return StatusCode(StatusCodes.Status403Forbidden, MessageCodes.SubscriptionCannotPerformAction);
+                }
+
+                if (string.IsNullOrEmpty(plan.Tenant))
+                {
+                    // Some older plans might not have their tenant ID property set, but the EnvironmentManager
+                    // update requires it. The caller's tenant ID should be the same anyway.
+                    plan.Tenant = CurrentUserProvider.Identity?.GetTenantId();
                 }
             }
 

@@ -331,7 +331,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var update = new CloudEnvironmentUpdate
             {
-                Plan = new VsoPlan { Plan = plan2 },
+                Plan = new VsoPlan { Plan = plan2, Tenant = Guid.Empty.ToString() },
                 PlanAccessIdentity = new VsoClaimsIdentity(
                     authorizedPlan: plan2.ResourceId,
                     scopes: new[] { PlanAccessTokenScopes.WriteEnvironments },
@@ -399,9 +399,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             {
                 Id = Guid.Empty.ToString().Replace('0', '1'),
                 Plan = MockPlan(name: "plan2"),
+                Tenant = Guid.Empty.ToString().Replace('0', 'B'),
             }, Logger);
 
             var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.Plan.ResourceId);
+
+            // Test with an owner ID that uses the plan ID as the tenant ID.
             environment.OwnerId = plan1.Id + "_" + Guid.Empty;
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
@@ -425,8 +428,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
-            Assert.StartsWith(plan2.Id, environment.OwnerId);
+            Assert.StartsWith(plan2.Tenant, environment.OwnerId);
         }
+
+        [Fact]
+        public async Task MoveEnvironment_UpdateOwnerId2()
+        {
+            var sku = MockSku();
+            var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
+            var billingEventRepository = new MockBillingEventRepository();
+
+            var planRepository = new MockPlanRepository();
+            var plan1 = await planRepository.CreateAsync(new VsoPlan
+            {
+                Id = Guid.Empty.ToString(),
+                Plan = MockPlan(name: "plan1"),
+                Tenant = Guid.Empty.ToString().Replace('0', 'A'),
+            }, Logger);
+            var plan2 = await planRepository.CreateAsync(new VsoPlan
+            {
+                Id = Guid.Empty.ToString().Replace('0', '1'),
+                Plan = MockPlan(name: "plan2"),
+                Tenant = Guid.Empty.ToString().Replace('0', 'B'),
+            }, Logger);
+
+            var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.Plan.ResourceId);
+
+            // Test with an owner ID that uses the plan's Tenant property as the tenant ID.
+            environment.OwnerId = plan1.Tenant + "_" + Guid.Empty;
+
+            environment = await environmentRepository.CreateAsync(environment, Logger);
+            environment.State = CloudEnvironmentState.Shutdown;
+
+            var update = new CloudEnvironmentUpdate
+            {
+                Plan = plan2,
+            };
+
+            var manager = CreateManager(
+                globalEnvironmentRepository: environmentRepository,
+                skuCatalog: skuCatalog,
+                planRepository: planRepository,
+                billingEventRepository: billingEventRepository);
+
+            var subscription = new Subscription
+            {
+                Id = plan1.Plan.Subscription,
+            };
+            var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
+            Assert.StartsWith(plan2.Tenant, environment.OwnerId);
+        }
+
 
         [Fact]
         public async Task MoveEnvironment_Conflict()
@@ -449,7 +504,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var update = new CloudEnvironmentUpdate
             {
                 FriendlyName = environment2.FriendlyName,
-                Plan = new VsoPlan { Plan = plan2 },
+                Plan = new VsoPlan { Plan = plan2, Tenant = Guid.Empty.ToString() },
             };
 
             var manager = CreateManager(
@@ -487,7 +542,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var update = new CloudEnvironmentUpdate
             {
-                Plan = new VsoPlan { Plan = plan2 },
+                Plan = new VsoPlan { Plan = plan2, Tenant = Guid.Empty.ToString() },
             };
 
             // Configure max 1 env per plan so quota will be exceeded when moving.

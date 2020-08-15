@@ -779,17 +779,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 VsoPlan currentPlan = currentPlanInfo == null ? null :
                     await PlanManager.GetAsync(currentPlanInfo, logger);
 
+                if (string.IsNullOrEmpty(update.Plan.Tenant))
+                {
+                    validationErrors.Add(MessageCodes.InvalidPlanTenant);
+                }
+
                 // The returned action will only be invoked if there are no validation errors.
                 return (validationErrors, (CloudEnvironment cloudEnvironment) =>
                 {
-                    if (currentPlan != null &&
-                        cloudEnvironment.OwnerId.StartsWith(currentPlan.Id, StringComparison.OrdinalIgnoreCase))
+                    if (currentPlan != null)
                     {
-                        // The owner ID uses a plan-level tenant. (It's a plan-scoped delegated identity.)
-                        // Update it to the new plan ID.
-                        logger.LogInfo($"{LogBaseName}_update_environment_ownerid");
-                        cloudEnvironment.OwnerId =
-                            update.Plan.Id + cloudEnvironment.OwnerId.Substring(currentPlan.Id.Length);
+                        // Update the env owner ID to the new plan tenant ID. The existing tenant ID may
+                        // be the plan ID (for a plan-scoped tenant) or the tenant property of the plan.
+                        if (cloudEnvironment.OwnerId.StartsWith(currentPlan.Id, StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.AddValue("Tenant", $"{currentPlan.Id}->{update.Plan.Tenant}");
+                            logger.LogInfo($"{LogBaseName}_update_environment_ownerid");
+                            cloudEnvironment.OwnerId =
+                                update.Plan.Tenant + cloudEnvironment.OwnerId.Substring(currentPlan.Id.Length);
+                        }
+                        else if (!string.IsNullOrEmpty(currentPlan.Tenant) &&
+                            cloudEnvironment.OwnerId.StartsWith(currentPlan.Tenant, StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.AddValue("Tenant", $"{currentPlan.Tenant}->{update.Plan.Tenant}");
+                            logger.LogInfo($"{LogBaseName}_update_environment_ownerid");
+                            cloudEnvironment.OwnerId =
+                                update.Plan.Tenant + cloudEnvironment.OwnerId.Substring(currentPlan.Tenant.Length);
+                        }
                     }
 
                     cloudEnvironment.PlanId = update.Plan.Plan.ResourceId;

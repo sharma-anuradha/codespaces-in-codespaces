@@ -145,5 +145,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Exceeded secrets quota.
         /// </summary>
         ExceededSecretsQuota = 26,
+
+        /// <summary>
+        /// Tenant ID of the plan is invalid.
+        /// </summary>
+        InvalidPlanTenant = 27,
     }
 }
