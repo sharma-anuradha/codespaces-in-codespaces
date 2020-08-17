@@ -14,10 +14,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
@@ -49,7 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
         /// </summary>
         /// <param name="context">Request context.</param>
         /// <param name="logger">Target logger.</param>
-        /// <param name="serviceBusClientProvider">Queue client provider.</param>
+        /// <param name="newConnectionsQueueClientProvider">The connections-new queue client provider.</param>
+        /// <param name="connectionErrorsSessionClientProvider">The connections-errors session client provider.</param>
         /// <param name="mappingClient">The mappings client.</param>
         /// <param name="hostEnvironment">The host environment.</param>
         /// <param name="hostUtils">The host utils.</param>
@@ -58,7 +59,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
         public async Task InvokeAsync(
             HttpContext context,
             IDiagnosticsLogger logger,
-            IServiceBusClientProvider serviceBusClientProvider,
+            INewConnectionsQueueClientProvider newConnectionsQueueClientProvider,
+            IConnectionErrorsSessionClientProvider connectionErrorsSessionClientProvider,
             IAgentMappingClient mappingClient,
             IHostEnvironment hostEnvironment,
             PortForwardingHostUtils hostUtils,
@@ -90,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 VSLiveShareApiEndpoint = appSettings.VSLiveShareApiEndpoint,
             };
 
-            logger.AddConnectionDetails(connectionInfo);
+            logger.AddBaseConnectionDetails(connectionInfo);
 
             // At this stage we only care about headers setting the PF context.
             // TODO: Can we structure the helpers and services in a way that PFS would explicitly work only on top of headers?
@@ -118,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 "connection_creation_middleware_send_create_new_message",
                 async (childLogger) =>
                 {
-                    var client = await serviceBusClientProvider.GetQueueClientAsync(QueueNames.NewConnections, childLogger);
+                    var client = await newConnectionsQueueClientProvider.Client.Value;
 
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, this.serializationOptions))
                     {
@@ -129,8 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                         ReplyToSessionId = context.GetCorrelationId(),
                     };
 
-                    await client.SendAsync(message);
-                    await client.CloseAsync();
+                    await childLogger.OperationScopeAsync("connection_creation_middleware_connections_new_send_async", (_) => client.SendAsync(message));
                 });
 
             // 3. Wait for the connection kubernetes service is available
@@ -141,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             {
                 var errorMessageTask = logger.OperationScopeAsync("connection_creation_middleware_subscribe_to_errors", async (childLogger) =>
                 {
-                    var errorsSessionsClient = await serviceBusClientProvider.GetSessionClientAsync(QueueNames.ConnectionErrors, childLogger);
+                    var errorsSessionsClient = await connectionErrorsSessionClientProvider.Client.Value;
 
                     try
                     {
@@ -159,10 +160,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                     catch
                     {
                         return null;
-                    }
-                    finally
-                    {
-                        await errorsSessionsClient.CloseAsync();
                     }
                 });
 
@@ -214,8 +211,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
                 logger.LogWarning("connection_creation_middleware_service_creation_timeout");
                 await context.Response.CompleteAsync();
-
-                return;
             }
         }
 

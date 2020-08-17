@@ -16,10 +16,10 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -41,19 +41,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
         /// Initializes a new instance of the <see cref="PortForwardingConnectionsController"/> class.
         /// </summary>
         /// <param name="currentUserProvider">The current user provider.</param>
-        /// <param name="serviceBusClientProvider">The service bus client provider.</param>
+        /// <param name="newConnectionsQueueClientProvider">The connections-new queue client provider.</param>
         /// <param name="kubernetesClient">The kubernetes client.</param>
         /// <param name="appSettings">The settings.</param>
         /// <param name="frontEndClient">The front end service client.</param>
         public PortForwardingConnectionsController(
             ICurrentUserProvider currentUserProvider,
-            IServiceBusClientProvider serviceBusClientProvider,
+            INewConnectionsQueueClientProvider newConnectionsQueueClientProvider,
             IKubernetes kubernetesClient,
             PortForwardingAppSettings appSettings,
             ICodespacesApiClient frontEndClient)
         {
             CurrentUserProvider = currentUserProvider;
-            ServiceBusClientProvider = serviceBusClientProvider;
+            NewConnectionsQueueClientProvider = newConnectionsQueueClientProvider;
             KubernetesClient = kubernetesClient;
             AppSettings = appSettings;
             FrontEndClient = frontEndClient;
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
 
         private ICurrentUserProvider CurrentUserProvider { get; }
 
-        private IServiceBusClientProvider ServiceBusClientProvider { get; }
+        private INewConnectionsQueueClientProvider NewConnectionsQueueClientProvider { get; }
 
         private IKubernetes KubernetesClient { get; }
 
@@ -94,10 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
 
             var ingressRule = await logger.OperationScopeAsync(
                 "check_ingress",
-                async (childLogger) =>
-                {
-                    return await KubernetesClient.ReadNamespacedIngressAsync(kubernetesObjectName, "default");
-                },
+                (childLogger) => KubernetesClient.ReadNamespacedIngressAsync(kubernetesObjectName, "default"),
                 swallowException: true);
 
             if (ingressRule == default)
@@ -127,10 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
 
             var ingressRule = await logger.OperationScopeAsync(
                 "check_ingress",
-                async (childLogger) =>
-                {
-                    return await KubernetesClient.ReadNamespacedIngressAsync(kubernetesObjectName, "default");
-                },
+                (childLogger) => KubernetesClient.ReadNamespacedIngressAsync(kubernetesObjectName, "default"),
                 swallowException: true);
 
             if (ingressRule == default)
@@ -192,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
                 {
                     childLogger.AddConnectionDetails(connectionInfo);
 
-                    var client = await ServiceBusClientProvider.GetQueueClientAsync(QueueNames.NewConnections, childLogger);
+                    var client = await NewConnectionsQueueClientProvider.Client.Value;
 
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, this.serializationOptions))
                     {
@@ -203,8 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Contr
                         ReplyToSessionId = HttpContext.GetCorrelationId(),
                     };
 
-                    await client.SendAsync(message);
-                    await client.CloseAsync();
+                    await childLogger.OperationScopeAsync("send_create_new_connection_message_send_async", (_) => client.SendAsync(message));
                 });
 
             return Ok();

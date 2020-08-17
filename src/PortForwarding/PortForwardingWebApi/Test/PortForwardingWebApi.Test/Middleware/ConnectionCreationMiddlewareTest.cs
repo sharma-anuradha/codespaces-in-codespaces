@@ -5,18 +5,15 @@
 using System;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
-using k8s.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middleware;
 using Moq;
@@ -47,7 +44,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task InvokeAsync_NoToken_401()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
             var mappingClient = new Mock<IAgentMappingClient>();
             var hostEnvironment = new Mock<IHostEnvironment>();
             var context = CreateMockContext(isAuthenticated: false);
@@ -55,7 +53,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             await middleware.InvokeAsync(
                 context,
                 logger,
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
                 hostEnvironment.Object,
                 hostUtils,
@@ -67,15 +66,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task InvokeAsync_ValidConfiguration_HeaderDetails_SendMessage()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
             var mappingClient = new Mock<IAgentMappingClient>();
             var hostEnvironment = new Mock<IHostEnvironment>();
             var context = CreateMockContext();
 
             var queueClient = new Mock<IQueueClient>();
-            queueClientProvider
-                .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(queueClient.Object);
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
 
             mappingClient
                 .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
@@ -84,7 +84,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             await middleware.InvokeAsync(
                 context,
                 logger,
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
                 hostEnvironment.Object,
                 hostUtils,
@@ -112,15 +113,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task InvokeAsync_InvalidConfiguration_HeaderDetails_SendMessage()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
             var mappingClient = new Mock<IAgentMappingClient>();
             var hostEnvironment = new Mock<IHostEnvironment>();
             var context = CreateMockContext(invalidHeaders: true);
 
             var queueClient = new Mock<IQueueClient>();
-            queueClientProvider
-                .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(queueClient.Object);
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
 
             mappingClient
                 .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
@@ -129,7 +131,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             await middleware.InvokeAsync(
                 context,
                 logger,
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
                 hostEnvironment.Object,
                 hostUtils,
@@ -141,15 +144,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task InvokeAsync_ValidConfiguration_SendsMessage()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
             var mappingClient = new Mock<IAgentMappingClient>();
             var hostEnvironment = new Mock<IHostEnvironment>();
             var context = CreateMockContext();
 
             var queueClient = new Mock<IQueueClient>();
-            queueClientProvider
-                .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(queueClient.Object);
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
 
             mappingClient
                 .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
@@ -158,7 +162,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             await middleware.InvokeAsync(
                 context,
                 logger,
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
                 hostEnvironment.Object,
                 hostUtils,
@@ -186,12 +191,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task InvokeAsync_ValidConfiguration_ServiceWaitTimesOut()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
             var hostEnvironment = new Mock<IHostEnvironment>();
             var queueClient = new Mock<IQueueClient>();
-            queueClientProvider
-                .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(queueClient.Object);
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
 
             var mappingClient = new Mock<IAgentMappingClient>();
             mappingClient
@@ -203,7 +209,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             await middleware.InvokeAsync(
                 context,
                 logger,
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
                 hostEnvironment.Object,
                 hostUtils,
@@ -212,11 +219,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             Assert.Equal(StatusCodes.Status504GatewayTimeout, context.Response.StatusCode);
         }
 
-
         [Fact]
         public async Task InvokeAsync_ValidConfiguration_AgentError()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
             var hostEnvironment = new Mock<IHostEnvironment>();
             var newConnectionsQueueClient = new Mock<IQueueClient>();
             var errorsSessionClient = new Mock<ISessionClient>();
@@ -225,13 +232,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 new ErrorMessage { Message = "Test Error" },
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
 
-            queueClientProvider
-                .Setup(provider => provider.GetQueueClientAsync(QueueNames.NewConnections, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(newConnectionsQueueClient.Object);
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => newConnectionsQueueClient.Object));
+            connectionErrorsSessionClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<ISessionClient>(() => errorsSessionClient.Object));
 
-            queueClientProvider
-                .Setup(provider => provider.GetSessionClientAsync(QueueNames.ConnectionErrors, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(errorsSessionClient.Object);
             errorsSessionClient
                 .Setup(client => client.AcceptMessageSessionAsync(It.IsAny<string>(), It.IsAny<TimeSpan>()))
                 .ReturnsAsync(errorMessageSession.Object);
@@ -245,7 +252,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             var mappingClient = new Mock<IAgentMappingClient>();
             mappingClient
                 .Setup(i => i.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
-                .Returns(async () => 
+                .Returns(async () =>
                 {
                     await Task.Delay(1000);
                     return default;
@@ -256,7 +263,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             await middleware.InvokeAsync(
                 context,
                 logger,
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
                 hostEnvironment.Object,
                 hostUtils,

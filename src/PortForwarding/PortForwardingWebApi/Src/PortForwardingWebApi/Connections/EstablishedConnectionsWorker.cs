@@ -9,8 +9,7 @@ using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections
 {
@@ -27,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         /// <param name="hostApplicationLifetime">The host application lifetime object.</param>
         /// <param name="logger">The logger.</param>
         public EstablishedConnectionsWorker(
-            IServiceBusClientProvider queueClientProvider,
+            IEstablishedConnectionsQueueClientProvider queueClientProvider,
             IConnectionEstablishedMessageHandler messageHandler,
             IHostApplicationLifetime hostApplicationLifetime,
             IDiagnosticsLogger logger)
@@ -38,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
             Logger = Requires.NotNull(logger, nameof(logger));
         }
 
-        private IServiceBusClientProvider QueueClientProvider { get; }
+        private IEstablishedConnectionsQueueClientProvider QueueClientProvider { get; }
 
         private IConnectionEstablishedMessageHandler MessageHandler { get; }
 
@@ -51,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         {
             try
             {
-                var client = await QueueClientProvider.GetQueueClientAsync(QueueNames.EstablishedConnections, Logger);
+                var client = await QueueClientProvider.Client.Value;
 
                 client.RegisterSessionHandler(
                     ProcessSessionMessage,

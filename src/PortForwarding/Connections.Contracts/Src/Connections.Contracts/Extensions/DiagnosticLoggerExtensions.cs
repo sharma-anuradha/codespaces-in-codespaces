@@ -56,5 +56,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Exte
                 .FluentAddValue("Port", connectionRequest.Port)
                 .FluentAddValue("VSLiveShareApiEndpoint", connectionRequest.VSLiveShareApiEndpoint);
         }
+
+        /// <summary>
+        /// Adds connection request values to the logger.
+        /// </summary>
+        /// <param name="logger">The logger.</param>
+        /// <param name="connectionRequest">The connection request.</param>
+        /// <returns>The logger with additional values.</returns>
+        public static IDiagnosticsLogger AddBaseConnectionDetails(this IDiagnosticsLogger logger, ConnectionRequest connectionRequest)
+        {
+            return logger
+                .FluentAddBaseValue("ConnectionId", connectionRequest.WorkspaceId)
+                .FluentAddBaseValue("EnvironmentId", connectionRequest.EnvironmentId)
+                .FluentAddBaseValue("Port", connectionRequest.Port)
+                .FluentAddBaseValue("VSLiveShareApiEndpoint", connectionRequest.VSLiveShareApiEndpoint);
+        }
     }
 }

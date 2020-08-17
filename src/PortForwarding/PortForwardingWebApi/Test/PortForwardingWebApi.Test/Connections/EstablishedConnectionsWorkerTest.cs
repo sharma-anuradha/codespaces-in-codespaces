@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections;
 using Moq;
 using Xunit;
@@ -24,16 +24,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         [Fact]
         public async Task ExecuteAsync_Succeeds()
         {
-            var queueClientProvider = new Mock<IServiceBusClientProvider>();
+            var newConnectionsQueueClientProvider = new Mock<IEstablishedConnectionsQueueClientProvider>();
             var queueClient = new Mock<IQueueClient>();
-            queueClientProvider
-                .Setup(provider => provider.GetQueueClientAsync(QueueNames.EstablishedConnections, It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync(queueClient.Object);
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
+
             var messageHandler = new Mock<IConnectionEstablishedMessageHandler>();
             var hostApplicationLifetime = new Mock<IHostApplicationLifetime>();
 
             var worker = new EstablishedConnectionsWorker(
-                queueClientProvider.Object,
+                newConnectionsQueueClientProvider.Object,
                 messageHandler.Object,
                 hostApplicationLifetime.Object,
                 logger);

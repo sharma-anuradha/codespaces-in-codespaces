@@ -23,8 +23,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Connections;
@@ -131,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
             services.AddSingleton(developerPersonalStampSettings);
             services.AddSingleton<IResourceNameBuilder, ResourceNameBuilder>();
 
-            services.AddSingleton<IServiceBusClientProvider, ServiceBusClientProvider>();
+            services.AddServiceBusClientProviders();
 
             services.AddSingleton<IManagedCache, InMemoryManagedCache>();
             services.AddSingleton<ISystemCatalog, NullSystemCatalog>();
