@@ -16,7 +16,8 @@ export class PortForwardingManagementApi {
         const response = await fetch(config.portForwardingManagementEndpoint, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${token}`,
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 id: codespaceId,
