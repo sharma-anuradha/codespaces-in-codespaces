@@ -287,7 +287,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     if (result.VsoPlan == null)
                     {
                         logger.LogErrorWithDetail("plan_create_error", $"Plan creation failed with ErrorCode: {result.ErrorCode}");
-                        return CreateErrorResponse("ValidateResourceFailed", result.ErrorMessage);
+
+                        var statusCode = HttpStatusCode.InternalServerError;
+                        if (result.ErrorCode == Plans.Contracts.ErrorCodes.ExceededQuota ||
+                            result.ErrorCode == Plans.Contracts.ErrorCodes.SubscriptionBanned ||
+                            result.ErrorCode == Plans.Contracts.ErrorCodes.SubscriptionStateNotRegistered)
+                        {
+                            statusCode = HttpStatusCode.Forbidden;
+                        }
+
+                        return CreateErrorResponse("ValidateResourceFailed", result.ErrorMessage, statusCode);
                     }
 
                     // Clear the userId property so it will not be stored on the created ARM resource.
@@ -296,7 +305,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
                     return CreateResponse(HttpStatusCode.OK, resource);
                 },
-                (ex, logger) => Task.FromResult(CreateErrorResponse("CreateResourceFailed")),
+                (ex, logger) => Task.FromResult(CreateErrorResponse("CreateResourceFailed", statusCode: HttpStatusCode.InternalServerError)),
                 swallowException: true);
         }
 
