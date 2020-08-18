@@ -1,4 +1,4 @@
-﻿// <copyright file="IStorageQueueCollection.cs" company="Microsoft">
+// <copyright file="IStorageQueueCollection.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,10 +19,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Adds content to the queue.
         /// </summary>
         /// <param name="content">Content that is being added.</param>
+        /// <param name="timeToLive">The time to live for the content added.</param>
         /// <param name="initialVisibilityDelay">Adds initial visibilit delay if needed.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task AddAsync(string content, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
+        Task AddAsync(string content, TimeSpan? timeToLive, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Pulls multiple messages from the queue.

@@ -19,6 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class PartnerCloudStorageClient : IPartnerCloudStorageClient
     {
+        private static readonly int TimeToLive = 30;
+
         private readonly IStorageQueueCollection queue;
         private readonly IDiagnosticsLogger logger;
 
@@ -39,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public async Task PushPartnerQueueSubmission(PartnerQueueSubmission queueSubmission)
         {
             Requires.NotNull(queueSubmission, nameof(queueSubmission));
-            await this.queue.AddAsync(queueSubmission.ToJson(), null, this.logger);
+            await this.queue.AddAsync(queueSubmission.ToJson(), TimeSpan.FromDays(TimeToLive), null, this.logger);
         }
     }
 }

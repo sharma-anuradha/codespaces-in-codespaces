@@ -1,4 +1,4 @@
-﻿// <copyright file="MockResourceJobQueueRepository.cs" company="Microsoft">
+// <copyright file="MockResourceJobQueueRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         private Random Random { get; }
 
         /// <inheritdoc/>
-        public Task AddAsync(string id, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        public Task AddAsync(string id, TimeSpan? timeToLive, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             // TODO: Delay add to queue if needed
             TaskHelper.RunBackground(

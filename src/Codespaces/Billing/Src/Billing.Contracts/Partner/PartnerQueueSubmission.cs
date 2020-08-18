@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -25,7 +26,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             var summary = billingEvent.Args as BillingSummary;
             PeriodStart = summary.PeriodStart;
             PeriodEnd = summary.PeriodEnd;
-            UsageDetail = new PartnerUsageDetail(summary.UsageDetail);
+
+            if (summary.UsageDetail != null)
+            {
+                UsageDetail = new PartnerUsageDetail(summary.UsageDetail);
+            }
         }
 
         /// <summary>
@@ -66,10 +71,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public PartnerUsageDetail UsageDetail { get; set; }
 
         /// <summary>
+        /// Gets the total compute time.
+        /// </summary>
+        /// <returns>Returns total compute time.</returns>
+        public double TotalComputeTime => this?.UsageDetail?.Environments?.Sum(o => o?.TotalComputeTime) ?? 0;
+
+        /// <summary>
+        /// Gets the total storage time.
+        /// </summary>
+        /// <returns>Returns total storage time.</returns>
+        public double TotalStorageTime => this?.UsageDetail?.Environments?.Sum(o => o?.TotalStorageTime) ?? 0;
+
+        /// <summary>
         /// Returns if the detail has any actual data.
         /// </summary>
         /// <returns>Returns true or false.</returns>
-        public bool IsEmpty() => UsageDetail?.IsEmpty() ?? true;
+        public bool IsEmpty() => TotalComputeTime == 0 && TotalStorageTime == 0;
 
         /// <summary>
         /// Convert to Json.

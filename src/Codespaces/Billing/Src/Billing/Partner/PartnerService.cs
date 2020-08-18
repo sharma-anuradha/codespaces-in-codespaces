@@ -119,12 +119,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     if (gitHubQueueSubmission.IsEmpty())
                     {
+                        // Update the billing event to show it's empty and will never be submitted
+                        billingSummary.PartnerSubmissionState = BillingSubmissionState.NeverSubmit;
+                        await billingEventManager.UpdateEventAsync(billingEvent, Logger);
                         return;
                     }
 
                     // Update the billing event to show it's been submitted
                     billingSummary.PartnerSubmissionState = BillingSubmissionState.Submitted;
-                    await this.billingEventManager.UpdateEventAsync(billingEvent, Logger);
+                    await billingEventManager.UpdateEventAsync(billingEvent, Logger);
 
                     // Submit all the stuff. An entry needs to be added to the table with the usage record
                     try
@@ -133,8 +136,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     }
                     catch (Exception e)
                     {
+                        // Update the billing event to show an error happend while pushing to the queue
                         billingSummary.PartnerSubmissionState = BillingSubmissionState.Error;
-                        await this.billingEventManager.UpdateEventAsync(billingEvent, Logger);
+                        await billingEventManager.UpdateEventAsync(billingEvent, Logger);
 
                         throw e;
                     }
@@ -143,8 +147,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         .FluentAddValue("PartnerId", PartnerId)
                         .FluentAddValue("ResourceId", billingEvent.Plan.ResourceId)
                         .FluentAddValue("Subscription", billingEvent.Plan.Subscription)
-                        .FluentAddValue("ComputeTime", gitHubQueueSubmission?.UsageDetail?.Environments?.Sum(o => o?.ResourceUsage?.Compute?.Sum(x => x.Usage) ?? 0) ?? 0)
-                        .FluentAddValue("StorageTime", gitHubQueueSubmission?.UsageDetail?.Environments?.Sum(o => o?.ResourceUsage?.Storage?.Sum(x => x.Usage) ?? 0) ?? 0)
+                        .FluentAddValue("ComputeTime", gitHubQueueSubmission.TotalComputeTime)
+                        .FluentAddValue("StorageTime", gitHubQueueSubmission.TotalStorageTime)
                         .LogInfo("github_summary_submission");
                 });
         }

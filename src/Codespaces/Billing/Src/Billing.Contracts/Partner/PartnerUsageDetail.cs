@@ -1,4 +1,4 @@
-﻿// <copyright file="PartnerUsageDetail.cs" company="Microsoft">
+// <copyright file="PartnerUsageDetail.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,10 +19,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="usageDetail">Partner usage detail.</param>
         public PartnerUsageDetail(UsageDetail usageDetail)
         {
-            this.Environments = usageDetail
-                .Environments
-                .Select(o => new PartnerEnvironmentUsageDetail(o.Key, o.Value))
-                .ToArray();
+            Environments = usageDetail.Environments == null ?
+                new PartnerEnvironmentUsageDetail[0] :
+                usageDetail
+                    .Environments
+                    .Select(o => new PartnerEnvironmentUsageDetail(o.Key, o.Value))
+                    .Where(o => !o.IsEmpty())
+                    .ToArray();
         }
 
         /// <summary>
@@ -30,11 +33,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "environments")]
         public PartnerEnvironmentUsageDetail[] Environments { get; set; }
-
-        /// <summary>
-        /// Returns if the detail has any actual data.
-        /// </summary>
-        /// <returns>Returns true or false.</returns>
-        public bool IsEmpty() => Environments == null;
     }
 }

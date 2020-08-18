@@ -1,4 +1,4 @@
-﻿// <copyright file="MockEnvironmentMonitorQueueRepository.cs" company="Microsoft">
+// <copyright file="MockEnvironmentMonitorQueueRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     internal class MockEnvironmentMonitorQueueRepository : IContinuationJobQueueRepository, ICrossRegionContinuationJobQueueRepository
     {
         /// <inheritdoc/>
-        public Task AddAsync(string content, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        public Task AddAsync(string content, TimeSpan? timeToLive, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;
         }

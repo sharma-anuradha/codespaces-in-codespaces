@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingSubmissionCloudStorageClient.cs" company="Microsoft">
+// <copyright file="BillingSubmissionCloudStorageClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public async Task PushBillingQueueSubmission(BillingSummaryQueueSubmission queueSubmission)
         {
             Requires.NotNull(queueSubmission, nameof(queueSubmission));
-            await cloudUsageQueue.AddAsync(queueSubmission.ToJson(), null, logger);
+            await cloudUsageQueue.AddAsync(queueSubmission.ToJson(), null, null, logger);
         }
 
         /// <inheritdoc />

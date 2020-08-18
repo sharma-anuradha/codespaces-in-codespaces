@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageQueueCollection.cs" company="Microsoft">
+// <copyright file="StorageQueueCollection.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         protected abstract string LoggingDocumentName { get; }
 
         /// <inheritdoc/>
-        public async Task AddAsync(string content, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
+        public async Task AddAsync(string content, TimeSpan? timeToLive, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
             await logger.OperationScopeAsync(
                 $"azurequeue_{LoggingDocumentName}_create",
@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     childLogger.FluentAddValue("QueueVisibilityDelay", initialVisibilityDelay);
 
-                    await queue.AddMessageAsync(message, null, initialVisibilityDelay, null, null);
+                    await queue.AddMessageAsync(message, timeToLive, initialVisibilityDelay, null, null);
                 });
         }
 

@@ -1,8 +1,9 @@
-﻿// <copyright file="PartnerEnvironmentUsageDetail.cs" company="Microsoft">
+// <copyright file="PartnerEnvironmentUsageDetail.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Newtonsoft.Json;
 
@@ -42,5 +43,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "resourceUsage")]
         public ResourceUsageDetail ResourceUsage { get; set; }
+
+        /// <summary>
+        /// Gets the total compute time.
+        /// </summary>
+        /// <returns>Returns total compute time.</returns>
+        public double TotalComputeTime => this?.ResourceUsage?.Compute?.Sum(x => x.Usage) ?? 0;
+
+        /// <summary>
+        /// Gets the total storage time.
+        /// </summary>
+        /// <returns>Returns total storage time.</returns>
+        public double TotalStorageTime => this?.ResourceUsage?.Storage?.Sum(x => x.Usage) ?? 0;
+
+        /// <summary>
+        /// Returns if the detail has any actual data.
+        /// </summary>
+        /// <returns>Returns true or false.</returns>
+        public bool IsEmpty() => TotalComputeTime == 0 && TotalStorageTime == 0;
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="ContinuationTaskMessagePump.cs" company="Microsoft">
+// <copyright file="ContinuationTaskMessagePump.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -127,7 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// <inheritdoc/>
         public async Task PushMessageAsync(ContinuationQueuePayload payload, TimeSpan? initialVisibilityDelay, IDiagnosticsLogger logger)
         {
-            await ContinuationJobQueueRepository.AddAsync(payload.ToJson(), initialVisibilityDelay, logger);
+            await ContinuationJobQueueRepository.AddAsync(payload.ToJson(), null, initialVisibilityDelay, logger);
         }
 
         /// <inheritdoc/>

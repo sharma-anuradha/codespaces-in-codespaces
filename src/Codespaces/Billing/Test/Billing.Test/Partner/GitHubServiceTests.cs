@@ -18,9 +18,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private const string GitHub = "github";
         private const string GitHubSubscription = "d833c9b9-c971-47f1-8156-c4236552bdfd";
 
-        [Fact]
-        //public async Task SubmitOneBill()
-        public async void SubmitPartnerInvoice()
+        public enum Missing
+        {
+            None,
+            UsageDetail,
+            Environments,
+            ResourceUsage,
+            Lists
+        }
+
+        [Theory]
+        [InlineData(1, 0)]
+        [InlineData(0, 1)]
+        [InlineData(0, 0)]
+        [InlineData(0, 0, Missing.UsageDetail)]
+        [InlineData(0, 0, Missing.Environments)]
+        [InlineData(0, 0, Missing.ResourceUsage)]
+        [InlineData(0, 0, Missing.Lists)]
+        public async void SubmitPartnerInvoice(
+            int compute,
+            int storage,
+            Missing missing = default)
         {
             var controlPlane = new Mock<IControlPlaneInfo>();
             var stampInfo = new Mock<IControlPlaneStampInfo>();
@@ -65,22 +83,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
             var resourceUsage = new ResourceUsageDetail()
             {
-
+                Compute = missing == Missing.Lists ? null : new List<ComputeUsageDetail>() { new ComputeUsageDetail() { Usage = compute } },
+                Storage = missing == Missing.Lists ? null : new List<StorageUsageDetail>() { new StorageUsageDetail() { Usage = storage } }
             };
 
             var environmentUsageDetail = new EnvironmentUsageDetail()
             {
                 Name = "FooBar",
                 UserId = Guid.NewGuid().ToString(),
-                ResourceUsage = resourceUsage,
+                ResourceUsage = missing == Missing.ResourceUsage ? null : resourceUsage,
             };
 
             var usageDetail = new UsageDetail()
             {
-                Environments = new Dictionary<string, EnvironmentUsageDetail>()
-                {
-                    {  Guid.NewGuid().ToString(), environmentUsageDetail },
-                }
+                Environments = missing == Missing.Environments ? null :
+                    new Dictionary<string, EnvironmentUsageDetail>()
+                    {
+                        {  Guid.NewGuid().ToString(), environmentUsageDetail },
+                    }
             };
 
             var billingSummary = new BillingSummary()
@@ -90,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Plan = "test",
                 SubmissionState = BillingSubmissionState.None,
                 Usage = usage,
-                UsageDetail = usageDetail,
+                UsageDetail = missing == Missing.UsageDetail ? null : usageDetail,
             };
 
             var billingEvent = new BillingEvent()
@@ -98,6 +118,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 Plan = planInfo,
                 Args = billingSummary,
             };
+
+            var partnerQueueSubmission = new PartnerQueueSubmission(billingEvent);
+
+            var isEmptySubmission = (missing != default) || (compute == 0 && storage == 0);
+            Assert.True(partnerQueueSubmission.IsEmpty() == isEmptySubmission);
 
             planManager.Setup(x => 
                 x.GetPartnerPlansByShardAsync(
@@ -126,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
                 x.PushPartnerQueueSubmission(
                     It.IsAny<PartnerQueueSubmission>()
                 )
-            ).Returns(Task.FromResult(new PartnerQueueSubmission(billingEvent)));
+            ).Returns(Task.FromResult(partnerQueueSubmission));
 
             // Setup a fake lease
             lease.Setup(x =>
@@ -149,7 +174,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             );
 
             await sut.Execute(new System.Threading.CancellationToken());
-            Assert.Equal(BillingSubmissionState.Submitted, billingSummary.PartnerSubmissionState);
+
+            var expectedBillingSubmissionState = isEmptySubmission ?
+                BillingSubmissionState.NeverSubmit : BillingSubmissionState.Submitted;
+            Assert.Equal(expectedBillingSubmissionState, billingSummary.PartnerSubmissionState);
         }
     }
 }
