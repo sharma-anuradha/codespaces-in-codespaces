@@ -76,7 +76,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             var telemetryLogger = new JsonStdoutLogger(DefaultLogValues);
-            telemetryLogger.AddBaseValue("Service", "VsoAgent");
 
             var validationExceptions = new List<ValidationException>();
             foreach (var data in telemetryDataCollection)
@@ -86,13 +85,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     ValidateTelemetryComputeResourceId(data, vmResourceId);
 
                     var childLogger = telemetryLogger.NewChildLogger();
+                    childLogger.AddValue("Service", "VsoAgent");
 
                     // Use the time from the agent telemetry
-                    childLogger.AddBaseValue("time", data.Time);
+                    childLogger.AddValue("time", data.Time);
 
                     foreach (var optionalKvp in data.OptionalValues)
                     {
-                        childLogger.AddBaseValue(optionalKvp.Key, optionalKvp.Value.ToString());
+                        childLogger.AddValue(optionalKvp.Key, optionalKvp.Value.ToString());
                     }
 
                     childLogger.Log(data.Message, data.Level);
