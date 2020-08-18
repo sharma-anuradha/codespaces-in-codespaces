@@ -53,22 +53,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <inheritdoc />
-        public async Task CreateAsync(VsoPlanInfo plan, EnvironmentBillingInfo environment, CloudEnvironmentState oldState, CloudEnvironmentState newState, IDiagnosticsLogger logger)
+        public Task CreateAsync(VsoPlanInfo plan, EnvironmentBillingInfo environment, CloudEnvironmentState oldState, CloudEnvironmentState newState, IDiagnosticsLogger logger)
         {
-            var fullPlan = await PlanManager.GetAsync(plan, logger);
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_create_from_plan_info",
+                async (childLogger) =>
+                {
+                    childLogger.AddVsoPlanInfo(plan);
 
-            // Create the new billing state change
-            var environmentStateChange = new EnvironmentStateChange()
-            {
-                OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
-                NewValue = newState.ToString(),
-                Environment = environment,
-                Plan = plan,
-                PlanId = fullPlan.Id,
-                Time = DateTime.UtcNow,
-            };
+                    var fullPlan = await PlanManager.GetAsync(plan, logger, includeDeleted: true);
 
-            await CreateAsync(environmentStateChange, logger.NewChildLogger());
+                    if (fullPlan == default)
+                    {
+                        throw new PlanNotFoundException(plan);
+                    }
+
+                    // Create the new billing state change
+                    var environmentStateChange = new EnvironmentStateChange()
+                    {
+                        OldValue = (oldState == default ? CloudEnvironmentState.Created : oldState).ToString(),
+                        NewValue = newState.ToString(),
+                        Environment = environment,
+                        Plan = plan,
+                        PlanId = fullPlan.Id,
+                        Time = DateTime.UtcNow,
+                    };
+
+                    await CreateAsync(environmentStateChange, logger.NewChildLogger());
+                });
         }
 
         /// <inheritdoc />
