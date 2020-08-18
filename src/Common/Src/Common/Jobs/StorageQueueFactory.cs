@@ -34,23 +34,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <param name="clientProvider">The client provider.</param>
         /// <param name="crossRegionClientProvider">The cross region client provider.</param>
         /// <param name="controlPlaneInfo">The control plane info.</param>
+        /// <param name="resourceNameBuilder">Resource name builder instance.</param>
         /// <param name="healthProvider">The health provider.</param>
         /// <param name="logger">The logger instance.</param>
         public StorageQueueFactory(
             IStorageQueueClientProvider clientProvider,
             ICrossRegionStorageQueueClientProvider crossRegionClientProvider,
             IControlPlaneInfo controlPlaneInfo,
+            IResourceNameBuilder resourceNameBuilder,
             IHealthProvider healthProvider,
             IDiagnosticsLogger logger)
         {
+            Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
+            Requires.NotNull(healthProvider, nameof(healthProvider));
+
             this.createCallback = (queueId) =>
                 new StorageQueue(
                     this,
-                    () => clientProvider.InitializeQueue(queueId, healthProvider, logger),
+                    () => clientProvider.InitializeQueue(resourceNameBuilder.GetQueueName(queueId), healthProvider, logger),
                     logger);
             this.createRegionCallback = (queueId, controlPlaneRegion) =>
             {
-                var initializeQueueTask = crossRegionClientProvider.InitializeQueue(queueId, healthProvider, controlPlaneInfo, logger);
+                var initializeQueueTask = crossRegionClientProvider.InitializeQueue(resourceNameBuilder.GetQueueName(queueId), healthProvider, controlPlaneInfo, logger);
                 return new StorageQueue(
                     this,
                     async () =>
@@ -143,7 +148,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                         }
 
                         childLogger.FluentAddValue("QueueFoundItems", results.Count());
-                        return results.Select(m => new QueueMessageAdapter(m) as QueueMessage).ToArray() as IEnumerable<QueueMessage>;
+                        return results.Select(m =>
+                        {
+                            this.logger.NewChildLogger().FluentAddValue(JobQueueLoggerConst.JobId, m.Id)
+                                .FluentAddValue("DequeueCount", m.DequeueCount)
+                                .FluentAddValue("NextVisibleTime", m.NextVisibleTime)
+                                .FluentAddValue("ExpirationTime", m.ExpirationTime)
+                                .FluentAddValue("InsertionTime", m.InsertionTime)
+                                .LogInfo($"{LoggingPrefix}_get_message_complete");
+
+                            return new QueueMessageAdapter(m) as QueueMessage;
+                        }).ToArray() as IEnumerable<QueueMessage>;
                     });
             }
 
@@ -154,6 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     $"{LoggingPrefix}_delete",
                     async (childLogger) =>
                     {
+                        childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, queueMessage.Id);
                         var queue = await this.cloudQueueFactoryCallback();
                         var cloudQueueMessage = QueueMessageAdapter.AsCloudQueueMessage(queueMessage);
                         await queue.DeleteMessageAsync(cloudQueueMessage, cancellationToken);
@@ -168,6 +184,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                     $"{LoggingPrefix}_update",
                     async (childLogger) =>
                     {
+                        childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, queueMessage.Id);
                         var queue = await this.cloudQueueFactoryCallback();
                         MessageUpdateFields messageUpdateFields =
                             MessageUpdateFields.Visibility | (updateContent ? MessageUpdateFields.Content : 0);

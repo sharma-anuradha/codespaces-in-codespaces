@@ -24,12 +24,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         });
 
         /// <summary>
+        /// Start the job consumer processing and fprget the returned task.
+        /// </summary>
+        /// <param name="jobQueueConsumer">The job consumer instance.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        public static void Start(this IJobQueueConsumer jobQueueConsumer, CancellationToken cancellationToken = default)
+        {
+            Task.Run(() => jobQueueConsumer.StartAsync(cancellationToken));
+        }
+
+        /// <summary>
         /// Register a job handler by the common interface.
         /// </summary>
         /// <param name="jobQueueConsumer">The job consumer instance.</param>
-        /// <param name="jobHandler">The job handler to regsiter.</param>
-        public static void RegisterJobHandler(this IJobQueueConsumer jobQueueConsumer, IJobHandler jobHandler)
+        /// <param name="jobHandler">The job handler to register.</param>
+        /// <returns>The modified job consumer instance..</returns>
+        public static IJobQueueConsumer RegisterJobHandler(this IJobQueueConsumer jobQueueConsumer, IJobHandler jobHandler)
         {
+            Requires.NotNull(jobQueueConsumer, nameof(jobQueueConsumer));
+
             var jobHandlerGenericType = jobHandler.GetType().GetInterfaces().Where(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IJobHandler<>)).FirstOrDefault();
             if (jobHandlerGenericType == null)
             {
@@ -38,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 
             var method = LazyRegisterHandlerMethod.Value.MakeGenericMethod(jobHandlerGenericType.GetGenericArguments());
             method.Invoke(jobQueueConsumer, new object[] { jobHandler, GetDataflowBlockOptions(jobHandler), GetJobHandlerOptions(jobHandler) });
+            return jobQueueConsumer;
         }
 
         /// <summary>
@@ -45,12 +59,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <param name="jobQueueConsumer">The job consumer instance.</param>
         /// <param name="jobHandlers">Enumerable job handlers to regsiter.</param>
-        public static void RegisterJobHandlers(this IJobQueueConsumer jobQueueConsumer, IEnumerable<IJobHandler> jobHandlers)
+        /// <returns>The modified job consumer instance..</returns>
+        public static IJobQueueConsumer RegisterJobHandlers(this IJobQueueConsumer jobQueueConsumer, IEnumerable<IJobHandler> jobHandlers)
         {
             foreach (var jobHandler in jobHandlers)
             {
                 RegisterJobHandler(jobQueueConsumer, jobHandler);
             }
+
+            return jobQueueConsumer;
         }
 
         /// <summary>
@@ -59,10 +76,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <typeparam name="T">Type of the payload of the job handler.</typeparam>
         /// <param name="jobQueueConsumer">The job consumer instance.</param>
         /// <param name="jobHandler">The job handler to regsiter.</param>
-        public static void RegisterJobHandler<T>(this IJobQueueConsumer jobQueueConsumer, IJobHandler<T> jobHandler)
+        /// <returns>The modified job consumer instance..</returns>
+        public static IJobQueueConsumer RegisterJobHandler<T>(this IJobQueueConsumer jobQueueConsumer, IJobHandler<T> jobHandler)
             where T : JobPayload
         {
             jobQueueConsumer.RegisterJobHandler<T>(jobHandler, GetDataflowBlockOptions(jobHandler));
+            return jobQueueConsumer;
         }
 
         /// <summary>
@@ -73,14 +92,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="handleJobCallback">The delegate callback.</param>
         /// <param name="dataflowBlockOptions">Optional dataflow block options.</param>
         /// <param name="options">Job handler options.</param>
-        public static void RegisterJobPayloadHandler<T>(
+        /// <returns>The modified job consumer instance..</returns>
+        public static IJobQueueConsumer RegisterJobPayloadHandler<T>(
             this IJobQueueConsumer jobQueueConsumer,
             Func<T, IDiagnosticsLogger, CancellationToken, Task> handleJobCallback,
             ExecutionDataflowBlockOptions dataflowBlockOptions = null,
             JobHandlerOptions options = null)
             where T : JobPayload
         {
-            jobQueueConsumer.RegisterJobHandler(CreateJobPayloadHandler(handleJobCallback, dataflowBlockOptions, options));
+            return jobQueueConsumer.RegisterJobHandler(CreateJobPayloadHandler(handleJobCallback, dataflowBlockOptions, options));
         }
 
         /// <summary>
@@ -91,14 +111,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="handleJobCallback">The delegate callback.</param>
         /// <param name="dataflowBlockOptions">Optional dataflow block options.</param>
         /// <param name="options">Job handler options.</param>
-        public static void RegisterJobHandler<T>(
+        /// <returns>The modified job consumer instance..</returns>
+        public static IJobQueueConsumer RegisterJobHandler<T>(
             this IJobQueueConsumer jobQueueConsumer,
             Func<IJob<T>, IDiagnosticsLogger, CancellationToken, Task> handleJobCallback,
             ExecutionDataflowBlockOptions dataflowBlockOptions = null,
             JobHandlerOptions options = null)
             where T : JobPayload
         {
-            jobQueueConsumer.RegisterJobHandler(CreateJobHandler(handleJobCallback, dataflowBlockOptions, options));
+            return jobQueueConsumer.RegisterJobHandler(CreateJobHandler(handleJobCallback, dataflowBlockOptions, options));
         }
 
         /// <summary>

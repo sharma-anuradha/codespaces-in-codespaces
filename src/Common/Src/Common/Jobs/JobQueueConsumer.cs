@@ -89,6 +89,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             {
                 var jobInstance = (Job)job;
 
+                this.logger.NewChildLogger().FluentAddValue(JobQueueLoggerConst.JobId, job.Id)
+                    .FluentAddValue(JobQueueLoggerConst.JobType, typeTag)
+                    .FluentAddValue(JobQueueLoggerConst.JobRetries, jobInstance.JobPayloadInfo.Retries)
+                    .LogInfo("job_queue_start_job_handler");
+
                 Func<Task> jobInstanceDispose = () =>
                 {
                     RemoveDequeuedJob(jobInstance);
@@ -234,8 +239,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         }
 
         /// <inheritdoc/>
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return QueueMessageProducer.StartAsync(cancellationToken);
+        }
+
+        /// <inheritdoc/>
         protected override async Task DisposeInternalAsync()
         {
+            await QueueMessageProducer.DisposeAsync();
+
             try
             {
                 await this.keepInvisibleJobsTask;

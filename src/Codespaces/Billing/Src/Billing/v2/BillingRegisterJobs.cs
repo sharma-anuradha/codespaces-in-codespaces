@@ -73,16 +73,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 // Register: Queue handlers
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingManagermentQueue)
-                    .RegisterJobHandler(BillingManagementConsumer);
+                    .RegisterJobHandler(BillingManagementConsumer)
+                    .Start();
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanBatchQueue)
-                    .RegisterJobHandler(BillingPlanBatchConsumer);
+                    .RegisterJobHandler(BillingPlanBatchConsumer)
+                    .Start();
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanSummaryQueue)
-                    .RegisterJobHandler(BillingPlanSummaryConsumer);
+                    .RegisterJobHandler(BillingPlanSummaryConsumer)
+                    .Start();
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanCleanupQueue)
-                    .RegisterJobHandler(BillingPlanCleanupConsumer);
+                    .RegisterJobHandler(BillingPlanCleanupConsumer)
+                     .Start();
 
                 // Job: Start Billing Management Producer
                 TaskHelper.RunBackgroundLoop(

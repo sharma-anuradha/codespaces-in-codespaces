@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Common;
 
@@ -25,7 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// <summary>
     /// A queue message producer definition.
     /// </summary>
-    public interface IQueueMessageProducer
+    public interface IQueueMessageProducer : IAsyncDisposable
     {
         /// <summary>
         /// Gets the underlying queue used.
@@ -36,5 +38,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the message source block.
         /// </summary>
         ISourceBlock<(QueueMessage, TimeSpan)> Messages { get; }
+
+        /// <summary>
+        /// Start the queue message processing.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>Completion task.</returns>
+        Task StartAsync(CancellationToken cancellationToken);
     }
 }

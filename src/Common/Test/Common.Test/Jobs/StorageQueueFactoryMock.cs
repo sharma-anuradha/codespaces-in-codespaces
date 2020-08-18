@@ -58,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 mockStorageQueueClientProvider.Object,
                 mockCrossRegionStorageQueueClientProvider.Object,
                 mockControlPlaneInfo.Object,
+                new ResourceNameBuilder(new DeveloperPersonalStampSettings(true, string.Empty, true)),
                 mockHealthProvider.Object,
                 new NullLogger());
         }

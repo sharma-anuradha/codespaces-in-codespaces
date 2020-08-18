@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Common;
 
@@ -32,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// <summary>
     /// A job queue consumer contract.
     /// </summary>
-    public interface IJobQueueConsumer
+    public interface IJobQueueConsumer : IAsyncDisposable
     {
         /// <summary>
         /// Return the current job handler metrics processed by this queue.
@@ -49,6 +51,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="jobHandlerOptions">Job handler options.</param>
         void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions, JobHandlerOptions jobHandlerOptions = null)
             where T : JobPayload;
+
+        /// <summary>
+        /// Start the job queue consumer processing.
+        /// </summary>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>Completion task.</returns>
+        Task StartAsync(CancellationToken cancellationToken);
     }
 
     /// <summary>

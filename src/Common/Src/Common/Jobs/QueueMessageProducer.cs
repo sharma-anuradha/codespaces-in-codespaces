@@ -1,9 +1,10 @@
-﻿// <copyright file="QueueMessageProducer.cs" company="Microsoft">
+// <copyright file="QueueMessageProducer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
@@ -16,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     public class QueueMessageProducer : DisposableBase, IQueueMessageProducer
     {
         private readonly BufferBlock<(QueueMessage, TimeSpan)> bufferBlock = new BufferBlock<(QueueMessage, TimeSpan)>();
-        private readonly Task getMessagesTask;
+        private Task getMessagesTask;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueueMessageProducer"/> class.
@@ -26,20 +27,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         public QueueMessageProducer(IQueue queue, QueueMessageProducerSettings settings)
         {
             Queue = Requires.NotNull(queue, nameof(queue));
-            this.getMessagesTask = Task.Run(async () =>
-            {
-                while (!DisposeToken.IsCancellationRequested)
-                {
-                    var queueMessages = await queue.GetMessagesAsync(settings.MessageCount, settings.VisibilityTimeout, settings.Timeout, DisposeToken);
-                    if (queueMessages.Any())
-                    {
-                        foreach (var queueMessage in queueMessages)
-                        {
-                            await this.bufferBlock.SendAsync((queueMessage, settings.VisibilityTimeout), DisposeToken);
-                        }
-                    }
-                }
-            });
+            Settings = Requires.NotNull(settings, nameof(settings));
         }
 
         /// <inheritdoc/>
@@ -48,15 +36,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <inheritdoc/>
         public ISourceBlock<(QueueMessage, TimeSpan)> Messages => this.bufferBlock;
 
+        private QueueMessageProducerSettings Settings { get; set; }
+
+        /// <inheritdoc/>
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            if (this.getMessagesTask != null)
+            {
+                throw new InvalidOperationException("Already started");
+            }
+
+            this.getMessagesTask = StartInternalAsync(cancellationToken);
+            return this.getMessagesTask;
+        }
+
         /// <inheritdoc/>
         protected override async Task DisposeInternalAsync()
         {
-            try
+            if (this.getMessagesTask != null)
             {
-                await this.getMessagesTask;
+                try
+                {
+                    await this.getMessagesTask;
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
-            catch (OperationCanceledException)
+        }
+
+        private async Task StartInternalAsync(CancellationToken cancellationToken)
+        {
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, DisposeToken))
             {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    var queueMessages = await Queue.GetMessagesAsync(Settings.MessageCount, Settings.VisibilityTimeout, Settings.Timeout, cts.Token);
+                    if (queueMessages.Any())
+                    {
+                        foreach (var queueMessage in queueMessages)
+                        {
+                            await this.bufferBlock.SendAsync((queueMessage, Settings.VisibilityTimeout), cts.Token);
+                        }
+                    }
+                }
             }
         }
     }

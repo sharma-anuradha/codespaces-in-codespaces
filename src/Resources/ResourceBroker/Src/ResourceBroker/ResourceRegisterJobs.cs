@@ -150,7 +150,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Register job handlers
             JobQueueConsumerFactory
                 .GetOrCreate(ResourceJobQueueConstants.GenericQueueName)
-                .RegisterJobHandlers(JobHandlers);
+                .RegisterJobHandlers(JobHandlers)
+                .Start();
 
             // register all the job schedulers
             foreach (var jobSchedulersRegister in JobSchedulersRegisters)

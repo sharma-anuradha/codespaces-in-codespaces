@@ -181,6 +181,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                     MaxDegreeOfParallelism = 1
                 };
 
+                otherJobQueueConsumer.Start();
+
                 var payloadsProcessed1Counter = 0;
                 var payloadsProcessed2Counter = 0;
                 var payloadsProcessed = new BufferBlock<JobContentPayload<int>>();
@@ -369,8 +371,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             foreach (var location in new AzureLocation[] { AzureLocation.WestUs2, AzureLocation.WestEurope })
             {
                 var jobQueueConsumer = (JobQueueConsumer)jobQueueConsumerFactory.GetOrCreate(queueId, location);
+                jobQueueConsumer.Start();
                 disposables.Add(jobQueueConsumer);
-                disposables.Add(jobQueueConsumer.QueueMessageProducer as IAsyncDisposable);
 
                 jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
                     async (payload, logger, ct) =>
@@ -401,10 +403,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 var jobQueueProducer = new JobQueueProducer(queue, new NullLogger());
                 var queueMessageProducer = new QueueMessageProducer(queue, queueMessageProducerSettings ?? QueueMessageProducerSettings.Default);
                 var jobQueueConsumer = new JobQueueConsumer(queueMessageProducer, new NullLogger());
+                jobQueueConsumer.Start(default);
                 await testCallback(jobQueueProducer, jobQueueConsumer, queue);
                 await jobQueueProducer.DisposeAsync();
                 await jobQueueConsumer.DisposeAsync();
-                await queueMessageProducer.DisposeAsync();
             });
         }
     }
