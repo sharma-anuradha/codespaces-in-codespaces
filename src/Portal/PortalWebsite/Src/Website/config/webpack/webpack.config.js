@@ -9,7 +9,6 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const WebpackMildCompile = require('webpack-mild-compile').Plugin;
 
 const rootFolder = path.resolve(__dirname, '..', '..');
 
@@ -94,7 +93,6 @@ module.exports = [
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
             plugins: [
-                !production && new WebpackMildCompile(),
                 new TsconfigPathsPlugin({ configFile: paths.tsConfig })
             ].filter(Boolean),
             modules: ['node_modules', 'vscode-downloads/workbench-page'],
@@ -151,7 +149,6 @@ module.exports = [
             ],
         },
         plugins: [
-            !production && new WebpackMildCompile(),
             new webpack.DefinePlugin({
                 'process.env.VSCS_IN_CODESPACE': `"${process.env['CODESPACES']}"`,
                 'process.env.VSCS_GIT_BRANCH': `"${gitRepoInfo.branch}"`,
@@ -270,7 +267,6 @@ module.exports = [
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
             plugins: [
-                !production && new WebpackMildCompile(),
                 new TsconfigPathsPlugin({ configFile: paths.tsConfig })
             ].filter(Boolean),
             alias: {
@@ -310,7 +306,6 @@ module.exports = [
             ],
         },
         plugins: [
-            !production && new WebpackMildCompile(),
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
                 'process.env.PUBLIC_URL': `"${publicPath}"`,
