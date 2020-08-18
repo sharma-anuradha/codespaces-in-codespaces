@@ -6,7 +6,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string[]]$SubscriptionNames,
-    [switch]$SkipRegistrations
+    [switch]$SkipRegistrations,
+    [switch]$AssignProdReader
 )
 
 # Global error handling
@@ -65,28 +66,30 @@ function Test-IsLegacySubscription([string]$SubscriptionName) {
 function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
 
     # Validate that the subscription exists
-    $sub = Select-AzSubscription -Subscription $SubscriptionName
+    $sub = ""
+    try {
+        $sub = Select-AzSubscription -Subscription $SubscriptionName
+    } catch {
+        throw "Legacy subscription not found: ${SubscriptionName}: $_"
+    }
     $env = Get-Environment -SubscriptionName $SubscriptionName
     Write-Host "Onboarding legacy subscription '$($sub.Subscription.Name)' for environment '$env'" -ForegroundColor Green
-
-    # Get the service principals
-    Write-Host "Getting service principals for $env..." -ForegroundColor Green
-    $opsSp = Get-AdSp -DisplayName "vsclk-online-$env-devops-sp"
-    $appSp = Get-AdSp -DisplayName "vsclk-online-$env-app-sp"
 
     if (!$SkipRegistrations) {
         $PartitionedData = !(Test-IsLegacySubscription -SubscriptionName $SubscriptionName)
         Register-DefaultProvidersAndFeatures -PartitionedData $PartitionedData
     }
 
-    # Assign RBAC
+    # Assign RBAC    
     Write-Host "Assigning break-glass access control" -ForegroundColor Green
     New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $breakGlassGroup | Out-Null
-
+    
     Write-Host "Assigning service principal access control" -ForegroundColor Green
+    $appSp = Get-AdSp -DisplayName "vsclk-online-$env-app-sp" | Out-Null
     New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $appSp | Out-Null
-
+    
     if (!(Test-IsDataSubscription -SubscriptionName $SubscriptionName)) {
+        $opsSp = Get-AdSp -DisplayName "vsclk-online-$env-devops-sp" | Out-Null
         New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $opsSp | Out-Null
     }
 
@@ -102,7 +105,10 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
         New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
         New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
     }
-    elseif ($env -eq "prod") {
+    elseif ($env -eq "prod" -and $AssignProdReader) {
+        Write-Host "Assigning team access control for prod" -ForegroundColor Green
+        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
+        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
     }
 }
 
