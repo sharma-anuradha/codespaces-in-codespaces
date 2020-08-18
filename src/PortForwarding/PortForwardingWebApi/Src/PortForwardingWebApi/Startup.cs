@@ -247,7 +247,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 
             app.Use(async (httpContext, next) =>
             {
-                if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
+                if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&
+                    !string.IsNullOrWhiteSpace(cookieCorrelationId))
+                {
+                    httpContext.TrySetRequestId(cookieCorrelationId);
+                    httpContext.Response.Cookies.Append(
+                        "codespaces_correlation_id",
+                        "<removed>",
+                        new CookieOptions
+                        {
+                            Expires = DateTimeOffset.Now.Subtract(TimeSpan.FromHours(2)),
+                        });
+                }
+                else if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
                 {
                     var requestId = nginxRequestId.SingleOrDefault();
                     if (requestId != default)

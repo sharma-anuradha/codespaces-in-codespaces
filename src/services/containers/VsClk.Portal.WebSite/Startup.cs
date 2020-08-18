@@ -150,7 +150,12 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
             app.Use(async (httpContext, next) =>
             {
-                if (httpContext.Request.Query.TryGetValue("cid", out var requestCorrelationId))
+                if (httpContext.Request.Cookies.TryGetValue(Constants.CorrelationCookieName, out string cookieCorrelationId) &&
+                    !string.IsNullOrWhiteSpace(cookieCorrelationId))
+                {
+                    httpContext.TrySetRequestId(cookieCorrelationId);
+                }
+                else if (httpContext.Request.Query.TryGetValue("cid", out var requestCorrelationId))
                 {
                     var correlationId = requestCorrelationId.SingleOrDefault();
                     if (correlationId != default)

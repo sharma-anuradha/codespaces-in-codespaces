@@ -67,6 +67,9 @@ pfingress:
         if ($new_cookie ~ "(.*)(?:^|;)\s*VstsSession=[^;]+(.*)") {
           set $new_cookie $1$2;
         }
+        if ($new_cookie ~ "(.*)(?:^|;)\s*codespaces_correlation_id=[^;]+(.*)") {
+          set $new_cookie $1$2;
+        }
         if ($new_cookie ~ ";\s*(.+);?\s*") {
           set $new_cookie $1;
         }

@@ -8,6 +8,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Filters;
 using Microsoft.VsCloudKernel.Services.Portal.WebSite.Models;
+using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 using Newtonsoft.Json;
@@ -257,6 +258,8 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 Path = path,
                 Query = query
             };
+
+            Response.Cookies.Append(Constants.CorrelationCookieName, HttpContext.GetCorrelationId());
 
             return Redirect(redirectUriBuilder.Uri.ToString());
         }

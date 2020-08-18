@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
@@ -24,7 +25,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
     public class ConnectionCreationMiddlewareTest
     {
         private readonly ConnectionCreationMiddleware middleware;
-        private readonly IDiagnosticsLogger logger;
         private readonly PortForwardingHostUtils hostUtils;
 
         private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
@@ -34,8 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
         public ConnectionCreationMiddlewareTest()
         {
-            IDiagnosticsLoggerFactory loggerFactory = new DefaultLoggerFactory();
-            logger = loggerFactory.New();
             hostUtils = new PortForwardingHostUtils(MockPortForwardingAppSettings.Settings.HostsConfigs);
 
             middleware = new ConnectionCreationMiddleware(context => Task.CompletedTask);
@@ -52,7 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             await middleware.InvokeAsync(
                 context,
-                logger,
                 newConnectionsQueueClientProvider.Object,
                 connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
@@ -83,7 +80,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             await middleware.InvokeAsync(
                 context,
-                logger,
                 newConnectionsQueueClientProvider.Object,
                 connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
@@ -130,7 +126,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             await middleware.InvokeAsync(
                 context,
-                logger,
                 newConnectionsQueueClientProvider.Object,
                 connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
@@ -161,7 +156,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             await middleware.InvokeAsync(
                 context,
-                logger,
                 newConnectionsQueueClientProvider.Object,
                 connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
@@ -208,7 +202,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             await middleware.InvokeAsync(
                 context,
-                logger,
                 newConnectionsQueueClientProvider.Object,
                 connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
@@ -262,7 +255,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
 
             await middleware.InvokeAsync(
                 context,
-                logger,
                 newConnectionsQueueClientProvider.Object,
                 connectionErrorsSessionClientProvider.Object,
                 mappingClient.Object,
@@ -273,7 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
         }
 
-        private HttpContext CreateMockContext(bool invalidHeaders = false, bool isAuthenticated = true)
+        private HttpContext CreateMockContext(bool invalidHeaders = false, bool isAuthenticated = true, IDiagnosticsLogger logger = null)
         {
             var context = new DefaultHttpContext
             {
@@ -288,6 +280,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 }
             };
 
+            IDiagnosticsLoggerFactory loggerFactory = new DefaultLoggerFactory();
+            logger = loggerFactory.New();
+
+            context.SetLogger(logger);
+
             if (!invalidHeaders)
             {
                 context.Request.Headers.Add(PortForwardingHeaders.WorkspaceId, "a68c43fa9e015e45e046c85d502ec5e4b774");
@@ -298,6 +295,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             {
                 context.Request.Headers.Add(PortForwardingHeaders.Token, "super_secret_token");
             }
+
 
             return context;
         }

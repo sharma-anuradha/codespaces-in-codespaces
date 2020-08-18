@@ -11,6 +11,7 @@ using k8s.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -48,7 +49,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
         /// Handles the first PFS client request.
         /// </summary>
         /// <param name="context">Request context.</param>
-        /// <param name="logger">Target logger.</param>
         /// <param name="newConnectionsQueueClientProvider">The connections-new queue client provider.</param>
         /// <param name="connectionErrorsSessionClientProvider">The connections-errors session client provider.</param>
         /// <param name="mappingClient">The mappings client.</param>
@@ -58,7 +58,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
         /// <returns>Task.</returns>
         public async Task InvokeAsync(
             HttpContext context,
-            IDiagnosticsLogger logger,
             INewConnectionsQueueClientProvider newConnectionsQueueClientProvider,
             IConnectionErrorsSessionClientProvider connectionErrorsSessionClientProvider,
             IAgentMappingClient mappingClient,
@@ -66,6 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             PortForwardingHostUtils hostUtils,
             PortForwardingAppSettings appSettings)
         {
+            var logger = context.GetLogger();
+
             // 1. Extract connection information from the request context.
             var token = string.Empty;
             if (context.Request.Headers.TryGetValue(PortForwardingHeaders.Token, out var tokenValues))

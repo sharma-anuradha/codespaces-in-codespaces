@@ -44,6 +44,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                 if ($new_cookie ~ ""(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)"") {
                     set $new_cookie $1$2;
                 }
+                if ($new_cookie ~ ""(.*)(?:^|;)\s*codespaces_correlation_id=[^;]+(.*)"") {
+                    set $new_cookie $1$2;
+                }
                 if ($new_cookie ~ "";\s*(.+);?\s*"") {
                     set $new_cookie $1;
                 }
