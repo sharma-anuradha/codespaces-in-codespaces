@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common.Contracts\Backend.Common.Contracts.csproj" />
     <ProjectReference Include="..\..\..\KeyVaultProvider\Src\KeyVaultProvider.Contracts\KeyVaultProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\QueueProvider\Src\QueueProvider.Contracts\QueueProvider.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

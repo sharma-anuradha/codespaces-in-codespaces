@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourcePoolResourceDetailExtensions.cs" company="Microsoft">
+// <copyright file="ResourcePoolResourceDetailExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -61,6 +61,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
             };
 
             return resource;
+        }
+
+        /// <summary>
+        /// Get code for pool queue resource.
+        /// </summary>
+        /// <param name="poolCode">pool code.</param>
+        /// <returns>pool queue code.</returns>
+        public static string GetPoolQueueDefinition(this string poolCode)
+        {
+            return $"{poolCode}-PoolQueue";
         }
     }
 }

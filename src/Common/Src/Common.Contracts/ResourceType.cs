@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceType.cs" company="Microsoft">
+// <copyright file="ResourceType.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -48,5 +48,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// VM's disk snapshots.
         /// </summary>
         Snapshot = 8,
+
+        /// <summary>
+        /// Pool queue forresource requests.
+        /// </summary>
+        PoolQueue = 9,
     }
 }

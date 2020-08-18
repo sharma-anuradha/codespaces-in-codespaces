@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceNameBuilder.cs" company="Microsoft">
+// <copyright file="ResourceNameBuilder.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public string GetQueueName(string baseName)
         {
-            return CreateResourceName(baseName);
+            return $"pool-{CreateResourceName(baseName)}";
         }
 
         /// <inheritdoc/>

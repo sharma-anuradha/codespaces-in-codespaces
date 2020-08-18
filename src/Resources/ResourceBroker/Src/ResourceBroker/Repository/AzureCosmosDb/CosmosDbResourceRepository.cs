@@ -395,5 +395,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
 
             return items;
         }
+
+        /// <inheritdoc/>
+        public async Task<ResourceRecord> GetPoolQueueRecordAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT TOP 1 *
+                FROM c
+                WHERE c.poolReference.code = @poolCode
+                    AND c.type = @type",
+                new SqlParameterCollection
+                {
+                    new SqlParameter { Name = "@poolCode", Value = poolCode },
+                    new SqlParameter { Name = "@type", Value = ResourceType.PoolQueue.ToString() },
+                });
+
+            var items = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<ResourceRecord>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            var result = items.FirstOrDefault();
+
+            return result;
+        }
     }
 }

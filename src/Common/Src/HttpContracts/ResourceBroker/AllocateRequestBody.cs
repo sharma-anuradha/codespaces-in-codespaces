@@ -1,4 +1,4 @@
-﻿// <copyright file="AllocateRequestBody.cs" company="Microsoft">
+// <copyright file="AllocateRequestBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -35,6 +35,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Gets or sets a value indicating whether to queue create resource.
         /// </summary>
         public bool QueueCreateResource { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to queue resource allocation request.
+        /// </summary>
+        public bool QueueResourceRequest { get; set; }
 
         /// <summary>
         /// Gets or sets allocate extended properties.

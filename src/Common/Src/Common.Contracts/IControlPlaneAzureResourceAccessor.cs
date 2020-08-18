@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="computeVmLocation">The azure location of the compute vm.</param>
         /// <param name="logger">The logger instance.</param>
         /// <returns>A tuple of the account name and the account key.</returns>
-        Task<ComputeQueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger);
+        Task<QueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the stamp-level storage account used for compute vm agent images..
@@ -137,5 +137,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// </summary>
         /// <returns>AzureCredentials.</returns>
         Task<AzureCredentials> GetAzureCredentialsAsync();
+
+        /// <summary>
+        /// Get storage account for creating pool queues.
+        /// </summary>
+        /// <param name="logger">logger instance.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<QueueStorageInfo> GetStampStorageAccountForPoolQueuesAsync(IDiagnosticsLogger logger);
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="StartArchiveContinuationHandler.cs" company="Microsoft">
+// <copyright file="StartArchiveContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -38,13 +38,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
+        /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         public StartArchiveContinuationHandler(
             IArchiveStorageProvider archiveStorageProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
-            IStorageFileShareProviderHelper storageFileShareProviderHelper)
-            : base(serviceProvider, resourceRepository)
+            IStorageFileShareProviderHelper storageFileShareProviderHelper,
+            IResourceStateManager resourceStateManager)
+            : base(serviceProvider, resourceRepository, resourceStateManager)
         {
             ArchiveStorageProvider = archiveStorageProvider;
             StorageProvider = storageProvider;

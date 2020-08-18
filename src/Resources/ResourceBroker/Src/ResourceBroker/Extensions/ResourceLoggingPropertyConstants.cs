@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceLoggingPropertyConstants.cs" company="Microsoft">
+// <copyright file="ResourceLoggingPropertyConstants.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -88,5 +88,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Max Delete Batch Count name.
         /// </summary>
         public const string MaxDeleteBatchCount = nameof(MaxDeleteBatchCount);
+
+        /// <summary>
+        /// Resource request record id.
+        /// </summary>
+        public const string RequestRecordId = nameof(RequestRecordId);
     }
 }

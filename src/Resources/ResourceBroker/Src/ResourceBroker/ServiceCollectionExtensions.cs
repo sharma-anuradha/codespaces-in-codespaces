@@ -113,6 +113,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<ICreateComponentStrategy, CreateNetworkInterfaceStrategy>();
             services.AddSingleton<ICreateComponentStrategy, CreateQueueStrategy>();
 
+            // Resource Request Manager
+            services.AddSingleton<IResourceStateManager, ResourceStateManager>();
+            services.AddSingleton<IResourceRequestManager, ResourceRequestManager>();
+            services.AddSingleton<IResourceRequestQueueProvider, ResourceRequestQueueProvider>();
+
             // Job payload factories
             services.AddSingleton<WatchPoolPayloadFactory>();
 

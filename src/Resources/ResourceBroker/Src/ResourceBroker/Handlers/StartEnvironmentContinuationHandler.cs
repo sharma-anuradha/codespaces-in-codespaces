@@ -1,4 +1,4 @@
-﻿// <copyright file="StartEnvironmentContinuationHandler.cs" company="Microsoft">
+// <copyright file="StartEnvironmentContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -43,14 +43,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
         /// <param name="queueProvider">Queue provider.</param>
+        /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         public StartEnvironmentContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
             IStorageFileShareProviderHelper storageFileShareProviderHelper,
-            IQueueProvider queueProvider)
-            : base(serviceProvider, resourceRepository)
+            IQueueProvider queueProvider,
+            IResourceStateManager resourceStateManager)
+            : base(serviceProvider, resourceRepository, resourceStateManager)
         {
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;

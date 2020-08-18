@@ -1,4 +1,4 @@
-﻿// <copyright file="DeleteResourceContinuationHandler.cs" company="Microsoft">
+// <copyright file="DeleteResourceContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,6 +14,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -36,21 +38,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <summary>
         /// Initializes a new instance of the <see cref="DeleteResourceContinuationHandler"/> class.
         /// </summary>
+        /// <param name="requestQueueProvider">Resource request queue provider.</param>
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
         /// <param name="keyVaultProvider">KeyVault provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="diskProvider">Disk provider.</param>
         /// <param name="serviceProvider">Service Provider.</param>
+        /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         public DeleteResourceContinuationHandler(
+            IResourceRequestQueueProvider requestQueueProvider,
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IDiskProvider diskProvider,
             IKeyVaultProvider keyVaultProvider,
             IResourceRepository resourceRepository,
-            IServiceProvider serviceProvider)
-            : base(serviceProvider, resourceRepository)
+            IServiceProvider serviceProvider,
+            IResourceStateManager resourceStateManager)
+            : base(serviceProvider, resourceRepository, resourceStateManager)
         {
+            RequestQueueProvider = requestQueueProvider;
             ComputeProvider = computeProvider;
             StorageProvider = storageProvider;
             DiskProvider = diskProvider;
@@ -65,6 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
 
         /// <inheritdoc/>
         protected override ResourceOperation Operation => ResourceOperation.Deleting;
+
+        private IResourceRequestQueueProvider RequestQueueProvider { get; }
 
         private IComputeProvider ComputeProvider { get; set; }
 
@@ -147,6 +156,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     AzureResourceInfo = resource.Value.AzureResourceInfo,
                 };
             }
+            else if (resource.Value.Type == ResourceType.PoolQueue)
+            {
+                var didParseLocation = Enum.TryParse(resource.Value.Location, true, out AzureLocation azureLocation);
+                if (!didParseLocation)
+                {
+                    throw new NotSupportedException($"Provided location of '{resource.Value.Location}' is not supported.");
+                }
+
+                operationInput = new QueueProviderDeleteInput
+                {
+                    Location = azureLocation,
+                    AzureResourceInfo = resource.Value.AzureResourceInfo,
+                    QueueName = resource.Value.AzureResourceInfo.Name,
+                };
+            }
             else
             {
                 throw new NotSupportedException($"Resource type is not supported - {resource.Value.Type}");
@@ -187,6 +211,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 else if (resource.Value.Type == ResourceType.KeyVault)
                 {
                     result = await KeyVaultProvider.DeleteAsync((KeyVaultProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
+                }
+                else if (resource.Value.Type == ResourceType.PoolQueue)
+                {
+                    result = await RequestQueueProvider.DeletePoolQueueAsync((QueueProviderDeleteInput)input.OperationInput, logger.NewChildLogger());
                 }
                 else
                 {

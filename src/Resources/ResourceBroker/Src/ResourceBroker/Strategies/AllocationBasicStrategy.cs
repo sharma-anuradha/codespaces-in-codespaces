@@ -1,4 +1,4 @@
-﻿// <copyright file="AllocationBasicStrategy.cs" company="Microsoft">
+// <copyright file="AllocationBasicStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -42,13 +42,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         /// <param name="resourceContinuationOperations">Resource continuation operations.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="mapper">Mapper.</param>
+        /// <param name="requestQueueManager">Resource request manager.</param>
         public AllocationBasicStrategy(
             IResourceRepository resourceRepository,
             IResourcePoolManager resourcePool,
             IResourcePoolDefinitionStore resourceScalingStore,
             IResourceContinuationOperations resourceContinuationOperations,
             ITaskHelper taskHelper,
-            IMapper mapper)
+            IMapper mapper,
+            IResourceRequestManager requestQueueManager)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
@@ -56,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
+            ResourceRequestManager = Requires.NotNull(requestQueueManager, nameof(requestQueueManager));
         }
 
         /// <summary>
@@ -87,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         /// Gets mapper.
         /// </summary>
         private IMapper Mapper { get; }
+
+        private IResourceRequestManager ResourceRequestManager { get; }
 
         /// <inheritdoc/>
         public bool CanHandle(IEnumerable<AllocateInput> inputs)
@@ -121,6 +126,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                             $"{LogBaseName}_allocate",
                             async (itemLogger) =>
                             {
+                                itemLogger.FluentAddBaseValue(nameof(input.QueueResourceRequest), input.QueueResourceRequest)
+                                    .FluentAddBaseValue(nameof(input.QueueCreateResource), input.QueueCreateResource);
+
                                 (ResourceRecord Resource, ResourcePool ResourceSku) assignResult = default;
 
                                 if (input.QueueCreateResource)
@@ -131,7 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                                 else
                                 {
                                     // Try and get item from the pool
-                                    assignResult = await TryGetAsync(input, itemLogger);
+                                    assignResult = await TryGetAsync(input, itemLogger, loggingProperties);
                                 }
 
                                 // Deal with case that it didn't exist
@@ -236,7 +244,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     else
                     {
                         // Try and get item from the pool
-                        assignResult = await TryGetAsync(input, childLogger);
+                        assignResult = await TryGetAsync(input, childLogger, loggingProperties);
                     }
 
                     // Deal with case that it didn't exist
@@ -262,7 +270,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                 });
         }
 
-        private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryGetAsync(AllocateInput input, IDiagnosticsLogger itemLogger)
+        private async Task<(ResourceRecord Resource, ResourcePool ResourceSku)> TryGetAsync(AllocateInput input, IDiagnosticsLogger itemLogger, IDictionary<string, string> loggingProperties)
         {
             // If a blob is being created, we don't need to go to the pool for that
             if (input.Type == ResourceType.StorageArchive)
@@ -301,6 +309,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
 
                 itemLogger.FluentAddBaseValue("ResourceAllocateFound", resource != null);
+
+                if (resource == null && input.QueueResourceRequest)
+                {
+                    resource = await ResourceRequestManager.EnqueueAsync(resourceSku, loggingProperties, itemLogger.NewChildLogger());
+                }
 
                 return (resource, resourceSku);
             }

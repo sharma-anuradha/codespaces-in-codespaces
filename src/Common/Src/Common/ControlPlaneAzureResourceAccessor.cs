@@ -207,22 +207,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<ComputeQueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger)
+        public async Task<QueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger)
         {
             var storageAccountName = ControlPlaneInfo.Stamp.GetStampStorageAccountNameForComputeQueues(computeVmLocation);
-            var (accountName, key) = await GetStorageAccountAsync(
-                ControlPlaneInfo.Stamp.StampResourceGroupName,
-                storageAccountName,
-                logger);
-            var subscriptionId = await GetCurrentSubscriptionIdAsync();
+            return await GetQueueStorageInfo(storageAccountName, logger);
+        }
 
-            return new ComputeQueueStorageInfo()
-            {
-                ResourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName,
-                StorageAccountKey = key,
-                StorageAccountName = accountName,
-                SubscriptionId = subscriptionId,
-            };
+        /// <inheritdoc/>
+        public async Task<QueueStorageInfo> GetStampStorageAccountForPoolQueuesAsync(IDiagnosticsLogger logger)
+        {
+            var storageAccountName = ControlPlaneInfo.Stamp.StampStorageAccountName;
+            return await GetQueueStorageInfo(storageAccountName, logger);
         }
 
         /// <inheritdoc/>
@@ -392,6 +387,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var storageManagementClient = StorageManagementClient;
             StorageManagementClient = null;
             storageManagementClient?.Dispose();
+        }
+
+        private async Task<QueueStorageInfo> GetQueueStorageInfo(string storageAccountName, IDiagnosticsLogger logger)
+        {
+            var (accountName, key) = await GetStorageAccountAsync(
+                            ControlPlaneInfo.Stamp.StampResourceGroupName,
+                            storageAccountName,
+                            logger);
+            var subscriptionId = await GetCurrentSubscriptionIdAsync();
+
+            return new QueueStorageInfo()
+            {
+                ResourceGroup = ControlPlaneInfo.Stamp.StampResourceGroupName,
+                StorageAccountKey = key,
+                StorageAccountName = accountName,
+                SubscriptionId = subscriptionId,
+            };
         }
 
         private async Task<IKeyVaultClient> GetKeyVaultClientAsync()

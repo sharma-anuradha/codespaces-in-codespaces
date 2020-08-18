@@ -1,4 +1,4 @@
-﻿// <copyright file="IResourceRepository.cs" company="Microsoft">
+// <copyright file="IResourceRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -110,5 +110,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns a list of failed resource id.</returns>
         Task<IEnumerable<ResourceRecord>> GetFailedOperationAsync(string poolCode, int count, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Fetch pool queue record.
+        /// </summary>
+        /// <param name="poolCode">pool code.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>pool queue record.</returns>
+        Task<ResourceRecord> GetPoolQueueRecordAsync(string poolCode, IDiagnosticsLogger logger);
     }
 }

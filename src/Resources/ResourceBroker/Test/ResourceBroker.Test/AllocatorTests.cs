@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
             var taskHelper = new Mock<ITaskHelper>().Object;
             var mapper = new Mock<IMapper>().Object;
+            var resourceRequestManager = new Mock<IResourceRequestManager>().Object;
 
             var allocStrategy = new AllocationBasicStrategy(
                 resourceRepository,
@@ -37,7 +38,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 resourcePoolDefinitionStore,
                 resourceContinuationOperations,
                 taskHelper,
-                mapper);
+                mapper,
+                resourceRequestManager);
 
             var allocateInput = new AllocateInput()
             {

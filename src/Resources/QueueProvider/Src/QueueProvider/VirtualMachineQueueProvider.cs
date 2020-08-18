@@ -257,7 +257,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider
               });
         }
 
-        private CloudQueue GetQueueClient(ComputeQueueStorageInfo storageInfo, string queueName, IDiagnosticsLogger logger)
+        private CloudQueue GetQueueClient(QueueStorageInfo storageInfo, string queueName, IDiagnosticsLogger logger)
         {
             var storageCredentials = new StorageCredentials(storageInfo.StorageAccountName, storageInfo.StorageAccountKey);
             var storageAccount = new CloudStorageAccount(storageCredentials, useHttps: true);

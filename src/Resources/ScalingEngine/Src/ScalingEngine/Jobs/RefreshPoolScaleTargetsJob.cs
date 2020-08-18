@@ -1,4 +1,4 @@
-﻿// <copyright file="RefreshPoolScaleTargetsJob.cs" company="Microsoft">
+// <copyright file="RefreshPoolScaleTargetsJob.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -37,18 +37,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
         /// overrides can be configured.</param>
         /// <param name="taskHelper">The task helper for triggering background jobs.</param>
         /// <param name="controlPlaneInfo">The control plane info.</param>
+        /// <param name="requestQueueProvider">The request queue provider.</param>
+        /// <param name="logger">logger.</param>
         public RefreshPoolScaleTargetsJob(
             ISystemCatalog systemCatalog,
             IResourceScalingHandler resourceScalingBroker,
             IResourcePoolSettingsRepository resourcePoolSettingsRepository,
             ITaskHelper taskHelper,
-            IControlPlaneInfo controlPlaneInfo)
+            IControlPlaneInfo controlPlaneInfo,
+            IResourceRequestQueueProvider requestQueueProvider,
+            IDiagnosticsLogger logger)
         {
             SystemCatalog = systemCatalog;
             ResourceScalingBroker = resourceScalingBroker;
             ResourcePoolSettingsRepository = resourcePoolSettingsRepository;
             TaskHelper = taskHelper;
             ControlPlaneInfo = controlPlaneInfo;
+            RequestQueueProvider = requestQueueProvider;
+            Logger = logger;
+            InitializationTask = UpdateScaleLevelsAsync(Logger);
         }
 
         private ISystemCatalog SystemCatalog { get; }
@@ -61,11 +68,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
+        private IResourceRequestQueueProvider RequestQueueProvider { get; }
+
+        private IDiagnosticsLogger Logger { get; }
+
+        private Task<bool> InitializationTask { get; }
+
         /// <inheritdoc/>
-        public Task WarmupCompletedAsync()
+        public async Task WarmupCompletedAsync()
         {
+            await InitializationTask;
+            await RequestQueueProvider.UpdatePoolQueuesAsync(Logger.NewChildLogger());
+
             // Kick off background job that re-evaluates the catalog every minute
-            return TaskHelper.RunBackgroundLoopAsync(
+            await TaskHelper.RunBackgroundLoopAsync(
                 $"{LoggingBaseName}_run",
                 (childLogger) => UpdateScaleLevelsAsync(childLogger),
                 TimeSpan.FromMinutes(1));

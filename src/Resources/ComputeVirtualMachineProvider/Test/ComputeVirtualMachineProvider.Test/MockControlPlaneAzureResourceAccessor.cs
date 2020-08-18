@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
-        public async Task<ComputeQueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger = null)
+        public async Task<QueueStorageInfo> GetStampStorageAccountForComputeQueuesAsync(AzureLocation computeVmLocation, IDiagnosticsLogger logger = null)
         {
             const string QueueStorageAccount = "teststoragedevusw2";
             const string QueueResourceGroup = "testvmqueueresourcegroup";
@@ -78,7 +78,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 throw new Exception($"Could not find storage account key for storage account : {QueueStorageAccount}");
             }
 
-            return new ComputeQueueStorageInfo()
+            return new QueueStorageInfo()
             {
                 ResourceGroup = QueueResourceGroup,
                 StorageAccountKey = storageAccountKey,
@@ -145,5 +145,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             throw new NotImplementedException();
         }
+        
+         public Task<QueueStorageInfo> GetStampStorageAccountForPoolQueuesAsync(IDiagnosticsLogger logger)
+         {
+            throw new NotImplementedException();
+         }
     }
 }

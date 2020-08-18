@@ -1,4 +1,4 @@
-﻿// <copyright file="AllocateInput.cs" company="Microsoft">
+// <copyright file="AllocateInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -31,6 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// Gets or sets a value indicating whether to create resource on the fly.
         /// </summary>
         public bool QueueCreateResource { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to allow to queue resource request.
+        /// </summary>
+        public bool QueueResourceRequest { get; set; }
 
         /// <summary>
         /// Gets or sets extended properties.

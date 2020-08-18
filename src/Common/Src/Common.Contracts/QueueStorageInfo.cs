@@ -1,4 +1,4 @@
-﻿// <copyright file="ComputeQueueStorageInfo.cs" company="Microsoft">
+﻿// <copyright file="QueueStorageInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     /// <summary>
     /// Represents queue storage information.
     /// </summary>
-    public class ComputeQueueStorageInfo
+    public class QueueStorageInfo
     {
         /// <summary>
         /// Gets or sets the subscription id.

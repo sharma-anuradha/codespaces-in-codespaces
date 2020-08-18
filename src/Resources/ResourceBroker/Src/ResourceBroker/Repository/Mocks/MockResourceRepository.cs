@@ -1,4 +1,4 @@
-﻿// <copyright file="MockResourceRepository.cs" company="Microsoft">
+// <copyright file="MockResourceRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -58,6 +58,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                     && x.IsAssigned == false
                     && x.IsReady == true
                     && x.IsDeleted == false)
+                .FirstOrDefault();
+        }
+
+        /// <inheritdoc/>
+        public async Task<ResourceRecord> GetPoolQueueRecordAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.PoolReference.Code == poolCode
+                      && x.Type == Common.Contracts.ResourceType.PoolQueue)
                 .FirstOrDefault();
         }
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateResourceContinuationHandlerV2.cs" company="Microsoft">
+// <copyright file="CreateResourceContinuationHandlerV2.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -39,12 +39,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
         /// <param name="creationStrategies">Disk provider.</param>
+        /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         public CreateResourceContinuationHandlerV2(
             IDiskProvider diskProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
-            IEnumerable<ICreateResourceStrategy> creationStrategies)
-            : base(serviceProvider, resourceRepository)
+            IEnumerable<ICreateResourceStrategy> creationStrategies,
+            IResourceStateManager resourceStateManager)
+            : base(serviceProvider, resourceRepository, resourceStateManager)
         {
             CreationStrategies = creationStrategies;
             DiskProvider = diskProvider;

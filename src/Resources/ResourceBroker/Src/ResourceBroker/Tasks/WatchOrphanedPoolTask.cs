@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchOrphanedPoolTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedPoolTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         {
             // Get record so we can tell if it exists and unAssigned.
             await ResourceRepository.ForEachAsync(
-                x => x.PoolReference.Code == poolReferenceCode && x.IsAssigned == false && x.IsDeleted == false,
+                x => (x.PoolReference.Code == poolReferenceCode || x.PoolReference.Code == poolReferenceCode.GetPoolQueueDefinition()) && x.IsAssigned == false && x.IsDeleted == false,
                 logger.NewChildLogger(),
                 (resource, innerLogger) =>
                 {

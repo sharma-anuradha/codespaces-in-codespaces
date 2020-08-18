@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceHeartBeatManager.cs" company="Microsoft">
+// <copyright file="ResourceHeartBeatManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -29,15 +29,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// </summary>
         /// <param name="resourceRepository">Resource Repository.</param>
         /// <param name="mapper">Mapper.</param>
-        public ResourceHeartBeatManager(IResourceRepository resourceRepository, IMapper mapper)
+        /// <param name="resourceStateManager">Resource state Manager.</param>
+        public ResourceHeartBeatManager(
+            IResourceRepository resourceRepository,
+            IMapper mapper,
+            IResourceStateManager resourceStateManager)
         {
             ResourceRepository = resourceRepository;
             Mapper = mapper;
+            ResourceStateManager = resourceStateManager;
         }
 
         private IResourceRepository ResourceRepository { get; }
 
         private IMapper Mapper { get; }
+
+        private IResourceStateManager ResourceStateManager { get; }
 
         /// <inheritdoc/>
         public async Task SaveHeartBeatAsync(HeartBeatInput heartBeatInput, IDiagnosticsLogger logger)
@@ -73,13 +80,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                   resourceRecord.HeartBeatSummary = heartBeatSummaryRecord;
 
-                  if (!resourceRecord.IsReady)
-                  {
-                      // Storage resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
-                      resourceRecord.IsReady = true;
-                      resourceRecord.Ready = DateTime.UtcNow;
-                  }
-
                   // Update os disk record if it exists.
                   var computeDetails = resourceRecord.GetComputeDetails();
                   var osDiskRecordId = computeDetails.OSDiskRecordId;
@@ -101,7 +101,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                       }
                   }
 
-                  await ResourceRepository.UpdateAsync(resourceRecord, logger.NewChildLogger());
+                  if (!resourceRecord.IsReady)
+                  {
+                      // Update resource status.
+                      await ResourceStateManager.MarkResourceReady(resourceRecord, "HeartbeatReceived", logger.NewChildLogger());
+                  }
+                  else
+                  {
+                      await ResourceRepository.UpdateAsync(resourceRecord, logger.NewChildLogger());
+                  }
               });
         }
 

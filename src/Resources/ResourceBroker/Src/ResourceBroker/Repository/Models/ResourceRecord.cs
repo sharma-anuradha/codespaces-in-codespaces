@@ -88,6 +88,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         public DateTime? Assigned { get; set; }
 
         /// <summary>
+        /// Gets or sets the assigned resource id.
+        /// </summary>
+        [JsonProperty(PropertyName = "assignedResourceId")]
+        public string AssignedResourceId { get; set; }
+
+        /// <summary>
         /// Gets or sets the created date.
         /// </summary>
         [JsonProperty(PropertyName = "created")]
@@ -293,16 +299,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             }
 
             (ProvisioningStatus, ProvisioningStatusChanged, ProvisioningStatusChanges) = AddStateChange(ProvisioningStatusChanges, newState, trigger, newTime);
-
-            if (newState == OperationState.Succeeded)
-            {
-                if (Type == ResourceType.StorageFileShare || Type == ResourceType.KeyVault)
-                {
-                    // Storage and Keyvault resources are ready once they are provisioned. While compute resources are ready when heartbeat is received.
-                    IsReady = true;
-                    Ready = ProvisioningStatusChanged;
-                }
-            }
 
             return true;
         }

@@ -1,4 +1,4 @@
-﻿// <copyright file="CleanupResourceContinuationHandler.cs" company="Microsoft">
+// <copyright file="CleanupResourceContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -39,12 +39,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="resourceRepository">Resource repository to be used.</param>
         /// <param name="serviceProvider">Service provider.</param>
         /// <param name="queueProvider">Queue provider.</param>
+        /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         public CleanupResourceContinuationHandler(
             IComputeProvider computeProvider,
             IResourceRepository resourceRepository,
             IServiceProvider serviceProvider,
-            IQueueProvider queueProvider)
-            : base(serviceProvider, resourceRepository)
+            IQueueProvider queueProvider,
+            IResourceStateManager resourceStateManager)
+            : base(serviceProvider, resourceRepository, resourceStateManager)
         {
             ComputeProvider = computeProvider;
             QueueProvider = queueProvider;

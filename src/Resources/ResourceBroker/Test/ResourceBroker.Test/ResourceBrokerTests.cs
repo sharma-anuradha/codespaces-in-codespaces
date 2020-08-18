@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
+            var resourcRequestManager = new Mock<IResourceRequestManager>().Object;
 
             var provider = new AllocationBasicStrategy(
                 resourceRepository,
@@ -93,7 +94,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 scalingStore.Object,
                 resourceContinuationOperations,
                 taskHelper,
-                mapper);
+                mapper,
+                resourcRequestManager);
 
             var result = await provider.AllocateAsync(EnvironmentId, input, Reason, logger);
 
@@ -117,6 +119,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
+            var resourcRequestManager = new Mock<IResourceRequestManager>().Object;
 
             var provider = new AllocationBasicStrategy(
                 resourceRepository,
@@ -124,7 +127,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 scalingStore.Object,
                 resourceContinuationOperations,
                 taskHelper,
-                mapper);
+                mapper,
+                resourcRequestManager);
 
             Assert.ThrowsAsync<OutOfCapacityException>(async () => await provider.AllocateAsync(EnvironmentId, input, Reason, logger));
         }
@@ -144,6 +148,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, It.IsAny<IDiagnosticsLogger>())).Returns(Task.FromResult(rawResult));
+            var resourcRequestManager = new Mock<IResourceRequestManager>().Object;
 
             var provider = new AllocationBasicStrategy(
                 resourceRepository,
@@ -151,7 +156,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 scalingStore.Object,
                 resourceContinuationOperations,
                 taskHelper,
-                mapper);
+                mapper,
+                resourcRequestManager);
             var result = await provider.AllocateAsync(EnvironmentId, new List<AllocateInput> { input }, Reason, logger);
 
             Assert.NotNull(result);
@@ -176,6 +182,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePool = new Mock<IResourcePoolManager>();
             resourcePool.Setup(x => x.TryGetAsync(DefaultPoolCode, logger)).Returns(Task.FromResult((ResourceRecord)null));
+            var resourcRequestManager = new Mock<IResourceRequestManager>().Object;
 
             var provider = new AllocationBasicStrategy(
                 resourceRepository,
@@ -183,7 +190,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
                 scalingStore.Object,
                 resourceContinuationOperations,
                 taskHelper,
-                mapper);
+                mapper,
+                resourcRequestManager);
 
             Assert.ThrowsAsync<ArgumentException>(async () => await provider.AllocateAsync(EnvironmentId, input, Reason, logger));
         }

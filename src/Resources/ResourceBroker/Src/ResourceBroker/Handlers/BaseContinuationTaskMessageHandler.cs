@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseContinuationTaskMessageHandler.cs" company="Microsoft">
+// <copyright file="BaseContinuationTaskMessageHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -29,12 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// </summary>
         /// <param name="serviceProvider">Service Provider.</param>
         /// <param name="resourceRepository">Resource repository to be used.</param>
+        /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
         public BaseContinuationTaskMessageHandler(
             IServiceProvider serviceProvider,
-            IResourceRepository resourceRepository)
+            IResourceRepository resourceRepository,
+            IResourceStateManager resourceStateManager)
         {
             ServiceProvider = serviceProvider;
             ResourceRepository = resourceRepository;
+            ResourceStateManager = resourceStateManager;
         }
 
         /// <summary>
@@ -61,6 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// Gets the Resource Repository.
         /// </summary>
         protected IResourceRepository ResourceRepository { get; }
+
+        private IResourceStateManager ResourceStateManager { get; }
 
         /// <inheritdoc/>
         public virtual bool CanHandle(ContinuationQueuePayload payload)
@@ -351,6 +356,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             // If the state was changed
             if (stateChanged)
             {
+                if (Operation == ResourceOperation.Provisioning && state == OperationState.Succeeded)
+                {
+                    if (record.Value.Type == ResourceType.StorageFileShare || record.Value.Type == ResourceType.KeyVault)
+                    {
+                        // Try to assign resource to queued requests
+                        record.Value = await ResourceStateManager.MarkResourceReady(record.Value, "ProvisioningSucceeded", logger.NewChildLogger());
+                    }
+                }
+
                 // Trigger cleanup post fail
                 if (state == OperationState.Failed)
                 {
