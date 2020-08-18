@@ -1,0 +1,11 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.test",
+  "baseEnvironmentName": "vscs-codesp-test",
+  "baseFileName": "codesp.test",
+  "baseName": "vscs-codesp-test",
+  "component": "codesp",
+  "env": "test",
+  "prefix": "vscs"
+}

@@ -1,0 +1,31 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.ppe",
+  "baseEnvironmentName": "vscs-core-ppe",
+  "baseFileName": "core.ppe-ops-rel-us-w2",
+  "baseInstanceFileName": "core.ppe-ops-rel",
+  "baseInstanceName": "vscs-core-ppe-ops-rel",
+  "baseName": "vscs-core-ppe-ops-rel-us-w2",
+  "basePlaneFileName": "core.ppe-ops",
+  "basePlaneName": "vscs-core-ppe-ops",
+  "baseRegionFileName": "core.ppe-ops-rel-us-w2",
+  "baseRegionName": "vscs-core-ppe-ops-rel-us-w2",
+  "baseRegionStorageName": "coreppeopsrelusw2",
+  "component": "core",
+  "env": "ppe",
+  "geo": "us",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "region": "us-w2",
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "b37129d5-ec65-4920-bd6c-42aa7a4bdd73",
+  "subscriptionName": "vscs-core-ppe-ops"
+}

@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.dev",
+  "baseEnvironmentName": "vscs-codesp-dev",
+  "baseFileName": "codesp.dev-ctl",
+  "baseName": "vscs-codesp-dev",
+  "basePlaneFileName": "codesp.dev-ctl",
+  "basePlaneName": "vscs-codesp-dev",
+  "component": "codesp",
+  "env": "dev",
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-codesp-dev-ctl"
+}

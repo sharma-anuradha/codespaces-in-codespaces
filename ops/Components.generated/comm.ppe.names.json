@@ -1,0 +1,11 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.ppe",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "baseFileName": "comm.ppe",
+  "baseName": "vscs-comm-ppe",
+  "component": "comm",
+  "env": "ppe",
+  "prefix": "vscs"
+}

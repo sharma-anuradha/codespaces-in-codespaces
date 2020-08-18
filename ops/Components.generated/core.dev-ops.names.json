@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.dev",
+  "baseEnvironmentName": "vscs-core-dev",
+  "baseFileName": "core.dev-ops",
+  "baseName": "vscs-core-dev-ops",
+  "basePlaneFileName": "core.dev-ops",
+  "basePlaneName": "vscs-core-dev-ops",
+  "component": "core",
+  "env": "dev",
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "03f9b555-3a9a-44c4-b410-a53acc2a32eb",
+  "subscriptionName": "vscs-core-dev-ops"
+}

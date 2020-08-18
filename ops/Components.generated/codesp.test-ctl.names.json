@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.test",
+  "baseEnvironmentName": "vscs-codesp-test",
+  "baseFileName": "codesp.test-ctl",
+  "baseName": "vscs-codesp-test",
+  "basePlaneFileName": "codesp.test-ctl",
+  "basePlaneName": "vscs-codesp-test",
+  "component": "codesp",
+  "env": "test",
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc (vscs-core-prod-ctl-rel-ap-se)
+// "..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc"
+// with names file "core.prod-ctl-rel-ap-se.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -7,16 +8,16 @@
   "contentVersion": "0.0.0.1",
 
   "serviceMetadata": {
-    "serviceGroup": "vscs-core-prod-ctl-rel-ap-se-service-group",
+    "serviceGroup": "vscs-core-prod-rel-ap-se-service-group",
     "environment": "Test"
   },
 
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-core-prod-ctl-rel-ap-se-rg",
+      "name": "vscs-core-prod-rel-ap-se-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-prod-ctl-rel-ap-se-arm",
+          "name": "vscs-core-prod-rel-ap-se-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.prod-ctl-rel-ap-se.cluster.jsonc",
@@ -30,14 +31,14 @@
 
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-core-prod-ctl-rel-ap-se",
+      "azureResourceGroupName": "vscs-core-prod-rel-ap-se",
       "location": "SoutheastAsia",
-      "instanceOf": "vscs-core-prod-ctl-rel-ap-se-rg",
-      "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
+      "instanceOf": "vscs-core-prod-rel-ap-se-rg",
+      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-core-prod-ctl-rel-ap-se-arm",
-          "instanceOf": "vscs-core-prod-ctl-rel-ap-se-arm"
+          "name": "vscs-core-prod-rel-ap-se-arm",
+          "instanceOf": "vscs-core-prod-rel-ap-se-arm"
         }
       ]
     }

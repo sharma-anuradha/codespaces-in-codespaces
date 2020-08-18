@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc (vscs-core-test-ctl-tst-us-w2)
+// "..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc"
+// with names file "core.test-ctl-tst-us-w2.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -7,16 +8,16 @@
   "contentVersion": "0.0.0.1",
 
   "serviceMetadata": {
-    "serviceGroup": "vscs-core-test-ctl-tst-us-w2-service-group",
+    "serviceGroup": "vscs-core-test-tst-us-w2-service-group",
     "environment": "Test"
   },
 
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-core-test-ctl-tst-us-w2-rg",
+      "name": "vscs-core-test-tst-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-test-ctl-tst-us-w2-arm",
+          "name": "vscs-core-test-tst-us-w2-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.test-ctl-tst-us-w2.cluster.jsonc",
@@ -30,14 +31,14 @@
 
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-core-test-ctl-tst-us-w2",
+      "azureResourceGroupName": "vscs-core-test-tst-us-w2",
       "location": "WestUs2",
-      "instanceOf": "vscs-core-test-ctl-tst-us-w2-rg",
+      "instanceOf": "vscs-core-test-tst-us-w2-rg",
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-core-test-ctl-tst-us-w2-arm",
-          "instanceOf": "vscs-core-test-ctl-tst-us-w2-arm"
+          "name": "vscs-core-test-tst-us-w2-arm",
+          "instanceOf": "vscs-core-test-tst-us-w2-arm"
         }
       ]
     }

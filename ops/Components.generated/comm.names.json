@@ -1,0 +1,8 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseFileName": "comm",
+  "baseName": "vscs-comm",
+  "component": "comm",
+  "prefix": "vscs"
+}

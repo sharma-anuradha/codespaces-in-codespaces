@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.test",
+  "baseEnvironmentName": "vscs-core-test",
+  "baseFileName": "core.test-ctl",
+  "baseName": "vscs-core-test",
+  "basePlaneFileName": "core.test-ctl",
+  "basePlaneName": "vscs-core-test",
+  "component": "core",
+  "env": "test",
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

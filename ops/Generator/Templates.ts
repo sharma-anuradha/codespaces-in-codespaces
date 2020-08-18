@@ -68,9 +68,14 @@ export default class Templates {
         let buffer = orgBuffer;
         const commentHeader = [
           this.staticCommentHeader,
-          `${templatePath} (${name.names?.baseName ?? '*'})`,
-          this.staticCommentFooter,
+          `"${templatePath}"`
         ];
+        if (name.names?.baseFileName) {
+          const withNamesFileName = `with names file "${name.names.baseFileName}.names.json"`;
+          commentHeader.push(withNamesFileName);
+        }
+        commentHeader.push(this.staticCommentFooter);
+
         switch (filetype) {
           case "jsonc":
             buffer = this.textHeader(buffer, commentHeader);
@@ -214,7 +219,7 @@ export default class Templates {
     }
 
     for (const name of names) {
-      console.log(`info: ${name.fileName} -> ${name.outputName} (${name.names?.baseName})`);
+      console.log(`info: ${name.fileName} -> ${name.outputName} (${name.names?.baseFileName}.names.json)`);
     }
 
     return names;

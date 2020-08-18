@@ -1,20 +1,21 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc (vscs-stub-test-ctl-tst)
+// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc"
+// with names file "stub.test-ctl-tst.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
   "contentVersion": "0.0.0.1",
   "serviceMetadata": {
-    "serviceGroup": "vscs-stub-test-ctl-tst-service-group",
+    "serviceGroup": "vscs-stub-test-tst-service-group",
     "environment": "Test"
   },
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-stub-test-ctl-tst-rg",
+      "name": "vscs-stub-test-tst-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-test-ctl-tst-arm",
+          "name": "vscs-stub-test-tst-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.test-ctl-tst.stub.jsonc",
@@ -23,7 +24,7 @@
           }
         },
         {
-          "name": "vscs-stub-test-ctl-tst-script",
+          "name": "vscs-stub-test-tst-script",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\empty.template.jsonc",
@@ -53,18 +54,18 @@
   ],
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-stub-test-ctl-tst",
+      "azureResourceGroupName": "vscs-stub-test-tst",
       "location": "WestUs2",
-      "instanceOf": "vscs-stub-test-ctl-tst-rg",
+      "instanceOf": "vscs-stub-test-tst-rg",
       "azureSubscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
       "serviceResources": [
         {
-          "name": "vscs-stub-test-ctl-tst-arm",
-          "instanceOf": "vscs-stub-test-ctl-tst-arm"
+          "name": "vscs-stub-test-tst-arm",
+          "instanceOf": "vscs-stub-test-tst-arm"
         },
         {
-          "name": "vscs-stub-test-ctl-tst-script",
-          "instanceOf": "vscs-stub-test-ctl-tst-script"
+          "name": "vscs-stub-test-tst-script",
+          "instanceOf": "vscs-stub-test-tst-script"
         }
       ]
     }

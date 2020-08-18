@@ -8,9 +8,14 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Component,
     [string]$RolloutSpecName = "*.rolloutspec.jsonc",
-    [string]$ComponentsGeneratedFolder ="$PSScriptRoot\..\Components.generated",
+    [string]$ComponentsGeneratedFolder ="$PSScriptRoot\..\..\bin\debug\ops\Components.generated",
     [string]$Ev2SubFolder = "Ev2"
 )
+
+# Preamble
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
 
 # Global error handling
 trap {
@@ -55,6 +60,13 @@ function Import-AzureDeploymentExpressClient {
         "Install the Ev2 powershell cmdlets from https://ev2docs.azure.net/references/cmdlets/Intro.html" | Write-Host -ForegroundColor Red
         throw
     }
+}
+
+$ComponentsGeneratedFolder | Write-Host -ForegroundColor Yellow
+$ComponentsGeneratedFolder = [System.IO.Path]::GetFullPath($ComponentsGeneratedFolder)
+$ComponentsGeneratedFolder | Write-Host -ForegroundColor Yellow
+if (!(Test-Path -Path $ComponentsGeneratedFolder -PathType Container)) {
+    throw "Generated folder does not exist: '$ComponentsGeneratedFolder'. Please generate outputs and build ops.csproj."
 }
 
 Import-AzureDeploymentExpressClient

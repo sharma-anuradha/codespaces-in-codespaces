@@ -1,0 +1,23 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.test",
+  "baseEnvironmentName": "vscs-core-test",
+  "baseFileName": "core.test-ops-tst",
+  "baseInstanceFileName": "core.test-ops-tst",
+  "baseInstanceName": "vscs-core-test-ops-tst",
+  "baseName": "vscs-core-test-ops-tst",
+  "basePlaneFileName": "core.test-ops",
+  "basePlaneName": "vscs-core-test-ops",
+  "component": "core",
+  "env": "test",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

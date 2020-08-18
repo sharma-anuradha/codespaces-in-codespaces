@@ -1,0 +1,33 @@
+{
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.prod",
+  "baseEnvironmentName": "vscs-stub-prod",
+  "baseFileName": "stub.prod-ops-rel-eu-w",
+  "baseInstanceFileName": "stub.prod-ops-rel",
+  "baseInstanceName": "vscs-stub-prod-ops-rel",
+  "baseName": "vscs-stub-prod-ops-rel-eu-w",
+  "basePlaneFileName": "stub.prod-ops",
+  "basePlaneName": "vscs-stub-prod-ops",
+  "baseRegionFileName": "stub.prod-ops-rel-eu-w",
+  "baseRegionName": "vscs-stub-prod-ops-rel-eu-w",
+  "baseRegionStorageName": "stubprodopsreleuw",
+  "component": "stub",
+  "env": "prod",
+  "geo": "eu",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "region": "eu-w",
+  "regionLocation": "WestEurope",
+  "regionSuffix": "w",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

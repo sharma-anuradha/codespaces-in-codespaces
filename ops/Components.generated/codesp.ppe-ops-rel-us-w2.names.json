@@ -1,0 +1,31 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.ppe",
+  "baseEnvironmentName": "vscs-codesp-ppe",
+  "baseFileName": "codesp.ppe-ops-rel-us-w2",
+  "baseInstanceFileName": "codesp.ppe-ops-rel",
+  "baseInstanceName": "vscs-codesp-ppe-ops-rel",
+  "baseName": "vscs-codesp-ppe-ops-rel-us-w2",
+  "basePlaneFileName": "codesp.ppe-ops",
+  "basePlaneName": "vscs-codesp-ppe-ops",
+  "baseRegionFileName": "codesp.ppe-ops-rel-us-w2",
+  "baseRegionName": "vscs-codesp-ppe-ops-rel-us-w2",
+  "baseRegionStorageName": "codespppeopsrelusw2",
+  "component": "codesp",
+  "env": "ppe",
+  "geo": "us",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "region": "us-w2",
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "4b957fae-cce2-4865-9570-3add886016a4",
+  "subscriptionName": "vscs-codesp-ppe-ops"
+}

@@ -1,0 +1,11 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.ppe",
+  "baseEnvironmentName": "vscs-core-ppe",
+  "baseFileName": "core.ppe",
+  "baseName": "vscs-core-ppe",
+  "component": "core",
+  "env": "ppe",
+  "prefix": "vscs"
+}

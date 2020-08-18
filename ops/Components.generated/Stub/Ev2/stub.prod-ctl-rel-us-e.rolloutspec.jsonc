@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}-{Region}.rolloutspec.jsonc (vscs-stub-prod-ctl-rel-us-e)
+// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}-{Region}.rolloutspec.jsonc"
+// with names file "stub.prod-ctl-rel-us-e.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -9,7 +10,7 @@
   "rolloutMetadata": {
     "serviceModelPath": "stub.prod-ctl-rel-us-e.servicemodel.jsonc",
     "scopeBindingsPath": null,
-    "name": "vscs-stub-prod-ctl-rel-us-e Rollout 1.0.0.0",
+    "name": "vscs-stub-prod-rel-us-e Rollout 1.0.0.0",
     "rolloutType": "Major",
     "buildSource": {
       "parameters": {
@@ -19,9 +20,9 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-prod-ctl-rel-us-e-arm",
+      "name": "Deploy vscs-stub-prod-rel-us-e-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-prod-ctl-rel-us-e-arm",
+      "targetName": "vscs-stub-prod-rel-us-e-arm",
       "actions": [ "deploy" ]
     }
   ]

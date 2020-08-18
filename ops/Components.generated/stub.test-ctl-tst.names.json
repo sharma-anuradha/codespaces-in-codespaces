@@ -1,0 +1,23 @@
+{
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.test",
+  "baseEnvironmentName": "vscs-stub-test",
+  "baseFileName": "stub.test-ctl-tst",
+  "baseInstanceFileName": "stub.test-ctl-tst",
+  "baseInstanceName": "vscs-stub-test-tst",
+  "baseName": "vscs-stub-test-tst",
+  "basePlaneFileName": "stub.test-ctl",
+  "basePlaneName": "vscs-stub-test",
+  "component": "stub",
+  "env": "test",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
+  "subscriptionName": "vscs-core-test-ctl"
+}

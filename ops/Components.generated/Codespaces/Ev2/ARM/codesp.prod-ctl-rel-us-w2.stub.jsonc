@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Codespaces\Ev2\ARM\codesp.{Env}-[ctl]-{Instance}-{Region}.stub.jsonc (vscs-codesp-prod-ctl-rel-us-w2)
+// "..\Components\Codespaces\Ev2\ARM\codesp.{Env}-[ctl]-{Instance}-{Region}.stub.jsonc"
+// with names file "codesp.prod-ctl-rel-us-w2.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -14,7 +15,7 @@
   "outputs": {
     "baseName": {
       "type": "string",
-      "value": "vscs-codesp-prod-ctl-rel-us-w2"
+      "value": "vscs-codesp-prod-rel-us-w2"
     },
     "baseEnvironmentName": {
       "type": "string",
@@ -22,11 +23,11 @@
     },
     "basePlaneName": {
       "type": "string",
-      "value": "vscs-codesp-prod-ctl"
+      "value": "vscs-codesp-prod"
     },
     "baseInstanceName": {
       "type": "string",
-      "value": "vscs-codesp-prod-ctl-rel"
+      "value": "vscs-codesp-prod-rel"
     },
     "instanceRegions": {
       "type": "array",
@@ -34,11 +35,11 @@
     },
     "baseRegionName": {
       "type": "string",
-      "value": "vscs-codesp-prod-ctl-rel-us-w2"
+      "value": "vscs-codesp-prod-rel-us-w2"
     },
     "baseRegionStorageName": {
       "type": "string",
-      "value": "codespprodctlrelusw2"
+      "value": "codespprodrelusw2"
     }
   }
 }

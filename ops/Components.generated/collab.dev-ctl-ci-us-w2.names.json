@@ -1,0 +1,30 @@
+{
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.dev",
+  "baseEnvironmentName": "vscs-collab-dev",
+  "baseFileName": "collab.dev-ctl-ci-us-w2",
+  "baseInstanceFileName": "collab.dev-ctl-ci",
+  "baseInstanceName": "vscs-collab-dev-ci",
+  "baseName": "vscs-collab-dev-ci-us-w2",
+  "basePlaneFileName": "collab.dev-ctl",
+  "basePlaneName": "vscs-collab-dev",
+  "baseRegionFileName": "collab.dev-ctl-ci-us-w2",
+  "baseRegionName": "vscs-collab-dev-ci-us-w2",
+  "baseRegionStorageName": "collabdevciusw2",
+  "component": "collab",
+  "env": "dev",
+  "geo": "us",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "us-w2",
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

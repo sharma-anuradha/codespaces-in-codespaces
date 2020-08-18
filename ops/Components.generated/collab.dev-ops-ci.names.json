@@ -1,0 +1,23 @@
+{
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.dev",
+  "baseEnvironmentName": "vscs-collab-dev",
+  "baseFileName": "collab.dev-ops-ci",
+  "baseInstanceFileName": "collab.dev-ops-ci",
+  "baseInstanceName": "vscs-collab-dev-ops-ci",
+  "baseName": "vscs-collab-dev-ops-ci",
+  "basePlaneFileName": "collab.dev-ops",
+  "basePlaneName": "vscs-collab-dev-ops",
+  "component": "collab",
+  "env": "dev",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

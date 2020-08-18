@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\ARM\stub.{Env}-[ctl]-{Instance}.stub.jsonc (vscs-stub-dev-ctl-ci)
+// "..\Components\Stub\Ev2\ARM\stub.{Env}-[ctl]-{Instance}.stub.jsonc"
+// with names file "stub.dev-ctl-ci.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -14,7 +15,7 @@
   "outputs": {
     "baseName": {
       "type": "string",
-      "value": "vscs-stub-dev-ctl-ci"
+      "value": "vscs-stub-dev-ci"
     },
     "baseEnvironmentName": {
       "type": "string",
@@ -22,11 +23,11 @@
     },
     "basePlaneName": {
       "type": "string",
-      "value": "vscs-stub-dev-ctl"
+      "value": "vscs-stub-dev"
     },
     "baseInstanceName": {
       "type": "string",
-      "value": "vscs-stub-dev-ctl-ci"
+      "value": "vscs-stub-dev-ci"
     },
     "instanceRegions": {
       "type": "array",

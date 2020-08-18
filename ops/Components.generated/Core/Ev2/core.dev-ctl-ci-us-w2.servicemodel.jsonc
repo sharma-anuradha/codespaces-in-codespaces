@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc (vscs-core-dev-ctl-ci-us-w2)
+// "..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc"
+// with names file "core.dev-ctl-ci-us-w2.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -7,16 +8,16 @@
   "contentVersion": "0.0.0.1",
 
   "serviceMetadata": {
-    "serviceGroup": "vscs-core-dev-ctl-ci-us-w2-service-group",
+    "serviceGroup": "vscs-core-dev-ci-us-w2-service-group",
     "environment": "Test"
   },
 
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-core-dev-ctl-ci-us-w2-rg",
+      "name": "vscs-core-dev-ci-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-dev-ctl-ci-us-w2-arm",
+          "name": "vscs-core-dev-ci-us-w2-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.dev-ctl-ci-us-w2.cluster.jsonc",
@@ -30,14 +31,14 @@
 
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-core-dev-ctl-ci-us-w2",
+      "azureResourceGroupName": "vscs-core-dev-ci-us-w2",
       "location": "WestUs2",
-      "instanceOf": "vscs-core-dev-ctl-ci-us-w2-rg",
-      "azureSubscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c",
+      "instanceOf": "vscs-core-dev-ci-us-w2-rg",
+      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-core-dev-ctl-ci-us-w2-arm",
-          "instanceOf": "vscs-core-dev-ctl-ci-us-w2-arm"
+          "name": "vscs-core-dev-ci-us-w2-arm",
+          "instanceOf": "vscs-core-dev-ci-us-w2-arm"
         }
       ]
     }

@@ -1,0 +1,8 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseFileName": "codesp",
+  "baseName": "vscs-codesp",
+  "component": "codesp",
+  "prefix": "vscs"
+}

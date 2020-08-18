@@ -1,0 +1,31 @@
+{
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.ppe",
+  "baseEnvironmentName": "vscs-stub-ppe",
+  "baseFileName": "stub.ppe-ctl-rel-eu-w",
+  "baseInstanceFileName": "stub.ppe-ctl-rel",
+  "baseInstanceName": "vscs-stub-ppe-rel",
+  "baseName": "vscs-stub-ppe-rel-eu-w",
+  "basePlaneFileName": "stub.ppe-ctl",
+  "basePlaneName": "vscs-stub-ppe",
+  "baseRegionFileName": "stub.ppe-ctl-rel-eu-w",
+  "baseRegionName": "vscs-stub-ppe-rel-eu-w",
+  "baseRegionStorageName": "stubppereleuw",
+  "component": "stub",
+  "env": "ppe",
+  "geo": "eu",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "eu-w",
+  "regionLocation": "WestEurope",
+  "regionSuffix": "w",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

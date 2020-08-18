@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.ppe",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "baseFileName": "comm.ppe-ctl",
+  "baseName": "vscs-comm-ppe",
+  "basePlaneFileName": "comm.ppe-ctl",
+  "basePlaneName": "vscs-comm-ppe",
+  "component": "comm",
+  "env": "ppe",
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

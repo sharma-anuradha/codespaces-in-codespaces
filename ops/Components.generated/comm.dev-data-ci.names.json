@@ -1,0 +1,23 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.dev",
+  "baseEnvironmentName": "vscs-comm-dev",
+  "baseFileName": "comm.dev-data-ci",
+  "baseInstanceFileName": "comm.dev-data-ci",
+  "baseInstanceName": "vscs-comm-dev-data-ci",
+  "baseName": "vscs-comm-dev-data-ci",
+  "basePlaneFileName": "comm.dev-data",
+  "basePlaneName": "vscs-comm-dev-data",
+  "component": "comm",
+  "env": "dev",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

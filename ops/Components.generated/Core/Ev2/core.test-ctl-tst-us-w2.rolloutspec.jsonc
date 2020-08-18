@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.rolloutspec.jsonc (vscs-core-test-ctl-tst-us-w2)
+// "..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.rolloutspec.jsonc"
+// with names file "core.test-ctl-tst-us-w2.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -9,7 +10,7 @@
   "rolloutMetadata": {
     "serviceModelPath": "core.test-ctl-tst-us-w2.servicemodel.jsonc",
     "scopeBindingsPath": null,
-    "name": "vscs-core-test-ctl-tst-us-w2 Rollout 1.0.0.0",
+    "name": "vscs-core-test-tst-us-w2 Rollout 1.0.0.0",
     "rolloutType": "Major",
     "buildSource": {
       "parameters": {
@@ -19,9 +20,9 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-core-test-ctl-tst-us-w2-arm",
+      "name": "Deploy vscs-core-test-tst-us-w2-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-core-test-ctl-tst-us-w2-arm",
+      "targetName": "vscs-core-test-tst-us-w2-arm",
       "actions": [ "deploy" ]
     }
   ]

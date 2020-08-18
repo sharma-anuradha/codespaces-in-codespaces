@@ -1,0 +1,33 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.prod",
+  "baseEnvironmentName": "vscs-core-prod",
+  "baseFileName": "core.prod-ctl-rel-ap-se",
+  "baseInstanceFileName": "core.prod-ctl-rel",
+  "baseInstanceName": "vscs-core-prod-rel",
+  "baseName": "vscs-core-prod-rel-ap-se",
+  "basePlaneFileName": "core.prod-ctl",
+  "basePlaneName": "vscs-core-prod",
+  "baseRegionFileName": "core.prod-ctl-rel-ap-se",
+  "baseRegionName": "vscs-core-prod-rel-ap-se",
+  "baseRegionStorageName": "coreprodrelapse",
+  "component": "core",
+  "env": "prod",
+  "geo": "ap",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "ap-se",
+  "regionLocation": "SoutheastAsia",
+  "regionSuffix": "se",
+  "subscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
+  "subscriptionName": "vscs-core-prod-ctl"
+}

@@ -1,0 +1,23 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.dev",
+  "baseEnvironmentName": "vscs-codesp-dev",
+  "baseFileName": "codesp.dev-ops-ci",
+  "baseInstanceFileName": "codesp.dev-ops-ci",
+  "baseInstanceName": "vscs-codesp-dev-ops-ci",
+  "baseName": "vscs-codesp-dev-ops-ci",
+  "basePlaneFileName": "codesp.dev-ops",
+  "basePlaneName": "vscs-codesp-dev-ops",
+  "component": "codesp",
+  "env": "dev",
+  "instance": "ci",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "ops",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "vscs-codesp-dev-ops"
+}

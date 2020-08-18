@@ -1,0 +1,33 @@
+{
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.prod",
+  "baseEnvironmentName": "vscs-collab-prod",
+  "baseFileName": "collab.prod-data-rel-ap-se",
+  "baseInstanceFileName": "collab.prod-data-rel",
+  "baseInstanceName": "vscs-collab-prod-data-rel",
+  "baseName": "vscs-collab-prod-data-rel-ap-se",
+  "basePlaneFileName": "collab.prod-data",
+  "basePlaneName": "vscs-collab-prod-data",
+  "baseRegionFileName": "collab.prod-data-rel-ap-se",
+  "baseRegionName": "vscs-collab-prod-data-rel-ap-se",
+  "baseRegionStorageName": "collabproddatarelapse",
+  "component": "collab",
+  "env": "prod",
+  "geo": "ap",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "region": "ap-se",
+  "regionLocation": "SoutheastAsia",
+  "regionSuffix": "se",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

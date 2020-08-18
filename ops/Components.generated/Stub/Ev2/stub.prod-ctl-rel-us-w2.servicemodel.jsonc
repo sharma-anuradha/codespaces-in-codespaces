@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc (vscs-stub-prod-ctl-rel-us-w2)
+// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc"
+// with names file "stub.prod-ctl-rel-us-w2.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -7,16 +8,16 @@
   "contentVersion": "0.0.0.1",
 
   "serviceMetadata": {
-    "serviceGroup": "vscs-stub-prod-ctl-rel-us-w2-service-group",
+    "serviceGroup": "vscs-stub-prod-rel-us-w2-service-group",
     "environment": "Test"
   },
 
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-stub-prod-ctl-rel-us-w2-rg",
+      "name": "vscs-stub-prod-rel-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-prod-ctl-rel-us-w2-arm",
+          "name": "vscs-stub-prod-rel-us-w2-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.prod-ctl-rel-us-w2.stub.jsonc",
@@ -30,14 +31,14 @@
 
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-stub-prod-ctl-rel-us-w2",
+      "azureResourceGroupName": "vscs-stub-prod-rel-us-w2",
       "location": "WestUs2",
-      "instanceOf": "vscs-stub-prod-ctl-rel-us-w2-rg",
+      "instanceOf": "vscs-stub-prod-rel-us-w2-rg",
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-prod-ctl-rel-us-w2-arm",
-          "instanceOf": "vscs-stub-prod-ctl-rel-us-w2-arm"
+          "name": "vscs-stub-prod-rel-us-w2-arm",
+          "instanceOf": "vscs-stub-prod-rel-us-w2-arm"
         }
       ]
     }

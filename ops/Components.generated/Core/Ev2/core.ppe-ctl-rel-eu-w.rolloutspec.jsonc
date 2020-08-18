@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.rolloutspec.jsonc (vscs-core-ppe-ctl-rel-eu-w)
+// "..\Components\Core\Ev2\core.{Env}-[ctl]-{Instance}-{Region}.rolloutspec.jsonc"
+// with names file "core.ppe-ctl-rel-eu-w.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -9,7 +10,7 @@
   "rolloutMetadata": {
     "serviceModelPath": "core.ppe-ctl-rel-eu-w.servicemodel.jsonc",
     "scopeBindingsPath": null,
-    "name": "vscs-core-ppe-ctl-rel-eu-w Rollout 1.0.0.0",
+    "name": "vscs-core-ppe-rel-eu-w Rollout 1.0.0.0",
     "rolloutType": "Major",
     "buildSource": {
       "parameters": {
@@ -19,9 +20,9 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-core-ppe-ctl-rel-eu-w-arm",
+      "name": "Deploy vscs-core-ppe-rel-eu-w-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-core-ppe-ctl-rel-eu-w-arm",
+      "targetName": "vscs-core-ppe-rel-eu-w-arm",
       "actions": [ "deploy" ]
     }
   ]

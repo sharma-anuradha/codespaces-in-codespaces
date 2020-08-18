@@ -1,0 +1,31 @@
+{
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.ppe",
+  "baseEnvironmentName": "vscs-collab-ppe",
+  "baseFileName": "collab.ppe-ctl-rel-eu-w",
+  "baseInstanceFileName": "collab.ppe-ctl-rel",
+  "baseInstanceName": "vscs-collab-ppe-rel",
+  "baseName": "vscs-collab-ppe-rel-eu-w",
+  "basePlaneFileName": "collab.ppe-ctl",
+  "basePlaneName": "vscs-collab-ppe",
+  "baseRegionFileName": "collab.ppe-ctl-rel-eu-w",
+  "baseRegionName": "vscs-collab-ppe-rel-eu-w",
+  "baseRegionStorageName": "collabppereleuw",
+  "component": "collab",
+  "env": "ppe",
+  "geo": "eu",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "eu-w",
+  "regionLocation": "WestEurope",
+  "regionSuffix": "w",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

@@ -1,0 +1,11 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.test",
+  "baseEnvironmentName": "vscs-comm-test",
+  "baseFileName": "comm.test",
+  "baseName": "vscs-comm-test",
+  "component": "comm",
+  "env": "test",
+  "prefix": "vscs"
+}

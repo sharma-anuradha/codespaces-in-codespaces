@@ -1,0 +1,11 @@
+{
+  "baseComponentFileName": "core",
+  "baseComponentName": "vscs-core",
+  "baseEnvironmentFileName": "core.test",
+  "baseEnvironmentName": "vscs-core-test",
+  "baseFileName": "core.test",
+  "baseName": "vscs-core-test",
+  "component": "core",
+  "env": "test",
+  "prefix": "vscs"
+}

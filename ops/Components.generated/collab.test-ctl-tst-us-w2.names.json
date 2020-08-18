@@ -1,0 +1,30 @@
+{
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.test",
+  "baseEnvironmentName": "vscs-collab-test",
+  "baseFileName": "collab.test-ctl-tst-us-w2",
+  "baseInstanceFileName": "collab.test-ctl-tst",
+  "baseInstanceName": "vscs-collab-test-tst",
+  "baseName": "vscs-collab-test-tst-us-w2",
+  "basePlaneFileName": "collab.test-ctl",
+  "basePlaneName": "vscs-collab-test",
+  "baseRegionFileName": "collab.test-ctl-tst-us-w2",
+  "baseRegionName": "vscs-collab-test-tst-us-w2",
+  "baseRegionStorageName": "collabtesttstusw2",
+  "component": "collab",
+  "env": "test",
+  "geo": "us",
+  "instance": "tst",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "us-w2",
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

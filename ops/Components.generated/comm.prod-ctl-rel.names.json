@@ -1,0 +1,26 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.prod",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "baseFileName": "comm.prod-ctl-rel",
+  "baseInstanceFileName": "comm.prod-ctl-rel",
+  "baseInstanceName": "vscs-comm-prod-rel",
+  "baseName": "vscs-comm-prod-rel",
+  "basePlaneFileName": "comm.prod-ctl",
+  "basePlaneName": "vscs-comm-prod",
+  "component": "comm",
+  "env": "prod",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

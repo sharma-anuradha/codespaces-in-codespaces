@@ -1,20 +1,21 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc (vscs-stub-dev-ctl-ci)
+// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc"
+// with names file "stub.dev-ctl-ci.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
   "contentVersion": "0.0.0.1",
   "serviceMetadata": {
-    "serviceGroup": "vscs-stub-dev-ctl-ci-service-group",
+    "serviceGroup": "vscs-stub-dev-ci-service-group",
     "environment": "Test"
   },
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-stub-dev-ctl-ci-rg",
+      "name": "vscs-stub-dev-ci-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-dev-ctl-ci-arm",
+          "name": "vscs-stub-dev-ci-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.dev-ctl-ci.stub.jsonc",
@@ -23,7 +24,7 @@
           }
         },
         {
-          "name": "vscs-stub-dev-ctl-ci-script",
+          "name": "vscs-stub-dev-ci-script",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\empty.template.jsonc",
@@ -53,18 +54,18 @@
   ],
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-stub-dev-ctl-ci",
+      "azureResourceGroupName": "vscs-stub-dev-ci",
       "location": "WestUs2",
-      "instanceOf": "vscs-stub-dev-ctl-ci-rg",
+      "instanceOf": "vscs-stub-dev-ci-rg",
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-dev-ctl-ci-arm",
-          "instanceOf": "vscs-stub-dev-ctl-ci-arm"
+          "name": "vscs-stub-dev-ci-arm",
+          "instanceOf": "vscs-stub-dev-ci-arm"
         },
         {
-          "name": "vscs-stub-dev-ctl-ci-script",
-          "instanceOf": "vscs-stub-dev-ctl-ci-script"
+          "name": "vscs-stub-dev-ci-script",
+          "instanceOf": "vscs-stub-dev-ci-script"
         }
       ]
     }

@@ -1,20 +1,21 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc (vscs-stub-ppe-ctl-rel)
+// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.servicemodel.jsonc"
+// with names file "stub.ppe-ctl-rel.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
   "contentVersion": "0.0.0.1",
   "serviceMetadata": {
-    "serviceGroup": "vscs-stub-ppe-ctl-rel-service-group",
+    "serviceGroup": "vscs-stub-ppe-rel-service-group",
     "environment": "Test"
   },
   "serviceResourceGroupDefinitions": [
     {
-      "name": "vscs-stub-ppe-ctl-rel-rg",
+      "name": "vscs-stub-ppe-rel-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-stub-ppe-ctl-rel-arm",
+          "name": "vscs-stub-ppe-rel-arm",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\stub.ppe-ctl-rel.stub.jsonc",
@@ -23,7 +24,7 @@
           }
         },
         {
-          "name": "vscs-stub-ppe-ctl-rel-script",
+          "name": "vscs-stub-ppe-rel-script",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\empty.template.jsonc",
@@ -53,18 +54,18 @@
   ],
   "serviceResourceGroups": [
     {
-      "azureResourceGroupName": "vscs-stub-ppe-ctl-rel",
+      "azureResourceGroupName": "vscs-stub-ppe-rel",
       "location": "WestUs2",
-      "instanceOf": "vscs-stub-ppe-ctl-rel-rg",
+      "instanceOf": "vscs-stub-ppe-rel-rg",
       "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
-          "name": "vscs-stub-ppe-ctl-rel-arm",
-          "instanceOf": "vscs-stub-ppe-ctl-rel-arm"
+          "name": "vscs-stub-ppe-rel-arm",
+          "instanceOf": "vscs-stub-ppe-rel-arm"
         },
         {
-          "name": "vscs-stub-ppe-ctl-rel-script",
-          "instanceOf": "vscs-stub-ppe-ctl-rel-script"
+          "name": "vscs-stub-ppe-rel-script",
+          "instanceOf": "vscs-stub-ppe-rel-script"
         }
       ]
     }

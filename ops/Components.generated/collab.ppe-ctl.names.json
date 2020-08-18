@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "collab",
+  "baseComponentName": "vscs-collab",
+  "baseEnvironmentFileName": "collab.ppe",
+  "baseEnvironmentName": "vscs-collab-ppe",
+  "baseFileName": "collab.ppe-ctl",
+  "baseName": "vscs-collab-ppe",
+  "basePlaneFileName": "collab.ppe-ctl",
+  "basePlaneName": "vscs-collab-ppe",
+  "component": "collab",
+  "env": "ppe",
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

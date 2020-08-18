@@ -1,0 +1,31 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.ppe",
+  "baseEnvironmentName": "vscs-comm-ppe",
+  "baseFileName": "comm.ppe-ctl-rel-eu-w",
+  "baseInstanceFileName": "comm.ppe-ctl-rel",
+  "baseInstanceName": "vscs-comm-ppe-rel",
+  "baseName": "vscs-comm-ppe-rel-eu-w",
+  "basePlaneFileName": "comm.ppe-ctl",
+  "basePlaneName": "vscs-comm-ppe",
+  "baseRegionFileName": "comm.ppe-ctl-rel-eu-w",
+  "baseRegionName": "vscs-comm-ppe-rel-eu-w",
+  "baseRegionStorageName": "commppereleuw",
+  "component": "comm",
+  "env": "ppe",
+  "geo": "eu",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "eu-w",
+  "regionLocation": "WestEurope",
+  "regionSuffix": "w",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

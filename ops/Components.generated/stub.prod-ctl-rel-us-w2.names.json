@@ -1,0 +1,33 @@
+{
+  "baseComponentFileName": "stub",
+  "baseComponentName": "vscs-stub",
+  "baseEnvironmentFileName": "stub.prod",
+  "baseEnvironmentName": "vscs-stub-prod",
+  "baseFileName": "stub.prod-ctl-rel-us-w2",
+  "baseInstanceFileName": "stub.prod-ctl-rel",
+  "baseInstanceName": "vscs-stub-prod-rel",
+  "baseName": "vscs-stub-prod-rel-us-w2",
+  "basePlaneFileName": "stub.prod-ctl",
+  "basePlaneName": "vscs-stub-prod",
+  "baseRegionFileName": "stub.prod-ctl-rel-us-w2",
+  "baseRegionName": "vscs-stub-prod-rel-us-w2",
+  "baseRegionStorageName": "stubprodrelusw2",
+  "component": "stub",
+  "env": "prod",
+  "geo": "us",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "ap-se",
+    "eu-w",
+    "us-e",
+    "us-w2"
+  ],
+  "plane": "ctl",
+  "prefix": "vscs",
+  "region": "us-w2",
+  "regionLocation": "WestUs2",
+  "regionSuffix": "w2",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

@@ -1,6 +1,7 @@
 
 export class ComponentNames {
     public baseName: string;
+    public baseFileName: string;
     public readonly prefix: string;
     public readonly component: string;
     public readonly baseComponentName: string;
@@ -9,9 +10,9 @@ export class ComponentNames {
     constructor (prefix: string, component: string) {
         this.prefix = prefix;
         this.component = component;
-        this.baseComponentName = ResourceNames.makeResourceName(prefix, component);
-        this.baseName = this.baseComponentName;
-        this.baseComponentFileName = ResourceNames.makeBaseFileName(this.baseName, prefix, component);
+        const baseComponentNames = ResourceNames.makeResourceNames(prefix, component);
+        this.baseName = this.baseComponentName = baseComponentNames.resourceName;;
+        this.baseFileName = this.baseComponentFileName = baseComponentNames.fileName;
     }
 }
 
@@ -23,9 +24,9 @@ export class EnvironmentNames extends ComponentNames {
     constructor (componentNames: ComponentNames, env: string) {
         super(componentNames.prefix, componentNames.component);
         this.env = env;
-        this.baseEnvironmentName = ResourceNames.makeResourceName(this.prefix, this.component, this.env);
-        this.baseName = this.baseEnvironmentName;
-        this.baseEnvironmentFileName = ResourceNames.makeBaseFileName(this.baseEnvironmentName, this.prefix, this.component);
+        const baseEnvironmentNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env);
+        this.baseName = this.baseEnvironmentName = baseEnvironmentNames.resourceName;
+        this.baseFileName = this.baseEnvironmentFileName = baseEnvironmentNames.fileName;
     }
 }
 
@@ -41,9 +42,9 @@ export class PlaneNames extends EnvironmentNames {
         this.plane = plane;
         this.subscriptionName = subscriptionName;
         this.subscriptionId = subscriptionId;
-        this.basePlaneName = ResourceNames.makeResourceName(this.prefix, this.component, this.env, this.plane);
-        this.baseName = this.basePlaneName;
-        this.basePlaneFileName = ResourceNames.makeBaseFileName(this.basePlaneName, this.prefix, this.component);
+        const basePlaneNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env, this.plane);
+        this.baseName = this.basePlaneName = basePlaneNames.resourceName;
+        this.baseFileName = this.basePlaneFileName = basePlaneNames.fileName;
     }
 }
 
@@ -59,9 +60,9 @@ export class InstanceNames extends PlaneNames {
         this.instance = instance;
         this.instanceLocation = instanceLocation;
         this.instanceRegions = instanceRegions;
-        this.baseInstanceName = ResourceNames.makeResourceName(this.prefix, this.component, this.env, this.plane, this.instance);
-        this.baseName = this.baseInstanceName;
-        this.baseInstanceFileName = ResourceNames.makeBaseFileName(this.baseInstanceName, this.prefix, this.component);
+        const baseInstanceNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env, this.plane, this.instance);
+        this.baseName = this.baseInstanceName = baseInstanceNames.resourceName;
+        this.baseFileName = this.baseInstanceFileName = baseInstanceNames.fileName;
     }
 }
 
@@ -79,10 +80,10 @@ export class RegionNames extends InstanceNames {
         this.geo = geo;
         this.regionSuffix = regionSuffix;
         this.regionLocation = regionLocation;
-        this.baseRegionName = ResourceNames.makeResourceName(this.prefix, this.component, this.env, this.plane, this.instance, this.geo, this.regionSuffix);
-        this.baseName = this.baseRegionName;
-        this.baseRegionStorageName = ResourceNames.convertToStorageResourceName(this.prefix, this.baseRegionName);
-        this.baseRegionFileName = ResourceNames.makeBaseFileName(this.baseRegionName, this.prefix, this.component);
+        const baseRegionNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env, this.plane, this.instance, this.geo, this.regionSuffix);
+        this.baseName = this.baseRegionName = baseRegionNames.resourceName;
+        this.baseRegionStorageName = baseRegionNames.storageName;
+        this.baseFileName = this.baseRegionFileName = baseRegionNames.fileName;
     }
 }
 
@@ -113,8 +114,35 @@ export default abstract class ResourceNames {
         return obj_1;
     }
 
-    public static makeBaseFileName(resourceName: string, globalPrefix: string, component: string): string {
-        const baseComponentName = `${globalPrefix}-${component}`;
+    public static makeResourceNames(
+        prefix: string,
+        component: string,
+        env: string = null,
+        plane: string = null,
+        instance: string = null,
+        geography: string = null,
+        regionSuffix: string = null,
+        typeSuffix: string = null
+        ): { resourceName:string; storageName:string; fileName:string } {
+
+        let resourceName = this.makeResourceName(prefix, component, env, plane, instance, geography, regionSuffix, typeSuffix);
+        const fileName = this.makeBaseFileName(resourceName, prefix, component);
+
+        if (plane === "ctl") {
+            resourceName = resourceName.replace('-ctl','');
+        }
+
+        const storageName = this.convertToStorageResourceName(prefix, resourceName);
+
+        return {
+            resourceName: resourceName,
+            storageName: storageName,
+            fileName: fileName
+        };
+    }
+
+    private static makeBaseFileName(resourceName: string, prefix: string, component: string): string {
+        const baseComponentName = `${prefix}-${component}`;
         if (resourceName === baseComponentName) {
             return component;
         }
@@ -124,8 +152,8 @@ export default abstract class ResourceNames {
         }
     }
 
-    public static makeResourceName(
-        globalPrefix: string,
+    private static makeResourceName(
+        prefix: string,
         component: string,
         env: string = null,
         plane: string = null,
@@ -135,15 +163,15 @@ export default abstract class ResourceNames {
         typeSuffix: string = null
     ): string {
 
-        if (!globalPrefix) {
-            throw "globalPrefix is required";
+        if (!prefix) {
+            throw "prefix is required";
         }
 
         if (!component) {
             throw "component is required";
         }
 
-        let resourceName = `${globalPrefix}-${component}`;
+        let resourceName = `${prefix}-${component}`;
 
         if (env) {
             resourceName += `-${env}`;
@@ -171,7 +199,7 @@ export default abstract class ResourceNames {
         return resourceName;
     }
 
-    public static convertToStorageResourceName(prefix: string, baseResourceName: string): string {
+    private static convertToStorageResourceName(prefix: string, baseResourceName: string): string {
         return baseResourceName.replace(`${prefix}-`, '').replace(/-/g, '');
     }
 }

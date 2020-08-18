@@ -1,0 +1,16 @@
+{
+  "baseComponentFileName": "comm",
+  "baseComponentName": "vscs-comm",
+  "baseEnvironmentFileName": "comm.prod",
+  "baseEnvironmentName": "vscs-comm-prod",
+  "baseFileName": "comm.prod-ctl",
+  "baseName": "vscs-comm-prod",
+  "basePlaneFileName": "comm.prod-ctl",
+  "basePlaneName": "vscs-comm-prod",
+  "component": "comm",
+  "env": "prod",
+  "plane": "ctl",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

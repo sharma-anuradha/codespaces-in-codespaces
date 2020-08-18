@@ -1,0 +1,24 @@
+{
+  "baseComponentFileName": "codesp",
+  "baseComponentName": "vscs-codesp",
+  "baseEnvironmentFileName": "codesp.ppe",
+  "baseEnvironmentName": "vscs-codesp-ppe",
+  "baseFileName": "codesp.ppe-data-rel",
+  "baseInstanceFileName": "codesp.ppe-data-rel",
+  "baseInstanceName": "vscs-codesp-ppe-data-rel",
+  "baseName": "vscs-codesp-ppe-data-rel",
+  "basePlaneFileName": "codesp.ppe-data",
+  "basePlaneName": "vscs-codesp-ppe-data",
+  "component": "codesp",
+  "env": "ppe",
+  "instance": "rel",
+  "instanceLocation": "WestUs2",
+  "instanceRegions": [
+    "eu-w",
+    "us-w2"
+  ],
+  "plane": "data",
+  "prefix": "vscs",
+  "subscriptionId": "00000000-0000-0000-0000-000000000000",
+  "subscriptionName": "UNDEFINED"
+}

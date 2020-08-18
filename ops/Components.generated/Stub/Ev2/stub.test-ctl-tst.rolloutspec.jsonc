@@ -1,5 +1,6 @@
 // Auto-Generated From Template
-// ..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.rolloutspec.jsonc (vscs-stub-test-ctl-tst)
+// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}.rolloutspec.jsonc"
+// with names file "stub.test-ctl-tst.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
@@ -9,7 +10,7 @@
   "rolloutMetadata": {
     "serviceModelPath": "stub.test-ctl-tst.servicemodel.jsonc",
     "scopeBindingsPath": null,
-    "name": "vscs-stub-test-ctl-tst Rollout 1.0.0.0",
+    "name": "vscs-stub-test-tst Rollout 1.0.0.0",
     "rolloutType": "Major",
     "buildSource": {
       "parameters": {
@@ -19,15 +20,15 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-stub-test-ctl-tst-arm",
+      "name": "Deploy vscs-stub-test-tst-arm",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-test-ctl-tst-arm",
+      "targetName": "vscs-stub-test-tst-arm",
       "actions": [ "deploy" ]
     },
     {
-      "name": "Deploy and Run vscs-stub-test-ctl-tst-script",
+      "name": "Deploy and Run vscs-stub-test-tst-script",
       "targetType": "ServiceResource",
-      "targetName": "vscs-stub-test-ctl-tst-script",
+      "targetName": "vscs-stub-test-tst-script",
       "actions": [ "Shell/stub-script" ]
     }
   ]
