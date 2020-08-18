@@ -9,6 +9,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const WebpackMildCompile = require('webpack-mild-compile').Plugin;
 
 const rootFolder = path.resolve(__dirname, '..', '..');
 
@@ -92,7 +93,10 @@ module.exports = [
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
-            plugins: [new TsconfigPathsPlugin({ configFile: paths.tsConfig })],
+            plugins: [
+                !production && new WebpackMildCompile(),
+                new TsconfigPathsPlugin({ configFile: paths.tsConfig })
+            ].filter(Boolean),
             modules: ['node_modules', 'vscode-downloads/workbench-page'],
             alias: {
                 'net': paths.mocks.net,
@@ -147,7 +151,9 @@ module.exports = [
             ],
         },
         plugins: [
+            !production && new WebpackMildCompile(),
             new webpack.DefinePlugin({
+                'process.env.VSCS_IN_CODESPACE': `"${process.env['CODESPACES']}"`,
                 'process.env.VSCS_GIT_BRANCH': `"${gitRepoInfo.branch}"`,
                 'process.env.VSCS_GIT_SHA': `"${gitRepoInfo.sha}"`,
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
@@ -192,11 +198,11 @@ module.exports = [
                     },
                     chunks: ['platform-authentication'],
                 }),
-            new MiniCssExtractPlugin({
+            production && new MiniCssExtractPlugin({
                 filename: 'static/css/[name].[contenthash:8].css',
                 chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
             }),
-            new CopyWebpackPlugin([
+            production && new CopyWebpackPlugin([
                 path.join(paths.staticContent, 'ms-logo.svg'),
                 path.join(paths.staticContent, 'site.css'),
                 path.join(paths.staticContent, 'splash-screen-styles.css'),
@@ -263,7 +269,10 @@ module.exports = [
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             // @ts-ignore
-            plugins: [new TsconfigPathsPlugin({ configFile: paths.tsConfig })],
+            plugins: [
+                !production && new WebpackMildCompile(),
+                new TsconfigPathsPlugin({ configFile: paths.tsConfig })
+            ].filter(Boolean),
             alias: {
                 'net': paths.mocks.net,
                 'node-rsa': paths.mocks.nodeRsa,
@@ -301,6 +310,7 @@ module.exports = [
             ],
         },
         plugins: [
+            !production && new WebpackMildCompile(),
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': production ? '"production"' : '"development"',
                 'process.env.PUBLIC_URL': `"${publicPath}"`,
@@ -319,7 +329,7 @@ module.exports = [
             // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
             // You can remove this if you don't use Moment.js:
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-        ],
+        ].filter(Boolean),
         stats: 'errors-only',
         performance: {
             /**

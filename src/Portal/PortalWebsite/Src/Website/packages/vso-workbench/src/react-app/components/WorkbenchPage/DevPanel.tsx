@@ -63,13 +63,11 @@ export class DevPanel extends DevPanelToggleComponent<IDevPanelProps, IDevPanelS
         return (
             <div className={`vscs-dev-panel ${cls}`}>
                 <DevPanelHeader environment={environment} onClick={this.onToggle} />
-
                 <div className='vscs-dev-panel__body'>
                     <DevPanelConnectSection codespaceInfo={codespaceInfo} />
                     <DevPanelDefaultExtensionsSection defaultExtensions={requiredExtensions} />
                     <DevPanelSuspendSection codespaceInfo={codespaceInfo} />
                 </div>
-
                 <div
                     className='vscs-dev-panel__toggle-button'
                     onClick={this.onToggle}

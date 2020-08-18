@@ -50,9 +50,13 @@
 }
 
 .vscs-dev-panel__input--button {
+    padding: calc(.5 * var(--grid-unit)) calc(1 * var(--grid-unit));
+    --button-height: calc(2.5 * var(--grid-unit));
+    height: var(--button-height);
+    line-height: calc((var(--button-height) / 2) - 1px);
+    font-size: 12px;
     cursor: pointer;
     border: none;
-    padding: calc(.5 * var(--grid-unit)) calc(1 * var(--grid-unit));
 }
 
 .vscs-dev-panel__toggle-button {
@@ -84,7 +88,7 @@
     line-height: calc(var(--dev-panel-height) - 1px);
     font-size: 12px;
     background: #161818;
-    box-shadow: 0 5px 0 rgba(0,0,0,.25);
+    box-shadow: 0 5px 0 rgba(0,0,0,.15);
     z-index: 0;
 }
 
@@ -98,7 +102,7 @@
     overflow: hidden;
     overflow-y: auto;
     background: #161818;
-    box-shadow: 5px 5px 0 rgba(0,0,0,.25),
+    box-shadow: 5px 5px 0 rgba(0,0,0,.15),
                 inset 0 1px 0 var(--dev-panel-border-color);
     max-height: calc(40 * var(--grid-unit));
     z-index: 0;
@@ -110,8 +114,4 @@
 
 .vscs-dev-panel.is-hidden .vscs-dev-panel__header {
     box-shadow: none;
-}
-
-.vso-button {
-    font-size: 13px;
 }

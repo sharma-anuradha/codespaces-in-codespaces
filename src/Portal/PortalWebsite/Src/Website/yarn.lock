@@ -9970,6 +9970,11 @@ webpack-merge@^4.2.2:
   dependencies:
     lodash "^4.17.15"
 
+webpack-mild-compile@^3.3.1:
+  version "3.3.1"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/webpack-mild-compile/-/webpack-mild-compile-3.3.1.tgz#60d56efcf8f0424ec12373cb2649b9c8a6d37e7f"
+  integrity sha1-YNVu/PjwQk7BI3PLJkm5yKbTfn8=
+
 webpack-sources@^1.1.0, webpack-sources@^1.3.0, webpack-sources@^1.4.0, webpack-sources@^1.4.1:
   version "1.4.3"
   resolved "https://devdiv.pkgs.visualstudio.com/_packaging/NodeRepos/npm/registry/webpack-sources/-/webpack-sources-1.4.3.tgz#eedd8ec0b928fbf1cbfe994e22d2d890f330a933"

@@ -1,0 +1,40 @@
+
+.vscs-dev-panel-header__section-value {
+    padding: 0 calc(.5 * var(--grid-unit));
+    overflow: hidden;
+    position: relative;
+    display: inline;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+.vscs-dev-panel-header__section-value::selection,
+.vscs-dev-panel-header__section-value a::selection {
+    background-color: var(--dev-panel-selection-color);
+    color: black;
+    padding: 20px;
+}
+
+.vscs-dev-panel-header__section-value a::selection {
+    background-color: var(--dev-panel--linkselection-color);
+}
+
+.vscs-dev-panel-header__section-value::before,
+.vscs-dev-panel-header__section-value::after {
+    content: '';
+    position: absolute;
+    top: calc(-.25 * var(--dev-panel-height));
+    height: var(--dev-panel-height);
+    width: calc(.5 * var(--grid-unit));
+    opacity: 0;
+}
+
+.vscs-dev-panel-header__section-value::before {
+    left: 0;
+}
+
+.vscs-dev-panel-header__section-value::after {
+    right: 0;
+}

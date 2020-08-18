@@ -9,8 +9,12 @@ interface IDevPanelSuspendSectionProps {
 }
 
 export const DevPanelSuspendSection: React.SFC<IDevPanelSuspendSectionProps> = ({
-    codespaceInfo,
+    codespaceInfo
 }) => {
+    if (!codespaceInfo) {
+        return null;
+    }
+
     const suspendCodespace = React.useCallback(async () => {
         if (!codespaceInfo || !('codespaceToken' in codespaceInfo)) {
             return null;
@@ -23,12 +27,12 @@ export const DevPanelSuspendSection: React.SFC<IDevPanelSuspendSectionProps> = (
     }, [codespaceInfo]);
 
     return (
-        <DevPanelSection id={'dev-panel-suspend--section'} title={'Suspend Codespace'}>
+        <DevPanelSection id={'dev-panel-suspend--section'} title={'Codespace Commands'}>
             <button
                 className='vso-button vscs-dev-panel__input vscs-dev-panel__input--button'
                 onClick={suspendCodespace}
             >
-                Suspend Codespace
+                😴&nbsp;&nbsp;Suspend
             </button>
         </DevPanelSection>
     );
