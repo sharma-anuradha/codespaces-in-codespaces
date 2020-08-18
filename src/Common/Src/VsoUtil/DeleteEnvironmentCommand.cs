@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// <summary>
         /// Gets or sets a value indicating the environment to delete.
         /// </summary>
-        [Option('i', "id", HelpText = "The cloud environment id.")]
+        [Option('i', "id", HelpText = "The cloud environment id.", Required = true)]
         public string EnvironmentId { get; set; }
 
         /// <summary>
