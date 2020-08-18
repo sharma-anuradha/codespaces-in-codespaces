@@ -75,7 +75,7 @@ export class DevPanelConnectSection extends React.Component<
                             onChange={this.onTargetChanged}
                             checked={isNewTab}
                         />
-                        <label htmlFor='codespace-connection-new-tab'>into new tab</label>{' '}
+                        <label htmlFor='codespace-connection-new-tab'>new tab</label>{' '}
                     </p>
                     <input
                         type='text'

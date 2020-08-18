@@ -1,6 +1,6 @@
 import { TKnownPartners } from '../interfaces/TKnownPartners';
 import { ConfigurationError } from '../errors/ConfigurationError';
-import { IEnvironment } from '../../../vso-client-core/src';
+import { IEnvironment, isHostedOnGithub } from '../../../vso-client-core/src';
 
 interface IPartnerConfig {
     loginRedirectUrl: string;
@@ -35,6 +35,7 @@ export interface IConfiguration {
     readonly environmentsApiPath: string;
     readonly richNavWebExtensionEndpoint: string;
     readonly isDevStamp: boolean;
+    readonly githubApiEndpoint: string;
 }
 
 const CONFIG: IConfig = {
@@ -49,6 +50,7 @@ const CONFIG: IConfig = {
         apiEndpoint: 'https://online.visualstudio.com/api/v1',
         liveShareEndpoint: 'https://prod.liveshare.vsengsaas.visualstudio.com',
         liveShareWebExtensionEndpoint: 'https://vslsprod.blob.core.windows.net/webextension',
+        githubApiEndpoint: 'https://api.github.com/vscs_internal/proxy',
         environment: 'production',
         portForwardingDomainTemplate: '{0}.app.online.visualstudio.com',
         enableEnvironmentPortForwarding: false,
@@ -155,6 +157,21 @@ export class Config {
         return apiUrl.toString();
     };
 
+    /**
+     * Partners need to have control over some of the API calls, for instance,
+     * GitHub need to hook into the `start` codespace API call to prevent
+     * a Codespace from being started if user is blocked or off-boarded.
+     * This endpoint represents such proxied Codespaces API endpoint that
+     * partners maintain.
+     */
+    public getProxiedApiEndpoint = (codespace: IEnvironment) => {
+        if (isHostedOnGithub()) {
+            return  CONFIG.portalConfig.githubApiEndpoint;
+        }
+
+        return this.getCodespaceRegionalApiEndpoint(codespace);
+    }
+
     get environment() {
         return CONFIG.portalConfig.environment;
     }
@@ -165,6 +182,10 @@ export class Config {
 
     get api() {
         return CONFIG.portalConfig.apiEndpoint;
+    }
+
+    get githubApi() {
+        return CONFIG.portalConfig.githubApiEndpoint;
     }
 
     get enableEnvironmentPortForwarding() {

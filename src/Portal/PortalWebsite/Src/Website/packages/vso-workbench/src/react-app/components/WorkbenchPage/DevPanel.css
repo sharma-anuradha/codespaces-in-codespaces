@@ -47,6 +47,8 @@
     line-height: var(--input-height);
     padding: calc(.5 * var(--grid-unit));
     box-sizing: border-box;
+    margin: calc(.5 * var(--grid-unit)) 0;
+    width: 100%;
 }
 
 .vscs-dev-panel__input--button {

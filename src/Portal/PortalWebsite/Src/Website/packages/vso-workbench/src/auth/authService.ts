@@ -22,6 +22,7 @@ import { isJwtTokenWithMicrosoftEmail } from '../utils/isJwtTokenWithMicrosoftEm
 import { AuthenticationError } from '../errors/AuthenticationError';
 import { TAuthServiceEvent } from '../interfaces/TAuthServiceEvent';
 import { PlatformQueryParams } from '../constants';
+import { config } from '../config/config';
 
 const trace = createTrace('vso-workbench-auth-service');
 
@@ -54,7 +55,12 @@ export class AuthService {
         }
 
         const githubToken = partnerInfo.credentials.find((token) => {
-            return token.host === 'github.com';
+            const { host: tokenHost } = token;
+            const { environment } = config;
+
+            return (
+                tokenHost === 'github.com' || (environment === 'local' && tokenHost.endsWith('.ngrok.io'))
+            );
         });
 
         if (!githubToken) {

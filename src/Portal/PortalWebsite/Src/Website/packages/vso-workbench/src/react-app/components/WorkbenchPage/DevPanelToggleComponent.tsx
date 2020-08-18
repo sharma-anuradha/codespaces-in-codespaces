@@ -38,8 +38,6 @@ export class DevPanelToggleComponent<T, K> extends React.Component<
         const { id, isAccountForChildEvents } = this.props;
         const { isOn } = this.state;
 
-        console.log(e, e.target, e.currentTarget);
-
         if (!isAccountForChildEvents && e.currentTarget !== e.target) {
             return;
         }

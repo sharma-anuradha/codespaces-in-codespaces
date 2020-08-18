@@ -66,6 +66,11 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
         }
     };
 
+    /**
+     * Since GitHub needs to have the control over the codespace permissions,
+     * we need to call their API so they can perevent the codespave from being
+     * started for offboarded or blocked users.
+     */
     private startCodespace = async () => {
         this.setState({
             value: EnvironmentStateInfo.Starting,
@@ -77,25 +82,17 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
             throw new Error(`Fetch environment info first.`);
         }
 
-        const token = await authService.getCachedToken();
-        if (!token) {
-            trace.info(`No token found.`);
-
-            this.setState({
-                value: EnvironmentWorkspaceState.SignedOut,
-            });
-
-            return;
-        }
+        // stop polling so the splash screen
+        // does not flicker during the start call
+        await this.stopPollEnvironment();
 
         trace.info(`Starting codespace`);
 
-        await this.stopPollEnvironment();
-
         try {
-            await vsoAPI.startCodespace(this.environmentInfo, token);
+            await vsoAPI.startCodespace(this.environmentInfo);
         } catch (e) {
-            this.handleAPIError(e);
+            trace.error(`Failed to start Codespace: `, e);
+            return this.handleAPIError(e);
         }
 
         await this.startPollingEnvironment();

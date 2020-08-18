@@ -1,9 +1,10 @@
-import { IEnvironment } from 'vso-client-core';
+import { IEnvironment, isHostedOnGithub } from 'vso-client-core';
 
 import { config } from '../config/config';
 import { AuthenticationError } from '../errors/AuthenticationError';
 import { RateLimitingError } from '../errors/ReteLimitingError';
 import { HttpError } from '../errors/HttpError';
+import { authService } from '../auth/authService';
 
 const cache: { [key: string]: Promise<IEnvironment> | undefined } = {};
 
@@ -78,23 +79,54 @@ export class VsoAPI {
         }
     };
 
-    public startCodespace = async (codespace: IEnvironment, token: string) => {
-        // all write operations should go to the region the codespace is in
-        const apiEndpoint = config.getCodespaceRegionalApiEndpoint(codespace);
+    /**
+     * Since GitHub needs to have control over the codespace permissions,
+     * we need to call their API proxy so they can prevent the codespace
+     * from being started for offboarded or blocked users.
+     */
+    public startCodespace = async (codespace: IEnvironment) => {
+        const token = isHostedOnGithub()
+            ? await authService.getCachedGithubToken()
+            : await authService.getCachedToken();
 
-        const url = new URL(`${apiEndpoint}/environments/${codespace.id}/start`);
+        // VSCS API implements the "fake redirection" responses as a workaround
+        // for the `Origin: null` header set by the browser due to "opaque response"
+        // caused by cross-domain redirection during the CORS handshake.
+        // The `fake redirection` represents a HTTP 333 response with `location`
+        // inside the response body that the client uses for manual redirection.
+        const headers = isHostedOnGithub()
+            ? {}
+            : { [headerNames.acceptRedirects]: 'false' };
+
+        if (!token) {
+            throw new AuthenticationError('Cannot find auth token.');
+        }
+
+        return await this.requestToStartCodespace(
+            `${config.getProxiedApiEndpoint(codespace)}/environments/${codespace.id}/start`,
+            token,
+            headers
+        );
+    };
+
+    private requestToStartCodespace = async (
+        apiURL: string,
+        token: string,
+        additionalHeaders: Record<string, string> = {}
+    ) => {
+        const url = new URL(apiURL);
 
         const headers = {
             Authorization: `Bearer ${token}`,
-            [headerNames.acceptRedirects]: 'false',
+            ...additionalHeaders,
         };
+
         const options = {
             method: 'POST',
             headers,
         };
 
         let envStartResponse = await fetch(url.toString(), options);
-
         if (isFakeRedirectResponse(envStartResponse)) {
             const { location: redirectLocation } = await envStartResponse.json();
             if (redirectLocation) {
