@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -102,7 +103,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     childLogger.AddEnvironmentId(environment.Id);
 
                     environment.IsMigrated = true;
-                    await CloudEnvironmentRepository.RegionalRepository.CreateOrUpdateAsync(environment, logger.NewChildLogger());
+
+                    try
+                    {
+                        await CloudEnvironmentRepository.RegionalRepository.CreateOrUpdateAsync(environment, logger.NewChildLogger());
+                    }
+                    catch (DocumentClientException ex)
+                    {
+                        // Note: If we get a Precondition Failed error, it means that the environment has already been copied to the Regional DB.
+                        if (ex.StatusCode != System.Net.HttpStatusCode.PreconditionFailed)
+                        {
+                            throw;
+                        }
+                    }
+
                     await CloudEnvironmentRepository.GlobalRepository.UpdateAsync(environment, logger.NewChildLogger());
                 },
                 swallowException: true);

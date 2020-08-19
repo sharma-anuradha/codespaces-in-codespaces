@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -301,27 +302,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         {
             if (rolloutStatus == RolloutStatus.Phase1)
             {
-                environment.IsMigrated = true;
+                if (environment.IsMigrated)
+                {
+                    // The environment is known to exist in the regional database so we can just update it. If this fails, then it's no different from
+                    // the way things used to work.
+                    environment = await RegionalRepository.UpdateAsync(environment, logger.NewChildLogger());
+                }
+                else
+                {
+                    // The environment hadn't (yet?) been migrated when it was fetched. Try creating it in the regional database. If that fails,
+                    // then hopefully our caller will properly handle the situation.
+                    environment.IsMigrated = true;
 
-                // Note: We use CreateOrUpdate for the RegionalRepository because it might not have been migrated over to the regional db yet.
-                environment = await RegionalRepository.CreateOrUpdateAsync(environment, logger.NewChildLogger());
+                    environment = await RegionalRepository.CreateAsync(environment, logger.NewChildLogger());
+                }
 
                 // Update the record in the global repository as well so that the Get*Count() methods continue to work.
                 var globalEnvironment = await logger.RetryOperationScopeAsync(
-                       "cloud_environment_repository_update_getglobal_retry_scope",
-                       async (retryLogger) =>
-                       {
-                           return await GlobalRepository.GetAsync(environment.Id, logger.NewChildLogger());
-                       });
+                   "cloud_environment_repository_update_getglobal_retry_scope",
+                   async (retryLogger) =>
+                   {
+                       return await GlobalRepository.GetAsync(environment.Id, logger.NewChildLogger());
+                   });
 
-                CopyCloudEnvironment(environment, globalEnvironment);
+                if (globalEnvironment != null)
+                {
+                    CopyCloudEnvironment(environment, globalEnvironment);
 
-                await logger.RetryOperationScopeAsync(
+                    await logger.RetryOperationScopeAsync(
                        "cloud_environment_repository_update_global_retry_scope",
                        async (retryLogger) =>
                        {
                            return await GlobalRepository.UpdateAsync(globalEnvironment, retryLogger);
                        });
+                }
 
                 return environment;
             }
