@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.Azure.ServiceBus;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
@@ -23,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clie
             IServiceBusClientProvider serviceBusClientProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
-            : base(QueueNames.NewConnections, serviceBusClientProvider, loggerFactory, defaultLogValues)
+            : base(QueueNames.NewConnections, true, serviceBusClientProvider, loggerFactory, defaultLogValues)
         {
         }
     }

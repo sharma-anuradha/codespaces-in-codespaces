@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.Build.Traversal">
 
+  <PropertyGroup>
+    <BuildOps Condition="'$(BuildOps)' == ''">true</BuildOps>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="src/dirs.proj" />
     <ProjectReference Include="test/dirs.proj" />
-    <ProjectReference Include="ops/ops.csproj" />
+    <ProjectReference Include="ops/ops.csproj" Condition="'$(BuildOps)' == 'true'" />
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,7 @@
 using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
 {
@@ -23,14 +24,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient
             this IServiceCollection services,
             Action<HttpCodespacesApiClientOptions> configureOptions)
         {
+            services.AddTransient<ForwardingCorrelationIdHandler>();
+
             return services.Configure(configureOptions)
                 .AddHttpClient<ICodespacesApiClient, HttpCodespacesApiClient>()
-                .ConfigurePrimaryHttpMessageHandler(_ =>
+                .AddHttpMessageHandler<ForwardingCorrelationIdHandler>()
+                .ConfigurePrimaryHttpMessageHandler(_ => new SocketsHttpHandler()
                 {
-                    return new SocketsHttpHandler()
-                    {
-                        AllowAutoRedirect = false,
-                    };
+                    AllowAutoRedirect = false,
                 });
         }
     }

@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clie
             IServiceBusClientProvider serviceBusClientProvider,
             IDiagnosticsLoggerFactory loggerFactory,
             LogValueSet defaultLogValues)
-            : base(QueueNames.EstablishedConnections, serviceBusClientProvider, loggerFactory, defaultLogValues)
+            : base(QueueNames.EstablishedConnections, true, serviceBusClientProvider, loggerFactory, defaultLogValues)
         {
         }
     }

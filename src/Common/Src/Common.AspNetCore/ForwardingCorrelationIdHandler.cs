@@ -27,6 +27,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             ContextAccessor = new HttpContextAccessor();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ForwardingCorrelationIdHandler"/> class.
+        /// </summary>
+        public ForwardingCorrelationIdHandler()
+        {
+            ContextAccessor = new HttpContextAccessor();
+        }
+
         private IHttpContextAccessor ContextAccessor { get; }
 
         /// <inheritdoc/>

@@ -400,6 +400,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             baseLogValueSet.Add("ServiceInstance", controlPlaneInfo.InstanceResourceGroupName);
             baseLogValueSet.Add("ServiceStamp", controlPlaneInfo.Stamp.StampResourceGroupName);
             baseLogValueSet.Add("ServiceLocation", controlPlaneInfo.Stamp.Location.ToString().ToLowerInvariant());
+            baseLogValueSet.Add("KubernetesPodName", System.Net.Dns.GetHostName());
 
             // Emit the startup settings to logs for diagnostics.
             var logger = app.ApplicationServices.GetRequiredService<IDiagnosticsLogger>();

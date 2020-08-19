@@ -125,6 +125,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
 
                     var message = new Message(JsonSerializer.SerializeToUtf8Bytes(connectionInfo, this.serializationOptions))
                     {
+                        // Automatic SB deduplication uses message ids to dedupe messages.
+                        // We have deduplication set for 30s
+                        MessageId = connectionInfo.GetMessagingSessionId(),
                         SessionId = connectionInfo.WorkspaceId,
                         ContentType = MediaTypeNames.Application.Json,
                         CorrelationId = context.GetCorrelationId(),

@@ -72,12 +72,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
             }
         }
 
-        private Task ProcessSessionMessage(
+        private async Task ProcessSessionMessage(
             IMessageSession session,
             Message message,
             CancellationToken cancellationToken)
         {
-            return Logger.OperationScopeAsync(
+            if (message.Label == QueueClientProvider.WarmupMessageLabel)
+            {
+                await session.CloseAsync();
+
+                return;
+            }
+
+            await Logger.OperationScopeAsync(
                 "established_connection_worker_process_connection_established",
                 async (childLogger) =>
                 {

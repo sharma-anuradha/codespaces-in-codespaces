@@ -14,6 +14,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.ServiceBus
     public interface IQueueClientProvider
     {
         /// <summary>
+        /// Gets the warmup message label so clients can throw it away.
+        /// </summary>
+        public string WarmupMessageLabel { get; }
+
+        /// <summary>
         /// Gets the <see cref="IQueueClient"/> task.
         /// </summary>
         public Lazy<Task<IQueueClient>> Client { get; }
