@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
             this.createCallback = (queueId) =>
                 new StorageQueue(
+                    queueId,
                     this,
                     () => clientProvider.InitializeQueue(resourceNameBuilder.GetQueueName(queueId), healthProvider, logger),
                     logger);
@@ -57,6 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             {
                 var initializeQueueTask = crossRegionClientProvider.InitializeQueue(resourceNameBuilder.GetQueueName(queueId), healthProvider, controlPlaneInfo, logger);
                 return new StorageQueue(
+                    queueId,
                     this,
                     async () =>
                     {
@@ -82,14 +84,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             private IDiagnosticsLogger logger;
 
             public StorageQueue(
+                string queueId,
                 IQueueFactory queueFactory,
                 Func<Task<CloudQueue>> cloudQueueFactoryCallback,
                 IDiagnosticsLogger logger)
             {
+                Requires.NotNullOrEmpty(queueId, nameof(queueId));
+                Id = queueId;
+
                 Factory = queueFactory;
                 this.cloudQueueFactoryCallback = cloudQueueFactoryCallback;
                 this.logger = logger;
             }
+
+            public string Id { get; }
 
             public IQueueFactory Factory { get; }
 

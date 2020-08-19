@@ -22,6 +22,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         public int? MaxHandlerRetries { get; set; }
 
         /// <summary>
+        /// Gets or sets the retry timeout value.
+        /// </summary>
+        public TimeSpan? RetryTimeout { get; set; }
+
+        /// <summary>
+        /// Gets or sets the invisible threshold time span.
+        /// </summary>
+        public TimeSpan? InvisibleThreshold { get; set; }
+
+        /// <summary>
         /// Create job handler options with max retries.
         /// </summary>
         /// <param name="maxHandlerRetries">Number of retries.</param>

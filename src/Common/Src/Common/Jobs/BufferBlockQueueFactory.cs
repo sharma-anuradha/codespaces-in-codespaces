@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         public IQueue GetOrCreate(string queueId, AzureLocation? azureLocation)
         {
             Requires.NotNullOrEmpty(queueId, nameof(queueId));
-            return this.bufferBlockQueues.GetOrAdd((queueId, azureLocation), (id) => new BufferBlockQueue());
+            return this.bufferBlockQueues.GetOrAdd((queueId, azureLocation), (id) => new BufferBlockQueue(queueId));
         }
 
         /// <inheritdoc/>

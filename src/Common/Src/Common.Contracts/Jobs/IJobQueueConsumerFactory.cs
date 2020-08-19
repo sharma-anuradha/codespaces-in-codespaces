@@ -37,6 +37,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public interface IJobQueueConsumer : IAsyncDisposable
     {
         /// <summary>
+        /// Event fired when a job is created by this consumer instance.
+        /// </summary>
+        event Action<IJob> JobCreated;
+
+        /// <summary>
         /// Return the current job handler metrics processed by this queue.
         /// </summary>
         /// <returns>A dictionary for each type of job taf type beign procesed.</returns>
@@ -47,9 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <typeparam name="T">Type of the payload.</typeparam>
         /// <param name="jobHandler">The job handler instance.</param>
-        /// <param name="dataflowBlockOptions">TPL data flow options.</param>
-        /// <param name="jobHandlerOptions">Job handler options.</param>
-        void RegisterJobHandler<T>(IJobHandler<T> jobHandler, ExecutionDataflowBlockOptions dataflowBlockOptions, JobHandlerOptions jobHandlerOptions = null)
+        void RegisterJobHandler<T>(IJobHandler<T> jobHandler)
             where T : JobPayload;
 
         /// <summary>

@@ -23,8 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <summary>
         /// Initializes a new instance of the <see cref="BufferBlockQueue"/> class.
         /// </summary>
-        public BufferBlockQueue()
+        /// <param name="queueId">Queue id.</param>
+        public BufferBlockQueue(string queueId)
         {
+            Requires.NotNullOrEmpty(queueId, nameof(queueId));
+            Id = queueId;
+
             this.invisibleMessagesTask = Task.Run(async () =>
             {
                 while (!DisposeToken.IsCancellationRequested)
@@ -40,6 +44,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 }
             });
         }
+
+        /// <inheritdoc/>
+        public string Id { get; }
 
         private BufferBlock<QueueMessage> BufferBlock { get; } = new BufferBlock<QueueMessage>();
 

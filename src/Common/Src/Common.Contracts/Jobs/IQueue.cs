@@ -1,4 +1,4 @@
-﻿// <copyright file="IQueue.cs" company="Microsoft">
+// <copyright file="IQueue.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,6 +14,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// </summary>
     public interface IQueue
     {
+        /// <summary>
+        /// Gets the queue id for this instance.
+        /// </summary>
+        string Id { get; }
+
         /// <summary>
         /// Add a message to this queue.
         /// </summary>

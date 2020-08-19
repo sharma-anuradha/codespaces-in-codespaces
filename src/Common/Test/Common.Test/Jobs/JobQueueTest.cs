@@ -60,15 +60,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         {
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
             {
-                var payloadsProcessed = new BufferBlock<JobPayloadError>();
-                jobQueueConsumer.RegisterJobPayloadHandler<JobPayloadError>(
-                    async (payload, logger, ct) =>
+                var jobsCompleted = new BufferBlock<IJobCompleted>();
+                jobQueueConsumer.JobCreated += (job) =>
+                {
+                    job.Completed += (jobCompleted, ct) =>
                     {
-                        await payloadsProcessed.SendAsync(payload);
-                    });
+                        return jobsCompleted.SendAsync(jobCompleted, ct);
+                    };
+                };
+
                 await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(100));
-                var jobPayloadError = await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
-                Assert.IsType<NotSupportedException>(jobPayloadError.Error);
+                var jobCompleted = await jobsCompleted.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.PayloadError, jobCompleted.Status);
+                Assert.IsType<NotSupportedException>(jobCompleted.Error);
             });
         }
 
@@ -224,7 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 jobQueueConsumer.RegisterJobHandler<JobContentPayload<int>>(
                     async (job, logger, ct) =>
                     {
-                        await job.UpdateAsync(TimeSpan.FromSeconds(60), ct);
+                        await job.UpdateVisibilityAsync(TimeSpan.FromSeconds(60), ct);
                         await payloadsProcessed.SendAsync(job.Payload);
                     });
                 await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(200), new JobPayloadOptions() { HandlerTimeout = TimeSpan.FromMilliseconds(50) });
@@ -321,6 +325,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         }
 
         [Fact]
+        public Task ContinuationPayloadAsync()
+        {
+            return RunJobQueueFactoryTest(async (jobQueueProducerFactory, jobQueueConsumerFactory, queue) =>
+            {
+                var jobQueueConsumer = jobQueueConsumerFactory.GetOrCreate(queue.Id, null);
+                jobQueueConsumer.Start();
+                var continuationJobHandler = new ContinuationJobHandler(jobQueueProducerFactory);
+                jobQueueConsumer.RegisterJobHandler(continuationJobHandler);
+
+                var continuationJobPayloadResult = new BufferBlock<ContinuationJobPayloadResult<ContinuationState, ContinuationResult>>();
+                jobQueueConsumer.RegisterJobPayloadHandler<ContinuationJobPayloadResult<ContinuationState, ContinuationResult>>(
+                    async (payload, logger, ct) =>
+                    {
+                        await continuationJobPayloadResult.SendAsync(payload);
+                    });
+
+                await jobQueueProducerFactory.GetOrCreate(queue.Id, null).AddJobAsync(new ContinuationPayload(), null, default);
+                var jobPayloadResult = await continuationJobPayloadResult.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal("hello", jobPayloadResult.Result.ResultStep1);
+                Assert.Equal(100, jobPayloadResult.Result.ResultStep2);
+                Assert.Equal(ContinuationState.Step3, jobPayloadResult.CurrentState);
+                Assert.Equal(ContinuationJobPayloadResultState.Succeeded, jobPayloadResult.CompletionState);
+
+                await jobQueueProducerFactory.GetOrCreate(queue.Id, null).AddJobAsync(new ContinuationPayload() { InitValue = 100 } , null, default);
+                jobPayloadResult = await continuationJobPayloadResult.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(ContinuationJobPayloadResultState.Failed, jobPayloadResult.CompletionState);
+                Assert.Equal(ContinuationState.Step2, jobPayloadResult.CurrentState);
+
+                continuationJobHandler.JobHandlerOptions = new JobHandlerOptions() { MaxHandlerRetries = 10, RetryTimeout = TimeSpan.FromMilliseconds(100) };
+                continuationJobHandler.Step1Retries = 4;
+                await jobQueueProducerFactory.GetOrCreate(queue.Id, null).AddJobAsync(new ContinuationPayload() { InitValue = 500 }, null, default);
+                jobPayloadResult = await continuationJobPayloadResult.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(ContinuationJobPayloadResultState.Succeeded, jobPayloadResult.CompletionState);
+                Assert.Equal(0, continuationJobHandler.Step1Retries);
+            });
+        }
+
+        [Fact]
         public Task DoubleProcessAsync()
         {
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
@@ -345,6 +387,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 await Task.Delay(2000);
                 Assert.Equal(2, count);
             }, new QueueMessageProducerSettings(5, TimeSpan.FromSeconds(8), TimeSpan.FromMilliseconds(500)));
+        }
+
+        [Fact]
+        public Task KeepInvisibleAsync()
+        {
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                var jobsCompletedStatus = new BufferBlock<JobCompletedStatus>();
+                jobQueueConsumer.JobCreated += (job) =>
+                {
+                    job.Completed += (jobCompleted, ct) =>
+                    {
+                        return jobsCompletedStatus.SendAsync(jobCompleted.Status, ct);
+                    };
+                };
+
+                bool first = false;
+                jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
+                    async (payload, logger, ct) =>
+                    {
+                        if (!first)
+                        {
+                            first = true;
+                            await Task.Delay(6000); // 6 secs
+                        }
+                    }, dataflowBlockOptions: null, options: new JobHandlerOptions() { InvisibleThreshold = TimeSpan.FromSeconds(2) });
+                var jobPayload = new JobContentPayload<int>(100);
+                await jobQueueProducer.AddJobAsync(jobPayload);
+                var jobCompletedStatus = await jobsCompletedStatus.ReceiveAsync(ReceiveTimeout);
+                Assert.True(jobCompletedStatus.HasFlag(JobCompletedStatus.KeepInvisible));
+                await Assert.ThrowsAsync<TimeoutException>(() => jobsCompletedStatus.ReceiveAsync(TimeSpan.FromSeconds(2)));
+            }, new QueueMessageProducerSettings(5, TimeSpan.FromSeconds(4), TimeSpan.FromMilliseconds(500)));
         }
 
         [Fact]
@@ -408,6 +482,88 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 await jobQueueProducer.DisposeAsync();
                 await jobQueueConsumer.DisposeAsync();
             });
+        }
+
+        protected Task RunJobQueueFactoryTest(Func<JobQueueProducerFactory, JobQueueConsumerFactory, IQueue, Task> testCallback,
+            QueueMessageProducerSettings queueMessageProducerSettings = null)
+        {
+            return RunQueueTest(async (queue) =>
+            {
+                var jobQueueProducerFactory = new JobQueueProducerFactory(QueueFactory, new NullLogger());
+                var queueMessageProducerFactory = new QueueMessageProducerFactory(QueueFactory, queueMessageProducerSettings ?? QueueMessageProducerSettings.Default);
+                var jobQueueConsumerFactory = new JobQueueConsumerFactory(queueMessageProducerFactory, new NullLogger());
+                await testCallback(jobQueueProducerFactory, jobQueueConsumerFactory, queue);
+            });
+        }
+
+        public enum ContinuationState
+        {
+            None,
+            Step1,
+            Step2,
+            Step3
+        }
+
+        private class ContinuationPayload : ContinuationJobPayload<ContinuationState>
+        {
+            public int InitValue { get; set; }
+
+            public string Step1Value { get; set; }
+
+            public int? Step2Value { get; set; }
+        }
+
+        private class ContinuationResult
+        {
+            public string ResultStep1 { get; set; }
+
+            public int ResultStep2 { get; set; }
+        }
+
+        private class ContinuationJobHandler : ContinuationJobHandlerBase<ContinuationPayload, ContinuationState, ContinuationResult>
+        {
+            public ContinuationJobHandler(IJobQueueProducerFactory jobQueueProducerFactory)
+                : base(jobQueueProducerFactory)
+            {
+            }
+
+            public JobHandlerOptions JobHandlerOptions { set; get; }
+
+            public int Step1Retries { set; get; }
+
+            public override JobHandlerOptions GetJobOptions(IJob<ContinuationPayload> job)
+            {
+                return JobHandlerOptions ?? base.GetJobOptions(job);
+            }
+
+            protected override Task<(ContinuationResult, ContinuationJobPayloadResultState)> ContinueAsync(ContinuationPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            {
+                switch(payload.CurrentState)
+                {
+                    case ContinuationState.None:
+                        break;
+                    case ContinuationState.Step1:
+                        payload.Step1Value = "hello";
+                        break;
+                    case ContinuationState.Step2:
+                        if (payload.InitValue == 100 || Step1Retries != 0)
+                        {
+                            if (Step1Retries != 0)
+                            {
+                                --Step1Retries;
+                            }
+                            throw new InvalidOperationException();
+                        }
+
+                        payload.Step2Value = 100;
+                        break;
+                    case ContinuationState.Step3:
+                        var result = new ContinuationResult() { ResultStep1 = payload.Step1Value, ResultStep2 = payload.Step2Value.Value };
+                        return Task.FromResult<(ContinuationResult, ContinuationJobPayloadResultState)>((result, ContinuationJobPayloadResultState.Succeeded));
+                }
+
+                return Task.FromResult<(ContinuationResult, ContinuationJobPayloadResultState)>((null, ContinuationJobPayloadResultState.None));
+            }
         }
     }
 }

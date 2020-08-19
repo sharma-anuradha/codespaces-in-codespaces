@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             }
 
             var method = LazyRegisterHandlerMethod.Value.MakeGenericMethod(jobHandlerGenericType.GetGenericArguments());
-            method.Invoke(jobQueueConsumer, new object[] { jobHandler, GetDataflowBlockOptions(jobHandler), GetJobHandlerOptions(jobHandler) });
+            method.Invoke(jobQueueConsumer, new object[] { jobHandler });
             return jobQueueConsumer;
         }
 
@@ -71,20 +71,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         }
 
         /// <summary>
-        /// Register a job handler with dataflow options.
-        /// </summary>
-        /// <typeparam name="T">Type of the payload of the job handler.</typeparam>
-        /// <param name="jobQueueConsumer">The job consumer instance.</param>
-        /// <param name="jobHandler">The job handler to regsiter.</param>
-        /// <returns>The modified job consumer instance..</returns>
-        public static IJobQueueConsumer RegisterJobHandler<T>(this IJobQueueConsumer jobQueueConsumer, IJobHandler<T> jobHandler)
-            where T : JobPayload
-        {
-            jobQueueConsumer.RegisterJobHandler<T>(jobHandler, GetDataflowBlockOptions(jobHandler));
-            return jobQueueConsumer;
-        }
-
-        /// <summary>
         /// Register a job handler with a callback that use the job payload.
         /// </summary>
         /// <typeparam name="T">Type of the payload of the job handler.</typeparam>
@@ -100,7 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             JobHandlerOptions options = null)
             where T : JobPayload
         {
-            return jobQueueConsumer.RegisterJobHandler(CreateJobPayloadHandler(handleJobCallback, dataflowBlockOptions, options));
+            jobQueueConsumer.RegisterJobHandler(CreateJobPayloadHandler(handleJobCallback, dataflowBlockOptions, options));
+            return jobQueueConsumer;
         }
 
         /// <summary>
@@ -119,7 +106,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             JobHandlerOptions options = null)
             where T : JobPayload
         {
-            return jobQueueConsumer.RegisterJobHandler(CreateJobHandler(handleJobCallback, dataflowBlockOptions, options));
+            jobQueueConsumer.RegisterJobHandler(CreateJobHandler(handleJobCallback, dataflowBlockOptions, options));
+            return jobQueueConsumer;
         }
 
         /// <summary>
@@ -151,26 +139,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             where T : JobPayload
         {
             return new JobHandler<T>(handleJobCallback, dataflowBlockOptions, options);
-        }
-
-        private static ExecutionDataflowBlockOptions GetDataflowBlockOptions(IJobHandler jobHandler)
-        {
-            if (jobHandler is IJobHandlerOptions handlerOptions)
-            {
-                return handlerOptions.DataflowBlockOptions;
-            }
-
-            return new ExecutionDataflowBlockOptions();
-        }
-
-        private static JobHandlerOptions GetJobHandlerOptions(IJobHandler jobHandler)
-        {
-            if (jobHandler is IJobHandlerOptions handlerOptions)
-            {
-                return handlerOptions.Options;
-            }
-
-            return null;
         }
 
         private class JobHandler<T> : JobHandlerBase<T>

@@ -14,6 +14,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// </summary>
     public interface IJobHandler
     {
+        /// <summary>
+        /// Gets the dataflow options.
+        /// </summary>
+        ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
     }
 
     /// <summary>
@@ -31,21 +35,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Completion task.</returns>
         Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken);
-    }
-
-    /// <summary>
-    /// Definition of the supported job handler options.
-    /// </summary>
-    public interface IJobHandlerOptions
-    {
-        /// <summary>
-        /// Gets the dataflow options.
-        /// </summary>
-        ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
 
         /// <summary>
-        /// Gets the job handler options.
+        /// Get the job handler options ot be used for a job.
         /// </summary>
-        JobHandlerOptions Options { get; }
+        /// <param name="job">The job type safe instance.</param>
+        /// <returns>Handler Options to use.</returns>
+        JobHandlerOptions GetJobOptions(IJob<T> job);
     }
 }

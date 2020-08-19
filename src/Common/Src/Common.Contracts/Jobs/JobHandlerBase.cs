@@ -69,10 +69,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// </summary>
     /// <typeparam name="T">Type of the payload.</typeparam>
 #pragma warning disable SA1402 // File may only contain a single type
-    public abstract class JobHandlerBase<T> : JobHandlerBase, IJobHandler<T>, IJobHandlerOptions
+    public abstract class JobHandlerBase<T> : JobHandlerBase, IJobHandler<T>
 #pragma warning restore SA1402 // File may only contain a single type
         where T : JobPayload
     {
+        private readonly JobHandlerOptions options;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="JobHandlerBase{T}"/> class.
         /// </summary>
@@ -81,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         protected JobHandlerBase(ExecutionDataflowBlockOptions dataflowBlockOptions = null, JobHandlerOptions options = null)
         {
             DataflowBlockOptions = dataflowBlockOptions ?? DefaultDataflowBlockOptions;
-            Options = options;
+            this.options = options;
         }
 
         /// <summary>
@@ -95,10 +97,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         }
 
         /// <inheritdoc/>
-        public virtual ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
+        public ExecutionDataflowBlockOptions DataflowBlockOptions { get; }
 
         /// <inheritdoc/>
-        public JobHandlerOptions Options { get; }
+        public virtual JobHandlerOptions GetJobOptions(IJob<T> job)
+        {
+            return this.options;
+        }
 
         /// <inheritdoc/>
         public abstract Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken);
