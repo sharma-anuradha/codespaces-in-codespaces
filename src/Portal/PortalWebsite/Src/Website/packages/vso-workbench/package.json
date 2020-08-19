@@ -12,7 +12,7 @@
     "lint": "tslint -c ../tslint.json src/**/*.{ts,tsx} --project tsconfig.json"
   },
   "vscodeCommit": {
-    "insider": "3d5b2fecf2e6788cb9877d7d868d964fbc3ecd53",
+    "insider": "f694b07825a23005985b470e767a68927a83a553",
     "stable": "db40434f562994116e5b21c24015a2e40b2504e6"
   },
   "husky": {
