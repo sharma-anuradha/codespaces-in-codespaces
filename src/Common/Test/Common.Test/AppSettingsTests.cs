@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -84,7 +84,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                         !sku.SkuName.Equals("internalWindows") &&
                         !sku.SkuName.Equals("premiumWindowsStaging") &&
                         !sku.SkuName.Equals("premiumWindowsInternalStaging") &&
-                        !sku.SkuName.Equals("premiumWindowsServerInternalStaging"))
+                        !sku.SkuName.Equals("premiumWindowsServerInternalStaging") &&
+                        !sku.SkuName.Equals("internal64Server") &&
+                        !sku.SkuName.Equals("internal32Server") &&
+                        !sku.SkuName.Equals("internalDailyWindows"))
                     {
                         Assert.True(sku.ComputeVsoUnitsPerHour > 0.0m);
                         Assert.True(sku.StorageVsoUnitsPerHour > 0.0m);
@@ -99,7 +102,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                             sku.SkuName.Equals("premiumWindows") ||
                             sku.SkuName.Equals("premiumWindowsStaging") ||
                             sku.SkuName.Equals("premiumWindowsInternalStaging") ||
-                            sku.SkuName.Equals("premiumWindowsServerInternalStaging"))
+                            sku.SkuName.Equals("premiumWindowsServerInternalStaging") ||
+                            sku.SkuName.Equals("premiumWindows") ||
+                            sku.SkuName.Equals("premiumWindowsStaging") ||
+                            sku.SkuName.Equals("premiumWindowsInternalStaging"))
                         {
                             Assert.True(sku.StoragePoolLevel == 0);
                             Assert.True(sku.ComputePoolLevel == 0);
@@ -112,6 +118,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                     }
                 }
             }
+        }
+
+        [Theory]
+        [MemberData(nameof(EnvironmentNames))]
+        public void AppSettings_SkuCatalogDisabledSkus(string environmentName, string overrideName)
+        {
+            var appSettings = LoadAppSettings(environmentName, overrideName);
+            var controlPlaneInfo = new Mock<IControlPlaneInfo>();
+            controlPlaneInfo.Setup(obj => obj.EnvironmentResourceGroupName).Returns("test-environment-rg");
+            controlPlaneInfo.Setup(obj => obj.Stamp.DataPlaneLocations).Returns(new List<AzureLocation>());
+            var subscriptionId = Guid.NewGuid().ToString();
+            var controlPlaneAzureResourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
+            controlPlaneAzureResourceAccessor.Setup(obj => obj.GetCurrentSubscriptionIdAsync()).Returns(Task.FromResult(subscriptionId));
+
+            var currentImageInfoProvider = new Mock<ICurrentImageInfoProvider>();
+            currentImageInfoProvider
+                .Setup(x => x.GetImageNameAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultName, IDiagnosticsLogger logger) => Task.FromResult(defaultName));
+            currentImageInfoProvider
+                .Setup(x => x.GetImageVersionAsync(It.IsAny<ImageFamilyType>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns((ImageFamilyType familyType, string family, string defaultVersion, IDiagnosticsLogger logger) => Task.FromResult(defaultVersion));
+
+            var skuCatalog = new SkuCatalog(
+                appSettings.SkuCatalogSettings,
+                controlPlaneInfo.Object,
+                controlPlaneAzureResourceAccessor.Object,
+                currentImageInfoProvider.Object);
+
+            Assert.NotNull(skuCatalog);
+            var internal32Server = skuCatalog.CloudEnvironmentSkus.FirstOrDefault(s => s.Key.Equals("internal32Server"));
+            var internal64Server = skuCatalog.CloudEnvironmentSkus.FirstOrDefault(s => s.Key.Equals("internal64Server"));
+            var internalDailyWindows = skuCatalog.CloudEnvironmentSkus.FirstOrDefault(s => s.Key.Equals("internalDailyWindows"));
+
+            Assert.False(internal32Server.Value.Enabled);
+            Assert.False(internal64Server.Value.Enabled);
+            Assert.False(internalDailyWindows.Value.Enabled);
         }
 
         [Theory]
