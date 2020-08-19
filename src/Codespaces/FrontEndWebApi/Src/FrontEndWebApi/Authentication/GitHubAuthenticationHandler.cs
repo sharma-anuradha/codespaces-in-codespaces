@@ -11,13 +11,10 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.Net.Http.Headers;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -27,8 +24,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
-using Microsoft.VsSaaS.Services.TokenService.Contracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -138,17 +133,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             catch (Exception ex)
             {
                 return AuthenticateResult.Fail(ex);
-            }
-
-            var claims = new List<Claim>();
-            if (!ReadClaim(user, "id", CustomClaims.OId, out string id))
-            {
-                return AuthenticateResult.Fail("Missing user id claim.");
-            }
-
-            if (!ReadClaim(user, "name", CustomClaims.DisplayName, out string name))
-            {
-                return AuthenticateResult.Fail("Missing name claim.");
             }
 
             if (!ReadClaim(user, "login", CustomClaims.Username, out string username))
