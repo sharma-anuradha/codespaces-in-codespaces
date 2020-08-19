@@ -22,15 +22,15 @@ export default abstract class Names {
 
         for (const plane of env.planes) {
 
-          const subscriptions = comp.getSubscription(env.name, plane.name);
-          const firstSub = subscriptions[0];
-          if (firstSub) {
-              plane.subscriptionName = firstSub.name;
-              plane.subscriptionId = firstSub.subscriptionId;
-          }
-          else {
-            plane.subscriptionName = "UNDEFINED";
-            plane.subscriptionId = "00000000-0000-0000-0000-000000000000";
+          plane.subscriptionName = `UNDEFINED-${comp.prefix}-${env.name}-${plane.name}`;
+          plane.subscriptionId = "00000000-0000-0000-0000-000000000000";
+          if (plane.name !== "data" && env.name !== "test") {
+            const subscriptions = comp.getSubscription(env.name, plane.name);
+            const firstSub = subscriptions[0];
+            if (firstSub) {
+              plane.subscriptionName = firstSub.subscriptionName;
+              plane.subscriptionId = firstSub.subscriptionID;
+            }
           }
 
           const planeJson = plane.generateNamesJson(env.outputNames)

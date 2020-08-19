@@ -34,7 +34,7 @@
       "azureResourceGroupName": "vscs-core-dev-ci-us-w2",
       "location": "WestUs2",
       "instanceOf": "vscs-core-dev-ci-us-w2-rg",
-      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "azureSubscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c",
       "serviceResources": [
         {
           "name": "vscs-core-dev-ci-us-w2-arm",

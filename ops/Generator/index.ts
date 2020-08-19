@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "fs";
 import { EnvironmentsDeployment } from "./Parser/Environments";
-import { ComponentsDeployment, Component } from "./Parser/Components";
+import { ComponentsDeployment, Component, Subscription } from "./Parser/Components";
 import * as path from "path";
 import Names from "./Names";
 import Templates from "./Templates";
@@ -40,8 +40,11 @@ class Main {
     const envJson = JSON.parse(
       readFileSync(path.join(this.inputDir, "environments.json"), "utf8")
     );
+    const subsJson = JSON.parse(
+      readFileSync(path.join(this.inputDir, "subscriptions.json"), "utf8")
+    ) as Subscription[];
 
-    this.compDep = new ComponentsDeployment(compJson);
+    this.compDep = new ComponentsDeployment(compJson, subsJson);
     this.envDep = new EnvironmentsDeployment(envJson);
     this.components = this.compDep.components;
   }

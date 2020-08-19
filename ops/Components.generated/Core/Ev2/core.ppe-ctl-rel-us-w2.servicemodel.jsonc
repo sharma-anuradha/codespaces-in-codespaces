@@ -34,7 +34,7 @@
       "azureResourceGroupName": "vscs-core-ppe-rel-us-w2",
       "location": "WestUs2",
       "instanceOf": "vscs-core-ppe-rel-us-w2-rg",
-      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
       "serviceResources": [
         {
           "name": "vscs-core-ppe-rel-us-w2-arm",

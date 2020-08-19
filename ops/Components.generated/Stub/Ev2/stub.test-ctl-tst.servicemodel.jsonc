@@ -57,7 +57,7 @@
       "azureResourceGroupName": "vscs-stub-test-tst",
       "location": "WestUs2",
       "instanceOf": "vscs-stub-test-tst-rg",
-      "azureSubscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
+      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
       "serviceResources": [
         {
           "name": "vscs-stub-test-tst-arm",

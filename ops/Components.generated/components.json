@@ -4,58 +4,18 @@
     "stub": {
       "displayName": "Stub",
       "prefix": "stub",
-      "dependsOn": [],
-      "subscriptions": [
-        {
-          "nameTemplate": "{prefix}-{component}-{env}-{plane}",
-          "provisioned": {
-            "vscs-core-test-ops": {
-              "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2"
-            },
-            "vscs-core-test-ctl": {
-              "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2"
-            }
-          }
-        }
-      ]
+      "dependsOn": []
     },
     "core": {
       "displayName": "Core",
       "prefix": "core",
-      "dependsOn": [],
-      "subscriptions": [
-        {
-          "nameTemplate": "{prefix}-{component}-{env}-{plane}",
-          "provisioned": {
-            "vscs-core-dev-ctl": {
-              "subscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c"
-            },
-            "vscs-core-ppe-ctl": {
-              "subscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2"
-            },
-            "vscs-core-prod-ctl": {
-              "subscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34"
-            },
-            "vscs-core-dev-ops": {
-              "subscriptionId": "03f9b555-3a9a-44c4-b410-a53acc2a32eb"
-            },
-            "vscs-core-ppe-ops": {
-              "subscriptionId": "b37129d5-ec65-4920-bd6c-42aa7a4bdd73"
-            },
-            "vscs-core-prod-ops": {
-              "subscriptionId": "b5e134ee-9729-42cf-b4c1-6371f7e2afa7"
-            }
-          }
-        }
-      ]
+      "dependsOn": []
     },
     "comm": {
       "displayName": "Communications",
       "prefix": "comm",
       "dependsOn": [
         "core"
-      ],
-      "subscriptions": [
       ]
     },
     "collab": {
@@ -74,32 +34,7 @@
       "dependsOn": [
         "core",
         "collab"
-      ],
-      "subscriptions": [
-        {
-          "nameTemplate": "{prefix}-{component}-{env}-{plane}",
-          "provisioned": {
-            "vscs-codesp-dev-ops": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-dev-ctl": {
-              "subscriptionId": "00000000-0000-0000-0000-000000000000"
-            },
-            "vscs-codesp-ppe-ops": {
-              "subscriptionId": "4b957fae-cce2-4865-9570-3add886016a4"
-            },
-            "vscs-codesp-ppe-ctl": {
-              "subscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd"
-            },
-            "vscs-codesp-prod-ops": {
-              "subscriptionId": "5f625617-0786-46cc-815e-c969b3f01e12"
-            },
-            "vscs-codesp-prod-ctl": {
-              "subscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce"
-            }
-          }
-        }
-     ]
+      ]
     }
   }
 }
