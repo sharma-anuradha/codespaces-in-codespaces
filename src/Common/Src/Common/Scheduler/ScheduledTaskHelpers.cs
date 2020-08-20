@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler
 {
     /// <summary>
     /// Helper methods for scheduled tasks.

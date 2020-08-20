@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
@@ -27,7 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
         private readonly IPlanRepository planRepository;
         private readonly PlanManagerSettings planManagerSettings;
-        private readonly IEnumerable<string> guidChars = new List<string> { "a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" }.Shuffle();
+        private readonly IEnumerable<string> guidChars = ScheduledTaskHelpers.GetIdShards();
         private readonly TimeSpan pagingDelay = TimeSpan.FromSeconds(1);
         private readonly ISkuCatalog skuCatalog;
         private readonly ICurrentLocationProvider currentLocationProvider;
