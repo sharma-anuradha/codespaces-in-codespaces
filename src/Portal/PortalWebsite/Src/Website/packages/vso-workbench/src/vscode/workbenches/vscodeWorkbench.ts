@@ -16,6 +16,7 @@ import { config } from '../../config/config';
 import { getUriAuthority } from '../../utils/getUriAuthority';
 import { GitCredentialService } from '../../rpcServices/GitCredentialService';
 import { BrowserSyncService } from '../../rpcServices/BrowserSyncService';
+import { BrowserConnectorMessages } from 'vso-ts-agent';
 
 interface IWorkbenchOptions {
     domElementId: string;
@@ -67,6 +68,24 @@ export class VSCodeWorkbench {
                 );
 
                 new BrowserSyncService(sourceEventService);
+
+                const codespaceInfo = await authService.getPartnerInfo();
+                if (!codespaceInfo) {
+                    return;
+                }
+
+                /**
+                 * If no `homeIndicator` present in `CodespaceInfo`,
+                 * enable the `Go Home` item in the VSCode FileMenu,
+                 * since vscode won't add it automatically.
+                 * https://github.com/github/codespaces/issues/1014
+                 */
+                if (!('homeIndicator' in codespaceInfo)) {
+                    await sourceEventService.fireEventAsync(
+                        BrowserConnectorMessages.GetLocalStorageValueResponse,
+                        ''
+                    );
+                }
             });
         }
 

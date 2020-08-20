@@ -62,9 +62,11 @@ export const getExtensions = async (isFirstRun: boolean): Promise<string[]> => {
     }
 
     const settingsSyncExtensions = await getSettingsSyncExtensions(requiredExtensions);
-    return arrayUnique([
+    const result = arrayUnique([
         ...requiredExtensions,
         ...settingsDefaultExtensions,
         ...settingsSyncExtensions,
     ]);
+
+    return result
 };

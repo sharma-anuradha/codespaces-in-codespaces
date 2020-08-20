@@ -1,5 +1,4 @@
 import { vsls } from 'vso-client-core';
-import { WorkspaceClient } from '../WorkspaceClient';
 
 export enum BrowserConnectorMessages {
     ConnectToEnvironment = 'VSO_BrowserSync_ConnectToEnvironment',
@@ -10,6 +9,7 @@ export enum BrowserConnectorMessages {
     SignOut = 'VSO_BrowserSync_SignOut',
     GetLocalStorageValueRequest = 'VSO_BrowserSync_GetLocalStorageValue_Request',
     GetLocalStorageValueResponse = 'VSO_BrowserSync_GetLocalStorageValue_Response',
+    IsGoHomeFileMenuItemEnabled = 'vsonline:is-go-home-file-menu-item-enabled',
 }
 
 export interface IForwardPortPayload {
