@@ -64,6 +64,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Delete an existing secret store.
+        /// </summary>
+        /// <param name="planId">The plan id.</param>
+        /// <param name="secretStoreId">The secret store id.</param>
+        /// <param name="resourceId">The key vault resource id.</param>
+        /// <param name="logger">IDiagnostics Logger.</param>
+        /// <returns>The result of the deletion.</returns>
+        Task<bool> DeleteSecretStoreAsync(
+            string planId,
+            string secretStoreId,
+            Guid resourceId,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Delete an existing secret.
         /// </summary>
         /// <param name="planId">The plan id.</param>

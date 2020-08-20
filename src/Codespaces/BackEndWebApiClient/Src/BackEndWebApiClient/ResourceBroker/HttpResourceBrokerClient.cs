@@ -110,9 +110,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         /// <inheritdoc/>
         public async Task<bool> DeleteAsync(Guid environmentId, IEnumerable<Guid> resources, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
-            Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNullOrEmpty(resources, nameof(resources));
-            var requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(environmentId);
+
+            string requestUri;
+            if (environmentId == Guid.Empty)
+            {
+                requestUri = ResourceBrokerHttpContract.ResourcesRoute;
+            }
+            else
+            {
+                requestUri = ResourceBrokerHttpContract.GetDeleteResourceUri(environmentId);
+            }
+
             return await SendAsync<IEnumerable<Guid>, bool>(
                 ResourceBrokerHttpContract.DeleteResourceMethod, requestUri, resources, logger.NewChildLogger());
         }

@@ -1,4 +1,4 @@
-// <copyright file="WatchDeletedPlanEnvironmentsTask.cs" company="Microsoft">
+// <copyright file="WatchDeletedPlanSecretStoresTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,64 +13,73 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 {
     /// <summary>
-    /// Cleans up all the environments from plans that have been deleted.
+    /// Cleans up all of the secret stores from plans that have been deleted.
     /// </summary>
-    public class WatchDeletedPlanEnvironmentsTask : EnvironmentTaskBase, IWatchDeletedPlanEnvironmentsTask
+    public class WatchDeletedPlanSecretStoresTask : EnvironmentTaskBase, IWatchDeletedPlanSecretStoresTask
     {
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
         private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
 
+        // The number of days since a plan has been deleted
+        private static readonly int DaysSinceDeletion = -7;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchDeletedPlanEnvironmentsTask"/> class.
+        /// Initializes a new instance of the <see cref="WatchDeletedPlanSecretStoresTask"/> class.
         /// </summary>
-        /// <param name="planRepository">The plan repository used to get deleted plans.</param>
         /// <param name="environmentManagerSettings">Target Environment Manager Settings.</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
-        /// <param name="environmentManager">the environment manager needed to delete environments.</param>
-        /// <param name="controlPlaneInfo"> The control plane info used to figure out locations to run from.</param>
+        /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>
+        /// <param name="planRepository">The plan repository used to get deleted plans.</param>
+        /// <param name="secretStoreRepository">The secret store repository.</param>
+        /// <param name="secretStoreManager">The secret store manager.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
-        public WatchDeletedPlanEnvironmentsTask(
-            IPlanRepository planRepository,
+        public WatchDeletedPlanSecretStoresTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IEnvironmentManager environmentManager,
             IControlPlaneInfo controlPlaneInfo,
             ICurrentIdentityProvider currentIdentityProvider,
-            VsoSuperuserClaimsIdentity superuserIdentity)
-             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            VsoSuperuserClaimsIdentity superuserIdentity,
+            IPlanRepository planRepository,
+            ISecretStoreRepository secretStoreRepository,
+            ISecretStoreManager secretStoreManager)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
         {
-            PlanRepository = planRepository;
-            EnvironmentManager = environmentManager;
             ControlPlaneInfo = controlPlaneInfo;
             CurrentIdentityProvider = currentIdentityProvider;
             SuperuserIdentity = superuserIdentity;
+            PlanRepository = planRepository;
+            SecretStoreRepository = secretStoreRepository;
+            SecretStoreManager = secretStoreManager;
         }
 
-        private IPlanRepository PlanRepository { get; }
+        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchDeletedPlanSecretStoresTask)}Lease");
 
-        private IEnvironmentManager EnvironmentManager { get; }
+        private string LogBaseName => EnvironmentLoggingConstants.WatchDeletedPlanSecretStoresTask;
 
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
         private ICurrentIdentityProvider CurrentIdentityProvider { get; }
 
+        private IPlanRepository PlanRepository { get; }
+
+        private ISecretStoreRepository SecretStoreRepository { get; }
+
+        private ISecretStoreManager SecretStoreManager { get; }
+
         private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
-
-        private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchDeletedPlanEnvironmentsTask)}Lease");
-
-        private string LogBaseName => EnvironmentLoggingConstants.WatchDeletedPlanEnvironmentsTask;
 
         /// <inheritdoc/>
         public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
@@ -83,12 +92,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     {
                         var locations = ControlPlaneInfo.Stamp.DataPlaneLocations;
 
-                        // Run through found plans in the background
+                        // Run through found resources in the background
                         await TaskHelper.RunConcurrentEnumerableAsync(
                             $"{LogBaseName}_run_unit_check",
                             locations,
                             (location, itemLogger) => CoreRunUnitAsync(location, itemLogger),
-                            childLogger.NewChildLogger(),
+                            childLogger,
                             (location, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{location}", claimSpan, itemLogger));
 
                         return !Disposed;
@@ -101,53 +110,58 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private Task CoreRunUnitAsync(AzureLocation location, IDiagnosticsLogger logger)
         {
             return PlanRepository.ForEachAsync(
-                x => (!x.AreEnvironmentsDeleted.HasValue ||
-                     x.AreEnvironmentsDeleted != true) &&
+                x => (!x.AreSecretStoresDeleted.HasValue ||
+                     x.AreSecretStoresDeleted != true) &&
                      x.IsDeleted == true &&
+                     (x.DeletedDate <= DateTime.UtcNow.AddDays(DaysSinceDeletion) ||
+                     x.DeletedDate == null) &&
                      x.Plan.Location == location,
                 logger.NewChildLogger(),
-                (plan, innerLogger) => CoreDeletePlanEnvironmentsAsync(plan, innerLogger),
+                (plan, innerLogger) => CoreDeletePlanSecretStoresAsync(plan, innerLogger),
                 (_, __) => Task.Delay(QueryDelay));
         }
 
-        private async Task CoreDeletePlanEnvironmentsAsync(VsoPlan plan, IDiagnosticsLogger innerLogger)
+        private async Task CoreDeletePlanSecretStoresAsync(VsoPlan plan, IDiagnosticsLogger innerLogger)
         {
             await innerLogger.OperationScopeAsync(
-                $"{LogBaseName}_delete_plan_environments",
+                $"{LogBaseName}_delete_plan_secret_store",
                 async (childLogger)
                 =>
                 {
                     childLogger.AddVsoPlan(plan);
 
-                    var environments = await EnvironmentManager.ListAsync(
-                        plan.Plan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, childLogger.NewChildLogger());
-                    var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
+                    // Default to true so even in the case there aren't any secret stores, this plan won't be reprocessed
                     var deletionsSuccessful = true;
-                    if (nonDeletedEnvironments.Any())
+                    var planSecretStores = await SecretStoreRepository.GetSecretStoresByPlanIdAsync(plan.Plan.ResourceId, childLogger.NewChildLogger());
+                    if (planSecretStores.Any())
                     {
-                        var deletedEnvironmentCount = 0;
-                        foreach (var environment in nonDeletedEnvironments)
+                        var deletedSecretStoreCount = 0;
+                        foreach (var secretStore in planSecretStores)
                         {
-                            childLogger.AddCloudEnvironment(environment);
-                            var result = await EnvironmentManager.SoftDeleteAsync(Guid.Parse(environment.Id), childLogger.NewChildLogger());
+                            var result = await SecretStoreManager.DeleteSecretStoreAsync(
+                                plan.Plan.ResourceId,
+                                secretStore.Id,
+                                secretStore.SecretResource.ResourceId,
+                                childLogger.NewChildLogger());
+
                             if (result)
                             {
-                                deletedEnvironmentCount++;
+                                deletedSecretStoreCount++;
                             }
                             else
                             {
                                 deletionsSuccessful = false;
-                                childLogger.LogError($"{LogBaseName}_delete_environment_error");
+                                childLogger.LogError($"{LogBaseName}_delete_secret_store_error");
                             }
                         }
 
                         childLogger
-                            .FluentAddValue($"DeletedEnvironmentSuccess", $"{nonDeletedEnvironments.Count() == deletedEnvironmentCount}");
+                            .FluentAddValue($"DeletedSecretStoreSuccess", $"{planSecretStores.Count() == deletedSecretStoreCount}");
                     }
 
                     if (deletionsSuccessful)
                     {
-                        plan.AreEnvironmentsDeleted = true;
+                        plan.AreSecretStoresDeleted = true;
                         await PlanRepository.UpdateAsync(plan, childLogger);
                     }
 

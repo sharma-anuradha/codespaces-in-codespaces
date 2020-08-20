@@ -108,6 +108,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
             model.IsFinalBillSubmitted = false;
             model.DeletedDate = null;
             model.IsDeleted = false;
+            model.AreEnvironmentsDeleted = false;
+            model.AreSecretStoresDeleted = false;
 
             result.VsoPlan = await planRepository.CreateOrUpdateAsync(model, logger);
             return result;

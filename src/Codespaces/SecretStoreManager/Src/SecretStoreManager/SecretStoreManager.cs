@@ -40,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         /// <param name="secretManagerHttpClient">Backend secret manager http client.</param>
         /// <param name="secretStoreRepository">The secret store repository.</param>
         /// <param name="resourceAllocationManager">The resource allocation manager.</param>
+        /// <param name="resourceBrokerHttpClient">Target resource broker http client.</param>
         /// <param name="planManager">The plan manager.</param>
         /// <param name="planSkuCatalog">The plan sku catalog.</param>
         /// <param name="currentUserProvider">The current user provider.</param>
@@ -49,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             ISecretManagerHttpContract secretManagerHttpClient,
             ISecretStoreRepository secretStoreRepository,
             IResourceAllocationManager resourceAllocationManager,
+            IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IPlanManager planManager,
             IPlanSkuCatalog planSkuCatalog,
             ICurrentUserProvider currentUserProvider,
@@ -58,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
             SecretManagerHttpClient = secretManagerHttpClient;
             SecretStoreRepository = secretStoreRepository;
             ResourceAllocationManager = resourceAllocationManager;
+            ResourceBrokerClient = resourceBrokerHttpClient;
             PlanManager = planManager;
             PlanSkuCatalog = planSkuCatalog;
             CurrentUserProvider = currentUserProvider;
@@ -70,6 +73,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         private ISecretStoreRepository SecretStoreRepository { get; }
 
         private IResourceAllocationManager ResourceAllocationManager { get; }
+
+        private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         private IPlanManager PlanManager { get; }
 
@@ -198,6 +203,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
                 {
                     throw new ProcessingFailedException((int)MessageCodes.FailedToUpdateSecret, innerException: e);
                 }
+            });
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> DeleteSecretStoreAsync(
+            string planId,
+            string secretStoreId,
+            Guid resourceId,
+            IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync($"{LoggingBaseName}_delete_secret_store", async (childLogger) =>
+            {
+                var keyVaultDeleted = await ResourceBrokerClient.DeleteAsync(default, new List<Guid> { resourceId }, childLogger);
+
+                // Make sure the key vault gets deleted before deleting the document
+                if (keyVaultDeleted)
+                {
+                    var documentDeleted = await SecretStoreRepository.DeleteAsync(secretStoreId, planId, childLogger);
+
+                    return documentDeleted;
+                }
+
+                return false;
             });
         }
 

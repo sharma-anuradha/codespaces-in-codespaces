@@ -29,6 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="continuationTaskMessagePump">Target Continuation Task Message Pump.</param>
         /// <param name="continuationTaskWorkerPoolManager">Target Continuation Task Worker Pool Manager.</param>
         /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
+        /// <param name="watchDeletedPlanSecretStoresTask">Target watch secrets stores to be deleted.</param>
         /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
         /// <param name="cloudEnvironmentRegionalMigrationTask">Migration task for cloud environments.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
@@ -39,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ILogCloudEnvironmentStateTask logCloudEnvironmentStateTask,
             ILogSubscriptionStatisticsTask logSubscriptionStatisticsTask,
             IWatchDeletedPlanEnvironmentsTask cleanDeletedPlanEnvironmentsTask,
+            IWatchDeletedPlanSecretStoresTask watchDeletedPlanSecretStoresTask,
             IContinuationTaskMessagePump continuationTaskMessagePump,
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
@@ -52,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             LogCloudEnvironmentStateTask = logCloudEnvironmentStateTask;
             LogSubscriptionStatisticsTask = logSubscriptionStatisticsTask;
             CleanDeletedPlanEnvironmentsTask = cleanDeletedPlanEnvironmentsTask;
+            WatchDeletedPlanSecretStoresTask = watchDeletedPlanSecretStoresTask;
             ContinuationTaskMessagePump = continuationTaskMessagePump;
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
@@ -72,6 +75,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ILogSubscriptionStatisticsTask LogSubscriptionStatisticsTask { get; }
 
         private IWatchDeletedPlanEnvironmentsTask CleanDeletedPlanEnvironmentsTask { get; }
+
+        private IWatchDeletedPlanSecretStoresTask WatchDeletedPlanSecretStoresTask { get; }
 
         private IContinuationTaskMessagePump ContinuationTaskMessagePump { get; }
 
@@ -166,6 +171,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchDeletedPlanEnvironmentsTask}_run",
                 (childLogger) => CleanDeletedPlanEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recuring tasks
+            await Task.Delay(Random.Next(1000, 2000));
+
+            // Job: Delete secret stores in deleted plans more than 7 days old
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchDeletedPlanSecretStoresTask}_run",
+                (childLogger) => WatchDeletedPlanSecretStoresTask.RunAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks

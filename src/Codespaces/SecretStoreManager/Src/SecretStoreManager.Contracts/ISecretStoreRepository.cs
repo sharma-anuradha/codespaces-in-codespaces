@@ -1,4 +1,4 @@
-﻿// <copyright file="ISecretStoreRepository.cs" company="Microsoft">
+// <copyright file="ISecretStoreRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -39,6 +39,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager
         /// <returns>A list of matching <see cref="SecretStore"/> documents.</returns>
         Task<IEnumerable<SecretStore>> GetAllPlanSecretStoresByUserAsync(
             string userId,
+            string planId,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Fetch the list of secret store documents that are associated with the given plan.
+        /// </summary>
+        /// <param name="planId">Plan Id.</param>
+        /// <param name="logger">The Logger.</param>
+        /// <returns>A list of matching <see cref="SecretStore"/> documents.</returns>
+        Task<IEnumerable<SecretStore>> GetSecretStoresByPlanIdAsync(
             string planId,
             IDiagnosticsLogger logger);
 

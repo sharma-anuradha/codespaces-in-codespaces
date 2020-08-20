@@ -1,4 +1,4 @@
-﻿// <copyright file="SecretStoreRepository.cs" company="Microsoft">
+// <copyright file="SecretStoreRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -90,6 +90,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.SecretStoreManager.Reposit
                    ((secretsStore.Scope == SecretScope.Plan) ||
                    (secretsStore.Scope == SecretScope.User && secretsStore.OwnerId == userId)),
                logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<SecretStore>> GetSecretStoresByPlanIdAsync(
+            string planId,
+            IDiagnosticsLogger logger)
+        {
+            return await GetWhereAsync(
+                (secretStore) =>
+                    (secretStore.PlanId == planId),
+                logger);
         }
 
         /// <inheritdoc/>

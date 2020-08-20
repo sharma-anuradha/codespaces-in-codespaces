@@ -45,6 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         public const string WatchSoftDeletedEnvironmentToBeHardDeletedTask = "watch_soft_deleted_environments_to_be_hard_deleted_task";
 
         /// <summary>
+        /// Watch secret stores to be deleted Task.
+        /// </summary>
+        public const string WatchDeletedPlanSecretStoresTask = "watch_deleted_plan_secret_stores_task";
+
+        /// <summary>
         /// Continuation Task Message Handler Archive.
         /// </summary>
         public const string ContinuationTaskMessageHandlerArchive = "continuation_task_message_handler_archive";

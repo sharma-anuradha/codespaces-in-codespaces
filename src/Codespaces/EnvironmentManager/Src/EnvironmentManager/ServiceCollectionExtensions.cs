@@ -157,6 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ILogSubscriptionStatisticsTask, LogSubscriptionStatisticsTask>();
             services.AddSingleton<IWatchDeletedPlanEnvironmentsTask, WatchDeletedPlanEnvironmentsTask>();
             services.AddSingleton<IWatchSoftDeletedEnvironmentToBeHardDeletedTask, WatchEnvironmentsToBeHardDeleteTask>();
+            services.AddSingleton<IWatchDeletedPlanSecretStoresTask, WatchDeletedPlanSecretStoresTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
             services.AddSingleton<ICloudEnvironmentRegionalMigrationTask, CloudEnvironmentRegionalMigrationTask>();
 

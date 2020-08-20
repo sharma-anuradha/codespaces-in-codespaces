@@ -86,6 +86,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public DateTime? FinalBillSubmittedDate { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the plan's environments have been soft deleted.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "areEnvironmentsDeleted")]
+        public bool? AreEnvironmentsDeleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the plan's secret stores have been deleted.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "areSecretStoresDeleted")]
+        public bool? AreSecretStoresDeleted { get; set; }
+
+        /// <summary>
         /// Gets or sets the default properties for this plan.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "properties")]
