@@ -105,9 +105,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Monitoring", "..\Codespaces
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FrontEndWebApi.Test", "..\Codespaces\FrontEndWebApi\Test\FrontEndWebApi.Test\FrontEndWebApi.Test.csproj", "{52192056-C949-426C-A737-3AD9E4BF6383}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveStorageProvider.Contracts", "..\Resources\ArchiveStorageProvider\Src\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj", "{038AD153-AE14-4A78-B27A-F7DE40E7A591}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharedStorageProvider.Contracts", "..\Resources\ArchiveStorageProvider\Src\ArchiveStorageProvider.Contracts\SharedStorageProvider.Contracts.csproj", "{038AD153-AE14-4A78-B27A-F7DE40E7A591}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveStorageProvider", "..\Resources\ArchiveStorageProvider\Src\ArchiveStorageProvider\ArchiveStorageProvider.csproj", "{1DD84712-1945-4D08-80F6-AB2450E554CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharedStorageProvider", "..\Resources\ArchiveStorageProvider\Src\ArchiveStorageProvider\SharedStorageProvider.csproj", "{1DD84712-1945-4D08-80F6-AB2450E554CB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveStorageProvider.Test", "..\Resources\ArchiveStorageProvider\Test\ArchiveStorageProvider.Test\ArchiveStorageProvider.Test.csproj", "{C5DE347F-DEB8-450D-B615-218C1DB2D97D}"
 EndProject

@@ -1,4 +1,4 @@
-﻿// <copyright file="HeartBeatController.cs" company="Microsoft">
+// <copyright file="HeartBeatController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

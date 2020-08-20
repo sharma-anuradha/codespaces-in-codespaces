@@ -43,8 +43,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentListAction">Target environment listaction.</param>
         /// <param name="environmentUpdateStatusAction">Target environment update status action.</param>
         /// <param name="environmentCreateAction">Target environment create action.</param>
-        /// <param name="environmentDeleteRestoreAction">Target environment restore action.</param>        /// <param name="environmentResumeAction">Target environment resume action.</param>
+        /// <param name="environmentDeleteRestoreAction">Target environment restore action.</param>
+        /// <param name="environmentResumeAction">Target environment resume action.</param>
+        /// <param name="environmentExportAction">Target environment export action.</param>
         /// <param name="environmentFinalizeResumeAction">Target environment resume finalize action.</param>
+        /// <param name="environmentFinalizeExportAction">Target environment export finalize action.</param>
         /// <param name="environmentSuspendAction">Target environment suspend action.</param>
         /// <param name="environmentForceSuspendAction">Target environment force suspend action.</param>
         /// <param name="environmentHardDeleteAction">Target environment hard delete action.</param>
@@ -65,7 +68,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentCreateAction environmentCreateAction,
             IEnvironmentDeleteRestoreAction environmentDeleteRestoreAction,
             IEnvironmentResumeAction environmentResumeAction,
+            IEnvironmentExportAction environmentExportAction,
             IEnvironmentFinalizeResumeAction environmentFinalizeResumeAction,
+            IEnvironmentFinalizeExportAction environmentFinalizeExportAction,
             IEnvironmentSuspendAction environmentSuspendAction,
             IEnvironmentForceSuspendAction environmentForceSuspendAction,
             IEnvironmentHardDeleteAction environmentHardDeleteAction,
@@ -86,7 +91,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentCreateAction = Requires.NotNull(environmentCreateAction, nameof(environmentCreateAction));
             EnvironmentDeleteRestoreAction = Requires.NotNull(environmentDeleteRestoreAction, nameof(environmentDeleteRestoreAction));
             EnvironmentResumeAction = Requires.NotNull(environmentResumeAction, nameof(environmentResumeAction));
+            EnvironmentExportAction = Requires.NotNull(environmentExportAction, nameof(environmentExportAction));
             EnvironmentFinalizeResumeAction = Requires.NotNull(environmentFinalizeResumeAction, nameof(environmentFinalizeResumeAction));
+            EnvironmentFinalizeExportAction = Requires.NotNull(environmentFinalizeExportAction, nameof(environmentFinalizeExportAction));
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
             EnvironmentHardDeleteAction = Requires.NotNull(environmentHardDeleteAction, nameof(environmentHardDeleteAction));
@@ -123,7 +130,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IEnvironmentResumeAction EnvironmentResumeAction { get; }
 
+        private IEnvironmentExportAction EnvironmentExportAction { get; }
+
         private IEnvironmentFinalizeResumeAction EnvironmentFinalizeResumeAction { get; }
+
+        private IEnvironmentFinalizeExportAction EnvironmentFinalizeExportAction { get; }
 
         private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
 
@@ -284,6 +295,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
 
             return await EnvironmentDeleteRestoreAction.RunAsync(environmentId, logger);
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> ExportAsync(
+            Guid environmentId,
+            ExportCloudEnvironmentParameters exportCloudEnvironmentParameters,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            Requires.NotNull(logger, nameof(logger));
+            Requires.NotNull(exportCloudEnvironmentParameters, nameof(exportCloudEnvironmentParameters));
+
+            return EnvironmentExportAction.RunAsync(environmentId, exportCloudEnvironmentParameters, logger);
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> ExportCallbackAsync(
+            Guid environmentId,
+            Guid storageResourceId,
+            Guid? archiveStorageResourceId,
+            string exportedEnvironmentUrl,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            Requires.NotEmpty(storageResourceId, nameof(storageResourceId));
+            Requires.NotNull(logger, nameof(logger));
+            Requires.NotNull(exportedEnvironmentUrl, nameof(exportedEnvironmentUrl));
+
+            return EnvironmentFinalizeExportAction.RunAsync(environmentId, storageResourceId, archiveStorageResourceId, exportedEnvironmentUrl, logger);
         }
 
         /// <inheritdoc/>
@@ -581,11 +621,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             CloudEnvironmentOptions cloudEnvironmentOptions,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            CloudEnvironmentParameters cloudEnvironmentParameters,
+            StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger)
         {
             return ResourceStartManager.StartComputeAsync(
-                cloudEnvironment, computeResourceId, osDiskResourceId, storageResourceId, archiveStorageResourceId, null, startCloudEnvironmentParameters, logger.NewChildLogger());
+                cloudEnvironment, computeResourceId, osDiskResourceId, storageResourceId, archiveStorageResourceId, null, cloudEnvironmentParameters, startEnvironmentAction, logger.NewChildLogger());
         }
 
         /// <inheritdoc/>

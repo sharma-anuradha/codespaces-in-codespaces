@@ -635,7 +635,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockControlPlaneInfo(),
                 environmentSettings);
             var environmentResumeAction = new Mock<IEnvironmentResumeAction>().Object;
+            var environmentExportAction = new Mock<IEnvironmentExportAction>().Object;
             var environmentFinalizeResumeAction = new Mock<IEnvironmentFinalizeResumeAction>().Object;
+            var environmentFinalizeExportAction = new Mock<IEnvironmentFinalizeExportAction>().Object;
             var environmentDeleteAction = new Mock<IEnvironmentHardDeleteAction>().Object;
             var environmentSuspendAction = new Mock<IEnvironmentSuspendAction>().Object;
             var environmentForceSuspendAction = new Mock<IEnvironmentForceSuspendAction>().Object;
@@ -659,7 +661,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentCreateAction,
                 environmentDeleteRestoreAction,
                 environmentResumeAction,
+                environmentExportAction,
                 environmentFinalizeResumeAction,
+                environmentFinalizeExportAction,
                 environmentSuspendAction,
                 environmentForceSuspendAction,
                 environmentDeleteAction,

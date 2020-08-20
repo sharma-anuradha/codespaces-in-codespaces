@@ -25,6 +25,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         public const string StartEnvironmentJobFailed = "StartEnvironmentJobFailed";
 
         /// <summary>
+        /// Export environment failed.
+        /// </summary>
+        public const string ExportEnvironmentJobFailed = "ExportEnvironmentJobFailed";
+
+        /// <summary>
         /// Create new environment.
         /// </summary>
         public const string CreateEnvironment = "CreateEnvironment";
@@ -51,6 +56,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
 
         /// <summary>
         /// Soft Delete environment.
+        /// Export environment.
+        /// </summary>
+        public const string ExportEnvironment = "ExportEnvironment";
+
+        /// <summary>
+        /// Start environment.
         /// </summary>
         public const string SoftDeleteEnvironment = "SoftDeleteEnvironment";
 

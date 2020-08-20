@@ -118,8 +118,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Gets the data-plane stamp storage account name for archive storage.
         /// </summary>
         /// <param name="storageLocation">The storage account location.</param>
-        /// <param name="index">The index of the storage account. If non null, it is appended in the forma "00".</param>
+        /// <param name="index">The index of the storage account. If non null, it is appended in the format "00".</param>
         /// <returns>The storage account name.</returns>
         string GetDataPlaneStorageAccountNameForArchiveStorageName(AzureLocation storageLocation, int? index = null);
+
+        /// <summary>
+        /// Gets the data-plane stamp storage account name for export storage.
+        /// </summary>
+        /// <param name="storageLocation">The storage account location.</param>
+        /// <param name="index">The index of the storage account. If non null, it is appended in the format "00".</param>
+        /// <returns>The storage account name.</returns>
+        string GetDataPlaneStorageAccountNameForExportStorageName(AzureLocation storageLocation, int? index = null);
     }
 }

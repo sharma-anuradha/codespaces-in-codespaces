@@ -19,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Action to finalize environment resume based on heartbeat.
     /// </summary>
-    public class EnvironmentFinalizeResumeAction : EnvironmentItemAction<EnvironmentFinalizeResumeActionInput, object>, IEnvironmentFinalizeResumeAction
+    public class EnvironmentFinalizeResumeAction : EnvironmentBaseFinalizeStartAction<EnvironmentFinalizeResumeActionInput>, IEnvironmentFinalizeResumeAction
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentFinalizeResumeAction"/> class.
@@ -43,9 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ISkuCatalog skuCatalog,
             ISkuUtils skuUtils,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient)
-            : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
+            : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils, resourceBrokerClient)
         {
-            ResourceBrokerClient = resourceBrokerClient;
         }
 
         /// <inheritdoc/>
@@ -54,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> RunAsync(
+        public Task<CloudEnvironment> RunAsync(
             Guid environmentId,
             Guid storageResourceId,
             Guid? archiveStorageResourceId,
@@ -66,79 +65,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 ArchiveStorageResourceId = archiveStorageResourceId,
             };
 
-            return await RunAsync(input, logger);
+            return RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
-        protected override async Task<CloudEnvironment> RunCoreAsync(
+        protected override Task<CloudEnvironment> RunCoreAsync(
             EnvironmentFinalizeResumeActionInput input,
             object transientState,
             IDiagnosticsLogger logger)
         {
             ValidateInput(input);
 
-            var record = await FetchAsync(input, logger.NewChildLogger());
-
-            ValidateTargetLocation(record.Value.Location, logger);
-
-            // Detect if environment is archived
-            var isEnvironmentArchived = record.Value.Storage.Type == ResourceType.StorageArchive;
-            var computeResourceId = record.Value.Compute.ResourceId;
-
-            logger.AddCloudEnvironmentIsArchived(isEnvironmentArchived)
-                .AddComputeResourceId(computeResourceId)
-                .AddStorageResourceId(input.StorageResourceId)
-                .AddArchiveStorageResourceId(input.ArchiveStorageResourceId);
-
-            // Only need to trigger resume callback if environment was archived
-            if (isEnvironmentArchived && record.Value.Storage.Type == ResourceType.StorageArchive)
-            {
-                // Finalize start if we can
-                if (input.ArchiveStorageResourceId != null)
-                {
-                    // Conduct update to swapout archived storage for file storage
-                    await logger.RetryOperationScopeAsync(
-                        $"{LogBaseName}_resume_callback_update",
-                        async (retryLogger) =>
-                        {
-                            // Fetch resource details
-                            var storageDetails = await ResourceBrokerClient.StatusAsync(
-                                input.Id,
-                                input.StorageResourceId,
-                                retryLogger.NewChildLogger());
-
-                            // Switch out storage reference
-                            var storageResource = new ResourceAllocationRecord
-                            {
-                                ResourceId = input.StorageResourceId,
-                                Location = storageDetails.Location,
-                                SkuName = storageDetails.SkuName,
-                                Type = storageDetails.Type,
-                                Created = DateTime.UtcNow,
-                            };
-                            record.PushTransition((environment) =>
-                            {
-                                environment.Storage = storageResource;
-                                environment.Transitions.Archiving.ResetStatus(true);
-                            });
-
-                            // Update record
-                            await Repository.UpdateTransitionAsync("cloudenvironment", record, logger);
-                        });
-
-                    // Delete archive blob once its not needed any more
-                    await ResourceBrokerClient.DeleteAsync(
-                        input.Id,
-                        input.ArchiveStorageResourceId.Value,
-                        logger.NewChildLogger());
-                }
-                else
-                {
-                    throw new NotSupportedException("Failed to find necessary result and/or supporting data to complete restart.");
-                }
-            }
-
-            return record.Value;
+            return ConfigureRunCoreAsync(input, transientState, logger);
         }
 
         private void ValidateInput(EnvironmentFinalizeResumeActionInput input)

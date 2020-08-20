@@ -39,9 +39,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc/>
-        public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
+        public Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
-            return await logger.OperationScopeAsync(
+            return logger.OperationScopeAsync(
                 "start_environment_handler_process",
                 async (childLogger) =>
                 {

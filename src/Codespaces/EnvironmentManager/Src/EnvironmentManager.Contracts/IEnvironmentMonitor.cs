@@ -86,5 +86,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
             string environmentId,
             Guid computeId,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Monitor the export state transition by invoking the continution activator.
+        /// </summary>
+        /// <param name="environmentId">Target environment id.</param>
+        /// <param name="computeId">Target compute id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>returns task.</returns>
+        Task MonitorExportStateTransitionAsync(
+            string environmentId,
+            Guid computeId,
+            IDiagnosticsLogger logger);
     }
 }

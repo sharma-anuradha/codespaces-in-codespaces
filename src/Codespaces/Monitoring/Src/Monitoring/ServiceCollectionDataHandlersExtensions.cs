@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionDataHandlersExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionDataHandlersExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
             services.AddSingleton<IDataHandler, ShutdownJobHandler>();
             services.AddSingleton<IDataHandler, EnvironmentSessionDataHandler>();
             services.AddSingleton<IDataHandler, GitChangesDataHandler>();
+            services.AddSingleton<IDataHandler, ExportEnvironmentResultHandler>();
             /* Add additional handlers here as needed */
 
             return services;

@@ -26,6 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private const string VmAgentImageKind = "vm";
         private const string BatchAccountKind = "ba";
         private const string BillingStorageImageKind = "bl";
+        private const string ExportStorageKind = "ex";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ControlPlaneStampInfo"/> class.
@@ -171,6 +172,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string GetDataPlaneStorageAccountNameForArchiveStorageName(AzureLocation storageLocation, int? index = null)
         {
             return MakeStorageAccountName(ArchiveStorageKind, storageLocation, index);
+        }
+
+        /// <inheritdoc/>
+        public string GetDataPlaneStorageAccountNameForExportStorageName(AzureLocation storageLocation, int? index = null)
+        {
+            return MakeStorageAccountName(ExportStorageKind, storageLocation, index);
         }
 
         private static string NotNullOrWhiteSpace(string value, string propertyName)

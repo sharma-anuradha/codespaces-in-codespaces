@@ -113,9 +113,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IArchiveEnvironmentContinuationHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ArchiveEnvironmentContinuationHandler>());
 
-            services.AddSingleton<StartEnvironmentContinuationHandler>();
-            services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
-            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
+            services.AddSingleton<StartEnvironmentContinuationHandlerV2>();
+            services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandlerV2>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandlerV2>());
 
             services.AddSingleton<ShutdownEnvironmentContinuationHandler>();
             services.AddSingleton<IShutdownEnvironmentContinuationHandler>(x => x.GetRequiredService<ShutdownEnvironmentContinuationHandler>());
@@ -136,7 +136,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentHardDeleteAction, EnvironmentHardDeleteAction>();
             services.AddSingleton<IEnvironmentDeleteRestoreAction, EnvironmentDeleteRestoreAction>();
             services.AddSingleton<IEnvironmentResumeAction, EnvironmentResumeAction>();
+            services.AddSingleton<IEnvironmentExportAction, EnvironmentExportAction>();
             services.AddSingleton<IEnvironmentFinalizeResumeAction, EnvironmentFinalizeResumeAction>();
+            services.AddSingleton<IEnvironmentFinalizeExportAction, EnvironmentFinalizeExportAction>();
             services.AddSingleton<IEnvironmentSuspendAction, EnvironmentSuspendAction>();
             services.AddSingleton<IEnvironmentForceSuspendAction, EnvironmentForceSuspendAction>();
             services.AddSingleton<IEnvironmentSoftDeleteAction, EnvironmentSoftDeleteAction>();

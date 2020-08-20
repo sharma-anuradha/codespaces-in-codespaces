@@ -34,7 +34,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// </summary>
         ShutdownStaticEnvironment = 4,
 
-        /// <summarys
+        /// <summary>
         /// Cannot start a static environment.
         /// </summary>
         StartStaticEnvironment = 5,
@@ -150,5 +150,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Tenant ID of the plan is invalid.
         /// </summary>
         InvalidPlanTenant = 27,
+
+        /// <summary>
+        /// Cannot export a static environment.
+        /// </summary>
+        ExportStaticEnvironment = 28,
+
+        /// <summary>
+        /// Environment exporting failed due to user provided information.
+        /// Generic message when we don't know the exact reason.
+        /// </summary>
+        ExportEnvironmentGenericError = 29,
     }
 }

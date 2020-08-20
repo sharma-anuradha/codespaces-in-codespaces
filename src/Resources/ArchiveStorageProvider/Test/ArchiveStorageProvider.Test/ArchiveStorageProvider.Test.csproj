@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Src\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
-    <ProjectReference Include="..\..\Src\ArchiveStorageProvider\ArchiveStorageProvider.csproj" />
+    <ProjectReference Include="..\..\Src\ArchiveStorageProvider.Contracts\SharedStorageProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\Src\ArchiveStorageProvider\SharedStorageProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>

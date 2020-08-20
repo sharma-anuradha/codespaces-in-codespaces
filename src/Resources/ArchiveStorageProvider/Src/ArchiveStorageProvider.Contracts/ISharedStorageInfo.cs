@@ -1,16 +1,16 @@
-﻿// <copyright file="IArchiveStorageInfo.cs" company="Microsoft">
+// <copyright file="ISharedStorageInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Contracts
 {
     /// <summary>
     /// Specifies the location-coordinates and name of an azure storage account.
     /// </summary>
-    public interface IArchiveStorageInfo
+    public interface ISharedStorageInfo
     {
         /// <summary>
         /// Gets the storage account azure resource info.

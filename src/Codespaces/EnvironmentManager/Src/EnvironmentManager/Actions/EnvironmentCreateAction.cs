@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
@@ -431,7 +432,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Kick off start-compute before returning.
             await ResourceStartManager.StartComputeAsync(
-                record.Value, record.Value.Compute.ResourceId, record.Value.OSDisk?.ResourceId, record.Value.Storage?.ResourceId, null, environmentOptions, input.StartEnvironmentParams, logger.NewChildLogger());
+                record.Value, record.Value.Compute.ResourceId, record.Value.OSDisk?.ResourceId, record.Value.Storage?.ResourceId, null, environmentOptions, input.StartEnvironmentParams, StartEnvironmentAction.StartCompute, logger.NewChildLogger());
 
             // Kick off state transition monitoring.
             await EnvironmentMonitor.MonitorProvisioningStateTransitionAsync(record.Value.Id, record.Value.Compute.ResourceId, logger);

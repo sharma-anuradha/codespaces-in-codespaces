@@ -1,10 +1,11 @@
-﻿// <copyright file="IResourceStartManager.cs" company="Microsoft">
+// <copyright file="IResourceStartManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -23,7 +24,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="storageResourceId">storage resource id.</param>
         /// <param name="archiveStorageResourceId">archive storage id.</param>
         /// <param name="cloudEnvironmentOptions">cloud environment options.</param>
-        /// <param name="startCloudEnvironmentParameters">start environment params.</param>
+        /// <param name="cloudEnvironmentParameters">start environment params.</param>
+        /// <param name="startAction">start environment action.</param>
         /// <param name="logger">logger.</param>
         /// <returns>resule.</returns>
         Task<bool> StartComputeAsync(
@@ -33,7 +35,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
            Guid? storageResourceId,
            Guid? archiveStorageResourceId,
            CloudEnvironmentOptions cloudEnvironmentOptions,
-           StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+           CloudEnvironmentParameters cloudEnvironmentParameters,
+           StartEnvironmentAction startAction,
            IDiagnosticsLogger logger);
     }
 }

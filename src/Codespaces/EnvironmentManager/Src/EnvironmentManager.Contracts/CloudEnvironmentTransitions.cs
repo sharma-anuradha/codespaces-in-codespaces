@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentTransitions.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentTransitions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Provisioning = new TransitionState();
             Resuming = new TransitionState();
             ShuttingDown = new TransitionState();
+            Exporting = new TransitionState();
         }
 
         /// <summary>
@@ -45,5 +46,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         [JsonProperty(PropertyName = "shutdownEnvironment")]
         public TransitionState ShuttingDown { get; set; }
+
+        /// <summary>
+        /// Gets or sets the export environment transitions.
+        /// </summary>
+        [JsonProperty(PropertyName = "exportEnvironment")]
+        public TransitionState Exporting { get; set; }
     }
 }

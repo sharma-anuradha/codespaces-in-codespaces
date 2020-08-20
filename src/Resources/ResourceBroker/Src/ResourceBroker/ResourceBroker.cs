@@ -115,6 +115,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     // Switch between different actions
                     switch (action)
                     {
+                        case StartAction.StartExport:
+
+                            if (backingResources.Count == 2 || backingResources.Count == 3)
+                            {
+                                // Select target resorces
+                                var computeResource = backingResources.Single(x => x.Record.Type == ResourceType.ComputeVM);
+                                var osDiskResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.OSDisk);
+                                var storageResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.StorageFileShare);
+                                var archiveStorageResource = backingResources.SingleOrDefault(x => x.Record.Type == ResourceType.StorageArchive);
+
+                                childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.ResourceId, computeResource.Resource.ResourceId)
+                                    .FluentAddBaseValue("StorageResourceId", storageResource.Resource?.ResourceId)
+                                    .FluentAddBaseValue("OSDiskResourceId", osDiskResource.Resource?.ResourceId)
+                                    .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource.Resource?.ResourceId);
+
+                                // Trigger environment export
+                                await ResourceContinuationOperations.StartExportAsync(
+                                    environmentId,
+                                    computeResource.Resource.ResourceId,
+                                    osDiskResource.Resource?.ResourceId,
+                                    storageResource.Resource?.ResourceId,
+                                    archiveStorageResource.Resource?.ResourceId,
+                                    computeResource.Resource.Variables,
+                                    trigger,
+                                    childLogger.NewChildLogger(),
+                                    loggingProperties);
+                            }
+                            else
+                            {
+                                throw new NotSupportedException($"Start export action expects 2 resource and {resources.Count()} was supplied.");
+                            }
+
+                            break;
+
                         case StartAction.StartCompute:
 
                             if (backingResources.Count == 2 || backingResources.Count == 3)

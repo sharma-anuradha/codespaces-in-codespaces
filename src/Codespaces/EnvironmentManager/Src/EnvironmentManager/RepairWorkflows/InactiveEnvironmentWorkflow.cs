@@ -1,4 +1,4 @@
-﻿// <copyright file="InactiveEnvironmentWorkflow.cs" company="Microsoft">
+// <copyright file="InactiveEnvironmentWorkflow.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

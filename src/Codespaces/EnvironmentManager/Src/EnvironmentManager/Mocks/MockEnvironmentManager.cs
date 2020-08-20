@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
@@ -64,7 +65,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             CloudEnvironmentOptions cloudEnvironmentOptions,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            CloudEnvironmentParameters cloudEnvironmentParameters,
+            StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
@@ -151,6 +153,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> ForceSuspendAsync(Guid environmentId, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> ExportAsync(Guid cloudEnvironment, ExportCloudEnvironmentParameters exportCloudEnvironmentParameters, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> ExportCallbackAsync(Guid cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, string exportedEnvironmentUrl, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

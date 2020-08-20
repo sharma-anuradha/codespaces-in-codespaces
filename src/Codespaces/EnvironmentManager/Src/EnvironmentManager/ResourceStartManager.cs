@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Sql.Fluent.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth;
@@ -75,7 +76,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             CloudEnvironmentOptions cloudEnvironmentOptions,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            CloudEnvironmentParameters startCloudEnvironmentParameters,
+            StartEnvironmentAction startAction,
             IDiagnosticsLogger logger)
         {
             return await logger.OperationScopeAsync(
@@ -118,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             ResourceId = computeResourceId,
                             Variables = environmentVariables,
                             FilterSecrets = filterSecrets,
-                            Secrets = startCloudEnvironmentParameters.Secrets,
+                            Secrets = (startAction == StartEnvironmentAction.StartCompute) ? ((StartCloudEnvironmentParameters)startCloudEnvironmentParameters).Secrets : null,
                         },
                     };
 
@@ -146,12 +148,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         });
                     }
 
+                    var startRequestAction = (startAction == StartEnvironmentAction.StartExport) ?
+                                        StartRequestAction.StartExport :
+                                        StartRequestAction.StartCompute;
+
                     // Execute start
                     return await ResourceBrokerClient.StartAsync(
-                         Guid.Parse(cloudEnvironment.Id),
-                         StartRequestAction.StartCompute,
-                         resources,
-                         logger.NewChildLogger());
+                             Guid.Parse(cloudEnvironment.Id),
+                             startRequestAction,
+                             resources,
+                             logger.NewChildLogger());
                 });
         }
 

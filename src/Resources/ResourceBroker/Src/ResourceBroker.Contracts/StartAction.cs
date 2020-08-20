@@ -1,4 +1,4 @@
-﻿// <copyright file="StartAction.cs" company="Microsoft">
+// <copyright file="StartAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// Indicates that the blob storage should be archived.
         /// </summary>
         StartArchive = 2,
+
+        /// <summary>
+        /// Indicates that the compute should be started and environment should be exported.
+        /// </summary>
+        StartExport = 3,
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="StartEnvironmentContinuationInput.cs" company="Microsoft">
+// <copyright file="StartEnvironmentContinuationInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <summary>
         /// Gets or sets current state.
         /// </summary>
-        public StartEnvironmentContinuationInputState CurrentState { get;  set; }
+        public StartEnvironmentContinuationInputState CurrentState { get; set; }
 
         /// <summary>
         /// Gets or sets the compute resource for environment.

@@ -1,4 +1,4 @@
-// <copyright file="StartEnvironmentContinuationHandler.cs" company="Microsoft">
+// <copyright file="BaseStartEnvironmentContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -26,16 +26,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
     /// <summary>
     /// Continuation handler that manages starting of environment.
     /// </summary>
-    public class StartEnvironmentContinuationHandler
-        : BaseContinuationTaskMessageHandler<StartEnvironmentContinuationInput>, IStartEnvironmentContinuationHandler
+    /// <typeparam name="TI">Type of the target input.</typeparam>
+    public abstract class BaseStartEnvironmentContinuationHandler<TI>
+        : BaseContinuationTaskMessageHandler<TI>
+        where TI : BaseStartEnvironmentContinuationInput
     {
         /// <summary>
-        /// Gets default target name for item on queue.
-        /// </summary>
-        public const string DefaultQueueTarget = "JobStartEnvironment";
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StartEnvironmentContinuationHandler"/> class.
+        /// Initializes a new instance of the <see cref="BaseStartEnvironmentContinuationHandler{TI}"/> class.
         /// </summary>
         /// <param name="computeProvider">Compute provider.</param>
         /// <param name="storageProvider">Storatge provider.</param>
@@ -44,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <param name="storageFileShareProviderHelper">Storage File Share Provider Helper.</param>
         /// <param name="queueProvider">Queue provider.</param>
         /// <param name="resourceStateManager">Request state Manager to update resource state.</param>
-        public StartEnvironmentContinuationHandler(
+        public BaseStartEnvironmentContinuationHandler(
             IComputeProvider computeProvider,
             IStorageProvider storageProvider,
             IResourceRepository resourceRepository,
@@ -61,24 +58,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         }
 
         /// <inheritdoc/>
-        protected override string LogBaseName => ResourceLoggingConstants.ContinuationTaskMessageHandlerStartEnvironment;
-
-        /// <inheritdoc/>
-        protected override string DefaultTarget => DefaultQueueTarget;
-
-        /// <inheritdoc/>
         protected override ResourceOperation Operation => ResourceOperation.StartEnvironment;
 
-        private IComputeProvider ComputeProvider { get; }
+        /// <summary>
+        /// Gets the compute provider.
+        /// </summary>
+        protected IComputeProvider ComputeProvider { get; }
 
-        private IStorageProvider StorageProvider { get; }
+        /// <summary>
+        /// Gets the storage provider.
+        /// </summary>
+        protected IStorageProvider StorageProvider { get; }
 
-        private IStorageFileShareProviderHelper StorageFileShareProviderHelper { get; }
+        /// <summary>
+        /// Gets the storage file share provider helper.
+        /// </summary>
+        protected IStorageFileShareProviderHelper StorageFileShareProviderHelper { get; }
 
-        private IQueueProvider QueueProvider { get; }
+        /// <summary>
+        /// Gets the queue provider.
+        /// </summary>
+        protected IQueueProvider QueueProvider { get; }
 
-        /// <inheritdoc/>
-        protected override async Task<ContinuationInput> BuildOperationInputAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
+        /// <summary>
+        /// Builds the input required for the target continuation.
+        /// </summary>
+        /// <param name="input">Target input.</param>
+        /// <param name="compute">Referene to compute of target resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Required target input.</returns>
+        protected async Task<ContinuationInput> ConfigureBuildOperationInputAsync(TI input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
             var computeOs = compute.Value.PoolReference.GetComputeOS();
 
@@ -125,19 +134,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageResult.StorageFileServiceHost);
             }
 
-            return new VirtualMachineProviderStartComputeInput(
-                compute.Value.AzureResourceInfo,
-                shareConnectionInfo,
-                input.EnvironmentVariables,
-                input.UserSecrets,
-                computeOs,
-                azureLocation,
-                compute.Value.SkuName,
-                null);
+            // Pass user secrets to VirtualMachineProviderStartComputeInput only if environment is starting.
+            return CreateStartComputeInput(input, compute, shareConnectionInfo, computeOs, azureLocation);
         }
 
-        /// <inheritdoc/>
-        protected override async Task<ContinuationResult> RunOperationCoreAsync(StartEnvironmentContinuationInput input, ResourceRecordRef compute, IDiagnosticsLogger logger)
+        /// <summary>
+        /// Triggers the run operation on the target continuation.
+        /// </summary>
+        /// <param name="input">Target operation input.</param>
+        /// <param name="compute">Reference to target compute resource.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target operations continuation result.</returns>
+        protected async Task<ContinuationResult> ConfigureRunOperationCoreAsync(TI input, ResourceRecordRef compute, IDiagnosticsLogger logger)
         {
             var queueComponent = compute.Value.Components?.Items?.SingleOrDefault(x => x.Value.ComponentType == ResourceType.InputQueue).Value;
             if (queueComponent == default)
@@ -151,7 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     async (childLogger) =>
                     {
                         var startComputeInput = (VirtualMachineProviderStartComputeInput)input.OperationInput;
-                        var queueMessage = startComputeInput.GenerateStartEnvironmentPayload();
+                        var queueMessage = GeneratePayload(startComputeInput);
 
                         await QueueProvider.PushMessageAsync(
                             queueComponent.AzureResourceInfo,
@@ -166,7 +174,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             }
         }
 
-        private async Task<FileShareProviderAssignResult> StartStorageAsync(StartEnvironmentContinuationInput input, Guid storageId, ComputeOS computeOS, IDiagnosticsLogger logger)
+        /// <summary>
+        /// Triggers the run operation on the target continuation.
+        /// </summary>
+        /// <param name="input">Base start environment continuation input.</param>
+        /// <param name="record">Resource record reference.</param>
+        /// <param name="shareConnectionInfo">Share connection info.</param>
+        /// <param name="computeOs">Compute OS. </param>
+        /// <param name="azureLocation">Azure location.</param>
+        /// <returns>Target operations continuation result.</returns>
+        protected abstract VirtualMachineProviderStartComputeInput CreateStartComputeInput(TI input, ResourceRecordRef record, ShareConnectionInfo shareConnectionInfo, ComputeOS computeOs, AzureLocation azureLocation);
+
+        /// <summary>
+        /// Generate start payload.
+        /// </summary>
+        /// <param name="startComputeInput">Start compute input.</param>
+        /// <returns>Queue Message.</returns>
+        protected abstract QueueMessage GeneratePayload(VirtualMachineProviderStartComputeInput startComputeInput);
+
+        private async Task<FileShareProviderAssignResult> StartStorageAsync(TI input, Guid storageId, ComputeOS computeOS, IDiagnosticsLogger logger)
         {
             // Fetch storage reference
             var fileReference = await FetchReferenceAsync(storageId, logger);
@@ -205,7 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
             return storageContinuationResult;
         }
 
-        private async Task SetupArchiveStorageInfo(StartEnvironmentContinuationInput input, Guid archiveStorageResourceId, IDiagnosticsLogger logger)
+        private async Task SetupArchiveStorageInfo(TI input, Guid archiveStorageResourceId, IDiagnosticsLogger logger)
         {
             // Fetch blob reference
             var archiveReference = await FetchReferenceAsync(archiveStorageResourceId, logger);

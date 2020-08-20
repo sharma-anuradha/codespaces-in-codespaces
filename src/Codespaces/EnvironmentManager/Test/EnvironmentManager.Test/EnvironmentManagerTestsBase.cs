@@ -294,6 +294,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 taskHelper
                 );
 
+
+            var environmentExportAction = new EnvironmentExportAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                MockUtil.MockSubscriptionManager(),
+                environmentSubscriptionManager,
+                environmentSettings,
+                workspaceManager,
+                environmentMonitor,
+                environmentContinuationOperations.Object,
+                resourceAllocationManager,
+                resourceStartManager,
+                environmentSuspendAction,
+                resourceBroker,
+                taskHelper
+                );
+
             var environmentFinalizeResumeAction = new EnvironmentFinalizeResumeAction(
                 environmentStateManager,
                 environmentRepository,
@@ -315,6 +339,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 environmentSuspendAction);
 
+            var environmentFinalizeExportAction = new EnvironmentFinalizeExportAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true),
+                resourceBroker
+                );
+
             this.environmentManager = new EnvironmentManager(
                 this.environmentRepository,
                 this.resourceBroker,
@@ -331,7 +367,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentCreateAction,
                 environmentDeleteRestoreAction,
                 environmentResumeAction,
+                environmentExportAction,
                 environmentFinalizeResumeAction,
+                environmentFinalizeExportAction,
                 environmentSuspendAction,
                 environmentForceSuspendAction,
                 environmentDeleteAction,

@@ -9,16 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Transitent state to track properties required for exception handling in Environment Resume Action.
     /// </summary>
-    public class EnvironmentResumeTransientState
+    public class EnvironmentResumeTransientState : EnvironmentStartTransientState
     {
-        /// <summary>
-        /// Gets or sets the compute resource id allocated during environment resume.
-        /// </summary>
-        public Guid AllocatedComputeId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the environment state to be tracked during environment resume.
-        /// </summary>
-        public CloudEnvironmentState CloudEnvironmentState { get; set; }
     }
 }

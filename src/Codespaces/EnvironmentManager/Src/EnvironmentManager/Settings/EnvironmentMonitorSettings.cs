@@ -45,6 +45,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         public int DefaultResumeEnvironmentTimeoutInSeconds { get; set; }
 
         /// <summary>
+        /// Gets or sets Export Environment Timeout In Seconds.
+        /// </summary>
+        public int DefaultExportEnvironmentTimeoutInSeconds { get; set; }
+
+        /// <summary>
         /// Gets or sets Shutdown Environment Timeout In Seconds.
         /// </summary>
         public int DefaultShutdownEnvironmentTimeoutInSeconds { get; set; }
@@ -75,6 +80,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             var timeout = await SystemConfiguration.GetValueAsync("setting:resume-environment-timeout-in-seconds", logger, DefaultResumeEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
+        }
+
+        /// <summary>
+        /// Gets the export environment timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> ExportEnvironmentTimeout(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:export-environment-timeout-in-seconds", logger, DefaultExportEnvironmentTimeoutInSeconds);
             return TimeSpan.FromSeconds(timeout);
         }
 

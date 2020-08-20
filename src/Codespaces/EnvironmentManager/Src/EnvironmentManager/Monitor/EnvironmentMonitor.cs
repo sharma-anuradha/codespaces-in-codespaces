@@ -127,6 +127,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
+        public async Task MonitorExportStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                ComputeResourceId = computeId,
+                CurrentState = CloudEnvironmentState.Exporting,
+                TargetState = CloudEnvironmentState.Shutdown,
+                TransitionTimeout = await EnvironmentMonitorSettings.ExportEnvironmentTimeout(logger.NewChildLogger()),
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
         public async Task MonitorShutdownStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
         {
             var input = new EnvironmentStateTransitionInput()

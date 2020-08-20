@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IContinuationTaskActivator Activator { get; }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> ArchiveAsync(
+        public Task<ContinuationResult> ArchiveAsync(
             Guid environmentId,
             DateTime lastStateUpdated,
             string reason,
@@ -49,11 +49,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             };
             var target = ArchiveEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> CreateAsync(
+        public Task<ContinuationResult> CreateAsync(
             Guid environmentId,
             DateTime lastStateUpdated,
             CloudEnvironmentOptions cloudEnvironmentOptions,
@@ -63,21 +63,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
 
-            var input = new StartEnvironmentContinuationInput(cloudEnvironmentOptions, true)
+            var input = new StartEnvironmentContinuationInputV2(cloudEnvironmentOptions)
             {
                 EnvironmentId = environmentId,
                 LastStateUpdated = lastStateUpdated,
-                StartCloudEnvironmentParameters = startCloudEnvironmentParameters,
+                CloudEnvironmentParameters = startCloudEnvironmentParameters,
                 Reason = reason,
+                ActionState = StartEnvironmentInputActionState.CreateNew,
             };
 
-            var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
+            var target = StartEnvironmentContinuationHandlerV2.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> ResumeAsync(
+        public Task<ContinuationResult> ResumeAsync(
             Guid environmentId,
             DateTime lastStateUpdated,
             StartCloudEnvironmentParameters startCloudEnvironmentParameters,
@@ -90,21 +91,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 QueueResourceAllocation = true,
             };
 
-            var input = new StartEnvironmentContinuationInput(options, false)
+            var input = new StartEnvironmentContinuationInputV2(options)
             {
                 EnvironmentId = environmentId,
                 LastStateUpdated = lastStateUpdated,
-                StartCloudEnvironmentParameters = startCloudEnvironmentParameters,
+                CloudEnvironmentParameters = startCloudEnvironmentParameters,
                 Reason = reason,
+                ActionState = StartEnvironmentInputActionState.Resume,
             };
 
-            var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
+            var target = StartEnvironmentContinuationHandlerV2.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }
 
         /// <inheritdoc/>
-        public async Task<ContinuationResult> ShutdownAsync(
+        public Task<ContinuationResult> ShutdownAsync(
             Guid environmentId,
             bool forceSuspend,
             string reason,
@@ -121,7 +123,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var target = ShutdownEnvironmentContinuationHandler.DefaultQueueTarget;
 
-            return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+        }
+
+        /// <inheritdoc/>
+        public Task<ContinuationResult> ExportAsync(
+            Guid environmentId,
+            DateTime lastStateUpdated,
+            ExportCloudEnvironmentParameters exportCloudEnvironmentParameters,
+            string reason,
+            IDiagnosticsLogger logger)
+        {
+            var loggingProperties = BuildLoggingProperties(environmentId, reason);
+            var options = new CloudEnvironmentOptions()
+            {
+                QueueResourceAllocation = true,
+            };
+
+            var input = new StartEnvironmentContinuationInputV2(options)
+            {
+                EnvironmentId = environmentId,
+                LastStateUpdated = lastStateUpdated,
+                CloudEnvironmentParameters = exportCloudEnvironmentParameters,
+                Reason = reason,
+                ActionState = StartEnvironmentInputActionState.Export,
+            };
+
+            var target = StartEnvironmentContinuationHandlerV2.DefaultQueueTarget;
+
+            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
         }
 
         private IDictionary<string, string> BuildLoggingProperties(

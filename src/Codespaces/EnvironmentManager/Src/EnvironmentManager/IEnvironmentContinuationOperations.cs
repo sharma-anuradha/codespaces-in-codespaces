@@ -77,5 +77,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             bool forceSuspend,
             string reason,
             IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Export the environment.
+        /// </summary>
+        /// <param name="environmentId">Target environment id. </param>
+        /// <param name="lastStateUpdated">Target last state updated.</param>
+        /// <param name="exportCloudEnvironmentParameters">Env parameters for exporting. </param>
+        /// <param name="reason">Reason.</param>
+        /// <param name="logger">Logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<ContinuationResult> ExportAsync(
+          Guid environmentId,
+          DateTime lastStateUpdated,
+          ExportCloudEnvironmentParameters exportCloudEnvironmentParameters,
+          string reason,
+          IDiagnosticsLogger logger);
     }
 }

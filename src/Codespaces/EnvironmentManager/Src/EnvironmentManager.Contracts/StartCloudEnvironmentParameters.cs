@@ -12,41 +12,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Parameters required to start the compute of a CloudEnvironment.
     /// </summary>
-    public class StartCloudEnvironmentParameters
+    public class StartCloudEnvironmentParameters : CloudEnvironmentParameters
     {
         /// <summary>
-        /// Gets or sets the user claims to store in the environment connection token.
+        /// Gets or sets the secrets sent from Create/Resume request.
         /// </summary>
-        public Profile UserProfile { get; set; }
-
-        /// <summary>
-        /// Gets or sets the callback uri format.
-        /// </summary>
-        public string CallbackUriFormat { get; set; }
-
-        /// <summary>
-        /// Gets or sets the service uri.
-        /// </summary>
-        public Uri FrontEndServiceUri { get; set; }
+        public IEnumerable<SecretDataBody> Secrets { get; set; }
 
         /// <summary>
         /// Gets or sets the connection service (Live Share) uri.
         /// </summary>
         public Uri ConnectionServiceUri { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user token.
-        /// </summary>
-        public string UserAuthToken { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user id set.
-        /// </summary>
-        public UserIdSet CurrentUserIdSet { get; set; }
-
-        /// <summary>
-        /// Gets or sets the secrets sent from Create/Resume request.
-        /// </summary>
-        public IEnumerable<SecretDataBody> Secrets { get; set; }
     }
 }

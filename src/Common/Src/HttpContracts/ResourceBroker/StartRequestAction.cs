@@ -1,4 +1,4 @@
-﻿// <copyright file="StartRequestAction.cs" company="Microsoft">
+// <copyright file="StartRequestAction.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// Indicates that the blob storage should be archived.
         /// </summary>
         StartArchive = 2,
+
+        /// <summary>
+        /// Indicates that the compute should be started and exported.
+        /// </summary>
+        StartExport = 3,
     }
 }

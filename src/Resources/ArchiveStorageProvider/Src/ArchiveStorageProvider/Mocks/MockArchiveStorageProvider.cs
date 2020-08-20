@@ -1,4 +1,4 @@
-﻿// <copyright file="MockArchiveStorageProvider.cs" company="Microsoft">
+// <copyright file="MockArchiveStorageProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Mocks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Mocks
 {
     /// <summary>
     /// Mock archive storage provider (for internal/test use only).
@@ -29,14 +29,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Moc
         }
 
         /// <inheritdoc/>
-        public async Task<IArchiveStorageInfo> GetArchiveStorageAccountAsync(AzureLocation location, int minimumRequiredGB, IDiagnosticsLogger logger, bool forceCapacityCheck)
+        public async Task<ISharedStorageInfo> GetArchiveStorageAccountAsync(AzureLocation location, int minimumRequiredGB, IDiagnosticsLogger logger, bool forceCapacityCheck)
         {
             await Task.CompletedTask;
             return new MockArchiveStorageInfo(subscriptionCatalog, location);
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IArchiveStorageInfo>> ListArchiveStorageAccountsAsync(AzureLocation location, IDiagnosticsLogger logger)
+        public async Task<IEnumerable<ISharedStorageInfo>> ListArchiveStorageAccountsAsync(AzureLocation location, IDiagnosticsLogger logger)
         {
             await Task.CompletedTask;
             return new[] { new MockArchiveStorageInfo(subscriptionCatalog, location) };

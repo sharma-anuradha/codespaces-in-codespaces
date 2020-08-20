@@ -15,6 +15,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
     public class MockEnvironmentMonitor : IEnvironmentMonitor
     {
         /// <inheritdoc/>
+        public Task MonitorExportStateTransitionAsync(string environmentId, Guid computeId, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
         public Task MonitorHeartbeatAsync(string environmentId, Guid? computeId, IDiagnosticsLogger logger)
         {
             return Task.CompletedTask;

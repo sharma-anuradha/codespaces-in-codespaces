@@ -1,4 +1,4 @@
-﻿// <copyright file="TokenProviderExtensions.cs" company="Microsoft">
+// <copyright file="TokenProviderExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -58,8 +58,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
                     ' ',
                     PlanAccessTokenScopes.ShareSession,
                     PlanAccessTokenScopes.JoinSession)));
-                claims.Add(
-                    new Claim(CustomClaims.Session, environment.Connection.WorkspaceId));
+                if (environment.State != CloudEnvironmentState.Exporting)
+                {
+                    claims.Add(
+                        new Claim(CustomClaims.Session, environment.Connection.WorkspaceId));
+                }
             }
 
             // Copy additional optional identity claims from the authenticated user.

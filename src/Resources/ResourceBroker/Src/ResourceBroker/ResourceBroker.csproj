@@ -17,7 +17,7 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common\Common.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
-    <ProjectReference Include="..\..\..\ArchiveStorageProvider\Src\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\ArchiveStorageProvider\Src\ArchiveStorageProvider.Contracts\SharedStorageProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
     <ProjectReference Include="..\..\..\ComputeVirtualMachineProvider\Src\ComputeVirtualMachineProvider.Contracts\ComputeVirtualMachineProvider.Contracts.csproj" />
     <ProjectReference Include="..\..\..\DiskProvider\Src\DiskProvider.Contracts\DiskProvider.Contracts.csproj" />

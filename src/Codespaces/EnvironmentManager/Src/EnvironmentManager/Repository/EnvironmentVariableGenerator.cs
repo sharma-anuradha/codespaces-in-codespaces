@@ -1,9 +1,10 @@
-﻿// <copyright file="EnvironmentVariableGenerator.cs" company="Microsoft">
+// <copyright file="EnvironmentVariableGenerator.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 #pragma warning disable SA1402 // File may only contain a single type
@@ -310,11 +311,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         public EnvVarLiveshareServiceEndpoint(CloudEnvironment cloudEnvironment, string serviceUrl)
             : base(cloudEnvironment)
         {
-            Requires.NotNull(serviceUrl, nameof(serviceUrl));
+            if (cloudEnvironment.State != CloudEnvironmentState.Exporting)
+            {
+                Requires.NotNull(serviceUrl, nameof(serviceUrl));
 
-            var serviceUri = new Uri(serviceUrl);
+                var serviceUri = new Uri(serviceUrl);
 
-            ServiceEndpoint = serviceUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped);
+                ServiceEndpoint = serviceUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped);
+            }
+            else
+            {
+                ServiceEndpoint = null;
+            }
         }
 
         private string ServiceEndpoint { get; }
@@ -322,6 +330,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <inheritdoc/>
         public override Tuple<string, string> GetEnvironmentVariable()
         {
+            // Service endpoint is null only if user is exporting as assigned in the constructor
+            if (ServiceEndpoint == null)
+            {
+                return null;
+            }
+
             return new Tuple<string, string>(EnvironmentVariableConstants.LiveShareServiceUrl, ServiceEndpoint);
         }
     }

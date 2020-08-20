@@ -160,7 +160,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 UserSecrets = userSecrets,
                 Reason = reason,
             };
-            var target = StartEnvironmentContinuationHandler.DefaultQueueTarget;
+            var target = ResumeEnvironmentContinuationHandler.DefaultQueueTarget;
+
+            return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+        }
+
+        /// <inheritdoc/>
+        public async Task<ContinuationResult> StartExportAsync(
+            Guid environmentId,
+            Guid computeResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
+            Guid? archiveStorageResourceId,
+            IDictionary<string, string> environmentVariables,
+            string reason,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
+        {
+            logger.FluentAddBaseValue("StorageResourceId", storageResourceId)
+                .FluentAddBaseValue("OSDiskResourceId", osDiskResourceId)
+                .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
+
+            var consolidatedloggerProperties = await BuildLoggingProperties(computeResourceId, reason, logger, loggingProperties);
+
+            var input = new StartExportContinuationInput
+            {
+                EnvironmentId = environmentId,
+                ResourceId = computeResourceId,
+                OSDiskResourceId = osDiskResourceId,
+                StorageResourceId = storageResourceId,
+                ArchiveStorageResourceId = archiveStorageResourceId,
+                EnvironmentVariables = environmentVariables,
+                Reason = reason,
+            };
+            var target = ExportEnvironmentContinuationHandler.DefaultQueueTarget;
 
             return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }

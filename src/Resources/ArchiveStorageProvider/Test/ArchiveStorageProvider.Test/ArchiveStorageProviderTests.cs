@@ -1,14 +1,14 @@
 ﻿using System;
 using Microsoft.VsSaaS.Azure.Metrics;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Xunit;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Test
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Test
 {
     public class ArchiveStorageProviderTests
     {

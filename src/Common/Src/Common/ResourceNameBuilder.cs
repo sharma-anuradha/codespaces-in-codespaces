@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public string GetArchiveStorageAccountName(string baseName)
+        public string GetStorageAccountName(string baseName, string storageType)
         {
             if (DeveloperPersonalStampSettings.DeveloperStamp)
             {
@@ -74,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     name = name.Substring(0, 9);
                 }
 
-                return $"{name}{ResourceGroupPostFix}as".Replace("-", string.Empty).ToLowerInvariant();
+                return $"{name}{ResourceGroupPostFix}{storageType}".Replace("-", string.Empty).ToLowerInvariant();
             }
 
             return baseName;

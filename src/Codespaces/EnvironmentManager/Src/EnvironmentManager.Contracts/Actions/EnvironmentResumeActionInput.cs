@@ -3,30 +3,26 @@
 // </copyright>
 
 using System;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
     /// Environment resume action input.
     /// </summary>
-    public class EnvironmentResumeActionInput : IEntityActionIdInput
+    public class EnvironmentResumeActionInput : EnvironmentBaseStartActionInput
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentResumeActionInput"/> class.
         /// </summary>
-        /// <param name="id">Target environment id.</param>
-        public EnvironmentResumeActionInput(Guid id)
+        /// <param name="environmentId">Target environment id.</param>
+        public EnvironmentResumeActionInput(Guid environmentId)
+            : base(environmentId)
         {
-            Id = id;
         }
 
         /// <summary>
         /// Gets or sets start env params.
         /// </summary>
         public StartCloudEnvironmentParameters StartEnvironmentParams { get; set; }
-
-        /// <inheritdoc/>
-        public Guid Id { get; }
     }
 }

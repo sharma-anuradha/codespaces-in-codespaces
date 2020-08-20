@@ -66,7 +66,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
-        /// Starts archive of storage by invoking the continuation activator.
+        /// Exports environment by invoking the continuation activator.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="computeResourceId">Target compute resource id.</param>
+        /// <param name="osDiskResourceId">Target osdisk resource id.</param>
+        /// <param name="storageResourceId">Target storage resource id.</param>
+        /// <param name="archiveStorageResourceId">Target blob storage resource id.</param>
+        /// <param name="environmentVariables">Input environment variables for the compute.</param>
+        /// <param name="reason">Trigger for operation.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
+        /// <returns>Resuling continuation result.</returns>
+        Task<ContinuationResult> StartExportAsync(
+            Guid environmentId,
+            Guid computeResourceId,
+            Guid? osDiskResourceId,
+            Guid? storageResourceId,
+            Guid? archiveStorageResourceId,
+            IDictionary<string, string> environmentVariables,
+            string reason,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties = null);
+
+        /// <summary>
+        /// Starts arhive of storage by invoking the continution activator.
         /// </summary>
         /// <param name="environmentId">The environment id.</param>
         /// <param name="blobResourceId">Target blob resource id.</param>

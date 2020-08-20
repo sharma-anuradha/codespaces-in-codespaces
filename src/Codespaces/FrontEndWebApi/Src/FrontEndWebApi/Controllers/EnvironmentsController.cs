@@ -272,7 +272,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             IsSecretQuotaReached(requestBody?.Secrets);
 
-            var startEnvParams = await GetStartCloudEnvironmentParametersAsync();
+            StartCloudEnvironmentParameters startEnvParams = await GetStartCloudEnvironmentParametersAsync();
             startEnvParams.Secrets = requestBody?.Secrets;
 
             var result = await EnvironmentManager.ResumeAsync(
@@ -281,6 +281,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 logger.NewChildLogger());
 
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result));
+        }
+
+        /// <summary>
+        /// Exports an environment.
+        /// </summary>
+        /// <param name="environmentId">The environment id.</param>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>A cloud environment.</returns>
+        [HttpPost("{environmentId}/export")]
+        [ThrottlePerUserLow(nameof(EnvironmentsController), nameof(ExportAsync))]
+        [ProducesResponseType(typeof(CloudEnvironmentResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(MessageCodes), StatusCodes.Status503ServiceUnavailable)]
+        [HttpOperationalScope("export")]
+        [Audit(AuditEventCategory.ResourceManagement, "environmentId")]
+        [MdmMetric(name: MdmMetricConstants.ControlPlaneLatency, metricNamespace: MdmMetricConstants.CodespacesHealthNamespace)]
+        public async Task<IActionResult> ExportAsync(
+            [FromRoute] Guid environmentId,
+            [FromServices] IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+
+            // TODO t-aibha: set feature flag to true if we want to enable exporting
+            if (FrontEndAppSettings.EnableExporting)
+            {
+                ExportCloudEnvironmentParameters exportEnvParams = await GetExportCloudEnvironmentParametersAsync();
+                var result = await EnvironmentManager.ExportAsync(
+                    environmentId,
+                    exportEnvParams,
+                    logger.NewChildLogger());
+
+                var temp = Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result);
+
+                return Ok(temp);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         /// <summary>
@@ -319,7 +360,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var metricsInfo = await GetMetricsInfoAsync(logger);
 
             // Get start environment parameters
-            var startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
+            StartCloudEnvironmentParameters startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
             startEnvironmentParams.Secrets = environmentCreateDetails.Secrets;
 
             // Create environment
@@ -768,6 +809,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
         }
 
+        // TODO t-aibha: refactor GetStartCLoudEnviornmentParamaters and GetExportCloudEnvironmentParameters once Ed has merged his changes for git export operation.
         private async Task<StartCloudEnvironmentParameters> GetStartCloudEnvironmentParametersAsync()
         {
             var currentStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(CurrentLocationProvider.CurrentLocation);
@@ -785,11 +827,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, currentStamp).ToString();
 
             var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
+
             return new StartCloudEnvironmentParameters
             {
                 UserProfile = currentUserProfile,
                 FrontEndServiceUri = serviceUri,
                 ConnectionServiceUri = new Uri(FrontEndAppSettings.VSLiveShareApiEndpoint, UriKind.Absolute),
+                CallbackUriFormat = callbackUriFormat,
+                UserAuthToken = CurrentUserProvider.BearerToken,
+                CurrentUserIdSet = CurrentUserProvider.CurrentUserIdSet,
+            };
+        }
+
+        private async Task<ExportCloudEnvironmentParameters> GetExportCloudEnvironmentParametersAsync()
+        {
+            var currentStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(CurrentLocationProvider.CurrentLocation);
+
+            var displayUri = Request.GetDisplayUrl();
+
+            // Extract the root API uri which is everything up and and including "/environments/"
+            // TODO: Ideally this shouldn't need to include the "/environments/"
+            var indexOfController = displayUri.IndexOf("/environments/", StringComparison.OrdinalIgnoreCase);
+            var requestUri = indexOfController == -1
+                ? displayUri
+                : displayUri.Substring(0, indexOfController + "/environments/".Length);
+
+            var serviceUri = ServiceUriBuilder.GetServiceUri(requestUri, currentStamp);
+            var callbackUriFormat = ServiceUriBuilder.GetCallbackUriFormat(requestUri, currentStamp).ToString();
+
+            var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
+
+            return new ExportCloudEnvironmentParameters
+            {
+                UserProfile = currentUserProfile,
+                FrontEndServiceUri = serviceUri,
                 CallbackUriFormat = callbackUriFormat,
                 UserAuthToken = CurrentUserProvider.BearerToken,
                 CurrentUserIdSet = CurrentUserProvider.CurrentUserIdSet,

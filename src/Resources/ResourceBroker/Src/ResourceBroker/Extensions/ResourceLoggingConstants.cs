@@ -132,6 +132,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// <summary>
         /// Start Continuation Task Message Handler name.
         /// </summary>
+        public const string ContinuationTaskMessageHandlerExportEnvironment = "continuation_task_message_handler_export_envionment";
+
+        /// <summary>
+        /// Start Continuation Task Message Handler name.
+        /// </summary>
         public const string ContinuationTaskMessageHandlerStartArchive = "continuation_task_message_handler_start_archive";
 
         /// <summary>

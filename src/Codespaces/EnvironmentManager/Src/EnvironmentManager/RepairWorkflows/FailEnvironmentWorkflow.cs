@@ -1,4 +1,4 @@
-﻿// <copyright file="FailEnvironmentWorkflow.cs" company="Microsoft">
+// <copyright file="FailEnvironmentWorkflow.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

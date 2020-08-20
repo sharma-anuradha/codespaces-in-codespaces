@@ -18,7 +18,6 @@ using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
@@ -37,6 +36,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -172,6 +172,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             services.AddAzureMetrics();
             services.AddAzureManagement();
             services.AddArchiveStorageProvider(appSettings.BackEnd.MocksSettings);
+
+            // Export Storage Provider
+            services.AddExportStorageProvider(appSettings.BackEnd.MocksSettings);
 
             // KeyVault Provider
             services.AddKeyVaultProvider(appSettings.BackEnd.MocksSettings);

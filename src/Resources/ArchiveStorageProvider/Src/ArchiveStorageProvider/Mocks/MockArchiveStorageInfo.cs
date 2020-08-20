@@ -1,19 +1,19 @@
-﻿// <copyright file="MockArchiveStorageInfo.cs" company="Microsoft">
+// <copyright file="MockArchiveStorageInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using System.Linq;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Mocks
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Mocks
 {
     /// <summary>
     /// Mock archive storage info (for internal/test use only).
     /// </summary>
-    internal class MockArchiveStorageInfo : IArchiveStorageInfo
+    internal class MockArchiveStorageInfo : ISharedStorageInfo
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MockArchiveStorageInfo"/> class.

@@ -135,5 +135,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets subscription information.
         /// </summary>
         public SubscriptionData SubscriptionData { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating exported environment blob url.
+        /// </summary>
+        public string ExportedBlobUrl { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="PayloadExtensions.cs" company="Microsoft">
+// <copyright file="PayloadExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         private const string RefreshVMCommand = "RefreshVM";
         private const string StartEnvironmentCommand = "StartEnvironment";
         private const string ShutdownEnvironmentCommand = "ShutdownEnvironment";
+        private const string ExportEnvironmentCommand = "ExportEnvironment";
 
         /// <summary>
         /// Creates queue payload for VM refresh.
@@ -98,29 +99,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <returns>Queue payload.</returns>
         public static QueueMessage GenerateStartEnvironmentPayload(this VirtualMachineProviderStartComputeInput startComputeInput)
         {
-            var jobParameters = new Dictionary<string, string>();
-            foreach (var kvp in startComputeInput.VmInputParams)
-            {
-                jobParameters.Add(kvp.Key, kvp.Value);
-            }
-
-            if (startComputeInput.FileShareConnection != null)
-            {
-                jobParameters.Add(StorageAccountNameTag, startComputeInput.FileShareConnection.StorageAccountName);
-                jobParameters.Add(StorageAccountKeyTag, startComputeInput.FileShareConnection.StorageAccountKey);
-                jobParameters.Add(StorageShareNameTag, startComputeInput.FileShareConnection.StorageShareName);
-                jobParameters.Add(StorageFileNameTag, startComputeInput.FileShareConnection.StorageFileName);
-                jobParameters.Add(StorageFileServiceHostTag, startComputeInput.FileShareConnection.StorageFileServiceHost);
-            }
-
-            // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.
-            jobParameters.Add(SkuNameTag, startComputeInput.SkuName);
+            var jobParameters = CreateJobParameters(startComputeInput);
 
             var queueMessage = new QueueMessage
             {
                 Command = StartEnvironmentCommand,
                 Parameters = jobParameters,
                 UserSecrets = startComputeInput.UserSecrets,
+            };
+
+            // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.
+            jobParameters.Add(SkuNameTag, startComputeInput.SkuName);
+
+            return queueMessage;
+        }
+
+        /// <summary>
+        /// Creates queue payload for environment export.
+        /// </summary>
+        /// <param name="startComputeInput">Virtual machine start compute input.</param>
+        /// <returns>Queue payload.</returns>
+        public static QueueMessage GenerateExportEnvironmentPayload(this VirtualMachineProviderStartComputeInput startComputeInput)
+        {
+            var jobParameters = CreateJobParameters(startComputeInput);
+
+            var queueMessage = new QueueMessage
+            {
+                Command = ExportEnvironmentCommand,
+                Parameters = jobParameters,
             };
 
             return queueMessage;
@@ -140,6 +146,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             };
 
             return queueMessage;
+        }
+
+        private static Dictionary<string, string> CreateJobParameters(this VirtualMachineProviderStartComputeInput startComputeInput)
+        {
+            var jobParameters = new Dictionary<string, string>();
+            foreach (var kvp in startComputeInput.VmInputParams)
+            {
+                jobParameters.Add(kvp.Key, kvp.Value);
+            }
+
+            if (startComputeInput.FileShareConnection != null)
+            {
+                jobParameters.Add(StorageAccountNameTag, startComputeInput.FileShareConnection.StorageAccountName);
+                jobParameters.Add(StorageAccountKeyTag, startComputeInput.FileShareConnection.StorageAccountKey);
+                jobParameters.Add(StorageShareNameTag, startComputeInput.FileShareConnection.StorageShareName);
+                jobParameters.Add(StorageFileNameTag, startComputeInput.FileShareConnection.StorageFileName);
+                jobParameters.Add(StorageFileServiceHostTag, startComputeInput.FileShareConnection.StorageFileServiceHost);
+            }
+
+            return jobParameters;
         }
     }
 }

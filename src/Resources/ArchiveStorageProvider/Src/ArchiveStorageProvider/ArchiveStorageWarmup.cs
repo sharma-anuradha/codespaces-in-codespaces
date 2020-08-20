@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider.Contracts;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.ArchiveStorageProvider
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.SharedStorageProvider
 {
     /// <summary>
     /// Initialize archive storage during service warmup.

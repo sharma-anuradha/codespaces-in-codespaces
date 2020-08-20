@@ -10,28 +10,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// <summary>
     /// Environment Finalize Resume Action Input.
     /// </summary>
-    public class EnvironmentFinalizeResumeActionInput : IEntityActionIdInput
+    public class EnvironmentFinalizeResumeActionInput : EnvironmentBaseFinalizeActionInput
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentFinalizeResumeActionInput"/> class.
         /// </summary>
         /// <param name="environmentId">Target environment id.</param>
         public EnvironmentFinalizeResumeActionInput(Guid environmentId)
+            : base(environmentId)
         {
-            Id = environmentId;
         }
-
-        /// <summary>
-        /// Gets or sets new storage that should be swapped in.
-        /// </summary>
-        public Guid StorageResourceId { get; set; }
-
-        /// <summary>
-        /// Gets or sets archive storage resource id if waking from archive.
-        /// </summary>
-        public Guid? ArchiveStorageResourceId { get; set; }
-
-        /// <inheritdoc/>
-        public Guid Id { get; }
     }
 }

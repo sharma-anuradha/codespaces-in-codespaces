@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -144,6 +145,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Exports environment.
+        /// </summary>
+        /// <param name="cloudEnvironment">The environment id.</param>
+        /// <param name="exportCloudEnvironmentParameters">The parameters for starting compute.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironment> ExportAsync(
+            Guid cloudEnvironment,
+            ExportCloudEnvironmentParameters exportCloudEnvironmentParameters,
+            IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Completes the start of a shutdown environment.
         /// </summary>
         /// <param name="environmentId">Target environment Id.</param>
@@ -152,6 +165,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The cloud environment record.</returns>
         Task<CloudEnvironment> ResumeCallbackAsync(Guid environmentId, Guid storageResourceId, Guid? archiveStorageResourceId, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Completes the start of an archived environment.
+        /// </summary>
+        /// <param name="cloudEnvironment">The environment.</param>
+        /// <param name="storageResourceId">Target new storage that should be swapped in.</param>
+        /// <param name="archiveStorageResourceId">Target archive storage resource id if waking from archive.</param>
+        /// <param name="exportedEnvironmentUrl">Exported environment url.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>Cloud environment service result.</returns>
+        Task<CloudEnvironment> ExportCallbackAsync(Guid cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, string exportedEnvironmentUrl, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Shuts down an environment.
@@ -223,7 +247,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="storageResourceId">storage resource id.</param>
         /// <param name="archiveStorageResourceId">archive storage id.</param>
         /// <param name="cloudEnvironmentOptions">cloud environment options.</param>
-        /// <param name="startCloudEnvironmentParameters">start environment params.</param>
+        /// <param name="cloudEnvironmentParameters">start environment params.</param>
+        /// <param name="startEnvironmentAction">start environment action.</param>
         /// <param name="logger">logger.</param>
         /// <returns>resule.</returns>
         Task<bool> StartComputeAsync(
@@ -233,7 +258,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             CloudEnvironmentOptions cloudEnvironmentOptions,
-            StartCloudEnvironmentParameters startCloudEnvironmentParameters,
+            CloudEnvironmentParameters cloudEnvironmentParameters,
+            StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger);
 
         /// <summary>

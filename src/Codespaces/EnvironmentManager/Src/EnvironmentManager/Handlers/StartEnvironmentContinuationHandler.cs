@@ -1,4 +1,4 @@
-﻿// <copyright file="StartEnvironmentContinuationHandler.cs" company="Microsoft">
+// <copyright file="StartEnvironmentContinuationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -586,6 +586,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  archiveStorageResourceId,
                  operationInput.CloudEnvironmentOptions,
                  operationInput.StartCloudEnvironmentParameters,
+                 StartEnvironmentAction.StartCompute,
                  logger.NewChildLogger());
 
             if (isSuccess)

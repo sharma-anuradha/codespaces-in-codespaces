@@ -1,4 +1,4 @@
-﻿// <copyright file="IResourceNameBuilder.cs" company="Microsoft">
+// <copyright file="IResourceNameBuilder.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -45,11 +45,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         string GetVirtualMachineAgentContainerName(string baseName);
 
         /// <summary>
-        /// Creates name of the archive storage account.
+        /// Creates name of the storage account.
         /// </summary>
         /// <param name="baseName">Base name of the storage account.</param>
-        /// <returns>Storage account name..</returns>
-        string GetArchiveStorageAccountName(string baseName);
+        /// <param name="storageType">Kind name of the storage account.</param>
+        /// <returns>Storage account name.</returns>
+        string GetStorageAccountName(string baseName, string storageType);
 
         /// <summary>
         /// Creates name for kusto table in a developer stamp.

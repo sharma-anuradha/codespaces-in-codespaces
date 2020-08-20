@@ -1,4 +1,4 @@
-﻿  <Project Sdk="Microsoft.NET.Sdk">
+  <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>$(NetCoreAppTargetFramework)</TargetFramework>
@@ -7,7 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Capacity\Src\Capacity.Contracts\Capacity.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Src\Common\BackEnd.Common.csproj" />
-    <ProjectReference Include="..\ArchiveStorageProvider.Contracts\ArchiveStorageProvider.Contracts.csproj" />
+    <ProjectReference Include="..\ArchiveStorageProvider.Contracts\SharedStorageProvider.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

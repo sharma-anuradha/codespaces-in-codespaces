@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentState.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentState.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -83,5 +83,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// The environment failed and is not recoverable.
         /// </summary>
         Failed,
+
+        /// <summary>
+        /// The environment is exporting.
+        /// </summary>
+        Exporting,
     }
 }

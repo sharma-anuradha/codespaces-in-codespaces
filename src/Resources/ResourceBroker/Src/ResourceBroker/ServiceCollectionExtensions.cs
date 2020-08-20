@@ -90,9 +90,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<CreateResourceContinuationHandlerV2>();
             services.AddSingleton<ICreateResourceContinuationHandler>(x => x.GetRequiredService<CreateResourceContinuationHandlerV2>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CreateResourceContinuationHandlerV2>());
-            services.AddSingleton<StartEnvironmentContinuationHandler>();
-            services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
-            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartEnvironmentContinuationHandler>());
+            services.AddSingleton<ResumeEnvironmentContinuationHandler>();
+            services.AddSingleton<IStartEnvironmentContinuationHandler>(x => x.GetRequiredService<ResumeEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ResumeEnvironmentContinuationHandler>());
+            services.AddSingleton<ExportEnvironmentContinuationHandler>();
+            services.AddSingleton<IExportEnvironmentContinuationHandler>(x => x.GetRequiredService<ExportEnvironmentContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ExportEnvironmentContinuationHandler>());
             services.AddSingleton<StartArchiveContinuationHandler>();
             services.AddSingleton<IStartArchiveContinuationHandler>(x => x.GetRequiredService<StartArchiveContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<StartArchiveContinuationHandler>());

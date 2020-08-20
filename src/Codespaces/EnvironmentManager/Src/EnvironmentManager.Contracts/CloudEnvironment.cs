@@ -274,6 +274,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public ResourceAllocationRecord OSDiskSnapshot { get; set; }
 
         /// <summary>
+        /// Gets or sets the exported environment blob storage url.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "exportedBlobUrl")]
+        public string ExportedBlobUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets the last time the record is updated based on heartbeat.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]
