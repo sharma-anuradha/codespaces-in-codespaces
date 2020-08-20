@@ -132,10 +132,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions
 
             var resourceOwningStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(resourceLocation);
 
-            logger.FluentAddValue("ResourceOwningStampLocation", resourceOwningStamp.Location.ToString())
+            logger.FluentAddValue("ResourceOwningStampLocation", resourceOwningStamp?.Location.ToString())
                 .FluentAddValue("CurrentStampLocation", CurrentLocationProvider.CurrentLocation.ToString());
 
-            if (resourceOwningStamp.Location != CurrentLocationProvider.CurrentLocation)
+            if (resourceOwningStamp != null && resourceOwningStamp.Location != CurrentLocationProvider.CurrentLocation)
             {
                 throw new RedirectToLocationException("Invalid location.", resourceOwningStamp.DnsHostName);
             }

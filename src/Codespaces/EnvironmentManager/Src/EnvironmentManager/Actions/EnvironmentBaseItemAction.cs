@@ -71,6 +71,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             if (record != null)
             {
                 ValidateAndAuthorizeRecord(record, logger);
+
+                // Redirect if the Codespace is in the wrong region.
+                ValidateTargetLocation(record.Value.Location, logger);
             }
 
             return record;
@@ -84,7 +87,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // Fetch record
             var record = await base.FetchAsync(input, logger);
 
-            ValidateAndAuthorizeRecord(record, logger);
+            if (record != null)
+            {
+                ValidateAndAuthorizeRecord(record, logger);
+
+                // Redirect if the Codespace is in the wrong region.
+                ValidateTargetLocation(record.Value.Location, logger);
+            }
 
             return record;
         }

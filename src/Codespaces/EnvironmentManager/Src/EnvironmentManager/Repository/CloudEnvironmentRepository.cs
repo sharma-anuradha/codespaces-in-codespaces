@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository
@@ -69,6 +70,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <inheritdoc/>
         public async Task<CloudEnvironment> CreateAsync(CloudEnvironment environment, IDiagnosticsLogger logger)
         {
+            if (environment.ControlPlaneLocation != RegionalRepository.ControlPlaneLocation)
+            {
+                throw new Exception($"Trying to create a CloudEnvironment record for {environment.ControlPlaneLocation} in {RegionalRepository.ControlPlaneLocation}.");
+            }
+
             switch (rolloutStatus)
             {
                 case RolloutStatus.Phase1:
@@ -300,6 +306,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <inheritdoc/>
         public async Task<CloudEnvironment> UpdateAsync(CloudEnvironment environment, IDiagnosticsLogger logger)
         {
+            if (environment.ControlPlaneLocation != RegionalRepository.ControlPlaneLocation)
+            {
+                throw new Exception($"Trying to update a CloudEnvironment record for {environment.ControlPlaneLocation} in {RegionalRepository.ControlPlaneLocation}.");
+            }
+
             if (rolloutStatus == RolloutStatus.Phase1)
             {
                 if (environment.IsMigrated)

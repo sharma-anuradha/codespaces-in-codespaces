@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -15,6 +16,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// </summary>
     public interface IGlobalCloudEnvironmentRepository : IDocumentDbCollection<CloudEnvironment>
     {
+        /// <summary>
+        /// Gets the control-plane location of the repository.
+        /// </summary>
+        AzureLocation ControlPlaneLocation { get; }
+
         /// <summary>
         /// Gets the count of unique subscriptions that have Environments in the cloud environments table.
         /// </summary>

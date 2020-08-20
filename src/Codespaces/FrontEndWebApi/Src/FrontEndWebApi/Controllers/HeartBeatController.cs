@@ -96,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     shouldSendBackendTask = !(environment == null || environment.Type == EnvironmentType.StaticEnvironment);
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (!(e is RedirectToLocationException))
             {
                 LogHeartBeatException(e, e.Message, logger, duration, heartBeat);
                 return UnprocessableEntity();

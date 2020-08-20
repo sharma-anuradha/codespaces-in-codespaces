@@ -61,9 +61,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
         }
 
-        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+        /// <inheritdoc/>
+        public AzureLocation ControlPlaneLocation { get; }
 
-        private AzureLocation ControlPlaneLocation { get; }
+        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
 
         /// <summary>
         /// Configures the standard options for this repository.

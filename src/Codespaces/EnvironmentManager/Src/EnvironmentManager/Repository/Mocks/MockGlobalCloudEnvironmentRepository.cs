@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -16,6 +17,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public class MockGlobalCloudEnvironmentRepository : MockRepository<CloudEnvironment>, IGlobalCloudEnvironmentRepository
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MockGlobalCloudEnvironmentRepository"/> class.
+        /// </summary>
+        /// <param name="location">The mock control-plane location.</param>
+        public MockGlobalCloudEnvironmentRepository(AzureLocation location = AzureLocation.WestUs2)
+        {
+            ControlPlaneLocation = location;
+        }
+
+        /// <inheritdoc/>
+        public AzureLocation ControlPlaneLocation { get; }
+
         /// <inheritdoc/>
         public Task<int> GetCloudEnvironmentPlanCountAsync(IDiagnosticsLogger logger)
         {
