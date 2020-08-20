@@ -7,7 +7,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string[]]$SubscriptionNames,
     [switch]$SkipRegistrations,
-    [switch]$AssignProdReader
+    [switch]$SkipTags,
+    [switch]$SkipRbac,
+    [switch]$AdminOwner
 )
 
 # Global error handling
@@ -28,6 +30,48 @@ if ($PSBoundParameters.ContainsKey('Verbose')) {
     $script:Verbose = $PsBoundParameters.Get_Item('Verbose')
 }
 
+class SubscriptionInfo {
+    [string]$SubscriptionName
+    [string]$Prefix
+    [string]$Component
+    [string]$Environment
+    [string]$Plane
+    [string]$Type
+    [string]$Region
+    [nullable[int]]$Ordinal
+    [bool]$IsLegacy
+
+    SubscriptionInfo([string]$SubscriptionName) {
+        $this.SubscriptionName = $SubscriptionName
+        $parts = $SubscriptionName.Split('-');
+        $upper = $parts.GetUpperBound(0)
+        if ($upper -ge 0) {
+            $this.Prefix = $parts[0]
+            $this.IsLegacy = $this.Prefix.StartsWith('vsclk-')
+            if ($upper -ge 1) {
+                $this.Component = $parts[1]
+                if ($upper -ge 2) {
+                    $this.Environment = $parts[2]
+                    if ($upper -ge 3) {
+                        $this.Plane = $parts[3]
+                        if ($upper -ge 4) {
+                            $this.Type = $parts[4]
+                            if ($upper -ge 6) {
+                                $geo = $parts[5]
+                                $regionCode = $parts[6]
+                                $this.Region = "$geo-$regionCode"
+                                if ($upper -ge 7) {
+                                    $this.Ordinal = [int]$parts[7]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 function Get-AdSp([string]$DisplayName) {
     $sp = Get-AzADServicePrincipal -DisplayName $DisplayName
     if (!$sp) {
@@ -46,69 +90,81 @@ function Get-AdGroup([string]$DisplayName) {
     $group
 }
 
-function Get-Environment([string]$SubscriptionName) {
-    foreach ($e in @("dev", "ppe", "prod")) {
-        if ($SubscriptionName.Contains($e) -or $SubscriptionName.EndsWith($e)) {
-            return $e
-        }
-    }
-    throw "Subscription name doesn't specify env: $SubscriptionName"
-}
-
-function Test-IsDataSubscription([string]$SubscriptionName) {
-    return $SubscriptionName.Contains("-data-")
-}
-
-function Test-IsLegacySubscription([string]$SubscriptionName) {
-    return $SubscriptionName.StartsWith("vsclk-")
-}
-
 function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
 
+    $subscriptionInfo = New-Object SubscriptionInfo -ArgumentList $subscriptionName
+
     # Validate that the subscription exists
-    $sub = ""
     try {
         $sub = Select-AzSubscription -Subscription $SubscriptionName
-    } catch {
+    }
+    catch {
         throw "Legacy subscription not found: ${SubscriptionName}: $_"
     }
-    $env = Get-Environment -SubscriptionName $SubscriptionName
+    $env = $subscriptionInfo.Environment
     Write-Host "Onboarding legacy subscription '$($sub.Subscription.Name)' for environment '$env'" -ForegroundColor Green
 
+    # Provider Registrations
     if (!$SkipRegistrations) {
-        $PartitionedData = !(Test-IsLegacySubscription -SubscriptionName $SubscriptionName)
+        $PartitionedData = !($subscriptionInfo.IsLegacy)
         Register-DefaultProvidersAndFeatures -PartitionedData $PartitionedData
     }
 
-    # Assign RBAC    
-    Write-Host "Assigning break-glass access control" -ForegroundColor Green
-    New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $breakGlassGroup | Out-Null
-    
-    Write-Host "Assigning service principal access control" -ForegroundColor Green
-    $appSp = Get-AdSp -DisplayName "vsclk-online-$env-app-sp" | Out-Null
-    New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $appSp | Out-Null
-    
-    if (!(Test-IsDataSubscription -SubscriptionName $SubscriptionName)) {
-        $opsSp = Get-AdSp -DisplayName "vsclk-online-$env-devops-sp" | Out-Null
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $opsSp | Out-Null
+    # Subscription Tags
+    if (!$SkipTags) {
+        Write-Host "Updating subscription tags" -ForegroundColor Green
+        $tags = @{
+            prefix = $subscriptionInfo.Prefix ?? ""
+            component = $subscriptionInfo.Component ?? ""
+            env = $subscriptionInfo.Environment ?? ""
+            plane = $subscriptionInfo.Plane ?? ""
+            type = $subscriptionInfo.Type ?? ""
+            region = $subscriptionInfo.Region ?? ""
+            ordinal = [string]($subscriptionInfo.Ordinal) ?? ""
+            serviceTreeUrl = 'https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b'
+            serviceTreeId = '8fa58105-2fc7-4ffb-8d9e-5654c301864b'
+        }
+        Update-AzTag -ResourceId "/subscriptions/$($sub.Subscription.Id)" -Tag $tags -Operation Merge | Out-String | Write-Host -ForegroundColor DarkGray
     }
 
-    if ($env -eq "dev") {
-        Write-Host "Assigning team access control for dev" -ForegroundColor Green
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $contributorsGroup | Out-Null
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
-    }
-    elseif ($env -eq "ppe") {
-        Write-Host "Assigning team access control for ppe" -ForegroundColor Green
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
-    }
-    elseif ($env -eq "prod" -and $AssignProdReader) {
-        Write-Host "Assigning team access control for prod" -ForegroundColor Green
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
-        New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
+    # Assign RBAC
+    if (!$SkipRbac) {
+        Write-Host "Assigning break-glass access control" -ForegroundColor Green
+        New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $breakGlassGroup | Out-Null
+
+        Write-Host "Assigning service principal access control" -ForegroundColor Green
+        $appSp = Get-AdSp -DisplayName "vsclk-online-$env-app-sp"
+        New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $appSp | Out-Null
+
+        if (!($subscriptionInfo.Plane -eq 'data')) {
+            $opsSp = Get-AdSp -DisplayName "vsclk-online-$env-devops-sp"
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $opsSp | Out-Null
+        }
+
+        if ($env -eq "dev") {
+            Write-Host "Assigning team access control for dev" -ForegroundColor Green
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $contributorsGroup | Out-Null
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
+        }
+        elseif ($env -eq "ppe") {
+            Write-Host "Assigning team access control for ppe" -ForegroundColor Green
+            if ($AdminOwner) {
+                New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
+            }
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
+        }
+        elseif ($env -eq "prod") {
+            Write-Host "Assigning team access control for prod" -ForegroundColor Green
+            if ($AdminOwner) {
+                New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
+            }
+            # A prior version of the script added these. But they shouldn't be present for prod.
+            Remove-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
+            Remove-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
+        }
     }
 }
 
@@ -116,12 +172,14 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
 # Assert-SignedInUserIsOwner | Out-Null
 
 # Get the group accounts for subscription RBAC.
-Write-Host "Getting group security accounts..." -ForegroundColor Green
-$script:adminsGroup = Get-AdGroup -DisplayName "vsclk-core-admin-a98a"
-$script:breakGlassGroup = Get-AdGroup -DisplayName "vsclk-core-breakglass-823b"
-$script:contributorsGroup = Get-AdGroup -DisplayName "vsclk-core-contributors-3a5d"
-$script:readersGroup = Get-AdGroup -DisplayName "vsclk-core-readers-fd84"
+if (!$SkipRbac) {
+    Write-Host "Getting group security accounts..." -ForegroundColor Green
+    $script:adminsGroup = Get-AdGroup -DisplayName "vsclk-core-admin-a98a"
+    $script:breakGlassGroup = Get-AdGroup -DisplayName "vsclk-core-breakglass-823b"
+    $script:contributorsGroup = Get-AdGroup -DisplayName "vsclk-core-contributors-3a5d"
+    $script:readersGroup = Get-AdGroup -DisplayName "vsclk-core-readers-fd84"
+}
 
-$SubscriptionNames | % {
-    Invoke-OnboardLegacySubscription -SubscriptionName $_
+foreach ($SubscripionName in $SubscriptionNames) {
+    Invoke-OnboardLegacySubscription -SubscriptionName $SubscripionName
 }

@@ -336,9 +336,25 @@ function New-SubscriptionRoleAssignment(
   $assigneeDisplayName = $Assignee.DisplayName
   "Assigning $RoleDefinitionName to $assigneeDisplayName in subscription/$subscriptionName" | Write-Host -ForegroundColor DarkGray
   $role = Get-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
-  $role | Out-String | Write-Host -ForegroundColor DarkGray
   if (!$role) {
     $role = New-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
   }
+  $role | Out-String | Write-Host -ForegroundColor DarkGray
   $role
+}
+
+function Remove-SubscriptionRoleAssignment(
+  [string]$RoleDefinitionName,
+  [object]$Assignee) {
+  $subscription = (get-azcontext).Subscription
+  $subscriptionId = $subscription.Id
+  $subscriptionName = $subscription.Name
+  $scope = "/subscriptions/$subscriptionId"
+  $assigneeObjectId = $Assignee.Id
+  $assigneeDisplayName = $Assignee.DisplayName
+  $role = Get-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
+  if ($role) {
+    "Removing $RoleDefinitionName from $assigneeDisplayName in subscription/$subscriptionName" | Write-Host -ForegroundColor DarkGray
+    Remove-AzRoleAssignment -Scope $scope -RoleDefinitionName $RoleDefinitionName -ObjectId $assigneeObjectId
+  }
 }
