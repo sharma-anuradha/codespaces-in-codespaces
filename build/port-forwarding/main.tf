@@ -82,6 +82,7 @@ resource "azurerm_kubernetes_cluster" "cluster" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   dns_prefix          = "${var.alias}-pfs"
+  kubernetes_version  = "1.15.11"
 
   default_node_pool {
     name       = "default"

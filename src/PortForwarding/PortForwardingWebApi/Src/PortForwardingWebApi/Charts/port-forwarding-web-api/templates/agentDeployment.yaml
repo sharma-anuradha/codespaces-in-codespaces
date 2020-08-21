@@ -32,6 +32,10 @@ spec:
         - name: {{ include "port-forwarding-agent.name" . }}
           image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.agentRepositoryName not specified" .Values.image.agentRepositoryName }}:{{ required "Value image.agentTag not specified" .Values.image.agentTag }}'
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.containerPort }}
+              protocol: TCP
           env:
             - name: PodName
               valueFrom:
@@ -57,6 +61,48 @@ spec:
                 secretKeyRef:
                   name: {{ $chartFullName }}-settings
                   key: {{ . }}
+          {{- end }}
+          {{- if .Values.agent.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.agent.livenessProbe.path }}
+              port: http
+            {{- if .Values.agent.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.agent.livenessProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if .Values.agent.livenessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.agent.livenessProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .Values.agent.livenessProbe.periodSeconds }}
+            periodSeconds: {{ .Values.agent.livenessProbe.periodSeconds }}
+            {{- end }}
+            {{- if .Values.agent.livenessProbe.successThreshold }}
+            successThreshold: {{ .Values.agent.livenessProbe.successThreshold }}
+            {{- end }}
+            {{- if .Values.agent.livenessProbe.failureThreshold }}
+            failureThreshold: {{ .Values.agent.livenessProbe.failureThreshold }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.agent.readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.agent.readinessProbe.path }}
+              port: http
+            {{- if .Values.agent.readinessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .Values.agent.readinessProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if .Values.agent.readinessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.agent.readinessProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .Values.agent.readinessProbe.periodSeconds }}
+            periodSeconds: {{ .Values.agent.readinessProbe.periodSeconds }}
+            {{- end }}
+            {{- if .Values.agent.readinessProbe.successThreshold }}
+            successThreshold: {{ .Values.agent.readinessProbe.successThreshold }}
+            {{- end }}
+            {{- if .Values.agent.readinessProbe.failureThreshold }}
+            failureThreshold: {{ .Values.agent.readinessProbe.failureThreshold }}
+            {{- end }}
           {{- end }}
           resources:
             {{- toYaml .Values.agentResources | nindent 12 }}
