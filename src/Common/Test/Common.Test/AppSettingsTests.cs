@@ -80,7 +80,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 var sku = item.Value;
                 {
                     // for launch we're disabling windows billing
-                    if (!sku.SkuName.Equals("premiumWindows") &&
+                    if (!sku.SkuName.Equals("standardWindows") &&
+                        !sku.SkuName.Equals("premiumWindows") &&
                         !sku.SkuName.Equals("internalWindows") &&
                         !sku.SkuName.Equals("premiumWindowsStaging") &&
                         !sku.SkuName.Equals("premiumWindowsInternalStaging") &&
