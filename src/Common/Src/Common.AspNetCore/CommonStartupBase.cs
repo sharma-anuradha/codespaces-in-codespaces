@@ -80,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // appsettings override file to "appsettings.prod-can.json". If that
             // override file is specified, instead of treating it as a real override, we instead
             // change the infix from "prod-rel" to "prod-can". This will yield both
-            // "appsettings.prod-can.json" and "appsettings.subscriptions.prod-can.json".
+            // "appsettings.prod-can.json" and "appsettings.subscriptions.prod-can.jsonc".
             // In this case, the override file is now redundant is redundant and it is nulled out.
 
             // Get the override file, if any, and test if it is canary.
@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Get the infix designation and compute the standard appsettings filenames.
             var infix = GetAppSettingsInfixName(isCanary);
             var appsettingsInfixFile = $"appsettings.{infix}.json";
-            var appsettingsSubscriptionsInfixFile = $"appsettings.subscriptions.{infix}.json";
+            var appsettingsSubscriptionsInfixFile = $"appsettings.subscriptions.{infix}.jsonc";
 
             // If the override file is equal to the standard file (as with canary), we don't
             // want to load the override file a second time; so null it out.
@@ -98,9 +98,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             {
                 overrideAppSettingsJsonFile = null;
             }
-
-            // TEMPORARY: The appsettings.subscriptions.*.json files are not yet deployed, so do not require one.
-            var requireAppsettingsSubscriptionsJson = false;
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(hostingEnvironment.ContentRootPath)
@@ -111,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             // Add the {env}-{instance} specific appsettings and appsettings.subscriptions files.
             builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{appsettingsInfixFile}"), optional: false);
-            builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{appsettingsSubscriptionsInfixFile}"), optional: !requireAppsettingsSubscriptionsJson);
+            builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{appsettingsSubscriptionsInfixFile}"), optional: false);
 
             // Get the optional override appsettings file.
             if (overrideAppSettingsJsonFile != null)
