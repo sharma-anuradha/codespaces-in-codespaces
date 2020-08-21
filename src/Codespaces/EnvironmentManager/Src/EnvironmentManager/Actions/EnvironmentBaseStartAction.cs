@@ -390,7 +390,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private async Task<SubscriptionComputeData> ValidatePlanAndSubscriptionAsync(CloudEnvironment environment, VsoPlan plan, IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(environment.SkuName, out var sku);
-            var subscriptionComputeData = new SubscriptionComputeData();
 
             // Validate whether or not the subscription is allowed to create plans and environments.
             var subscription = await SubscriptionManager.GetSubscriptionAsync(plan.Plan.Subscription, logger.NewChildLogger());
@@ -414,7 +413,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
             }
 
-            subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
+            var subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, plan.Partner, logger.NewChildLogger());
             if (computeCheckEnabled && subscriptionComputeData.HasReachedQuota)
             {
                 throw new ForbiddenException((int)MessageCodes.ExceededQuota);

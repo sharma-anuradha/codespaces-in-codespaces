@@ -186,7 +186,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private async Task ValidateSubscriptionAndPlanAsync(
             CloudEnvironment cloudEnvironment, VsoPlan planDetails, IEnumerable<CloudEnvironment> environmentsInPlan, IDiagnosticsLogger logger)
         {
-            await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(cloudEnvironment.SkuName, environmentsInPlan, planDetails.Plan.Subscription, logger.NewChildLogger());
+            await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(cloudEnvironment.SkuName, environmentsInPlan, planDetails.Plan.Subscription, planDetails.Partner, logger.NewChildLogger());
         }
     }
 }

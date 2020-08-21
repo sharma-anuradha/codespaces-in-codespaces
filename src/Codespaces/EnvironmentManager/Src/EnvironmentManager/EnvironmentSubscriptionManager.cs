@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -42,19 +43,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<SubscriptionComputeData> HasReachedMaxComputeUsedForSubscriptionAsync(
             Subscription subscription,
             ICloudEnvironmentSku desiredSku,
+            Partner? partner,
             IDiagnosticsLogger logger)
         {
-            var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, desiredSku, logger);
-            int currentMaxQuota = subscription.CurrentMaximumQuota[desiredSku.ComputeSkuFamily];
+            int currentComputeUsed = default;
+            int currentMaxQuota = default;
+            bool hasMaxComputeUsed = false;
 
-            bool hasMaxComputeUsed = currentComputeUsed + desiredSku.ComputeSkuCores > currentMaxQuota;
-            if (hasMaxComputeUsed)
+            if (partner != Partner.GitHub)
             {
-                logger.AddValue("RequestedSku", desiredSku.SkuName);
-                logger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
-                logger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
-                logger.AddSubscriptionId(subscription.Id);
-                logger.LogError($"{LogBaseName}_create_exceed_compute_quota");
+                currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(subscription, desiredSku, logger);
+                currentMaxQuota = subscription.CurrentMaximumQuota[desiredSku.ComputeSkuFamily];
+
+                hasMaxComputeUsed = currentComputeUsed + desiredSku.ComputeSkuCores > currentMaxQuota;
+                if (hasMaxComputeUsed)
+                {
+                    logger.AddValue("RequestedSku", desiredSku.SkuName);
+                    logger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
+                    logger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
+                    logger.AddSubscriptionId(subscription.Id);
+                    logger.LogError($"{LogBaseName}_create_exceed_compute_quota");
+                }
             }
 
             var computeData = new SubscriptionComputeData

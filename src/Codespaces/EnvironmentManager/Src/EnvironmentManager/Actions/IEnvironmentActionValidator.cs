@@ -20,12 +20,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="cloudEnvironmentSkuName">Cloud environment Sku Name.</param>
         /// <param name="environmentsInPlan">Existing active environments in the plan.</param>
         /// <param name="planSubscriptionId">Plan subscripton ID.</param>
+        /// <param name="partner">The Partner identifier.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>The async task with result SubscriptionComputeData object.</returns>
         public Task<SubscriptionComputeData> ValidateSubscriptionAndQuotaAsync(
             string cloudEnvironmentSkuName,
             IEnumerable<CloudEnvironment> environmentsInPlan,
             string planSubscriptionId,
+            Plans.Contracts.Partner? partner,
             IDiagnosticsLogger logger);
     }
 }

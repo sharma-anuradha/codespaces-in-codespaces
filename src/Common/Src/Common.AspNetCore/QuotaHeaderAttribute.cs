@@ -41,8 +41,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                       var computeUsage = result.SubscriptionData.ComputeUsage;
                       var computeQuota = result.SubscriptionData.ComputeQuota;
                       var subscriptionId = result.SubscriptionData.SubscriptionId;
-                      context.HttpContext.Response.Headers.Add(CoreUsageHeader, computeUsage.ToString());
-                      context.HttpContext.Response.Headers.Add(CoreLimitHeader, computeQuota.ToString());
+                      if (computeUsage != default)
+                      {
+                          context.HttpContext.Response.Headers.Add(CoreUsageHeader, computeUsage.ToString());
+                      }
+
+                      if (computeQuota != default)
+                      {
+                          context.HttpContext.Response.Headers.Add(CoreLimitHeader, computeQuota.ToString());
+                      }
 
                       logger.AddValue("SubscriptionId", subscriptionId);
                       logger.AddValue("CurrentComputeUsage", computeUsage.ToString());

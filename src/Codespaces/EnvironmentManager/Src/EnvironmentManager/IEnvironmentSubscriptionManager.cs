@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -21,11 +22,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="subscription">Target Subscription.</param>
         /// <param name="desiredSku">Target Desired Sku.</param>
+        /// <param name="partner">The subscriptions Partner indicator.</param>
         /// <param name="logger">Target Logger.</param>
         /// <returns>Returns if limit is hit.</returns>
         Task<SubscriptionComputeData> HasReachedMaxComputeUsedForSubscriptionAsync(
             Subscription subscription,
             ICloudEnvironmentSku desiredSku,
+            Partner? partner,
             IDiagnosticsLogger logger);
 
         /// <summary>

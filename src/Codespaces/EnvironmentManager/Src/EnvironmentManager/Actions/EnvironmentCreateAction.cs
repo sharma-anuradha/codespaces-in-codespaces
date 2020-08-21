@@ -309,7 +309,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 throw new ConflictException((int)MessageCodes.EnvironmentNameAlreadyExists);
             }
 
-            var subscriptionComputeData = await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(input.Details.SkuName, environmentsInPlan, input.Plan.Plan.Subscription, logger.NewChildLogger());
+            var subscriptionComputeData = await EnvironmentActionValidator.ValidateSubscriptionAndQuotaAsync(input.Details.SkuName, environmentsInPlan, input.Plan.Plan.Subscription, input.Plan.Partner, logger.NewChildLogger());
 
             // Validate suspend timeout
             if (input.Details.Type != EnvironmentType.StaticEnvironment)

@@ -59,10 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             string cloudEnvironmentSkuName,
             IEnumerable<CloudEnvironment> environmentsInPlan,
             string planSubscriptionId,
+            Plans.Contracts.Partner? partner,
             IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironmentSkuName, out var sku);
-            var subscriptionComputeData = new SubscriptionComputeData();
 
             // Check invalid subscription
             var subscription = await SubscriptionManager.GetSubscriptionAsync(planSubscriptionId, logger.NewChildLogger());
@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
 
             // Check subscription quota
-            subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, logger.NewChildLogger());
+            var subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, partner, logger.NewChildLogger());
 
             if (computeCheckEnabled)
             {
