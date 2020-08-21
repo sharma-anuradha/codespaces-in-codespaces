@@ -21,7 +21,7 @@
     <NoWarn>$(NoWarn);NU1608</NoWarn>
     <TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
   </PropertyGroup>
-  
+
   <!-- Compiler options -->
   <PropertyGroup>
     <Deterministic>true</Deterministic>
@@ -55,6 +55,7 @@
     <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
     <ReportGeneratorVersion>4.0.15</ReportGeneratorVersion>
     <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
+    <FxCopAnalyzersPackageVersion>3.3.0</FxCopAnalyzersPackageVersion>
     <SwashbuckleAspNetCorePackageVersion>5.0.0-rc5</SwashbuckleAspNetCorePackageVersion>
     <SystemIdentityModelTokensJwtPackageVersion>5.6.0</SystemIdentityModelTokensJwtPackageVersion>
     <VisualStudioValidationVersion>15.5.31</VisualStudioValidationVersion>
@@ -145,7 +146,14 @@
     <When Condition="'$(UseCodeAnalysis)'=='true'">
       <PropertyGroup>
         <CodeAnalysisRuleSet Condition="'$(CodeAnalysisRuleSet)'==''">$(MSBuildThisFileDirectory)CodeAnalysis.ruleset</CodeAnalysisRuleSet>
+        <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
       </PropertyGroup>
+      <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(FxCopAnalyzersPackageVersion)">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+      </ItemGroup>
     </When>
   </Choose>
 

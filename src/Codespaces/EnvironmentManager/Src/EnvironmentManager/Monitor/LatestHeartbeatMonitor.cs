@@ -1,32 +1,35 @@
-﻿// <copyright file="LatestHeartbeatMonitor.cs" company="Microsoft">
+// <copyright file="LatestHeartbeatMonitor.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 
-/// <summary>
-/// Keeps track of the latest heartbeat timestamp.
-/// </summary>
-public class LatestHeartbeatMonitor : ILatestHeartbeatMonitor
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="LatestHeartbeatMonitor"/> class.
+    /// Keeps track of the latest heartbeat timestamp.
     /// </summary>
-    public LatestHeartbeatMonitor()
+    public class LatestHeartbeatMonitor : ILatestHeartbeatMonitor
     {
-        LastHeartbeatReceived = null;
-    }
-
-    /// <inheritdoc/>
-    public DateTime? LastHeartbeatReceived { get; private set; }
-
-    /// <inheritdoc/>
-    public void UpdateHeartbeat(DateTime heartbeatTimestamp)
-    {
-        if (LastHeartbeatReceived == null || heartbeatTimestamp > LastHeartbeatReceived)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LatestHeartbeatMonitor"/> class.
+        /// </summary>
+        public LatestHeartbeatMonitor()
         {
-            LastHeartbeatReceived = heartbeatTimestamp;
+            LastHeartbeatReceived = null;
+        }
+
+        /// <inheritdoc/>
+        public DateTime? LastHeartbeatReceived { get; private set; }
+
+        /// <inheritdoc/>
+        public void UpdateHeartbeat(DateTime heartbeatTimestamp)
+        {
+            if (LastHeartbeatReceived == null || heartbeatTimestamp > LastHeartbeatReceived)
+            {
+                LastHeartbeatReceived = heartbeatTimestamp;
+            }
         }
     }
 }

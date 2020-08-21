@@ -128,7 +128,7 @@ namespace Microsoft.VsCloudKernel.SignalService
                     --maxRetries;
                     if (maxRetries == 0)
                     {
-                        throw error;
+                        throw;
                     }
                     else
                     {

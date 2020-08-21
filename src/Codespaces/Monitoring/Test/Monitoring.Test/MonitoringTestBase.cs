@@ -5,6 +5,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers;
 

@@ -320,9 +320,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
                 return allPlans;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw e;
+                throw;
             }
         }
 

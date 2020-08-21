@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentMonitorInitializationException.cs" company="Microsoft">
+// <copyright file="EnvironmentMonitorInitializationException.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     /// <summary>
     /// Environment monitoring exception..
     /// </summary>
-    internal class EnvironmentMonitorInitializationException : Exception
+    public class EnvironmentMonitorInitializationException : Exception
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentMonitorInitializationException"/> class.

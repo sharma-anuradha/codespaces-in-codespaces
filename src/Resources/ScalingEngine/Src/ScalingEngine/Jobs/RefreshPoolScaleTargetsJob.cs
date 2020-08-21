@@ -326,9 +326,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                     var settings = (await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger()))
                         .ToDictionary(x => x.Id);
 
+#pragma warning disable CA2326 // Do not use TypeNameHandling values other than None
                     childLogger.FluentAddValue("SettingsFoundCount", settings.Count)
                         .FluentAddValue("SettingsFoundData", JsonConvert.SerializeObject(
                             settings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
+#pragma warning restore CA2326 // Do not use TypeNameHandling values other than None
 
                     childLogger.FluentAddValue("SettingsFoundPoolDefinitionCount", pools.Count());
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="NgrokProcessManager.cs" company="Microsoft">
+// <copyright file="NgrokProcessManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -96,9 +96,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services
                     throw new Exception("Ngrok process has started, but couldn't valid API is up and running.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 

@@ -1,4 +1,4 @@
-﻿// <copyright file="ContinuationQueuePayload.cs" company="Microsoft">
+// <copyright file="ContinuationQueuePayload.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -91,8 +91,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
         /// <returns>JSON string.</returns>
         public string ToJson()
         {
+#pragma warning disable CA2326 // Do not use TypeNameHandling values other than None
             return JsonConvert.SerializeObject(
                 this, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
+#pragma warning restore CA2326 // Do not use TypeNameHandling values other than None
         }
     }
 }

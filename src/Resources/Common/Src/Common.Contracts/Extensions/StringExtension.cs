@@ -43,7 +43,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public static string GetDeterministicHashCode(this string value)
         {
             var sb = new StringBuilder();
+#pragma warning disable CA5350 // Do Not Use Weak Cryptographic Algorithms
             using (var hash = SHA1.Create())
+#pragma warning restore CA5350 // Do Not Use Weak Cryptographic Algorithms
             {
                 var result = hash.ComputeHash(Encoding.UTF8.GetBytes(value));
                 foreach (var b in result)

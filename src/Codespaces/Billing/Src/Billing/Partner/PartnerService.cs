@@ -134,13 +134,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     {
                         await storageClient.PushPartnerQueueSubmission(gitHubQueueSubmission);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         // Update the billing event to show an error happend while pushing to the queue
                         billingSummary.PartnerSubmissionState = BillingSubmissionState.Error;
                         await billingEventManager.UpdateEventAsync(billingEvent, Logger);
 
-                        throw e;
+                        throw;
                     }
 
                     childLogger.FluentAddValue("PartnerSummaryEndTime", billingSummary.PeriodEnd.ToString())

@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Monitor;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;

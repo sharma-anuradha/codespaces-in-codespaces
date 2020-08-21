@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingSummaryQueueSubmission.cs" company="Microsoft">
+// <copyright file="BillingSummaryQueueSubmission.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,8 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         public string ToJson()
         {
-            return JsonConvert.SerializeObject(
-                this, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
+            return JsonConvert.SerializeObject(this);
         }
     }
 }

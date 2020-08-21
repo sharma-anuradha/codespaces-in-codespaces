@@ -1,4 +1,4 @@
-﻿// <copyright file="BatchJobProvider.cs" company="Microsoft">
+// <copyright file="BatchJobProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -249,7 +249,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                             continue;
                         }
 
-                        throw ex;
+                        throw;
                     }
                 }
             }

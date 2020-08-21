@@ -94,8 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <returns>Returns json.</returns>
         public string ToJson()
         {
-            return JsonConvert.SerializeObject(
-                this, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
+            return JsonConvert.SerializeObject(this);
         }
     }
 }

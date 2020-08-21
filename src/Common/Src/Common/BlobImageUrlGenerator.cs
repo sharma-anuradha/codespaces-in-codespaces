@@ -1,4 +1,4 @@
-﻿// <copyright file="BlobImageUrlGenerator.cs" company="Microsoft">
+// <copyright file="BlobImageUrlGenerator.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -128,11 +128,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                     var blob = container.GetBlobReference(imageName);
 
+#pragma warning disable CA5377 // Use Container Level Access Policy
                     var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
                     {
                         Permissions = SharedAccessBlobPermissions.Read,
                         SharedAccessExpiryTime = DateTime.UtcNow.Add(expiryTime),
                     });
+#pragma warning restore CA5377 // Use Container Level Access Policy
 
                     return blob.Uri + sas;
                 });

@@ -1,4 +1,4 @@
-﻿// <copyright file="ContinuationTaskWorker.cs" company="Microsoft">
+// <copyright file="ContinuationTaskWorker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -146,8 +146,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation
 
         private ContinuationQueuePayload GetTypedPayload(CloudQueueMessage message)
         {
+#pragma warning disable CA2326 // Do not use TypeNameHandling values other than None
+#pragma warning disable CA2327 // Do not use insecure JsonSerializerSettings
             return JsonConvert.DeserializeObject<ContinuationQueuePayload>(
                 message.AsString, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
+#pragma warning restore CA2326 // Do not use TypeNameHandling values other than None
+#pragma warning restore CA2327 // Do not use insecure JsonSerializerSettings
         }
 
         private bool QueueMessageIsValid(CloudQueueMessage message, IDiagnosticsLogger logger)
