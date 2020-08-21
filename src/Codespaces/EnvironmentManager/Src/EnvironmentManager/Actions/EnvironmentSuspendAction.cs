@@ -122,13 +122,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             {
                 // If the environment is not in an available state during shutdown,
                 // force clean the environment details, to put it in a recoverable state.
-                return await EnvironmentForceSuspendAction.RunAsync(input.Id, logger.NewChildLogger());
+                return await EnvironmentForceSuspendAction.RunAsync(input, logger.NewChildLogger());
             }
             else if (record.Value.Compute.ResourceId == default && input.AllocatedComputeResourceId == default)
             {
                 // If the allocated compute is missing for the environment,
                 // force clean the environment details, to put it in a recoverable state.
-                return await EnvironmentForceSuspendAction.RunAsync(input.Id, logger.NewChildLogger());
+                return await EnvironmentForceSuspendAction.RunAsync(input, logger.NewChildLogger());
             }
             else
             {

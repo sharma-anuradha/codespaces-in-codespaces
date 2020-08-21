@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
-
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
@@ -11,8 +9,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
     /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
-    /// <typeparam name="TResult">Result type.</typeparam>
-    public interface IEnvironmentBaseStartAction<TInput, TState, TResult> : IEntityAction<TInput, TState, TResult>
+    public interface IEnvironmentBaseStartAction<TInput, TState> : IEnvironmentItemAction<TInput, TState>
     {
     }
 }

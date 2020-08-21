@@ -28,8 +28,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// </summary>
     /// <typeparam name="TInput">Input type.</typeparam>
     /// <typeparam name="TState">Transitent state to track properties required for exception handling.</typeparam>
-    public abstract class EnvironmentBaseStartAction<TInput, TState> : EnvironmentItemAction<TInput, TState>, IEnvironmentBaseStartAction<TInput, TState, CloudEnvironment>
-    where TState : class, new()
+    public abstract class EnvironmentBaseStartAction<TInput, TState> : EnvironmentItemAction<TInput, TState>, IEnvironmentBaseStartAction<TInput, TState>
+        where TInput : EnvironmentBaseStartActionInput
+        where TState : EnvironmentStartTransientState, new()
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentBaseStartAction{TInput, TState}"/> class.
@@ -135,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="transientState"> Environment start action transient state. </param>
         /// <param name="logger"> Logger. </param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        protected async Task<EnvironmentTransition> ConfigureRunCoreAsync(
+        protected async Task ConfigureRunCoreAsync(
             EnvironmentTransition record,
             TInput input,
             EnvironmentStartTransientState transientState,
@@ -183,44 +184,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
 
             // Add Subscription quota data
-            record.Value.SubscriptionData = new SubscriptionData
+            var subscriptionData = new SubscriptionData
             {
                 SubscriptionId = plan.Plan.Subscription,
                 ComputeUsage = subscriptionComputeData.ComputeUsage,
                 ComputeQuota = subscriptionComputeData.ComputeQuota,
             };
+            record.PushTransition(environment =>
+            {
+                environment.SubscriptionData = subscriptionData;
+            });
 
-            return record;
+            SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
+            if (sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
+            {
+                // Windows can only be queued resume because the VM has to be constructed from the given OS disk.
+                await QueueStartEnvironmentAsync(input, record, transientState, logger.NewChildLogger());
+            }
+            else
+            {
+                await StartEnvironmentAsync(input, record, transientState, logger.NewChildLogger());
+            }
         }
 
-        /// <summary>
-        /// Handles Exceptions for environment.
-        /// </summary>
-        /// <param name="inputId"> Environment start action input id. </param>
-        /// <param name="ex"> Exception caught. </param>
-        /// <param name="transientState"> Environment start action transient state.</param>
-        /// <param name="expectedState"> Expected state is where the method is being called from (export or resume). </param>
-        /// <param name="logger"> Logger. </param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        protected async Task<bool> HandleExceptionAsync(
-           Guid inputId,
-           Exception ex,
-           EnvironmentStartTransientState transientState,
-           CloudEnvironmentState expectedState,
-           IDiagnosticsLogger logger)
+        /// <inheritdoc/>
+        protected override async Task<bool> HandleExceptionAsync(TInput input, Exception ex, TState transientState, IDiagnosticsLogger logger)
         {
-            var isFullyHandled = false;
-
-            // Suspend the environment if the state is already changed to expected state/queued
-            if (transientState.CloudEnvironmentState == expectedState || transientState.CloudEnvironmentState == CloudEnvironmentState.Queued)
-            {
-                await EnvironmentSuspendAction.RunAsync(inputId, transientState.AllocatedComputeId, logger.NewChildLogger());
-            }
-            else if (transientState.AllocatedComputeId != default)
-            {
-                // Delete the allocated resources.
-                await ResourceBrokerClient.DeleteAsync(inputId, transientState.AllocatedComputeId, logger.NewChildLogger());
-            }
+            await EnvironmentSuspendAction.RunAsync(input.Id, transientState.AllocatedComputeId, logger.NewChildLogger());
 
             if (ex is EnvironmentMonitorInitializationException)
             {
@@ -230,7 +220,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
 
             // If the code made this far, the exception is not fully handled.
-            return isFullyHandled;
+            return false;
         }
 
         /// <summary>
@@ -239,14 +229,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="input"> Environment start action input.</param>
         /// <param name="record"> Transition cloud environment record. </param>
         /// <param name="transientState"> Current transient state of environment. </param>
-        /// <param name="startAction"> Start action of environment. </param>
         /// <param name="logger"> Logger. </param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         protected async Task StartEnvironmentAsync(
             TInput input,
             EnvironmentTransition record,
             EnvironmentStartTransientState transientState,
-            StartEnvironmentAction startAction,
             IDiagnosticsLogger logger)
         {
             // Allocate Compute
@@ -277,23 +265,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             logger.AddCloudEnvironmentIsArchived(isArchivedEnvironment);
 
             // At this point, if archive record is going to be switched in it will have been
-            var startingStateReson = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
-
-            // Set current state and update trigger based on start action.
-            var currentState = (startAction == StartEnvironmentAction.StartCompute) ? CloudEnvironmentState.Starting : CloudEnvironmentState.Exporting;
-            var updateTrigger = (startAction == StartEnvironmentAction.StartCompute) ? CloudEnvironmentStateUpdateTriggers.StartEnvironment : CloudEnvironmentStateUpdateTriggers.ExportEnvironment;
-
-            await EnvironmentStateManager.SetEnvironmentStateAsync(
-                record,
-                currentState,
-                updateTrigger,
-                startingStateReson,
-                null,
-                logger.NewChildLogger());
-
-            // Set environment state in to transientState object,
-            // so that it can be used to suspend/force suspend in case of an exception.
-            transientState.CloudEnvironmentState = record.Value.State;
+            var startingStateReason = isArchivedEnvironment ? MessageCodes.RestoringFromArchive.ToString() : null;
 
             record.PushTransition((environment) =>
             {
@@ -321,26 +293,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="input"> Environment start action input.</param>
         /// <param name="record"> Transition cloud environment record. </param>
         /// <param name="transientState"> Current transient state of environment. </param>
-        /// <param name="startAction"> Start action of environment.</param>
         /// <param name="logger"> Logger. </param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         protected async Task QueueStartEnvironmentAsync(
             TInput input,
             EnvironmentTransition record,
             EnvironmentStartTransientState transientState,
-            StartEnvironmentAction startAction,
             IDiagnosticsLogger logger)
         {
-            var updateTrigger = (startAction == StartEnvironmentAction.StartCompute) ? CloudEnvironmentStateUpdateTriggers.StartEnvironment : CloudEnvironmentStateUpdateTriggers.ExportEnvironment;
-
-            await EnvironmentStateManager.SetEnvironmentStateAsync(
-                record,
-                CloudEnvironmentState.Queued,
-                updateTrigger,
-                string.Empty,
-                null,
-                logger);
-
             record.PushTransition((environment) =>
             {
                 // Initialize connection, if it is null, client will fail to get environment list.
@@ -363,8 +323,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <summary>
         /// Validate input.
         /// </summary>
-        /// <param name="input"> Environment start action input.</param>
+        /// <param name="input">Environment start action input.</param>
         protected abstract void ValidateInput(TInput input);
+
+        /// <summary>
+        /// Validate environment state.
+        /// </summary>
+        /// <param name="environment">Target environment.</param>
+        protected abstract void ValidateEnvironmentState(CloudEnvironment environment);
 
         /// <summary>
         /// Adding liveshare workspace connection.
@@ -411,12 +377,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             if (environment.Type == EnvironmentType.StaticEnvironment)
             {
                 throw new CodedValidationException((int)MessageCodes.StartStaticEnvironment);
-            }
-
-            // Cannot resume an environment that is not suspended
-            if (!environment.IsShutdown())
-            {
-                throw new CodedValidationException((int)MessageCodes.EnvironmentNotShutdown);
             }
 
             // Validate sku details

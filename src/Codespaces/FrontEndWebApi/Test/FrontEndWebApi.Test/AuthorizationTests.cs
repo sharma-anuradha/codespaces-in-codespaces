@@ -406,7 +406,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                     test.ExceptionType,
                     () => environmentController.UpdateSettingsAsync(mockEnv.Id, updateInput, logger));
             }
-            }
+        }
 
         private static IEnvironmentManager CreateEnvironmentManager(
             IGlobalCloudEnvironmentRepository globalRepository,
@@ -446,8 +446,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Mock.Of<IEnvironmentUpdateStatusAction>(),
                 Mock.Of<IEnvironmentCreateAction>(),
                 Mock.Of<IEnvironmentDeleteRestoreAction>(),
-                Mock.Of<IEnvironmentResumeAction>(),
-                Mock.Of<IEnvironmentExportAction>(),
+                Mock.Of<IEnvironmentIntializeResumeAction>(),
+                Mock.Of<IEnvironmentIntializeExportAction>(),
                 Mock.Of<IEnvironmentFinalizeResumeAction>(),
                 Mock.Of<IEnvironmentFinalizeExportAction>(),
                 Mock.Of<IEnvironmentSuspendAction>(),

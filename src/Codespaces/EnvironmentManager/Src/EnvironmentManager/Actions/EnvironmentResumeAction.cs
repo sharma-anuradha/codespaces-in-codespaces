@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
@@ -99,44 +98,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             var record = await FetchAsync(input, logger);
 
-            // No action required if the environment is alredy running, or being resumed
-            if (record.Value.State == CloudEnvironmentState.Starting ||
-                        record.Value.State == CloudEnvironmentState.Available)
+            // No action required if the environment is already running
+            if (record.Value.State == CloudEnvironmentState.Available)
             {
                 return record.Value;
             }
 
             await ConfigureRunCoreAsync(record, input, transientState, logger);
 
-            SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
-            if (sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
-            {
-                // Windows can only be queued resume because the VM has to be constructed from the given OS disk.
-                await QueueStartEnvironmentAsync(input, record, transientState, StartEnvironmentAction.StartCompute, logger.NewChildLogger());
-            }
-            else
-            {
-                await StartEnvironmentAsync(input, record, transientState, StartEnvironmentAction.StartCompute, logger.NewChildLogger());
-            }
-
             return record.Value;
-        }
-
-        /// <inheritdoc/>
-        protected override Task<bool> HandleExceptionAsync(
-            EnvironmentResumeActionInput input,
-            Exception ex,
-            EnvironmentResumeTransientState transientState,
-            IDiagnosticsLogger logger)
-        {
-            return HandleExceptionAsync(input.Id, ex, transientState, CloudEnvironmentState.Starting, logger);
-        }
-
-        /// <inheritdoc/>
-        protected override void ValidateInput(EnvironmentResumeActionInput input)
-        {
-            ValidationUtil.IsRequired(input, nameof(input));
-            ValidationUtil.IsRequired(input.StartEnvironmentParams, nameof(input.StartEnvironmentParams));
         }
 
         /// <inheritdoc/>
@@ -193,6 +163,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                    input.StartEnvironmentParams,
                    "resumeenvironment",
                    logger.NewChildLogger());
+        }
+
+        /// <inheritdoc/>
+        protected override void ValidateInput(EnvironmentResumeActionInput input)
+        {
+            ValidationUtil.IsRequired(input, nameof(input));
+            ValidationUtil.IsRequired(input.StartEnvironmentParams, nameof(input.StartEnvironmentParams));
+        }
+
+        /// <inheritdoc/>
+        protected override void ValidateEnvironmentState(CloudEnvironment environment)
+        {
+            // Cannot resume if the state is not Starting or Queued
+            // Todo: elpadann - standardize using the action state allow list which aaronpaskin is working on.
+            ValidationUtil.IsTrue(
+                environment.State == CloudEnvironmentState.Starting || environment.State == CloudEnvironmentState.Queued,
+                "Environment is not in a resumable state.");
         }
     }
 }

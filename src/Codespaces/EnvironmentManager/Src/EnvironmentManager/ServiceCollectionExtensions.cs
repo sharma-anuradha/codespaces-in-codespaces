@@ -135,6 +135,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IEnvironmentListAction, EnvironmentListAction>();
             services.AddSingleton<IEnvironmentHardDeleteAction, EnvironmentHardDeleteAction>();
             services.AddSingleton<IEnvironmentDeleteRestoreAction, EnvironmentDeleteRestoreAction>();
+            services.AddSingleton<IEnvironmentIntializeResumeAction, EnvironmentIntializeResumeAction>();
+            services.AddSingleton<IEnvironmentIntializeExportAction, EnvironmentIntializeExportAction>();
             services.AddSingleton<IEnvironmentResumeAction, EnvironmentResumeAction>();
             services.AddSingleton<IEnvironmentExportAction, EnvironmentExportAction>();
             services.AddSingleton<IEnvironmentFinalizeResumeAction, EnvironmentFinalizeResumeAction>();

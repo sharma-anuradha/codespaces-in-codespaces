@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
@@ -44,8 +45,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentUpdateStatusAction">Target environment update status action.</param>
         /// <param name="environmentCreateAction">Target environment create action.</param>
         /// <param name="environmentDeleteRestoreAction">Target environment restore action.</param>
-        /// <param name="environmentResumeAction">Target environment resume action.</param>
-        /// <param name="environmentExportAction">Target environment export action.</param>
+        /// <param name="environmentIntializeResumeAction">Target environment resume action.</param>
+        /// <param name="environmentIntializeExportAction">Target environment export action.</param>
         /// <param name="environmentFinalizeResumeAction">Target environment resume finalize action.</param>
         /// <param name="environmentFinalizeExportAction">Target environment export finalize action.</param>
         /// <param name="environmentSuspendAction">Target environment suspend action.</param>
@@ -67,8 +68,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnvironmentUpdateStatusAction environmentUpdateStatusAction,
             IEnvironmentCreateAction environmentCreateAction,
             IEnvironmentDeleteRestoreAction environmentDeleteRestoreAction,
-            IEnvironmentResumeAction environmentResumeAction,
-            IEnvironmentExportAction environmentExportAction,
+            IEnvironmentIntializeResumeAction environmentIntializeResumeAction,
+            IEnvironmentIntializeExportAction environmentIntializeExportAction,
             IEnvironmentFinalizeResumeAction environmentFinalizeResumeAction,
             IEnvironmentFinalizeExportAction environmentFinalizeExportAction,
             IEnvironmentSuspendAction environmentSuspendAction,
@@ -90,14 +91,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             EnvironmentUpdateStatusAction = Requires.NotNull(environmentUpdateStatusAction, nameof(environmentUpdateStatusAction));
             EnvironmentCreateAction = Requires.NotNull(environmentCreateAction, nameof(environmentCreateAction));
             EnvironmentDeleteRestoreAction = Requires.NotNull(environmentDeleteRestoreAction, nameof(environmentDeleteRestoreAction));
-            EnvironmentResumeAction = Requires.NotNull(environmentResumeAction, nameof(environmentResumeAction));
-            EnvironmentExportAction = Requires.NotNull(environmentExportAction, nameof(environmentExportAction));
             EnvironmentFinalizeResumeAction = Requires.NotNull(environmentFinalizeResumeAction, nameof(environmentFinalizeResumeAction));
             EnvironmentFinalizeExportAction = Requires.NotNull(environmentFinalizeExportAction, nameof(environmentFinalizeExportAction));
             EnvironmentSuspendAction = Requires.NotNull(environmentSuspendAction, nameof(environmentSuspendAction));
             EnvironmentForceSuspendAction = Requires.NotNull(environmentForceSuspendAction, nameof(environmentForceSuspendAction));
             EnvironmentHardDeleteAction = Requires.NotNull(environmentHardDeleteAction, nameof(environmentHardDeleteAction));
             EnvironmentSoftDeleteAction = Requires.NotNull(environmentSoftDeleteAction, nameof(environmentSoftDeleteAction));
+            EnvironmentIntializeResumeAction = Requires.NotNull(environmentIntializeResumeAction, nameof(environmentIntializeResumeAction));
+            EnvironmentIntializeExportAction = Requires.NotNull(environmentIntializeExportAction, nameof(environmentIntializeExportAction));
         }
 
         private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
@@ -128,10 +129,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IEnvironmentDeleteRestoreAction EnvironmentDeleteRestoreAction { get; }
 
-        private IEnvironmentResumeAction EnvironmentResumeAction { get; }
-
-        private IEnvironmentExportAction EnvironmentExportAction { get; }
-
         private IEnvironmentFinalizeResumeAction EnvironmentFinalizeResumeAction { get; }
 
         private IEnvironmentFinalizeExportAction EnvironmentFinalizeExportAction { get; }
@@ -143,6 +140,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IEnvironmentHardDeleteAction EnvironmentHardDeleteAction { get; }
 
         private IEnvironmentSoftDeleteAction EnvironmentSoftDeleteAction { get; }
+
+        private IEnvironmentIntializeResumeAction EnvironmentIntializeResumeAction { get; }
+
+        private IEnvironmentIntializeExportAction EnvironmentIntializeExportAction { get; }
 
         /// <inheritdoc/>
         public Task<CloudEnvironment> GetAsync(
@@ -261,7 +262,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
             Requires.NotNull(startCloudEnvironmentParameters, nameof(startCloudEnvironmentParameters));
 
-            return EnvironmentResumeAction.RunAsync(environmentId, startCloudEnvironmentParameters, logger);
+            return EnvironmentIntializeResumeAction.RunAsync(environmentId, startCloudEnvironmentParameters, logger);
         }
 
         /// <inheritdoc/>
@@ -307,7 +308,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotNull(logger, nameof(logger));
             Requires.NotNull(exportCloudEnvironmentParameters, nameof(exportCloudEnvironmentParameters));
 
-            return EnvironmentExportAction.RunAsync(environmentId, exportCloudEnvironmentParameters, logger);
+            return EnvironmentIntializeExportAction.RunAsync(environmentId, exportCloudEnvironmentParameters, logger);
         }
 
         /// <inheritdoc/>

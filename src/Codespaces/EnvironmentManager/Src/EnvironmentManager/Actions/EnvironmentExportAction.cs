@@ -3,19 +3,15 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
@@ -103,24 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             var record = await FetchAsync(input, logger);
 
-            // No action required if the environment is already being exported.
-            if (record.Value.State == CloudEnvironmentState.Exporting)
-            {
-                return record.Value;
-            }
-
             await ConfigureRunCoreAsync(record, input, transientState, logger);
-
-            SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
-            if (sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
-            {
-                // Windows can only be queued resume because the VM has to be constructed from the given OS disk.
-                await QueueStartEnvironmentAsync(input, record, transientState, StartEnvironmentAction.StartExport, logger.NewChildLogger());
-            }
-            else
-            {
-                await StartEnvironmentAsync(input, record, transientState, StartEnvironmentAction.StartExport, logger.NewChildLogger());
-            }
 
             if (record.Value.ExportedBlobUrl == null)
             {
@@ -128,16 +107,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
 
             return record.Value;
-        }
-
-        /// <inheritdoc/>
-        protected override Task<bool> HandleExceptionAsync(
-            EnvironmentExportActionInput input,
-            Exception ex,
-            EnvironmentExportTransientState transientState,
-            IDiagnosticsLogger logger)
-        {
-            return HandleExceptionAsync(input.Id, ex, transientState, CloudEnvironmentState.Exporting, logger);
         }
 
         /// <inheritdoc/>
@@ -188,6 +157,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                    input.ExportEnvironmentParams,
                    "exportenvironment",
                    logger.NewChildLogger());
+        }
+
+        /// <inheritdoc/>
+        protected override void ValidateEnvironmentState(CloudEnvironment environment)
+        {
+            // Cannot export if the state is not Exporting or Queued
+            // Todo: elpadann - standardize using the action state allow list which aaronpaskin is working on.
+            ValidationUtil.IsTrue(
+                environment.State == CloudEnvironmentState.Exporting || environment.State == CloudEnvironmentState.Queued,
+                "Environment is not in an exportable state.");
         }
     }
 }

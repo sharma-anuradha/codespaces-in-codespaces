@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// <summary>
     /// Environment force suspend action.
     /// </summary>
-    public class EnvironmentForceSuspendAction : EnvironmentItemAction<Guid, object>, IEnvironmentForceSuspendAction
+    public class EnvironmentForceSuspendAction : EnvironmentItemAction<EnvironmentSuspendActionInput, object>, IEnvironmentForceSuspendAction
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentForceSuspendAction"/> class.
@@ -57,8 +57,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IResourceBrokerResourcesExtendedHttpContract ResourceBrokerClient { get; }
 
         /// <inheritdoc/>
+        public Task<CloudEnvironment> RunAsync(Guid environmentId, IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+
+            var input = new EnvironmentSuspendActionInput(environmentId);
+
+            return RunAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
         protected override async Task<CloudEnvironment> RunCoreAsync(
-            Guid input,
+            EnvironmentSuspendActionInput input,
             object transientState,
             IDiagnosticsLogger logger)
         {
@@ -70,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             if (record.Value?.OSDisk != default)
             {
                 await EnvironmentContinuation.ShutdownAsync(
-                    input,
+                    input.Id,
                     true,
                     LogBaseName,
                     logger.NewChildLogger());
@@ -107,8 +117,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             if (computeIdToken != null)
             {
                 await ResourceBrokerClient.DeleteAsync(
-                    input,
+                    input.Id,
                     computeIdToken.Value,
+                    logger.NewChildLogger());
+            }
+
+            // Delete the allocated compute resource that is not yet persisted, if any.
+            // This can happen during resume, if DB write fails after resource allocation
+            if (input.AllocatedComputeResourceId != default && input.AllocatedComputeResourceId != computeIdToken)
+            {
+                await ResourceBrokerClient.DeleteAsync(
+                    input.Id,
+                    input.AllocatedComputeResourceId,
                     logger.NewChildLogger());
             }
 
@@ -117,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         /// <inheritdoc/>
         protected override Task<bool> HandleExceptionAsync(
-            Guid input,
+            EnvironmentSuspendActionInput input,
             Exception ex,
             object transientState,
             IDiagnosticsLogger logger)

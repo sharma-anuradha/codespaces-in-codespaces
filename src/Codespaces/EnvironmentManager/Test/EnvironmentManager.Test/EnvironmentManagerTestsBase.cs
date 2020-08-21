@@ -241,19 +241,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 environmentActionValidator,
                 environmentSettings);
-            
-              var environmentForceSuspendAction = new EnvironmentForceSuspendAction(
-                environmentStateManager,
-                environmentRepository,
-                MockUtil.MockCurrentLocationProvider(),
-                MockUtil.MockCurrentUserProvider(),
-                MockUtil.MockControlPlaneInfo(),
-                environmentAccessManager,
-                MockUtil.MockSkuCatalog(),
-                MockUtil.MockSkuUtils(true),
-                environmentContinuationOperations.Object,
-                resourceBroker
-                );
+
+            var environmentForceSuspendAction = new EnvironmentForceSuspendAction(
+              environmentStateManager,
+              environmentRepository,
+              MockUtil.MockCurrentLocationProvider(),
+              MockUtil.MockCurrentUserProvider(),
+              MockUtil.MockControlPlaneInfo(),
+              environmentAccessManager,
+              MockUtil.MockSkuCatalog(),
+              MockUtil.MockSkuUtils(true),
+              environmentContinuationOperations.Object,
+              resourceBroker
+              );
 
             var environmentSuspendAction = new EnvironmentSuspendAction(
                 environmentStateManager,
@@ -294,7 +294,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 taskHelper
                 );
 
-
             var environmentExportAction = new EnvironmentExportAction(
                 environmentStateManager,
                 environmentRepository,
@@ -317,6 +316,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 resourceBroker,
                 taskHelper
                 );
+
+            var environmentIntializeResumeAction = new EnvironmentIntializeResumeAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                environmentResumeAction,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true)
+                );
+
+            var environmentIntializeExportAction = new EnvironmentIntializeExportAction(
+                environmentStateManager,
+                environmentRepository,
+                MockUtil.MockCurrentLocationProvider(),
+                MockUtil.MockCurrentUserProvider(),
+                MockUtil.MockControlPlaneInfo(),
+                environmentAccessManager,
+                environmentExportAction,
+                MockUtil.MockSkuCatalog(),
+                MockUtil.MockSkuUtils(true));
 
             var environmentFinalizeResumeAction = new EnvironmentFinalizeResumeAction(
                 environmentStateManager,
@@ -366,8 +388,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 this.environmentUpdateStatusAction,
                 environmentCreateAction,
                 environmentDeleteRestoreAction,
-                environmentResumeAction,
-                environmentExportAction,
+                environmentIntializeResumeAction,
+                environmentIntializeExportAction,
                 environmentFinalizeResumeAction,
                 environmentFinalizeExportAction,
                 environmentSuspendAction,
