@@ -66,37 +66,66 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
 
             // All appsettings.*.json files are loaded from this location.
             var settingsRelativePath = GetSettingsRelativePath();
-            var infix = GetAppSettingsInfixName();
+
+            // This function loads a number of appsettings*.json files. Some are common for
+            // all configurations. Appsettings that are specific to environment/instance
+            // are designated by using an infix such as "dev", "ppe-rel", or "prod-rel" in the filename.
+            //
+            // The infix is used with these primary appsettings settings files:
+            //      appsettings.{infix}.json
+            //      appsettings.subscriptions.{infix}.json
+            //
+            // We determine the infix based on the current hosting environment. For production, we also
+            // need to differentiate release vs canary. The canary release pipeline sets the
+            // appsettings override file to "appsettings.prod-can.json". If that
+            // override file is specified, instead of treating it as a real override, we instead
+            // change the infix from "prod-rel" to "prod-can". This will yield both
+            // "appsettings.prod-can.json" and "appsettings.subscriptions.prod-can.json".
+            // In this case, the override file is now redundant is redundant and it is nulled out.
+
+            // Get the override file, if any, and test if it is canary.
+            var overrideAppSettingsJsonFile = GetOverrideAppSettingsJsonFile();
+            var isCanary = overrideAppSettingsJsonFile == "appsettings.prod-can.json";
+
+            // Get the infix designation and compute the standard appsettings filenames.
+            var infix = GetAppSettingsInfixName(isCanary);
+            var appsettingsInfixFile = $"appsettings.{infix}.json";
+            var appsettingsSubscriptionsInfixFile = $"appsettings.subscriptions.{infix}.json";
+
+            // If the override file is equal to the standard file (as with canary), we don't
+            // want to load the override file a second time; so null it out.
+            if (appsettingsInfixFile.Equals(overrideAppSettingsJsonFile, StringComparison.OrdinalIgnoreCase))
+            {
+                overrideAppSettingsJsonFile = null;
+            }
+
+            // TEMPORARY: The appsettings.subscriptions.*.json files are not yet deployed, so do not require one.
+            var requireAppsettingsSubscriptionsJson = false;
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(hostingEnvironment.ContentRootPath)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.json"), optional: false, reloadOnChange: true)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.secrets.json"), optional: true)
-                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: true)
+                .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.images.json"), optional: false)
                 .AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.commitId.json"), optional: true);
 
-            var hasOverrideFile = TryGetOverrideAppSettingsJsonFile(out var overrideAppSettingsJsonFile);
-            var isDevelopment = hostingEnvironment.IsDevelopment();
-
-            // Skipping environment appsettings file if override file is 'prod-can', so Stamps do not get merged
-            if (!(hasOverrideFile && overrideAppSettingsJsonFile == "appsettings.prod-can.json"))
-            {
-                builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.{infix}.json"), optional: false);
-            }
+            // Add the {env}-{instance} specific appsettings and appsettings.subscriptions files.
+            builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{appsettingsInfixFile}"), optional: false);
+            builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{appsettingsSubscriptionsInfixFile}"), optional: !requireAppsettingsSubscriptionsJson);
 
             // Get the optional override appsettings file.
-            if (hasOverrideFile)
+            if (overrideAppSettingsJsonFile != null)
             {
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}{overrideAppSettingsJsonFile}"), optional: false);
             }
-            else if (isDevelopment)
+            else if (hostingEnvironment.IsDevelopment())
             {
                 // Get the default override appsettings file as dev-ci to not break cenarios for development environment.
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.dev-ci.json"), optional: false);
             }
 
             // Load the local file if not running in azure.
-            if (!IsRunningInAzure() && isDevelopment)
+            if (!IsRunningInAzure() && hostingEnvironment.IsDevelopment())
             {
                 builder.AddJsonFile(AddAppSettingsJsonFile($"{settingsRelativePath}appsettings.local.json"), optional: true);
 
@@ -428,20 +457,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             warmup.Start();
         }
 
-        private static bool TryGetOverrideAppSettingsJsonFile(out string overrideAppSettingsJsonFile)
+        private static string GetOverrideAppSettingsJsonFile()
         {
-            overrideAppSettingsJsonFile = Environment.GetEnvironmentVariable(OverrideAppSettingsJsonEnvironmentVariable);
+            var overrideAppSettingsJsonFile = Environment.GetEnvironmentVariable(OverrideAppSettingsJsonEnvironmentVariable);
 
             if (string.IsNullOrEmpty(overrideAppSettingsJsonFile) ||
                 overrideAppSettingsJsonFile.Equals("\"false\"", StringComparison.OrdinalIgnoreCase))
             {
-                return false;
+                return null;
             }
 
             // Helm adds quotes in strange ways. Linux doesn't like them.
             overrideAppSettingsJsonFile = overrideAppSettingsJsonFile.Trim('"');
-
-            return true;
+            return overrideAppSettingsJsonFile;
         }
 
         /// <summary>
@@ -469,7 +497,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             }
         }
 
-        private string GetAppSettingsInfixName()
+        private string GetAppSettingsInfixName(bool isCanary)
         {
             /* Future: If needed, let deployment set an environment variable to override this default.
              */
@@ -484,7 +512,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             }
             else if (HostingEnvironment.IsProduction())
             {
-                return "prod-rel";
+                return isCanary ? "prod-can" : "prod-rel";
             }
 
             throw new NotSupportedException($"The hosting environment '{HostingEnvironment.EnvironmentName}' is not supported.");
