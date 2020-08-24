@@ -115,9 +115,6 @@ pfingress:
         proxy_set_header X-Request-ID $http_correlation_id;
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
       }
-      location /favicon.ico {
-        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
-      }
       location /site.css {
         proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
       }
