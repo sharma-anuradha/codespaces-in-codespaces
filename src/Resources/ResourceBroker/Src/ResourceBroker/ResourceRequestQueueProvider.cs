@@ -174,7 +174,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                  async (childLogger) =>
                  {
                      var poolCode = resourcePool.Details.GetPoolDefinition();
-                     var queueName = ResourceNameBuilder.GetQueueName(poolCode);
+                     var queueName = ResourceNameBuilder.GetPoolQueueName(poolCode);
 
                      childLogger.FluentAddBaseValue("PoolQueueSku", resourcePool.Details.SkuName)
                          .FluentAddBaseValue("PoolQueueName", queueName)

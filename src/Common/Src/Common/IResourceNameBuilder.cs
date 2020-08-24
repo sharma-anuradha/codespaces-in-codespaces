@@ -24,6 +24,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         string GetQueueName(string baseName);
 
         /// <summary>
+        /// Creates a name for queue.
+        /// </summary>
+        /// <param name="baseName">Basename of the queue.</param>
+        /// <returns>Name with stamp.</returns>
+        string GetPoolQueueName(string baseName);
+
+        /// <summary>
         /// Creates name for resource group.
         /// </summary>
         /// <param name="baseName">Basename of the resource group.</param>
