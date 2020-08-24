@@ -1,4 +1,4 @@
-﻿// <copyright file="GithubAuthenticationHandler.cs" company="Microsoft">
+// <copyright file="GithubAuthenticationHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -116,6 +116,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Authentication
             // Add a tenant ID claim to the identity, as some other code might expect it.
             // Note this ID is just "github" rather than a GUID like most tenant IDs.
             claims.Add(new Claim(CustomClaims.TenantId, ProviderNames.GitHub));
+            claims.Add(new Claim(CustomClaims.Provider, ProviderNames.GitHub));
 
             var identity = new ClaimsIdentity(
                 claims,

@@ -1,11 +1,9 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.TokenService.Client;
 using Microsoft.VsSaaS.Services.TokenService.Contracts;
 using Xunit;
 
@@ -77,7 +75,13 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         {
             var tokenClient = CreateSPAuthenticatedClient(TestAppId1);
 
-            var token = await tokenClient.ExchangeAsync(audience, lifetime, CancellationToken.None);
+            var token = await tokenClient.ExchangeAsync(
+                new ExchangeParameters
+                {
+                    Audience = audience,
+                    Lifetime = lifetime,
+                },
+                CancellationToken.None);
 
             var payload = DecodeToken(token, new[] { TestDecryptingCredentials1 });
             Assert.Equal(TestIssuer1, payload.Iss);
@@ -97,7 +101,8 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             string email = "user@example.com";
             var tokenClient = CreateUserAuthenticatedClient(name, email);
 
-            var token = await tokenClient.ExchangeAsync(null, null, CancellationToken.None);
+            var token = await tokenClient.ExchangeAsync(
+                new ExchangeParameters(), CancellationToken.None);
 
             var payload = DecodeToken(token);
             Assert.Equal(TestIssuer1, payload.Iss);
@@ -110,37 +115,24 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         [Fact]
         public async Task ExchangeTokenWithTokenInBody()
         {
-            var expectedExpiration = DateTime.UtcNow + ExchangeLifetime;
-
             string name = "Test User";
             string email = "user@example.com";
-            var authHeader = await GetUserAuthHeaderAsync(name, email);
+            var tokenClient = CreateUnauthenticatedClient();
 
-            var requestParameters = new ExchangeParameters
-            {
-                Token = authHeader.Parameter,
-            };
-
-            var httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(TokenService.ServiceUri, "/api/v1/tokens/"),
-            };
-
-            var response = await httpClient.PostAsJsonAsync(
-                "exchange",
-                requestParameters,
+            var token = await tokenClient.ExchangeAsync(
+                new ExchangeParameters
+                {
+                    Token = CreateMockToken(name, email),
+                    Provider = ProviderNames.Microsoft,
+                },
                 CancellationToken.None);
 
-            var result = await TokenServiceClient.ConvertResponseAsync<IssueResult>(
-                response, allowNotFound: false, CancellationToken.None);
-
-            var token = result.Token;
             var payload = DecodeToken(token);
-
-            Assert.Equal(TestAudience1, payload.Aud?.SingleOrDefault());
-
-            var exp = payload.ValidTo;
-            AssertTime(expectedExpiration, exp);
+            Assert.Equal(TestIssuer1, payload.Iss);
+            Assert.Equal(TestTid, payload[CustomClaims.TenantId] as string);
+            Assert.Equal(TestOid, payload[CustomClaims.OId] as string);
+            Assert.Equal(name, payload[CustomClaims.DisplayName] as string);
+            Assert.Equal(email, payload[CustomClaims.Email] as string);
         }
     }
 }

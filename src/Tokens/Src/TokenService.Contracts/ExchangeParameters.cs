@@ -22,11 +22,13 @@ namespace Microsoft.VsSaaS.Services.TokenService.Contracts
         public string? Token { get; set; }
 
         /// <summary>
-        /// Gets or sets a hint about the token provider, if a <see cref="Token"/> was specified
+        /// Gets or sets the name of the token provider, if a <see cref="Token"/> was specified
         /// in the body.
         /// </summary>
-        /// <remarks>If unspecified, the provider is inferred based on the token issuer or
-        /// audience.</remarks>
+        /// <remarks>
+        /// Required if the <see cref="Token" /> property is specified. Must be one of the values
+        /// from <see cref="ProviderNames" />.
+        /// </remarks>
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string? Provider { get; set; }
 

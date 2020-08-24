@@ -21,6 +21,7 @@ using Microsoft.VsSaaS.Common.Identity;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.TokenService.Settings;
+using static Microsoft.VsSaaS.AspNetCore.Authentication.JwtBearer.JwtBearerAuthenticationOptions2;
 
 namespace Microsoft.VsSaaS.Services.TokenService.Authentication
 {
@@ -63,6 +64,10 @@ namespace Microsoft.VsSaaS.Services.TokenService.Authentication
                 OnAuthenticationFailed = AuthenticationFailedAsync,
             };
             jwtBearerOptions.IsEmailClaimRequired = false;
+            jwtBearerOptions.CompatibilityAudiences = new Audience[]
+            {
+                Audience.VisualStudioClient,
+            };
         }
 
         /// <summary>

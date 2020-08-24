@@ -292,42 +292,23 @@ namespace Microsoft.VsSaaS.Services.TokenService.Client
         /// <summary>
         /// Exchanges a token for a newly issued JWT token via the token service.
         /// </summary>
-        /// <param name="audience">Optional requested audience for the resulting token.</param>
-        /// <param name="lifetime">Optional requested lifetime for the resulting token.</param>
+        /// <param name="exchangeParameters">Input token and parameters for the exchange.</param>
         /// <param name="cancellation">Cancellation token.</param>
         /// <returns>The issued JWT token.</returns>
         /// <exception cref="ArgumentException">Some claims or parameters were missing or invalid.
         /// The exception message often contains details.</exception>
         /// <exception cref="UnauthorizedAccessException">The client authentication token was
         /// missing or invalid.</exception>
-        /// <remarks>
-        /// The input token for the exchange is supplied via the client auth callback (or service
-        /// principal identity) passed into the constructor.
-        /// <para />
-        /// If the audience is unspecified, the configured default audience will be used.
-        /// <para />
-        /// If the requested lifetime is greater than the configured maximum, the maximum is used.
-        /// If the lifetime is unspecified, the configured default lifetime will be used.
-        /// </remarks>
         public async Task<string> ExchangeAsync(
-            string? audience,
-            TimeSpan? lifetime,
+            ExchangeParameters exchangeParameters,
             CancellationToken cancellation)
         {
-            ExchangeParameters? requestParameters = null;
-            if (audience != null || lifetime != null)
-            {
-                requestParameters = new ExchangeParameters
-                {
-                    Audience = audience,
-                    Lifetime = lifetime,
-                };
-            }
+            Requires.NotNull(exchangeParameters, nameof(exchangeParameters));
 
             this.httpClient.DefaultRequestHeaders.Authorization = await this.authCallback();
             var response = await this.httpClient.PostAsJsonAsync(
                 TokensApiPath + "/exchange",
-                requestParameters,
+                exchangeParameters,
                 cancellation);
 
             var result = await ConvertResponseAsync<IssueResult>(

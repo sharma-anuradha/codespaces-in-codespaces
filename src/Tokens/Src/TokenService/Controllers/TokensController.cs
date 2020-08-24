@@ -247,11 +247,16 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 return Problem("Missing exchange issuer configuration.");
             }
 
-            var provider = parameters?.Provider ?? ProviderNames.Microsoft;
             var identity = User.Identity as ClaimsIdentity;
 
             if (!string.IsNullOrEmpty(parameters?.Token))
             {
+                var provider = parameters.Provider;
+                if (string.IsNullOrEmpty(provider))
+                {
+                    return Problem("A token provider name is required.");
+                }
+
                 if (identity?.IsAuthenticated == true)
                 {
                     return Problem("Include token in either header or body, not both.");
@@ -262,6 +267,11 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 if (!authenticateResult.Succeeded ||
                     (identity = authenticateResult.Principal.Identity as ClaimsIdentity) == null)
                 {
+                    if (authenticateResult.Failure != null)
+                    {
+                        logger.AddErrorDetail(authenticateResult.Failure.Message);
+                    }
+
                     logger.LogError("token_exchange_unauthorized");
                     return Unauthorized();
                 }
@@ -299,7 +309,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
                 payload.AddClaim(JwtWriter.CreateDateTimeClaim(JwtRegisteredClaimNames.Exp, exp));
             }
 
-            var claimsError = CopyIdentityClaims(provider, identity.Claims, payload, logger);
+            var claimsError = CopyIdentityClaims(identity.Claims, payload, logger);
             if (claimsError != null)
             {
                 return claimsError;
@@ -340,6 +350,12 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             // (The existing instance of the handler for the request has already failed.)
             var scheme = await this.authSchemeProvider.GetSchemeAsync(
                 authenticationScheme);
+            if (scheme == null)
+            {
+                return AuthenticateResult.Fail(
+                    $"Invalid authentication scheme: {authenticationScheme}");
+            }
+
             var handler = (IAuthenticationHandler)ActivatorUtilities.CreateInstance(
                 HttpContext.RequestServices, scheme.HandlerType);
             await handler.InitializeAsync(scheme, HttpContext);
@@ -441,7 +457,6 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
         }
 
         private IActionResult? CopyIdentityClaims(
-            string providerName,
             IEnumerable<Claim> fromClaims,
             JwtPayload toPayload,
             IDiagnosticsLogger logger)
@@ -453,8 +468,13 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
 
             string? GetClaimValue(string claimName, string? altClaimName = null)
             {
-                return fromClaims.SingleOrDefault(
-                    (c) => c.Type == claimName || c.Type == altClaimName)?.Value;
+                var claim = fromClaims.FirstOrDefault((c) => c.Type == claimName);
+                if (claim == null && altClaimName != null)
+                {
+                    claim = fromClaims.FirstOrDefault((c) => c.Type == altClaimName);
+                }
+
+                return claim?.Value;
             }
 
             var tid = GetClaimValue(CustomClaims.TenantId, tidClaimType);
@@ -465,15 +485,31 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             }
 
             var oid = GetClaimValue(CustomClaims.OId, oidClaimType);
-            if (string.IsNullOrEmpty(oid))
+            var altsecid = GetClaimValue(CustomClaims.AltSecId);
+            if (!string.IsNullOrEmpty(oid))
+            {
+                toPayload.AddClaim(new Claim(CustomClaims.OId, oid));
+            }
+            else if (!string.IsNullOrEmpty(altsecid))
+            {
+                toPayload.AddClaim(new Claim(CustomClaims.AltSecId, altsecid));
+            }
+            else
             {
                 logger.LogError("token_exchange_missing_oid");
-                return Problem($"Missing claim: '{CustomClaims.OId}'");
+                return Problem($"Missing claim: '{CustomClaims.OId}' or '{CustomClaims.AltSecId}'");
             }
 
-            toPayload.AddClaim(new Claim(CustomClaims.Provider, providerName));
+            var provider = GetClaimValue(CustomClaims.Provider);
+            if (provider != ProviderNames.GitHub)
+            {
+                // AAD tokens can have other 'idp' values, for example "live.com".
+                // Simplify to just "microsoft".
+                provider = ProviderNames.Microsoft;
+            }
+
+            toPayload.AddClaim(new Claim(CustomClaims.Provider, provider));
             toPayload.AddClaim(new Claim(CustomClaims.TenantId, tid));
-            toPayload.AddClaim(new Claim(CustomClaims.OId, oid));
 
             void AddOptionalClaim(string claimName, string? value, string? defaultValue)
             {
@@ -491,12 +527,33 @@ namespace Microsoft.VsSaaS.Services.TokenService.Controllers
             }
 
             var name = GetClaimValue(CustomClaims.DisplayName, ClaimTypes.Name);
-            var email = GetClaimValue(CustomClaims.Email, ClaimTypes.Email);
             var username = GetClaimValue(CustomClaims.Username);
 
-            if (string.IsNullOrEmpty(email) && username?.Contains('@') == true)
+            var email = GetClaimValue(CustomClaims.Email, ClaimTypes.Email);
+            if (email?.Contains('@') != true)
             {
-                email = username;
+                // Different token providers may use different claim names for email.
+                // Try a few other possibilities.
+                if (username?.Contains('@') == true)
+                {
+                    email = username;
+                }
+                else
+                {
+                    var upn = GetClaimValue("upn", ClaimTypes.Upn);
+                    if (upn?.Contains('@') == true)
+                    {
+                        email = upn;
+                    }
+                    else
+                    {
+                        var uniqueName = GetClaimValue("unique_name");
+                        if (uniqueName?.Contains('@') == true)
+                        {
+                            email = uniqueName;
+                        }
+                    }
+                }
             }
 
             AddOptionalClaim(CustomClaims.DisplayName, name, clientSettings?.DisplayName);

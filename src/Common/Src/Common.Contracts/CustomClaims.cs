@@ -30,6 +30,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public const string OId = "oid";
 
         /// <summary>
+        /// The oid claim.
+        /// </summary>
+        public const string AltSecId = "altsecid";
+
+        /// <summary>
         /// The user's username.
         /// </summary>
         public const string Username = "preferred_username";

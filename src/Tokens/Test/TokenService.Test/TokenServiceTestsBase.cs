@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -65,6 +65,12 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
         protected static Task<AuthenticationHeaderValue> GetUserAuthHeaderAsync(
             string name, string email)
         {
+            string mockToken = CreateMockToken(name, email);
+            return Task.FromResult(new AuthenticationHeaderValue("Bearer", mockToken));
+        }
+
+        protected static string CreateMockToken(string name, string email)
+        {
             var payload = new JwtPayload(new[]
             {
                 new Claim(CustomClaims.DisplayName, name),
@@ -74,7 +80,7 @@ namespace Microsoft.VsSaaS.Services.TokenService.Test
             });
             var mockToken = Convert.ToBase64String(
                 Encoding.UTF8.GetBytes(payload.SerializeToJson()));
-            return Task.FromResult(new AuthenticationHeaderValue("Bearer", mockToken));
+            return mockToken;
         }
 
         protected TokenServiceClient CreateUnauthenticatedClient()
