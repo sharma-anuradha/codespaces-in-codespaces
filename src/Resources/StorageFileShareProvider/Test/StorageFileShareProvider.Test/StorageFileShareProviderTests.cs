@@ -42,6 +42,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             {"ResourceTag", "GeneratedFromTest"},
         };
 
+        public static TheoryData<int> MockStorageSizeInGb = new TheoryData<int>
+        {
+            32,
+            64
+        };
+
         [Fact]
         public void Ctor_with_bad_options()
         {
@@ -60,8 +66,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// <summary>
         /// Create operation succeeds.
         /// </summary>
-        [Fact]
-        public async Task FileShare_Create_Ok()
+        [Theory]
+        [MemberData(nameof(MockStorageSizeInGb))]
+        public async Task FileShare_Create_Ok(int storageSizeInGb)
         {
             var logger = new DefaultLoggerFactory().New();
 
@@ -89,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 .Setup(x => x.CreateStorageAccountAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockAzureResourceInfo);
             providerHelperMoq
-                .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<IDiagnosticsLogger>()))
+                .Setup(x => x.CreateFileShareAsync(It.IsAny<AzureResourceInfo>(), storageSizeInGb, It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.CompletedTask);
 
             var storageProvider = new StorageFileShareProvider(
@@ -104,6 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 AzureSubscription = MockSubscriptionId.ToString(),
                 StorageCopyItems = new[] { MockStorageCopyItem },
                 ResourceTags = MockResourceTags,
+                StorageSizeInGb = storageSizeInGb,
             };
 
             // 3 because there are 3 steps before we wait for the preparation to complete.
@@ -143,8 +151,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// <summary>
         /// Create operation that failed should return null continuation token and failed status.
         /// </summary>
-        [Fact]
-        public async Task FileShare_Create_Failed()
+        [Theory]
+        [MemberData(nameof(MockStorageSizeInGb))]
+        public async Task FileShare_Create_Failed(int storageSizeInGb)
         {
             var logger = new DefaultLoggerFactory().New();
             var batchPrepareFileShareJobProviderMoq = new Mock<IBatchPrepareFileShareJobProvider>();
@@ -164,6 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 AzureSubscription = MockSubscriptionId.ToString(),
                 StorageCopyItems = new[] { MockStorageCopyItem },
                 ResourceTags = MockResourceTags,
+                StorageSizeInGb = storageSizeInGb,
             };
             var result = await storageProvider.CreateAsync(input, logger);
             Assert.NotNull(result);
@@ -428,6 +438,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             Assert.Null(result.NextInput);
             Assert.Equal(OperationState.Failed, result.Status);
         }
-
     }
 }

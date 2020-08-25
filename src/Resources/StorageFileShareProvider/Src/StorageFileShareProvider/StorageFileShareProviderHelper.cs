@@ -1,4 +1,4 @@
-// <copyright file="StorageFileShareProviderHelper.cs" company="Microsoft">
+﻿// <copyright file="StorageFileShareProviderHelper.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -31,7 +31,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         private const string StorageSkuNamePremium = "Premium_LRS";
         private static readonly int StorageAccountNameMaxLength = 24;
         private static readonly int StorageAccountNameGenerateMaxAttempts = 3;
-        private static readonly int StorageShareQuotaGb = 100;
         private static readonly string StorageMountableShareName = "cloudenvdata";
         private static readonly string StorageAccountNamePrefix = "vsoce";
         private static readonly string StorageLinuxMountableFilename = "dockerlib";
@@ -145,6 +144,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <inheritdoc/>
         public Task CreateFileShareAsync(
             AzureResourceInfo azureResourceInfo,
+            int storageSizeInGb,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
@@ -157,7 +157,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     var cloudStorageAccount = await GetCloudStorageAccount(azureResourceInfo, null, childLogger);
                     var fileClient = cloudStorageAccount.CreateCloudFileClient();
                     var fileShare = fileClient.GetShareReference(StorageMountableShareName);
-                    fileShare.Properties.Quota = StorageShareQuotaGb;
+                    fileShare.Properties.Quota = storageSizeInGb;
                     await fileShare.CreateIfNotExistsAsync();
                 });
         }

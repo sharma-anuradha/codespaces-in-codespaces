@@ -14,12 +14,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public enum SkuTier
     {
         /// <summary>
-        /// A standard tier SKU, 4 vCPU, FSv2 compute.
+        /// A standard tier SKU, 4 vCPU, FSv2 compute, 64GB Storage.
         /// </summary>
         Standard = 0,
 
         /// <summary>
-        /// A premium tier SKU, 8 vCPU, FSv2 compute.
+        /// A premium tier SKU, 8 vCPU, FSv2 compute, 64GB Storage.
         /// </summary>
         Premium = 1,
 
@@ -34,8 +34,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         PremiumDSv3 = 3,
 
         /// <summary>
-        /// A basic tier SKU, 2 vCPU, FSv2 compute.
+        /// A basic tier SKU, 2 vCPU, FSv2 compute, 64GB Storage.
         /// </summary>
         Basic = 4,
+
+        /// <summary>
+        /// A basic tier SKU, 2 vCPU, FSv2 compute, 32GB Storage.
+        /// </summary>
+        Basic32gb = 5,
+
+        /// <summary>
+        /// A standard tier SKU, 4 vCPU, FSv2 compute, 32GB Storage.
+        /// </summary>
+        Standard32gb = 6,
+
+        /// <summary>
+        /// A premium tier SKU, 8 vCPU, FSv2 compute, 32GB Storage.
+        /// </summary>
+        Premium32gb = 7,
     }
 }

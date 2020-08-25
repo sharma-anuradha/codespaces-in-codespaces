@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageFileShareProvider.cs" company="Microsoft">
+// <copyright file="StorageFileShareProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -219,7 +219,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 switch (prevContinuation.NextState)
                 {
                     case FileShareProviderCreateState.CreateFileShare:
-                        await providerHelper.CreateFileShareAsync(prevContinuation.AzureResourceInfo, logger);
+                        await providerHelper.CreateFileShareAsync(prevContinuation.AzureResourceInfo, input.StorageSizeInGb, logger);
                         nextState = FileShareProviderCreateState.PrepareFileShare;
                         break;
                     case FileShareProviderCreateState.PrepareFileShare:

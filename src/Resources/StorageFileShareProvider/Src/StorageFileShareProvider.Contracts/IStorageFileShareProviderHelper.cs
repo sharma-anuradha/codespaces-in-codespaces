@@ -56,10 +56,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.C
         /// Create a file share in the provided storage account.
         /// </summary>
         /// <param name="azureStorageAccountId">Azure Resource Id of the storage account.</param>
+        /// <param name="storageSizeInGb">File Share size of this storage.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Task.</returns>
         Task CreateFileShareAsync(
             AzureResourceInfo azureStorageAccountId,
+            int storageSizeInGb,
             IDiagnosticsLogger logger);
 
         /// <summary>

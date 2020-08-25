@@ -39,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private static readonly string srcTemplateBlobNameLinux = "cloudenvdata_kitchensink_1.0.2583-g656088a7fb87cca16ccdc6cc8686f34342a71260.release1104";
         
         // Azure subscription that the storage accounts will be created in.
-        private static readonly string destAzureSubscriptionId = "391ef925-0b71-4920-8e81-93cb44d896c0";
+        private static readonly string destAzureSubscriptionId = "6cb4f993-a8bb-422a-9864-1346e1b4dd2c";
 
         // Prefix for Azure resource group that will be created (then cleaned-up) by the test
         private static readonly string destResourceGroupPrefix = "test-storage-file-share-";
@@ -205,7 +205,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             try
             {
                 // Create file shares
-                await Task.WhenAll(storageAccounts.Select(sa => providerHelper.CreateFileShareAsync(sa, logger)));
+                await Task.WhenAll(storageAccounts.Select(sa => providerHelper.CreateFileShareAsync(sa, STORAGE_SIZE_IN_GB, logger)));
 
                 var linuxCopyItem = new StorageCopyItem()
                 {

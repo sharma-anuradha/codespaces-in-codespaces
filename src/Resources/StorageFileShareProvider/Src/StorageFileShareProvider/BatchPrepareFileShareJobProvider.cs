@@ -153,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         /// <inheritdoc/>
         protected override string GetBatchJobIdFromInput(BatchPrepareFileShareJobInput taskInput, int jobSuffix)
         {
-            return $"{(StorageProviderSettings.WorkerBatchPoolId + JoinCopyItemFileNames(taskInput.SourceCopyItems)).GetDeterministicHashCode()}_{jobSuffix}";
+            return $"{(StorageProviderSettings.WorkerBatchPoolId + taskInput.StorageSizeInGb + JoinCopyItemFileNames(taskInput.SourceCopyItems)).GetDeterministicHashCode()}_{jobSuffix}";
         }
 
         private string JoinCopyItemFileNames(IEnumerable<StorageCopyItem> copyItems) => string.Join(",", copyItems.Select(s => $"{s.StorageType.ToString()}={s.SrcBlobFileName}"));

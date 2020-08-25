@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     async (i, childLogger) =>
                     {
                         // Create file share
-                        await providerHelper.CreateFileShareAsync(storageAccount, childLogger);
+                        await providerHelper.CreateFileShareAsync(storageAccount, STORAGE_SIZE_IN_GB, childLogger);
 
                         // Start prepare file share job
                         var linuxCopyItem = new StorageCopyItem()
