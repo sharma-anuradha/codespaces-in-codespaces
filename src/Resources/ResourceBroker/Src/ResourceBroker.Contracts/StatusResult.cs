@@ -1,4 +1,4 @@
-﻿// <copyright file="StatusResult.cs" company="Microsoft">
+// <copyright file="StatusResult.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -38,6 +38,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// Gets or sets a value indicating whether record is ready.
         /// </summary>
         public bool IsReady { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resource allocation created timestamp.
+        /// </summary>
+        public DateTime Created { get; set; }
 
         /// <summary>
         /// Gets or sets the Provisioning Status.

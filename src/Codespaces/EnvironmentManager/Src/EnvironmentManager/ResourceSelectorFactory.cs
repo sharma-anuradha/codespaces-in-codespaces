@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceSelectorFactory.cs" company="Microsoft">
+// <copyright file="ResourceSelectorFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ISystemConfiguration SystemConfiguration { get; }
 
         /// <inheritdoc/>
-        public async Task<IList<AllocateRequestBody>> CreateAllocationRequestsAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentOptions cloudEnvironmentOptions, IDiagnosticsLogger logger)
+        public async Task<IList<AllocateRequestBody>> CreateAllocationRequestsAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
         {
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(cloudEnvironment.SkuName, out var sku);
 
@@ -50,6 +50,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var isWindowsEnvPersistingOSDisk = await IsWindowsEnvironmentPersistingOSDiskAsync(logger);
             var isOsDiskAllocationRequired = isWindowsEnvPersistingOSDisk && sku.ComputeOS == ComputeOS.Windows;
             var isStorageAllocated = cloudEnvironment.Storage?.Type == ResourceType.StorageFileShare;
+            var queueComputeCreateRequest = !string.IsNullOrWhiteSpace(properties.SubnetResourceId);
+            var queueComputeAllocation = cloudEnvironment.QueueResourceAllocation && !queueComputeCreateRequest && !isOsDiskAllocationRequired;
 
             if (isOsDiskAllocationRequired)
             {
@@ -76,13 +78,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 }
             }
 
-            var queueComputeRequest = cloudEnvironmentOptions.QueueResourceAllocation || !string.IsNullOrWhiteSpace(properties.SubnetResourceId);
             var computeRequest = new AllocateRequestBody
             {
                 Type = ResourceType.ComputeVM,
                 SkuName = cloudEnvironment.SkuName,
                 Location = cloudEnvironment.Location,
-                QueueCreateResource = queueComputeRequest,
+                QueueCreateResource = queueComputeCreateRequest,
+                QueueResourceRequest = queueComputeAllocation,
                 ExtendedProperties = properties,
             };
 
@@ -98,7 +100,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         Type = ResourceType.OSDisk,
                         SkuName = cloudEnvironment.SkuName,
                         Location = cloudEnvironment.Location,
-                        QueueCreateResource = queueComputeRequest,
+                        QueueCreateResource = queueComputeCreateRequest,
+                        QueueResourceRequest = queueComputeAllocation,
                         ExtendedProperties = properties,
                     };
 
@@ -114,6 +117,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     SkuName = cloudEnvironment.SkuName,
                     Location = cloudEnvironment.Location,
                     QueueCreateResource = false, // Note: storage always from the hot pool.
+                    QueueResourceRequest = cloudEnvironment.QueueResourceAllocation,
                     ExtendedProperties = properties,
                 };
 

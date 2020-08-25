@@ -381,6 +381,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
                         Location = resourceResult.Location,
                         Type = resourceResult.Type,
                         IsReady = resourceResult.IsReady,
+                        Created = resourceResult.Created,
                         ProvisioningStatus = resourceResult.ProvisioningStatus,
                         ProvisioningStatusChanged = resourceResult.ProvisioningStatusChanged,
                         StartingStatus = resourceResult.StartingStatus,

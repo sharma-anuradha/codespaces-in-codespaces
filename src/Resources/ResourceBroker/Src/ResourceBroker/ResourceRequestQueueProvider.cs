@@ -177,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                      var queueName = ResourceNameBuilder.GetPoolQueueName(poolCode);
 
                      childLogger.FluentAddBaseValue("PoolQueueSku", resourcePool.Details.SkuName)
-                         .FluentAddBaseValue("PoolQueueName", queueName)
+                         .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolQueueName, queueName)
                          .FluentAddBaseValue("PoolQueueLocation", resourcePool.Details.Location);
 
                      var queue = queueClient.GetQueueReference(queueName);
@@ -256,7 +256,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                                pool.Details.SkuName,
                                                poolReference);
                        resource.IsAssigned = true;
+                       resource.Assigned = DateTime.UtcNow;
                        resource.IsReady = true;
+                       resource.Ready = DateTime.UtcNow;
                        resource.ProvisioningStatus = OperationState.Succeeded;
                        resource.AzureResourceInfo = queueResourceInfo;
 

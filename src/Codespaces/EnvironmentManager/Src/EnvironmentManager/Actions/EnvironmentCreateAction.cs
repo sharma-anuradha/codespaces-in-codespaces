@@ -201,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             {
                 environmentOptions.CustomContainers = input.Details.ExperimentalFeatures.CustomContainers;
                 environmentOptions.NewTerminal = input.Details.ExperimentalFeatures.NewTerminal;
-                environmentOptions.QueueResourceAllocation = input.Details.ExperimentalFeatures.QueueResourceAllocation;
+                record.Value.QueueResourceAllocation = input.Details.ExperimentalFeatures.QueueResourceAllocation;
             }
 
             // Setup static environment
@@ -212,7 +212,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             else
             {
                 // Queued or standard create
-                if (environmentOptions.QueueResourceAllocation || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
+                if (record.Value.QueueResourceAllocation || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
                 {
                     await QueueCoreEnvironmentAsync(input, record, environmentOptions, transientState, logger);
                 }
@@ -443,7 +443,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
            CloudEnvironmentOptions environmentOptions,
            IDiagnosticsLogger logger)
         {
-            var inputRequest = await ResourceSelectorFactory.CreateAllocationRequestsAsync(cloudEnvironment, environmentOptions, logger);
+            var inputRequest = await ResourceSelectorFactory.CreateAllocationRequestsAsync(cloudEnvironment, logger);
 
             try
             {

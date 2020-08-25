@@ -349,6 +349,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public SubscriptionData SubscriptionData { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the environment allows to queue resource allocation request.
+        /// </summary>
+        [JsonProperty(PropertyName = "queueResourceAllocation")]
+        public bool QueueResourceAllocation { get; set; }
+
+        /// <summary>
         /// Indicates whether the environment is in a shutdown state.
         /// </summary>
         /// <returns>Whether it is shutdown.</returns>

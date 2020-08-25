@@ -246,7 +246,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="osDiskResourceId">os disk resource id.</param>
         /// <param name="storageResourceId">storage resource id.</param>
         /// <param name="archiveStorageResourceId">archive storage id.</param>
-        /// <param name="cloudEnvironmentOptions">cloud environment options.</param>
         /// <param name="cloudEnvironmentParameters">start environment params.</param>
         /// <param name="startEnvironmentAction">start environment action.</param>
         /// <param name="logger">logger.</param>
@@ -257,7 +256,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid? osDiskResourceId,
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
-            CloudEnvironmentOptions cloudEnvironmentOptions,
             CloudEnvironmentParameters cloudEnvironmentParameters,
             StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger);

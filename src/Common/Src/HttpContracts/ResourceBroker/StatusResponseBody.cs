@@ -1,4 +1,4 @@
-﻿// <copyright file="StatusResponseBody.cs" company="Microsoft">
+// <copyright file="StatusResponseBody.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -39,8 +39,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <summary>
         /// Gets or sets a value indicating whether record is ready.
         /// </summary>
-        [JsonProperty]
         public bool IsReady { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resource allocation created timestamp.
+        /// </summary>
+        public DateTime Created { get; set; }
 
         /// <summary>
         /// Gets or sets the Provisioning Status.

@@ -93,5 +93,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Resource request record id.
         /// </summary>
         public const string RequestRecordId = nameof(RequestRecordId);
+
+        /// <summary>
+        /// Pool queue name.
+        /// </summary>
+        public const string PoolQueueName = nameof(PoolQueueName);
     }
 }

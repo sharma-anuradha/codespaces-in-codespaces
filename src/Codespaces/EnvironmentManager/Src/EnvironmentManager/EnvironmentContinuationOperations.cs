@@ -63,7 +63,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         {
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
 
-            var input = new StartEnvironmentContinuationInputV2(cloudEnvironmentOptions)
+            var input = new StartEnvironmentContinuationInputV2()
             {
                 EnvironmentId = environmentId,
                 LastStateUpdated = lastStateUpdated,
@@ -86,12 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
-            var options = new CloudEnvironmentOptions()
-            {
-                QueueResourceAllocation = true,
-            };
 
-            var input = new StartEnvironmentContinuationInputV2(options)
+            var input = new StartEnvironmentContinuationInputV2()
             {
                 EnvironmentId = environmentId,
                 LastStateUpdated = lastStateUpdated,
@@ -135,12 +131,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IDiagnosticsLogger logger)
         {
             var loggingProperties = BuildLoggingProperties(environmentId, reason);
-            var options = new CloudEnvironmentOptions()
-            {
-                QueueResourceAllocation = true,
-            };
 
-            var input = new StartEnvironmentContinuationInputV2(options)
+            var input = new StartEnvironmentContinuationInputV2()
             {
                 EnvironmentId = environmentId,
                 LastStateUpdated = lastStateUpdated,

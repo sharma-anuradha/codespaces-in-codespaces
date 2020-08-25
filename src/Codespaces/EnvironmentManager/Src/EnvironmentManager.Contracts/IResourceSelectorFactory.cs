@@ -1,4 +1,4 @@
-﻿// <copyright file="IResourceSelectorFactory.cs" company="Microsoft">
+// <copyright file="IResourceSelectorFactory.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -18,9 +18,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Creates list of allocation requests.
         /// </summary>
         /// <param name="cloudEnvironment">Cloud environment record.</param>
-        /// <param name="cloudEnvironmentOptions">Cloud environment options.</param>
         /// <param name="logger">Diagnostics logger.</param>
         /// <returns>List of allocation requests.</returns>
-        Task<IList<AllocateRequestBody>> CreateAllocationRequestsAsync(CloudEnvironment cloudEnvironment, CloudEnvironmentOptions cloudEnvironmentOptions, IDiagnosticsLogger logger);
+        Task<IList<AllocateRequestBody>> CreateAllocationRequestsAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger);
     }
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseContinuationTaskMessageHandler.cs" company="Microsoft">
+// <copyright file="BaseContinuationTaskMessageHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

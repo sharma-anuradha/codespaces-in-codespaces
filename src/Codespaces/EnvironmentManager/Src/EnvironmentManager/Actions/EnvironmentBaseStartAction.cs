@@ -196,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             });
 
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
-            if (sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
+            if (record.Value.QueueResourceAllocation || sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
             {
                 // Windows can only be queued resume because the VM has to be constructed from the given OS disk.
                 await QueueStartEnvironmentAsync(input, record, transientState, logger.NewChildLogger());

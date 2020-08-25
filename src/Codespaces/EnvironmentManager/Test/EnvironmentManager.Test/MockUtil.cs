@@ -57,8 +57,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var moq = new Mock<IResourceSelectorFactory>();
 
-            moq.Setup(x => x.CreateAllocationRequestsAsync(It.IsAny<CloudEnvironment>(), It.IsAny<CloudEnvironmentOptions>(), It.IsAny<IDiagnosticsLogger>()))
-                .ReturnsAsync((CloudEnvironment cloudEnvironment, CloudEnvironmentOptions cloudEnvironmentOptions, IDiagnosticsLogger logger) =>
+            moq.Setup(x => x.CreateAllocationRequestsAsync(It.IsAny<CloudEnvironment>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync((CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger) =>
                 {
                     var computeRequest = new AllocateRequestBody
                     {

@@ -1,4 +1,4 @@
-﻿using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using System;
@@ -31,9 +31,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
 
             var cloudEnvironment = new CloudEnvironment();
-            var options = new CloudEnvironmentOptions();
 
-            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, options, logger);
+            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, logger);
 
             Assert.True(requests.Count == 2);
             Assert.NotNull(requests.Single(x => x.Type == ResourceType.ComputeVM));
@@ -48,9 +47,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
 
             var cloudEnvironment = new CloudEnvironment();
-            var options = new CloudEnvironmentOptions();
 
-            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, options, logger);
+            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, logger);
 
             Assert.True(requests.Count == 2);
             Assert.NotNull(requests.Single(x => x.Type == ResourceType.ComputeVM));
@@ -65,9 +63,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
 
             var cloudEnvironment = new CloudEnvironment();
-            var options = new CloudEnvironmentOptions();
 
-            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, options, logger);
+            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, logger);
 
             Assert.True(requests.Count == 2);
             Assert.NotNull(requests.Single(x => x.Type == ResourceType.ComputeVM));
@@ -82,9 +79,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var resourceSelector = new ResourceSelectorFactory(skuCatalog, systemConfiguration);
 
             var cloudEnvironment = new CloudEnvironment();
-            var options = new CloudEnvironmentOptions();
 
-            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, options, logger);
+            var requests = await resourceSelector.CreateAllocationRequestsAsync(cloudEnvironment, logger);
 
             Assert.True(requests.Count == 2);
             Assert.NotNull(requests.Single(x => x.Type == ResourceType.ComputeVM));

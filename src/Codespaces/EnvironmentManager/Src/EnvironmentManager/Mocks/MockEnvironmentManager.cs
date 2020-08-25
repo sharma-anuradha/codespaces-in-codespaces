@@ -64,7 +64,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
             Guid? osDiskResourceId,
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
-            CloudEnvironmentOptions cloudEnvironmentOptions,
             CloudEnvironmentParameters cloudEnvironmentParameters,
             StartEnvironmentAction startEnvironmentAction,
             IDiagnosticsLogger logger)

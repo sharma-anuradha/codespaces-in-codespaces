@@ -192,7 +192,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 .FluentAddBaseValue("OSDiskResourceId", operationInput.OSDiskResource?.ResourceId)
                 .FluentAddBaseValue("OSDisResourceReady", operationInput.OSDiskResource?.IsReady)
                 .AddBaseEnvironmentId(operationInput.EnvironmentId)
-                .FluentAddBaseValue(nameof(operationInput.CurrentState), operationInput.CurrentState);
+                .FluentAddBaseValue(nameof(operationInput.CurrentState), operationInput.CurrentState)
+                .FluentAddBaseValue(nameof(operationInput.ActionState), operationInput.ActionState);
         }
 
         private static bool IsInvalidOrFailedState(EnvironmentRecordRef record, StartEnvironmentContinuationInputV2 operationInput)
@@ -279,6 +280,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(record.Value.Id), resourceList, logger.NewChildLogger());
             }
 
+            if (record.Value.Connection?.WorkspaceId != default)
+            {
+                await WorkspaceManager.DeleteWorkspaceAsync(record.Value.Connection.WorkspaceId, logger.NewChildLogger());
+            }
+
             return await base.FailOperationCleanupCoreAsync(operationInput, record, trigger, logger);
         }
 
@@ -355,7 +361,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             var requests = await ResourceSelector.CreateAllocationRequestsAsync(
                 record.Value,
-                operationInput.CloudEnvironmentOptions,
                 logger);
 
             if (record.Value.OSDiskSnapshot != default)
@@ -372,7 +377,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     Type = ResourceType.OSDisk,
                     SkuName = record.Value.SkuName,
                     Location = record.Value.Location,
-                    QueueCreateResource = operationInput.CloudEnvironmentOptions.QueueResourceAllocation,
+                    QueueCreateResource = true, // Create new custom resource
                     ExtendedProperties = new AllocateExtendedProperties { OSDiskSnapshotResourceID = record.Value.OSDiskSnapshot.ResourceId.ToString() },
                 };
 
@@ -425,44 +430,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             };
         }
 
-        private async Task<bool> UpdateResourceInfoAsync(StartEnvironmentContinuationInputV2 operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
-        {
-            return await logger.OperationScopeAsync(
-                $"{LogBaseName}_update_resources_post_allocate",
-                async (childLogger) =>
-                {
-                    var hasStorageResource = operationInput.StorageResource != default;
-                    var hasOSDiskResource = operationInput.OSDiskResource != default;
-
-                    var computeResource = operationInput.ComputeResource.BuildResourceRecord();
-                    var osDiskResource = operationInput.OSDiskResource.BuildResourceRecord();
-                    var storageResource = operationInput.StorageResource.BuildResourceRecord();
-
-                    return await UpdateRecordAsync(
-                        operationInput,
-                        record,
-                        (environment, innerLogger) =>
-                        {
-                            // Update compute and disk resources
-                            record.Value.Compute = computeResource;
-                            if (hasOSDiskResource)
-                            {
-                                record.Value.OSDisk = osDiskResource;
-                                record.Value.OSDiskSnapshot = null;
-                            }
-
-                            // For archived environments, dont switch storage resource.
-                            if (hasStorageResource && record.Value.Storage?.Type != ResourceType.StorageArchive)
-                            {
-                                record.Value.Storage = storageResource;
-                            }
-
-                            return Task.FromResult(true);
-                        },
-                        logger);
-                });
-        }
-
         private async Task<ContinuationResult> RunCheckResourceProvisioningAsync(
             StartEnvironmentContinuationInputV2 operationInput,
             EnvironmentRecordRef record,
@@ -491,30 +458,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var osDiskStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.OSDisk);
             var storageStatus = statusResponse.SingleOrDefault(x => x.Type == ResourceType.StorageFileShare);
 
-            operationInput.ComputeResource.IsReady = computeStatus.IsReady;
+            var updatedResourceList = new List<Guid>();
+            operationInput.ComputeResource = UpdateResourceStatus(computeStatus, operationInput.ComputeResource, updatedResourceList);
 
             if (hasOSDiskResource)
             {
-                operationInput.OSDiskResource.IsReady = osDiskStatus.IsReady;
+                operationInput.OSDiskResource = UpdateResourceStatus(osDiskStatus, operationInput.OSDiskResource, updatedResourceList);
             }
 
             if (hasStorageResource)
             {
-                operationInput.StorageResource.IsReady = storageStatus.IsReady;
+                operationInput.StorageResource = UpdateResourceStatus(storageStatus, operationInput.StorageResource, updatedResourceList);
             }
 
             LogResource(operationInput, logger);
 
-            if (computeStatus.IsReady &&
-                (!hasOSDiskResource || osDiskStatus.IsReady) &&
-                (!hasStorageResource || storageStatus.IsReady))
+            if (updatedResourceList.Count != 0)
             {
-                bool didUpdate = await UpdateResourceInfoAsync(operationInput, record, logger);
-                if (!didUpdate)
+                try
                 {
-                    return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
+                    await ResourceBrokerHttpClient.DeleteAsync(Guid.Parse(record.Value.Id), updatedResourceList, logger.NewChildLogger());
+                }
+                catch (Exception ex)
+                {
+                    // Continue on failure to delete shadow record, as it is best effort.
+                    logger.LogException($"{LogBaseName}_delete_shadow_record_error", ex);
                 }
 
+                // Queued allocation request is completed, so update resource information in environment record.
+                var didUpdate = await UpdateResourceInfoAsync(operationInput, record, logger.NewChildLogger());
+                if (!didUpdate)
+                {
+                    // retry to update the updated resource in environment record.
+                    return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
+                }
+            }
+
+            if (statusResponse.All(status => status.IsReady))
+            {
                 operationInput.CurrentState = StartEnvironmentContinuationInputState.StartCompute;
                 return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
             }
@@ -567,6 +548,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // Update state from queued
             var newState = operationInput.ActionState == StartEnvironmentInputActionState.CreateNew ? CloudEnvironmentState.Provisioning : CloudEnvironmentState.Starting;
+            if (record.Value.State != CloudEnvironmentState.Queued)
+            {
+                logger.LogErrorWithDetail($"{LogBaseName}_invalid_state_error", $"Found invalid state {record.Value.State} instead of {CloudEnvironmentState.Queued}");
+
+                if (record.Value.State == newState || record.Value.State == CloudEnvironmentState.Available || record.Value.State == CloudEnvironmentState.Unavailable)
+                {
+                    // Return success to cancel this continuation, as another continuation is already operating on this environment.
+                    return new ContinuationResult { Status = OperationState.Succeeded };
+                }
+            }
+
             var didUpdate = await UpdateRecordAsync(
                     operationInput,
                     record,
@@ -610,7 +602,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                  record.Value.OSDisk?.ResourceId,
                  storageResourceId,
                  archiveStorageResourceId,
-                 operationInput.CloudEnvironmentOptions,
                  operationInput.CloudEnvironmentParameters,
                  startEnvironmentAction,
                  logger.NewChildLogger());
@@ -665,6 +656,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             await environmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
 
             return new ContinuationResult { Status = OperationState.Succeeded };
+        }
+
+        private async Task<bool> UpdateResourceInfoAsync(StartEnvironmentContinuationInputV2 operationInput, EnvironmentRecordRef record, IDiagnosticsLogger logger)
+        {
+            return await logger.OperationScopeAsync(
+                $"{LogBaseName}_update_resources_post_allocate",
+                async (childLogger) =>
+                {
+                    var hasStorageResource = operationInput.StorageResource != default;
+                    var hasOSDiskResource = operationInput.OSDiskResource != default;
+
+                    var computeResource = operationInput.ComputeResource.BuildResourceRecord();
+                    var osDiskResource = operationInput.OSDiskResource.BuildResourceRecord();
+                    var storageResource = operationInput.StorageResource.BuildResourceRecord();
+
+                    return await UpdateRecordAsync(
+                        operationInput,
+                        record,
+                        (environment, innerLogger) =>
+                        {
+                            // Update compute and disk resources
+                            record.Value.Compute = computeResource;
+                            if (hasOSDiskResource)
+                            {
+                                record.Value.OSDisk = osDiskResource;
+                                record.Value.OSDiskSnapshot = null;
+                            }
+
+                            // For archived environments, dont switch storage resource.
+                            if (hasStorageResource && record.Value.Storage?.Type != ResourceType.StorageArchive)
+                            {
+                                record.Value.Storage = storageResource;
+                            }
+
+                            return Task.FromResult(true);
+                        },
+                        logger);
+                });
+        }
+
+        private EnvironmentContinuationInputResource UpdateResourceStatus(
+          StatusResponseBody resourceStatus,
+          EnvironmentContinuationInputResource inputResource,
+          List<Guid> shadowResourceList)
+        {
+            if (inputResource.ResourceId != resourceStatus.ResourceId)
+            {
+                shadowResourceList.Add(inputResource.ResourceId);
+            }
+
+            inputResource = resourceStatus.BuildQueueInputResource();
+
+            return inputResource;
         }
     }
 }

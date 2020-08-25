@@ -42,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public string GetQueueName(string baseName)
         {
-            return $"{CreateResourceName(baseName)}";
+            return CreateResourceName(baseName);
         }
 
         public string GetPoolQueueName(string baseName)

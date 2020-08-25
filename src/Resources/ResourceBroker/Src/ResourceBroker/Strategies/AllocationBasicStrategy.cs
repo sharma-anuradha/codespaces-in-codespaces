@@ -306,9 +306,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
                 // Try and get item from the pool
                 var resource = await ResourcePool.TryGetAsync(
-                    resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
+                   resourceSku.Details.GetPoolDefinition(), itemLogger.NewChildLogger());
 
-                itemLogger.FluentAddBaseValue("ResourceAllocateFound", resource != null);
+                itemLogger.FluentAddBaseValue("ResourceAllocatedFromPool", resource != null);
 
                 if (resource == null && input.QueueResourceRequest)
                 {

@@ -16,9 +16,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Initializes a new instance of the <see cref="StartEnvironmentContinuationInputV2"/> class.
         /// </summary>
         /// <param name="options">Cloud environment options.</param>
-        public StartEnvironmentContinuationInputV2(CloudEnvironmentOptions options)
+        public StartEnvironmentContinuationInputV2()
         {
-            CloudEnvironmentOptions = options;
         }
 
         /// <summary>

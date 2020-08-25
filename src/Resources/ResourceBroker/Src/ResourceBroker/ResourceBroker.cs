@@ -109,6 +109,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     foreach (var resource in resources)
                     {
                         var record = await ResourceRepository.GetAsync(resource.ResourceId.ToString(), logger.NewChildLogger());
+                        if (record == default)
+                        {
+                            throw new ResourceNotFoundException(resource.ResourceId);
+                        }
+
                         backingResources.Add((Resource: resource, Record: record));
                     }
 
@@ -339,19 +344,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     // Build result
                     var result = new StatusResult()
                     {
-                        ResourceId = Guid.Parse(record.Id),
+                        ResourceId = Guid.Parse(assignedRecord.Id),
                         SkuName = recordDetails.SkuName,
                         Location = recordDetails.Location,
-                        Type = record.Type,
-                        IsReady = record.IsReady,
-                        ProvisioningStatus = record.ProvisioningStatus,
-                        ProvisioningStatusChanged = record.ProvisioningStatusChanged,
-                        StartingStatus = record.StartingStatus,
-                        StartingStatusChanged = record.StartingStatusChanged,
-                        DeletingStatus = record.DeletingStatus,
-                        DeletingStatusChanged = record.DeletingStatusChanged,
-                        CleanupStatus = record.CleanupStatus,
-                        CleanupStatusChanged = record.CleanupStatusChanged,
+                        Type = assignedRecord.Type,
+                        IsReady = assignedRecord.IsReady,
+                        Created = assignedRecord.Created,
+                        ProvisioningStatus = assignedRecord.ProvisioningStatus,
+                        ProvisioningStatusChanged = assignedRecord.ProvisioningStatusChanged,
+                        StartingStatus = assignedRecord.StartingStatus,
+                        StartingStatusChanged = assignedRecord.StartingStatusChanged,
+                        DeletingStatus = assignedRecord.DeletingStatus,
+                        DeletingStatusChanged = assignedRecord.DeletingStatusChanged,
+                        CleanupStatus = assignedRecord.CleanupStatus,
+                        CleanupStatusChanged = assignedRecord.CleanupStatusChanged,
                     };
 
                     return result;

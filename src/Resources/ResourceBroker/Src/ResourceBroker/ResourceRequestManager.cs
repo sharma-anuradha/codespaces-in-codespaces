@@ -57,9 +57,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                $"{LogBaseName}_enqueue_request",
                async (childLogger) =>
                {
-                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, logger, false);
+                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), false);
 
-                   logger.FluentAddBaseValues(loggingProperties)
+                   childLogger.FluentAddBaseValues(loggingProperties)
                        .FluentAddBaseValue(nameof(resourcePool.Details.SkuName), resourcePool.Details.SkuName)
                        .FluentAddBaseValue(QueueResourceRequestEnabled, queueResourceRequest);
 
@@ -70,10 +70,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                    var resource = await CreateShadowRecord(resourcePool, logger);
 
-                   logger.FluentAddBaseValue(ResourceLoggingPropertyConstants.RequestRecordId, resource.Id);
+                   childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.RequestRecordId, resource.Id);
 
                    var poolName = resourcePool.Details.GetPoolDefinition();
                    var poolQueue = await ResourceRequestQueueProvider.GetPoolQueueAsync(poolName);
+
+                   childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolQueueName, poolQueue.Name);
+
                    var content = new CloudQueueMessage(
                                        JsonConvert.SerializeObject(
                                            new ResourceRequestQueueMessage(resource.Id, loggingProperties)));
@@ -156,6 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     if (request == default)
                     {
                         childLogger.LogErrorWithDetail($"{LogBaseName}_invalid_message_error", "Dequeued message can not be deserialized");
+
                         return result;
                     }
 
@@ -172,15 +176,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     {
                         // if null, Reserve Resource and Assign to request.
                         var resourceReserved = await childLogger.RetryOperationScopeAsync(
-                        $"{LogBaseName}_reserve_resource",
-                        async (IDiagnosticsLogger innerLogger) =>
-                        {
-                            // Update core properties to indicate that its assigned
-                            resource.IsAssigned = true;
-                            resource.Assigned = DateTime.UtcNow;
-                            resource = await ResourceRepository.UpdateAsync(resource, logger.NewChildLogger());
-                            return true;
-                        });
+                            $"{LogBaseName}_reserve_resource",
+                            async (IDiagnosticsLogger innerLogger) =>
+                            {
+                                // Update core properties to indicate that its assigned
+                                resource.IsAssigned = true;
+                                resource.Assigned = DateTime.UtcNow;
+                                resource = await ResourceRepository.UpdateAsync(resource, innerLogger.NewChildLogger());
+                                return true;
+                            });
 
                         childLogger.FluentAddBaseValue("ResourceReserved", resourceReserved);
 
@@ -191,8 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                 async (IDiagnosticsLogger innerLogger) =>
                                 {
                                     queuedResourceRecord.AssignedResourceId = resource.Id;
-
-                                    queuedResourceRecord = await ResourceRepository.UpdateAsync(queuedResourceRecord, logger.NewChildLogger());
+                                    queuedResourceRecord = await ResourceRepository.UpdateAsync(queuedResourceRecord, innerLogger.NewChildLogger());
                                 });
                         }
 
@@ -202,6 +205,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                     childLogger.FluentAddBaseValue("RetryAssignToNewRequest", result.Item1)
                         .FluentAddBaseValue("RequestAssigned", queuedResourceRecord?.AssignedResourceId != default);
+
                     return result;
                 },
                 (ex, childLogger) =>
@@ -218,13 +222,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private async Task<ResourceRecord> CreateShadowRecord(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             // Core recrod
+            var poolReference = new ResourcePoolDefinitionRecord()
+            {
+                Code = resourcePool.Details.GetPoolDefinition(),
+                Dimensions = resourcePool.Details.GetPoolDimensions(),
+            };
+
             var resource = ResourceRecord.Build(
                 Guid.NewGuid(),
                 DateTime.UtcNow,
                 resourcePool.Type,
                 resourcePool.Details.Location,
-                resourcePool.Details.SkuName);
+                resourcePool.Details.SkuName,
+                poolReference);
+
             resource.IsAssigned = true;
+            resource.Assigned = DateTime.UtcNow;
             resource.IsReady = false;
             resource.ProvisioningStatus = OperationState.Initialized;
 
