@@ -25,6 +25,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// Gets or sets a value indicating whether transmission to push agent is enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
+        public bool EnableV1 { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether transmission to push agent is enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV1Transmission { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether transmission to push agent is enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
         public bool EnableV2BillingManagementProducer { get; set; }
 
         /// <summary>
@@ -70,6 +82,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         public void Init(ISystemConfiguration systemConfiguration)
         {
             this.systemConfiguration = systemConfiguration;
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V1IsEnabledAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1", logger, EnableV1);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V1TransmissionIsEnabledAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1-transmission", logger, EnableV1Transmission);
         }
 
         /// <summary>

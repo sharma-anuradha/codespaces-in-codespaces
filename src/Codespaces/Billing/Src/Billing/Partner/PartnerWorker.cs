@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -16,6 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class PartnerWorker : BackgroundService
     {
+        private readonly BillingSettings billingSettings;
         private readonly IPartnerService partnerService;
         private readonly IDiagnosticsLogger logger;
         private readonly string name;
@@ -29,8 +31,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="diagnosticsLogger">the logger.</param>
         /// <param name="name">The service name.</param>
         /// <param name="interval">The interval.</param>
-        public PartnerWorker(IPartnerService partnerService, IDiagnosticsLogger diagnosticsLogger, string name, double interval)
+        public PartnerWorker(
+            BillingSettings billingSettings,
+            IPartnerService partnerService,
+            IDiagnosticsLogger diagnosticsLogger,
+            string name,
+            double interval)
         {
+            this.billingSettings = billingSettings;
             this.partnerService = partnerService;
             this.logger = diagnosticsLogger.NewChildLogger();
             this.name = name;
@@ -45,15 +53,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             while (!cancellationToken.IsCancellationRequested)
             {
                 var duration = this.logger.StartDuration();
-                await this.logger.OperationScopeAsync(
-                  $"{this.name}_partner_worker_begin",
-                  async (childLogger) =>
-                  {
-                      // Do the actual work
-                      await this.partnerService.Execute(cancellationToken);
 
-                      // await billingSummarySubmissionService.CheckForBillingSubmissionErorrs(cancellationToken);
-                  }, swallowException: true);
+                if (await billingSettings.V1IsEnabledAsync(logger) &&
+                    await billingSettings.V1TransmissionIsEnabledAsync(logger))
+                {
+                    await this.logger.OperationScopeAsync(
+                      $"{this.name}_partner_worker_begin",
+                      async (childLogger) =>
+                      {
+                          // Do the actual work
+                          await this.partnerService.Execute(cancellationToken);
+
+                          // await billingSummarySubmissionService.CheckForBillingSubmissionErorrs(cancellationToken);
+                      }, swallowException: true);
+                }
 
                 // Delay for 1 hour
                 var remainingTime = this.interval - TimeSpan.FromMilliseconds(duration.Elapsed.TotalMilliseconds).TotalMinutes;

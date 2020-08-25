@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingWorker.cs" company="Microsoft">
+// <copyright file="BillingWorker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -16,6 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingWorker : BackgroundService
     {
+        private readonly BillingSettings billingSettings;
         private readonly IBillingService billingService;
         private readonly IDiagnosticsLogger logger;
         private readonly double taskRunIntervalMinutes = 60;
@@ -25,8 +27,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         /// <param name="service">IBillingService.</param>
         /// <param name="diagnosticsLogger">IDiagnosticLogger.</param>
-        public BillingWorker(IBillingService service, IDiagnosticsLogger diagnosticsLogger)
+        public BillingWorker(
+            BillingSettings billingSettings,
+            IBillingService service,
+            IDiagnosticsLogger diagnosticsLogger)
         {
+            this.billingSettings = billingSettings;
             billingService = service;
             logger = diagnosticsLogger.NewChildLogger();
         }
@@ -47,12 +53,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 try
                 {
                     var duration = logger.StartDuration();
-                    await logger.OperationScopeAsync(
-                         $"billWorker_begin",
-                         async (childLogger) =>
-                         {
-                             await billingService.GenerateBillingSummaryAsync(cancellationToken);
-                         }, swallowException: true);
+
+                    if (await billingSettings.V1IsEnabledAsync(logger))
+                    {
+                        await logger.OperationScopeAsync(
+                             $"billWorker_begin",
+                             async (childLogger) =>
+                             {
+                                 await billingService.GenerateBillingSummaryAsync(cancellationToken);
+                             }, swallowException: true);
+                    }
+
                     logger.AddDuration(duration).LogInfo(GetType().FormatLogMessage(nameof(ExecuteAsync)));
                     var remainingTime = taskRunIntervalMinutes - TimeSpan.FromMilliseconds(duration.Elapsed.TotalMilliseconds).TotalMinutes;
                     await Task.Delay(TimeSpan.FromMinutes(remainingTime > 0 ? remainingTime : 0));

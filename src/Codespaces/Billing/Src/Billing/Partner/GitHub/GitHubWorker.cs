@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
@@ -25,8 +26,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         /// <param name="partnerService">the partner service that runs the actual operation.</param>
         /// <param name="diagnosticsLogger">the logger.</param>
-        public GitHubWorker(IPartnerService partnerService, IDiagnosticsLogger diagnosticsLogger)
-            : base(partnerService, diagnosticsLogger, Name, Interval)
+        public GitHubWorker(
+            BillingSettings billingSettings,
+            IPartnerService partnerService,
+            IDiagnosticsLogger diagnosticsLogger)
+            : base(billingSettings, partnerService, diagnosticsLogger, Name, Interval)
         {
         }
     }

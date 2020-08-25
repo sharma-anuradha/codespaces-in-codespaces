@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingSummarySubmissionWorker.cs" company="Microsoft">
+// <copyright file="BillingSummarySubmissionWorker.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -16,6 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingSummarySubmissionWorker : BackgroundService
     {
+        private readonly BillingSettings billingSettings;
         private readonly IBillingSummarySubmissionService billingSummarySubmissionService;
         private readonly IDiagnosticsLogger logger;
 
@@ -26,8 +28,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         /// <param name="billingSummarySubmissionService">the billing service that runs the actual operation.</param>
         /// <param name="diagnosticsLogger">the logger.</param>
-        public BillingSummarySubmissionWorker(IBillingSummarySubmissionService billingSummarySubmissionService, IDiagnosticsLogger diagnosticsLogger)
+        public BillingSummarySubmissionWorker(
+            BillingSettings billingSettings,
+            IBillingSummarySubmissionService billingSummarySubmissionService,
+            IDiagnosticsLogger diagnosticsLogger)
         {
+            this.billingSettings = billingSettings;
             this.billingSummarySubmissionService = billingSummarySubmissionService;
             logger = diagnosticsLogger.NewChildLogger();
         }
@@ -40,14 +46,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             while (!cancellationToken.IsCancellationRequested)
             {
                 var duration = logger.StartDuration();
-                await logger.OperationScopeAsync(
-                  $"billingsub_worker_begin",
-                  async (childLogger) =>
-                  {
-                      // Do the actual work
-                      await billingSummarySubmissionService.ProcessBillingSummariesAsync(cancellationToken);
-                      await billingSummarySubmissionService.CheckForBillingSubmissionErorrs(cancellationToken);
-                  }, swallowException: true);
+
+                if (await billingSettings.V1IsEnabledAsync(logger) &&
+                    await billingSettings.V1TransmissionIsEnabledAsync(logger))
+                {
+                    await logger.OperationScopeAsync(
+                      $"billingsub_worker_begin",
+                      async (childLogger) =>
+                      {
+                          // Do the actual work
+                          await billingSummarySubmissionService.ProcessBillingSummariesAsync(cancellationToken);
+                          await billingSummarySubmissionService.CheckForBillingSubmissionErorrs(cancellationToken);
+                      }, swallowException: true);
+                }
 
                 // Delay for 1 hour
                 var remainingTime = taskRunIntervalMinutes - TimeSpan.FromMilliseconds(duration.Elapsed.TotalMilliseconds).TotalMinutes;
