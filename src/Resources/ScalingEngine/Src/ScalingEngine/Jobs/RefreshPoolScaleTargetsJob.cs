@@ -335,55 +335,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                         childLogger.LogWarning($"{LoggingBaseName}_override_settings_warning", ex);
                     }
 
-                    if (ResourcePoolSettings == null)
+                    if (ResourcePoolSettings != null && ResourcePoolSettings.Count() > 0)
                     {
-                        // The resource pool settings never found so far.
-                        return;
-                    }
-
-                    // Do not use TypeNameHandling values other than None
+                        // Do not use TypeNameHandling values other than None
 #pragma warning disable CA2326
-                    childLogger
-                        .FluentAddValue("SettingsFoundCount", ResourcePoolSettings.Count)
-                        .FluentAddValue("SettingsFoundData", JsonConvert.SerializeObject(
-                            ResourcePoolSettings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
+                        childLogger
+                            .FluentAddValue("SettingsFoundCount", ResourcePoolSettings.Count)
+                            .FluentAddValue("SettingsFoundPoolDefinitionCount", pools.Count())
+                            .FluentAddValue("SettingsFoundData", JsonConvert.SerializeObject(
+                                ResourcePoolSettings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
 #pragma warning restore CA2326
 
-                    childLogger.FluentAddValue("SettingsFoundPoolDefinitionCount", pools.Count());
-
-                    // Run through each pool item
-                    foreach (var pool in pools)
-                    {
-                        await childLogger.OperationScopeAsync(
-                            $"{LoggingBaseName}_override_settings_unit_check",
-                            (itemLogger) =>
-                            {
-                                var poolDefinition = pool.Details.GetPoolDefinition();
-
-                                itemLogger
-                                    .FluentAddValue("SettingsFoundPool", poolDefinition)
-                                    .FluentAddValue("SettingPreOverrideTargetCount", pool.OverrideTargetCount)
-                                    .FluentAddValue("SettingPreOverrideIsEnabled", pool.OverrideIsEnabled);
-
-                                // Overrides the value if we have settings for it
-                                if (ResourcePoolSettings.TryGetValue(poolDefinition, out var resourceSetting))
+                        // Run through each pool item
+                        foreach (var pool in pools)
+                        {
+                            await childLogger.OperationScopeAsync(
+                                $"{LoggingBaseName}_override_settings_unit_check",
+                                (itemLogger) =>
                                 {
-                                    pool.OverrideTargetCount = resourceSetting.TargetCount;
-                                    pool.OverrideIsEnabled = resourceSetting.IsEnabled;
-                                }
-                                else
-                                {
-                                    // Clear out any overrides if we don't have matches
-                                    pool.OverrideTargetCount = null;
-                                    pool.OverrideIsEnabled = null;
-                                }
+                                    var poolDefinition = pool.Details.GetPoolDefinition();
 
-                                itemLogger
-                                    .FluentAddValue("SettingPostOverrideTargetCount", pool.OverrideTargetCount)
-                                    .FluentAddValue("SettingPostOverrideIsEnabled", pool.OverrideIsEnabled);
+                                    itemLogger
+                                        .FluentAddValue("SettingsFoundPool", poolDefinition)
+                                        .FluentAddValue("SettingPreOverrideTargetCount", pool.OverrideTargetCount)
+                                        .FluentAddValue("SettingPreOverrideIsEnabled", pool.OverrideIsEnabled);
 
-                                return Task.CompletedTask;
-                            });
+                                    // Overrides the value if we have settings for it
+                                    if (ResourcePoolSettings.TryGetValue(poolDefinition, out var resourceSetting))
+                                    {
+                                        pool.OverrideTargetCount = resourceSetting.TargetCount;
+                                        pool.OverrideIsEnabled = resourceSetting.IsEnabled;
+                                    }
+                                    else
+                                    {
+                                        // Clear out any overrides if we don't have matches
+                                        pool.OverrideTargetCount = null;
+                                        pool.OverrideIsEnabled = null;
+                                    }
+
+                                    itemLogger
+                                        .FluentAddValue("SettingPostOverrideTargetCount", pool.OverrideTargetCount)
+                                        .FluentAddValue("SettingPostOverrideIsEnabled", pool.OverrideIsEnabled);
+
+                                    return Task.CompletedTask;
+                                });
+                        }
                     }
                 },
                 swallowException: true);
