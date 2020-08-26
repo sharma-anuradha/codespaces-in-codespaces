@@ -224,7 +224,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
             var appSettings = LoadAppSettings(environmentName, overrideName);
             var secretProvider = new Mock<ISecretProvider>().Object;
             var servicePrincipal = new ServicePrincipal(
-                appSettings.ApplicationServicePrincipal.ClientId, 
+                appSettings.ApplicationServicePrincipal.ClientId,
                 appSettings.ApplicationServicePrincipal.ClientSecretName,
                 appSettings.ApplicationServicePrincipal.TenantId,
                 secretProvider);
@@ -487,11 +487,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 .SetBasePath(Environment.CurrentDirectory)
                 .AddJsonFile("appsettings.json", optional: false)
                 .AddJsonFile("appsettings.images.json", optional: false)
-                .AddJsonFile($"appsettings.{environmentName}.json", optional: false);
+                .AddJsonFile($"appsettings.{environmentName}.json", optional: false)
+                .AddJsonFile($"appsettings.subscriptions.{environmentName}.jsonc", optional: true);
 
             if (!string.IsNullOrEmpty(overrideName))
             {
                 builder.AddJsonFile($"appsettings.{overrideName}.json", optional: false);
+                builder.AddJsonFile($"appsettings.subscriptions.{overrideName}.jsonc", optional: true);
             }
 
             var configuration = builder.Build();

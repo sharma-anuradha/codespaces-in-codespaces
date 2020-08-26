@@ -25,15 +25,17 @@ class Subscription {
     [string]$location
     [nullable[int]]$ordinal
     [string]$plane
+    [string]$premiumFilesInternalSettings
     [string]$region
-    [System.Guid]$subscriptionID
-    [string]$subscriptionName
     [nullable[ServiceType]]$serviceType
+    [System.Guid]$subscriptionId
+    [string]$subscriptionName
+    [string]$vnetInjection
 }
 
 class AzureSubscriptionSettings {
-    [System.Guid]$subscriptionID
-    [bool]$enabled
+    [System.Guid]$subscriptionId
+    # [bool]$enabled
     [System.Collections.ArrayList]$locations = [System.Collections.ArrayList]::new()
     $servicePrincipal
     $quotas
@@ -183,17 +185,20 @@ function Format-ExcelToJson {
         [int]$lastRow = $totalRow - 1
 
         # Find columns
-        [int]$subscriptionIDColumn = Find-HeaderColumn $headerRow "Subscription ID"
+        [int]$subscriptionIdColumn = Find-HeaderColumn $headerRow "Subscription ID"
         [int]$subscriptionNameColumn = Find-HeaderColumn $headerRow "Subscription Name"
+        [int]$subscriptionOldNameColumn = Find-HeaderColumn $headerRow "Old Name"
         [int]$enabledColumn = Find-HeaderColumn $headerRow "Enabled"
         [int]$environmentColumn = Find-HeaderColumn $headerRow "Environment"
         [int]$componentColumn = Find-HeaderColumn $headerRow "Component"
         [int]$planeColumn = Find-HeaderColumn $headerRow "Plane"
+        [int]$premiumFilesInternalSettingsColumn = Find-HeaderColumn $headerRow "Storage 32gb Flag"
         [int]$serviceTypeColumn = Find-HeaderColumn $headerRow "Type"
         [int]$regionColumn = Find-HeaderColumn $headerRow "Region"
         [int]$ordinalColumn = Find-HeaderColumn $headerRow "Ordinal"
         [int]$generationColumn = Find-HeaderColumn $headerRow "Generation"
         [int]$ameColumn = Find-HeaderColumn $headerRow "AME"
+        [int]$vnetInjectionColumn = Find-HeaderColumn $headerRow "VNet Injection"
 
         $subscriptions = [System.Collections.ArrayList]@()
 
@@ -203,23 +208,30 @@ function Format-ExcelToJson {
             Write-Host "Processing row $i of ${lastRow}: '$subscriptionName'" -ForegroundColor DarkGray
 
             # Skip blank subscription IDs
-            $subscriptionIDValue = Get-CellValue $i $subscriptionIDColumn
+            $subscriptionIdValue = Get-CellValue $i $subscriptionIdColumn
             [System.Guid]$subscriptionId = [System.Guid]::Empty
 
-            if (!$subscriptionIDValue) {
+            if (!$subscriptionIdValue) {
               Write-Host "Skipping row ${i}: '$subscriptionName' has blank subscription id" -ForegroundColor Yellow
               continue
             }
 
-            if (![System.Guid]::TryParse($subscriptionIDValue, [ref]$subscriptionId)) {
-              Write-Host "Skipping row ${i}: '$subscriptionName' has invalid subscription id '$subscriptionIDValue'" -ForegroundColor Yellow
+            if (![System.Guid]::TryParse($subscriptionIdValue, [ref]$subscriptionId)) {
+              Write-Host "Skipping row ${i}: '$subscriptionName' has invalid subscription id '$subscriptionIdValue'" -ForegroundColor Yellow
               continue
             }
 
             $subscription = [Subscription]::new()
 
             $subscription.subscriptionName = $subscriptionName
-            $subscription.subscriptionID = $subscriptionId
+
+            # If Subscription has old name we should use it for now.
+            $subscriptionOldName = Get-CellValue $i $subscriptionOldNameColumn
+            if ($null -ne $subscriptionOldName -and $subscriptionOldName.Trim().Length -ne 0) {
+                $subscription.subscriptionName = $subscriptionOldName
+            }
+
+            $subscription.subscriptionId = $subscriptionId
 
             [bool]$enabled = $false
             if ([System.Boolean]::TryParse($enabledColumn, [ref]$enabled)) {
@@ -229,6 +241,7 @@ function Format-ExcelToJson {
             $subscription.environment = Get-CellValue $i $environmentColumn -ToLower
             $subscription.component = Get-CellValue $i $componentColumn -ToLower
             $subscription.plane = Get-CellValue $i $planeColumn -ToLower
+            $subscription.premiumFilesInternalSettings = Get-CellValue $i $premiumFilesInternalSettingsColumn -ToLower
 
             try {
                 $subscription.serviceType = [ServiceType](Get-CellValue $i $serviceTypeColumn)
@@ -254,6 +267,8 @@ function Format-ExcelToJson {
             if ([System.Boolean]::TryParse($ameValue, [ref]$ame)) {
               $subscription.ame = $ame
             }
+
+            $subscription.vnetInjection = Get-CellValue $i $vnetInjectionColumn -ToLower
 
             $subscriptions.Add($subscription) | Out-Null
         }
@@ -301,13 +316,13 @@ function Test-Json {
         $found = $false
         $azureSubscriptions | Where-Object {
             $azureSubscription = $_
-            if ($azureSubscription.Name -eq $jsonSubscription.subscriptionName -and $azureSubscription.SubscriptionId -eq $jsonSubscription.subscriptionID) {
+            if ($azureSubscription.Name -eq $jsonSubscription.subscriptionName -and $azureSubscription.SubscriptionId -eq $jsonSubscription.subscriptionId) {
                 $script:found = $true
             }
         }
 
         if ($false -eq $found) {
-            Write-Host "$($jsonSubscription.subscriptionName) {$($jsonSubscription.subscriptionID)} not found on Azure"
+            Write-Host "$($jsonSubscription.subscriptionName) {$($jsonSubscription.subscriptionId)} not found on Azure"
         }
     }
 }
@@ -329,13 +344,13 @@ function Test-Azure {
         $jsonSubscriptions | Where-Object {
             [Subscription]$jsonSubscription = $_
 
-            if ($jsonSubscription.subscriptionName -eq $azureSubscription.Name -and $jsonSubscription.SubscriptionId -eq $subscription.subscriptionID) {
+            if ($jsonSubscription.subscriptionName -eq $azureSubscription.Name -and $jsonSubscription.SubscriptionId -eq $subscription.subscriptionId) {
                 $script:found = $true
             }
         }
 
         if ($false -eq $found) {
-            Write-Host "$($azureSubscription.Name) {$($azureSubscription.subscriptionID)} not found on Json"
+            Write-Host "$($azureSubscription.Name) {$($azureSubscription.subscriptionId)} not found on Json"
         }
     }
 }
@@ -354,14 +369,22 @@ function Build-AppSettings {
 
     $jsonSubscriptions = Get-Content $InputJsonFile | Out-String | ConvertFrom-Json
 
-    $jsonSubscriptions = $jsonSubscriptions | Where-Object { 
-        $_.environment -eq $Environment -and $_.plane -eq "data" -and $null -ne $_.serviceType -and $_.generation -eq "v2-hybrid"
+    $jsonSubscriptions = $jsonSubscriptions | Where-Object {
+        $_.environment -eq $Environment -and $_.plane -eq "data" -and $_.generation -ne "v2"
+    }
+
+    $jsonSubscriptions = $jsonSubscriptions | Where-Object {
+        $_.serviceType -ne "compute" -or ($_.serviceType -eq "compute" -and $_.vnetInjection -eq "done")
+    }
+
+    $jsonSubscriptions = $jsonSubscriptions | Where-Object {
+        $_.serviceType -ne "storage" -or ($_.serviceType -eq "storage" -and $_.premiumFilesInternalSettings -eq "done")
     }
 
     if ($Canary) {
         $jsonSubscriptions = $jsonSubscriptions | Where-Object { $_.ordinal -eq 1 }
      }
-    
+
     if ($jsonSubscriptions.Count -eq 0) {
         Write-Host "No subscription found."
         return
@@ -374,9 +397,12 @@ function Build-AppSettings {
         $subscription = $_
 
         $azureSubscriptionSettings = [AzureSubscriptionSettings]::new()
-        $azureSubscriptionSettings.subscriptionID = $subscription.subscriptionID
-        $azureSubscriptionSettings.enabled = $subscription.enabled
-        $azureSubscriptionSettings.locations.Add($subscription.location) | Out-Null
+        $azureSubscriptionSettings.subscriptionId = $subscription.subscriptionId
+        # Don't write out this property until the values in subscriptions.json have been verified
+        # $azureSubscriptionSettings.enabled = $subscription.enabled
+        if ($subscription.location -ne "") {
+            $azureSubscriptionSettings.locations.Add($subscription.location) | Out-Null
+        }
         $azureSubscriptionSettings.serviceType = ([string]$subscription.serviceType).ToLowerInvariant()
 
         $appSettings.dataPlaneSettings.subscriptions.Add($subscription.subscriptionName, $azureSubscriptionSettings)
@@ -392,8 +418,8 @@ function Build-AppSettings {
         return
     }
 
-    [string]$env = $Environment
-    if ($Environment -eq "prod" -or $Environment -eq "ppe") {
+    [string]$env = $Environment.ToLowerInvariant()
+    if ($env -eq "prod" -or $env -eq "ppe") {
         if ($Canary) {
             $env += "-can"
         } else {
@@ -401,7 +427,7 @@ function Build-AppSettings {
         }
     }
 
-    $header = "// GENERATED BY A TOOL. DO NOT EDIT" + [System.Environment]::NewLine
+    $header = "// Auto-Generated from script: 'Subscription-Tracker.ps1'" + [System.Environment]::NewLine +  " // DO NOT EDIT THIS FILE."    + [System.Environment]::NewLine
     $file = "appsettings.subscriptions.$env.jsonc"
-    $appSettings | ConvertTo-Json -Depth 50 | ForEach-Object { $header + $_ } | Out-File -Encoding utf8 -FilePath $(Join-Path $OutputPath $file)
+    @{ AppSettings = $appSettings } | ConvertTo-Json -Depth 50 | ForEach-Object { $header + $_ } | Out-File -Encoding utf8 -FilePath $(Join-Path $OutputPath $file)
 }
