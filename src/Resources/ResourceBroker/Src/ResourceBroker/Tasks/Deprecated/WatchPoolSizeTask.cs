@@ -139,14 +139,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private Task<int> GetPoolUnassignedCountAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
-            return ResourceRepository.GetPoolUnassignedCountAsync(
-                resourcePool.Details.GetPoolDefinition(), logger.NewChildLogger());
+            return logger.RetryOperationScopeAsync(
+                   "{LogBaseName}_GetPoolUnassignedCountAsync_retry_scope",
+                   async (retryLogger) =>
+                   {
+                       return await ResourceRepository.GetPoolUnassignedCountAsync(resourcePool.Details.GetPoolDefinition(), logger.NewChildLogger());
+                   });
         }
 
         private Task<IEnumerable<string>> GetPoolUnassignedAsync(ResourcePool resourcePool, int count, IDiagnosticsLogger logger)
         {
-            return ResourceRepository.GetPoolUnassignedAsync(
-                resourcePool.Details.GetPoolDefinition(), count, logger.NewChildLogger());
+            return logger.RetryOperationScopeAsync(
+                  "{LogBaseName}_GetPoolUnassignedAsync_retry_scope",
+                  async (retryLogger) =>
+                  {
+                      return await ResourceRepository.GetPoolUnassignedAsync(resourcePool.Details.GetPoolDefinition(), count, logger.NewChildLogger());
+                  });
         }
 
         private async Task AddPoolItemAsync(ResourcePool resourcePool, int iteration, IDiagnosticsLogger logger)

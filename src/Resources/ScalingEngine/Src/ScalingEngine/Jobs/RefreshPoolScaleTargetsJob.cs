@@ -74,6 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
 
         private Task<bool> InitializationTask { get; }
 
+        private Dictionary<string, ResourcePoolSettingsRecord> ResourcePoolSettings { get; set; }
+
         /// <inheritdoc/>
         public async Task WarmupCompletedAsync()
         {
@@ -322,15 +324,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                 $"{LoggingBaseName}_override_settings",
                 async (childLogger) =>
                 {
-                    // Pull out core settings records
-                    var settings = (await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger()))
-                        .ToDictionary(x => x.Id);
+                    try
+                    {
+                        // Pull out core settings records if it succeeds else use the last used ResourcePoolSettings.
+                        ResourcePoolSettings = (await ResourcePoolSettingsRepository.GetWhereAsync(x => true, childLogger.NewChildLogger()))
+                                                .ToDictionary(x => x.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        childLogger.LogWarning($"{LoggingBaseName}_override_settings_warning", ex);
+                    }
 
-#pragma warning disable CA2326 // Do not use TypeNameHandling values other than None
-                    childLogger.FluentAddValue("SettingsFoundCount", settings.Count)
+                    if (ResourcePoolSettings == null)
+                    {
+                        // The resource pool settings never found so far.
+                        return;
+                    }
+
+                    // Do not use TypeNameHandling values other than None
+#pragma warning disable CA2326
+                    childLogger
+                        .FluentAddValue("SettingsFoundCount", ResourcePoolSettings.Count)
                         .FluentAddValue("SettingsFoundData", JsonConvert.SerializeObject(
-                            settings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
-#pragma warning restore CA2326 // Do not use TypeNameHandling values other than None
+                            ResourcePoolSettings, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto }));
+#pragma warning restore CA2326
 
                     childLogger.FluentAddValue("SettingsFoundPoolDefinitionCount", pools.Count());
 
@@ -343,12 +360,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                             {
                                 var poolDefinition = pool.Details.GetPoolDefinition();
 
-                                itemLogger.FluentAddValue("SettingsFoundPool", poolDefinition)
+                                itemLogger
+                                    .FluentAddValue("SettingsFoundPool", poolDefinition)
                                     .FluentAddValue("SettingPreOverrideTargetCount", pool.OverrideTargetCount)
                                     .FluentAddValue("SettingPreOverrideIsEnabled", pool.OverrideIsEnabled);
 
                                 // Overrides the value if we have settings for it
-                                if (settings.TryGetValue(poolDefinition, out var resourceSetting))
+                                if (ResourcePoolSettings.TryGetValue(poolDefinition, out var resourceSetting))
                                 {
                                     pool.OverrideTargetCount = resourceSetting.TargetCount;
                                     pool.OverrideIsEnabled = resourceSetting.IsEnabled;
@@ -360,7 +378,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ScalingEngine.Jobs
                                     pool.OverrideIsEnabled = null;
                                 }
 
-                                itemLogger.FluentAddValue("SettingPostOverrideTargetCount", pool.OverrideTargetCount)
+                                itemLogger
+                                    .FluentAddValue("SettingPostOverrideTargetCount", pool.OverrideTargetCount)
                                     .FluentAddValue("SettingPostOverrideIsEnabled", pool.OverrideIsEnabled);
 
                                 return Task.CompletedTask;
