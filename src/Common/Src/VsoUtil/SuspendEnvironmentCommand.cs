@@ -1,4 +1,4 @@
-// <copyright file="DeleteEnvironmentCommand.cs" company="Microsoft">
+// <copyright file="SuspendEnvironmentCommand.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,22 +17,16 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 {
     /// <summary>
-    /// Delete a Cloud Environment.
+    /// Suspend a Cloud Environment.
     /// </summary>
-    [Verb("delete-environment", HelpText = "Delete a Cloud Environment.")]
-    public class DeleteEnvironmentCommand : CommandBase
+    [Verb("suspend-environment", HelpText = "Suspend a Cloud Environment.")]
+    public class SuspendEnvironmentCommand : CommandBase
     {
         /// <summary>
-        /// Gets or sets a value indicating the environment to delete.
+        /// Gets or sets a value indicating the environment to suspend.
         /// </summary>
         [Option('i', "id", HelpText = "The cloud environment id.", Required = true)]
         public string EnvironmentId { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether or not the environment should be hard deleted.
-        /// </summary>
-        [Option("hard", HelpText = "Hard delete the environment.")]
-        public bool HardDelete { get; set; }
 
         /// <summary>
         /// Creates the web host.
@@ -53,22 +47,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)
         {
-            Guid id;
-
-            try
-            {
-                id = Guid.Parse(EnvironmentId);
-            }
-            catch
+            if (!Guid.TryParse(EnvironmentId, out var id))
             {
                 stderr.WriteLine($"Invalid Cloud Environment ID: {EnvironmentId}");
                 return;
             }
 
-            DeleteEnvironmentAsync(services, id, stdout, stderr).Wait();
+            SuspendEnvironmentAsync(services, id, stdout, stderr).Wait();
         }
 
-        private async Task DeleteEnvironmentAsync(IServiceProvider services, Guid id, TextWriter stdout, TextWriter stderr)
+        private async Task SuspendEnvironmentAsync(IServiceProvider services, Guid id, TextWriter stdout, TextWriter stderr)
         {
             var superuserIdentity = services.GetRequiredService<VsoSuperuserClaimsIdentity>();
             var currentIdentityProvider = services.GetRequiredService<ICurrentUserProvider>();
@@ -102,18 +90,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 
                 if (DryRun || environment.IsDeleted)
                 {
-                    await stdout.WriteLineAsync("Bailing out. " + (environment.IsDeleted ? "Environment already deleted." : "Dry run."));
+                    await stdout.WriteLineAsync("Bailing out. " + (environment.IsDeleted ? "Environment deleted." : "Dry run."));
                     return;
                 }
 
-                if (HardDelete)
-                {
-                    await manager.HardDeleteAsync(id, logger);
-                }
-                else
-                {
-                    await manager.SoftDeleteAsync(id, logger);
-                }
+                await manager.SuspendAsync(id, logger);
             }
         }
     }

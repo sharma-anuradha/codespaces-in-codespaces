@@ -102,9 +102,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 {
                     subscription = await manager.GetSubscriptionAsync(id.ToString(), logger);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    await stderr.WriteLineAsync($"Subscription not found: {SubscriptionId}");
+                    await stderr.WriteLineAsync($"Subscription not found: {SubscriptionId}. {ex.Message}");
                     return;
                 }
 
@@ -117,10 +117,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 
                 if (DryRun || subscription.IsBanned)
                 {
+                    await stdout.WriteLineAsync("Bailing out. " + (subscription.IsBanned ? "Subscription already banned." : "Dry run."));
                     return;
                 }
 
-                await manager.AddBannedSubscriptionAsync(id.ToString(), reason, superuserIdentity.Actor.Name, logger);
+                await manager.AddBannedSubscriptionAsync(id.ToString(), reason, "vsoutil", logger);
             }
         }
     }
