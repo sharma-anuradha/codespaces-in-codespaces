@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             Id = billingEvent.Id;
             Plan = new PartnerPlan(billingEvent.Plan);
-            Time = DateTime.UtcNow;
+            Time = billingEvent.Time;
 
             var summary = billingEvent.Args as BillingSummary;
             PeriodStart = summary.PeriodStart;
@@ -74,12 +74,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Gets the total compute time.
         /// </summary>
         /// <returns>Returns total compute time.</returns>
+        [JsonIgnore]
         public double TotalComputeTime => this?.UsageDetail?.Environments?.Sum(o => o?.TotalComputeTime) ?? 0;
 
         /// <summary>
         /// Gets the total storage time.
         /// </summary>
         /// <returns>Returns total storage time.</returns>
+        [JsonIgnore]
         public double TotalStorageTime => this?.UsageDetail?.Environments?.Sum(o => o?.TotalStorageTime) ?? 0;
 
         /// <summary>

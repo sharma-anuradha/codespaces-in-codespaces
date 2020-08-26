@@ -48,12 +48,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// Gets the total compute time.
         /// </summary>
         /// <returns>Returns total compute time.</returns>
+        [JsonIgnore]
         public double TotalComputeTime => this?.ResourceUsage?.Compute?.Sum(x => x.Usage) ?? 0;
 
         /// <summary>
         /// Gets the total storage time.
         /// </summary>
         /// <returns>Returns total storage time.</returns>
+        [JsonIgnore]
         public double TotalStorageTime => this?.ResourceUsage?.Storage?.Sum(x => x.Usage) ?? 0;
 
         /// <summary>
