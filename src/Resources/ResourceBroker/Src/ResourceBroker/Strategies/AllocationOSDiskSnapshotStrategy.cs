@@ -129,11 +129,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     var disk = await azure.Disks.GetByResourceGroupAsync(diskRecord.AzureResourceInfo.ResourceGroup, diskRecord.AzureResourceInfo.Name);
 
                     childLogger.FluentAddValue("SnapshotDiskTargetSizeGb", disk.SizeInGB)
-                        .FluentAddValue("SnapshotDiskOSType", disk.OSType);
+                        .FluentAddValue("SnapshotDiskOSType", disk.OSType)
+                        .FluentAddValue("ResourceLocation", disk.RegionName)
+                        .FluentAddValue("ResourceGroup", disk.ResourceGroupName)
+                        .FluentAddValue("ResourceType", ResourceType.Snapshot.ToString());
 
                     var snapshot = await azure.Snapshots.Define($"{Guid.NewGuid()}-snapshot")
-                        .WithRegion(diskRecord.Location)
-                        .WithExistingResourceGroup(diskRecord.AzureResourceInfo.ResourceGroup)
+                        .WithRegion(disk.RegionName)
+                        .WithExistingResourceGroup(disk.ResourceGroupName)
                         .WithDataFromDisk(disk.Id)
                         .CreateAsync();
                     if (snapshot == null)
@@ -175,9 +178,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                     // Create snapshot from disk
                     var snapshot = await azure.Snapshots.GetByResourceGroupAsync(snapshotRecord.AzureResourceInfo.ResourceGroup, snapshotRecord.AzureResourceInfo.Name);
 
+                    childLogger.FluentAddValue("ResourceLocation", snapshot.RegionName)
+                        .FluentAddValue("ResourceGroup", snapshot.ResourceGroupName)
+                        .FluentAddValue("ResourceType", ResourceType.OSDisk.ToString());
+
                     var disk = await azure.Disks.Define($"{Guid.NewGuid()}-disk")
-                        .WithRegion(snapshotRecord.Location)
-                        .WithExistingResourceGroup(snapshotRecord.AzureResourceInfo.ResourceGroup)
+                        .WithRegion(snapshot.RegionName)
+                        .WithExistingResourceGroup(snapshot.ResourceGroupName)
                         .WithWindowsFromSnapshot(snapshot)
                         .CreateAsync();
                     if (disk == null)
