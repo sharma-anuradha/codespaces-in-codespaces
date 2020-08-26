@@ -312,6 +312,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                     AND (c.isDeleted = true
                          AND c.lastDeleted < @cutoffTime)
                     AND (c.state != @deletedState)
+                    AND (c.transitions.archiving.status != @archivingInProgressStatus
+                         AND c.transitions.archiving.status != @archivingInitializedStatus
+                         AND c.transitions.archiving.status != @archivingTriggeredStatus)
                     AND (((
                         IS_DEFINED(c.controlPlaneLocation) = false
                             OR c.controlPlaneLocation = null) AND c.location = @controlPlaneLocation)
@@ -320,6 +323,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 {
                     new SqlParameter { Name = "@idShard", Value = idShard },
                     new SqlParameter { Name = "@deletedState", Value = CloudEnvironmentState.Deleted.ToString() },
+                    new SqlParameter { Name = "@archivingInProgressStatus", Value = OperationState.InProgress.ToString() },
+                    new SqlParameter { Name = "@archivingInitializedStatus", Value = OperationState.Initialized.ToString() },
+                    new SqlParameter { Name = "@archivingTriggeredStatus", Value = OperationState.Triggered.ToString() },
                     new SqlParameter { Name = "@cutoffTime", Value = cutoffTime },
                     new SqlParameter { Name = "@controlPlaneLocation", Value = ControlPlaneLocation.ToString() },
                 });
