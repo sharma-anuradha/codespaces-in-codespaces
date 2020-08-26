@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="TokenService\TokenService.csproj" />
     <ProjectReference Include="TokenService.Client\TokenService.Client.csproj" />
+    <ProjectReference Include="TokenService.Client\TokenService.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
