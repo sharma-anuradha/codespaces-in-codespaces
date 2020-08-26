@@ -31,6 +31,7 @@
   <PropertyGroup>
     <NetCoreAppTargetFramework>netcoreapp3.1</NetCoreAppTargetFramework>
     <NetStandardTargetFramework>netstandard2.1</NetStandardTargetFramework>
+    <NetStandardTargetFrameworkMT>netstandard2.0</NetStandardTargetFrameworkMT>
   </PropertyGroup>
 
   <!-- NuGet Package Versions -->
