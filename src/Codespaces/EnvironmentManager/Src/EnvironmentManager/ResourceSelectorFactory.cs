@@ -50,8 +50,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             var isWindowsEnvPersistingOSDisk = await IsWindowsEnvironmentPersistingOSDiskAsync(logger);
             var isOsDiskAllocationRequired = isWindowsEnvPersistingOSDisk && sku.ComputeOS == ComputeOS.Windows;
             var isStorageAllocated = cloudEnvironment.Storage?.Type == ResourceType.StorageFileShare;
-            var queueComputeCreateRequest = !string.IsNullOrWhiteSpace(properties.SubnetResourceId);
-            var queueComputeAllocation = cloudEnvironment.QueueResourceAllocation && !queueComputeCreateRequest && !isOsDiskAllocationRequired;
 
             if (isOsDiskAllocationRequired)
             {
@@ -77,6 +75,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     }
                 }
             }
+
+            var isWindowsResume = isWindowsEnvPersistingOSDisk && ((cloudEnvironment.OSDisk != default) || (cloudEnvironment.OSDiskSnapshot != default));
+            bool isVnetInjected = !string.IsNullOrWhiteSpace(properties.SubnetResourceId);
+            var queueComputeCreateRequest = isVnetInjected || isWindowsResume;
+            var queueComputeAllocation = cloudEnvironment.QueueResourceAllocation && !queueComputeCreateRequest;
 
             var computeRequest = new AllocateRequestBody
             {
