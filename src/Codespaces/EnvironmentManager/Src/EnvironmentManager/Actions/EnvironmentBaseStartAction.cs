@@ -13,12 +13,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -44,9 +40,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="skuCatalog">Target sku catalog.</param>
         /// <param name="skuUtils">Target skuUtils, to find sku's eligiblity.</param>
         /// <param name="planManager">Target plan manager.</param>
-        /// <param name="subscriptionManager">Target subscription manager.</param>
-        /// <param name="environmentSubscriptionManager">Target environnment subscription manager.</param>
-        /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         /// <param name="workspaceManager">Target workspace manager.</param>
         /// <param name="environmentMonitor">Target environment monitor.</param>
         /// <param name="environmentContinuation">Target environment continuation.</param>
@@ -65,9 +58,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ISkuCatalog skuCatalog,
             ISkuUtils skuUtils,
             IPlanManager planManager,
-            ISubscriptionManager subscriptionManager,
-            IEnvironmentSubscriptionManager environmentSubscriptionManager,
-            EnvironmentManagerSettings environmentManagerSettings,
             IWorkspaceManager workspaceManager,
             IEnvironmentMonitor environmentMonitor,
             IEnvironmentContinuationOperations environmentContinuation,
@@ -79,9 +69,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
-            SubscriptionManager = Requires.NotNull(subscriptionManager, nameof(subscriptionManager));
-            EnvironmentSubscriptionManager = Requires.NotNull(environmentSubscriptionManager, nameof(environmentSubscriptionManager));
-            EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
             EnvironmentMonitor = Requires.NotNull(environmentMonitor, nameof(environmentMonitor));
             EnvironmentContinuation = Requires.NotNull(environmentContinuation, nameof(environmentContinuation));
@@ -114,12 +101,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
         private IPlanManager PlanManager { get; }
 
-        private ISubscriptionManager SubscriptionManager { get; }
-
-        private IEnvironmentSubscriptionManager EnvironmentSubscriptionManager { get; }
-
-        private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
-
         private IResourceAllocationManager ResourceAllocationManager { get; }
 
         private IEnvironmentSuspendAction EnvironmentSuspendAction { get; }
@@ -149,8 +130,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Validate
             ValidateInput(input);
-            await ValidateEnvironmentAsync(record.Value, plan, logger);
-            var subscriptionComputeData = await ValidatePlanAndSubscriptionAsync(record.Value, plan, logger);
 
             // Authorize
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes: null, logger);
@@ -182,18 +161,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                     environment.Connection.WorkspaceId = null;
                 });
             }
-
-            // Add Subscription quota data
-            var subscriptionData = new SubscriptionData
-            {
-                SubscriptionId = plan.Plan.Subscription,
-                ComputeUsage = subscriptionComputeData.ComputeUsage,
-                ComputeQuota = subscriptionComputeData.ComputeQuota,
-            };
-            record.PushTransition(environment =>
-            {
-                environment.SubscriptionData = subscriptionData;
-            });
 
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
             if (record.Value.QueueResourceAllocation || sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
@@ -369,57 +336,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidationUtil.IsTrue(planDetails != null, $"Plan '{environment.PlanId}' not found.");
 
             return planDetails;
-        }
-
-        private async Task ValidateEnvironmentAsync(CloudEnvironment environment, VsoPlan plan, IDiagnosticsLogger logger)
-        {
-            // Static Environment
-            if (environment.Type == EnvironmentType.StaticEnvironment)
-            {
-                throw new CodedValidationException((int)MessageCodes.StartStaticEnvironment);
-            }
-
-            // Validate sku details
-            await ValidateSkuAsync(environment.SkuName, plan.Plan);
-
-            // Validate VNet details
-            var isVnetInjectionEnabled = await PlanManager.CheckFeatureFlagsAsync(plan, PlanFeatureFlag.VnetInjection, logger.NewChildLogger());
-            ValidationUtil.IsTrue(isVnetInjectionEnabled, "The requested vnet injection feature is disabled.");
-        }
-
-        private async Task<SubscriptionComputeData> ValidatePlanAndSubscriptionAsync(CloudEnvironment environment, VsoPlan plan, IDiagnosticsLogger logger)
-        {
-            SkuCatalog.CloudEnvironmentSkus.TryGetValue(environment.SkuName, out var sku);
-
-            // Validate whether or not the subscription is allowed to create plans and environments.
-            var subscription = await SubscriptionManager.GetSubscriptionAsync(plan.Plan.Subscription, logger.NewChildLogger());
-            if (!await SubscriptionManager.CanSubscriptionCreatePlansAndEnvironmentsAsync(subscription, logger.NewChildLogger()))
-            {
-                throw new ForbiddenException((int)MessageCodes.SubscriptionCannotPerformAction);
-            }
-
-            // Validate subscription state
-            if (subscription.SubscriptionState != SubscriptionStateEnum.Registered)
-            {
-                logger.LogError($"{LogBaseName}_resume_subscriptionstate_error");
-                throw new ForbiddenException((int)MessageCodes.SubscriptionStateIsNotRegistered);
-            }
-
-            // Check subscription quota
-            var computeCheckEnabled = await EnvironmentManagerSettings.ComputeCheckEnabled(logger.NewChildLogger());
-            var windowsComputeCheckEnabled = await EnvironmentManagerSettings.WindowsComputeCheckEnabled(logger.NewChildLogger());
-            if (sku.ComputeOS == ComputeOS.Windows)
-            {
-                computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
-            }
-
-            var subscriptionComputeData = await EnvironmentSubscriptionManager.HasReachedMaxComputeUsedForSubscriptionAsync(subscription, sku, plan.Partner, logger.NewChildLogger());
-            if (computeCheckEnabled && subscriptionComputeData.HasReachedQuota)
-            {
-                throw new ForbiddenException((int)MessageCodes.ExceededQuota);
-            }
-
-            return subscriptionComputeData;
         }
 
         private Task<ResourceAllocationRecord> AllocateComputeAsync(

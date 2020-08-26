@@ -10,10 +10,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -35,9 +33,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="skuCatalog">Target sku catalog.</param>
         /// <param name="skuUtils">Target skuUtils, to find sku's eligiblity.</param>
         /// <param name="planManager">Target plan manager.</param>
-        /// <param name="subscriptionManager">Target subscription manager.</param>
-        /// <param name="environmentSubscriptionManager">Target environnment subscription manager.</param>
-        /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         /// <param name="workspaceManager">Target workspace manager.</param>
         /// <param name="environmentMonitor">Target environment monitor.</param>
         /// <param name="environmentContinuation">Target environment continuation.</param>
@@ -56,9 +51,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ISkuCatalog skuCatalog,
             ISkuUtils skuUtils,
             IPlanManager planManager,
-            ISubscriptionManager subscriptionManager,
-            IEnvironmentSubscriptionManager environmentSubscriptionManager,
-            EnvironmentManagerSettings environmentManagerSettings,
             IWorkspaceManager workspaceManager,
             IEnvironmentMonitor environmentMonitor,
             IEnvironmentContinuationOperations environmentContinuation,
@@ -67,7 +59,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentSuspendAction environmentSuspendAction,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerClient,
             ITaskHelper taskHelper)
-           : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils, planManager, subscriptionManager, environmentSubscriptionManager, environmentManagerSettings, workspaceManager, environmentMonitor, environmentContinuation, resourceAllocationManager, resourceStartManager, environmentSuspendAction, resourceBrokerClient, taskHelper)
+           : base(
+                 environmentStateManager,
+                 repository,
+                 currentLocationProvider,
+                 currentUserProvider,
+                 controlPlaneInfo,
+                 environmentAccessManager,
+                 skuCatalog,
+                 skuUtils,
+                 planManager,
+                 workspaceManager,
+                 environmentMonitor,
+                 environmentContinuation,
+                 resourceAllocationManager,
+                 resourceStartManager,
+                 environmentSuspendAction,
+                 resourceBrokerClient,
+                 taskHelper)
         {
         }
 

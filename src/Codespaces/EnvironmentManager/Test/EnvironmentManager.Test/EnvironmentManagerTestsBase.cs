@@ -281,9 +281,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
                 MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
-                MockUtil.MockSubscriptionManager(),
-                environmentSubscriptionManager,
-                environmentSettings,
                 workspaceManager,
                 environmentMonitor,
                 environmentContinuationOperations.Object,
@@ -304,9 +301,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
                 MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
-                MockUtil.MockSubscriptionManager(),
-                environmentSubscriptionManager,
-                environmentSettings,
                 workspaceManager,
                 environmentMonitor,
                 environmentContinuationOperations.Object,
@@ -326,7 +320,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 environmentResumeAction,
                 MockUtil.MockSkuCatalog(),
-                MockUtil.MockSkuUtils(true)
+                MockUtil.MockSkuUtils(true),
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                MockUtil.MockSubscriptionManager(),
+                environmentSubscriptionManager,
+                environmentSettings
                 );
 
             var environmentIntializeExportAction = new EnvironmentIntializeExportAction(
@@ -338,7 +336,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 environmentExportAction,
                 MockUtil.MockSkuCatalog(),
-                MockUtil.MockSkuUtils(true));
+                MockUtil.MockSkuUtils(true),
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
+                MockUtil.MockSubscriptionManager(),
+                environmentSubscriptionManager,
+                environmentSettings);
 
             var environmentFinalizeResumeAction = new EnvironmentFinalizeResumeAction(
                 environmentStateManager,

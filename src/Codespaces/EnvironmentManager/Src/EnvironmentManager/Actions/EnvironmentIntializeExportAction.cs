@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -28,6 +31,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentExportAction">Target environment export action.</param>
         /// <param name="skuCatalog">Target sku catalog.</param>
         /// <param name="skuUtils">Target skuUtils, to find sku's eligiblity.</param>
+        /// <param name="planManager">Target plan manager.</param>
+        /// <param name="subscriptionManager">Target subscription manager.</param>
+        /// <param name="environmentSubscriptionManager">Target environnment subscription manager.</param>
+        /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         public EnvironmentIntializeExportAction(
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
@@ -37,7 +44,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentAccessManager environmentAccessManager,
             IEnvironmentExportAction environmentExportAction,
             ISkuCatalog skuCatalog,
-            ISkuUtils skuUtils)
+            ISkuUtils skuUtils,
+            IPlanManager planManager,
+            ISubscriptionManager subscriptionManager,
+            IEnvironmentSubscriptionManager environmentSubscriptionManager,
+            EnvironmentManagerSettings environmentManagerSettings)
             : base(
                   environmentStateManager,
                   repository,
@@ -46,7 +57,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                   controlPlaneInfo,
                   environmentAccessManager,
                   skuCatalog,
-                  skuUtils)
+                  skuUtils,
+                  planManager,
+                  subscriptionManager,
+                  environmentSubscriptionManager,
+                  environmentManagerSettings)
         {
             EnvironmentExportAction = environmentExportAction;
         }
@@ -83,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             var record = await FetchAsync(input, logger);
 
-            var canProceed = ConfigureRunCore(record, logger);
+            var canProceed = await ConfigureRunCoreAsync(record, logger);
             if (!canProceed)
             {
                 return record.Value;
