@@ -95,6 +95,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 .Returns(
                   Task.FromResult(
                     (outputState, deploymentStatusInput)));
+            deploymentManagerMoq.Setup(x => x.ApplyNsgRulesAsync(It.IsAny<AzureResourceInfo>(), It.IsAny<ResourceComponent>(), It.IsAny<IDiagnosticsLogger>()))
+                .Returns(
+                    Task.FromResult(
+                        OperationState.Succeeded));
 
             var computeProvider = new VirtualMachineProvider(deploymentManagerMoq.Object);
             var result = await computeProvider.CreateAsync(new VirtualMachineProviderCreateInput { ContinuationToken = continuationToken }, logger);

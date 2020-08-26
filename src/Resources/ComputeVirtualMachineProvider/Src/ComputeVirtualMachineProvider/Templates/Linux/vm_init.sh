@@ -72,14 +72,6 @@ mkdir -p $containerTmp
 chmod o+rwt $containerTmp
 setfacl -dR -m o::rw $containerTmp
 
-# Block Azure Instance Metadata Service IP on host (OUTPUT) and also in containers (DOCKER-USER)
-# This needs to happen after the docker install for DOCKER-USER to exist in iptables.
-
-echo "Block Azure Instance Metadata Service ..."
-INSTANCE_METADATA_IP=169.254.169.254
-iptables -I OUTPUT -d $INSTANCE_METADATA_IP -j DROP
-iptables -I DOCKER-USER -d $INSTANCE_METADATA_IP -j DROP
-
 echo "Update Time Sync Configuration ..."
 # disable NTP-based time sync
 timedatectl set-ntp off

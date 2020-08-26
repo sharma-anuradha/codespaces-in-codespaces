@@ -3,6 +3,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -10,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 {
@@ -60,6 +63,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                                 childLogger,
                                 manager.BeginCreateComputeAsync,
                                 manager.CheckCreateComputeStatusAsync);
+
+                    if (resultState == OperationState.Succeeded)
+                    {
+                        var postDeploymentResultState = await PostDeploymentApplyNsgRulesAsync(input, azureResourceInfo, logger.NewChildLogger());
+
+                        if (postDeploymentResultState != OperationState.Succeeded)
+                        {
+                            return new VirtualMachineProviderCreateResult() { Status = OperationState.Failed, ErrorReason = "FailedToApplyPostDeploymentNsgRules" };
+                        }
+                    }
+
                     var vmComponents = new ResourceComponentDetail()
                     {
                         Items = input.CustomComponents.ToComponentDictionary(),
@@ -217,6 +231,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                     return Task.FromResult(result);
                 },
                 swallowException: true);
+        }
+
+        private Task<OperationState> PostDeploymentApplyNsgRulesAsync(
+            VirtualMachineProviderCreateInput input,
+            AzureResourceInfo azureResourceInfo,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(input, nameof(input));
+            Requires.NotNull(azureResourceInfo, nameof(azureResourceInfo));
+            Requires.NotNull(logger, nameof(logger));
+ 
+            return logger.OperationScopeAsync(
+                 "virtual_machine_compute_provider_apply_nsg_rules",
+                 async (childLogger) =>
+                 {
+                    var shouldApplyPostDeploymentNsgRules = true;
+                    var niComponent = input.CustomComponents?.SingleOrDefault(c => c.ComponentType == ResourceType.NetworkInterface);
+                    if (niComponent != default)
+                    {
+                        var nicProperties = new AzureResourceInfoNetworkInterfaceProperties(niComponent.AzureResourceInfo.Properties);
+                        var isVnetInjected = nicProperties.IsVNetInjected;
+                        shouldApplyPostDeploymentNsgRules = isVnetInjected ? false : true;
+                    }
+
+                    childLogger.FluentAddValue("ShouldApplyPostDeploymentNsgRules", shouldApplyPostDeploymentNsgRules);
+
+                    if (shouldApplyPostDeploymentNsgRules)
+                    {
+                        var operationState = await manager.ApplyNsgRulesAsync(
+                            azureResourceInfo,
+                            niComponent,
+                            childLogger.NewChildLogger());
+                        return operationState;
+                    }
+
+                    return OperationState.Succeeded;
+                 },
+                 (ex, childLogger) =>
+                 {
+                    var result = OperationState.Failed;
+                    childLogger.FluentAddValue("Result", result)
+                        .FluentAddValue("Message", ex.Message);
+                    return Task.FromResult(result);
+                 },
+                 swallowException: true);
         }
 
         /// <inheritdoc/>

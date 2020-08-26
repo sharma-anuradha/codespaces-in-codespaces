@@ -65,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// <summary>
         /// Update compute tags.
         /// </summary>
-        /// <param name="input">inpute.</param>
+        /// <param name="input">input.</param>
         /// <param name="logger">logger.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         Task<VirtualMachineProviderUpdateTagsResult> UpdateTagsAsync(VirtualMachineProviderUpdateTagsInput input, IDiagnosticsLogger logger);

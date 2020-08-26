@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
@@ -86,6 +87,87 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             {
                 resourceTags[ResourceTagName.ResourceComponentRecordIds] = componentRecordIds;
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task<OperationState> ApplyNsgRulesAsync(AzureResourceInfo azureResourceInfo, ResourceComponent niComponent, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(logger, nameof(logger));
+
+            return await logger.OperationScopeAsync(
+                $"{LogBase}_apply_nsg_rules",
+                async (childLogger) =>
+                {
+                    var azure = niComponent != default ?
+                        await ClientFactory.GetAzureClientAsync(niComponent.AzureResourceInfo.SubscriptionId) :
+                        await ClientFactory.GetAzureClientAsync(azureResourceInfo.SubscriptionId);
+
+                    INetworkSecurityGroup networkSecurityGroup;
+                    if (niComponent == default)
+                    {
+                        var nsgName = VirtualMachineResourceNames.GetNetworkSecurityGroupName(azureResourceInfo.Name);
+                        networkSecurityGroup = await azure.NetworkSecurityGroups.GetByResourceGroupAsync(
+                            azureResourceInfo.ResourceGroup,
+                            nsgName);
+                    }
+                    else
+                    {
+                        var nicProperties = new AzureResourceInfoNetworkInterfaceProperties(niComponent.AzureResourceInfo.Properties);
+                        networkSecurityGroup = await azure.NetworkSecurityGroups.GetByResourceGroupAsync(
+                            niComponent.AzureResourceInfo.ResourceGroup,
+                            nicProperties.Nsg);
+                    }
+
+                    var nsgUpdatable = networkSecurityGroup.Update();
+
+                    nsgUpdatable.DefineRule("Restrict-Outbound-AzurePlatformIMDS-Rule")
+                        .DenyOutbound()
+                        .FromAnyAddress()
+                        .FromAnyPort()
+                        .ToAddress("AzurePlatformIMDS")
+                        .ToAnyPort()
+                        .WithAnyProtocol()
+                        .WithPriority(300)
+                        .Attach();
+
+                    nsgUpdatable.DefineRule("Restrict-Outbound-Udp-Rule")
+                        .DenyOutbound()
+                        .FromAnyAddress()
+                        .FromAnyPort()
+                        .ToAnyAddress()
+                        .ToAnyPort()
+                        .WithProtocol(SecurityRuleProtocol.Udp)
+                        .WithPriority(290)
+                        .Attach();
+
+                    nsgUpdatable.DefineRule("Allow-Outbound-Udp-Skype-Rule")
+                        .AllowOutbound()
+                        .FromAnyAddress()
+                        .FromAnyPort()
+                        .ToAddresses(new[]
+                        {
+                            "13.107.64.0/18",
+                            "52.112.0.0/14",
+                            "52.120.0.0/14",
+                        })
+                        .ToPortRanges(new[]
+                        {
+                            "3478",
+                            "3479",
+                            "3480",
+                            "3481",
+                        })
+                        .WithProtocol(SecurityRuleProtocol.Udp)
+                        .WithPriority(280)
+                        .Attach();
+
+                    var nsgResult = await nsgUpdatable.ApplyAsync();
+
+                    childLogger.FluentAddValue("SecurityRules", string.Join(", ", nsgResult.SecurityRules.Keys));
+                    childLogger.FluentAddValue("DefaultSecurityRules", string.Join(", ", nsgResult.DefaultSecurityRules.Keys));
+
+                    return OperationState.Succeeded;
+                });
         }
 
         /// <inheritdoc/>

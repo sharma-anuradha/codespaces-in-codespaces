@@ -87,5 +87,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         Task<OperationState> UpdateTagsAsync(
             VirtualMachineProviderUpdateTagsInput input,
             IDiagnosticsLogger logger);
+        
+        /// <summary>
+        /// Apply nsg rules.
+        /// </summary>
+        /// <param name="azureResourceInfo">azureResourceInfo.</param>
+        /// <param name="networkInterfaceComponent">networkInterfaceComponent.</param>
+        /// <returns>result.</returns>
+        Task<OperationState> ApplyNsgRulesAsync(AzureResourceInfo azureResourceInfo, ResourceComponent networkInterfaceComponent, IDiagnosticsLogger logger);
     }
 }
