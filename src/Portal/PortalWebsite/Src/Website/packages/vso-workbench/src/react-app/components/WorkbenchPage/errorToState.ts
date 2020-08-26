@@ -29,12 +29,12 @@ export const errorToState = (e: Error): IWorkbenchStateObject => {
     if (e instanceof HttpError) {
         return {
             value: EnvironmentWorkspaceState.Error,
-            message: `Failed to get workspage info. [${e.message}]`,
+            message: `Failed to get codespace info. [${e.message}]`,
         };
     }
 
     return {
         value: EnvironmentWorkspaceState.Error,
-        message: e.message || 'Unknown error when fetching workspace info.',
+        message: e.message || 'Unknown error when fetching codespace info.',
     };
 };

@@ -38,7 +38,7 @@ describe('workspace page `errorToState`', () => {
 
         expect(result).toMatchObject({
             value: EnvironmentWorkspaceState.Error,
-            message: `Failed to get workspage info. [${e.message}]`,
+            message: `Failed to get codespace info. [${e.message}]`,
         });
     });
 
@@ -48,7 +48,7 @@ describe('workspace page `errorToState`', () => {
 
         expect(result).toMatchObject({
             value: EnvironmentWorkspaceState.Error,
-            message: e.message || 'Unknown error when fetching workspace info.',
+            message: e.message || 'Unknown error when fetching codespace info.',
         });
     });
 });
