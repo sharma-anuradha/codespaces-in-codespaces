@@ -1,0 +1,8 @@
+// Lists CorrelationId of the resume requests which failed unexpectedly.
+// #include("BuildingBlocks\ResumeOutcomeClassifiedEvents.ksf")
+ResumeOutcomeClassifiedEvents 
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | where EventAtResumeSkuResolve_SkuName contains "linux"
+    | where EventAtResumeStartRequest_Time < ago(1h)
+    | where EventAtResumeRequestStop_ResponseCode >= 500
+    | project EventAtResumeRequestStart_CorrelationId

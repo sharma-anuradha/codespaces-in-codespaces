@@ -1,0 +1,9 @@
+// Orders the Infrastructure or Bugs by hitcount
+// #include("BuildingBlocks\CreateOutcomeClassifiedEvents.ksf")
+CreateOutcomeClassifiedEvents
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | where EventAtCreateRequestStop_SkuName contains "linux"
+    | where EventAtCreateRequestStart_Time < ago(1h)
+    | where CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:"
+    | summarize HitCount = count() by CreateOutcome
+    | order by HitCount desc

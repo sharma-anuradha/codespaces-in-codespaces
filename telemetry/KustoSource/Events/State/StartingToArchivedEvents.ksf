@@ -1,0 +1,12 @@
+#include("GetStateTransitionEvents.ksf")
+let StartingToArchivedEvents = GetStateTransitionEvents(fromState="Starting", toState="Archived")
+    | extend EventAtStartingToArchived = 1
+    | extend EventAtStartingToArchived_Time = ['time']
+    | extend EventAtStartingToArchived_UserInitiated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestUri endswith "/shutdown" and HttpRequestMethod == "POST", 1, 0)
+    | extend EventAtStartingToArchived_CorrelationId = CorrelationId
+    | extend EventAtStartingToArchived_WorkspaceId = WorkspaceId
+    | project EventAtStartingToArchived,
+        EventAtStartingToArchived_Time, 
+        EventAtStartingToArchived_UserInitiated, 
+        EventAtStartingToArchived_CorrelationId, 
+        EventAtStartingToArchived_WorkspaceId;

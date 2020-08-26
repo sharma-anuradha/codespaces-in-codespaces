@@ -1,0 +1,3 @@
+#include("Raw\ScopedRawEvents_7Days.ksf")
+let ShutdownEnvironmentPOSTRequestEvents = ScopedRawEvents
+    | where HttpRequestMethod == "POST" and HttpRequestUri startswith "/api/v1/environments" and HttpRequestUri endswith "/shutdown";

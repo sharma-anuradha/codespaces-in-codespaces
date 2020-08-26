@@ -1,0 +1,15 @@
+// Computes total reliability rate of create.
+// #include("BuildingBlocks\CreateOutcomeClassifiedEvents.ksf")
+CreateOutcomeClassifiedEvents
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | where EventAtCreateRequestStop_SkuName contains "linux"
+    | where EventAtCreateRequestStart_Time < ago(1h)
+    | summarize 
+        Total = count(), 
+        Failed =  countif(ResponseOutcome startswith "Infrastructure:" or 
+            ResponseOutcome startswith "Bug:" or 
+            CreateOutcome startswith "Infrastructure:" or 
+            CreateOutcome startswith "Bug:")
+    | extend Success = Total - Failed
+    | extend  Rate = (Success * 100.0) / Total
+    | project Rate

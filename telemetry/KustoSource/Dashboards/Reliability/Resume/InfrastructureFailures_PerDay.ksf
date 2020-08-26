@@ -1,0 +1,8 @@
+// Counts the Infrastructure failures per day of resume.
+// #include("BuildingBlocks\ResumeOutcomeClassifiedEvents.ksf")
+ResumeOutcomeClassifiedEvents 
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | where EventAtResumeSkuResolve_SkuName contains "linux"
+    | where EventAtResumeStartRequest_Time < ago(1h)
+    | where ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:" or ResponseOutcome startswith "Infrastructure:" or ResponseOutcome startswith "Bug:"
+    | summarize count() by bin(EventAtResumeStartRequest_Time, 1d)

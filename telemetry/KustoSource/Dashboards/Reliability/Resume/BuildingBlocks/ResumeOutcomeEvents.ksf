@@ -1,0 +1,23 @@
+// Stitches together events from a resume request to a possible outcome.
+#include("..\..\..\..\Events\ResumeEnvironmentRequestStartEvents.ksf")
+#include("..\..\..\..\Events\ResumeEnvironmentRequestStopEvents.ksf")
+#include("..\..\..\..\Events\ResumeEnvironmentRequestSkuResolveEvents.ksf")
+#include("..\..\..\..\Events\ResumeEnvironmentWorkspaceIdEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToAvailableEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToDeletedEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToShutdownEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToFailedEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToArchivedEvents.ksf")
+#include("..\Bugs\BugExcludeDupeStartingEvents.ksf")
+#include("..\..\..\..\Events\AgentCollectedErrorDataOnJobEvents.ksf")
+let ResumeOutcomeEvents = ResumeEnvironmentRequestStartEvents
+    | join kind=leftouter (ResumeEnvironmentRequestStopEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeRequestStop_CorrelationId
+    | join kind=leftouter (ResumeEnvironmentRequestSkuResolveEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeSkuResolve_CorrelationId
+    | join kind=leftouter (ResumeEnvironmentWorkspaceIdEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeHasWorkspace_CorrelationId
+    | join kind=leftouter (StartingToAvailableEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToAvailable_WorkspaceId
+    | join kind=leftouter (StartingToDeletedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToDeleted_WorkspaceId
+    | join kind=leftouter (StartingToFailedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToFailed_WorkspaceId
+    | join kind=leftouter (StartingToShutdownEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToShutdown_WorkspaceId
+    | join kind=leftouter (StartingToArchivedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToArchived_WorkspaceId
+    | join kind=leftouter (BugExcludeDupeStartingEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.PreviousCorrelationId
+    | join kind=leftouter (AgentCollectedErrorDataOnJobEvents) on $left.EventAtStartingToShutdown_CorrelationId == $right.EventAtAgentCollectedError_CorrelationId;

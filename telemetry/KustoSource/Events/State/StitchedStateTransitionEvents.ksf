@@ -1,0 +1,23 @@
+#include("GetAllStateTransitionEvents.ksf")
+let StateTransitionEvents = GetAllStateTransitionEvents
+    | order by CloudEnvironmentId, ['time'] asc
+    | extend Row = row_number(1, prev(CloudEnvironmentId) != CloudEnvironmentId);
+let MaterializedStateTransitionEvents = materialize(StateTransitionEvents);
+let StitchedStateTransitionEvents = MaterializedStateTransitionEvents
+    | extend TargetRowJoin = Row + 1
+    | extend PreviousOldState = CloudEnvironmentOldState
+    | extend PreviousNewState = CloudEnvironmentNewState
+    | extend PreviousWorkspaceId = WorkspaceId
+    | extend PreviousTransitionAt = ['time']
+    | extend PreviousCorrelationId = CorrelationId
+    | project TargetRowJoin, CloudEnvironmentId, PreviousOldState, PreviousNewState, PreviousWorkspaceId, PreviousTransitionAt, PreviousCorrelationId, SkuName
+    | join (MaterializedStateTransitionEvents
+                | extend CurrentOldState = CloudEnvironmentOldState
+                | extend CurrentNewState = CloudEnvironmentNewState
+                | extend CurrentWorkspaceId = WorkspaceId
+                | extend CurrentTransitionAt = ['time']
+                | extend CurrentCorrelationId = CorrelationId
+                | project CloudEnvironmentId, Row, CurrentOldState, CurrentNewState, CurrentWorkspaceId, CurrentTransitionAt, CurrentCorrelationId
+            ) on $left.TargetRowJoin == $right.Row and $left.CloudEnvironmentId == $right.CloudEnvironmentId
+    | project-away TargetRowJoin, Row, CloudEnvironmentId1
+    | extend TimeBetweenTransitions = (CurrentTransitionAt - PreviousTransitionAt) / 1s;

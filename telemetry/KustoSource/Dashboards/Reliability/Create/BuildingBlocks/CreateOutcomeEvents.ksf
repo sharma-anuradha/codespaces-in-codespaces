@@ -1,0 +1,17 @@
+// Stitches together events from a creation request to a possible outcome.
+#include("..\..\..\..\Events\CreateEnvironmentRequestStartEvents.ksf")
+#include("..\..\..\..\Events\CreateEnvironmentRequestStopEvents.ksf")
+#include("..\..\..\..\Events\CreateEnvironmentWorkspaceIdEvents.ksf")
+#include("..\..\..\..\Events\EnvironmentAvailabilityEvents.ksf")
+#include("..\..\..\..\Events\State\ProvisioningToAvailableEvents.ksf")
+#include("..\..\..\..\Events\State\ProvisioningToDeletedEvents.ksf")
+#include("..\..\..\..\Events\State\ProvisioningToShutdownEvents.ksf")
+#include("..\..\..\..\Events\State\ProvisioningToFailedEvents.ksf")
+let CreateOutcomeEvents = CreateEnvironmentRequestStartEvents
+    | join kind=leftouter (CreateEnvironmentRequestStopEvents) on $left.EventAtCreateRequestStart_CorrelationId == $right.EventAtCreateRequestStop_CorrelationId
+    | where EventAtCreateRequestStop_SkuName contains "linux" // Bug: Static environment causes joins to work incorrectly because of empty workspace id.
+    | join kind=leftouter (CreateEnvironmentWorkspaceIdEvents) on $left.EventAtCreateRequestStart_CorrelationId == $right.EventAtCreateHasWorkspace_CorrelationId
+    | join kind=leftouter (ProvisioningToAvailableEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToAvailable_WorkspaceId and $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtProvisioningToAvailable_CloudEnvironmentId
+    | join kind=leftouter (ProvisioningToDeletedEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtProvisioningToDeleted_CloudEnvironmentId
+    | join kind=leftouter (ProvisioningToShutdownEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToShutdown_WorkspaceId
+    | join kind=leftouter (ProvisioningToFailedEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToFailed_WorkspaceId;

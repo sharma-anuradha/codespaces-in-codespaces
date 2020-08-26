@@ -1,0 +1,15 @@
+#include("CreateEnvironmentPOSTRequestEvents.ksf")
+let CreateEnvironmentWorkspaceIdEvents = CreateEnvironmentPOSTRequestEvents
+    | where msg == "environmentstatemanager_setenvironmentstateasync"
+    | where WorkspaceId != ""
+    | extend EventAtCreateHasWorkspace = 1
+    | extend EventAtCreateHasWorkspace_CorrelationId = CorrelationId
+    | extend EventAtCreateHasWorkspace_Time = ["time"]
+    | extend EventAtCreateHasWorkspace_WorkspaceId = WorkspaceId
+    | extend EventAtCreateHasWorkspace_CloudEnvironmentId = CloudEnvironmentId
+    | project EventAtCreateHasWorkspace, 
+        EventAtCreateHasWorkspace_CorrelationId, 
+        EventAtCreateHasWorkspace_Time, 
+        EventAtCreateHasWorkspace_WorkspaceId, 
+        EventAtCreateHasWorkspace_CloudEnvironmentId
+    | summarize arg_max(EventAtCreateHasWorkspace_Time, *) by EventAtCreateHasWorkspace_CorrelationId, EventAtCreateHasWorkspace_WorkspaceId;

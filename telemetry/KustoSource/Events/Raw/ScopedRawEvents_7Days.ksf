@@ -1,0 +1,4 @@
+// Scoped events for last 7 days and on prod ring.
+let ScopedRawEvents = DefaultEvent
+    | where ['time'] between (ago(7d) .. now())
+    | where ServiceEnvironment == "vsclk-online-prod";

@@ -1,0 +1,7 @@
+#include("GetStateTransitionEventsAlt.ksf")
+// Alternative way to determine if heartbeat was received.
+let StartingToAvailableAltEvents = GetStateTransitionEvents(fromState="Starting", toState="Available")
+    | extend EventAtStartingToAvailableAlt = 1
+    | extend AvailableAt = ['time']
+    | extend AvailableViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+    | project-away HttpRequestUri, HttpRequestMethod;

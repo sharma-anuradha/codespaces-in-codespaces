@@ -1,0 +1,9 @@
+#include("ShutdownEnvironmentPOSTRequestEvents.ksf")
+let ShutdownEnvironmentRequestStopEvents = ShutdownEnvironmentPOSTRequestEvents
+    | where msg == "request_stop"
+    | extend EventAtShutdownRequestStop_Time = ["time"]
+    | extend EventAtShutdownRequestStop_ResponseCode = toint(HttpResponseStatus)
+    | extend EventAtShutdownRequestStop = 1
+    | extend EventAtShutdownRequestStop_CorrelationId = CorrelationId
+    | project EventAtShutdownRequestStop_ResponseCode, EventAtShutdownRequestStop_CorrelationId, EventAtShutdownRequestStop_Time, EventAtShutdownRequestStop
+    | summarize arg_max(EventAtShutdownRequestStop_Time, *) by EventAtShutdownRequestStop_CorrelationId;

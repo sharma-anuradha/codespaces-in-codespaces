@@ -1,0 +1,9 @@
+#include("CreateEnvironmentPOSTRequestEvents.ksf")
+let CreateEnvironmentRequestStartEvents = CreateEnvironmentPOSTRequestEvents
+    | where msg == "request_start" 
+    | extend EventAtCreateRequestStart = 1
+    | extend EventAtCreateRequestStart_Time = ["time"]
+    | extend EventAtCreateRequestStart_CorrelationId = CorrelationId
+    | project EventAtCreateRequestStart_Time, EventAtCreateRequestStart_CorrelationId, EventAtCreateRequestStart,
+        Service, CommitId, ServiceEnvironment, ServiceInstance, ServiceStamp, ServiceLocation, BuildId
+    | summarize arg_min(EventAtCreateRequestStart_Time, *) by EventAtCreateRequestStart_CorrelationId;

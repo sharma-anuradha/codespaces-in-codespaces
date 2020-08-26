@@ -1,0 +1,13 @@
+// Counts the Infrastructure failures per day for shutdown request.
+// #include("BuildingBlocks\ShutdownOutcomeClassifiedEvents.ksf")
+ShutdownOutcomeClassifiedEvents
+    | where EventAtShutdownRequestStop_ResponseCode != 307
+    | where EventAtShutdownSkuResolve_SkuName contains "linux"
+    | where EventAtShutdownRequestStart_Time < ago(1h)
+    | summarize 
+        Total = count(),
+        Failed = countif(ShutdownOutcome startswith "Bug:" or ShutdownOutcome startswith "Infrastructure:")
+        by bin(EventAtShutdownRequestStart_Time, 1d)
+    | extend Success = Total - Failed
+    | extend  Rate = (Success * 100.0) / Total
+    | project Rate, EventAtShutdownRequestStart_Time

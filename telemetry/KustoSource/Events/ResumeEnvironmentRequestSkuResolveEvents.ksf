@@ -1,0 +1,9 @@
+#include("ResumeEnvironmentPOSTRequestEvents.ksf")
+let ResumeEnvironmentRequestSkuResolveEvents = ResumeEnvironmentPOSTRequestEvents
+    | where msg == "docdb_VsoPlan_query"
+    | extend EventAtResumeSkuResolve = 1
+    | extend EventAtResumeSkuResolve_CorrelationId = CorrelationId
+    | extend EventAtResumeSkuResolve_Time = ["time"]
+    | extend EventAtResumeSkuResolve_SkuName = SkuName
+    | project EventAtResumeSkuResolve_Time, EventAtResumeSkuResolve_CorrelationId, EventAtResumeSkuResolve_SkuName
+    | summarize arg_max(EventAtResumeSkuResolve_Time, *) by EventAtResumeSkuResolve_CorrelationId;

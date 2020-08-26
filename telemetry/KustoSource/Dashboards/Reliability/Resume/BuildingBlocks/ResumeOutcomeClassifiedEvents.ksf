@@ -1,0 +1,27 @@
+// Classifies a resume request, response and outcome into classes.
+#include("ResumeOutcomeEvents.ksf")
+let ResumeOutcomeClassifiedEvents = ResumeOutcomeEvents
+    | extend ResponseOutcome = "unknown"
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 200, "Success", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 307, "Redirect", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 400, "User: Failed 400", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 401, "User: Failed 401", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 403, "User: Failed 403", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 404, "User: Failed 404", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 409, "User: Failed 409", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 429, "User: Failed 429", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 500, "Infrastructure: Unknown failure 500", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtResumeRequestStop_ResponseCode == 503, "Infrastructure: Out of capacity 503", ResponseOutcome)
+    | extend ResponseOutcome = iff(ResponseOutcome == "unknown", "Bug: unclassified response", ResponseOutcome)
+    | extend ResumeOutcome = iff(EventAtResumeRequestStop_ResponseCode != 200, "Response Failed", "unknown")
+    | extend ResumeOutcome = iff(EventAtStartingToAvailable == 1, "Available", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed == 1, "User: Failed", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToFailed == 1 and EventAtStartingToFailed_UserAttributed != 1, "Infrastructure: Failed", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated == 1 , "User: Delete", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToDeleted == 1 and EventAtStartingToDeleted_UserInitated != 1 , "Infrastructure: Delete", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_UserInitiated  == 1 , "User: Shutdown", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_HeartBeatInitiated == 1 , strcat("Infrastructure: ", EventAtAgentCollectedError_JobError, " - Heartbeat Initiated Shutdown") , ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToArchived == 1 and EventAtStartingToArchived_UserInitiated == 1 , "User: Shutdown/Archive", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtStartingToArchived == 1 and EventAtStartingToArchived_UserInitiated != 1 , "Infrastructure: Shutdown/Archive", ResumeOutcome)
+    | extend ResumeOutcome = iff(EventAtBugExcludeDupeStartingEvent == 1 , "Bug: Duplicate Start Request", ResumeOutcome)
+    | extend ResumeOutcome = iff(ResumeOutcome == "unknown", "Bug: Stuck in Starting state (unknown/unclassified)", ResumeOutcome);

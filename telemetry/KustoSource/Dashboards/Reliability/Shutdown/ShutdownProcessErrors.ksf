@@ -1,0 +1,9 @@
+// Orders the Infrastructure or Bugs by hitcount
+// #include("BuildingBlocks\ShutdownOutcomeClassifiedEvents.ksf")
+ShutdownOutcomeClassifiedEvents
+    | where EventAtShutdownSkuResolve_SkuName contains "linux"
+    | where EventAtShutdownRequestStop_ResponseCode != 307
+    | where EventAtShutdownRequestStart_Time  < ago(1h)
+    | where ShutdownOutcome startswith "Infrastructure:" or ShutdownOutcome startswith "Bug:"
+    | summarize HitCount = count() by ShutdownOutcome
+    | order by HitCount desc

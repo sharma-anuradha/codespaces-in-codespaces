@@ -1,0 +1,19 @@
+// Stitches together events from a shutdown request to a possible outcome.
+#include("..\..\..\..\Events\ShutdownEnvironmentRequestStartEvents.ksf")
+#include("..\..\..\..\Events\ShutdownEnvironmentRequestStopEvents.ksf")
+#include("..\..\..\..\Events\ShutdownEnvironmentRequestSkuResolveEvents.ksf")
+#include("..\..\..\..\Events\State\AvailableToShuttingDownEvents.ksf")
+#include("..\..\..\..\Events\State\UnavailableToShutdownEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToShutdownEvents.ksf")
+#include("..\..\..\..\Events\State\StartingToArchivedEvents.ksf")
+#include("..\..\..\..\Events\State\ShuttingDownToShutdownEvents.ksf")
+#include("..\..\..\..\Events\State\ShuttingDownToDeletedEvents.ksf")
+let ShutdownOutcomeEvents = ShutdownEnvironmentRequestStartEvents
+    | join kind=leftouter (ShutdownEnvironmentRequestSkuResolveEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtShutdownSkuResolve_CorrelationId
+    | join kind=leftouter (ShutdownEnvironmentRequestStopEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtShutdownRequestStop_CorrelationId
+    | join kind=leftouter (AvailableToShuttingDownEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtAvailableToShuttingDown_CorrelationId
+    | join kind=leftouter (UnavailableToShutDownEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtUnavailableToShutdown_CorrelationId
+    | join kind=leftouter (StartingToShutdownEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtStartingToShutdown_CorrelationId
+    | join kind=leftouter (StartingToArchivedEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtStartingToArchived_CorrelationId
+    | join kind=leftouter (ShuttingDownToShutdownEvents) on $left.EventAtShutdownSkuResolve_WorkspaceId == $right.EventAtShuttingDownToShutdown_WorkspaceId
+    | join kind=leftouter (ShuttingDownToDeletedEvents) on $left.EventAtShutdownSkuResolve_WorkspaceId == $right.EventAtShuttingDownToDeleted_WorkspaceId;

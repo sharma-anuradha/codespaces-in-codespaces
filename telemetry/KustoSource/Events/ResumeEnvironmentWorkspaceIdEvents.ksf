@@ -1,0 +1,10 @@
+#include("ResumeEnvironmentPOSTRequestEvents.ksf")
+let ResumeEnvironmentWorkspaceIdEvents = ResumeEnvironmentPOSTRequestEvents
+    | where msg == "environmentstatemanager_setenvironmentstateasync"
+    | extend EventAtResumeHasWorkspace = 1
+    | extend EventAtResumeHasWorkspace_CorrelationId = CorrelationId
+    | extend EventAtResumeHasWorkspace_Time = ["time"]
+    | extend EventAtResumeHasWorkspace_WorkspaceId = WorkspaceId
+    | extend EventAtResumeHasWorkspace_CloudEnvironmentId = CloudEnvironmentId
+    | project EventAtResumeHasWorkspace, EventAtResumeHasWorkspace_CorrelationId, EventAtResumeHasWorkspace_Time, EventAtResumeHasWorkspace_WorkspaceId, EventAtResumeHasWorkspace_CloudEnvironmentId
+    | summarize arg_max(EventAtResumeHasWorkspace_Time, *) by EventAtResumeHasWorkspace_CorrelationId, EventAtResumeHasWorkspace_WorkspaceId;

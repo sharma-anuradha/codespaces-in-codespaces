@@ -1,0 +1,14 @@
+#include("GetStateTransitionEvents.ksf")
+let UnavailableToShutDownEvents = GetStateTransitionEvents(fromState="Unavailable", toState="Shutdown")
+    | extend EventAtUnavailableToShutdown = 1
+    | extend EventAtUnavailableToShutdown_Time = ['time']
+    | extend EventAtUnavailableToShutdown_UserInitiated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestUri endswith "/shutdown" and HttpRequestMethod == "POST", 1, 0)
+    | extend EventAtUnavailableToShutdown_UserInitiatedDelete = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestMethod == "DELETE", 1, 0)
+    | extend EventAtUnavailableToShutdown_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+    | extend EventAtUnavailableToShutdown_CorrelationId = CorrelationId
+    | project EventAtUnavailableToShutdown,
+        EventAtUnavailableToShutdown_Time,
+        EventAtUnavailableToShutdown_UserInitiated,
+        EventAtUnavailableToShutdown_UserInitiatedDelete,
+        EventAtUnavailableToShutdown_ViaHeartbeat,
+        EventAtUnavailableToShutdown_CorrelationId;

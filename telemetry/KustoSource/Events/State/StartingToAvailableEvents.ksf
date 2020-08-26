@@ -1,0 +1,15 @@
+#include("GetStateTransitionEvents.ksf")
+let StartingToAvailableEvents = GetStateTransitionEvents(fromState="Starting", toState="Available")
+    | extend EventAtStartingToAvailable = 1
+    | extend EventAtStartingToAvailable_Time = ['time']
+    | extend EventAtStartingToAvailable_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+    | extend EventAtStartingToAvailable_WorkspaceId = WorkspaceId
+    | extend EventAtStartingToAvailable_CloudEnvironmentId = CloudEnvironmentId
+    | extend EventAtStartingToAvailable_CorrelationId = CorrelationId
+    | project EventAtStartingToAvailable, 
+        EventAtStartingToAvailable_Time, 
+        EventAtStartingToAvailable_ViaHeartbeat, 
+        EventAtStartingToAvailable_WorkspaceId, 
+        EventAtStartingToAvailable_CloudEnvironmentId, 
+        EventAtStartingToAvailable_CorrelationId
+    | summarize arg_min(EventAtStartingToAvailable_Time, *) by EventAtStartingToAvailable_WorkspaceId, EventAtStartingToAvailable_CloudEnvironmentId;

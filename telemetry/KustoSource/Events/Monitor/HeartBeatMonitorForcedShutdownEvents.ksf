@@ -1,0 +1,8 @@
+#include("..\Raw\ScopedRawEvents_7Days.ksf")
+let HeartBeatMonitorForcedShutdownEvents = ScopedRawEvents_7Days
+    | where EnvironmentMonitorType == "HeartbeatMonitor"
+    | where msg == "environmentstatemanager_setenvironmentstateasync"
+    | where CloudEnvironmentNewUpdatedTrigger == "ForceEnvironmentShutdown"
+    | where CloudEnvironmentNewState == "Shutdown"
+    | project CloudEnvironmentId, ContinuationPayloadTrackingInstanceId
+    | extend EventAtHeartBeatMonitorForcedShutdown = 1;
