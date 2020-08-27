@@ -2,6 +2,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using Microsoft.Azure.Management.Network.Fluent.Models;
+
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
     /// <summary>
@@ -55,8 +57,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         public const string PlanId = "PlanId";
 
         /// <summary>
+        /// The data plane location.
+        /// </summary>
+        public const string Location = "Location";
+
+        /// <summary>
         /// The shard value.
         /// </summary>
         public const string Shard = "Shard";
+
+        /// <summary>
+        /// The desired end time.
+        /// </summary>
+        public const string BillEndingTime = "BillEndingTime";
     }
 }

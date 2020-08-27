@@ -22,10 +22,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         private ISystemConfiguration systemConfiguration;
 
         /// <summary>
-        /// Gets or sets a value indicating whether transmission to push agent is enabled.
+        /// Gets or sets a value indicating whether billing V1 workers are enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
-        public bool EnableV1 { get; set; }
+        public bool EnableV1Workers { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether transmission to push agent is enabled.
@@ -34,7 +34,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         public bool EnableV1Transmission { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether transmission to push agent is enabled.
+        /// Gets or sets a value indicating whether billing V2 workers are enabled.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
+        public bool EnableV2Workers { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether queue-based orchestration for billing V2 is enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
         public bool EnableV2BillingManagementProducer { get; set; }
@@ -89,11 +95,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public virtual Task<bool> V1IsEnabledAsync(IDiagnosticsLogger logger)
+        public virtual Task<bool> V1WorkersAreEnabledAsync(IDiagnosticsLogger logger)
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
-            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1", logger, EnableV1);
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v1-workers", logger, EnableV1Workers);
+        }
+
+        /// <summary>
+        /// Get current the value of the feature flag.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public virtual Task<bool> V2WorkersAreEnabledAsync(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+
+            return systemConfiguration.GetValueAsync("featureflag:enable-billing-v2-workers", logger, EnableV2Workers);
         }
 
         /// <summary>

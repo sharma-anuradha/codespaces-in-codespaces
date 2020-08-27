@@ -47,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             {
                 var duration = logger.StartDuration();
 
-                if (await billingSettings.V1IsEnabledAsync(logger) &&
+                if (await billingSettings.V1WorkersAreEnabledAsync(logger) &&
                     await billingSettings.V1TransmissionIsEnabledAsync(logger))
                 {
                     await logger.OperationScopeAsync(
