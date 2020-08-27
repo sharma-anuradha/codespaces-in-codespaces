@@ -45,7 +45,7 @@ image:
   repositoryName: port-forwarding-web-api
   tag:
   agentRepositoryName: port-forwarding-agent
-  agentTag: 1.0.2728
+  agentTag: 1.0.2733
   imagePullSecret:
 
 serviceAccount:
