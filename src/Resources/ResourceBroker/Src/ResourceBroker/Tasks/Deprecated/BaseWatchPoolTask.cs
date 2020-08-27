@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 foreach (var dimension in poolDimensions)
                 {
                     logger.FluentAddBaseValue(
-                        $"{ResourceLoggingPropertyConstants.PoolDimension}.{CommonUtils.CamelToPascalCase(dimension.Key)}",
+                        $"{ResourceLoggingPropertyConstants.PoolDimension}_{CommonUtils.CamelToPascalCase(dimension.Key)}",
                         dimension.Value);
                 }
             }
