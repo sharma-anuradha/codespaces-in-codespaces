@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageFileShareProviderHelper.cs" company="Microsoft">
+// <copyright file="StorageFileShareProviderHelper.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -35,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
         private static readonly string StorageAccountNamePrefix = "vsoce";
         private static readonly string StorageLinuxMountableFilename = "dockerlib";
         private static readonly string StorageWindowsMountableFilename = "windowsdisk.vhdx";
+        private static readonly int StorageExtraSizeInGb = 1; // Extra storage size for logs outside Ext4
         private readonly IAzureClientFactory azureClientFactory;
 
         /// <summary>
@@ -157,7 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                     var cloudStorageAccount = await GetCloudStorageAccount(azureResourceInfo, null, childLogger);
                     var fileClient = cloudStorageAccount.CreateCloudFileClient();
                     var fileShare = fileClient.GetShareReference(StorageMountableShareName);
-                    fileShare.Properties.Quota = storageSizeInGb;
+                    fileShare.Properties.Quota = storageSizeInGb + StorageExtraSizeInGb;
                     await fileShare.CreateIfNotExistsAsync();
                 });
         }
