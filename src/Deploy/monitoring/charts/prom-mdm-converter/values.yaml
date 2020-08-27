@@ -1,0 +1,96 @@
+# Default values for prom-mdm-converter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 3
+
+# init containers
+genevaSecrets:
+  mode: kvagent
+  manual: # Must prepopulate secret manually
+    secretName: geneva-secret # Name of kubernetes secrets containing gcs.{crt,key}
+
+# See https://github.com/Hexadite/acs-keyvault-agent
+kvagent:
+  image:
+    repository: linuxgeneva-microsoft.azurecr.io/acskeyvaultagent
+    tag: master_8
+    pullPolicy: IfNotPresent
+  certsPath: /secrets/
+  authorityServer: https://login.microsoftonline.com/
+  vaultResourceName: https://vault.azure.net
+  use_msi: false
+  # Geneva MDM doesn't support intermediate CA certs in anything except for OnCert generated certs
+  # don't download CA certs by default.
+  download_cacerts: false
+  #cert: eegenevaplayground--pfx::cert.pem:key.pem
+  #vault_base_url: https://aireesharedsecrets.vault.azure.net/
+
+  resources: {}
+
+image:
+  repository: kubernetesshared.azurecr.io/shared/prom-mdm-converter
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecret:
+    create: False
+    name: ""
+    #registry:
+    #username:
+    #password:
+
+nameOverride: ""
+fullnameOverride: ""
+
+mdm:
+# if userSecretFile is true, will create a secret object with local certificates (see readme)
+# If it is false, will use the keyvault agent to pull certificates directly from keyvault
+  useSecretFile: false
+  logLevel: Info
+  endpoint: https://global.metrics.nsatc.net/
+  #account:
+  certFile: /secrets/certs_keys/mdm-cert.pem
+  keyFile: /secrets/certs_keys/mdm-key.pem
+  source:
+    environment: DefaultEnvironment
+    role: DefaultRole
+    roleinstance: DefaultRoleInstance
+    #identity:
+  # if set to true, use the configOverridesJson value, instead of the default one from the Dockerfile
+  customConfigOverrides: false
+  # this is the config overrides from the Dockerfile, so you may want to keep this while adding more overrides
+  configOverridesJson: |
+    {
+      "internalMetricProductionLevel":2,
+      "enableDimensionTrimming":false
+    }
+
+converter:
+  region: region
+  underlay: underlay
+  statsdEndpoint: localhost
+  statsdPort: 8125
+  statsdProtocol: tcp
+  debugLogs: false
+
+service:
+  type: ClusterIP
+  port: 80
+
+internalPort: 8080
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+rules:

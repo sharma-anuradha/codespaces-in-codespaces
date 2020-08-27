@@ -1,0 +1,9 @@
+{{- if .Values.mdm.customConfigOverrides }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mdm-config-overrides
+data:
+  config-overrides.json: |
+{{ .Values.mdm.configOverridesJson | default "{}" | indent 4 }}
+{{- end -}}

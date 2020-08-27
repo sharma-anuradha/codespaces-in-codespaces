@@ -1,0 +1,11 @@
+dependencies:
+
+  - name: grafana
+    repository: file://charts/grafana
+    condition: grafana.enabled
+
+  - name: prom-mdm-converter
+    repository: file://charts/prom-mdm-converter
+
+  - name: prometheus
+    repository: file://charts/prometheus

@@ -1,0 +1,61 @@
+grafana:
+  image:
+    repository: vsclkonlineprod.azurecr.io/grafana-grafana
+  downloadDashboardsImage:
+    repository: vsclkonlineprod.azurecr.io/curlimages-curl
+  initChownData:
+    repository: vsclkonlineprod.azurecr.io/busybox
+  sidecar:
+    repository: vsclkonlineprod.azurecr.io/kiwigrid-k8s-sidecar
+  ingress:
+    hosts:
+      - monitoring.app.online.visualstudio.com
+    tls:
+      - hosts:
+          - '*.app.online.visualstudio.com'
+        secretName: ssl-cert
+  grafana.ini:
+    server:
+      root_url: https://monitoring.app.online.visualstudio.com/
+    auth.azuread:
+      client_id: "8d8c51c9-2c2f-4c2d-857a-96777e071671"
+      auth_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/v2.0/authorize"
+      token_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/v2.0/token"
+
+prometheus:
+  alertmanager:
+    image:
+      repository: vsclkonlineprod.azurecr.io/prom-alertmanager
+  configmapReload:
+    prometheus:
+      image:
+        repository: vsclkonlineprod.azurecr.io/jimmidyson-configmap-reload
+    alertmanager:
+      image:
+        repository: vsclkonlineprod.azurecr.io/jimmidyson-configmap-reload
+  nodeExporter:
+    image:
+      repository: vsclkonlineprod.azurecr.io/prom-node-exporter
+  server:
+    image:
+      repository: vsclkonlineprod.azurecr.io/prom-prometheus
+  pushgateway:
+    image:
+      repository: vsclkonlineprod.azurecr.io/prom-pushgateway
+  kube-state-metrics:
+    image:
+      repository: vsclkonlineprod.azurecr.io/coreos-kube-state-metrics
+
+prom-mdm-converter:
+  image:
+    repository: vsclkonlineprod.azurecr.io/shared/prom-mdm-converter
+  kvagent:
+    image:
+      repository: vsclkonlineprod.azurecr.io/acskeyvaultagent
+    vault_base_url: https://vsclk-core-prod-kv.vault.azure.net/
+    cert: vsclk-core-prod-monitoring::mdm-cert.pem:mdm-key.pem
+  mdm:
+    account: VsOnlineProd
+    source:
+      environment: VsOnlineProd
+      role: VsOnlineProd

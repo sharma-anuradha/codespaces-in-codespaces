@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "prom-mdm-converter.fullname" . }}
+  labels:
+    app: {{ template "prom-mdm-converter.name" . }}
+    chart: {{ template "prom-mdm-converter.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ template "prom-mdm-converter.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/rulesConfig: {{ include (print $.Template.BasePath "/rules-configmap.yaml") . | sha256sum }}
+      labels:
+        app: {{ template "prom-mdm-converter.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+{{- if eq .Values.genevaSecrets.mode "kvagent" }}
+      initContainers:
+        # KV agent to fetch secrets
+        - name: kvagent
+          image: {{ .Values.kvagent.image.repository }}:{{ .Values.kvagent.image.tag }}
+          imagePullPolicy: {{ .Values.kvagent.image.pullPolicy }}
+          env:
+            - name: VAULT_BASE_URL
+              value: {{ required "missing required kvagent.vault_base_url" .Values.kvagent.vault_base_url | quote }}
+            - name: VAULT_RESOURCE_NAME
+              value: {{ required "missing required kvagent.vaultResourceName" .Values.kvagent.vaultResourceName | quote}}
+            - name: AZURE_AUTHORITY_SERVER
+              value: {{ required "missing required kvagent.authorityServer" .Values.kvagent.authorityServer | quote }}
+            - name: SERVICE_PRINCIPLE_FILE_PATH
+              value: /host/azure.json
+            - name: SECRETS_FOLDER
+              value: /secrets
+            - name: SECRETS_KEYS
+              value: {{ required "missing required kvagent.cert" .Values.kvagent.cert | quote }}
+            - name: USE_MSI
+              value: {{ .Values.kvagent.use_msi | quote }}
+            - name: DOWNLOAD_CA_CERTIFICATES
+              value: {{ .Values.kvagent.download_cacerts | quote }}
+          volumeMounts:
+            - name: mdm-cert
+              mountPath: {{ .Values.kvagent.certsPath }}
+            - name: host-sp
+              mountPath: /host
+              readOnly: true
+          resources:
+{{ toYaml .Values.kvagent.resources | indent 12 }}
+{{- end }}
+      containers:
+        - name: prom-mdm-converter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.internalPort }}
+          env:
+            - name: MDM_LOG_LEVEL
+              value: "{{ .Values.mdm.logLevel }}"
+            - name: MDM_ENDPOINT
+              value: "{{ .Values.mdm.endpoint }}"
+            - name: MDM_ACCOUNT
+              value: "{{ required "missing required mdm.account" .Values.mdm.account }}"
+            - name: MDM_SOURCE_ENVIRONMENT
+              value: "{{ .Values.mdm.source.environment }}"
+            - name: MDM_SOURCE_ROLE
+              value: "{{ .Values.mdm.source.role }}"
+            - name: MDM_SOURCE_ROLE_INSTANCE
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: MDM_SOURCE_IDENTITY
+              value: "{{ .Values.mdm.source.identity }}"
+            - name: MDM_CERT_FILE
+              value: "{{ .Values.mdm.certFile }}"
+            - name: MDM_KEY_FILE
+              value: "{{ .Values.mdm.keyFile }}"
+            {{- if .Values.mdm.customConfigOverrides }}
+            - name: MDM_CONFIG_OVERRIDES_FILE
+              value: "/mdm-config-overrides/config-overrides.json"
+            {{- end }}
+            - name: SERVER_PORT
+              value: "{{ .Values.internalPort }}"
+            - name: REGION
+              value: "{{ .Values.converter.region }}"
+            - name: UNDERLAY
+              value: "{{ .Values.converter.underlay }}"
+            - name: STATSD_ENDPOINT
+              value: "{{ .Values.converter.statsdEndpoint }}"
+            - name: STATSD_PORT
+              value: "{{ .Values.converter.statsdPort }}"
+            - name: STATSD_PROTOCOL
+              value: "{{ .Values.converter.statsdProtocol }}"
+            {{- if .Values.converter.debugLogs }}
+            - name: DEBUG_LOG
+              value: "1"
+            {{- end }}
+          volumeMounts:
+            - mountPath: /config
+              name: prom-mdm-converter-rules
+              readOnly: true
+            - mountPath: /secrets
+              name: mdm-cert
+            {{- if .Values.mdm.customConfigOverrides }}
+            - mountPath: /mdm-config-overrides
+              name: mdm-config-overrides
+              readOnly: true
+            {{- end }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+        - name: prom-mdm-converter-rules
+          configMap:
+            name: {{ template "prom-mdm-converter.fullname" . }}
+        {{- if .Values.mdm.customConfigOverrides }}
+        - name: mdm-config-overrides
+          configMap:
+            name: mdm-config-overrides
+        {{- end }}
+        - name: mdm-cert
+{{- if eq .Values.mdm.useSecretFile true}}
+          secret:
+            secretName: mdm-cert
+{{- else if eq .Values.genevaSecrets.mode "kvagent"}}
+          emptyDir:
+            medium: Memory
+        - name: host-sp
+          hostPath:
+            # this file contains the cluster service-principal, it exists on every node by default
+            path: /etc/kubernetes
+
+{{- end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- if .Values.image.pullSecret.name }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecret.name }}
+    {{- end }}

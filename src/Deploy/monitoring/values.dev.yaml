@@ -1,0 +1,62 @@
+grafana:
+  enabled: true
+  image:
+    repository: vsclkonlinedev.azurecr.io/grafana-grafana
+  downloadDashboardsImage:
+    repository: vsclkonlinedev.azurecr.io/curlimages-curl
+  initChownData:
+    repository: vsclkonlinedev.azurecr.io/busybox
+  sidecar:
+    repository: vsclkonlinedev.azurecr.io/kiwigrid-k8s-sidecar
+  ingress:
+    hosts:
+      - monitoring.app.online.dev.core.vsengsaas.visualstudio.com
+    tls:
+      - hosts:
+          - '*.app.online.dev.core.vsengsaas.visualstudio.com'
+        secretName: ssl-cert
+  grafana.ini:
+    server:
+      root_url: https://monitoring.app.online.dev.core.vsengsaas.visualstudio.com/
+    auth.azuread:
+      client_id: "8d8c51c9-2c2f-4c2d-857a-96777e071671"
+      auth_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/v2.0/authorize"
+      token_url: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/v2.0/token"
+
+prometheus:
+  alertmanager:
+    image:
+      repository: vsclkonlinedev.azurecr.io/prom-alertmanager
+  configmapReload:
+    prometheus:
+      image:
+        repository: vsclkonlinedev.azurecr.io/jimmidyson-configmap-reload
+    alertmanager:
+      image:
+        repository: vsclkonlinedev.azurecr.io/jimmidyson-configmap-reload
+  nodeExporter:
+    image:
+      repository: vsclkonlinedev.azurecr.io/prom-node-exporter
+  server:
+    image:
+      repository: vsclkonlinedev.azurecr.io/prom-prometheus
+  pushgateway:
+    image:
+      repository: vsclkonlinedev.azurecr.io/prom-pushgateway
+  kube-state-metrics:
+    image:
+      repository: vsclkonlinedev.azurecr.io/coreos-kube-state-metrics
+
+prom-mdm-converter:
+  image:
+    repository: vsclkonlinedev.azurecr.io/shared/prom-mdm-converter
+  kvagent:
+    image:
+      repository: vsclkonlinedev.azurecr.io/acskeyvaultagent
+    vault_base_url: https://vsclk-core-dev-kv.vault.azure.net/
+    cert: vsclk-core-dev-monitoring::mdm-cert.pem:mdm-key.pem
+  mdm:
+    account: VsOnlineDev
+    source:
+      environment: VsOnlineDev
+      role: VsOnlineDev

@@ -1,0 +1,98 @@
+prometheus:
+  alertmanager:
+    enabled: false
+  pushgateway:
+    enabled: false
+  kube-state-metrics:
+    image:
+      tag: v1.8.0
+    collectors:
+      mutatingwebhookconfigurations: false
+      validatingwebhookconfigurations: false
+      networkpolicies: false
+      volumeattachments: false
+  server:
+    global:
+      scrape_interval: 1m
+  serverFiles:
+    prometheus.yml:
+      remote_write:
+        - url: "http://monitoring-prom-mdm-converter/receive"
+    rules:
+      groups:
+        - name: port_forwarding
+          interval: 1m
+          rules:
+            - record: port_forwarding_agent_status_phase
+              expr: "label_replace(kube_pod_status_phase{pod=~\"web-port-forwarding-agent-.+\"}, \"Service\", \"port-forwarding-agent\", \"pod\", \".+\")"
+
+grafana:
+  enabled: false
+  envFromSecret: monitoring-aad-client-secret
+  initChownData:
+    tag: latest
+  ingress:
+    enabled: true
+    path: /
+  grafana.ini:
+    auth.azuread:
+      name: "Azure AD"
+      enabled: true
+      allow_sign_up: true
+      scopes: "openid email profile"
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://monitoring-prometheus-server
+          isDefault: true
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: default
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+  dashboards:
+    default:
+      kubernetes:
+        gnetId: 315
+        revision: 3
+        datasource: Prometheus
+      kubernetes-control-plane:
+        gnetId: 10907
+        revision: 1
+        datasource: Prometheus
+      request-handling-performance:
+        url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/request-handling-performance.json
+        datasource: Prometheus
+      nginx:
+        url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/nginx.json
+        datasource: Prometheus
+      port-forwarding-agents:
+        file: dashboards/port-forwarding-agents.json
+
+prom-mdm-converter:
+  image:
+    tag: 2.0.master.20200730.1
+  kvagent:
+    image:
+      tag: master_26
+  rules: |
+    defaultMetricAllow: false
+    defaultDimensionAllow: true
+    startsWithFilters:
+      - 'kube_node'
+      - 'kube_pod'
+      - 'kube_deployment'
+      - 'apiserver_request'
+      - 'port_forwarding'
+      - 'nginx'
