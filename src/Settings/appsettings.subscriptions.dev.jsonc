@@ -4,51 +4,6 @@
   "AppSettings": {
     "dataPlaneSettings": {
       "subscriptions": {
-        "vscs-codesp-dev-data-keyvault-eu-w-001": {
-          "locations": [
-            "westeurope"
-          ],
-          "subscriptionId": "cd6a254d-0a70-4179-aea8-376a13fabe11",
-          "servicePrincipal": null,
-          "quotas": null,
-          "serviceType": "keyvault"
-        },
-        "vscs-codesp-dev-data-keyvault-us-e-001": {
-          "locations": [
-            "eastus"
-          ],
-          "subscriptionId": "9913076c-ae80-4ba8-9205-a7b92a80ab64",
-          "servicePrincipal": null,
-          "quotas": null,
-          "serviceType": "keyvault"
-        },
-        "vscs-codesp-dev-data-network-eu-w-001": {
-          "locations": [
-            "westeurope"
-          ],
-          "subscriptionId": "a58a7754-44fc-4c38-aecf-e641f305ab7b",
-          "servicePrincipal": null,
-          "quotas": null,
-          "serviceType": "network"
-        },
-        "vscs-codesp-dev-data-network-us-e-001": {
-          "locations": [
-            "eastus"
-          ],
-          "subscriptionId": "105133ff-05aa-4fe9-89f9-f1483f96041f",
-          "servicePrincipal": null,
-          "quotas": null,
-          "serviceType": "network"
-        },
-        "vscs-codesp-dev-data-network-us-e-002": {
-          "locations": [
-            "eastus"
-          ],
-          "subscriptionId": "b47d56d7-0429-47f0-a6cf-c32531f2aebe",
-          "servicePrincipal": null,
-          "quotas": null,
-          "serviceType": "network"
-        },
         "vscs-codesp-dev-data-storage-eu-w-001": {
           "locations": [
             "westeurope"
