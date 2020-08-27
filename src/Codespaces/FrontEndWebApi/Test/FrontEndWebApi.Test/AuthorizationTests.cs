@@ -72,7 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
             var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            await mockGlobalEnvironmentRepository.CreateAsync(mockEnv, logger);
+            await mockRegionalEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
                 mockGlobalEnvironmentRepository,
                 mockRegionalEnvironmentRepository,
@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
             var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            await mockGlobalEnvironmentRepository.CreateAsync(mockEnv, logger);
+            await mockRegionalEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
                 mockGlobalEnvironmentRepository,
                 mockRegionalEnvironmentRepository,
@@ -375,7 +375,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
             var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            await mockGlobalEnvironmentRepository.CreateAsync(mockEnv, logger);
+            await mockRegionalEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
                 mockGlobalEnvironmentRepository,
                 mockRegionalEnvironmentRepository,
