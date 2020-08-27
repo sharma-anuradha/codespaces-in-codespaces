@@ -136,6 +136,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxCreateBatchCount, resourcePool.MaxCreateBatchCount)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxDeleteBatchCount, resourcePool.MaxDeleteBatchCount);
 
+            var poolDimensions = resourcePool.Details.GetPoolDimensions();
+            if (poolDimensions != default)
+            {
+                foreach (var dimension in poolDimensions)
+                {
+                    logger.FluentAddBaseValue(
+                        $"{ResourceLoggingPropertyConstants.PoolDimension}.{CommonUtils.CamelToPascalCase(dimension.Key)}",
+                        dimension.Value);
+                }
+            }
+
             // Executes the action that needs to be performed on the pool
             await logger.TrackDurationAsync(
                 "RunPoolAction", () => RunActionAsync(resourcePool, logger));

@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts
         public static readonly string PoolVersionDefinition = "PoolVersionDefinition";
 
         /// <summary>
-        /// Pool Image Famil yName.
+        /// Pool Image Family Name.
         /// </summary>
         public static readonly string PoolImageFamilyName = "PoolImageFamilyName";
 

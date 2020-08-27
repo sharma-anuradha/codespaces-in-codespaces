@@ -98,5 +98,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Pool queue name.
         /// </summary>
         public const string PoolQueueName = nameof(PoolQueueName);
+
+        /// <summary>
+        /// Pool dimension.
+        /// </summary>
+        public const string PoolDimension = nameof(PoolDimension);
     }
 }

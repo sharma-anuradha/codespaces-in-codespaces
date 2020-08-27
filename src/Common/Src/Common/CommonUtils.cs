@@ -44,5 +44,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             return value;
         }
+
+        /// <summary>
+        /// Converts a camel case string to pascal case.
+        /// </summary>
+        /// <param name="value">value.</param>
+        /// <returns>result.</returns>
+        public static string CamelToPascalCase(string value)
+        {
+            Requires.NotNull(value, nameof(value));
+
+            return value.Length == 0 ? string.Empty :
+                value.Substring(0, 1).ToUpperInvariant() + value.Substring(1);
+        }
     }
 }
