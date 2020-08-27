@@ -42,6 +42,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
 
         private Mock<IBillingSubmissionCloudStorageFactory> BillingStorageFactory { get; }
 
+        private Mock<IPartnerCloudStorageFactory> PartnerCloudStorageFactory { get; }
+
         private BillSummaryGenerator BillSummaryGenerator { get; }
 
         public BillSummaryGeneratorTests()
@@ -50,9 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             EnvironmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>();
             BillingMeterService = new Mock<IBillingMeterService>();
             BillingStorageFactory = new Mock<IBillingSubmissionCloudStorageFactory>();
+            PartnerCloudStorageFactory = new Mock<IPartnerCloudStorageFactory>();
             BillingSettings = new Mock<BillingSettings>();
+            
             var skuCatalog = GetMockSKuCatalog();
-            BillSummaryGenerator = new BillSummaryGenerator(BillingSettings.Object, BillSummaryManager.Object, EnvironmentStateChangeManager.Object, skuCatalog.Object, BillingMeterService.Object, BillingStorageFactory.Object);
+            BillSummaryGenerator = new BillSummaryGenerator(BillingSettings.Object, BillSummaryManager.Object, EnvironmentStateChangeManager.Object, skuCatalog.Object, BillingMeterService.Object, BillingStorageFactory.Object, PartnerCloudStorageFactory.Object);
         }
 
         [Fact]

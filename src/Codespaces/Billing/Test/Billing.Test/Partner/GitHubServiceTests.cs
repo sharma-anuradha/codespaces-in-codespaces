@@ -211,8 +211,100 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             var jsonBlob = queuMessage.ToJson();
             string expectedJSon = @$"{{""time"":""{TestTimeNow.Subtract(TimeSpan.FromHours(6)).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""id"":""aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"",""plan"":{{""subscription"":""{GitHubSubscription}"",""resourceGroup"":""RG"",""name"":""PlanName"",""location"":""WestUs2""}},""periodStart"":""0001-01-01T00:00:00"",""periodEnd"":""{TestTimeNow.AddHours(-4).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""usageDetail"":{{""environments"":[{{""id"":""{testEnvironment.Id}"",""name"":""testEnvironment"",""resourceUsage"":{{""compute"":[{{""usage"":3600.0,""sku"":""standardLinuxSku""}}],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment2.Id}"",""name"":""testEnvironment2"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment3.Id}"",""name"":""testEnvironment3"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":1800.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}}]}}}}";
             Assert.Equal(expectedJSon, jsonBlob);
-
         }
+
+        [Fact]
+        public void Serialize_and_compare_PartnerSubmissionBillingV2()
+        {
+            var planInfo = new VsoPlanInfo()
+            {
+                Name = "PlanName",
+                Location = AzureLocation.WestUs2,
+                ResourceGroup = "RG",
+                Subscription = GitHubSubscription,
+            };
+
+            var billSummary = new BillSummary()
+            {
+                Plan = planInfo,
+                BillGenerationTime = TestTimeNow.Subtract(TimeSpan.FromHours(6)),
+                Id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                PeriodEnd = TestTimeNow.AddHours(-4),
+                UsageDetail = new List<EnvironmentUsage>()
+                {
+                    new EnvironmentUsage()
+                    {
+                        Id = testEnvironment.Id,
+                         EndState = "Available",
+                            Sku = new Sku { Name = standardLinuxSkuName },
+                        ResourceUsage = new ResourceUsageDetail
+                            {
+                                Compute = new List<ComputeUsageDetail>{ new ComputeUsageDetail
+                                    {
+                                        Sku = standardLinuxSkuName,
+                                        Usage = 3600,
+                                    }
+                                },
+                                Storage = new List<StorageUsageDetail>
+                                {
+                                    new StorageUsageDetail
+                                    {
+                                        Sku = standardLinuxSkuName,
+                                        Usage = 3600,
+                                        Size = 64,
+                                    }
+                                }
+                            },
+                    },
+                    new EnvironmentUsage()
+                    {
+                          Id = testEnvironment2.Id,
+
+                            EndState = "Shutdown",
+                            Sku = new Sku { Name = standardLinuxSkuName },
+                             ResourceUsage = new ResourceUsageDetail
+                            {
+                                Storage = new List<StorageUsageDetail>
+                                {
+                                    new StorageUsageDetail
+                                    {
+                                        Sku = standardLinuxSkuName,
+                                        Usage = 3600,
+                                        Size = 64,
+                                    }
+                                }
+                            }
+                    },
+                    new EnvironmentUsage()
+                    {
+                          Id = testEnvironment3.Id,
+
+                            EndState = "Deleted",
+                            Sku = new Sku { Name = standardLinuxSkuName },
+                             ResourceUsage = new ResourceUsageDetail
+                            {
+                                Storage = new List<StorageUsageDetail>
+                                {
+                                    new StorageUsageDetail
+                                    {
+                                        Sku = standardLinuxSkuName,
+                                        Usage = 1800,
+                                        Size = 64,
+                                    }
+                                }
+                            }
+                    }
+                },
+            };
+
+            var queuMessage = new PartnerQueueSubmission(billSummary);
+
+            var jsonBlob = queuMessage.ToJson();
+            string expectedJSon = @$"{{""time"":""{TestTimeNow.Subtract(TimeSpan.FromHours(6)).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""id"":""aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"",""plan"":{{""subscription"":""{GitHubSubscription}"",""resourceGroup"":""RG"",""name"":""PlanName"",""location"":""WestUs2""}},""periodStart"":""0001-01-01T00:00:00"",""periodEnd"":""{TestTimeNow.AddHours(-4).ToString("yyyy-MM-ddTHH:mm:ssZ")}"",""usageDetail"":{{""environments"":[{{""id"":""{testEnvironment.Id}"",""resourceUsage"":{{""compute"":[{{""usage"":3600.0,""sku"":""standardLinuxSku""}}],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment2.Id}"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":3600.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}},{{""id"":""{testEnvironment3.Id}"",""resourceUsage"":{{""compute"":[],""storage"":[{{""usage"":1800.0,""size"":64,""sku"":""standardLinuxSku""}}]}}}}]}}}}";
+            Assert.Equal(expectedJSon, jsonBlob);
+        }
+
+
         public static readonly string standardLinuxSkuName = "standardLinuxSku";
         public static readonly EnvironmentBillingInfo testEnvironment = new EnvironmentBillingInfo
         {

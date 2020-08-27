@@ -27,6 +27,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PartnerEnvironmentUsageDetail"/> class.
+        /// </summary>
+        /// <param name="id">The environment id.</param>
+        /// <param name="detail">The environment detail.</param>
+        public PartnerEnvironmentUsageDetail(EnvironmentUsage detail)
+        {
+            this.Id = detail.Id;
+            this.ResourceUsage = detail.ResourceUsage;
+        }
+
+        /// <summary>
         /// Gets or sets the environment id.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "id")]
@@ -35,7 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <summary>
         /// Gets or sets the environment name.
         /// </summary>
-        [JsonProperty(Required = Required.Always, PropertyName = "name")]
+        [JsonProperty(Required = Required.Default, PropertyName = "name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
 
         /// <summary>

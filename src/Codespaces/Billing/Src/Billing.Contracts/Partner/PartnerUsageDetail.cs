@@ -29,6 +29,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PartnerUsageDetail"/> class.
+        /// </summary>
+        /// <param name="usageDetail">Partner usage detail.</param>
+        public PartnerUsageDetail(IEnumerable<EnvironmentUsage> usageDetail)
+        {
+            Environments = usageDetail == null ?
+                new PartnerEnvironmentUsageDetail[0] :
+                usageDetail
+                   .Select(o => new PartnerEnvironmentUsageDetail(o))
+                    .Where(o => !o.IsEmpty())
+                    .ToArray();
+        }
+
+        /// <summary>
         /// Gets or sets mapping from environment IDs to environment usage details.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "environments")]

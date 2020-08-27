@@ -34,6 +34,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PartnerQueueSubmission"/> class.
+        /// </summary>
+        /// <param name="billSummary">The billing event being pushed to a partner.</param>
+        public PartnerQueueSubmission(BillSummary billSummary)
+        {
+            Id = billSummary.Id;
+            Plan = new PartnerPlan(billSummary.Plan);
+            Time = billSummary.BillGenerationTime;
+
+            PeriodStart = billSummary.PeriodStart;
+            PeriodEnd = billSummary.PeriodEnd;
+
+            if (billSummary.UsageDetail != null)
+            {
+                UsageDetail = new PartnerUsageDetail(billSummary.UsageDetail);
+            }
+        }
+
+        /// <summary>
         /// Gets or sets UTC time this record is created for debugging purposes.
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "time")]

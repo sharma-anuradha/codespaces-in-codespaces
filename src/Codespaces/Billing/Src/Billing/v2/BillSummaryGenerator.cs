@@ -38,19 +38,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="skuCatalog">the sku catalog.</param>
         /// <param name="billingMeterService"> the billing meter service.</param>
         /// <param name="billingStorageFactory">the billing storage factory.</param>
+        /// <param name="partnerCloudStorageFactory">Factory for partner submissions</param>
         public BillSummaryGenerator(
             BillingSettings billingSettings,
             IBillSummaryManager billSummaryManager,
             IEnvironmentStateChangeManager environmentStateChangeManager,
             ISkuCatalog skuCatalog,
             IBillingMeterService billingMeterService,
-            IBillingSubmissionCloudStorageFactory billingStorageFactory)
+            IBillingSubmissionCloudStorageFactory billingStorageFactory,
+            IPartnerCloudStorageFactory partnerCloudStorageFactory)
         {
             this.billingSettings = billingSettings;
             BillSummaryManager = billSummaryManager;
             EnvironmentStateChangeManager = environmentStateChangeManager;
             BillingMeterService = billingMeterService;
             BillingStorageFactory = billingStorageFactory;
+            PartnerCloudStorageFactory = partnerCloudStorageFactory;
             skuDictionary = skuCatalog.CloudEnvironmentSkus;
         }
 
@@ -61,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private IBillingMeterService BillingMeterService { get; }
 
         private IBillingSubmissionCloudStorageFactory BillingStorageFactory { get; }
+        private IPartnerCloudStorageFactory PartnerCloudStorageFactory { get; }
 
         /// <inheritdoc />
         public Task GenerateBillingSummaryAsync(BillingSummaryRequest billingSummaryRequest, IDiagnosticsLogger logger)
@@ -134,8 +138,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // Now we need to submit this to PushAgent.
                     await TransmitBillSummaryToPushAgent(billSummary, billingSummaryRequest.PlanInformation, childLogger.NewChildLogger());
+
+                    await TransmitToPartner(billSummary, partner, childLogger.NewChildLogger());
                 },
                 swallowException: true);
+        }
+
+        private async Task TransmitToPartner(BillSummary billSummary, Partner? partner, IDiagnosticsLogger logger)
+        {
+            if (await billingSettings.V2PartnerTransmisionIsEnabledAsync(logger))
+            {
+                if (partner == Partner.GitHub)
+                {
+                    await logger.OperationScopeAsync(
+                        "billSummaryGenerator_partner_bill_submission",
+                        async (childLogger) =>
+                        {
+                            var storageClient = await PartnerCloudStorageFactory.CreatePartnerCloudStorage(billSummary.Plan.Location, "gh");
+                            var partnerSubmission = new PartnerQueueSubmission(billSummary);
+                            childLogger.FluentAddValue("billEndTime", billSummary.PeriodEnd.ToString())
+                               .FluentAddValue("PartnerId", "gh")
+                               .FluentAddValue("ComputeTime", partnerSubmission.TotalComputeTime)
+                               .FluentAddValue("StorageTime", partnerSubmission.TotalStorageTime);
+
+                            await storageClient.PushPartnerQueueSubmission(partnerSubmission);
+                            childLogger.FluentAddValue("SubmittedPartnerBill", true);
+                        });
+                }
+            }
         }
 
         /// <summary>
