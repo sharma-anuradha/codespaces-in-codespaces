@@ -23,13 +23,11 @@ class Subscription {
     [string]$environment
     [string]$generation
     [string]$location
-    # [nullable[int]]$maxResourceGroupCount
     [nullable[int]]$ordinal
     [string]$plane
     [string]$premiumFilesInternalSettings
     [string]$region
     [nullable[ServiceType]]$serviceType
-    [string]$storagePartionedDnsFlag
     [System.Guid]$subscriptionId
     [string]$subscriptionName
     [string]$vnetInjection
@@ -41,7 +39,6 @@ class AzureSubscriptionSettings {
     [System.Collections.ArrayList]$locations = [System.Collections.ArrayList]::new()
     $servicePrincipal
     $quotas
-    # [nullable[int]]$maxResourceGroupCount
     $serviceType
 }
 
@@ -59,134 +56,247 @@ function Disconnect-ComObject($Object) {
   }
 }
 
-function ConvertTo-AzureLocation([string]$Region) {
-    switch ($Region) {
-        "ap-se" { return "southeastasia" }
-        "eu-w" { return "westeurope" }
-        "us-e" { return "eastus" }
-        "us-e2euap" { return "eastus2euap" }
-        "us-w2" { return "westus2" }
-        "global" { return "" }
-        "" { return "" }
-    }
-
-    throw "Unsupported region: $Region"
-}
-
-# Generate Json data from Csv file
-function Format-CsvToJson {
+# Generate Json data from Excel file
+function Format-ExcelToJson {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$CsvFile,
+        [string]$ExcelFile,
         [string]$JsonFile = "$PSScriptRoot\..\Components\subscriptions.json"
     )
 
-    if ($CsvFile -is "System.IO.FileSystemInfo") {
-        $CsvFile = $CsvFile.FullName.ToString()
+    if ($ExcelFile -is "System.IO.FileSystemInfo") {
+        $ExcelFile = $ExcelFile.FullName.ToString()
     }
 
     # Make sure the input file path is fully qualified
-    $CsvFile = [System.IO.Path]::GetFullPath($CsvFile)
-    Write-Verbose "Converting '$CsvFile' to JSON"
+    $ExcelFile = [System.IO.Path]::GetFullPath($ExcelFile)
+    Write-Verbose "Converting '$ExcelFile' to JSON"
 
-    function Get-CsvValue($obj, [string]$propertyName, [switch]$ToLower) {
-        $value = $obj.$propertyName
-        if ($value) {
-            if($ToLower) {
-                $value = $value.ToLowerInvariant()
+    $excel = $null
+    $wb = $null
+    $sheet = $null
+
+    try {
+        $excel = New-Object -ComObject Excel.Application
+        $excel.DisplayAlerts = $false
+
+        $wb = $excel.Workbooks.Open($ExcelFile)
+        if (-not $wb) {
+            Write-Error "Unable to open Excel file."
+            return
+        }
+
+        $sheet = $wb.worksheets | Where-Object { $_.name -eq "Subscriptions" }
+        if (-not $sheet) {
+            Write-Error "Unable to find Subscriptions sheet."
+            return
+        }
+
+        function Find-HeaderRow () {
+            $cell = $sheet.Cells.Find("Subscription ID")
+            if (-not $cell) {
+                Write-Error "Unable to find Header row."
+                return -1
             }
-            $value = $value.Trim()
+
+            [int]$row = $cell.Row
+            Disconnect-ComObject $cell
+            return $row
         }
-        return $value
-    }
 
-    $subscriptions = [System.Collections.ArrayList]@()
+        function Find-Row ([string] $colName) {
+            $cell = $sheet.Cells.Find($colName)
+            if (-not $cell) {
+                Write-Error "Unable to find $colName row."
+                return -1
+            }
 
-    Import-Csv -Path $CsvFile | ForEach-Object {
-        $subscriptionName = Get-CsvValue $_ 'Subscription Name'
-        Write-Host "Processing row $i of ${lastRow}: '$subscriptionName'" -ForegroundColor DarkGray
+            [int]$row = $cell.Row
+            Disconnect-ComObject $cell
+            return $row
+        }
 
-        # Skip blank subscription IDs
-        $subscriptionIdValue = Get-CsvValue $_ 'Subscription ID'
-        [System.Guid]$subscriptionId = [System.Guid]::Empty
+        function Find-HeaderColumn ([int]$headerRow, [string]$headerName) {
 
-        if (!$subscriptionIdValue) {
-            Write-Host "Skipping row ${i}: '$subscriptionName' has blank subscription id" -ForegroundColor Yellow
+            $entireRow = $sheet.Cells.Item($headerRow, 1).EntireRow
+            $cell = $entireRow.Find($headerName, [Type]::Missing, [Type]::Missing, 1)
+            Disconnect-ComObject $entireRow
+
+            if (-not $cell) {
+                Write-Error "Unable to find $headerName column."
+                return -1
+            }
+
+            [int]$column = $cell.Column
+            Disconnect-ComObject $cell
+            return $column
+        }
+
+        function Get-CellValue ([int]$row, [int]$col, [switch]$ToLower) {
+            try {
+              $cell = $sheet.Cells.Item($row, $col)
+
+              [string]$value = $cell.Value2
+              if ([string]::IsNullOrEmpty($value)) {
+                $value = $null
+              }
+
+              if ($ToLower -and $value) {
+                $value = $value.ToLowerInvariant()
+              }
+
+              return $value
+            }
+            finally {
+              Disconnect-ComObject $cell
+            }
+        }
+
+        function ConvertTo-AzureLocation([string]$Region) {
+            switch ($Region) {
+              "ap-se" { return "southeastasia" }
+              "eu-w" { return "westeurope" }
+              "us-e" { return "eastus" }
+              "us-w2" { return "westus2" }
+              "global" { return "" }
+              "" { return "" }
+            }
+
+            throw "Unsupported region: $Region"
+          }
+
+        # Find first row
+        [int]$headerRow = Find-HeaderRow
+        if (-1 -eq $headerRow) {
+            Write-Error "Unable to find Header row."
             return
         }
 
-        if (![System.Guid]::TryParse($subscriptionIdValue, [ref]$subscriptionId)) {
-            Write-Host "Skipping row ${i}: '$subscriptionName' has invalid subscription id '$subscriptionIdValue'" -ForegroundColor Yellow
+        [int]$firstRow = $headerRow + 1
+
+        # Find last row
+        [int]$totalRow = Find-Row "Total"
+        if (-1 -eq $totalRow) {
+            Write-Error "Unable to find Total row."
             return
         }
 
-        $subscription = [Subscription]::new()
+        [int]$lastRow = $totalRow - 1
 
-        $subscription.subscriptionName = $subscriptionName
+        # Find columns
+        [int]$subscriptionIdColumn = Find-HeaderColumn $headerRow "Subscription ID"
+        [int]$subscriptionNameColumn = Find-HeaderColumn $headerRow "Subscription Name"
+        [int]$subscriptionOldNameColumn = Find-HeaderColumn $headerRow "Old Name"
+        [int]$enabledColumn = Find-HeaderColumn $headerRow "Enabled"
+        [int]$environmentColumn = Find-HeaderColumn $headerRow "Environment"
+        [int]$componentColumn = Find-HeaderColumn $headerRow "Component"
+        [int]$planeColumn = Find-HeaderColumn $headerRow "Plane"
+        [int]$premiumFilesInternalSettingsColumn = Find-HeaderColumn $headerRow "Storage 32gb Flag"
+        [int]$serviceTypeColumn = Find-HeaderColumn $headerRow "Type"
+        [int]$regionColumn = Find-HeaderColumn $headerRow "Region"
+        [int]$ordinalColumn = Find-HeaderColumn $headerRow "Ordinal"
+        [int]$generationColumn = Find-HeaderColumn $headerRow "Generation"
+        [int]$ameColumn = Find-HeaderColumn $headerRow "AME"
+        [int]$vnetInjectionColumn = Find-HeaderColumn $headerRow "VNet Injection"
 
-        # If Subscription has old name we should use it for now.
-        $subscriptionOldName = Get-CsvValue $_ 'Old Name '
-        if ($null -ne $subscriptionOldName -and $subscriptionOldName.Trim().Length -ne 0) {
-            $subscription.subscriptionName = $subscriptionOldName
+        $subscriptions = [System.Collections.ArrayList]@()
+
+        For ([int]$i = $firstRow; $i -le $lastRow; $i++) {
+
+            $subscriptionName = Get-CellValue $i $subscriptionNameColumn
+            Write-Host "Processing row $i of ${lastRow}: '$subscriptionName'" -ForegroundColor DarkGray
+
+            # Skip blank subscription IDs
+            $subscriptionIdValue = Get-CellValue $i $subscriptionIdColumn
+            [System.Guid]$subscriptionId = [System.Guid]::Empty
+
+            if (!$subscriptionIdValue) {
+              Write-Host "Skipping row ${i}: '$subscriptionName' has blank subscription id" -ForegroundColor Yellow
+              continue
+            }
+
+            if (![System.Guid]::TryParse($subscriptionIdValue, [ref]$subscriptionId)) {
+              Write-Host "Skipping row ${i}: '$subscriptionName' has invalid subscription id '$subscriptionIdValue'" -ForegroundColor Yellow
+              continue
+            }
+
+            $subscription = [Subscription]::new()
+
+            $subscription.subscriptionName = $subscriptionName
+
+            # If Subscription has old name we should use it for now.
+            $subscriptionOldName = Get-CellValue $i $subscriptionOldNameColumn
+            if ($null -ne $subscriptionOldName -and $subscriptionOldName.Trim().Length -ne 0) {
+                $subscription.subscriptionName = $subscriptionOldName
+            }
+
+            $subscription.subscriptionId = $subscriptionId
+
+            [bool]$enabled = $false
+            if ([System.Boolean]::TryParse($enabledColumn, [ref]$enabled)) {
+                $subscription.enabled = $enabled
+            }
+
+            $subscription.environment = Get-CellValue $i $environmentColumn -ToLower
+            $subscription.component = Get-CellValue $i $componentColumn -ToLower
+            $subscription.plane = Get-CellValue $i $planeColumn -ToLower
+            $subscription.premiumFilesInternalSettings = Get-CellValue $i $premiumFilesInternalSettingsColumn -ToLower
+
+            try {
+                $subscription.serviceType = [ServiceType](Get-CellValue $i $serviceTypeColumn)
+            }
+            catch {
+                $subscription.serviceType = $null
+            }
+
+            $subscription.region = Get-CellValue $i $regionColumn -ToLower
+            $subscription.location = ConvertTo-AzureLocation $subscription.region
+
+            $ordinalValue = Get-CellValue $i $ordinalColumn
+
+            [int]$ordinal = 0
+            if ([System.Int32]::TryParse($ordinalValue, [ref]$ordinal)) {
+              $subscription.ordinal = $ordinal
+            }
+
+            $subscription.Generation = Get-CellValue $i $generationColumn -ToLower
+            $ameValue = Get-CellValue $i $ameColumn
+
+            [bool]$ame = $false
+            if ([System.Boolean]::TryParse($ameValue, [ref]$ame)) {
+              $subscription.ame = $ame
+            }
+
+            $subscription.vnetInjection = Get-CellValue $i $vnetInjectionColumn -ToLower
+
+            $subscriptions.Add($subscription) | Out-Null
         }
 
-        $subscription.subscriptionId = $subscriptionId
+        $subscriptions = $subscriptions | Sort-Object -Property subscriptionName
 
-        $enabledValue = Get-CsvValue $_ 'Enabled'
-        [bool]$enabled = $false
-        if ([System.Boolean]::TryParse($enabledValue, [ref]$enabled)) {
-            $subscription.enabled = $enabled
+        if (-not $JsonFile) {
+            Write-Host ($subscriptions | ConvertTo-Json -EnumsAsStrings)
         }
-
-        $subscription.environment = Get-CsvValue $_ 'Environment' -ToLower
-        $subscription.component = Get-CsvValue $_ 'Component' -ToLower
-        $subscription.plane = Get-CsvValue $_ 'Plane' -ToLower
-        $subscription.premiumFilesInternalSettings = Get-CsvValue $_ 'Storage 32gb Flag ' -ToLower
-        $subscription.storagePartionedDnsFlag = Get-CsvValue $_ 'Storage Partitioned DNS Flag ' -ToLower
-
-        try {
-            $subscription.serviceType = [ServiceType](Get-CsvValue $_ 'Type')
+        else {
+            $subscriptions | ConvertTo-Json -EnumsAsStrings | Out-File -Encoding:utf8 -FilePath:$JsonFile
         }
-        catch {
-            $subscription.serviceType = $null
-        }
-
-        $subscription.region = Get-CsvValue $_ 'Region' -ToLower
-        $subscription.location = ConvertTo-AzureLocation $subscription.region
-
-        # $maxResourceGroupCountValue = Get-CsvValue $_ 'Max RG Count'
-        # [int]$maxResourceGroupCount = 0
-        # if ([System.Int32]::TryParse($maxResourceGroupCountValue, [ref]$maxResourceGroupCount)) {
-        #     $subscription.maxResourceGroupCount = $maxResourceGroupCount
-        # }
-
-        $ordinalValue = Get-CsvValue $_ 'Ordinal'
-        [int]$ordinal = 0
-        if ([System.Int32]::TryParse($ordinalValue, [ref]$ordinal)) {
-            $subscription.ordinal = $ordinal
-        }
-
-        $subscription.Generation = Get-CsvValue $_ 'Generation' -ToLower
-
-        $ameValue = Get-CsvValue $_ 'AME'
-        [bool]$ame = $false
-        if ([System.Boolean]::TryParse($ameValue, [ref]$ame)) {
-            $subscription.ame = $ame
-        }
-
-        $subscription.vnetInjection = Get-CsvValue $_ 'VNet Injection ' -ToLower
-
-        $subscriptions.Add($subscription) | Out-Null
     }
+    finally {
+        # Close the Workbook
+        if ($excel) {
+            $excel.Workbooks.Close()
+        }
 
-    $subscriptions = $subscriptions | Sort-Object -Property subscriptionName
+        # Release COM objects
+        Disconnect-ComObject $sheet
+        Disconnect-ComObject $wb
 
-    if (-not $JsonFile) {
-        Write-Host ($subscriptions | ConvertTo-Json -EnumsAsStrings)
-    }
-    else {
-        $subscriptions | ConvertTo-Json -EnumsAsStrings | Out-File -Encoding:utf8 -FilePath:$JsonFile
+        # Quit Excel
+        if ($excel) {
+            $excel.Quit()
+            Disconnect-ComObject $excel
+        }
     }
 }
 
@@ -268,7 +378,7 @@ function Build-AppSettings {
     }
 
     $jsonSubscriptions = $jsonSubscriptions | Where-Object {
-        $_.serviceType -ne "storage" -or ($_.serviceType -eq "storage" -and $_.premiumFilesInternalSettings -eq "done" -and $_.storagePartionedDnsFlag -eq "done")
+        $_.serviceType -ne "storage" -or ($_.serviceType -eq "storage" -and $_.premiumFilesInternalSettings -eq "done")
     }
 
     if ($Canary) {
@@ -294,9 +404,6 @@ function Build-AppSettings {
             $azureSubscriptionSettings.locations.Add($subscription.location) | Out-Null
         }
         $azureSubscriptionSettings.serviceType = ([string]$subscription.serviceType).ToLowerInvariant()
-        # if ($null -ne $subscription.maxResourceGroupCount) {
-        #     $azureSubscriptionSettings.maxResourceGroupCount = $subscription.maxResourceGroupCount
-        # }
 
         $appSettings.dataPlaneSettings.subscriptions.Add($subscription.subscriptionName, $azureSubscriptionSettings)
     }

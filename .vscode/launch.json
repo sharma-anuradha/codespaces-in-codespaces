@@ -14,13 +14,6 @@
         }
     ],
     "configurations": [
-    {
-      "name": "PowerShell Launch Current File",
-      "type": "PowerShell",
-      "request": "launch",
-      "script": "${file}",
-      "cwd": "${file}"
-    },
         {
             "name": "BackEndWebApi Launch (No Build)",
             "type": "coreclr",
