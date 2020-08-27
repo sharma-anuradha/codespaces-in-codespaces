@@ -67,58 +67,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_execute",
                 async (childLogger) =>
                 {
+                    // align the first run with the top of the next hour
+                    var initialStartTime = DateTime.UtcNow;
+                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour + 1, 0, 0, DateTimeKind.Utc);
+                    var firstRunDelay = firstRunTime - initialStartTime;
+
+                    await Task.Delay(firstRunDelay);
+
                     // no distributed lease is taken at the top level to allow multiple workers
                     while (!cancellationToken.IsCancellationRequested)
                     {
                         var now = DateTime.UtcNow;
                         var desiredEndDate = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
 
-                        if (await billingSettings.V2WorkersAreEnabledAsync(childLogger))
-                        {
-                            var overrides = (await billingOverrideRepository.QueryAsync(q => q, logger)).ToList();
-
-                            // generate billing summaries
-                            await ForEachPlan(
-                                "summaries",
-                                async (plan, innerLogger) =>
-                                {
-                                    innerLogger.FluentAddValue(BillingLoggingConstants.BillEndingTime, desiredEndDate);
-
-                                    await billSummaryGenerator.GenerateBillingSummaryAsync(
-                                        new BillingSummaryRequest
-                                        {
-                                            PlanId = plan.Id,
-                                            PlanInformation = plan.Plan,
-                                            DesiredEndTime = desiredEndDate,
-                                            BillingOverrides = BuildOverrides(Guid.Parse(plan.Id), plan.Plan.Subscription, overrides),
-                                            Partner = plan.Partner,
-                                        },
-                                        innerLogger);
-                                },
-                                logger,
-                                cancellationToken);
-
-                            // pause to give roughly enough time for all workers to complete the first phase.
-                            await Task.Delay(TimeSpan.FromMinutes(15));
-
-                            // run scrubbers (defers this less time-sensitive work, at the cost of looping through all plans again later).
-                            await ForEachPlan(
-                                "scrubber",
-                                async (plan, innerLogger) =>
-                                {
-                                    innerLogger.FluentAddValue(BillingLoggingConstants.BillEndingTime, desiredEndDate);
-
-                                    await billSummaryScrubber.ScrubBillSummariesForPlan(
-                                    new BillScrubberRequest
-                                    {
-                                        PlanId = plan.Id,
-                                        DesiredEndTime = desiredEndDate,
-                                    },
-                                    innerLogger);
-                                },
-                                logger,
-                                cancellationToken);
-                        }
+                        await ExecuteInnerAsync(childLogger, desiredEndDate, cancellationToken);
 
                         var nextRun = desiredEndDate.AddHours(1) - DateTime.UtcNow;
                         await Task.Delay(nextRun > TimeSpan.Zero ? nextRun : TimeSpan.Zero);
@@ -126,17 +88,73 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 });
         }
 
-        private Task ForEachPlan(string leaseName, Func<VsoPlan, IDiagnosticsLogger, Task> action, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        private Task ExecuteInnerAsync(IDiagnosticsLogger logger, DateTime desiredEndDate, CancellationToken cancellationToken)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_execute_inner",
+                async (childLogger) =>
+                {
+                    if (await billingSettings.V2WorkersAreEnabledAsync(logger))
+                    {
+                        var overrides = (await billingOverrideRepository.QueryAsync(q => q, childLogger)).ToList();
+
+                        // generate billing summaries
+                        await ForEachPlan(
+                            "summaries",
+                            async (plan, innerLogger) =>
+                            {
+                                innerLogger.FluentAddValue(BillingLoggingConstants.BillEndingTime, desiredEndDate);
+
+                                await billSummaryGenerator.GenerateBillingSummaryAsync(
+                                    new BillingSummaryRequest
+                                    {
+                                        PlanId = plan.Id,
+                                        PlanInformation = plan.Plan,
+                                        DesiredEndTime = desiredEndDate,
+                                        BillingOverrides = BuildOverrides(Guid.Parse(plan.Id), plan.Plan.Subscription, overrides),
+                                        Partner = plan.Partner,
+                                    },
+                                    innerLogger);
+                            },
+                            childLogger,
+                            cancellationToken);
+
+                        // pause to give roughly enough time for all workers to complete the first phase.
+                        await Task.Delay(TimeSpan.FromMinutes(15));
+
+                        // run scrubbers (defers this less time-sensitive work, at the cost of looping through all plans again later).
+                        await ForEachPlan(
+                            "scrubber",
+                            async (plan, innerLogger) =>
+                            {
+                                innerLogger.FluentAddValue(BillingLoggingConstants.BillEndingTime, desiredEndDate);
+
+                                await billSummaryScrubber.ScrubBillSummariesForPlan(
+                                new BillScrubberRequest
+                                {
+                                    PlanId = plan.Id,
+                                    DesiredEndTime = desiredEndDate,
+                                },
+                                innerLogger);
+                            },
+                            childLogger,
+                            cancellationToken);
+                    }
+                },
+                swallowException: true);
+        }
+
+        private Task ForEachPlan(string name, Func<VsoPlan, IDiagnosticsLogger, Task> action, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_{name}_for_each_plan",
                 (childLogger) =>
                 {
                     var shardRegionPairs = shards.SelectMany(x => controlPlaneInfo.Stamp.DataPlaneLocations, (shard, location) => (shard, location)).Shuffle();
 
                     // execute with default of three shards at once, 250ms pause between each, with a per-shard lease
                     return taskHelper.RunConcurrentEnumerableAsync(
-                        $"{LogBaseName}_execute_inner",
+                        $"{LogBaseName}_{name}_for_each_plan_enumerable",
                         shardRegionPairs,
                         (pair, itemLogger) =>
                         {
@@ -145,46 +163,59 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                             cancellationToken.ThrowIfCancellationRequested();
 
-                            return ExecuteShard(action, pair.shard, pair.location, itemLogger, cancellationToken);
+                            return ExecuteShard(name, action, pair.shard, pair.location, itemLogger, cancellationToken);
                         },
                         childLogger,
                         (pair, itemLogger) =>
                         {
-                            return claimedDistributedLease.Obtain(LeaseContainer, $"billing-v2-{leaseName}-{pair.location}-{pair.shard}", TimeSpan.FromMinutes(45), itemLogger);
+                            return claimedDistributedLease.Obtain(LeaseContainer, $"billing-v2-{name}-{pair.location}-{pair.shard}", TimeSpan.FromMinutes(45), itemLogger);
                         });
-                });
-        }
-
-        private Task ExecuteShard(Func<VsoPlan, IDiagnosticsLogger, Task> action, string shard, AzureLocation location, IDiagnosticsLogger logger, CancellationToken cancellationToken)
-        {
-            // retrieve plans from Cosmos DB in batches of 100
-            return planManager.GetBillablePlansByShardAsync(
-                shard,
-                location,
-                (plan, childLogger) => Task.CompletedTask, // no per-item work
-                (plans, childLogger) =>
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    return ExecutePlanBatch(action, plans, childLogger, cancellationToken);
                 },
-                logger);
+                swallowException: true);
         }
 
-        private Task ExecutePlanBatch(Func<VsoPlan, IDiagnosticsLogger, Task> action, IEnumerable<VsoPlan> plans, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        private Task ExecuteShard(string name, Func<VsoPlan, IDiagnosticsLogger, Task> action, string shard, AzureLocation location, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        {
+            return logger.OperationScopeAsync(
+                $"{LogBaseName}_{name}_execute_shard",
+                (childLogger) =>
+                {
+                    // retrieve plans from Cosmos DB in batches of 100
+                    return planManager.GetBillablePlansByShardAsync(
+                        shard,
+                        location,
+                        (plan, childLogger) => Task.CompletedTask, // no per-item work
+                        (plans, childLogger) =>
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+
+                            return ExecutePlanBatch(name, action, plans, childLogger, cancellationToken);
+                        },
+                        logger);
+                },
+                swallowException: true);
+        }
+
+        private Task ExecutePlanBatch(string name, Func<VsoPlan, IDiagnosticsLogger, Task> action, IEnumerable<VsoPlan> plans, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // concurrently process up to 100 plans (4 at a time by default)
             return taskHelper.RunConcurrentEnumerableAsync(
-                $"{LogBaseName}_worker_page",
+                $"{LogBaseName}_{name}_execute_plan_batch",
                 plans,
-                async (plan, childLogger) =>
+                (plan, childLogger) =>
                 {
-                    childLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);
+                    return childLogger.OperationScopeAsync(
+                        $"{LogBaseName}_{name}_action",
+                        async (innerLogger) =>
+                        {
+                            innerLogger.FluentAddValue(BillingLoggingConstants.PlanId, plan.Id);
 
-                    cancellationToken.ThrowIfCancellationRequested();
+                            cancellationToken.ThrowIfCancellationRequested();
 
-                    // lastly, execute the action
-                    await action(plan, childLogger);                   
+                            // lastly, execute the action
+                            await action(plan, innerLogger);
+                        },
+                        swallowException: true);
                 },
                 logger,
                 concurrentLimit: billingSettings.ConcurrentJobConsumerCount,
