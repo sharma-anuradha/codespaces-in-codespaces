@@ -1,7 +1,7 @@
 import * as debug from 'debug';
 
-import { IVSCodeConfig, IEnvironment, randomString, vsls } from 'vso-client-core';
-import { IWebSocketFactory, IWorkbenchConstructionOptions } from 'vscode-web';
+import { IVSCodeConfig, IEnvironment, randomString, vsls, VSCS_FEATURESET_LOCALSTORAGE_KEY} from 'vso-client-core';
+import { IWebSocketFactory, IWorkbenchConstructionOptions, IProductQualityChangeHandler } from 'vscode-web';
 import { postServiceWorkerMessage, disconnectCloudEnv } from 'vso-service-worker-client';
 
 import { EnvConnector } from '../../clients/envConnector';
@@ -167,6 +167,11 @@ export class VSCodeWorkbench {
             },
         };
 
+        const ProductQualityChangeHandler: IProductQualityChangeHandler = (newQuality: string) => {
+            window.localStorage.setItem(VSCS_FEATURESET_LOCALSTORAGE_KEY, newQuality);
+            window.location.reload();
+        };
+
         const providers = await getProviders(connector);
         const listener = () => {
             window.removeEventListener('beforeunload', listener);
@@ -184,6 +189,7 @@ export class VSCodeWorkbench {
             remoteAuthority: getUriAuthority(environmentInfo),
             webSocketFactory: VSLSWebSocketFactory,
             connectionToken: vscodeConfig.commit,
+            productQualityChangeHandler: ProductQualityChangeHandler,
             ...providers,
         };
 

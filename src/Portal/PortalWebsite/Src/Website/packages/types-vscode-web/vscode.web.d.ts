@@ -617,6 +617,15 @@ declare module 'vscode-web' {
         // editors?: IDefaultWorkspaceEditorsLayout
     }
 
+    export interface IProductQualityChangeHandler {
+
+        /**
+         * Handler is being called when the user wants to switch between
+         * `insider` or `stable` product qualities.
+         */
+        (newQuality: 'insider' | 'stable'): void;
+    }
+
     export interface IWorkbenchConstructionOptions {
         /**
          * Experimental: the remote authority is the IP:PORT from where the workbench is served
@@ -705,6 +714,11 @@ declare module 'vscode-web' {
          * Experimental: Support for update reporting.
          */
         updateProvider?: IUpdateProvider;
+
+        /**
+         * Support for product quality switching
+         */
+        productQualityChangeHandler?: IProductQualityChangeHandler;
 
         /**
          * Experimental: Support adding additional properties to telemetry.

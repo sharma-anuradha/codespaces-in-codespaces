@@ -27,6 +27,14 @@ export const getFeatureSet = (): FeatureSet => {
     const vsoFeatureSet = window.localStorage.getItem(VSCS_FEATURESET_LOCALSTORAGE_KEY);
     if (vsoFeatureSet === FeatureSet.Insider) {
         vscodeQuality = FeatureSet.Insider;
+        // the localstorage record should take precendence over partner config
+        return vscodeQuality;
+    }
+
+    if (vsoFeatureSet === FeatureSet.Stable) {
+        vscodeQuality = FeatureSet.Stable;
+        // the localstorage record should take precendence over partner config
+        return vscodeQuality;
     }
 
     if (memoryFeatureSet) {
