@@ -16,10 +16,6 @@
     <PackageReference Include="Microsoft.VsSaaS.Tokens" Version="$(VsSaaSPackageVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
-    <Reference Include="System.Web" />
-  </ItemGroup>
-
   <ItemGroup>	
     <ProjectReference Include="..\TokenService.Contracts\TokenService.Contracts.csproj" />
   </ItemGroup>
