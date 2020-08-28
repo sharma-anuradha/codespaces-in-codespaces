@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -21,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// Task mananager that tries to kick off a continuation which will try and manage tracking
     /// orphaned pools and conduct orchestrate drains as requried.
     /// </summary>
-    public class WatchOrphanedPoolTask : IWatchOrphanedPoolTask
+    public class WatchOrphanedPoolTask : BaseBackgroundTask, IWatchOrphanedPoolTask
     {
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
         private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="resourcePoolDefinitionStore">ResourcePoolDefinitionStore info.</param>
         /// <param name="resourceContinuationOperations">ResourceContinuationOperations object to perform the necessary workflows.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchOrphanedPoolTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
@@ -43,7 +45,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             IResourcePoolDefinitionStore resourcePoolDefinitionStore,
-            IResourceContinuationOperations resourceContinuationOperations)
+            IResourceContinuationOperations resourceContinuationOperations,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
@@ -53,6 +57,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ResourcePoolDefinitionStore = Requires.NotNull(resourcePoolDefinitionStore, nameof(resourcePoolDefinitionStore));
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchOrphanedPoolTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedPoolTask)}Lease");
 
@@ -75,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
@@ -106,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

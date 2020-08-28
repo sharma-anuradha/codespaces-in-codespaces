@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -40,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="controlPlaneInfo">Control plane info.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchOrphanedSystemEnvironmentsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -47,12 +49,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IControlPlaneInfo controlPlaneInfo)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            IControlPlaneInfo controlPlaneInfo,
+            IConfigurationReader configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
             ResourceBrokerHttpClient = resourceBrokerHttpClient;
             ControlPlaneInfo = controlPlaneInfo;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchOrphanedSystemEnvironmentsTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedSystemEnvironmentsTask)}Lease");
 
@@ -63,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchFailedResourcesTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceContinuationOperations resourceContinuationOperations,
@@ -44,12 +46,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
-            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags)
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
+            IConfigurationReader configurationReader)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchFailedResourcesTask";
 
         /// <inheritdoc/>
         protected override string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchFailedResourcesTask)}Lease");

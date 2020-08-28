@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchOrphanedStorageImagesTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedStorageImagesTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -29,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="controlPlaneAzureResourceAccessor">Gets storage accounts.</param>
         /// <param name="controlPlaneInfo">Gets control plan info.</param>
         /// <param name="skuCatalog">Gets skuCatalog that has active image info.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchOrphanedStorageImagesTask(
             ResourceBrokerSettings resourceBrokerSettings,
             ITaskHelper taskHelper,
@@ -36,12 +38,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceNameBuilder resourceNameBuilder,
             IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
             IControlPlaneInfo controlPlaneInfo,
-            ISkuCatalog skuCatalog)
+            ISkuCatalog skuCatalog,
+            IConfigurationReader configurationReader)
             : base(
                   resourceBrokerSettings,
                   taskHelper,
                   claimedDistributedLease,
-                  resourceNameBuilder)
+                  resourceNameBuilder,
+                  configurationReader)
         {
             SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -50,6 +54,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         /// <inheritdoc/>
         protected override string TaskName { get; } = nameof(WatchOrphanedStorageImagesTask);
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchOrphanedStorageImagesTask";
 
         /// <inheritdoc/>
         protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedStorageImagesTask;

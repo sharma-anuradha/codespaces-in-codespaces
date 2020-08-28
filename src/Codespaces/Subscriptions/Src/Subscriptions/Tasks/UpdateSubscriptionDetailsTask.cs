@@ -3,13 +3,11 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler;
@@ -20,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
     /// <summary>
     /// Updates subscription details.
     /// </summary>
-    public class UpdateSubscriptionDetailsTask : IUpdateSubscriptionDetailsTask
+    public class UpdateSubscriptionDetailsTask : BaseBackgroundTask, IUpdateSubscriptionDetailsTask
     {
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
         private static readonly TimeSpan QueryDelay = TimeSpan.FromSeconds(1);
@@ -28,21 +26,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
         /// <summary>
         /// Initializes a new instance of the <see cref="UpdateSubscriptionDetailsTask"/> class.
         /// </summary>
-        /// <param name="environmentManagerSettings">Used for lease container name.</param>
-        /// <param name="cloudEnvironmentRepository">Used for all environment manager sub queries.</param>
         /// <param name="taskHelper">the task helper.</param>
         /// <param name="claimedDistributedLease"> used to create leases.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         /// <param name="subscriptionManager">the subscription manager.</param>
-        /// <param name="subscriptionRepository">The subscription repository.</param>
         /// <param name="planRepository">The plan repository.</param>
-        /// <param name="controlPlanInfo">Control plane info.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public UpdateSubscriptionDetailsTask(
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             ISubscriptionManager subscriptionManager,
-            IPlanRepository planRepository)
+            IPlanRepository planRepository,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             TaskHelper = taskHelper;
             ClaimedDistributedLease = claimedDistributedLease;
@@ -50,6 +47,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
             SubscriptionManager = subscriptionManager;
             PlanRepository = planRepository;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "UpdateSubscriptionDetailsTask";
 
         private string LogBaseName => "update-subscription_details";
 
@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
         private bool Disposed { get; set; }
 
         /// <inheritdoc />
-        public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                  $"{LogBaseName}_run",
@@ -94,7 +94,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions
         }
 
         /// <inheritdoc />
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

@@ -7,14 +7,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
     /// A task that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
     /// </summary>
-    public class RefreshKeyVaultSecretCacheTask : IRefreshKeyVaultSecretCacheTask
+    public class RefreshKeyVaultSecretCacheTask : BaseBackgroundTask, IRefreshKeyVaultSecretCacheTask
     {
         private const string LogBaseName = "refresh_key_vault_secret_cache";
 
@@ -23,9 +23,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         /// <param name="taskHelper">The Task helper.</param>
         /// <param name="caches">list of keyvalut caches that required refresh.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public RefreshKeyVaultSecretCacheTask(
             ITaskHelper taskHelper,
-            IEnumerable<IRefreshKeyVaultSecretCache> caches)
+            IEnumerable<IRefreshKeyVaultSecretCache> caches,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             TaskHelper = taskHelper;
             Caches = caches;
@@ -38,13 +41,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override string ConfigurationBaseName => "RefreshKeyVaultSecretCacheTask";
+
+        /// <inheritdoc/>
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                $"{LogBaseName}_run",

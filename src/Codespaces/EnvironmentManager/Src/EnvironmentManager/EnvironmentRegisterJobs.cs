@@ -106,7 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Watch Orphaned System Resources
             TaskHelper.RunBackgroundLoop(
             $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
-            (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+            (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
             TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
@@ -115,7 +115,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Watch Suspended Environments to be Archived
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchSuspendedEnvironmentsToBeArchivedTask}_run",
-                (childLogger) => WatchSuspendedEnvironmentsToBeArchivedTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => WatchSuspendedEnvironmentsToBeArchivedTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(2));
 
             // Offset to help distribute inital load of recuring tasks
@@ -124,7 +124,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Watch Failed Environment
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchFailedEnvironmentTask}_run",
-                (childLogger) => WatchFailedEnvironmentTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => WatchFailedEnvironmentTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(2));
 
             // Offset to help distribute inital load of recuring tasks
@@ -133,7 +133,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Log Cloud Environment State
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.LogCloudEnvironmentsStateTask}_run",
-                (childLogger) => LogCloudEnvironmentStateTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => LogCloudEnvironmentStateTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(1));
 
             // Offset to help distribute inital load of recuring tasks
@@ -142,7 +142,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Log Plan and Subscription Information
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.LogSubscriptionStatisticsTask}_run",
-                (childLogger) => LogSubscriptionStatisticsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                (childLogger) => LogSubscriptionStatisticsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
@@ -151,7 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Refresh Key Vault Secret Cache Task
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.RefreshKeyVaultSecretCacheTask}_run",
-                (childLogger) => RefreshKeyVaultSecretCacheTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => RefreshKeyVaultSecretCacheTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromHours(4));
 
             // Offset to help distribute inital load of recuring tasks
@@ -160,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Delete Environments in deleted plans
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchDeletedPlanEnvironmentsTask}_run",
-                (childLogger) => CleanDeletedPlanEnvironmentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                (childLogger) => CleanDeletedPlanEnvironmentsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
@@ -169,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Delete secret stores in deleted plans more than 7 days old
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchDeletedPlanSecretStoresTask}_run",
-                (childLogger) => WatchDeletedPlanSecretStoresTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                (childLogger) => WatchDeletedPlanSecretStoresTask.RunTaskAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
@@ -178,7 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Watch Soft Deleted Environments to be Hard Deleted
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.WatchSoftDeletedEnvironmentToBeHardDeletedTask}_run",
-                (childLogger) => WatchSoftDeletedEnvironmentToBeHardDeletedTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => WatchSoftDeletedEnvironmentToBeHardDeletedTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(10));
         }
     }

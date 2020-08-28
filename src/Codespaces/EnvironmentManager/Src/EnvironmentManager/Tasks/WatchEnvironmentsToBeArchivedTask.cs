@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -32,18 +33,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
-        /// <param name="controlPlaneInfo">Target control plane info.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchEnvironmentsToBeArchivedTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IEnvironmentContinuationOperations environmentContinuationOperations,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
             EnvironmentContinuationOperations = environmentContinuationOperations;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchEnvironmentsToBeArchivedTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchEnvironmentsToBeArchivedTask)}Lease");
 
@@ -52,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private IEnvironmentContinuationOperations EnvironmentContinuationOperations { get; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",

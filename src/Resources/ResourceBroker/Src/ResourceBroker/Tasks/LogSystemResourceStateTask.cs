@@ -3,13 +3,13 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -18,10 +18,11 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
-    public class LogSystemResourceStateTask : ILogSystemResourceStateTask
+    public class LogSystemResourceStateTask : BaseBackgroundTask, ILogSystemResourceStateTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LogSystemResourceStateTask"/> class.
+        /// <param name="configurationReader">Configuration reader.</param>
         /// </summary>
         public LogSystemResourceStateTask(
             ResourceBrokerSettings resourceBrokerSettings,
@@ -30,7 +31,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IControlPlaneInfo controlPlaneInfo)
+            IControlPlaneInfo controlPlaneInfo,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             ResourceRepository = resourceRepository;
@@ -40,6 +43,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ResourceNameBuilder = resourceNameBuilder;
             ControlPlaneInfo = controlPlaneInfo;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "LogSystemResourceStateTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogSystemResourceStateTask)}Lease");
 
@@ -62,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
@@ -194,7 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

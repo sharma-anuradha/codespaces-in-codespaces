@@ -1,4 +1,4 @@
-﻿// <copyright file="DeleteResourceGroupDeploymentsTask.cs" company="Microsoft">
+// <copyright file="DeleteResourceGroupDeploymentsTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -35,22 +36,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="azureClientFactory">Azure client factory.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public DeleteResourceGroupDeploymentsTask(
             ResourceBrokerSettings resourceBrokerSettings,
             ITaskHelper taskHelper,
             ICapacityManager capacityManager,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IAzureClientFactory azureClientFactory)
+            IAzureClientFactory azureClientFactory,
+            IConfigurationReader configurationReader)
             : base(
                   resourceBrokerSettings,
                   taskHelper,
                   capacityManager,
                   claimedDistributedLease,
-                  resourceNameBuilder)
+                  resourceNameBuilder,
+                  configurationReader)
         {
             AzureClientFactory = azureClientFactory;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "DeleteResourceGroupDeploymentsTask";
 
         /// <inheritdoc/>
         protected override string TaskName { get; } = nameof(DeleteResourceGroupDeploymentsTask);

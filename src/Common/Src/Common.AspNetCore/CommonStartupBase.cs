@@ -20,6 +20,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.AzureCosmosDb;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
@@ -312,6 +313,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
                 CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
             services.AddSingleton<ISystemConfiguration, PersistedSystemConfiguration>();
+            services.AddSingleton<IConfigurationKeyGenerator, ConfigurationKeyGenerator>();
+            services.AddSingleton<IConfigurationReader, ConfigurationReader>();
             services.AddSingleton<CertificateKeyVaultSecretCache>();
             services.AddSingleton<ICertificateKeyVaultSecretCache>(x => x.GetRequiredService<CertificateKeyVaultSecretCache>());
             services.AddSingleton<IRefreshKeyVaultSecretCache>(x => x.GetRequiredService<CertificateKeyVaultSecretCache>());

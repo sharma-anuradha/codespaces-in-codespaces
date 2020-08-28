@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -34,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
         /// <param name="environmentMetricsLogger">The metrics logger.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public LogCloudEnvironmentStateTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -43,14 +45,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
-            IEnvironmentMetricsManager environmentMetricsLogger)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            IEnvironmentMetricsManager environmentMetricsLogger,
+            IConfigurationReader configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
             ControlPlane = Requires.NotNull(controlPlane, nameof(controlPlane));
             SkuDictionary = Requires.NotNull(skuCatalog, nameof(skuCatalog)).CloudEnvironmentSkus;
             EnvironmentMetricsLogger = Requires.NotNull(environmentMetricsLogger, nameof(environmentMetricsLogger));
             CloudEnvironmentCosmosContainer = Requires.NotNull(cloudEnvironmentCosmosContainer, nameof(cloudEnvironmentCosmosContainer));
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "LogCloudEnvironmentStateTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogCloudEnvironmentStateTask)}Lease");
 
@@ -65,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private IReadOnlyDictionary<string, ICloudEnvironmentSku> SkuDictionary { get; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                $"{LogBaseName}_run",

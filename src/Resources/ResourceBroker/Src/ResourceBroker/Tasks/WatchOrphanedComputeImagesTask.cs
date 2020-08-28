@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchOrphanedComputeImagesTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedComputeImagesTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
@@ -23,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// WatchOrphanedComputeImagesTask to delete artifacts(Nexus windows images).
     /// </summary>
-    public class WatchOrphanedComputeImagesTask : IBackgroundTask
+    public class WatchOrphanedComputeImagesTask : BaseBackgroundTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchOrphanedComputeImagesTask"/> class.
@@ -35,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="controlPlaneInfo">Gets control plan info.</param>
         /// <param name="skuCatalog">Gets skuCatalog that has active image info.</param>
         /// <param name="controlPlaneAzureClientFactory">Azure Client Factory for control plane related works.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchOrphanedComputeImagesTask(
             ResourceBrokerSettings resourceBrokerSettings,
             ITaskHelper taskHelper,
@@ -42,7 +44,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IResourceNameBuilder resourceNameBuilder,
             IControlPlaneInfo controlPlaneInfo,
             ISkuCatalog skuCatalog,
-            IControlPlaneAzureClientFactory controlPlaneAzureClientFactory)
+            IControlPlaneAzureClientFactory controlPlaneAzureClientFactory,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
@@ -69,6 +73,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private string TaskName { get; } = nameof(WatchOrphanedComputeImagesTask);
 
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchOrphanedComputeImagesTask";
+
         private string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedComputeImagesTask;
 
         private DateTime CutOffTime => DateTime.Now.AddMonths(-1).ToUniversalTime();
@@ -92,13 +99,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",

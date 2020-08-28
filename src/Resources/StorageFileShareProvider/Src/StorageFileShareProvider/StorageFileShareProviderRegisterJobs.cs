@@ -1,4 +1,4 @@
-﻿// <copyright file="StorageFileShareProviderRegisterJobs.cs" company="Microsoft">
+// <copyright file="StorageFileShareProviderRegisterJobs.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             TaskHelper.RunBackgroundLoop(
                 $"{TaskConstants.WatchStorageAzureBatchCleanupTaskLogBaseName}_run",
                 (childLogger) =>
-                    WatchStorageAzureBatchCleanupTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
+                    WatchStorageAzureBatchCleanupTask.RunTaskAsync(TimeSpan.FromMinutes(30), childLogger),
                 TimeSpan.FromMinutes(30));
 
             return Task.CompletedTask;

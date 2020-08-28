@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
@@ -19,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
     /// <summary>
     /// Task manager that regularly checks Azure Batch jobs and cleans them up as needed.
     /// </summary>
-    public class WatchStorageAzureBatchCleanupTask : IWatchStorageAzureBatchCleanupTask
+    public class WatchStorageAzureBatchCleanupTask : BaseBackgroundTask, IWatchStorageAzureBatchCleanupTask
     {
         private const string LogBaseName = TaskConstants.WatchStorageAzureBatchCleanupTaskLogBaseName;
         private readonly string taskName = nameof(WatchStorageAzureBatchCleanupTask);
@@ -33,13 +34,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="batchClientFactory">Batch client factory.</param>
         /// <param name="storageProviderSettings">Storage provider settings.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchStorageAzureBatchCleanupTask(
             ITaskHelper taskHelper,
             IControlPlaneInfo controlPlaneInfo,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             IBatchClientFactory batchClientFactory,
-            StorageProviderSettings storageProviderSettings)
+            StorageProviderSettings storageProviderSettings,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
@@ -48,6 +52,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             BatchClientFactory = Requires.NotNull(batchClientFactory, nameof(batchClientFactory));
             StorageProviderSettings = Requires.NotNull(storageProviderSettings, nameof(storageProviderSettings));
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchStorageAzureBatchCleanupTask";
 
         private bool Disposed { get; set; }
 
@@ -66,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         private StorageProviderSettings StorageProviderSettings { get; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
@@ -89,7 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

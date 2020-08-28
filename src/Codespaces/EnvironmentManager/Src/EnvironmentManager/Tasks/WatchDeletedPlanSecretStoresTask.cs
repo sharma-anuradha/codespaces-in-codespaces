@@ -9,6 +9,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -43,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="secretStoreRepository">The secret store repository.</param>
         /// <param name="secretStoreManager">The secret store manager.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchDeletedPlanSecretStoresTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -54,8 +56,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             VsoSuperuserClaimsIdentity superuserIdentity,
             IPlanRepository planRepository,
             ISecretStoreRepository secretStoreRepository,
-            ISecretStoreManager secretStoreManager)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            ISecretStoreManager secretStoreManager,
+            IConfigurationReader configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
             ControlPlaneInfo = controlPlaneInfo;
             CurrentIdentityProvider = currentIdentityProvider;
@@ -64,6 +67,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             SecretStoreRepository = secretStoreRepository;
             SecretStoreManager = secretStoreManager;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchDeletedPlanSecretStoresTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchDeletedPlanSecretStoresTask)}Lease");
 
@@ -82,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",

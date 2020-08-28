@@ -3,11 +3,11 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <remarks>
     /// When making changes in this class take a look at \src\Codespaces\EnvironmentManager\Src\EnvironmentManager\Tasks\WatchOrphanedSystemEnvironmentsTask.cs.
     /// </remarks>
-    public class WatchOrphanedSystemResourceTask : IWatchOrphanedSystemResourceTask
+    public class WatchOrphanedSystemResourceTask : BaseBackgroundTask, IWatchOrphanedSystemResourceTask
     {
         // Add an artificial delay between DB queries so that we reduce bursty load on our database to prevent throttling for end users
         private static readonly TimeSpan QueryDelay = TimeSpan.FromMilliseconds(250);
@@ -36,13 +36,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchOrphanedSystemResourceTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
             IResourcePoolDefinitionStore resourcePoolDefinitionStore,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             ResourceRepository = resourceRepository;
@@ -51,6 +54,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ClaimedDistributedLease = claimedDistributedLease;
             ResourceNameBuilder = resourceNameBuilder;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchOrphanedSystemResourceTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedSystemResourceTask)}Lease");
 
@@ -71,7 +77,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
@@ -97,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

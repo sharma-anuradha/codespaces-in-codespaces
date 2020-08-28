@@ -1,4 +1,4 @@
-﻿// <copyright file="BaseDataPlaneResourceGroupTask.cs" company="Microsoft">
+// <copyright file="BaseDataPlaneResourceGroupTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
@@ -18,7 +19,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Base class for background tasks that operate on all data plane resource groups for a control plane stamp.
     /// </summary>
-    public abstract class BaseDataPlaneResourceGroupTask : IBackgroundTask
+    public abstract class BaseDataPlaneResourceGroupTask : BaseBackgroundTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseDataPlaneResourceGroupTask"/> class.
@@ -28,12 +29,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="capacityManager">Target capacity manager.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public BaseDataPlaneResourceGroupTask(
             ResourceBrokerSettings resourceBrokerSettings,
             ITaskHelper taskHelper,
             ICapacityManager capacityManager,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             TaskHelper = taskHelper;
@@ -72,7 +76,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
@@ -97,7 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

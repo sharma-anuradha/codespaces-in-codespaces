@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -34,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchPoolVersionTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourceRepository resourceRepository,
@@ -42,12 +44,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IResourceNameBuilder resourceNameBuilder,
-            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
-            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags)
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
+            IConfigurationReader configurationReader)
+            : base(resourceBrokerSettings, resourceScalingStore, claimedDistributedLease, taskHelper, resourceNameBuilder, jobSchedulerFeatureFlags, configurationReader)
         {
             ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchPoolVersionTask";
 
         /// <inheritdoc/>
         protected override string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchPoolVersionTask)}Lease");

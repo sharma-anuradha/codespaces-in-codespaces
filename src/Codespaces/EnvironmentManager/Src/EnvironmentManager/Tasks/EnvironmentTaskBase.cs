@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentTaskBase.cs" company="Microsoft">
+// <copyright file="EnvironmentTaskBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
@@ -14,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
     /// <summary>
     /// Base type for all Environment tasks.
     /// </summary>
-    public class EnvironmentTaskBase : IDisposable
+    public abstract class EnvironmentTaskBase : BaseBackgroundTask, IDisposable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentTaskBase"/> class.
@@ -24,12 +25,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">the task helper.</param>
         /// <param name="claimedDistributedLease"> used to create leases.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public EnvironmentTaskBase(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             EnvironmentManagerSettings = environmentManagerSettings;
             CloudEnvironmentRepository = cloudEnvironmentRepository;
@@ -69,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         protected ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }

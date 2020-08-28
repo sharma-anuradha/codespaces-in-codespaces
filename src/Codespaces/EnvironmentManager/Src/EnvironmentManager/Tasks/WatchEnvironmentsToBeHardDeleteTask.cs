@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="environmentManager">Target Environment Manager.</param>
         /// <param name="currentIdentityProvider">Target identity provider.</param>
         /// <param name="superuserIdentity">Target super user identity.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public WatchEnvironmentsToBeHardDeleteTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
@@ -45,14 +47,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IResourceNameBuilder resourceNameBuilder,
             IEnvironmentManager environmentManager,
             ICurrentIdentityProvider currentIdentityProvider,
-            VsoSuperuserClaimsIdentity superuserIdentity)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            VsoSuperuserClaimsIdentity superuserIdentity,
+            IConfigurationReader configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
             EnvironmentContinuationOperations = environmentContinuationOperations;
             EnvironmentManager = environmentManager;
             CurrentIdentityProvider = currentIdentityProvider;
             SuperuserIdentity = superuserIdentity;
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "WatchEnvironmentsToBeHardDeleteTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchEnvironmentsToBeHardDeleteTask)}Lease");
 
@@ -67,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",

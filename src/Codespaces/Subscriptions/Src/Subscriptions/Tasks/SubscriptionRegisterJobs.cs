@@ -1,4 +1,4 @@
-﻿// <copyright file="SubscriptionRegisterJobs.cs" company="Microsoft">
+// <copyright file="SubscriptionRegisterJobs.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -43,12 +43,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Job: Update subscription details.
             TaskHelper.RunBackgroundLoop(
             $"update_subscription_details_run",
-            (childLogger) => UpdateSubscriptionDetailsTask.RunAsync(TimeSpan.FromHours(10), childLogger),
+            (childLogger) => UpdateSubscriptionDetailsTask.RunTaskAsync(TimeSpan.FromHours(10), childLogger),
             TimeSpan.FromHours(4));
 
             TaskHelper.RunBackgroundLoop(
             $"banned_worker_run",
-            (childLogger) => BannedSubscrciptionTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+            (childLogger) => BannedSubscrciptionTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
             TimeSpan.FromMinutes(10));
 
             return Task.CompletedTask;

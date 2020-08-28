@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
@@ -21,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Base class for background tasks that process all blobs/images.
     /// </summary>
-    public abstract class BaseResourceImageTask : IBackgroundTask
+    public abstract class BaseResourceImageTask : BaseBackgroundTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseResourceImageTask"/> class.
@@ -30,13 +31,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
-        /// <param name="controlPlaneInfo">Gets control plan info.</param>
-        /// <param name="controlPlaneAzureResourceAccessor">Gets storage accounts.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public BaseResourceImageTask(
             ResourceBrokerSettings resourceBrokerSettings,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = Requires.NotNull(resourceBrokerSettings, nameof(resourceBrokerSettings));
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
@@ -77,13 +79,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan taskInterval, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",

@@ -163,13 +163,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 jobSchedulersRegister.RegisterScheduleJob();
             }
 
-// Note: this next section will be eventually deprecated and removed
+            // Note: this next section will be eventually deprecated and removed
 #if true
             // Job: Watch Pool Size
             var watchPoolSizeTaskTimeSpan = TimeSpan.FromMinutes(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolSizeTask}_run",
-                (childLogger) => WatchPoolSizeJob.RunAsync(watchPoolSizeTaskTimeSpan, childLogger),
+                (childLogger) => WatchPoolSizeJob.RunTaskAsync(watchPoolSizeTaskTimeSpan, childLogger),
                 watchPoolSizeTaskTimeSpan);
 
             // Offset to help distribute inital load of recuring tasks
@@ -179,7 +179,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             var watchPoolVersionTaskSpan = TimeSpan.FromMinutes(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolVersionTask}_run",
-                (childLogger) => WatchPoolVersionTask.RunAsync(watchPoolVersionTaskSpan, childLogger),
+                (childLogger) => WatchPoolVersionTask.RunTaskAsync(watchPoolVersionTaskSpan, childLogger),
                 watchPoolVersionTaskSpan);
 
             // Offset to help distribute inital load of recuring tasks
@@ -189,7 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             var watchPoolStateTaskSpan = TimeSpan.FromMinutes(1);
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchPoolStateTask}_run",
-                (childLogger) => WatchPoolStateTask.RunAsync(watchPoolStateTaskSpan, childLogger),
+                (childLogger) => WatchPoolStateTask.RunTaskAsync(watchPoolStateTaskSpan, childLogger),
                 watchPoolStateTaskSpan);
 
             await Task.Delay(Random.Next(5000, 7500));
@@ -197,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Watch Failed Resources
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchFailedResourcesTask}_run",
-                (childLogger) => WatchFailedResourcesTask.RunAsync(TimeSpan.FromMinutes(30), childLogger),
+                (childLogger) => WatchFailedResourcesTask.RunTaskAsync(TimeSpan.FromMinutes(30), childLogger),
                 TimeSpan.FromMinutes(5));
 
             // Offset to help distribute inital load of recurring tasks
@@ -207,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Watch Orphaned Azure Resources
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedAzureResourceTask}_run",
-                (childLogger) => WatchOrphanedAzureResourceTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                (childLogger) => WatchOrphanedAzureResourceTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recurring tasks
@@ -216,7 +216,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Watch Orphaned System Resources
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
-                (childLogger) => WatchOrphanedSystemResourceTask.RunAsync(TimeSpan.FromHours(2), childLogger),
+                (childLogger) => WatchOrphanedSystemResourceTask.RunTaskAsync(TimeSpan.FromHours(2), childLogger),
                 TimeSpan.FromMinutes(20));
 
             // Offset to help distribute inital load of recurring tasks
@@ -225,7 +225,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Delete Resource Group Deployments
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.DeleteResourceGroupDeploymentsTask}_run",
-                (childLogger) => DeleteResourceGroupDeploymentsTask.RunAsync(TimeSpan.FromHours(1), childLogger),
+                (childLogger) => DeleteResourceGroupDeploymentsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recurring tasks
@@ -234,7 +234,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Delete Artifact images
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedVmAgentImagesTask}_run",
-                (childLogger) => WatchOrphanedVmAgentImagesTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                (childLogger) => WatchOrphanedVmAgentImagesTask.RunTaskAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromHours(1));
 
             // Offset to help distribute inital load of recurring tasks
@@ -243,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Delete Artifact storage images
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedStorageImagesTask}_run",
-                (childLogger) => WatchOrphanedStorageImagesTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                (childLogger) => WatchOrphanedStorageImagesTask.RunTaskAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromHours(1));
 
             // Offset to help distribute inital load of recurring tasks
@@ -252,7 +252,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Delete Artifact Nexus windows images
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedComputeImagesTask}_run",
-                (childLogger) => WatchOrphanedComputeImagesTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                (childLogger) => WatchOrphanedComputeImagesTask.RunTaskAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromHours(1));
 
             // Offset to help distribute inital load of recurring tasks
@@ -261,7 +261,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Delete orphaned pools.
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedPoolTask}_run",
-                (childLogger) => WatchOrphanedPoolTask.RunAsync(TimeSpan.FromDays(1), childLogger),
+                (childLogger) => WatchOrphanedPoolTask.RunTaskAsync(TimeSpan.FromDays(1), childLogger),
                 TimeSpan.FromHours(1));
 
             // Offset to help distribute inital load of recurring tasks
@@ -270,12 +270,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Refresh Key Vault Secret Cache Task
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.RefreshKeyVaultSecretCacheTask}_run",
-                (childLogger) => RefreshKeyVaultSecretCacheTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => RefreshKeyVaultSecretCacheTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromHours(4));
 
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.LogSystemResourceStateTask}_run",
-                (childLogger) => LogSystemResourceStateTask.RunAsync(TimeSpan.FromMinutes(10), childLogger),
+                (childLogger) => LogSystemResourceStateTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(1));
         }
     }

@@ -1,4 +1,4 @@
-﻿// <copyright file="LogSubscriptionStatisticsTask.cs" company="Microsoft">
+// <copyright file="LogSubscriptionStatisticsTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
@@ -28,17 +29,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// <param name="taskHelper">The Task helper.</param>
         /// <param name="claimedDistributedLease">Used to get a lease for the duration of the telemetry.</param>
         /// <param name="resourceNameBuilder">Used to build the lease name.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public LogSubscriptionStatisticsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
             IPlanRepository planRepository,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder)
-            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder)
+            IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader)
+            : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
             PlanRepository = Requires.NotNull(planRepository, nameof(planRepository));
         }
+
+        /// <inheritdoc/>
+        protected override string ConfigurationBaseName => "LogSubscriptionStatisticsTask";
 
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(LogSubscriptionStatisticsTask)}Lease");
 
@@ -47,7 +53,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private IPlanRepository PlanRepository { get; }
 
         /// <inheritdoc />
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                $"{LogBaseName}_run",

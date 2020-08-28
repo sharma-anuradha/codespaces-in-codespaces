@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -19,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Defines a task which is designed to watch the pools for versious changes.
     /// </summary>
-    public abstract class BaseWatchPoolTask : IBackgroundTask
+    public abstract class BaseWatchPoolTask : BaseBackgroundTask
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseWatchPoolTask"/> class.
@@ -30,13 +31,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public BaseWatchPoolTask(
             ResourceBrokerSettings resourceBrokerSettings,
             IResourcePoolDefinitionStore resourceScalingStore,
             IClaimedDistributedLease claimedDistributedLease,
             ITaskHelper taskHelper,
             IResourceNameBuilder resourceNameBuilder,
-            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags)
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
+            IConfigurationReader configurationReader)
+            : base(configurationReader)
         {
             ResourceBrokerSettings = resourceBrokerSettings;
             ResourceScalingStore = resourceScalingStore;
@@ -80,7 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private bool Disposed { get; set; }
 
         /// <inheritdoc/>
-        public Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
+        protected override Task<bool> RunAsync(TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run",
@@ -106,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public void Dispose()
+        public override void Dispose()
         {
             Disposed = true;
         }
