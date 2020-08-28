@@ -16,7 +16,7 @@ if (paramsFeatureSet === insiderFlag) {
 }
 
 const commits = {
-    insider: 'b58f4549b2919fa3a5dc52df83f4ba60780c625f',
+    insider: 'bd2a40195f1c904a0cc0dd161371c0e3e3957052',
     stable: 'a0479759d6e9ea56afa657e454193f72aef85bd0',
 };
 
