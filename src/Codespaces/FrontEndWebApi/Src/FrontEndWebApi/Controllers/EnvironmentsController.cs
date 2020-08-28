@@ -305,7 +305,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
 
-            // TODO t-aibha: set feature flag to true if we want to enable exporting
             if (FrontEndAppSettings.EnableExporting)
             {
                 ExportCloudEnvironmentParameters exportEnvParams = await GetExportCloudEnvironmentParametersAsync();

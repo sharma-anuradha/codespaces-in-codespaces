@@ -162,6 +162,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 });
             }
 
+            // Wipe out exported blob url each time user exports or resumes environment
+            record.PushTransition((environment) =>
+            {
+                environment.ExportedBlobUrl = string.Empty;
+            });
+
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
             if (record.Value.QueueResourceAllocation || sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))
             {
