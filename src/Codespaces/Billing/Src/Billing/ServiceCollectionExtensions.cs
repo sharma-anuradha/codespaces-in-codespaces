@@ -90,7 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             this IServiceCollection services)
         {
             services.AddHostedService<BillingWorker>();
-            services.AddHostedService<BillingV2Worker>();
+            services.AddHostedService<BillingV2SummaryWorker>();
+            services.AddHostedService<BillingV2CleanupWorker>();
 
             services.AddSingleton<IBillingService, BillingService>();
             return services;
