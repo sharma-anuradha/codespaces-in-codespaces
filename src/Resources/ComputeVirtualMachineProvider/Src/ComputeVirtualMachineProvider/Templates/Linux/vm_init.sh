@@ -41,8 +41,8 @@ declare -a DebPackagesArray=(
     "https://packages.microsoft.com/ubuntu/18.04/prod/pool/main/m/moby-cli/moby-cli_3.0.11+azure-2_amd64.deb"
     "http://azure.archive.ubuntu.com/ubuntu/pool/universe/p/pigz/pigz_2.4-1_amd64.deb"
     # chrony=3.2-4ubuntu4.4 (as well as dependencies: libnss, libnspr4)
-    "http://azure.archive.ubuntu.com/ubuntu/pool/main/c/chrony/chrony_3.2-4ubuntu4.4_amd64.deb"
-    "http://azure.archive.ubuntu.com/ubuntu/pool/main/n/nss/libnss3_3.35-2ubuntu2.11_amd64.deb"
+    "http://azure.archive.ubuntu.com/ubuntu/pool/main/c/chrony/chrony_3.2-4ubuntu4.5_amd64.deb"
+    "http://azure.archive.ubuntu.com/ubuntu/pool/main/n/nss/libnss3_3.35-2ubuntu2.12_amd64.deb"
     "http://azure.archive.ubuntu.com/ubuntu/pool/main/n/nspr/libnspr4_4.18-1ubuntu1_amd64.deb"
     # unzip
     "http://azure.archive.ubuntu.com/ubuntu/pool/main/u/unzip/unzip_6.0-21ubuntu1_amd64.deb"
