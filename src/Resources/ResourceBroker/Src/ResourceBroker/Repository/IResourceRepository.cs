@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
@@ -118,5 +119,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         /// <param name="logger">logger.</param>
         /// <returns>pool queue record.</returns>
         Task<ResourceRecord> GetPoolQueueRecordAsync(string poolCode, IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get resource count by dimensions.
+        /// </summary>
+        /// <param name="logger">The diganostics logger.</param>
+        /// <returns>Query results.</returns>
+        Task<IEnumerable<SystemResourceCountByDimensions>> GetResourceCountByDimensionsAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
+        /// Get resource component count by dimensions.
+        /// </summary>
+        /// <param name="logger">The diganostics logger.</param>
+        /// <returns>Query results.</returns>
+        Task<IEnumerable<SystemResourceCountByDimensions>> GetComponentCountByDimensionsAsync(IDiagnosticsLogger logger);
     }
 }

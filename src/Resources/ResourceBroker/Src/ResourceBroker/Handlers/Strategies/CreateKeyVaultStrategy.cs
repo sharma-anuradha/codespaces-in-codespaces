@@ -1,4 +1,4 @@
-﻿// <copyright file="CreateKeyVaultStrategy.cs" company="Microsoft">
+// <copyright file="CreateKeyVaultStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

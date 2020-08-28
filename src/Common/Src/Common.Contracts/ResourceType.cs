@@ -53,5 +53,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// Pool queue forresource requests.
         /// </summary>
         PoolQueue = 9,
+
+        /// <summary>
+        /// Virtual network.
+        /// </summary>
+        VirtualNetwork = 10,
+
+        /// <summary>
+        /// Network security group.
+        /// </summary>
+        NetworkSecurityGroup = 11,
     }
 }

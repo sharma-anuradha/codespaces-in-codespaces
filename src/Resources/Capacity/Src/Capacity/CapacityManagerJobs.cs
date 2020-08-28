@@ -1,4 +1,4 @@
-﻿// <copyright file="CapacityManagerJobs.cs" company="Microsoft">
+// <copyright file="CapacityManagerJobs.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -130,30 +131,70 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             }
 
             // Update the compute capacity
-            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Compute, computeSubscriptionLocations, updateCapacityInterval, logger);
+            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Compute, computeSubscriptionLocations, updateCapacityInterval, logger.NewChildLogger());
 
             // Update the storage capacity
             await DelayBetweenLoops();
-            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Storage, storageSubscriptionLocations, updateCapacityInterval, logger);
+            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Storage, storageSubscriptionLocations, updateCapacityInterval, logger.NewChildLogger());
 
             // Update the network capacity
             await DelayBetweenLoops();
-            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Network, networkSubscriptionLocations, updateCapacityInterval, logger);
+            UpdateAzureResourceUsageBackgroundLoop(ServiceType.Network, networkSubscriptionLocations, updateCapacityInterval, logger.NewChildLogger());
 
-            // Group the subscription by location for monitoring and aggregates
-            var subscriptionLocationGroups = subscriptionLocations.GroupBy(item => item.location);
+            var dataAndInfraSubscriptionLocationGroups = GetSubscriptionGroupsByLocation(
+                dataPlaneLocations,
+                AzureSubscriptionCatalog.AzureSubscriptions,
+                AzureSubscriptionCatalog.InfrastructureSubscription);
 
             // Monitor the compute capacity
             await DelayBetweenLoops();
-            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Compute, subscriptionLocationGroups, monitorCapacityInterval, logger);
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Compute, dataAndInfraSubscriptionLocationGroups, monitorCapacityInterval, logger.NewChildLogger());
 
             // Monitor the storage capacity
             await DelayBetweenLoops();
-            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Storage, subscriptionLocationGroups, monitorCapacityInterval, logger);
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Storage, dataAndInfraSubscriptionLocationGroups, monitorCapacityInterval, logger.NewChildLogger());
 
             // Monitor the network capacity
             await DelayBetweenLoops();
-            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Network, subscriptionLocationGroups, monitorCapacityInterval, logger);
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.Network, dataAndInfraSubscriptionLocationGroups, monitorCapacityInterval, logger.NewChildLogger());
+
+            // Monitor the keyvault capacity
+            await DelayBetweenLoops();
+            MonitorAzureResourceUsageBackgroundLoop(ServiceType.KeyVault, dataAndInfraSubscriptionLocationGroups, monitorCapacityInterval, logger.NewChildLogger());
+        }
+
+        private IEnumerable<(AzureLocation location, IEnumerable<IAzureSubscription> dataSubs, IAzureSubscription infraSub)> GetSubscriptionGroupsByLocation(
+            IEnumerable<AzureLocation> dataPlaneLocations,
+            IEnumerable<IAzureSubscription> dataPlaneSubscriptions,
+            IAzureSubscription infrastructureSubscription)
+        {
+            var subGroupsByLocation = new Dictionary<AzureLocation, (List<IAzureSubscription> dataSubs, IAzureSubscription infraSub)>();
+
+            foreach (var location in dataPlaneLocations)
+            {
+                subGroupsByLocation[location] = (new List<IAzureSubscription>(), default);
+            }
+
+            foreach (var subscription in dataPlaneSubscriptions)
+            {
+                foreach (var location in subscription.Locations)
+                {
+                    if (subGroupsByLocation.TryGetValue(location, out var subGroup))
+                    {
+                        subGroup.dataSubs.Add(subscription);
+                    }
+                }
+            }
+
+            foreach (var location in infrastructureSubscription.Locations)
+            {
+                if (subGroupsByLocation.TryGetValue(location, out var subGroup))
+                {
+                    subGroup.infraSub = infrastructureSubscription;
+                }
+            }
+
+            return subGroupsByLocation.Select(kvp => (location: kvp.Key, (IEnumerable<IAzureSubscription>)kvp.Value.dataSubs, kvp.Value.infraSub));
         }
 
         private void RegisterArmProvidersForDataPlaneSubscriptions(IDiagnosticsLogger logger)
@@ -174,8 +215,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                     {
                         var id = Guid.Parse(subscription.SubscriptionId);
                         childLogger
-                            .FluentAddBaseValue("subscriptionId", id)
-                            .FluentAddBaseValue("subscriptionName", subscription.DisplayName);
+                            .AddSubscriptionId(id.ToString())
+                            .AddSubscriptionName(subscription.DisplayName);
 
                         using (var client = await AzureClientFactory.GetResourceManagementClient(id))
                         {
@@ -238,9 +279,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                     await TaskHelper.RunConcurrentEnumerableAsync(
                         loopName,
                         subscriptionLocations,
-                        (item, childLogger) => UpdateAzureResourceUsageAsync(serviceType, item, childLogger),
+                        (item, childLogger) => UpdateAzureResourceUsageAsync(serviceType, item.subscription, item.location, childLogger.NewChildLogger()),
                         loopLogger,
-                        (item, childLogger) => ObtainUpdateCapacityLeaseAsync(serviceType, item, childLogger));
+                        (item, childLogger) => ObtainUpdateCapacityLeaseAsync(serviceType, item.subscription, item.location, childLogger.NewChildLogger()));
 
                     return true;
                 },
@@ -248,13 +289,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 logger);
         }
 
-        private async Task UpdateAzureResourceUsageAsync(ServiceType serviceType, (IAzureSubscription subscription, AzureLocation location) item, IDiagnosticsLogger logger)
+        private async Task UpdateAzureResourceUsageAsync(ServiceType serviceType, IAzureSubscription subscription, AzureLocation location, IDiagnosticsLogger logger)
         {
-            var (subscription, location) = item;
-
             logger
-                .FluentAddBaseValue(nameof(location), location.ToString())
-                .FluentAddBaseValue(nameof(serviceType), serviceType.ToString());
+                .AddAzureLocation(location)
+                .AddServiceType(serviceType);
 
             try
             {
@@ -271,9 +310,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             }
         }
 
-        private async Task<IDisposable> ObtainUpdateCapacityLeaseAsync(ServiceType serviceType, (IAzureSubscription subscription, AzureLocation location) item, IDiagnosticsLogger logger)
+        private async Task<IDisposable> ObtainUpdateCapacityLeaseAsync(ServiceType serviceType, IAzureSubscription subscription, AzureLocation location, IDiagnosticsLogger logger)
         {
-            var (subscription, location) = item;
             var containerName = ResourceNameBuilder.GetLeaseName(UpdateCapacityLeaseContainerName);
             var leaseName = $"{UpdateCapacityLeasePrefix}-{subscription.SubscriptionId}-{location}-{serviceType}".ToLowerInvariant();
             var leaseTime = UpdateCapacityLeaseTimeSpan;
@@ -286,16 +324,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 containerName,
                 leaseName,
                 leaseTime,
-                logger);
+                logger.NewChildLogger());
         }
 
         private void MonitorAzureResourceUsageBackgroundLoop(
             ServiceType serviceType,
-            IEnumerable<IGrouping<AzureLocation, (IAzureSubscription subscription, AzureLocation location)>> subscriptionLocationGroups,
+            IEnumerable<(AzureLocation location, IEnumerable<IAzureSubscription> dataSubs, IAzureSubscription infraSub)> subscriptionLocationGroups,
             TimeSpan monitorCapacityInterval,
             IDiagnosticsLogger logger)
         {
-            var loopName = MonitorCapacityLoopPrefix + $"_{serviceType}".ToLowerInvariant();
+            var loopName = $"{MonitorCapacityLoopPrefix}_{serviceType}".ToLowerInvariant();
 
             TaskHelper.RunBackgroundLoop(
                 loopName,
@@ -304,9 +342,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                     await TaskHelper.RunConcurrentEnumerableAsync(
                         loopName,
                         subscriptionLocationGroups,
-                        (item, childLogger) => MonitorAzureResourceUsageAsync(serviceType, item, childLogger),
+                        (item, childLogger) => MonitorAzureResourceUsageAsync(serviceType, item.location, item.dataSubs, item.infraSub, childLogger.NewChildLogger()),
                         loopLogger,
-                        (item, childLogger) => ObtainMonitorCapacityLeaseAsync(serviceType, item, childLogger));
+                        (item, childLogger) => ObtainMonitorCapacityLeaseAsync(serviceType, childLogger.NewChildLogger()));
 
                     return true;
                 },
@@ -316,68 +354,92 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private async Task MonitorAzureResourceUsageAsync(
             ServiceType serviceType,
-            IGrouping<AzureLocation, (IAzureSubscription, AzureLocation)> subscriptionLocationsGrouping,
+            AzureLocation location,
+            IEnumerable<IAzureSubscription> dataSubs,
+            IAzureSubscription infraSub,
             IDiagnosticsLogger logger)
         {
-            var location = subscriptionLocationsGrouping.Key;
-            var subscriptions = subscriptionLocationsGrouping
-                .AsEnumerable()
-                .Select(item => item.Item1);
-
             await logger.OperationScopeAsync(
                 MonitorCapacityOperationName,
                 async (innerLogger) =>
                 {
-                    innerLogger
-                        .FluentAddBaseValue(nameof(location), location.ToString())
-                        .FluentAddBaseValue(nameof(serviceType), serviceType.ToString());
-
-                    var aggregate = new Dictionary<string, (long, long, long, long, long, long)>();
-
-                    // Report subscription-location quota thresholds
-                    foreach (var subscription in subscriptions)
+                    if (dataSubs?.Any() == true)
                     {
-                        try
-                        {
-                            var resourceUsages = await AzureSubscriptionCapacityProvider
-                                .GetAzureResourceUsageAsync(
-                                    subscription,
-                                    location,
-                                    serviceType,
-                                    innerLogger.NewChildLogger());
+                        var aggregate = new Dictionary<string, (long, long, long, long, long, long)>();
 
-                            foreach (var resourceUsage in resourceUsages)
-                            {
-                                var isMixedSubscription = subscription.ServiceType == null;
-                                UpdateAggregate(aggregate, resourceUsage, isMixedSubscription);
-                                LogCapacityAlert(
-                                    innerLogger,
-                                    subscription.DisplayName,
-                                    resourceUsage.Quota,
-                                    resourceUsage.Limit,
-                                    resourceUsage.CurrentValue,
-                                    resourceUsage.SubscriptionId,
-                                    resourceUsage.Location,
-                                    subscription.Enabled,
-                                    subscription.ServiceType?.ToString());
-                            }
-                        }
-                        catch (Exception ex)
+                        // Report subscription-location quota thresholds
+                        foreach (var subscription in dataSubs)
                         {
-                            innerLogger.LogException($"{nameof(MonitorAzureResourceUsageAsync)}_error", ex);
+                            await innerLogger.OperationScopeAsync(
+                                $"{MonitorCapacityOperationName}_individual",
+                                async (subscriptionLogger) =>
+                                {
+                                    var resourceUsages = await AzureSubscriptionCapacityProvider
+                                        .GetAzureResourceUsageAsync(
+                                            subscription,
+                                            location,
+                                            serviceType,
+                                            subscriptionLogger.NewChildLogger());
+
+                                    foreach (var resourceUsage in resourceUsages)
+                                    {
+                                        var isMixedSubscription = subscription.ServiceType == null;
+                                        UpdateAggregate(aggregate, resourceUsage, isMixedSubscription);
+                                        LogCapacityAlert(
+                                            subscriptionLogger.NewChildLogger(),
+                                            subscription.DisplayName,
+                                            resourceUsage.Quota,
+                                            resourceUsage.Limit,
+                                            resourceUsage.CurrentValue,
+                                            resourceUsage.SubscriptionId,
+                                            resourceUsage.Location,
+                                            subscription.Enabled,
+                                            subscription.ServiceType,
+                                            SubscriptionType.Data);
+                                    }
+                                });
+                        }
+
+                        // Report aggregate location quota threshold
+                        foreach (var quota in aggregate.Keys)
+                        {
+                            var (limit, current, limitForMixedSubs, currentForMixedSubs, limitForServiceTypeSpecificSubs, currentForServiceTypeSpecificSubs) = aggregate[quota];
+
+                            var aggregateLogger = innerLogger
+                                .NewChildLogger()
+                                .AddAggregateCapacityValues(limitForMixedSubs, currentForMixedSubs, limitForServiceTypeSpecificSubs, currentForServiceTypeSpecificSubs);
+
+                            LogCapacityAlert(aggregateLogger.NewChildLogger(), "aggregate", quota, limit, current, location: location);
                         }
                     }
 
-                    // Report aggregate location quota threshold
-                    foreach (var quota in aggregate.Keys)
+                    if (infraSub != default)
                     {
-                        var (limit, current, limitForMixedSubs, currentForMixedSubs, limitForServiceTypeSpecificSubs, currentForServiceTypeSpecificSubs) = aggregate[quota];
-                        innerLogger
-                            .FluentAddValue(nameof(limitForMixedSubs), limitForMixedSubs)
-                            .FluentAddValue(nameof(currentForMixedSubs), currentForMixedSubs)
-                            .FluentAddValue(nameof(limitForServiceTypeSpecificSubs), limitForServiceTypeSpecificSubs)
-                            .FluentAddValue(nameof(currentForServiceTypeSpecificSubs), currentForServiceTypeSpecificSubs);
-                        LogCapacityAlert(innerLogger, "aggregate", quota, limit, current);
+                        // Don't include the infra sub in the aggregate
+                        await innerLogger.OperationScopeAsync(
+                            $"{MonitorCapacityOperationName}_individual",
+                            async (subscriptionLogger) =>
+                            {
+                                var resourceUsages = await AzureSubscriptionCapacityProvider
+                                    .GetAzureResourceUsageAsync(
+                                        infraSub,
+                                        location,
+                                        serviceType,
+                                        subscriptionLogger.NewChildLogger());
+
+                                foreach (var resourceUsage in resourceUsages)
+                                {
+                                    LogCapacityAlert(
+                                        subscriptionLogger.NewChildLogger(),
+                                        infraSub.DisplayName,
+                                        resourceUsage.Quota,
+                                        resourceUsage.Limit,
+                                        resourceUsage.CurrentValue,
+                                        resourceUsage.SubscriptionId,
+                                        resourceUsage.Location,
+                                        subscriptionType: SubscriptionType.Infrastructure);
+                                }
+                            });                        
                     }
                 },
                 null,
@@ -386,10 +448,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private async Task<IDisposable> ObtainMonitorCapacityLeaseAsync(
             ServiceType serviceType,
-            IEnumerable<(IAzureSubscription subscription, AzureLocation location)> items,
             IDiagnosticsLogger logger)
         {
-            _ = items;
             var containerName = ResourceNameBuilder.GetLeaseName(MonitorCapacityLeaseContainerName);
             var leaseName = $"{MonitorCapacityLeasePrefix}-{serviceType}".ToLowerInvariant();
             var leaseTime = MonitorCapacityLeaseTimeSpan;
@@ -402,7 +462,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 containerName,
                 leaseName,
                 leaseTime,
-                logger);
+                logger.NewChildLogger());
         }
 
         private void UpdateAggregate(
@@ -444,38 +504,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             string subscriptionId = default,
             AzureLocation? location = default,
             bool? enabled = default,
-            string subscriptionServiceType = default)
+            ServiceType? serviceType = default,
+            SubscriptionType? subscriptionType = default)
         {
             var usedPercent = limit > 0 ? (double)currentValue / (double)limit : 0.0;
+            var serviceTypeStr = serviceType?.ToString() ?? "all";
 
-            subscriptionServiceType = subscriptionServiceType ?? "all";
-
-            IDiagnosticsLogger AddLoggerValues()
-            {
-                return logger
-                    .FluentAddValue(nameof(subscriptionName), subscriptionName)
-                    .FluentAddValue(nameof(subscriptionServiceType), subscriptionServiceType)
-                    .FluentAddValue(nameof(quota), quota)
-                    .FluentAddValue(nameof(limit), limit)
-                    .FluentAddValue(nameof(currentValue), currentValue)
-                    .FluentAddValue(nameof(usedPercent), usedPercent)
-                    .FluentAddValue(nameof(subscriptionId), subscriptionId)
-                    .FluentAddValue(nameof(location), location)
-                    .FluentAddValue(nameof(enabled), enabled);
-            }
+            logger
+                .AddSubscriptionName(subscriptionName)
+                .AddServiceType(serviceTypeStr)
+                .AddSubscriptionCapacityValues(quota, limit, currentValue, usedPercent)
+                .AddSubscriptionId(subscriptionId)
+                .AddAzureLocation(location)
+                .AddSubscriptionIsEnabled(enabled)
+                .AddSubscriptionType(subscriptionType?.ToString());
 
             // Log critical and warning levels for automated alerts
             if (usedPercent >= MonitorCapacityQuotaThresholdCritical)
             {
-                AddLoggerValues().LogCritical(MonitorCapacityLogAlert);
+                logger.LogCritical(MonitorCapacityLogAlert);
             }
             else if (usedPercent >= MonitorCapacityQuotaThreshold)
             {
-                AddLoggerValues().LogWarning(MonitorCapacityLogAlert);
+                logger.LogWarning(MonitorCapacityLogAlert);
             }
 
             // Always log info level kosmos and PowerBI
-            AddLoggerValues().LogInfo(MonitorCapacityLogInfo);
+            logger.LogInfo(MonitorCapacityLogInfo);
+        }
+
+        private enum SubscriptionType
+        {
+            Data,
+            Infrastructure,
         }
     }
 }

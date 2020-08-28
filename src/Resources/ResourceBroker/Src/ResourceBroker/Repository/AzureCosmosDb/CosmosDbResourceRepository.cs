@@ -10,10 +10,14 @@ using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Health;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.NetworkInterfaceProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.AzureCosmosDb
@@ -415,6 +419,145 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
             var result = items.FirstOrDefault();
 
             return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<SystemResourceCountByDimensions>> GetResourceCountByDimensionsAsync(IDiagnosticsLogger logger)
+        {
+            var query = new SqlQuerySpec(
+                @"SELECT value {
+                    count: d.count, 
+                    type: d.type, 
+                    skuName: d.skuName, 
+                    location: d.location, 
+                    isReady: d.isReady, 
+                    isAssigned: d.isAssigned, 
+                    poolReferenceCode: d.code, 
+                    subscriptionId: d.subscriptionId
+                } FROM (
+                    SELECT 
+                        COUNT(1) AS count, 
+                        c.type, c.skuName, 
+                        c.location, 
+                        c.isReady, 
+                        c.isAssigned, 
+                        c.poolReference.code,
+                        c.azureResourceInfo.subscriptionId
+                    FROM c
+                    GROUP BY 
+                        c.type, 
+                        c.skuName,
+                        c.location, 
+                        c.isReady, 
+                        c.isAssigned, 
+                        c.poolReference.code, 
+                        c.azureResourceInfo.subscriptionId
+                ) as d");
+
+            var queryResults = await QueryAsync((client, uri, feedOptions) => client.CreateDocumentQuery<SystemResourceCountByDimensions>(uri, query, feedOptions).AsDocumentQuery(), logger);
+
+            return queryResults;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<SystemResourceCountByDimensions>> GetComponentCountByDimensionsAsync(IDiagnosticsLogger logger)
+        {
+            var countsByDimensions = new Dictionary<SystemResourceDimensions, int>();
+
+            void IncrementCount(SystemResourceDimensions dimensions)
+            {
+                var updatedValue = countsByDimensions.GetValueOrDefault(dimensions, 0) + 1;
+                countsByDimensions[dimensions] = updatedValue;
+            }
+
+            void CountComponent(ResourceRecord parent, ResourceComponent component)
+            {
+                switch (component.ComponentType)
+                {
+                    case ResourceType.NetworkInterface:
+                        {
+                            Enum.TryParse(parent.Location, true, out AzureLocation location);
+                            var subscriptionId = component.AzureResourceInfo.SubscriptionId.ToString();
+                            var poolReferenceCode = parent?.PoolReference?.Code;
+
+                            IncrementCount(new SystemResourceDimensions
+                            {
+                                Type = ResourceType.NetworkInterface,
+                                SkuName = "NetworkInterfaces",
+                                SubscriptionId = subscriptionId,
+                                IsAssigned = parent.IsAssigned,
+                                IsReady = parent.IsReady,
+                                Location = location,
+                                PoolReferenceCode = parent.PoolReference.Code,
+                            });
+
+                            var properties = new AzureResourceInfoNetworkInterfaceProperties(component.AzureResourceInfo.Properties);
+                            if (!properties.IsVNetInjected)
+                            {
+                                if (!string.IsNullOrWhiteSpace(properties.VNet))
+                                {
+                                    IncrementCount(new SystemResourceDimensions
+                                    {
+                                        Type = ResourceType.VirtualNetwork,
+                                        SkuName = "VirtualNetworks",
+                                        SubscriptionId = subscriptionId,
+                                        IsAssigned = parent.IsAssigned,
+                                        IsReady = parent.IsReady,
+                                        Location = location,
+                                        PoolReferenceCode = poolReferenceCode,
+                                    });
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(properties.Nsg))
+                                {
+                                    IncrementCount(new SystemResourceDimensions
+                                    {
+                                        Type = ResourceType.NetworkSecurityGroup,
+                                        SkuName = "NetworkSecurityGroups",
+                                        SubscriptionId = subscriptionId,
+                                        IsAssigned = parent.IsAssigned,
+                                        IsReady = parent.IsReady,
+                                        Location = location,
+                                        PoolReferenceCode = poolReferenceCode,
+                                    });
+                                }
+                            }
+
+                            break;
+                        }
+
+                    case ResourceType.OSDisk: // Tracked as a full resource, avoid duplicate numbers
+                    case ResourceType.InputQueue: // Not tracked, it's a control plane resource
+                    default:
+                        break;
+                }
+            }
+
+            await ForEachAsync(
+                (ResourceRecord resource) =>
+                    resource.Components != null,
+                logger,
+                (resource, innerLogger) =>
+                {
+                    foreach (var component in resource.Components.Items.Values)
+                    {
+                        CountComponent(resource, component);
+                    }
+
+                    return Task.CompletedTask;
+                });
+
+            return countsByDimensions.Select((kvp) => new SystemResourceCountByDimensions
+            {
+                Count = kvp.Value,
+                Type = kvp.Key.Type,
+                SkuName = kvp.Key.SkuName,
+                SubscriptionId = kvp.Key.SubscriptionId,
+                IsAssigned = kvp.Key.IsAssigned,
+                IsReady = kvp.Key.IsReady,
+                Location = kvp.Key.Location,
+                PoolReferenceCode = kvp.Key.PoolReferenceCode,
+            });
         }
     }
 }

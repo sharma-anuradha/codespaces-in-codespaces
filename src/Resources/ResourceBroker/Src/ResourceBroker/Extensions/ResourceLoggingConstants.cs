@@ -195,5 +195,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Watch Failed Resources Task.
         /// </summary>
         public const string WatchFailedResourcesTask = "watch_failed_resources_task";
+
+        /// <summary>
+        /// Log System Resource State Task.
+        /// </summary>
+        public const string LogSystemResourceStateTask = "log_system_resource_state_task";
     }
 }

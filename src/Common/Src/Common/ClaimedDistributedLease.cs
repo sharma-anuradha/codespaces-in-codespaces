@@ -1,4 +1,4 @@
-﻿// <copyright file="ClaimedDistributedLease.cs" company="Microsoft">
+// <copyright file="ClaimedDistributedLease.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

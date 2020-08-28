@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureSubscriptionCapacityProvider.cs" company="Microsoft">
+// <copyright file="AzureSubscriptionCapacityProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
+using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -45,11 +46,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         public static readonly TimeSpan UpdateLeaseInterval = TimeSpan.FromMinutes(4);
 
         private const string LoggingPrefix = "azure_subscription_capacity_provider";
-        private const string VirtualNetworksQuota = AzureResourceQuotaNames.VirtualNetworks;
-        private const int VirtualNetworksDefaultLimit = 1000;
-        private const string StorageAccountsQuota = AzureResourceQuotaNames.StorageAccounts;
-        private const int StorageAccountsDefaultLimit = 250;
-        private const int ArtificialKeyVaultLimit = 100; // Key vaults have no limit, but we'll return something reasonable for the caller to consider.
+
+        private const int ArtificialKeyVaultLimit = 100;
 
         // Random number generator used for randomizing subscription allocation for resources that
         // has no azure quota limits, such as KeyVaults.
@@ -93,16 +91,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private ITaskHelper TaskHelper { get; }
 
+        private static string MakeLoggingName(string operation) => $"{LoggingPrefix}_{operation}".ToLowerInvariant();
+
         /// <inheritdoc/>
         public async Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(IAzureSubscription subscription, AzureLocation location, ServiceType serviceType, IDiagnosticsLogger logger)
         {
-            logger = logger.WithValues(
-                new LogValueSet
-                {
-                    { nameof(subscription), subscription.SubscriptionId },
-                    { nameof(location), location.ToString() },
-                    { nameof(serviceType), serviceType.ToString() },
-                });
+            logger = logger
+                .NewChildLogger()
+                .AddSubscriptionId(subscription.SubscriptionId)
+                .AddAzureLocation(location)
+                .AddServiceType(serviceType);
 
             switch (serviceType)
             {
@@ -121,6 +119,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                     // This code constructs an artificial resource usage object for keyVaults, which can still
                     // preserve the randomness of how the subscription is choosen.
                     */
+
+                    // TODO - this should be tracked properly
 
                     int artificialKeyVaultCurrentUsage = Random.Next(ArtificialKeyVaultLimit); // Returning random usage implies there will always be room for one more.
 
@@ -147,78 +147,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             var operationName = MakeLoggingName($"get_{serviceType}_usage");
 
-            switch (serviceType)
-            {
-                case ServiceType.Compute:
-                    await UpdateAzureResourceUsageInternalAsync(
-                        logger,
-                        operationName,
-                        () => GetAzureComputeUsageAsync(subscription, location, subscription.ComputeQuotas.Keys));
-                    break;
-
-                case ServiceType.Storage:
-                    await UpdateAzureResourceUsageInternalAsync(
-                        logger,
-                        operationName,
-                        () => GetAzureStorageUsageAsync(subscription, location, subscription.StorageQuotas.Keys));
-                    break;
-
-                case ServiceType.Network:
-                    await UpdateAzureResourceUsageInternalAsync(
-                        logger,
-                        operationName,
-                        () => GetAzureNetworkUsageAsync(subscription, location, subscription.NetworkQuotas.Keys));
-                    break;
-
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<AzureResourceUsage>> GetAzureResourceUsageAsync(
-            IAzureSubscription subscription,
-            AzureLocation location,
-            ServiceType serviceType,
-            IDiagnosticsLogger logger)
-        {
-            logger = logger.WithValues(
-                new LogValueSet
-                {
-                    { nameof(subscription), subscription.SubscriptionId },
-                    { nameof(location), location.ToString() },
-                    { nameof(serviceType), serviceType.ToString() },
-                });
-
-            switch (serviceType)
-            {
-                case ServiceType.Compute:
-                    return await GetAzureComputeUsageAsync(subscription, location, subscription.ComputeQuotas.Keys);
-
-                case ServiceType.Storage:
-                    return await GetAzureStorageUsageAsync(subscription, location, subscription.StorageQuotas.Keys);
-
-                case ServiceType.Network:
-                    return await GetAzureNetworkUsageAsync(subscription, location, subscription.NetworkQuotas.Keys);
-
-                default:
-                    throw new NotSupportedException();
-            }
-        }
-
-        private static string MakeLoggingName(string operation) => $"{LoggingPrefix}_{operation}".ToLowerInvariant();
-
-        private async Task UpdateAzureResourceUsageInternalAsync(
-            IDiagnosticsLogger logger,
-            string operationName,
-            Func<Task<IEnumerable<AzureResourceUsage>>> getUsageFuncAsync)
-        {
             // TODO: Target for RunBackgroundEnumerableAsync
             await logger.OperationScopeAsync(
                 operationName,
                 async (childLogger) =>
                 {
-                    var usages = await getUsageFuncAsync();
+                    var usages = await GetAzureResourceUsageAsync(subscription, location, serviceType, childLogger.NewChildLogger());
 
                     foreach (var usage in usages)
                     {
@@ -230,6 +164,64 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                             });
                     }
                 });
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<AzureResourceUsage>> GetAzureResourceUsageAsync(
+            IAzureSubscription subscription,
+            AzureLocation location,
+            ServiceType serviceType,
+            IDiagnosticsLogger logger)
+        {
+            logger = logger
+                .NewChildLogger()
+                .AddSubscriptionId(subscription.SubscriptionId)
+                .AddAzureLocation(location)
+                .AddServiceType(serviceType);
+
+            IEnumerable<string> quotas = Enumerable.Empty<string>();
+
+            try
+            {
+                switch (serviceType)
+                {
+                    case ServiceType.Compute:
+                        quotas = subscription.ComputeQuotas.Keys;
+                        return await GetAzureComputeUsageAsync(subscription, location, quotas);
+
+                    case ServiceType.Storage:
+                        quotas = subscription.StorageQuotas.Keys;
+                        return await GetAzureStorageUsageAsync(subscription, location, quotas);
+
+                    case ServiceType.Network:
+                        quotas = subscription.NetworkQuotas.Keys;
+                        return await GetAzureNetworkUsageAsync(subscription, location, quotas);
+
+                    case ServiceType.KeyVault:
+                        quotas = new[] { AzureResourceQuotaNames.KeyVaults };
+                        return await GetAzureKeyVaultUsageAsync(subscription, location);
+
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+            catch (CloudException ex) when (ex.Body.Code == "SubscriptionNotFound")
+            {
+                logger
+                    .AddErrorDetail(ex.ToString())
+                    .LogWarning(MakeLoggingName("get_azure_resource_usage_error"));
+
+                // Return a default of zero for each quota
+                return quotas
+                    .Select(quota => new AzureResourceUsage(
+                        subscription.SubscriptionId,
+                        serviceType,
+                        location,
+                        quota,
+                        limit: 0,
+                        currentValue: 0))
+                    .ToArray();
+            }
         }
 
         private async Task<IEnumerable<AzureResourceUsage>> LoadAzureResourceUsageAsync(
@@ -247,6 +239,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 {
                     var result = new List<AzureResourceUsage>();
 
+                    logger = logger
+                        .NewChildLogger()
+                        .AddSubscriptionId(subscription.SubscriptionId)
+                        .AddAzureLocation(location)
+                        .AddServiceType(serviceType);
+
                     foreach (var quotaItem in quotas)
                     {
                         var quota = quotaItem.Key;
@@ -258,11 +256,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                             result.Add(usage);
                         }
                     }
-
-                    childLogger
-                        .FluentAddValue(nameof(subscription), subscription.SubscriptionId)
-                        .FluentAddValue(nameof(location), location.ToString())
-                        .FluentAddValue(nameof(serviceType), serviceType.ToString());
 
                     return result;
                 });
@@ -343,37 +336,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             using (var networkClient = await CreateNetworkManagementClientAsync(subscription))
             {
-                try
-                {
-                    var usage = await networkClient.Usages.ListAsync(location.ToString());
-                    var usageArray = usage.ToArray();
+                var usage = await networkClient.Usages.ListAsync(location.ToString());
+                var usageArray = usage.ToArray();
 
-                    var azureResourceUsage = usageArray
-                        .Where(networkUsage => quotas.Contains(networkUsage.Name.Value))
-                        .Select(networkUsage =>
-                            new AzureResourceUsage(
-                                subscription.SubscriptionId,
-                                ServiceType.Network,
-                                location,
-                                networkUsage.Name.Value,
-                                networkUsage.Limit,
-                                networkUsage.CurrentValue));
+                var azureResourceUsage = usageArray
+                    .Where(networkUsage => quotas.Contains(networkUsage.Name.Value))
+                    .Select(networkUsage =>
+                        new AzureResourceUsage(
+                            subscription.SubscriptionId,
+                            ServiceType.Network,
+                            location,
+                            networkUsage.Name.Value,
+                            networkUsage.Limit,
+                            networkUsage.CurrentValue));
 
-                    return azureResourceUsage;
-                }
-                catch (CloudException ex) when (ex.Message.Contains("has no usages in NRP"))
-                {
-                    // The exception message is of the form "Subscription XXX has no usages in NRP."
-                    // If no usage is reported, then return a default of zero.
-                    var defaultUsage = new AzureResourceUsage(
-                        subscription.SubscriptionId,
-                        ServiceType.Network,
-                        location,
-                        VirtualNetworksQuota,
-                        VirtualNetworksDefaultLimit,
-                        0);
-                    return new[] { defaultUsage };
-                }
+                return azureResourceUsage;
             }
         }
 
@@ -390,37 +367,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             using (var storageClient = await CreateStorageManagementClientAsync(subscription))
             {
-                try
-                {
-                    var usage = await storageClient.Usages.ListByLocationAsync(location.ToString());
-                    var usageArray = usage.ToArray();
+                var usage = await storageClient.Usages.ListByLocationAsync(location.ToString());
+                var usageArray = usage.ToArray();
 
-                    var azureResourceUsage = usageArray
-                        .Where(storageUsage => quotas.Contains(storageUsage.Name.Value))
-                        .Select(storageUsage =>
-                            new AzureResourceUsage(
-                                subscription.SubscriptionId,
-                                ServiceType.Storage,
-                                location,
-                                storageUsage.Name.Value,
-                                storageUsage.Limit.GetValueOrDefault(),
-                                storageUsage.CurrentValue.GetValueOrDefault()));
+                var azureResourceUsage = usageArray
+                    .Where(storageUsage => quotas.Contains(storageUsage.Name.Value))
+                    .Select(storageUsage =>
+                        new AzureResourceUsage(
+                            subscription.SubscriptionId,
+                            ServiceType.Storage,
+                            location,
+                            storageUsage.Name.Value,
+                            storageUsage.Limit.GetValueOrDefault(),
+                            storageUsage.CurrentValue.GetValueOrDefault()));
 
-                    return azureResourceUsage;
-                }
-                catch (CloudException ex) when (ex.Message.Contains("was not found"))
-                {
-                    // The exception message is of the form "Subscription XXX was not found."
-                    // If no usage is reported, then return a default of zero.
-                    var defaultUsage = new AzureResourceUsage(
+                return azureResourceUsage;                
+            }
+        }
+
+        private async Task<IEnumerable<AzureResourceUsage>> GetAzureKeyVaultUsageAsync(
+           IAzureSubscription subscription,
+           AzureLocation location)
+        {
+            // If service type of this subscription isn't "KeyVault" return empty.
+            if (subscription.ServiceType != null && subscription.ServiceType != ServiceType.KeyVault)
+            {
+                return new List<AzureResourceUsage>();
+            }
+
+            const int keyVaultLimit = 980 * 800;
+
+            using (var keyVaultClient = await CreateKeyVaultManagementClientAsync(subscription))
+            {
+                var keyVaults = await keyVaultClient.Vaults.ListAsync();
+                var totalKeyVaults = keyVaults.Where((kv) => kv.Location == location.ToString()).Count();
+
+                var azureResourceUsage = 
+                    new AzureResourceUsage(
                         subscription.SubscriptionId,
-                        ServiceType.Storage,
+                        ServiceType.KeyVault,
                         location,
-                        StorageAccountsQuota,
-                        StorageAccountsDefaultLimit,
-                        0);
-                    return new[] { defaultUsage };
-                }
+                        AzureResourceQuotaNames.KeyVaults,
+                        keyVaultLimit,
+                        totalKeyVaults);
+
+                return new[] { azureResourceUsage };
             }
         }
 
@@ -464,6 +455,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 SubscriptionId = azureSubscription.SubscriptionId,
             };
             return storageClient;
+        }
+
+        private async Task<KeyVaultManagementClient> CreateKeyVaultManagementClientAsync(IAzureSubscription azureSubscription)
+        {
+            var restClient = await CreateRestClientAsync();
+            var keyVaultClient = new KeyVaultManagementClient(restClient)
+            {
+                SubscriptionId = azureSubscription.SubscriptionId,
+            };
+            return keyVaultClient;
         }
 
         private async Task<RestClient> CreateRestClientAsync()
