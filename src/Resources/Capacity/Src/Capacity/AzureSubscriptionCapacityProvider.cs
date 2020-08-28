@@ -395,12 +395,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 return new List<AzureResourceUsage>();
             }
 
-            const int keyVaultLimit = 980 * 800;
+            const int maxKeyVaultsPerResourceGroup = 800;
+            var keyVaultLimit = maxKeyVaultsPerResourceGroup * subscription.MaxResourceGroupCount;
 
             using (var keyVaultClient = await CreateKeyVaultManagementClientAsync(subscription))
             {
                 var keyVaults = await keyVaultClient.Vaults.ListAsync();
-                var totalKeyVaults = keyVaults.Where((kv) => kv.Location == location.ToString()).Count();
+
+                var totalKeyVaults = keyVaults
+                    .Where((kv) => string.Equals(kv.Location, location.ToString(), StringComparison.OrdinalIgnoreCase))
+                    .Count();
 
                 var azureResourceUsage = 
                     new AzureResourceUsage(
