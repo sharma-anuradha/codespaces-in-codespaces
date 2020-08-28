@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -125,12 +125,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             Assert.True(result.Subscription.Enabled);
         }
 
-        private CapacityManager CreateTestCapacityManager(double percent = 0.10, bool fillZero = false)
+        [Fact]
+        public async Task SelectAzureResourceLocation_MaxResourceGroupCount()
+        {
+            // check the resource group number generated is in range 1 to 3 when MaxResourceGroupCount is set to 3
+            var location = AzureLocation.WestUs2;
+            var capacityManager = CreateTestCapacityManager(0.10, fillZero: false, SpreadResourcesInGroups: true);    
+            var criteria = CoresCriteria();
+            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
+            var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-1";
+            var resourceGroupNumber = int.Parse(result.ResourceGroup.Substring(result.ResourceGroup.Length - 3));
+            Assert.True(resourceGroupNumber >= 1 && resourceGroupNumber <= 3);
+            Assert.Equal(expectedSubscriptionNamePrefix, result.Subscription.DisplayName);
+            Assert.Equal(result.Location, location);
+            Assert.True(result.Subscription.Enabled);
+        }
+
+        private CapacityManager CreateTestCapacityManager(double percent = 0.10, bool fillZero = false, bool SpreadResourcesInGroups=false)
         {
             var catalog = MockAzureSubscriptionCatalog;
             var capacityProvider = MockAzureSubscriptionCapacityProvider(percent, fillZero);
             var controlPlaneInfo = MockControlPlaneInfo();
-            var capacitySettings = new CapacitySettings();
+            var capacitySettings = new CapacitySettings(1, 100, SpreadResourcesInGroups);
             var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false, "test", false));
             var azureClient = new Mock<IAzureClientFactory>().Object;
             var capacityManager = new CapacityManager(azureClient, catalog, capacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
@@ -152,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                     MockAzureSubscription(AzureLocation.EastUs, 1),
                     MockAzureSubscription(AzureLocation.SouthEastAsia, 1),
                     MockAzureSubscription(AzureLocation.WestEurope, 1),
-                    MockAzureSubscription(AzureLocation.WestUs2, 1, true, ServiceType.Compute),
+                    MockAzureSubscription(AzureLocation.WestUs2, 1, true, 3, ServiceType.Compute),
                     MockAzureSubscription(AzureLocation.EastUs, 2, false),
                     MockAzureSubscription(AzureLocation.SouthEastAsia, 2, false),
                     MockAzureSubscription(AzureLocation.WestEurope, 2, false),
@@ -163,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             return mockAzureSubscriptionCatalog.Object;
         }
 
-        private static AzureSubscription MockAzureSubscription(AzureLocation location, int instance = 0, bool enabled = true, ServiceType? serviceType = null)
+        private static AzureSubscription MockAzureSubscription(AzureLocation location, int instance = 0, bool enabled = true, int maxResourceGroupCount = 100, ServiceType? serviceType = null)
         {
             return new AzureSubscription(
                 Guid.NewGuid().ToString(),
@@ -187,6 +204,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
                 {
                     { VirtualNetworksQuota, 100 }
                 }),
+                maxResourceGroupCount,
                 serviceType
             );
         }

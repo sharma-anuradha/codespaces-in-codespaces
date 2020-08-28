@@ -179,7 +179,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Test
                 Assert.NotNull(subscription.ComputeQuotas);
                 Assert.NotNull(subscription.NetworkQuotas);
                 Assert.NotNull(subscription.StorageQuotas);
-
+                //maximum resource group number should in range 1 to 980
+                Assert.True(subscription.MaxResourceGroupCount >= 1 && subscription.MaxResourceGroupCount <= 980);
                 // service specific subscriptions should only have their respective quota type set
                 // and should only have a single location specified.
                 switch (subscription.ServiceType)

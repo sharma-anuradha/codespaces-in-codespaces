@@ -98,6 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                         null,
                         null,
                         null,
+                        100,
                         null)
                 });
             return catalogMoq;

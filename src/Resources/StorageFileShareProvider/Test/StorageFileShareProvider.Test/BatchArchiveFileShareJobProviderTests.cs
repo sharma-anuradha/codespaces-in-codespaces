@@ -212,6 +212,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                         null,
                         null,
                         null,
+                        100,
                         null)
                 });
             return catalogMoq;

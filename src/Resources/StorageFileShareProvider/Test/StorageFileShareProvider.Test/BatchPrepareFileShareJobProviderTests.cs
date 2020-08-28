@@ -101,6 +101,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 null,
                 null,
                 null,
+                100,
                 null);
             var dataPlaneSubscription = new AzureSubscription(
                 destAzureSubscriptionId,
@@ -111,6 +112,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                 null,
                 null,
                 null,
+                100,
                 null);
             catalogMoq
                 .Setup(x => x.AzureSubscriptionCatalog.AzureSubscriptions)

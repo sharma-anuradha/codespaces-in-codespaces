@@ -53,7 +53,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         IReadOnlyDictionary<string, int> NetworkQuotas { get; }
 
         /// <summary>
-        /// Gets or sets the service type supported by this Azure subscription.
+        /// Gets the maximum resource group count limited in this Azure subscription. The default value is 100.
+        /// </summary>
+        int MaxResourceGroupCount { get; }
+
+        /// <summary>
+        /// Gets the service type supported by this Azure subscription.
         /// </summary>
         ServiceType? ServiceType { get; }
     }

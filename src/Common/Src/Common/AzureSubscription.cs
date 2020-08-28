@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureSubscription.cs" company="Microsoft">
+// <copyright file="AzureSubscription.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -30,6 +30,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <param name="computeQuotas">The compute quotas.</param>
         /// <param name="storageQuotas">The storage quotas.</param>
         /// <param name="networkQuotas">The network quotas.</param>
+        /// <param name="maxResourceGroupCount ">The maximum resource group count limited in this subscription.</param>
         /// <param name="serviceType">The service type supported for this subscription.</param>
         public AzureSubscription(
             string subscriptionId,
@@ -40,6 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             IReadOnlyDictionary<string, int> computeQuotas,
             IReadOnlyDictionary<string, int> storageQuotas,
             IReadOnlyDictionary<string, int> networkQuotas,
+            int maxResourceGroupCount,
             ServiceType? serviceType)
         {
             Requires.NotNullOrEmpty(subscriptionId, nameof(subscriptionId));
@@ -55,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             ComputeQuotas = computeQuotas ?? EmptyQuotas.Value;
             StorageQuotas = storageQuotas ?? EmptyQuotas.Value;
             NetworkQuotas = networkQuotas ?? EmptyQuotas.Value;
+            MaxResourceGroupCount = maxResourceGroupCount;
             ServiceType = serviceType;
         }
 
@@ -82,6 +85,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
         /// <inheritdoc/>
         public IReadOnlyDictionary<string, int> NetworkQuotas { get; }
+
+        /// <inheritdoc/>
+        public int MaxResourceGroupCount { get; }
 
         /// <inheritdoc/>
         public ServiceType? ServiceType { get; }

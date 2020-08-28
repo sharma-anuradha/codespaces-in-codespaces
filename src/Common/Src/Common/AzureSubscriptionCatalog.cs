@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureSubscriptionCatalog.cs" company="Microsoft">
+// <copyright file="AzureSubscriptionCatalog.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,6 +17,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
     /// </summary>
     public class AzureSubscriptionCatalog : IAzureSubscriptionCatalog
     {
+        private const int DefaultMaxResourceGroupCount = 100;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureSubscriptionCatalog"/> class.
         /// </summary>
@@ -129,6 +131,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             Dictionary<string, int> storageQuotas = default;
             Dictionary<string, int> networkQuotas = default;
 
+            int maxResourceGroupCount = azureSubscriptionSettings.MaxResourceGroupCount ?? DefaultMaxResourceGroupCount;
+
             switch (azureSubscriptionSettings.ServiceType)
             {
                 case ServiceType.Compute:
@@ -158,6 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 computeQuotas,
                 storageQuotas,
                 networkQuotas,
+                maxResourceGroupCount,
                 azureSubscriptionSettings.ServiceType);
             return azureSubscription;
         }

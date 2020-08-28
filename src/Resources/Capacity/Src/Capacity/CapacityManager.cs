@@ -1,4 +1,4 @@
-﻿// <copyright file="CapacityManager.cs" company="Microsoft">
+// <copyright file="CapacityManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -174,7 +174,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             // vsclk-online-prod-rel-use-###
             if (CapacitySettings.SpreadResourcesInGroups)
             {
-                var resourceGroupNumber = GetRandomResourceGroupNumber();
+                var resourceGroupNumber = GetRandomResourceGroupNumber(theSubscription);
                 resourceGroupName = $"{resourceGroupName}-{resourceGroupNumber:000}";
             }
 
@@ -267,12 +267,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             return resourceGroupName;
         }
 
-        private int GetRandomResourceGroupNumber()
+        private int GetRandomResourceGroupNumber(IAzureSubscription azureSubscription)
         {
             // Handle unset or unreasonable capacity settings values.
             var min = Math.Max(1, CapacitySettings.Min);    // Min is at least 1
-            var max = Math.Max(100, CapacitySettings.Max);  // Max is at least 100
-            max = Math.Min(MaxResourceGroupsPerSubscription, max);
+            var max = Math.Min(azureSubscription.MaxResourceGroupCount, MaxResourceGroupsPerSubscription);  // Max is configure in subscription (default 100) and cannot exceed 980
             return Rnd.Next(min, max);
         }
     }

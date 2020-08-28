@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureSubscriptionSettings.cs" company="Microsoft">
+// <copyright file="AzureSubscriptionSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -53,6 +53,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public AzureSubscriptionQuotaSettings Quotas { get; set; }
+
+        /// <summary>
+        /// Gets or sets the maximum resource group count for this subscriptions -- use default value when no maximum specified.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public int? MaxResourceGroupCount { get; set; }
 
         /// <summary>
         /// Gets or sets the service type supported by this Azure subscription.
