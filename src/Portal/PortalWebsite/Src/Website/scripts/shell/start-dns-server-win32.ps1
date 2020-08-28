@@ -21,7 +21,7 @@ docker rm $OLD_CONTAINER_NAME 2>&1>$null
 Write-Output "* Starting the DNS server docker container.."
 
 # WSL has a different IP
-$isWsl = $PSCommandPath.StartsWith('\\wsl$\')
+$isWsl = $PSCommandPath.StartsWith('\\wsl')
 if ($isWsl) {
     wsl -e ./wsl2-docker-compose.sh
 } else {

@@ -1,7 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
     chrome.declarativeContent.onPageChanged.addRules([{
-      conditions: [new chrome.declarativeContent.PageStateMatcher({ pageUrl: { hostEquals: 'github.com' }, })
+      conditions: [new chrome.declarativeContent.PageStateMatcher({ pageUrl: { hostContains: '.github.' }, })
     ],
     actions: [new chrome.declarativeContent.ShowPageAction()]
   }]);
@@ -38,17 +38,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // stored in chrome.storage.
   function restoreOptions() {
     chrome.storage.sync.get({
-        vscodeChannel: true,
-        isEnabled: true
+        isEnabled: true,
+        codespaceInfo: {},
     }, function(items) {
         const isEnabled = typeof items.isEnabled === 'boolean'
             ? items.isEnabled
             : true;
 
+        const channel = items.codespaceInfo.vscodeSettings && items.codespaceInfo.vscodeSettings.vscodeChannel;
+
         document.body.classList.toggle('is-enabled', isEnabled);
 
         updateIcon({
-          channel: items.vscodeChannel,
+          channel,
           isEnabled,
         });
     });

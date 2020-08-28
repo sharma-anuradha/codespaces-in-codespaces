@@ -27,7 +27,13 @@
   "content_scripts": [{
     "css": [],
     "js": ["content.js"],
-    "matches": ["https://github.com/codespaces/*"],
+    "matches": [
+      "*://github.com/codespaces/*",
+      "*://*.github.dev/*",
+      "*://auth.apps.dev.codespaces.githubusercontent.com/*",
+      "*://auth.apps.ppe.codespaces.githubusercontent.com/*",
+      "*://auth.apps.codespaces.githubusercontent.com/*"
+    ],
     "run_at": "document_start"
   }],
   "background": {

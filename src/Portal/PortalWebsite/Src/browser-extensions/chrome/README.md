@@ -1,11 +1,12 @@
 
 ## VSCS GitHub DEV Dashboard
 
-The Chrome extension to switch the GitHub DEV to use the new standalone Workbench page served from the `/codespace` route.
+This Chrome extension can be used to modify values in the partnerInfo/codespaceInfo object for testing different feature flags and settings. See `options.html` for how to add new settings.
+
+Note: for existing codespaces, you might need to clear localStorage for the new settings to take effect.
 
 ### Installation
 
  - go to `chrome://extensions` tab
  - click on the `Load unpacked`
- - use DEV GitHub account to point GitHub to VSCS DEV
- - use `yarn start:platform` to start the portal
+ - choose this directory

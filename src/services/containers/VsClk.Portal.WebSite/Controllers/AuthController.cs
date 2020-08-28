@@ -115,7 +115,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             var originalUrl = new Uri(Request.GetEncodedUrl());
             var actionUriBuilder = new UriBuilder
             {
-                Scheme = Request.Scheme,
+                Scheme = "https",
                 Host = host,
                 Path = $"/authenticate-codespace/{environmentId}",
                 Query = originalUrl.Query
@@ -253,7 +253,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
             var redirectUriBuilder = new UriBuilder
             {
-                Scheme = Request.Scheme,
+                Scheme = "https",
                 Host = host,
                 Path = path,
                 Query = query

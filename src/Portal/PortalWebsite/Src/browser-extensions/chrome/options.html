@@ -50,11 +50,26 @@
         <input id="js-enable-extension" type="checkbox" checked name="enable-extension" />
     </section>
 
+    <!-- For the following options, set the name of the form input to be the path in the
+      partnerInfo/codespaceInfo object that you want to modify. For deep modifications,
+      only vscodeSettings and featureFlags are supported currently (see the logic in patchForm
+      in content.js) -->
+
     <section class="option">
-        <label for="vscode-channel">VSCode Channel:</label>
-        <select id="js-vscode-channel" name="vscode-channel">
-            <option value="insider" selected>Insiders</option>
+        <label for="vscodeSettings.vscodeChannel">VSCode Channel:</label>
+        <select class="js-codespace-info" name="vscodeSettings.vscodeChannel">
+            <option value="" selected>(Default)</option> 
+            <option value="insider">Insiders</option>
             <option value="stable">Stable</option>
+        </select>
+    </section>
+
+    <section class="option">
+        <label for="featureFlags.portForwardingServiceEnabled">PFS:</label>
+        <select class="js-codespace-info" name="featureFlags.portForwardingServiceEnabled">
+            <option value="" selected>(Default)</option>
+            <option value="true">Enabled</option>
+            <option value="false">Disabled</option>
         </select>
     </section>
 
