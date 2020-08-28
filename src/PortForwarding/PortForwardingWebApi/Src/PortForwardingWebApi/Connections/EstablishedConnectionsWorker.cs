@@ -79,8 +79,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Conne
         {
             if (message.Label == QueueClientProvider.WarmupMessageLabel)
             {
-                await session.CloseAsync();
-
                 return;
             }
 

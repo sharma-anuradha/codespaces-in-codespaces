@@ -23,6 +23,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Routing;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.VsSaaS.AspNetCore.Http;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.CodespacesApiClient;
 
 namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
@@ -150,25 +151,47 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
 
             app.Use(async (httpContext, next) =>
             {
-                if (httpContext.Request.Cookies.TryGetValue(Constants.CorrelationCookieName, out string cookieCorrelationId) &&
-                    !string.IsNullOrWhiteSpace(cookieCorrelationId))
-                {
-                    httpContext.TrySetRequestId(cookieCorrelationId);
-                }
-                else if (httpContext.Request.Query.TryGetValue("cid", out var requestCorrelationId))
-                {
-                    var correlationId = requestCorrelationId.SingleOrDefault();
-                    if (correlationId != default)
-                    {
-                        httpContext.TrySetRequestId(correlationId);
-                    }
-                }
-                else if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
+                if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
                 {
                     var requestId = nginxRequestId.SingleOrDefault();
                     if (requestId != default)
                     {
                         httpContext.TrySetRequestId(requestId);
+                    }
+                }
+
+                await next();
+            });
+
+            app.Use(async (httpContext, next) =>
+            {
+                if (!httpContext.Request.Cookies.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
+                    string.IsNullOrEmpty(correlationIdHeader))
+                {
+                    if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&
+                        !string.IsNullOrWhiteSpace(cookieCorrelationId))
+                    {
+                        // VsSaaS SDK middleware overrides correlation id by this header or request id.
+                        httpContext.Request.Headers.Add(HttpConstants.CorrelationIdHeader, cookieCorrelationId);
+                    }
+                }
+
+                await next();
+            });
+
+            app.Use(async (httpContext, next) =>
+            {
+                if (!httpContext.Request.Cookies.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
+                    string.IsNullOrEmpty(correlationIdHeader))
+                {
+                    if (httpContext.Request.Query.TryGetValue("cid", out var requestCorrelationId))
+                    {
+                        var correlationId = requestCorrelationId.SingleOrDefault();
+                        if (!string.IsNullOrWhiteSpace(correlationId))
+                        {
+                            // VsSaaS SDK middleware overrides correlation id by this header or request id.
+                            httpContext.Request.Headers.Add(HttpConstants.CorrelationIdHeader, correlationId);
+                        }
                     }
                 }
 

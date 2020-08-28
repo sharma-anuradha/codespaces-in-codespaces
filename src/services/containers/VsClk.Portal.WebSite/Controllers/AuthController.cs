@@ -259,7 +259,10 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 Query = query
             };
 
-            Response.Cookies.Append(Constants.CorrelationCookieName, HttpContext.GetCorrelationId());
+            Response.Cookies.Append(
+                Constants.CorrelationCookieName,
+                HttpContext.GetCorrelationId(),
+                new CookieOptions { Expires = DateTimeOffset.Now.AddSeconds(30) });
 
             return Redirect(redirectUriBuilder.Uri.ToString());
         }

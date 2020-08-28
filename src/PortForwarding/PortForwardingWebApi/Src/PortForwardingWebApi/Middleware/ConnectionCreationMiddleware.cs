@@ -130,9 +130,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                         MessageId = connectionInfo.GetMessagingSessionId(),
                         SessionId = connectionInfo.WorkspaceId,
                         ContentType = MediaTypeNames.Application.Json,
-                        CorrelationId = context.GetCorrelationId(),
+                        CorrelationId = context.GetRequestId(),
                         ReplyTo = QueueNames.ConnectionErrors,
-                        ReplyToSessionId = context.GetCorrelationId(),
+                        ReplyToSessionId = context.GetRequestId(),
                     };
 
                     await childLogger.OperationScopeAsync("connection_creation_middleware_connections_new_send_async", (_) => client.SendAsync(message));
@@ -161,17 +161,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
 
                         return null;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        logger.AddExceptionInfo(ex);
+                        logger.LogWarning("connection_creation_middleware_subscribe_to_errors_failed");
+
                         return null;
                     }
                 });
 
+                var waitForEndpointTask = mappingClient.WaitForEndpointReadyAsync(connectionInfo.GetKubernetesServiceName(), logger);
                 var endpointOrErrorTask = await Task.WhenAny(
-                     Wrap(mappingClient.WaitForEndpointReadyAsync(connectionInfo.GetKubernetesServiceName(), logger)),
+                     Wrap(waitForEndpointTask),
                      Wrap(errorMessageTask));
 
-                switch (await endpointOrErrorTask)
+                // When for some reason we fail to acquire the error message and it completes
+                // before fetching endpoint, we still want to wait for the endpoint or time out.
+                var result = await endpointOrErrorTask;
+                if (result == (null, null) && !waitForEndpointTask.IsCompletedSuccessfully)
+                {
+                    result = await Wrap(waitForEndpointTask);
+                }
+
+                switch (result)
                 {
                     case (V1Endpoints endpoint, null):
                         var ip = endpoint.Subsets.First().Addresses.First().Ip;

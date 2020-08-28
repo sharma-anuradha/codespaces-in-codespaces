@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Caching;
@@ -247,24 +248,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 
             app.Use(async (httpContext, next) =>
             {
-                if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&
-                    !string.IsNullOrWhiteSpace(cookieCorrelationId))
-                {
-                    httpContext.TrySetRequestId(cookieCorrelationId);
-                    httpContext.Response.Cookies.Append(
-                        "codespaces_correlation_id",
-                        "<removed>",
-                        new CookieOptions
-                        {
-                            Expires = DateTimeOffset.Now.Subtract(TimeSpan.FromHours(2)),
-                        });
-                }
-                else if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
+                if (httpContext.Request.Headers.TryGetValue("X-Request-ID", out var nginxRequestId))
                 {
                     var requestId = nginxRequestId.SingleOrDefault();
                     if (requestId != default)
                     {
                         httpContext.TrySetRequestId(requestId);
+                    }
+                }
+
+                await next();
+            });
+
+            app.Use(async (httpContext, next) =>
+            {
+                if (!httpContext.Request.Cookies.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
+                    string.IsNullOrEmpty(correlationIdHeader))
+                {
+                    if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&
+                        !string.IsNullOrWhiteSpace(cookieCorrelationId))
+                    {
+                        // VsSaaS SDK middleware overrides correlation id by this header or request id.
+                        httpContext.Request.Headers.Add(HttpConstants.CorrelationIdHeader, cookieCorrelationId);
                     }
                 }
 
