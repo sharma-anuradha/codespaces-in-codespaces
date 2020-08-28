@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_{name}_for_each_plan",
                 (childLogger) =>
                 {
-                    logger.LogInfo($"{LogBaseName}_{name}_for_each_plan_start");
+                    childLogger.LogInfo($"{LogBaseName}_{name}_for_each_plan_start");
 
                     var shardRegionPairs = shards.SelectMany(x => controlPlaneInfo.Stamp.DataPlaneLocations, (shard, location) => (shard, location)).Shuffle();
 
@@ -68,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             itemLogger.FluentAddBaseValue(BillingLoggingConstants.Shard, pair.shard);
                             itemLogger.FluentAddBaseValue(BillingLoggingConstants.Location, pair.location);
 
-                            logger.LogInfo($"{LogBaseName}_{name}_for_each_plan_shard_enumerable_item_start");
+                            itemLogger.LogInfo($"{LogBaseName}_{name}_for_each_plan_shard_enumerable_item_start");
 
                             cancellationToken.ThrowIfCancellationRequested();
 
@@ -102,7 +102,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                             return ExecutePlanBatch(name, action, plans, childLogger, cancellationToken);
                         },
-                        logger);
+                        childLogger);
                 },
                 swallowException: true);
         }

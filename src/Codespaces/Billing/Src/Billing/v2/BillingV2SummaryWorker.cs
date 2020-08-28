@@ -52,9 +52,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_execute",
                 async (childLogger) =>
                 {
+                    childLogger.FluentAddBaseValue("BillingInstanceId", Guid.NewGuid());
+
                     // align the first run with the top of the next hour
                     var initialStartTime = DateTime.UtcNow;
-                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour + 1, 0, 0, DateTimeKind.Utc);
+                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour + 1, 1, 0, DateTimeKind.Utc);
                     var firstRunDelay = firstRunTime - initialStartTime;
 
                     await Task.Delay(firstRunDelay);
@@ -69,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                         await RunAsync(childLogger, desiredEndDate, cancellationToken);
 
-                        var nextRun = desiredEndDate.AddHours(1) - DateTime.UtcNow;
+                        var nextRun = desiredEndDate.AddHours(1).AddMinutes(1) - DateTime.UtcNow;
                         await Task.Delay(nextRun > TimeSpan.Zero ? nextRun : TimeSpan.Zero);
                     }
                 });

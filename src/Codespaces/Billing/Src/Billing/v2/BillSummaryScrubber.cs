@@ -95,8 +95,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                         // Archive old state changes.
                         var olderEnvironmentStateChanges = await FindOlderEnvironmentStateChangesAsync(latestSummary.PeriodEnd, allEnvironmentStateChanges, childLogger.NewChildLogger());
-                        childLogger.FluentAddValue("NumberOfStateChangesBeingArchived", olderEnvironmentStateChanges.Count())
-                            .FluentAddValue("NumberOfEnvironmentsArchived", olderEnvironmentStateChanges.GroupBy(x => x.Environment.Id).Count());
+                        int numberOfStateChangesBeingArchived = olderEnvironmentStateChanges.Count();
+                        int numberOfEnvironmentsArchived = olderEnvironmentStateChanges.GroupBy(x => x.Environment.Id).Count();
+                        childLogger.FluentAddValue("NumberOfStateChangesBeingArchived", numberOfStateChangesBeingArchived)
+                                   .FluentAddValue("NumberOfEnvironmentsArchived", numberOfEnvironmentsArchived);
 
                         // Archive from oldest to newest.
                         foreach (var olderStateChanges in olderEnvironmentStateChanges.OrderBy(x => x.Time))
@@ -123,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     childLogger.FluentAddValue("PlanIsDeleted", billingSummary.PlanIsDeleted);
                     childLogger.FluentAddValue("SubmissionState", billingSummary.SubmissionState);
 
-                    bool isEnabled = await BillingSettings.V2EnableV2CheckForFinalStatesAsync(logger);
+                    bool isEnabled = await BillingSettings.V2EnableV2CheckForFinalStatesAsync(childLogger);
 
                     childLogger.FluentAddValue("IsEnabled", isEnabled);
 
@@ -209,7 +211,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     childLogger.FluentAddValue("PlanIsDeleted", billingSummary.PlanIsDeleted);
                     childLogger.FluentAddValue("SubmissionState", billingSummary.SubmissionState);
 
-                    bool isEnabled = await BillingSettings.V2EnableV2CheckForMissingEnvironmentsAsync(logger);
+                    bool isEnabled = await BillingSettings.V2EnableV2CheckForMissingEnvironmentsAsync(childLogger);
 
                     childLogger.FluentAddValue("IsEnabled", isEnabled);
 

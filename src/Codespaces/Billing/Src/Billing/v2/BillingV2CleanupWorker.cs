@@ -44,24 +44,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_execute",
                 async (childLogger) =>
                 {
-                    // align the first run with 15 minutes past the next hour
+                    childLogger.FluentAddBaseValue("BillingInstanceId", Guid.NewGuid());
+
+                    // delay the initial run until at least 15 minutes after the start of the current hour.
                     var initialStartTime = DateTime.UtcNow;
-                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour + 1, 15, 0, DateTimeKind.Utc);
+                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour, 15, 0, DateTimeKind.Utc);
                     var firstRunDelay = firstRunTime - initialStartTime;
 
-                    await Task.Delay(firstRunDelay);
+                    if (firstRunDelay > TimeSpan.Zero)
+                    {
+                        await Task.Delay(firstRunDelay);
+                    }
 
                     // no distributed lease is taken at the top level to allow multiple workers
                     while (!cancellationToken.IsCancellationRequested)
                     {
                         var now = DateTime.UtcNow;
 
-                        // 15 minutes past the hour
-                        var desiredEndDate = new DateTime(now.Year, now.Month, now.Day, now.Hour, 15, 0, DateTimeKind.Utc);
+                        var desiredEndDate = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
 
                         await RunAsync(childLogger, desiredEndDate, cancellationToken);
 
-                        var nextRun = desiredEndDate.AddHours(1) - DateTime.UtcNow;
+                        // 15 minutes past the next hour
+                        var nextRun = desiredEndDate.AddHours(1).AddMinutes(15) - DateTime.UtcNow;
                         await Task.Delay(nextRun > TimeSpan.Zero ? nextRun : TimeSpan.Zero);
                     }
                 });
@@ -78,7 +83,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     childLogger.LogInfo($"{LogBaseName}_run_start");
 
-                    if (await billingSettings.V2WorkersAreEnabledAsync(logger))
+                    if (await billingSettings.V2WorkersAreEnabledAsync(childLogger))
                     {
                         // run scrubbers (defers this less time-sensitive work, at the cost of looping through all plans again later).
                         await ForEachPlan(
