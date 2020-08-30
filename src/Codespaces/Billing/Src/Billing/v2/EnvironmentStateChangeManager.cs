@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -48,6 +49,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_create",
                 async (childLogger) =>
                 {
+                    childLogger.FluentAddValue("EnvironmentStateChange", JsonConvert.SerializeObject(change));
+
                     await EnvironmentStateChangeRepository.CreateOrUpdateAsync(change, logger.NewChildLogger());
                 });
         }

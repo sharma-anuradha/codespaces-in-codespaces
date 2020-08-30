@@ -10,6 +10,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Repository;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 {
@@ -63,6 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{LogBaseName}_create_or_update",
                 async (childLogger) =>
                 {
+                    childLogger.FluentAddValue("BillSummary", JsonConvert.SerializeObject(billingSummary));
+
                     return await billSummaryRepository.CreateOrUpdateAsync(billingSummary, childLogger);
                 });
         }
