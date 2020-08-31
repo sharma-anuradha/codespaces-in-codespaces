@@ -5,13 +5,14 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { URI, IHostCommand } from 'vscode-web';
 
 import { ApplicationState } from '../../reducers/rootReducer';
-import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
+import { ServerlessWorkbench } from 'vso-workbench';
 import { defaultConfig } from '../../services/configurationService';
 
 import { getShortEnvironmentName, isDevEnvironment } from '../../utils/getShortEnvironmentName';
 import { telemetry } from '../../utils/telemetry';
 import { vscode, PortForwardingExternalUriProvider } from 'vso-workbench';
 import { LiveShareExternalUriProvider } from '../../providers/externalUriProvider';
+import { credentialsProvider } from '../../providers/credentialsProvider';
 import { createTrace } from 'vso-client-core';
 import { withTranslation, WithTranslation } from 'react-i18next';
 
@@ -108,6 +109,7 @@ class LiveShareWorkbenchView extends Component<LiveShareWorkbenchProps> {
                 extensionUrls={extensionUrls}
                 resolveExternalUri={this.resolveExternalUri}
                 resolveCommands={getResolveCommands(extensionUrl, this.props.sessionId)}
+                credentialsProvider={credentialsProvider}
             />
         );
     }

@@ -12,7 +12,7 @@ import {
     localStorageKeychain,
     getCurrentEnvironmentId,
     isHostedOnGithub,
-    getVSCodeScheme
+    getVSCodeScheme,
 } from 'vso-client-core';
 
 import { authService } from '../services/authService';
@@ -97,8 +97,9 @@ class GistPadStrategy implements IAuthStrategy {
 /// Used by github-browser extension
 class GitHubStrategyForServerless implements IAuthStrategy {
     async canHandleService(service: string, account: string) {
-        return (service === `${getVSCodeScheme()}-github.login` && account == 'account');
+        return service === `${getVSCodeScheme()}-github.login` && account == 'account';
     }
+
     async getToken(service: string, account: string): Promise<string | null> {
         const token = await getStoredGitHubToken();
         if (!token) {
@@ -109,9 +110,7 @@ class GitHubStrategyForServerless implements IAuthStrategy {
             accessToken: token,
             scopes: ['repo'],
         };
-        const githubSessions = JSON.stringify([
-            githubSessionRepo,
-        ]);
+        const githubSessions = JSON.stringify([githubSessionRepo]);
         return githubSessions;
     }
 }
@@ -137,20 +136,17 @@ class LiveShareGithubAuthStrategy extends LiveShareGithubAuthStrategyWorkbench {
 }
 
 const getProviders = () => {
-    return (isHostedOnGithub())
-        ? [
-            new GitHubStrategy(),
-            new LiveShareGithubAuthStrategy()
-        ]
+    return isHostedOnGithub()
+        ? [new GitHubStrategy(), new LiveShareGithubAuthStrategy()]
         : [
-            new AADv2BrowserSyncStrategy(),
-            new MsalAuthStrategy(),
-            new AzureAccountStrategy(),
-            new LiveShareWebStrategy(),
-            new GistPadStrategy(),
-            new AzureDevOpsStrategy(),
-            new GitHubStrategyForServerless(),
-        ];
+              new AADv2BrowserSyncStrategy(),
+              new MsalAuthStrategy(),
+              new AzureAccountStrategy(),
+              new LiveShareWebStrategy(),
+              new GistPadStrategy(),
+              new AzureDevOpsStrategy(),
+              new GitHubStrategyForServerless(),
+          ];
 };
 
 export const credentialsProvider = new CredentialsProvider(getProviders());

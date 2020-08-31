@@ -1,24 +1,19 @@
 import * as path from 'path';
+import * as debug from 'debug';
 
 import React, { Component } from 'react';
 
-import {
-    UserDataProvider,
-    vscode,
-    getVSCodeAssetPath,
-    UrlCallbackProvider,
-    getVSCodeVersionString,
-    getVSCodeVersion,
-} from 'vso-workbench';
 
-import { IWorkbenchConstructionOptions, URI, IURLCallbackProvider, IHostCommand } from 'vscode-web';
+import { IWorkbenchConstructionOptions, URI, IURLCallbackProvider, IHostCommand, ICredentialsProvider } from 'vscode-web';
+import { updateFavicon } from 'vso-client-core';
 
-import { credentialsProvider } from '../../providers/credentialsProvider';
-
-import { telemetry, sendTelemetry } from '../../utils/telemetry';
-import { trace } from '../../utils/trace';
-import { FolderWorkspaceProvider } from '../../providers/folderWorkspaceProvider';
-import { updateFavicon } from '../../utils/updateFavicon';
+import { telemetry, sendTelemetry } from '../../telemetry/telemetry';
+import { getVSCodeAssetPath } from '../../utils/getVSCodeAssetPath';
+import { getVSCodeVersion, getVSCodeVersionString } from '../../utils/getVSCodeVersion';
+import { vscode } from '../vscodeAssets/vscode';
+import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
+import { FolderWorkspaceProvider } from '../providers/folderWorkspaceProvider';
+import { UrlCallbackProvider } from '../providers/userDataProvider/urlCallbackProvider';
 
 import './serverlessWorkbench.css';
 
@@ -35,6 +30,7 @@ export interface ServerlessWorkbenchProps {
     urlCallbackProvider?: IURLCallbackProvider;
     targetURLFactory?: (folderUri: URI) => URL | undefined;
     resolveCommands?: () => Promise<IHostCommand[]>;
+    credentialsProvider: ICredentialsProvider;
 }
 
 const managementFavicon = 'favicon.ico';
@@ -60,46 +56,6 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
     }
 
     private getBuiltinStaticExtensions() {
-        const version = getVSCodeVersion();
-
-        // VSCode packages extension with the web drop but that's not in stable yet. So keep using the old way of using
-        // extensions from the server drop until stable web drop has the
-        if (version.quality === 'stable') {
-            // Webpack parses require.context and makes those files available in the bundle. So all the package.json
-            // files in the extensions dir will be in the bundle and the .keys() property will be populated at build time
-            // to be all the relative paths for the package.json. So, keys will be like './csharp/package.json'
-            const context = (require as any).context(
-                'web-standalone',
-                true,
-                /^\.\/extensions\/(insider|stable)\-[a-f0-9]{7}\/[^\/]*\/package.json$/
-            );
-            const keys = context
-                .keys()
-                .filter((key: string) =>
-                    key.startsWith(`./extensions/${getVSCodeVersionString()}`)
-                );
-            const packagesWithMainThatWork = ['vscode.python', 'ms-vscode.references-view'];
-            const packages = keys.map((modulePath: string) => {
-                const packageJSON = context(modulePath);
-                const extensionName = `${packageJSON.publisher}.${packageJSON.name}`;
-                if (packageJSON.main && !packagesWithMainThatWork.includes(extensionName)) {
-                    return undefined; // unsupported
-                }
-                packageJSON.extensionKind = ['web'];
-                const packageDirName = path.basename(path.dirname(modulePath));
-                return {
-                    packageJSON,
-                    extensionLocation: vscode.URI.parse(
-                        `https://${
-                            window.location.hostname
-                        }/workbench-page/web-standalone/extensions/${getVSCodeVersionString()}/${packageDirName}/`
-                    ),
-                };
-            });
-
-            return packages.filter(isNotNullStaticExtension);
-        }
-
         // Webpack parses require.context and makes those files available in the bundle. So all the package.json
         // files in the extensions dir will be in the bundle and the .keys() property will be populated at build time
         // to be all the relative paths for the package.json. So, keys will be like './csharp/package.json'
@@ -201,7 +157,7 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
 
         staticExtensions = staticExtensions.concat(this.getBuiltinStaticExtensions());
 
-        const { urlCallbackProvider = new UrlCallbackProvider(), resolveCommands } = this.props;
+        const { urlCallbackProvider = new UrlCallbackProvider(), resolveCommands, credentialsProvider } = this.props;
         const commands = resolveCommands ? await resolveCommands() : undefined;
         const config: IWorkbenchConstructionOptions = {
             workspaceProvider,
@@ -214,7 +170,6 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
             commands,
         };
 
-        trace(`Creating workbench on #${this.workbenchRef}, with config: `, config);
         vscode.create(this.workbenchRef, config);
     }
 
@@ -224,7 +179,7 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
         return (
             <div className='vsonline-serverless-workbench'>
                 <div
-                    id='workbench'
+                    id='serverless-workbench'
                     style={{ height: '100%' }}
                     ref={
                         // tslint:disable-next-line: react-this-binding-issue

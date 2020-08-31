@@ -42,7 +42,9 @@ export class WorkbenchPage extends React.Component<IWorkbenchPageProps, IWorkben
     constructor(props: any, state: TEnvironmentState) {
         super(props, state);
 
-        this.state = { value: EnvironmentWorkspaceState.Unknown };
+        this.state = {
+            value: EnvironmentWorkspaceState.Unknown,
+        };
         this.startPollingEnvironment();
     }
 

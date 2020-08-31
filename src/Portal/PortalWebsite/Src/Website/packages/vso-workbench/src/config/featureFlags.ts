@@ -16,6 +16,7 @@ class FeatureFlagsAccessor {
 
 export enum FeatureFlags {
     PortForwardingService = 'portForwardingServiceEnabled',
+    ServerlessEnabled = 'serverlessEnabled',
 }
 
 export const featureFlags = new FeatureFlagsAccessor();

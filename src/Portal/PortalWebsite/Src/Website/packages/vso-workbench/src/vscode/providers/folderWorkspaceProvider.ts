@@ -1,5 +1,5 @@
 import { IWorkspace, IWorkspaceProvider, URI } from 'vscode-web';
-import { vscode } from 'vso-workbench';
+import { vscode } from '../vscodeAssets/vscode';
 
 export class FolderWorkspaceProvider implements IWorkspaceProvider {
     constructor(

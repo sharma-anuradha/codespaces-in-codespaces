@@ -6,7 +6,7 @@ import { Workbench } from '../../../../components/workbench/workbench';
 import { PageNotFoundGithub } from '../pageNotFound/pageNotFoundGithub';
 import { FAVICON_PATH, DEFAULT_TITLE } from '../../constants';
 import { WorkbenchSplashScreen } from '../../../../components/workbenchSplashScreen/workbenchSplashScreen';
-import { ServerlessSplashscreen } from '../../../../components/serverlessSpalshscreen/serverlessSplashscreen';
+import { ServerlessSplashscreen } from 'vso-workbench';
 
 interface IWorkbenchPageProps extends RouteComponentProps<{ id: string }> {}
 

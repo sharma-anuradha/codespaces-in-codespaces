@@ -6,12 +6,12 @@ import { getAzDevCredentials } from '../../actions/getAzDevCredentials';
 import { ApplicationState } from '../../reducers/rootReducer';
 import { defaultConfig } from '../../services/configurationService';
 import { Loader } from '../loader/loader';
-import { PageNotFound } from '../pageNotFound/pageNotFound';
 import {
     RepoType_QueryParam,
     ServerlessWorkbench,
-} from '../serverlessWorkbench/serverlessWorkbench';
+} from 'vso-workbench';
 import { withTranslation, WithTranslation } from 'react-i18next';
+import { credentialsProvider } from '../../providers/credentialsProvider';
 
 type Params = {
     org: string;
@@ -77,7 +77,7 @@ class AzureWorkbenchView extends Component<AzureWorkbenchProps, AzureWorkbenchSt
         const uriQueryString = JSON.stringify(uriQueryObj);
         const folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
 
-        return <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} />;
+        return <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} credentialsProvider={credentialsProvider} />;
     }
 }
 

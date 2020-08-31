@@ -6,7 +6,7 @@ import { getVSCodeAssetPath } from 'vso-workbench';
 
 import { Workbench } from '../workbench/workbench';
 import { WorkbenchSplashScreen } from '../workbenchSplashScreen/workbenchSplashScreen';
-import { ServerlessSplashscreen } from '../serverlessSpalshscreen/serverlessSplashscreen';
+import { ServerlessSplashscreen } from 'vso-workbench';
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 
 const managementFavicon = 'favicon.ico';

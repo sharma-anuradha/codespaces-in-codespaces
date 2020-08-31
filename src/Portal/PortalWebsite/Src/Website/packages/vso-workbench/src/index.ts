@@ -41,3 +41,6 @@ export { TerminalId } from './interfaces/TerminalId';
 
 export { CommunicationAdapter } from './utils/splashScreen/communicationAdapter';
 export { getWorkbenchDefaultLayout } from './utils/getWorkbenchDefaultLayout';
+
+export { ServerlessWorkbench, ServerlessWorkbenchProps, RepoType_QueryParam } from './vscode/workbenches/serverlessWorkbench';
+export { IServerlessSplashscreenProps, ServerlessSplashscreen } from './react-app/components/ServerlessSplashscreen/ServerlessSplashscreen';

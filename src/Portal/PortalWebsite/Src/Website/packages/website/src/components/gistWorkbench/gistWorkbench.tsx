@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { URI } from 'vscode-web';
+import { ServerlessWorkbench } from 'vso-workbench';
 
-import { ServerlessWorkbench } from '../serverlessWorkbench/serverlessWorkbench';
 import { GitHubUrlCallbackProvider } from '../../providers/gitHubUrlCallbackProvider';
+import { credentialsProvider } from '../../providers/credentialsProvider';
 import { PageNotFound } from '../pageNotFound/pageNotFound';
 
 type GistWorkbenchProps = RouteComponentProps<{ id: string }>;
@@ -39,6 +40,7 @@ export class GistWorkbench extends Component<GistWorkbenchProps, GistWorkbenchPr
                 targetURLFactory={this.targetURLFactory}
                 extensionUrls={extensionUrls}
                 urlCallbackProvider={urlCallbackProvider}
+                credentialsProvider={credentialsProvider}
             />
         );
     }

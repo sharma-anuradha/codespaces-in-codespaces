@@ -66,13 +66,13 @@ const getWorkspaceUrl = (defaultUrl: URL) => {
 };
 
 import { telemetry } from '../../utils/telemetry';
-import { updateFavicon } from '../../utils/updateFavicon';
+import { updateFavicon } from 'vso-client-core';
 import { defaultConfig } from '../../services/configurationService';
 import { createUniqueId } from '../../dependencies';
 import { connectEnvironment } from '../../actions/connectEnvironment';
 import { pollActivatingEnvironment } from '../../actions/pollEnvironment';
 import { useActionContext } from '../../actions/middleware/useActionContext';
-import { IServerlessSplashscreenProps } from '../serverlessSpalshscreen/serverlessSplashscreen';
+import { IServerlessSplashscreenProps } from 'vso-workbench';
 import { IWorkbenchSplashScreenProps } from '../../interfaces/IWorkbenchSplashScreenProps';
 import { Loader } from '../loader/loader';
 
@@ -525,7 +525,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
 
         if (this.state.isServerlessSplashScreenShown) {
-            return <ServerlessSplashscreenComponent environment={environmentInfo} />;
+            return <ServerlessSplashscreenComponent environment={environmentInfo} credentialsProvider={credentialsProvider} />;
         }
 
         if (isHostedOnGithub()) {
@@ -547,7 +547,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 </div>
             );
         } else if (this.state.isServerlessSplashScreenShown) {
-            return <ServerlessSplashscreenComponent environment={environmentInfo} />;
+            return <ServerlessSplashscreenComponent environment={environmentInfo} credentialsProvider={credentialsProvider} />;
         } else {
             this.connectionAdapter =
                 this.connectionAdapter || new SplashCommunicationProvider(this.onCommandReceived);

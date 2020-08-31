@@ -1,4 +1,4 @@
-import { updateFavicon } from '../../utils/updateFavicon';
+import { updateFavicon } from 'vso-client-core';
 import { DEFAULT_TITLE, FAVICON_PATH } from './constants';
 
 export const initHostingHtmlTags = async () => {

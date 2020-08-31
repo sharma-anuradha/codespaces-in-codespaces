@@ -1,7 +1,9 @@
 export const updateFavicon = (faviconPath: string) => {
-    const link = document.querySelector("#js-favicon");
-    if (!link) {
+    const links = document.querySelectorAll("#js-favicon, .js-favicon");
+    if (!links) {
         return;
     }
-    link.setAttribute('href', faviconPath);
+    links.forEach(function (link) {
+        link.setAttribute('href', faviconPath);
+    });
 };

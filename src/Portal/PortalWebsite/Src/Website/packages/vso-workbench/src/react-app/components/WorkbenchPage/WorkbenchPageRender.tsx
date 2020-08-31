@@ -4,11 +4,13 @@ import { EnvironmentStateInfo, wait, IEnvironment, IPartnerInfo } from 'vso-clie
 
 import { Workbench } from '../Workbench/Workbench';
 import { TEnvironmentState } from '../../../interfaces/TEnvironmentState';
-import { Fragment } from 'react';
 import { SplashScreenState } from './SplashScreenState';
 import { telemetryMarks } from '../../../telemetry/telemetryMarks';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { removeDefaultSplashScreen } from './utils/removeDefaultSplashScreen';
+import { credentialsProvider } from '../../../vscode/providers/credentialsProvider/credentialsProvider';
+import { ServerlessSplashscreen } from '../ServerlessSplashscreen/ServerlessSplashscreen';
+import { featureFlags, FeatureFlags } from 'vso-workbench/src/config/featureFlags';
 
 export interface IWorkbenchPageRenderProps {
     className?: string;
@@ -23,6 +25,7 @@ export interface IWorkbenchPageRenderProps {
 
 interface IWorkbenchPageRenderState {
     isMounted: boolean;
+    isServerlessSplashScreenShown: boolean;
 }
 
 /**
@@ -35,7 +38,17 @@ export class WorkbenchPageRender extends React.Component<
     constructor(props: IWorkbenchPageRenderProps, state: IWorkbenchPageRenderState) {
         super(props, state);
 
-        this.state = { isMounted: false };
+        var isServerlessSplashScreenShown: boolean = false;
+        if (
+            featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) &&
+            this.props.environmentInfo?.state === EnvironmentStateInfo.Provisioning
+        ) {
+            isServerlessSplashScreenShown = true;
+        }
+        this.state = {
+            isMounted: false,
+            isServerlessSplashScreenShown: isServerlessSplashScreenShown,
+        };
     }
 
     private onMount = () => {
@@ -47,6 +60,26 @@ export class WorkbenchPageRender extends React.Component<
             requestAnimationFrame(removeDefaultSplashScreen);
         }, 200);
     };
+
+    componentDidUpdate(
+        prevProps: Readonly<IWorkbenchPageRenderProps>,
+        prevState: Readonly<IWorkbenchPageRenderState>
+    ): void {
+        if (
+            this.state.isServerlessSplashScreenShown &&
+            this.props.environmentInfo?.state !== EnvironmentStateInfo.Provisioning
+        ) {
+            window.location.reload(true);
+        }
+
+        if (
+            !this.state.isServerlessSplashScreenShown &&
+            featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) &&
+            this.props.environmentInfo?.state === EnvironmentStateInfo.Provisioning
+        ) {
+            this.setState({ isServerlessSplashScreenShown: true });
+        }
+    }
 
     public render() {
         const { className = '' } = this.props;
@@ -76,6 +109,15 @@ export class WorkbenchPageRender extends React.Component<
         // hide the splash screen when the workbench gets mounted
         if (this.state.isMounted) {
             return null;
+        }
+
+        if (this.state.isServerlessSplashScreenShown) {
+            return (
+                <ServerlessSplashscreen
+                    environment={this.props.environmentInfo}
+                    credentialsProvider={credentialsProvider}
+                />
+            );
         }
 
         requestAnimationFrame(removeDefaultSplashScreen);

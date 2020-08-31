@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
 import { connect, ConnectedComponent } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
-
-import { ApplicationState } from '../../reducers/rootReducer';
 import {
     ServerlessWorkbench,
     RepoType_QueryParam,
-} from '../serverlessWorkbench/serverlessWorkbench';
+} from 'vso-workbench';
+
+import { ApplicationState } from '../../reducers/rootReducer';
 import { defaultConfig } from '../../services/configurationService';
+import { credentialsProvider } from '../../providers/credentialsProvider';
 
 type Params = { org: string; repoId: string; commitId: string };
 
@@ -28,8 +29,8 @@ const CODETOUR_ENDPOINT = 'https://vscsextensionsdev.blob.core.windows.net/codet
 class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenchProps> {
     render() {
         var extensionUrls: string[] = [CODETOUR_ENDPOINT];
-        var commitId = this.props.commitId ? this.props.commitId : 'HEAD';
-        var folderUri = `github://${commitId}/${this.props.org}/${this.props.repoId}`;
+        var commitId = this.props.commitId ? '+' + this.props.commitId : '';
+        var folderUri = `github://${this.props.org}+${this.props.repoId}${commitId}/`;
 
         if (localStorage.getItem('vscs-showserverless') !== 'true') {
             extensionUrls = [this.props.richNavWebExtensionEndpoint, CODETOUR_ENDPOINT];
@@ -50,7 +51,7 @@ class GitHubWorkbenchView extends Component<GitHubWorkbenchProps, GitHubWorkbenc
             folderUri = `vsck:/Rich Code Navigation/?${uriQueryString}`;
         }
 
-        return <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} />;
+        return <ServerlessWorkbench folderUri={folderUri} extensionUrls={extensionUrls} credentialsProvider={credentialsProvider} />;
     }
 }
 const getProps: (
