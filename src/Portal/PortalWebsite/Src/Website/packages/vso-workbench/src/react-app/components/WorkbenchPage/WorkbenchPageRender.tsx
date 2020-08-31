@@ -61,10 +61,10 @@ export class WorkbenchPageRender extends React.Component<
         }, 200);
     };
 
-    componentDidUpdate(
+    async componentDidUpdate(
         prevProps: Readonly<IWorkbenchPageRenderProps>,
         prevState: Readonly<IWorkbenchPageRenderState>
-    ): void {
+    ): Promise<void> {
         if (
             this.state.isServerlessSplashScreenShown &&
             this.props.environmentInfo?.state !== EnvironmentStateInfo.Provisioning
@@ -74,7 +74,7 @@ export class WorkbenchPageRender extends React.Component<
 
         if (
             !this.state.isServerlessSplashScreenShown &&
-            featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) &&
+            await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) &&
             this.props.environmentInfo?.state === EnvironmentStateInfo.Provisioning
         ) {
             this.setState({ isServerlessSplashScreenShown: true });
