@@ -87,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private static Task MigrateAsync<T>(IDocumentDbCollection<T> source, IDocumentDbCollection<T> destination, T entity, IDiagnosticsLogger logger)
             where T : CosmosDbEntity
         {
-            return logger.RetryOperationScopeAsync(
+            return logger.OperationScopeAsync(
                 $"{BaseLogName}_migrate",
                 async (childLogger) =>
                 {
@@ -97,13 +97,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     // compute the key first, (create or update will mutate it)
                     var originalKey = new DocumentDbKey(entity.Id, new PartitionKey(entity.PartitionKey));
 
-                    // create or update the record first, so the method is re-runnable
-                    var updatedEntity = await destination.CreateOrUpdateAsync(entity, childLogger);
+                    var isArchived = await childLogger.RetryOperationScopeAsync(
+                        $"{BaseLogName}_migrate_check_archived_status",
+                        async (innerLogger) =>
+                        {
+                            var item = await destination.GetAsync(originalKey, innerLogger);
+                            return item != null;
+                        });
 
-                    childLogger.FluentAddValue("DestinationPartitionKey", updatedEntity.PartitionKey);
+                    childLogger.FluentAddValue("ArchivedEntityAlreadyExists", isArchived);
+
+                    if (!isArchived)
+                    {
+                        // create the record first so the method is re-runnable if create or delete fails
+                        var archivedEntity = await destination.CreateAsync(entity, childLogger);
+                        childLogger.FluentAddValue("DestinationPartitionKey", archivedEntity.PartitionKey);
+                    }
 
                     // delete the source
-                    await source.DeleteAsync(originalKey, childLogger);
+                    await childLogger.RetryOperationScopeAsync(
+                        $"{BaseLogName}_migrate_delete_source_item",
+                        async (innerLogger) =>
+                        {
+                            await source.DeleteAsync(originalKey, innerLogger);
+                        });
                 });
         }
     }
