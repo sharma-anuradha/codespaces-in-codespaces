@@ -17,7 +17,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <summary>
         /// Feature flag to control wheather the job pools are enabled.
         /// </summary>
-        public const string WatchPoolJobsEnabledFeatureFlagName = "watch-pool-jobs-enabled";
+        public const string WatchPoolJobsEnabledFeatureFlagName = "WatchPoolJobs";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WatchPoolJobScheduleRegister"/> class.

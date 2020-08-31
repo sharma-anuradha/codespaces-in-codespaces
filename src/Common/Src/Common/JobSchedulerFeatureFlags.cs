@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
@@ -22,21 +24,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// Initializes a new instance of the <see cref="JobSchedulerFeatureFlags"/> class.
         /// </summary>
         /// <param name="jobSchedulerLease">A job scheduler lease instance.</param>
-        /// <param name="systemConfiguration">A system configuration instance.</param>
+        /// <param name="configurationReader">A configuration reader instance.</param>
         /// <param name="logger">Logger instance.</param>
         public JobSchedulerFeatureFlags(
             IJobSchedulerLease jobSchedulerLease,
-            ISystemConfiguration systemConfiguration,
+            IConfigurationReader configurationReader,
             IDiagnosticsLogger logger)
         {
             JobSchedulerLease = Requires.NotNull(jobSchedulerLease, nameof(jobSchedulerLease));
-            SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(jobSchedulerLease));
+            ConfigurationReader = Requires.NotNull(configurationReader, nameof(configurationReader));
             Logger = Requires.NotNull(logger, nameof(logger));
         }
 
         private IJobSchedulerLease JobSchedulerLease { get; }
 
-        private ISystemConfiguration SystemConfiguration { get; }
+        private IConfigurationReader ConfigurationReader { get; }
 
         private IDiagnosticsLogger Logger { get; }
 
@@ -52,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public Task<bool> IsFeatureFlagEnabledAsync(string featureFlagName, bool defaultValue = false)
         {
-            return SystemConfiguration.GetValueAsync($"featureflag:{featureFlagName}", Logger, defaultValue);
+            return ConfigurationReader.ReadSettingAsync(featureFlagName, ConfigurationConstants.EnabledSettingName, Logger, defaultValue);
         }
 
         /// <inheritdoc/>
