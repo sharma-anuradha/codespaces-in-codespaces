@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
         }
 
         [Fact]
-        public void OSDiskAllocate_CanHandle()
+        public void OSDiskAllocateCreate_CanHandle()
         {
             var resourceRepository = new Mock<IResourceRepository>().Object;
             var resourcePoolManager = new Mock<IResourcePoolManager>().Object;
@@ -59,23 +59,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
             var taskHelper = new Mock<ITaskHelper>().Object;
             var mapper = new Mock<IMapper>().Object;
-            var diskProvider = new Mock<IDiskProvider>().Object;
-            var agentSettings = new AgentSettings()
-            {
-                MinimumVersion = "1.2.3.4"
-            };
-            var computeProvider = new Mock<IComputeProvider>().Object;
+            var resourceRequestManager = new Mock<IResourceRequestManager>().Object;
 
-            var allocStrategy = new AllocationOSDiskStrategy(
+            var allocStrategy = new AllocationOSDiskCreateStrategy(
                 resourceRepository,
                 resourcePoolManager,
                 resourcePoolDefinitionStore,
                 resourceContinuationOperations,
                 taskHelper,
                 mapper,
-                diskProvider,
-                agentSettings,
-                computeProvider);
+                resourceRequestManager);
 
             var allocateInputOSDisk = new AllocateInput()
             {
@@ -92,6 +85,65 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Test
             Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputVM }));
 
             Assert.False(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputVM, allocateInputOSDisk, allocateInputVM }));
+        }
+
+         [Fact]
+        public void OSDiskAllocateResume_CanHandle()
+        {
+            var resourceRepository = new Mock<IResourceRepository>().Object;
+            var resourcePoolManager = new Mock<IResourcePoolManager>().Object;
+            var resourcePoolDefinitionStore = new Mock<IResourcePoolDefinitionStore>().Object;
+            var resourceContinuationOperations = new Mock<IResourceContinuationOperations>().Object;
+            var taskHelper = new Mock<ITaskHelper>().Object;
+            var mapper = new Mock<IMapper>().Object;
+            var diskProvider = new Mock<IDiskProvider>().Object;
+            var agentSettings = new AgentSettings()
+            {
+                MinimumVersion = "1.2.3.4"
+            };
+
+            var allocStrategy = new AllocationOSDiskResumeStrategy(
+                resourceRepository,
+                resourcePoolManager,
+                resourcePoolDefinitionStore,
+                resourceContinuationOperations,
+                taskHelper,
+                mapper,
+                diskProvider,
+                agentSettings);
+
+            var allocateInputOSDisk = new AllocateInput()
+            {
+                Type = ResourceType.OSDisk,
+                Location = VsSaaS.Common.AzureLocation.WestUs2,
+                ExtendedProperties = new AllocateExtendedProperties()
+                {
+                    OSDiskResourceID = Guid.NewGuid().ToString()
+                }
+                
+            };
+
+            var allocateInputOSDiskSnapshot = new AllocateInput()
+            {
+                Type = ResourceType.OSDisk,
+                Location = VsSaaS.Common.AzureLocation.WestUs2,
+                ExtendedProperties = new AllocateExtendedProperties()
+                {
+                    OSDiskSnapshotResourceID = Guid.NewGuid().ToString()
+                }
+                
+            };
+
+            var allocateInputVM = new AllocateInput()
+            {
+                Type = ResourceType.ComputeVM,
+                Location = VsSaaS.Common.AzureLocation.WestUs2,
+            };
+
+            Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputVM }));
+            Assert.True(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDiskSnapshot, allocateInputVM }));
+
+            Assert.False(allocStrategy.CanHandle(new List<AllocateInput>() { allocateInputOSDisk, allocateInputVM, allocateInputOSDiskSnapshot }));
         }
 
         [Fact]

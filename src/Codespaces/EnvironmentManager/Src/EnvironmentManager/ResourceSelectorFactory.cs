@@ -55,6 +55,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 properties.OSDiskResourceID = cloudEnvironment.OSDisk?.ResourceId.ToString();
 
+                // Add OS Disk snapshot id, if available.
+                properties.OSDiskSnapshotResourceID = cloudEnvironment.OSDiskSnapshot?.ResourceId.ToString();
+
                 // Note: Since this method could be called in two ways
                 // 1) Straight from web-request. In that case the transitions are correctly preserved. So looking at the last transition would do.
                 // 2) Via continuations. Resuming will have already added Initializing and InProgress states for the current continuation, so we just look back till we find a success or failed/cancelled.

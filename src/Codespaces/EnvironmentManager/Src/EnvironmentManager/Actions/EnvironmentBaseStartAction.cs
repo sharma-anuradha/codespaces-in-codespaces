@@ -167,6 +167,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             {
                 environment.ExportedBlobUrl = string.Empty;
             });
+            
+            logger.FluentAddBaseValue(nameof(record.Value.QueueResourceAllocation), record.Value.QueueResourceAllocation);
 
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
             if (record.Value.QueueResourceAllocation || sku.ComputeOS == ComputeOS.Windows || !string.IsNullOrEmpty(record.Value.SubnetResourceId))

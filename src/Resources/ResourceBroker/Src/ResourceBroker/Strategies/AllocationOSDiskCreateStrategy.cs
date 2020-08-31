@@ -1,4 +1,4 @@
-﻿// <copyright file="AllocationOSDiskStrategy.cs" company="Microsoft">
+// <copyright file="AllocationOSDiskCreateStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -11,7 +11,6 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
@@ -23,12 +22,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
     /// <summary>
     /// Allocation strategy for OS disks along with other resources.
     /// </summary>
-    public class AllocationOSDiskStrategy : IAllocationStrategy
+    public class AllocationOSDiskCreateStrategy : IAllocationStrategy
     {
-        private const string LogBaseName = ResourceLoggingConstants.ResourceBrokerAllocatorOSDisk;
+        private const string LogBaseName = ResourceLoggingConstants.ResourceBrokerAllocatorOSDiskCreate;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AllocationOSDiskStrategy"/> class.
+        /// Initializes a new instance of the <see cref="AllocationOSDiskCreateStrategy"/> class.
         /// </summary>
         /// <param name="resourceRepository">Resource repository.</param>
         /// <param name="resourcePool">Resource pool.</param>
@@ -36,19 +35,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         /// <param name="resourceContinuationOperations">Resource continuation operations.</param>
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="mapper">Mapper.</param>
-        /// <param name="diskProvider">Disk provider.</param>
-        /// <param name="agentSettings">Agent settings.</param>
-        /// <param name="computeProvider">Compute provider.</param>
-        public AllocationOSDiskStrategy(
+        /// <param name="requestQueueManager">Resource request manager.</param>
+        public AllocationOSDiskCreateStrategy(
             IResourceRepository resourceRepository,
             IResourcePoolManager resourcePool,
             IResourcePoolDefinitionStore resourceScalingStore,
             IResourceContinuationOperations resourceContinuationOperations,
             ITaskHelper taskHelper,
             IMapper mapper,
-            IDiskProvider diskProvider,
-            AgentSettings agentSettings,
-            IComputeProvider computeProvider)
+            IResourceRequestManager requestQueueManager)
         {
             ResourceRepository = Requires.NotNull(resourceRepository, nameof(resourceRepository));
             ResourcePool = Requires.NotNull(resourcePool, nameof(resourcePool));
@@ -56,9 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
             ResourceContinuationOperations = Requires.NotNull(resourceContinuationOperations, nameof(resourceContinuationOperations));
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
-            DiskProvider = Requires.NotNull(diskProvider, nameof(diskProvider));
-            AgentSettings = Requires.NotNull(agentSettings, nameof(agentSettings));
-            ComputeProvider = Requires.NotNull(computeProvider, nameof(computeProvider));
+            RequestQueueManager = Requires.NotNull(requestQueueManager, nameof(requestQueueManager));
         }
 
         private IResourceRepository ResourceRepository { get; }
@@ -73,11 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
         private IMapper Mapper { get; }
 
-        private IDiskProvider DiskProvider { get; }
-
-        private AgentSettings AgentSettings { get; }
-
-        private IComputeProvider ComputeProvider { get; }
+        private IResourceRequestManager RequestQueueManager { get; }
 
         /// <inheritdoc/>
         public Task<IEnumerable<AllocateResult>> AllocateAsync(
@@ -96,45 +85,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
 
                     var resourceSku = await ResourceScalingStore.MapLogicalSkuToResourceSku(computeRequest.SkuName, computeRequest.Type, computeRequest.Location);
 
-                    var osDiskExists = !string.IsNullOrWhiteSpace(osDiskRequest.ExtendedProperties?.OSDiskResourceID);
-
                     var allocationResults = default((ResourceRecord computeRecord, ResourceRecord osDiskRecord));
-                    if (!osDiskExists)
+                    if (osDiskRequest.QueueCreateResource == false && computeRequest.QueueCreateResource == false)
                     {
-                        if (osDiskRequest.QueueCreateResource == false && computeRequest.QueueCreateResource == false)
-                        {
-                            allocationResults = await TryGetComputeAndOSDisk(resourceSku, trigger, logger.NewChildLogger());
-                        }
-                        else if (osDiskRequest.QueueCreateResource == true && computeRequest.QueueCreateResource == true)
-                        {
-                            allocationResults = await TryQueueComputeAndOSDisk(
-                                resourceSku,
-                                computeRequest.ExtendedProperties,
-                                trigger,
-                                logger.NewChildLogger(),
-                                loggingProperties);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Not a supported allocation request.");
-                        }
+                        allocationResults = await TryGetComputeAndOSDisk(resourceSku, computeRequest.QueueResourceRequest, logger.NewChildLogger(), loggingProperties);
+                    }
+                    else if (osDiskRequest.QueueCreateResource == true && computeRequest.QueueCreateResource == true)
+                    {
+                        allocationResults = await TryQueueComputeAndOSDisk(
+                            resourceSku,
+                            computeRequest.ExtendedProperties,
+                            trigger,
+                            logger.NewChildLogger(),
+                            loggingProperties);
                     }
                     else
                     {
-                        if (computeRequest.QueueCreateResource == true)
-                        {
-                            computeRequest.ExtendedProperties.OSDiskResourceID = osDiskRequest.ExtendedProperties.OSDiskResourceID;
-                            allocationResults = await TryQueueComputeWithExistingOSDisk(
-                                resourceSku,
-                                trigger,
-                                computeRequest.ExtendedProperties,
-                                logger.NewChildLogger(),
-                                loggingProperties);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Not a supported allocation request. Compute request should be queued when OS disk exists.");
-                        }
+                        throw new InvalidOperationException($"Not a supported allocation request.");
                     }
 
                     var results = new List<AllocateResult>
@@ -158,14 +125,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
         {
             return
                 inputs.Count(x => x.Type == ResourceType.ComputeVM) == 1 &&
-                inputs.Count(x => x.Type == ResourceType.OSDisk) == 1;
+                inputs.Count(x => x.Type == ResourceType.OSDisk) == 1 &&
+                string.IsNullOrWhiteSpace(inputs.Single(x => x.Type == ResourceType.OSDisk).ExtendedProperties?.OSDiskResourceID) &&
+                string.IsNullOrWhiteSpace(inputs.Single(x => x.Type == ResourceType.OSDisk).ExtendedProperties?.OSDiskSnapshotResourceID);
         }
 
-        private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryGetComputeAndOSDisk(ResourcePool resourceSku, string reason, IDiagnosticsLogger logger)
+        private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryGetComputeAndOSDisk(
+            ResourcePool resourceSku,
+            bool queueResourceRequest,
+            IDiagnosticsLogger logger,
+            IDictionary<string, string> loggingProperties)
         {
             // Try and get item from the pool
             var computeResource = await ResourcePool.TryGetAsync(
                 resourceSku.Details.GetPoolDefinition(), logger.NewChildLogger());
+
+            logger.FluentAddBaseValue("ResourceAllocatedFromPool", computeResource != null);
+
+            if (computeResource == null && queueResourceRequest)
+            {
+                computeResource = await RequestQueueManager.EnqueueAsync(resourceSku, loggingProperties, logger.NewChildLogger());
+            }
 
             if (computeResource == default)
             {
@@ -194,59 +174,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Strategies
                             });
 
             return (computeResource, osDiskResource);
-        }
-
-        private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryQueueComputeWithExistingOSDisk(
-            ResourcePool resourceSku,
-            string reason,
-            AllocateExtendedProperties extendedProperties,
-            IDiagnosticsLogger logger,
-            IDictionary<string, string> loggingProperties)
-        {
-            var osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
-
-            if (!await DiskProvider.IsDetachedAsync(osDiskResource.AzureResourceInfo, logger.NewChildLogger()))
-            {
-                throw new InvalidOperationException($"OS disk is attached to a VM.");
-            }
-
-            extendedProperties.UpdateAgent = ShouldUpdateAgent(extendedProperties, osDiskResource);
-
-            var computeResource = await ResourceContinuationOperations.QueueCreateAsync(
-                Guid.NewGuid(),
-                ResourceType.ComputeVM,
-                extendedProperties,
-                resourceSku.Details,
-                reason,
-                logger.NewChildLogger(),
-                loggingProperties);
-
-            osDiskResource = await ResourceRepository.GetAsync(extendedProperties.OSDiskResourceID, logger.NewChildLogger());
-
-            return (computeResource, osDiskResource);
-        }
-
-        private bool ShouldUpdateAgent(AllocateExtendedProperties extendedProperties, ResourceRecord osDiskResource)
-        {
-            if (extendedProperties.UpdateAgent)
-            {
-                return extendedProperties.UpdateAgent;
-            }
-
-            if (osDiskResource.HeartBeatSummary?.LatestRawHeartBeat?.AgentVersion == default)
-            {
-                // Older environment will automatically follow agent update path.
-                return true;
-            }
-
-            var minimumAgentVersion = Version.Parse(AgentSettings.MinimumVersion);
-            var currentAgentVersion = Version.Parse(osDiskResource.HeartBeatSummary.LatestRawHeartBeat.AgentVersion);
-            if (minimumAgentVersion > currentAgentVersion)
-            {
-                return true;
-            }
-
-            return false;
         }
 
         private async Task<(ResourceRecord computeRecord, ResourceRecord osDiskRecord)> TryQueueComputeAndOSDisk(

@@ -66,7 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             // Resource broker strategies
             services.AddSingleton<IAllocationStrategy, AllocationBasicStrategy>();
-            services.AddSingleton<IAllocationStrategy, AllocationOSDiskStrategy>();
+            services.AddSingleton<IAllocationStrategy, AllocationOSDiskResumeStrategy>();
+            services.AddSingleton<IAllocationStrategy, AllocationOSDiskCreateStrategy>();
             services.AddSingleton<IAllocationStrategy, AllocationOSDiskSnapshotStrategy>();
 
             // Continuation

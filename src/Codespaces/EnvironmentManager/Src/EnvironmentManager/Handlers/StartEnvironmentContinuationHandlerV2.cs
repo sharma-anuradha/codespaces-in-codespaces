@@ -419,7 +419,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
             }
 
-            operationInput.CurrentState = StartEnvironmentContinuationInputState.CheckResourceState;
+            if (resultResponse.All(status => status.IsReady))
+            {
+                operationInput.CurrentState = StartEnvironmentContinuationInputState.StartCompute;
+                return new ContinuationResult { NextInput = operationInput, Status = OperationState.InProgress, };
+            }
+            else
+            {
+                operationInput.CurrentState = StartEnvironmentContinuationInputState.CheckResourceState;
+            }
 
             LogResource(operationInput, logger);
 

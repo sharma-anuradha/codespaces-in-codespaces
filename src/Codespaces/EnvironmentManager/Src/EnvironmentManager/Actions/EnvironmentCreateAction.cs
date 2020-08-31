@@ -13,6 +13,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
@@ -29,8 +30,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     /// </summary>
     public class EnvironmentCreateAction : EnvironmentItemAction<EnvironmentCreateActionInput, EnvironmentCreateTransientState>, IEnvironmentCreateAction
     {
+        private const string QueueResourceAllocationFeatureFlagKey = "featureflag:queue-resource-request-windows-enabled";
+       
+        private const bool QueueResourceAllocationDefault = false;
+        
         private readonly Regex envNameRegex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
-
+       
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentCreateAction"/> class.
         /// </summary>
@@ -55,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="environmentDeleteAction">Target environment delete action.</param>
         /// <param name="mapper">The auto mapper.</param>
         /// <param name="environmentActionValidator">Environment action validator.</param>
+        /// <param name="systemConfiguration">System configuration settings.</param>
         public EnvironmentCreateAction(
             IPlanManager planManager,
             ISkuCatalog skuCatalog,
@@ -76,7 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentAccessManager environmentAccessManager,
             IEnvironmentHardDeleteAction environmentDeleteAction,
             IMapper mapper,
-            IEnvironmentActionValidator environmentActionValidator)
+            IEnvironmentActionValidator environmentActionValidator,
+            ISystemConfiguration systemConfiguration)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager, skuCatalog, skuUtils)
         {
             PlanManager = Requires.NotNull(planManager, nameof(planManager));
@@ -92,6 +99,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             EnvironmentDeleteAction = Requires.NotNull(environmentDeleteAction, nameof(environmentDeleteAction));
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             EnvironmentActionValidator = Requires.NotNull(environmentActionValidator, nameof(environmentActionValidator));
+            SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
         }
 
         /// <inheritdoc/>
@@ -122,6 +130,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IMapper Mapper { get; }
 
         private IEnvironmentActionValidator EnvironmentActionValidator { get; }
+
+        private ISystemConfiguration SystemConfiguration { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> RunAsync(
@@ -196,13 +206,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             transientState.EnvironmentId = Guid.Parse(record.Value.Id);
 
             // Build options
+            SkuCatalog.CloudEnvironmentSkus.TryGetValue(record.Value.SkuName, out var sku);
+            var queueResourceRequestFlag = await SystemConfiguration.GetValueAsync(QueueResourceAllocationFeatureFlagKey, logger.NewChildLogger(), QueueResourceAllocationDefault);
+            var queueResourceRequestForWindows = queueResourceRequestFlag && sku.ComputeOS == ComputeOS.Windows;
             var environmentOptions = new CloudEnvironmentOptions();
             if (input.Details.ExperimentalFeatures != null)
             {
                 environmentOptions.CustomContainers = input.Details.ExperimentalFeatures.CustomContainers;
                 environmentOptions.NewTerminal = input.Details.ExperimentalFeatures.NewTerminal;
-                record.Value.QueueResourceAllocation = input.Details.ExperimentalFeatures.QueueResourceAllocation;
+                record.Value.QueueResourceAllocation = input.Details.ExperimentalFeatures.QueueResourceAllocation || queueResourceRequestForWindows;
             }
+
+            logger.FluentAddBaseValue(nameof(record.Value.QueueResourceAllocation), record.Value.QueueResourceAllocation);
 
             // Setup static environment
             if (record.Value.Type == EnvironmentType.StaticEnvironment)

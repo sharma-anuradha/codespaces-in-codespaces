@@ -14,7 +14,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
@@ -27,6 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private const string LogBaseName = "resource_request_manager";
         private const string QueueResourceRequestEnabled = "QueueResourceRequestEnabled";
         private const string FeatureFlagKey = "featureflag:queue-resource-request-enabled";
+        private const bool FeatureFlagDefault = true;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRequestManager"/> class.
@@ -57,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                $"{LogBaseName}_enqueue_request",
                async (childLogger) =>
                {
-                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), false);
+                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), FeatureFlagDefault);
 
                    childLogger.FluentAddBaseValues(loggingProperties)
                        .FluentAddBaseValue(nameof(resourcePool.Details.SkuName), resourcePool.Details.SkuName)
@@ -93,7 +93,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                $"{LogBaseName}_try_assign",
                async (childLogger) =>
                {
-                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), false);
+                   var queueResourceRequest = await SystemConfiguration.GetValueAsync(FeatureFlagKey, childLogger.NewChildLogger(), FeatureFlagDefault);
 
                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolSkuName, resource.SkuName)
                        .FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolLocation, resource.Location)
@@ -196,6 +196,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                 {
                                     queuedResourceRecord.AssignedResourceId = resource.Id;
                                     queuedResourceRecord = await ResourceRepository.UpdateAsync(queuedResourceRecord, innerLogger.NewChildLogger());
+
+                                    // Update OS Disk records if needed.
+                                    var queuedOsDiskRecordId = queuedResourceRecord.GetComputeDetails().OSDiskRecordId;
+                                    if (queuedOsDiskRecordId != default)
+                                    {
+                                        var queuedResourceComponentRecord = await ResourceRepository.GetAsync(queuedOsDiskRecordId, childLogger.NewChildLogger());
+                                        queuedResourceComponentRecord.AssignedResourceId = resource.GetComputeDetails().OSDiskRecordId;
+                                        await ResourceRepository.UpdateAsync(queuedResourceComponentRecord, innerLogger.NewChildLogger());
+                                    }
                                 });
                         }
 
@@ -204,7 +213,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                     }
 
                     childLogger.FluentAddBaseValue("RetryAssignToNewRequest", result.Item1)
-                        .FluentAddBaseValue("RequestAssigned", queuedResourceRecord?.AssignedResourceId != default);
+                                        .FluentAddBaseValue("RequestAssigned", queuedResourceRecord?.AssignedResourceId != default);
 
                     return result;
                 },
@@ -241,8 +250,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             resource.IsReady = false;
             resource.ProvisioningStatus = OperationState.Initialized;
 
+            if (resourcePool.Details is ResourcePoolComputeDetails computeDetails && computeDetails.OS == ComputeOS.Windows)
+            {
+                var osDiskResource = computeDetails.CreateOSDiskRecord();
+                osDiskResource.IsAssigned = true;
+                osDiskResource.Assigned = DateTime.UtcNow;
+                var componentId = Guid.NewGuid().ToString();
+
+                resource.Components = new ResourceComponentDetail()
+                {
+                    Items = new Dictionary<string, ResourceComponent>()
+                    {
+                        {
+                            componentId,
+                            new ResourceComponent()
+                            {
+                                    ResourceRecordId = osDiskResource.Id,
+                                    ComponentId = componentId,
+                                    ComponentType = ResourceType.OSDisk,
+                            }
+                        },
+                    },
+                };
+
+                await ResourceRepository.CreateAsync(osDiskResource, logger.NewChildLogger());
+            }
+
             // Create the actual record
             resource = await ResourceRepository.CreateAsync(resource, logger.NewChildLogger());
+
             return resource;
         }
     }

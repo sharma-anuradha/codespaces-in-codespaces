@@ -218,7 +218,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 environmentDeleteAction,
                 mapper,
-                environmentActionValidator);
+                environmentActionValidator,
+                mockSystemConfiguration.Object);
 
             var environmentGetAction = new EnvironmentGetAction(
                 environmentStateManager,
