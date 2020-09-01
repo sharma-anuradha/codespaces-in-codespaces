@@ -2,13 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
-using Microsoft.Azure.Documents.Linq;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
@@ -49,7 +42,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Repository.AzureCo
         /// <inheritdoc/>
         protected override string BuildPartitionKey(BillSummary entity)
         {
-            return $"{entity.PlanId}_{entity.BillGenerationTime:yyyy_MM}";
+            return BillSummary.CreateArchivedPartitionKey(entity.PlanId, entity.BillGenerationTime);
         }
     }
 }

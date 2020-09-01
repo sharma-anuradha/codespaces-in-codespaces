@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Azure.Documents;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Diagnostics;
@@ -68,7 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Repository.AzureCo
         /// <inheritdoc/>
         protected override string BuildPartitionKey(EnvironmentStateChange entity)
         {
-            return entity.PlanId;
+            return EnvironmentStateChange.CreateActivePartitionKey(entity.PlanId);
         }
     }
 }

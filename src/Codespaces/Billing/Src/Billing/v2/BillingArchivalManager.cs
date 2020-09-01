@@ -2,13 +2,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
-using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
@@ -62,7 +58,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     if (enableArchiving)
                     {
-                        await MigrateAsync(stateChangeRepository, stateChangeArchiveRepository, stateChange, logger);
+                        var sourcePartitionKey = EnvironmentStateChange.CreateActivePartitionKey(stateChange.PlanId);
+                        var destinationPartitionKey = EnvironmentStateChange.CreateArchivedPartitionKey(stateChange.PlanId, stateChange.Time);
+                        await MigrateAsync(
+                            stateChangeRepository,
+                            stateChangeArchiveRepository,
+                            sourcePartitionKey,
+                            destinationPartitionKey,
+                            stateChange,
+                            logger);
                     }
                 });
         }
@@ -79,12 +83,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     if (enableArchiving)
                     {
-                        await MigrateAsync(billSummaryRepository, billSummaryArchiveRepository, billSummary, logger);
+                        var sourcePartitionKey = BillSummary.CreateActivePartitionKey(billSummary.PlanId);
+                        var destinationPartitionKey = BillSummary.CreateArchivedPartitionKey(billSummary.PlanId, billSummary.BillGenerationTime);
+                        await MigrateAsync(
+                            billSummaryRepository,
+                            billSummaryArchiveRepository,
+                            sourcePartitionKey,
+                            destinationPartitionKey,
+                            billSummary,
+                            logger);
                     }
                 });
         }
 
-        private static Task MigrateAsync<T>(IDocumentDbCollection<T> source, IDocumentDbCollection<T> destination, T entity, IDiagnosticsLogger logger)
+        private static Task MigrateAsync<T>(
+            IDocumentDbCollection<T> source,
+            IDocumentDbCollection<T> destination,
+            string sourcePartitionKey,
+            string destinationPartitionKey,
+            T entity,
+            IDiagnosticsLogger logger)
             where T : CosmosDbEntity
         {
             return logger.OperationScopeAsync(
@@ -92,16 +110,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 async (childLogger) =>
                 {
                     childLogger.FluentAddValue("Id", entity.Id);
-                    childLogger.FluentAddValue("SourcePartitionKey", entity.PartitionKey);
+                    childLogger.FluentAddValue("SourcePartitionKey", sourcePartitionKey);
+                    childLogger.FluentAddValue("DestinationPartitionKey", destinationPartitionKey);
 
-                    // compute the key first, (create or update will mutate it)
-                    var originalKey = new DocumentDbKey(entity.Id, new PartitionKey(entity.PartitionKey));
+                    var sourceKey = new DocumentDbKey(entity.Id, new PartitionKey(sourcePartitionKey));
+                    var destinationKey = new DocumentDbKey(entity.Id, new PartitionKey(destinationPartitionKey));
 
                     var isArchived = await childLogger.RetryOperationScopeAsync(
                         $"{BaseLogName}_migrate_check_archived_status",
                         async (innerLogger) =>
                         {
-                            var item = await destination.GetAsync(originalKey, innerLogger);
+                            var item = await destination.GetAsync(destinationKey, innerLogger);
                             return item != null;
                         });
 
@@ -111,7 +130,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     {
                         // create the record first so the method is re-runnable if create or delete fails
                         var archivedEntity = await destination.CreateAsync(entity, childLogger);
-                        childLogger.FluentAddValue("DestinationPartitionKey", archivedEntity.PartitionKey);
                     }
 
                     // delete the source
@@ -119,7 +137,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                         $"{BaseLogName}_migrate_delete_source_item",
                         async (innerLogger) =>
                         {
-                            await source.DeleteAsync(originalKey, innerLogger);
+                            await source.DeleteAsync(sourceKey, innerLogger);
                         });
                 });
         }

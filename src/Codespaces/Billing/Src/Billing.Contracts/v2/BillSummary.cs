@@ -96,5 +96,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "submissionState")]
         public BillingSubmissionState SubmissionState { get; set; }
+
+        /// <summary>
+        /// Creates the partition key used for this a BillSummary in an active (non-archive) table
+        /// </summary>
+        /// <param name="planId">BillSummary.PlanId</param>
+        /// <returns>Partition key for active table</returns>
+        public static string CreateActivePartitionKey(string planId)
+        {
+            return planId;
+        }
+
+        /// <summary>
+        /// Creates the partition key used for this a BillSummary in an archive table
+        /// </summary>
+        /// <param name="planId">BillSummary.PlanId</param>
+        /// <param name="billGenerationTime">BillSummary.BillGenerationTime</param>
+        /// <returns>Partition key for archive table</returns>
+        public static string CreateArchivedPartitionKey(string planId, DateTime billGenerationTime)
+        {
+            return $"{planId}_{billGenerationTime:yyyy_MM}";
+        }
     }
 }

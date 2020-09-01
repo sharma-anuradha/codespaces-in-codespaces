@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using Microsoft.VsSaaS.Common.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Newtonsoft.Json;
 
@@ -67,5 +66,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         [JsonProperty(Required = Required.Always, PropertyName = "newValue")]
         public string NewValue { get; set; }
+
+        /// <summary>
+        /// Creates the partition key used for this an EnvironmentStateChange in an active (non-archive) table
+        /// </summary>
+        /// <param name="planId">EnvironmentStateChange.PlanId</param>
+        /// <returns>Partition key for active table</returns>
+        public static string CreateActivePartitionKey(string planId)
+        {
+            return planId;
+        }
+
+        /// <summary>
+        /// Creates the partition key used for this an EnvironmentStateChange in an archive table
+        /// </summary>
+        /// <param name="planId">EnvironmentStateChange.PlanId</param>
+        /// <param name="time">EnvironmentStateChange.Time</param>
+        /// <returns>Partition key for archive table</returns>
+        public static string CreateArchivedPartitionKey(string planId, DateTime time)
+        {
+            return $"{planId}_{time:yyyy_MM}";
+        }
     }
 }
