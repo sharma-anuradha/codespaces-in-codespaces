@@ -172,7 +172,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             await ValidateEnvironmentIsNotSoftDeleted(environment, logger);
 
             // Normalize state
-            environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, logger.NewChildLogger());
+            var checkWorkspaceStatus = await WorkspaceStatusToNormalizeEnvironmentEnabled(logger);
+            environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, checkWorkspaceStatus, logger.NewChildLogger());
 
             return Ok(Mapper.Map<CloudEnvironmentResult>(environment));
         }
@@ -808,7 +809,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // Normalize state
             if (normalizeEnvironmentState == true)
             {
-                environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(environment, logger.NewChildLogger());
+                var checkWorkspaceStatus = await WorkspaceStatusToNormalizeEnvironmentEnabled(logger);
+                environment = await EnvironmentStateManager.NormalizeEnvironmentStateAsync(
+                    environment,
+                    checkWorkspaceStatus,
+                    logger.NewChildLogger());
             }
 
             return environment;
@@ -922,6 +927,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     throw new EntityNotFoundException((int)MessageCodes.EnvironmentDoesNotExist);
                 }
             }
+        }
+
+        private async Task<bool> WorkspaceStatusToNormalizeEnvironmentEnabled(IDiagnosticsLogger logger)
+        {
+            return await FrontEndAppSettings.EnvironmentManagerSettings.WorkspaceStatusToNormalizeEnvironmentStateEnabled(logger.NewChildLogger());
         }
 
         private void IsSecretQuotaReached(IEnumerable<SecretDataBody> secrets)

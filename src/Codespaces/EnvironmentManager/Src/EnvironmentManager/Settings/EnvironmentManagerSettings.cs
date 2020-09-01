@@ -57,6 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         [JsonProperty(Required = Required.Always)]
         public double DefaultEnvironmentHardDeleteCutoffHours { get; set; }
 
+        /// <summary>
         /// Gets or sets a value indicating whether OS disk archiving is enabled.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
@@ -89,6 +90,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// Gets or sets a value indicating whether the environment soft delete is enabled.
         /// </summary>
         public bool DefaultEnvironmentSoftDeleteEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the workspace status to normalize environment state enabled.
+        /// </summary>
+        public bool DefaultWorkspaceStatusToNormalizeEnvironmentStateEnabled { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether environments' dynamic archival time should be set or not.
@@ -265,6 +271,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             return SystemConfiguration.GetValueAsync("featureflag:environment-soft-delete-enabled", logger, DefaultEnvironmentSoftDeleteEnabled);
+        }
+
+        /// <summary>
+        /// Gets or sets the environment feature flag about workspace status in the normalize environment state flow.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public Task<bool> WorkspaceStatusToNormalizeEnvironmentStateEnabled(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            return SystemConfiguration.GetValueAsync("featureflag:environment-workspace-status-to-normalize-enabled", logger, DefaultWorkspaceStatusToNormalizeEnvironmentStateEnabled);
         }
 
         /// <summary>

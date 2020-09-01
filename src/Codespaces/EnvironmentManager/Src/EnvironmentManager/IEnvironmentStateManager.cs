@@ -54,10 +54,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Normalizes environment state if there are any inconsistencies.
         /// </summary>
         /// <param name="cloudEnvironment">Target cloud environement.</param>
+        /// <param name="checkWorkspaceStatus">Feature flag enabled to check the workspace status.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Updated cloud environment if there is any updates.</returns>
         Task<CloudEnvironment> NormalizeEnvironmentStateAsync(
           CloudEnvironment cloudEnvironment,
+          bool checkWorkspaceStatus,
           IDiagnosticsLogger logger);
     }
 }

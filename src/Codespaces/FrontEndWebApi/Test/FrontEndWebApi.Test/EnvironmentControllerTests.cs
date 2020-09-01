@@ -26,6 +26,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
@@ -836,9 +837,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var metricsLogger = new MockEnvironmentMetricsLogger();
             var environmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>().Object;
             var environmentStateManager = new EnvironmentStateManager(workspaceManager, environmentRepositoryManager, billingEventManager, environmentStateChangeManager, metricsLogger);
-            var settings = new FrontEndAppSettings                                                                                                                                      
+
+            var environmentSettings = new EnvironmentManagerSettings();
+
+            var mockSystemConfiguration = new Mock<ISystemConfiguration>();
+            mockSystemConfiguration
+                    .Setup(x => x.GetValueAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
+                    .Returns(Task.FromResult(true));
+            mockSystemConfiguration
+                    .Setup(x => x.GetValueAsync(
+                        It.Is<string>(x => x == "featureflag:environment-workspace-status-to-normalize-enabled"),
+                        It.IsAny<IDiagnosticsLogger>(),
+                        It.IsAny<bool>()))
+                    .Returns(Task.FromResult(false));
+
+            environmentSettings.Init(mockSystemConfiguration.Object);
+
+            var settings = new FrontEndAppSettings
             {
                 VSLiveShareApiEndpoint = MockUtil.MockServiceUri,
+                EnvironmentManagerSettings = environmentSettings
             };
             var tokenProvider = new Mock<ITokenProvider>();
             accessTokenReader ??= new Mock<ICascadeTokenReader>().Object;

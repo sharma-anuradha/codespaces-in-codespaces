@@ -180,7 +180,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironment> NormalizeEnvironmentStateAsync(CloudEnvironment cloudEnvironment, IDiagnosticsLogger logger)
+        public Task<CloudEnvironment> NormalizeEnvironmentStateAsync(
+            CloudEnvironment cloudEnvironment,
+            bool checkWorkspaceStatus,
+            IDiagnosticsLogger logger)
         {
             // TODO: Need to switch over to be Entity Transition based.
             // TODO: Remove once Anu's update tracking is in.
@@ -222,21 +225,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         // Swap between available and awaiting based on the workspace status
                         case CloudEnvironmentState.Available:
                         case CloudEnvironmentState.Awaiting:
-                            var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
-                            var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
 
-                            logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
-                                .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
-                                .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
+                            if (checkWorkspaceStatus)
+                            {
+                                var sessionId = cloudEnvironment.Connection?.ConnectionSessionId;
+                                var workspace = await WorkspaceManager.GetWorkspaceStatusAsync(sessionId, childLogger.NewChildLogger());
 
-                            if (workspace == null)
-                            {
-                                // In this case the workspace is deleted. There is no way of getting to an environment without it.
-                                newState = CloudEnvironmentState.Unavailable;
-                            }
-                            else if (workspace.IsHostConnected.HasValue)
-                            {
-                                newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
+                                logger.FluentAddBaseValue("CloudEnvironmentWorkspaceSet", workspace != null)
+                                    .FluentAddBaseValue("CloudEnvironmentIsHostConnectedHasValue", workspace?.IsHostConnected.HasValue)
+                                    .FluentAddBaseValue("CloudEnvironmentIsHostConnectedValue", workspace?.IsHostConnected);
+
+                                if (workspace == null)
+                                {
+                                    // In this case the workspace is deleted. There is no way of getting to an environment without it.
+                                    newState = CloudEnvironmentState.Unavailable;
+                                }
+                                else if (workspace.IsHostConnected.HasValue)
+                                {
+                                    newState = workspace.IsHostConnected.Value ? CloudEnvironmentState.Available : CloudEnvironmentState.Awaiting;
+                                }
                             }
 
                             break;
