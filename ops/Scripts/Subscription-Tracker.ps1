@@ -95,7 +95,7 @@ function Format-ExcelToJson {
                 "ap-se" { return "southeastasia" }
                 "eu-w" { return "westeurope" }
                 "us-e" { return "eastus" }
-                "us-e2euap" { return "eastus2euap" }
+                "us-e2c" { return "eastus2euap" }
                 "us-w2" { return "westus2" }
                 "global" { return "" }
                 "" { return "" }
@@ -118,6 +118,7 @@ function Format-ExcelToJson {
                 [int]$subscriptionIdColumn = Find-HeaderColumn $dataTable.Rows[$i] "Subscription ID"
                 [int]$subscriptionNameColumn = Find-HeaderColumn $dataTable.Rows[$i] "Subscription Name"
                 [int]$subscriptionOldNameColumn = Find-HeaderColumn $dataTable.Rows[$i] "Old Name"
+                [int]$subscriptionRenameDoneColumn = Find-HeaderColumn $dataTable.Rows[$i] "Rename Done"
                 [int]$enabledColumn = Find-HeaderColumn $dataTable.Rows[$i] "Enabled"
                 [int]$maxResourceGroupCountColumn = Find-HeaderColumn $dataTable.Rows[$i] "Max RG Count"
                 [int]$componentColumn = Find-HeaderColumn $dataTable.Rows[$i] "Component"
@@ -159,10 +160,15 @@ function Format-ExcelToJson {
 
             $subscription.subscriptionName = $subscriptionName
 
-            # If Subscription has old name we should use it for now.
+            # If Subscription has old name, and rename isn't completeted,
+            # keep using old name for now.
             $subscriptionOldName = Get-CellValue $dataTable.Rows[$i] $subscriptionOldNameColumn
             if ($null -ne $subscriptionOldName -and $subscriptionOldName.Trim().Length -ne 0) {
-                $subscription.subscriptionName = $subscriptionOldName
+                $renameDoneValue = Get-CellValue $dataTable.Rows[$i] $subscriptionRenameDoneColumn
+                [bool]$renameDone = $false
+                if (![System.Boolean]::TryParse($renameDoneValue, [ref]$renameDone) -or !$renameDone) {
+                    $subscription.subscriptionName = $subscriptionOldName
+                }
             }
 
             $subscription.subscriptionId = $subscriptionId
@@ -372,8 +378,9 @@ function Build-AppSettings {
 
         $azureSubscriptionSettings = [PSCustomObject]@{
             subscriptionId = $subscription.subscriptionId
-            # Don't write out this property until the values in subscriptions.json have been verified
-            # enabled = $subscription.enabled
+        }
+        if (!$subscription.enabled) {
+            $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "enabled" -Value $subscription.enabled
         }
         if ($subscription.location) {
             $azureSubscriptionSettings | Add-Member -MemberType NoteProperty -Name "locations" -Value @($subscription.location)

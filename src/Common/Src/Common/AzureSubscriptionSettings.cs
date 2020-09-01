@@ -1,4 +1,4 @@
-// <copyright file="AzureSubscriptionSettings.cs" company="Microsoft">
+﻿// <copyright file="AzureSubscriptionSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -32,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <summary>
         /// Gets or sets a value indicating whether this Azure subscription is enabled for creating new resources.
         /// </summary>
+        [JsonProperty(Required = Required.Default)]
         public bool Enabled { get; set; } = true;
 
         /// <summary>
