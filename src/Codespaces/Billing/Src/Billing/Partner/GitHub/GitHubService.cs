@@ -55,8 +55,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
         /// <inheritdoc/>
         protected override Partner Partner => Partner.GitHub;
-
-        /// <inheritdoc/>
-        protected override IEnumerable<string> GetShards() => new[] { "d" };
     }
 }
