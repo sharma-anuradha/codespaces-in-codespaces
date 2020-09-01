@@ -1,5 +1,7 @@
 # Config for port-forwarding
 port-forwarding-web-api:
+  liveShareAgent:
+    liveShareApiEndpoint: https://prod.liveshare.vsengsaas.visualstudio.com/api/v1.2/
   config:
     aspNetEnv: Production
     overrideAppSettingsJson: appsettings.prod-can.json

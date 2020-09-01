@@ -29,19 +29,22 @@ spec:
         - name: {{ .Values.image.imagePullSecret }}
       {{- end }}
       containers:
-        - name: {{ include "port-forwarding-agent.name" . }}
+        - name: port-forwarding-agent
           image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.agentRepositoryName not specified" .Values.image.agentRepositoryName }}:{{ required "Value image.agentTag not specified" .Values.image.agentTag }}'
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.containerPort }}
               protocol: TCP
+          volumeMounts:
+            - mountPath: /tmp
+              name: temp
           env:
-            - name: PodName
+            - name: VSCS_AppSettings__PortForwardingAgent__AgentName
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: PFSAgentUid
+            - name: VSCS_AppSettings__PortForwardingAgent__AgentUid
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.uid
@@ -106,8 +109,19 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.agentResources | nindent 12 }}
+        - name: liveshare-agent
+          image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.liveShareAgentRepositoryName not specified" .Values.image.liveShareAgentRepositoryName }}:{{ required "Value image.agentTag not specified" .Values.image.agentTag }}'
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - mountPath: /tmp
+              name: temp
+          env:
+            - name: VSLS_SERVICE_ENDPOINT
+              value: {{ .Values.liveShareAgent.liveShareApiEndpoint }}
+      volumes:
+        - name: temp
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
-      restartPolicy: Never
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}

@@ -46,7 +46,11 @@ image:
   tag:
   agentRepositoryName: port-forwarding-agent
   agentTag: 1.0.2745
+  liveShareAgentRepositoryName: vsls-agent
   imagePullSecret:
+
+liveShareAgent:
+  liveShareApiEndpoint:
 
 serviceAccount:
   # Specifies whether a service account should be created
