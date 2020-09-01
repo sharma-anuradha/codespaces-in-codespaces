@@ -1,8 +1,5 @@
 import { IAuthStrategy } from '../../../../interfaces/IAuthStrategy';
 import { authService } from '../../../../auth/authService';
-import { DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID } from '../../../../constants';
-import { getVSCodeScheme } from 'vso-client-core';
-import { SessionData } from 'vscode-web';
 
 export const createCascadeTokenKey = (environmentId: string) => {
     return `vso-cascade-token_${environmentId}`;
@@ -18,7 +15,7 @@ export class GitHubStrategy implements IAuthStrategy {
     };
 
     public async canHandleService(service: string, account: string) {
-        return service === `${getVSCodeScheme()}-github.login`;
+        return false;
 
         // TODO - reenable after extension migrates to native auth
         // const isVSOGitHubRequest = (service === 'vso-github' &&
@@ -28,40 +25,23 @@ export class GitHubStrategy implements IAuthStrategy {
     }
 
     public async getToken(service: string, account: string): Promise<string | null> {
-        if (service !== `${getVSCodeScheme()}-github.login`) {
-            return null;
+        return null;
 
-            // TODO - reenable after extension migrates to native auth
-            // /**
-            //  * GitHub token for VSO extension.
-            //  */
-            // if (account.startsWith('github-token_')) {
-            //     const token = await this.getGithubToken();
-    
-            //     return token;
-            // }
-    
-            // /**
-            //  * Cascade token for VSO extension.
-            //  */
-            // const token = await this.getCascadeToken();
-    
-            // return token;
-        }
+        // TODO - reenable after extension migrates to native auth
+        // /**
+        //  * GitHub token for VSO extension.
+        //  */
+        // if (account.startsWith('github-token_')) {
+        //     const token = await this.getGithubToken();
 
-        
-        const token = await this.getGithubToken();
-        if (!token) {
-            return null;
-        }
-        const githubSessionRepo: SessionData = {
-            id: DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
-            accessToken: token,
-            scopes: ['repo'],
-        };
-        const githubSessions = JSON.stringify([
-            githubSessionRepo,
-        ]);
-        return githubSessions;
+        //     return token;
+        // }
+
+        // /**
+        //  * Cascade token for VSO extension.
+        //  */
+        // const token = await this.getCascadeToken();
+
+        // return token;
     }
 }

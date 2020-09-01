@@ -1,15 +1,13 @@
 import { VSCodeDefaultAuthSession } from 'vs-codespaces-authorization';
 
-import {
-    getVSCodeScheme,
-} from 'vso-client-core';
+import { getVSCodeScheme } from 'vso-client-core';
 
 import { IAuthStrategy } from '../../../../interfaces/IAuthStrategy';
 
 import { authService } from '../../../../auth/authService';
-import {
-    TSupportedNativeVSCodeAuthProviders,
-} from '../../../../../../vso-client-core/src/interfaces/IPartnerInfo';
+import { TSupportedNativeVSCodeAuthProviders } from '../../../../../../vso-client-core/src/interfaces/IPartnerInfo';
+import { DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID } from '../../../../../src/constants';
+import { featureFlags, FeatureFlags } from '../../../../../src/config/featureFlags';
 
 /**
  * The auth strategy that handles the authentication sessions used by
@@ -28,11 +26,11 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
     };
 
     private isGitHubService = (service: string) => {
-        return (service === `${getVSCodeScheme()}-github.login`);
+        return service === `${getVSCodeScheme()}-github.login`;
     };
 
     private isMicrosoftService = (service: string) => {
-        return (service === `${getVSCodeScheme()}-microsoft.login`);
+        return service === `${getVSCodeScheme()}-microsoft.login`;
     };
 
     private getDefaultSession = async (): Promise<VSCodeDefaultAuthSession[] | null> => {
@@ -89,6 +87,17 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
 
         if (this.isGitHubService(service)) {
             const ghTokens = this.getSessions(sessions, 'github');
+
+            // Add session that is required for github-browser extension
+            if (await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) && ghTokens.length > 0) {
+                const githubSessionRepo: VSCodeDefaultAuthSession = {
+                    id: DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
+                    accessToken: ghTokens[0].accessToken,
+                    scopes: ['repo'],
+                    type: 'github'
+                };
+                ghTokens.push(githubSessionRepo);
+            }
 
             return JSON.stringify(ghTokens);
         }
