@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourcePoolStateSnapshotRecord.cs" company="Microsoft">
+// <copyright file="ResourcePoolStateSnapshotRecord.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -73,6 +73,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         /// </summary>
         [JsonProperty(PropertyName = "readyUnassignedNotVersionCount")]
         public int ReadyUnassignedNotVersionCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the count of ready unassigned item that aren't the current version.
+        /// </summary>
+        [JsonProperty(PropertyName = "pendingRquestCount")]
+        public int PendingRquestCount { get; set; }
 
         /// <summary>
         /// Gets or sets the current pool Dimensions.

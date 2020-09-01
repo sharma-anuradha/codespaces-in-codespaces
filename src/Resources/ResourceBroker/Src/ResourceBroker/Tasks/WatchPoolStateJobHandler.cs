@@ -28,20 +28,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="resourceRepository">Target resource repository.</param>
         /// <param name="resourcePoolStateSnapshotRepository">Target resource pool state snapshot repository.</param>
         /// <param name="taskHelper">Task helper.</param>
+        /// <param name="requestQueueProvider">Request Queue Provider.</param>
         public WatchPoolStateJobHandler(
             IResourcePoolDefinitionStore resourcePoolDefinitionStore,
             IResourceRepository resourceRepository,
             IResourcePoolStateSnapshotRepository resourcePoolStateSnapshotRepository,
-            ITaskHelper taskHelper)
+            ITaskHelper taskHelper,
+            IResourceRequestQueueProvider requestQueueProvider)
             : base(resourcePoolDefinitionStore, taskHelper)
         {
             ResourceRepository = resourceRepository;
             ResourcePoolStateSnapshotRepository = resourcePoolStateSnapshotRepository;
+            RequestQueueProvider = requestQueueProvider;
         }
 
         private IResourceRepository ResourceRepository { get; }
 
         private IResourcePoolStateSnapshotRepository ResourcePoolStateSnapshotRepository { get; }
+
+        private IResourceRequestQueueProvider RequestQueueProvider { get; }
 
         private string LogBaseName => ResourceLoggingConstants.WatchPoolStateJobHandler;
 
@@ -77,6 +82,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var isReadyAtTargetCount = poolReadyUnassignedVersionCount == resourcePool.TargetCount;
             logger.FluentAddValue("PoolIsReadyAtTargetCount", isReadyAtTargetCount);
 
+            var pendingRequestCount = await RequestQueueProvider.GetPendingRequestCountForPoolAsync(poolCode, logger.NewChildLogger());
+            logger.FluentAddValue("PoolPendingRequestCount", pendingRequestCount);
+
             // Setup model
             var record = new ResourcePoolStateSnapshotRecord()
             {
@@ -92,6 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ReadyUnassignedCount = poolReadyUnassignedCount,
                 ReadyUnassignedVersionCount = poolReadyUnassignedVersionCount,
                 ReadyUnassignedNotVersionCount = poolReadyUnassignedNotVersionCount,
+                PendingRquestCount = pendingRequestCount,
                 Dimensions = resourcePool.Details.GetPoolDimensions(),
                 IsEnabled = resourcePool.IsEnabled,
                 OverrideIsEnabled = resourcePool.OverrideIsEnabled,

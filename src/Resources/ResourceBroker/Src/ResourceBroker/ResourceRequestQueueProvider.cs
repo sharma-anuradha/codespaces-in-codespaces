@@ -122,6 +122,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 });
         }
 
+        /// <inheritdoc/>
+        public async Task<int> GetPendingRequestCountForPoolAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            var poolQueue = await GetPoolQueueAsync(poolCode);
+            await poolQueue.FetchAttributesAsync();
+            var pendingRequestCount = poolQueue.ApproximateMessageCount;
+            return pendingRequestCount ?? 0;
+        }
+
         private Task<ReadOnlyDictionary<string, CloudQueue>> InitializePoolRequestQueues(IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(

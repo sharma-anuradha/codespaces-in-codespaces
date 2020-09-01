@@ -24,6 +24,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         Task<ContinuationResult> DeletePoolQueueAsync(QueueProviderDeleteInput input, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Get Pending request count for pool.
+        /// </summary>
+        /// <param name="poolCode">resource pool code.</param>
+        /// <param name="logger">logger.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        Task<int> GetPendingRequestCountForPoolAsync(string poolCode, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Get pool queue.
         /// </summary>
         /// <param name="poolCode">resource pool code.</param>
