@@ -10,6 +10,9 @@ body, html {
   overflow: hidden;
 }
 
-.supported-browser .portal-layout, .supported-browser .vsonline-workbench {
+.vso-sunset .portal-layout, .vso-sunset .vsonline-workbench {
   top: 32px
+}
+.supported-browser .portal-layout, .supported-browser .vsonline-workbench {
+  top: 64px
 }

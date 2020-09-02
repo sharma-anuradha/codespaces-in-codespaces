@@ -10,6 +10,7 @@ import { telemetry } from './utils/telemetry';
 import { ApplicationLoadEvent } from './utils/telemetry/ApplicationLoadEvent';
 import { MessageBar, MessageBarType, Link } from 'office-ui-fabric-react';
 import { isSupportedBrowser, isPartiallySupportedBrowser } from './utils/detection';
+import { injectMessageParametersJSX } from './utils/injectMessageParameters';
 import classnames from 'classnames';
 import { withTranslation, WithTranslation } from 'react-i18next';
 import './loc/i18n'
@@ -105,7 +106,7 @@ class AppRoot extends Component<AppProps, AppState> {
         );
 
         const unsupportedBrowserBar = (
-            <div style={{ margin: '0 -.8rem' }}>
+            <div>
                 <MessageBar messageBarType={MessageBarType.warning}>
                     Your browser isn’t currently supported in the preview, but we’ll be adding
                     support soon.{' '}
@@ -121,6 +122,21 @@ class AppRoot extends Component<AppProps, AppState> {
             </div>
         );
 
+        const vsoSunsetBar = (
+            <div>
+                <MessageBar messageBarType={MessageBarType.warning}>
+                    {injectMessageParametersJSX(translation('vsoSunset'),
+                        <Link href='https://github.com/codespaces' target='_blank'>
+                            GitHub
+                        </Link>
+                    )}
+                    <Link href='https://aka.ms/vscs-moving' target='_blank'>
+                        {translation('learnMore')}
+                    </Link>
+                </MessageBar>
+            </div>
+        );
+
         var appClassName = '';
         var browserBar;
 
@@ -130,12 +146,13 @@ class AppRoot extends Component<AppProps, AppState> {
                 ? partiallySupportedBrowserBar
                 : unsupportedBrowserBar;
         } else {
-            appClassName = 'vsonline';
+            appClassName = classnames('vsonline', 'vso-sunset');
             browserBar = null;
         }
 
         return (
             <div className={appClassName} key='main-app'>
+                {vsoSunsetBar}
                 {browserBar}
                 {this.renderMain()}
             </div>

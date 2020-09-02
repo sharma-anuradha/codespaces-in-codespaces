@@ -187,6 +187,7 @@
     "unregister": "Unregister",
     "valueIsTooLong": "Maximum length is {}.",
     "viewSuspendBehaviorDetails": "View suspend behavior details",
+    "vsoSunset": "Visual Studio Codespaces is moving to{} and this portal will be retired on February 17, 2021.",
     "wantToProceed": "Do you want to proceed?",
     "warning": "Warning",
     "weAreGettingThingsReady": "We are getting things ready.",
