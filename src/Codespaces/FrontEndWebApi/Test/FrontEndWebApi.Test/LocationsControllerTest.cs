@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -13,7 +13,9 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Moq;
@@ -136,20 +138,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             Assert.Equal("PremiuimWindows", locationInfo.Skus[2].Name);
             Assert.Equal(DefaultAutoSuspendDelayMinutes, locationInfo.DefaultAutoSuspendDelayMinutes);
         }
-
+    
         private LocationsController CreateTestLocationsController(ISkuCatalog skuCatalog, ISkuUtils skuUtils, ICurrentUserProvider currentUserProvider = null)
         {
+            var currentLocationProviderMock = MockCurrentLocationProvider();
             var controller = new LocationsController(
-                MockCurrentLocationProvider(),
+                currentLocationProviderMock,
                 MockControlPlaneInfo(),
                 skuCatalog,
                 currentUserProvider ?? MockCurrentUserProvider(),
                 MockUtil.MockPlanManager(() => MockUtil.GeneratePlan(planName: planName, subscription: subscription, resourceGroup: resourceGroup)),
             new PlanManagerSettings
-                {
-                    DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
-                },
-                skuUtils);
+            {
+                DefaultAutoSuspendDelayMinutesOptions = DefaultAutoSuspendDelayMinutes,
+            },
+                skuUtils,
+                new Middleware.GitHubFixedPlansMapper(currentLocationProviderMock, new FrontEndAppSettings(), new Mock<IGithubApiHttpClientProvider>().Object));
 
             var httpContext = MockHttpContext.Create();
             var logger = new Mock<IDiagnosticsLogger>().Object;

@@ -2,13 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -16,6 +17,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Environme
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
 {
@@ -28,22 +31,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
     /// </summary>
     public class GitHubFixedPlansMapper
     {
+        private readonly JsonSerializer jsonSerializer;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="GitHubFixedPlansMapper"/> class.
         /// </summary>
         /// <param name="currentLocationProvider">The current location provider.</param>
         /// <param name="frontEndAppSettings">The Front End Settings.</param>
+        /// <param name="githubApiHttpClientProvider">The GitHub API client.</param>
         public GitHubFixedPlansMapper(
             ICurrentLocationProvider currentLocationProvider,
-            FrontEndAppSettings frontEndAppSettings)
+            FrontEndAppSettings frontEndAppSettings,
+            IGithubApiHttpClientProvider githubApiHttpClientProvider)
         {
             CurrentLocationProvider = Requires.NotNull(currentLocationProvider, nameof(currentLocationProvider));
             FrontEndAppSettings = Requires.NotNull(frontEndAppSettings, nameof(frontEndAppSettings));
+            GithubApiHttpClientProvider = Requires.NotNull(githubApiHttpClientProvider, nameof(githubApiHttpClientProvider));
+
+            this.jsonSerializer = JsonSerializer.Create(new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.None,
+            });
         }
 
         private ICurrentLocationProvider CurrentLocationProvider { get; }
 
         private FrontEndAppSettings FrontEndAppSettings { get; }
+
+        private IGithubApiHttpClientProvider GithubApiHttpClientProvider { get; }
 
         /// <summary>
         /// Returns the <see cref="VsoPlan"/> we should be using. It uses the <see cref="CurrentLocationProvider"/>
@@ -86,14 +101,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
         }
 
         /// <summary>
-        /// Maps values in the parameter to preselected values from the configuration.
+        /// When the authentication happens through GitHub, the callback is used, to change the value of
+        /// planId.
         /// </summary>
-        /// <param name="createCloudEnvironmentBody">The parameter containing all the values relevant to the map.</param>
+        /// <param name="planIdModifier">The callback to use with the new plan id.</param>
         /// <param name="request">The HTTP Request triggering this call, used to check if the GitHub auth handler was ran.</param>
-        public void ApplyValuesWhenGitHubTokenIsUsed(CreateCloudEnvironmentBody createCloudEnvironmentBody, HttpRequest request)
+        public void ApplyValuesWhenGitHubTokenIsUsed(Action<string> planIdModifier, HttpRequest request)
         {
+            Requires.NotNull(planIdModifier, nameof(planIdModifier));
             request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out StringValues headerValue);
-            if (!headerValue.Any(x => string.Equals(bool.TrueString, x, StringComparison.OrdinalIgnoreCase)))
+            if (headerValue.All(x => string.IsNullOrEmpty(x)))
             {
                 // it appears we aren't in a GitHub auth session
                 return;
@@ -107,7 +124,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware
                 return;
             }
 
-            createCloudEnvironmentBody.PlanId = plan.Plan.ResourceId;
+            planIdModifier(plan.Plan.ResourceId);
+        }
+
+        /// <summary>
+        /// Determines if the current user is a Microsoft internal user.
+        /// </summary>
+        /// <param name="request">The HTTP Request.</param>
+        /// <param name="user">The User making the request.</param>
+        /// <returns>Return true if the user belongs to the Microsoft org. If the current request
+        /// is not authorized through a GitHub token, this will immediately return false.</returns>
+        public async Task<bool> IsMicrosoftInternalUserAsync(HttpRequest request, ClaimsPrincipal user)
+        {
+            request.Headers.TryGetValue(GitHubAuthenticationHandler.GitHubAuthenticationHandlerHeader, out StringValues headerValue);
+            var token = headerValue.FirstOrDefault();
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            var username = user.FindFirst(CustomClaims.Username)?.Value;
+            if (string.IsNullOrEmpty(username))
+            {
+                return false;
+            }
+
+            try
+            {
+                var httpClient = GithubApiHttpClientProvider.HttpClient;
+                var orgRequest = new HttpRequestMessage(HttpMethod.Get, $"/orgs/microsoft/members/{username}");
+                orgRequest.Headers.Authorization = new AuthenticationHeaderValue("token", token);
+                var response = await httpClient.SendAsync(orgRequest);
+
+                return response.StatusCode == HttpStatusCode.NoContent;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

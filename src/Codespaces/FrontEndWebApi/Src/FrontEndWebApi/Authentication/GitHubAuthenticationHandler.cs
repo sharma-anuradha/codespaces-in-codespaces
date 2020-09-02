@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// Defines the header value set by this auth handler when ran, so that we can check
         /// later down the line.
         /// </summary>
-        public const string GitHubAuthenticationHandlerHeader = "__enableGitHubAuth";
+        public const string GitHubAuthenticationHandlerHeader = "__githubToken";
 
         private readonly HttpClient httpClient;
         private readonly IDiagnosticsLoggerFactory loggerFactory;
@@ -162,7 +162,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 loggerFactory.New());
 
             this.Request.Headers["Authorization"] = $"Bearer {tx}";
-            this.Request.Headers[GitHubAuthenticationHandlerHeader] = bool.TrueString;
+            this.Request.Headers[GitHubAuthenticationHandlerHeader] = token;
 
             var authScheme = await this.AuthenticationSchemeProvider.GetSchemeAsync(JwtBearerUtility.VsoAuthenticationScheme);
             var handler = (IAuthenticationHandler)ActivatorUtilities.CreateInstance(

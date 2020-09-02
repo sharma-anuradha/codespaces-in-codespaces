@@ -860,7 +860,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
             var tokenProvider = new Mock<ITokenProvider>();
             accessTokenReader ??= new Mock<ICascadeTokenReader>().Object;
-            var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings);
+            var gitHubApiClientProvider = new Mock<IGithubApiHttpClientProvider>().Object;
+            var gitHubFixedPlansMapper = new GitHubFixedPlansMapper(currentLocationProvider, settings, gitHubApiClientProvider);
 
             var environmentController = new EnvironmentsController(
                 environmentManager,

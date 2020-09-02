@@ -349,7 +349,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             // Apply values if we're authenticating using a GitHub token.
-            GitHubFixedPlansMapper.ApplyValuesWhenGitHubTokenIsUsed(createEnvironmentInput, this.Request);
+            GitHubFixedPlansMapper.ApplyValuesWhenGitHubTokenIsUsed(planId => { createEnvironmentInput.PlanId = planId; }, this.Request);
 
             var environmentCreateDetails = Mapper.Map<CreateCloudEnvironmentBody, EnvironmentCreateDetails>(createEnvironmentInput);
             logger.AddSkuName(environmentCreateDetails.SkuName);

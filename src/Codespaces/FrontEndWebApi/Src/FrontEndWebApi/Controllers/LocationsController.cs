@@ -50,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="planManager">The plan manager.</param>
         /// <param name="planManagerSettings">The default plan settings.</param>
         /// <param name="skuUtils">skuUtils to find sku eligiblity.</param>
+        /// <param name="gitHubFixedPlansMapper">The GitHubFixedPlansMapper.</param>
         public LocationsController(
             ICurrentLocationProvider locationProvider,
             IControlPlaneInfo controlPlaneInfo,
@@ -57,7 +58,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ICurrentUserProvider currentUserProvider,
             IPlanManager planManager,
             PlanManagerSettings planManagerSettings,
-            ISkuUtils skuUtils)
+            ISkuUtils skuUtils,
+            GitHubFixedPlansMapper gitHubFixedPlansMapper)
         {
             LocationProvider = locationProvider;
             ControlPlaneInfo = controlPlaneInfo;
@@ -66,6 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             PlanManager = planManager;
             PlanManagerSettings = planManagerSettings;
             SkuUtils = skuUtils;
+            GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
         }
 
         private ICurrentLocationProvider LocationProvider { get; }
@@ -81,6 +84,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private PlanManagerSettings PlanManagerSettings { get; }
 
         private ISkuUtils SkuUtils { get; }
+
+        private GitHubFixedPlansMapper GitHubFixedPlansMapper { get; }
 
         /// <summary>
         /// Get the current location and list of globally available locations.
@@ -175,6 +180,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             var currentUserProfile = await CurrentUserProvider.GetProfileAsync();
+            var actualUserEmail = currentUserProfile.Email;
+
+            // We do this, because users that we "fake", from GitHub, don't carry the same information
+            // about SKU access. This makes it easier to keep the existing logic for checking SKU access.
+            // NOTE: this call will return false, if this request IS NOT authorized by GitHub.
+            if (await GitHubFixedPlansMapper.IsMicrosoftInternalUserAsync(Request, User))
+            {
+                currentUserProfile.Email = $"{currentUserProfile.UserName}.github@microsoft.com";
+            }
+
             foreach (var sku in skusFilteredByLocation)
             {
                 var isEnabled = await SkuUtils.IsVisible(sku, planInfo, currentUserProfile);
@@ -183,6 +198,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     skus.Add(sku);
                 }
             }
+
+            currentUserProfile.Email = actualUserEmail;
 
             VsoPlan vsoPlan = null;
             if (planInfo != null)
