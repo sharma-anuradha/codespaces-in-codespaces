@@ -39,6 +39,18 @@
       "maxLength": 36,
       "defaultValue": ""
     },
+    "appSpId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "defaultValue": ""
+    },
+    "firstPartyAppSpId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "defaultValue": ""
+    },
     "adminsGroup": {
       "type": "string",
       "minLength": 36,
@@ -79,6 +91,8 @@
     "isDataPlane": "[equals(variables('plane'),'data')]",
     "location": "[parameters('location')]",
     "opsSpId": "[if(variables('isDataPlane'),'',parameters('opsSpId'))]",
+    "appSpId": "[parameters('appSpId')]",
+    "firstPartyAppSpId": "[parameters('firstPartyAppSpId')]",
     "adminsGroup": "[parameters('adminsGroup')]",
     "contributorsGroup": "[parameters('contributorsGroup')]",
     "breakGlassGroup": "[parameters('breakGlassGroup')]",
@@ -189,6 +203,30 @@
         "principalType": "ServicePrincipal"
       }
     },
+    // Assign Contributor to the App service principal
+    {
+      "condition": "[not(empty(variables('appSpId')))]",
+      "name": "[guid(subscription().id,variables('appSpId'),variables('contributorRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleId')]",
+        "principalId": "[variables('appSpId')]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    // Assign Contributor to the First-Party App service principal
+    {
+      "condition": "[not(empty(variables('firstPartyAppSpId')))]",
+      "name": "[guid(subscription().id,variables('firstPartyAppSpId'),variables('contributorRoleId'))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "properties": {
+        "roleDefinitionId": "[variables('contributorRoleId')]",
+        "principalId": "[variables('firstPartyAppSpId')]",
+        "principalType": "ServicePrincipal"
+      }
+    },
     // Assign "Azure Service Deploy Release Management Contributor" to the Ops service principal
     // TODO: is this role assignment still required for Ev2?
     {
@@ -226,7 +264,7 @@
         "principalType": "Group"
       }
     },
-    // Assign Reader to the team Contribututors group (non-prod only)
+    // Assign Contributor to the team Contribututors group (non-prod only)
     {
       "condition": "[not(empty(variables('contributorsGroup')))]",
       "name": "[guid(subscription().id,variables('contributorsGroup'),variables('contributorRoleId'))]",

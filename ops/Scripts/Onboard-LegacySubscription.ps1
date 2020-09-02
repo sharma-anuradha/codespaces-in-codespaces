@@ -81,6 +81,16 @@ function Get-AdSp([string]$DisplayName) {
     $sp
 }
 
+function Get-AdSpByAppId([string]$ApplicationId) {
+    $sp = Get-AzADServicePrincipal -ApplicationId $ApplicationId
+    if (!$sp) {
+        throw "Service principal does not exist for appid: $ApplicationId"
+    }
+    "$($sp.DisplayName) $($sp.Id)" | Out-String | Write-Host -ForegroundColor DarkGray
+    $sp
+}
+
+
 function Get-AdGroup([string]$DisplayName) {
     $group = Get-AzADGroup -DisplayName $DisplayName
     if (!$group) {
@@ -146,6 +156,11 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
             New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $contributorsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
+
+            if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
+                Write-Host "Assigning first-party app access for dev" -ForegroundColor Green
+                New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppDev | Out-Null
+            }
         }
         elseif ($env -eq "ppe") {
             Write-Host "Assigning team access control for ppe" -ForegroundColor Green
@@ -155,15 +170,22 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
+
+            if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
+                Write-Host "Assigning first-party app access for ppe" -ForegroundColor Green
+                New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppPpe | Out-Null
+            }
         }
         elseif ($env -eq "prod") {
             Write-Host "Assigning team access control for prod" -ForegroundColor Green
             if ($AdminOwner) {
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
             }
-            # A prior version of the script added these. But they shouldn't be present for prod.
-            Remove-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $adminsGroup | Out-Null
-            Remove-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $contributorsGroup | Out-Null
+
+            if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
+                Write-Host "Assigning first-party app access for prod" -ForegroundColor Green
+                New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppProd | Out-Null
+            }
         }
     }
 }
@@ -171,13 +193,17 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
 # User must be Owner to run this script on the subscription.
 # Assert-SignedInUserIsOwner | Out-Null
 
-# Get the group accounts for subscription RBAC.
+# Get the group accounts and appids for subscription RBAC.
 if (!$SkipRbac) {
     Write-Host "Getting group security accounts..." -ForegroundColor Green
     $script:adminsGroup = Get-AdGroup -DisplayName "vsclk-core-admin-a98a"
     $script:breakGlassGroup = Get-AdGroup -DisplayName "vsclk-core-breakglass-823b"
     $script:contributorsGroup = Get-AdGroup -DisplayName "vsclk-core-contributors-3a5d"
     $script:readersGroup = Get-AdGroup -DisplayName "vsclk-core-readers-fd84"
+    Write-Host "Getting first-party appids..." -ForegroundColor Green
+    $script:firstPartyAppDev = Get-AdSpByAppId -ApplicationId "48ef7923-268f-473d-bcf1-07f0997961f4"
+    $script:firstPartyAppProd = Get-AdSpByAppId -ApplicationId "9bd5ab7f-4031-4045-ace9-6bebbad202f6"
+    $script:firstPartyAppPpe = $script:firstPartyAppProd
 }
 
 foreach ($SubscripionName in $SubscriptionNames) {

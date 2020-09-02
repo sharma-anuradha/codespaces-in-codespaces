@@ -52,10 +52,36 @@ if (!$SkipRegistrations) {
 $opsSpId = ""
 if ($Plane -ne "data") {
     Write-Host
-    Write-Host "Ensuring ops service principal exists..."
+    Write-Host "Ensuring core-ops service principal exists..."
     $opsSp = Get-ServicePrincipal -Prefix $Prefix -Component "core" -Env $Env -Plane "ops" -Create
     $opsSp | Out-String | Write-Host -ForegroundColor DarkGray
     $opsSpId = $opsSp.Id
+}
+
+# Get or create the app service principal, needed for runtime access.
+$appSpId = ''
+if ($Plane -ne 'ops') {
+    Write-Host
+    Write-Host 'Ensuring app service principal exists...'
+    $appSp = Get-ServicePrincipal -Prefix $Prefix -Component $Component -Env $Env -Plane 'ctl' -Create
+    $appSp | Out-String | Write-Host -ForegroundColor DarkGray
+    $appSpId = $opsSp.Id
+}
+
+# Get or create the first-party app service principal, needed for runtime access in compute subs.
+$firstPartyAppSpId = ''
+if ($Plane -eq 'data' -and $DataType -eq 'compute') {
+    Write-Host
+    Write-Host 'Getting first-party app service principal...'
+    if ($Env -eq 'ppe' -or $Env -eq 'prod') {
+        $appId = '9bd5ab7f-4031-4045-ace9-6bebbad202f6'
+    }
+    else {
+        $appId = '48ef7923-268f-473d-bcf1-07f0997961f4'
+    }
+    $firstPartyAppSpId = Get-AzADServicePrincipal -ApplicationId $appId
+    $firstPartyAppSpId | Out-String | Write-Host -ForegroundColor DarkGray
+    $firstPartyAppSpId = $firstPartyAppSpId.Id
 }
 
 # Get the group accounts for subscription RBAC.
@@ -75,13 +101,13 @@ if ($env -ne "ppe" -and $env -ne "prod") {
     $readersGroup = $readersGroup.Id
 }
 else {
-    # Do not assign these roles for production. They are JIT or break-glass only.
+    # Do not assign these group roles for production. They are JIT or break-glass only.
     $adminsGroup = ""
+    $contributorsGroup = ""
+    $readersGroup = ""
     $breakGlassGroup = Get-AzADGroup -DisplayName "BG-Codespaces"
     $breakGlassGroup | Out-String | Write-Host -ForegroundColor DarkGray
     $breakGlassGroup = $breakGlassGroup.Id
-    $contributorsGroup = ""
-    $readersGroup = ""
 }
 
 # Prepare the subscription onboarding ARM template and parameters
@@ -94,6 +120,8 @@ $parameters = @{
     plane             = $Plane
     location          = "westus2"
     opsSpId           = $opsSpId
+    appSpId           = $appSpId
+    firstPartyAppSpId = $firstPartyAppSpId
     adminsGroup       = $adminsGroup
     contributorsGroup = $contributorsGroup
     breakGlassGroup   = $breakGlassGroup
