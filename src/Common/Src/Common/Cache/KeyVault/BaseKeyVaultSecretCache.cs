@@ -71,15 +71,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// <inheritdoc/>
         public async Task<T> GetSecretAsync(string key, IDiagnosticsLogger logger)
         {
-            if (Cache.TryGetValue(key, out var value))
+            var secret = default(T);
+            var keyFound = Cache.TryGetValue(key, out secret);
+            if (!keyFound)
             {
-                return value;
+                secret = await RefreshSecretAsync(key, logger);
+
+                if (EqualityComparer<T>.Default.Equals(secret, default(T)))
+                {
+                    throw new KeyNotFoundException($"Secret {key} could not be retrieved from key vault"); 
+                }
             }
-            else
-            {
-                var secret = await RefreshSecretAsync(key, logger);
-                return secret;
-            }
+
+            return secret;
         }
 
         /// <summary>

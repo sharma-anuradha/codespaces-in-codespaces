@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
         {
             string configType = configurationType.ToString();
             string scope = GetScopeString(configurationScope);
-            string keyName = $"{componentName}{configurationName}";
+            string keyName = $"{componentName}-{configurationName}";
             string key = $"{configType}:{scope}:{keyName}";
             return key.ToLower();
         }

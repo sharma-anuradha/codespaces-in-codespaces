@@ -5,7 +5,7 @@
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator
 {
     /// <summary>
-    /// Marker interface for the Configuration key generator. For details please visit this wiki page - https://github.com/microsoft/vssaas-planning/wiki/Configuration-Key-Generator
+    /// Marker interface for the Configuration key generator. For details please visit this wiki page - https://github.com/microsoft/vssaas-planning/wiki/Configuration-Reader
     /// </summary>
     public interface IConfigurationKeyGenerator
     {

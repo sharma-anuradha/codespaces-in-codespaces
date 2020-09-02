@@ -10,7 +10,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator
 {
     /// <summary>
-    /// A key generator for various configurations. For details please visit this wiki page - https://github.com/microsoft/vssaas-planning/wiki/Configuration-Key-Generator
+    /// A key generator for various configurations. For details please visit this wiki page - https://github.com/microsoft/vssaas-planning/wiki/Configuration-Reader
     /// </summary>
     public class ConfigurationReader : IConfigurationReader
     {
