@@ -69,11 +69,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
 
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
+            var plan = new VsoPlan {
+                Plan = VsoPlanInfo.TryParse(claimPlanId)
+            };
+
+            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan));
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
             var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
             await mockRegionalEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
+                mockPlanManager,
                 mockGlobalEnvironmentRepository,
                 mockRegionalEnvironmentRepository,
                 mockCurrentUserProvider);
@@ -159,8 +165,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         [MemberData(nameof(GetData))]
         public async Task GetEnvironment(AccessTest test)
         {
+            string notPlanId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/MyResourceGroup/providers/Microsoft.VSOnline/plans/not-test-plan";
+            string planId = $"/subscriptions/{Guid.NewGuid()}/resourceGroups/MyResourceGroup/providers/Microsoft.VSOnline/plans/test-plan";
             string userId = "test-user";
-            string planId = "test-plan";
 
             var claimScopes = test.Scopes;
             var claimEnvironments = test.Environments;
@@ -171,17 +178,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             }
             else if (test.IsMatchingPlan == false)
             {
-                claimPlanId = "not-" + planId;
+                claimPlanId = notPlanId;
             }
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
 
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
+            var plan = new VsoPlan {
+                Plan = VsoPlanInfo.TryParse(claimPlanId)
+            };
+
+            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan));
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
             var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
             await mockRegionalEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
+                mockPlanManager,
                 mockGlobalEnvironmentRepository,
                 mockRegionalEnvironmentRepository,
                 mockCurrentUserProvider);
@@ -372,11 +385,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var mockIdentity = new VsoClaimsIdentity(claimPlanId, claimScopes, claimEnvironments, new ClaimsIdentity());
             var mockCurrentUserProvider = MockUtil.MockCurrentUserProvider(identity: mockIdentity);
 
+            var plan = new VsoPlan {
+                Plan = VsoPlanInfo.TryParse(claimPlanId)
+            };
+
+            var mockPlanManager = MockUtil.MockPlanManager(() => Task.FromResult(plan));
             var mockEnv = MockUtil.MockCloudEnvironment(userId, planId);
             var mockGlobalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             var mockRegionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
             await mockRegionalEnvironmentRepository.CreateAsync(mockEnv, logger);
             var environmentManager = CreateEnvironmentManager(
+                mockPlanManager,
                 mockGlobalEnvironmentRepository,
                 mockRegionalEnvironmentRepository,
                 mockCurrentUserProvider);
@@ -409,6 +428,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
         }
 
         private static IEnvironmentManager CreateEnvironmentManager(
+            IPlanManager planManager,
             IGlobalCloudEnvironmentRepository globalRepository,
             IRegionalCloudEnvironmentRepository regionalRepository,
             ICurrentUserProvider currentUserProvider)
@@ -426,6 +446,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 Mock.Of<ISkuCatalog>(),
                 Mock.Of<ISkuUtils>());
             var listAction = new EnvironmentListAction(
+                planManager,
                 environmentRepository,
                 Mock.Of<ICurrentLocationProvider>(),
                 currentUserProvider,

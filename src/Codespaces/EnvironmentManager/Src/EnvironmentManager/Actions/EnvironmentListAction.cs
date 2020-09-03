@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -25,12 +26,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentListAction"/> class.
         /// </summary>
+        /// <param name="planManager">Target plan manager.</param>
         /// <param name="repository">Target repository.</param>
         /// <param name="currentLocationProvider">Target current location provider.</param>
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="environmentManagerSettings">Target environment manager settings.</param>
         public EnvironmentListAction(
+            IPlanManager planManager,
             ICloudEnvironmentRepository repository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,
@@ -39,12 +42,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             : base(repository, currentLocationProvider, currentUserProvider, controlPlaneInfo)
         {
             EnvironmentManagerSettings = Requires.NotNull(environmentManagerSettings, nameof(environmentManagerSettings));
+            PlanManager = Requires.NotNull(planManager, nameof(planManager));
         }
 
         /// <inheritdoc/>
         protected override string LogBaseName => "environment_list_action";
 
         private EnvironmentManagerSettings EnvironmentManagerSettings { get; }
+
+        private IPlanManager PlanManager { get; }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> RunAsync(
@@ -136,6 +142,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             var environments = Enumerable.Empty<CloudEnvironment>();
             var environmentNameInLowerCase = input.Name?.Trim()?.ToLowerInvariant();
+
+            if (input.PlanId != null)
+            {
+                // Validate that we are in the correct location for listing the plan's environments.
+                var planInfo = VsoPlanInfo.TryParse(input.PlanId);
+                var plan = await PlanManager.GetAsync(planInfo, logger.NewChildLogger());
+
+                if (plan != null)
+                {
+                    ValidateTargetLocation(plan.Plan.Location, logger);
+                }
+            }
 
             // The code is written like this to optimize the CosmosDB lookups - consider that optimization if modifying it.
             if (input.UserIdSet == null)
