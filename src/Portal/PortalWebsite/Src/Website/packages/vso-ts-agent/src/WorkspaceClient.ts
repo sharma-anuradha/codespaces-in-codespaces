@@ -96,14 +96,17 @@ export class WorkspaceClient implements rpc.Disposable {
         this.sshSession = new ssh.SshClientSession(config);
 
         // The client authenticates over SSH using the workspace session token.
-        this.sshSession.setPasswordCredential('', this.workspaceAccess.sessionToken);
+        const clientCredentials: ssh.SshClientCredentials = {
+            username: '',
+            password: this.workspaceAccess.sessionToken,
+        };
 
         // The server authenticates over SSH via a public key.
         this.sshSession.onAuthenticating((e) => {
             // At this point the SSH protocol has already validated that the server holds
             // the private key that corresponds to the public key in e.key. So we just need
             // to check if the public key matches one of the host keys published for the workspace.
-            e.authenticationPromise = this.authenticateServer(e.key!);
+            e.authenticationPromise = this.authenticateServer(e.publicKey!);
         });
 
         await this.sshSession.connect(this.socketStream);
@@ -115,7 +118,7 @@ export class WorkspaceClient implements rpc.Disposable {
         if (clientAuthenticatedCompletion) {
             // A completion was supplied. Send the client authentication request but don't
             // directly wait for the response. Route the response to the completion instead.
-            await this.sshSession.authenticateClient((err, result) => {
+            await this.sshSession.authenticateClient(clientCredentials, (err, result) => {
                 if (!err && !result) {
                     // Convert from a false result to an Error.
                     err = new Error('Live Share client authentication failed.');
@@ -126,7 +129,7 @@ export class WorkspaceClient implements rpc.Disposable {
             });
         } else {
             // No completion was supplied, so just wait for full client authentication now.
-            if (!(await this.sshSession.authenticateClient())) {
+            if (!(await this.sshSession.authenticateClient(clientCredentials))) {
                 throw new Error('Live Share client authentication failed.');
             }
         }
@@ -140,7 +143,7 @@ export class WorkspaceClient implements rpc.Disposable {
             // Get the public key bytes using the matching algorithm name to ensure a valid comparison.
             const hostKey = rsa.createKeyPair();
             await hostKey.setPublicKeyBytes(Buffer.from(knownHostKey, 'base64'));
-            const hostKeyBytes = (await hostKey.getPublicKeyBytes(serverKey.algorithmName))!;
+            const hostKeyBytes = (await hostKey.getPublicKeyBytes())!;
 
             if (serverKeyBytes.equals(hostKeyBytes)) {
                 // Returning a non-null object indicates successful authentication.

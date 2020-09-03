@@ -13,7 +13,7 @@
     "@uifabric/fluent-theme": "^7.0.4",
     "@uifabric/utilities": "7.8.0",
     "@vs/msal": "1.2.2-3",
-    "@vs/vs-ssh": "^2.0.10",
+    "@vs/vs-ssh": "^3.0.9",
     "@vs/vso-splash-screen": "^1.0.2126",
     "classnames": "^2.2.6",
     "custom-protocol-check": "^1.0.1",

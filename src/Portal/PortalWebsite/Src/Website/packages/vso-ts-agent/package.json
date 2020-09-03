@@ -24,7 +24,7 @@
   "dependencies": {
     "@types/debug": "^4.1.5",
     "@types/deep-equal": "^1.0.1",
-    "@vs/vs-ssh": "^2.0.10",
+    "@vs/vs-ssh": "^3.0.9",
     "debug": "^4.1.1",
     "deep-equal": "^2.0.1",
     "http-message-parser": "^0.0.34",

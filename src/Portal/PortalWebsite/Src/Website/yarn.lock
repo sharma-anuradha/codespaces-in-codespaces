@@ -1130,10 +1130,10 @@
   dependencies:
     tslib "^1.9.3"
 
-"@vs/vs-ssh@^2.0.10":
-  version "2.2.1"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-2.2.1.tgz#6879851d9dc1f55ac2644ab592de0414a9f29644"
-  integrity sha1-aHmFHZ3B9VrCZEq1kt4EFKnylkQ=
+"@vs/vs-ssh@^3.0.9":
+  version "3.0.9"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-3.0.9.tgz#530e463444eb38b5681f64304f4a528d80605bce"
+  integrity sha1-Uw5GNETrOLVoH2QwT0pSjYBgW84=
   dependencies:
     buffer "^5.2.1"
     debug "^4.1.1"

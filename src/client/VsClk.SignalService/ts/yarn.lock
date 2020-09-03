@@ -61,10 +61,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vs/vs-ssh@^2.4.6":
-  version "2.4.6"
-  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-2.4.6.tgz#e05c6af41737ce3b0455910856bbcda2a223ea6e"
-  integrity sha1-4Fxq9Bc3zjsEVZEIVrvNoqIj6m4=
+"@vs/vs-ssh@^3.0.9":
+  version "3.0.9"
+  resolved "https://devdiv.pkgs.visualstudio.com/_packaging/VS/npm/registry/@vs/vs-ssh/-/vs-ssh-3.0.9.tgz#530e463444eb38b5681f64304f4a528d80605bce"
+  integrity sha1-Uw5GNETrOLVoH2QwT0pSjYBgW84=
   dependencies:
     buffer "^5.2.1"
     debug "^4.1.1"
@@ -83,7 +83,7 @@
 "@vs/vso-signalr-ssh@link:ssh":
   version "0.0.0-placeholder"
   dependencies:
-    "@vs/vs-ssh" "^2.4.6"
+    "@vs/vs-ssh" "^3.0.9"
     "@vs/vso-signalr-client-proxy" "link:signalr-client-proxy"
 
 ajv@^6.5.5:
