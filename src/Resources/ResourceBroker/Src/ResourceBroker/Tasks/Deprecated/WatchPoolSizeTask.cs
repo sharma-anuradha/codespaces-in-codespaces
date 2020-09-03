@@ -19,7 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
-    /// Task mananager that watches the pool size and determins if any delta operations need to be
+    /// Task mananager that watches the pool size and determines if any delta operations need to be
     /// performed to fill/drain the pool.
     /// </summary>
     public class WatchPoolSizeTask : BaseWatchPoolTask, IWatchPoolSizeTask
@@ -146,7 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task<int> GetPoolUnassignedCountAsync(ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             return logger.RetryOperationScopeAsync(
-                   "{LogBaseName}_GetPoolUnassignedCountAsync_retry_scope",
+                   $"{LogBaseName}_GetPoolUnassignedCountAsync_retry_scope",
                    async (retryLogger) =>
                    {
                        return await ResourceRepository.GetPoolUnassignedCountAsync(resourcePool.Details.GetPoolDefinition(), logger.NewChildLogger());
@@ -156,7 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private Task<IEnumerable<string>> GetPoolUnassignedAsync(ResourcePool resourcePool, int count, IDiagnosticsLogger logger)
         {
             return logger.RetryOperationScopeAsync(
-                  "{LogBaseName}_GetPoolUnassignedAsync_retry_scope",
+                  $"{LogBaseName}_GetPoolUnassignedAsync_retry_scope",
                   async (retryLogger) =>
                   {
                       return await ResourceRepository.GetPoolUnassignedAsync(resourcePool.Details.GetPoolDefinition(), count, logger.NewChildLogger());
