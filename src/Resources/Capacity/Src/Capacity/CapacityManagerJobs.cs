@@ -191,6 +191,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 if (subGroupsByLocation.TryGetValue(location, out var subGroup))
                 {
                     subGroup.infraSub = infrastructureSubscription;
+                    subGroupsByLocation[location] = subGroup;
                 }
             }
 
