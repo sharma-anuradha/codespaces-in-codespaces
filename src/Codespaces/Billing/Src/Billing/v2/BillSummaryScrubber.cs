@@ -52,7 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private IBillingArchivalManager BillingArchivalManager { get; }
 
         /// <inheritdoc />
-        public Task ScrubBillSummariesForPlan(BillScrubberRequest request, IDiagnosticsLogger logger)
+        public Task ScrubBillSummariesForPlanAsync(BillScrubberRequest request, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_scrub_bill_summaries_for_plan",
@@ -139,26 +139,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var hasChanged = false;
 
                     // Group all events by their env id
-                    var envsGroupedByEnvironments = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id).ToDictionary(x => x.Key);
+                    var eventsGroupedByEnvironment = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id).ToDictionary(x => x.Key);
                     var environmentsToRemove = new List<EnvironmentUsage>();
 
-                    foreach (var env in billingSummary.UsageDetail)
+                    foreach (var envUsage in billingSummary.UsageDetail)
                     {
                         await childLogger.OperationScopeAsync(
                             $"{LogBaseName}_check_for_correct_final_states_environment",
                             (innerLogger) =>
                             {
-                                var environmentEvents = envsGroupedByEnvironments[env.Id];
-                                innerLogger.FluentAddValue("CloudEnvironmentId", env.Id);
-                                if (!environmentEvents.Any())
+                                innerLogger.FluentAddValue("CloudEnvironmentId", envUsage.Id);
+                                if (!eventsGroupedByEnvironment.ContainsKey(envUsage.Id))
                                 {
                                     // We probably deleted this environment or archived it's bits. We need to remove this environment from the bill.
-                                    environmentsToRemove.Add(env);
+                                    environmentsToRemove.Add(envUsage);
                                     hasChanged = true;
                                     innerLogger.FluentAddValue("MissingAllEnvironmentStates", true);
                                     return Task.CompletedTask;
                                 }
 
+                                var environmentEvents = eventsGroupedByEnvironment[envUsage.Id];
                                 var lastEnvEventChange = BillingUtilities.GetLastBillableEventStateChange(environmentEvents);
                                 if (lastEnvEventChange is null)
                                 {
@@ -170,9 +170,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 // We have the latest billable state. Let's see if it differs from the previous state.
                                 var lastState = lastEnvEventChange.NewValue;
                                 innerLogger.FluentAddValue("NewFinalState", lastState)
-                                           .FluentAddValue("OriginalFinalState", env.EndState);
+                                           .FluentAddValue("OriginalFinalState", envUsage.EndState);
 
-                                if (lastState == env.EndState)
+                                if (lastState == envUsage.EndState)
                                 {
                                     return Task.CompletedTask;
                                 }
@@ -180,7 +180,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 innerLogger.FluentAddValue("CorrectedFinalState", true);
 
                                 // correct the final state.
-                                env.EndState = lastState;
+                                envUsage.EndState = lastState;
                                 hasChanged = true;
                                 return Task.CompletedTask;
                             });
@@ -225,16 +225,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     var hasChanged = false;
 
                     // Group all events by their env id
-                    var envsGroupedByEnvironments = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id);
-                    foreach (var env in envsGroupedByEnvironments)
+                    var eventsGroupedByEnvironment = allOlderEnvironmentEvents.GroupBy(x => x.Environment.Id);
+                    foreach (var envEvents in eventsGroupedByEnvironment)
                     {
-                        // Do we already have some sort of record of this environmnet. If so, do nothing.
-                        if (billingSummary?.UsageDetail != null && billingSummary.UsageDetail.Any(x => x.Id == env.Key))
+                        // Do we already have some sort of record of this environment? If so, do nothing.
+                        if (billingSummary?.UsageDetail != null && billingSummary.UsageDetail.Any(x => x.Id == envEvents.Key))
                         {
                             continue;
                         }
 
-                        var lastEnvEventChange = BillingUtilities.GetLastBillableEventStateChange(env);
+                        var lastEnvEventChange = BillingUtilities.GetLastBillableEventStateChange(envEvents);
                         if (lastEnvEventChange is null)
                         {
                             // If we get this far, we could not find an appropriate billing event. Perhaps it never became available after this time range started. If so, do nothing.
@@ -254,7 +254,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             EndState = lastState,
                             Sku = lastEnvEventChange.Environment.Sku,
                             Usage = new Dictionary<string, double>(),
-                            Id = env.Key,
+                            Id = envEvents.Key,
                         };
 
                         logger.FluentAddValue("EndState", envUsageDetails.EndState)

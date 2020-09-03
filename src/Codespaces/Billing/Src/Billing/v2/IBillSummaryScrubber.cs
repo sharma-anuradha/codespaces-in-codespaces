@@ -19,6 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="request">identifies which plan needs to have it's records scrubbed.</param>
         /// <param name="logger">the logger.</param>
         /// <returns>A task indicating completion.</returns>
-        public Task ScrubBillSummariesForPlan(BillScrubberRequest request, IDiagnosticsLogger logger);
+        public Task ScrubBillSummariesForPlanAsync(BillScrubberRequest request, IDiagnosticsLogger logger);
     }
 }

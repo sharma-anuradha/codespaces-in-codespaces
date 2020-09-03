@@ -41,7 +41,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 {
                     childLogger.FluentAddValue(BillingLoggingConstants.PlanId, payload.PlanId);
 
-                    await BillSummaryScrubber.ScrubBillSummariesForPlan(payload, childLogger.NewChildLogger());
+                    await BillSummaryScrubber.ScrubBillSummariesForPlanAsync(payload, childLogger.NewChildLogger());
                 });
         }
     }

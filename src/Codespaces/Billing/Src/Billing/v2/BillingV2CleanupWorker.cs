@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                             "cleanup",
                             async (plan, innerLogger) =>
                             {
-                                await billSummaryScrubber.ScrubBillSummariesForPlan(
+                                await billSummaryScrubber.ScrubBillSummariesForPlanAsync(
                                 new BillScrubberRequest
                                 {
                                     PlanId = plan.Id,
