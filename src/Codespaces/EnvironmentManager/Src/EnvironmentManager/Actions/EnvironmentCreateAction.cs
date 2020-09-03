@@ -32,7 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
     {
         private const string QueueResourceAllocationFeatureFlagKey = "featureflag:queue-resource-request-windows-enabled";
        
-        private const bool QueueResourceAllocationDefault = false;
+        private const bool QueueResourceAllocationDefault = true;
         
         private readonly Regex envNameRegex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
        
