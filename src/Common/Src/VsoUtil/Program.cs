@@ -49,7 +49,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(SuspendEnvironmentCommand),
                     typeof(BanSubscriptionCommand),
                     typeof(DeletePlanCommand),
-                    typeof(DisableBillingCommand))
+                    typeof(DisableBillingCommand),
+                    typeof(FeatureToggleCommand),
+                    typeof(UpdateConfigSettingCommand),
+                    typeof(UpdateQuotaSettingCommand))
                 .WithParsed<ShowDbAccountInfoCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CreatePortForwardingConnection>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<PortForwardingConnectionEstablished>(command => command.Execute(Console.Out, Console.Error))
@@ -74,6 +77,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<BanSubscriptionCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<DeletePlanCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<DisableBillingCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<FeatureToggleCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<UpdateConfigSettingCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<UpdateQuotaSettingCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithNotParsed(errs => { exitCode = 1; });
             }
             catch (Exception ex)

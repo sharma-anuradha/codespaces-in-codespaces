@@ -64,8 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         {
             if (!TimeSpan.TryParse(Duration, out var duration) || duration.TotalMilliseconds <= 0)
             {
-                stderr.WriteLine($"Invalid duration: {Duration}");
-                return;
+                throw new Exception($"Invalid duration: {Duration}");
             }
 
             var now = DateTime.UtcNow;
@@ -76,8 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             {
                 if (!Guid.TryParse(SubscriptionId, out var id))
                 {
-                    stderr.WriteLine($"Invalid Subscription ID: {SubscriptionId}");
-                    return;
+                    throw new Exception($"Invalid Subscription ID: {SubscriptionId}");
                 }
 
                 DisableBillingForSubscriptionAsync(services, id, startTime, endTime, stdout, stderr).Wait();
@@ -86,15 +84,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             {
                 if (!Guid.TryParse(PlanId, out var id))
                 {
-                    stderr.WriteLine($"Invalid Plan ID: {PlanId}");
-                    return;
+                    throw new Exception($"Invalid Plan ID: {PlanId}");
                 }
 
                 DisableBillingForPlanAsync(services, id, startTime, endTime, stdout, stderr).Wait();
             }
             else
             {
-                stderr.WriteLine("No plan or subscription specified.");
+                throw new Exception("No plan or subscription specified.");
             }
         }
 
@@ -114,10 +111,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 {
                     subscription = await manager.GetSubscriptionAsync(id.ToString(), logger);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    await stderr.WriteLineAsync($"Subscription not found: {SubscriptionId}");
-                    return;
+                    throw new Exception($"Subscription not found: {SubscriptionId}", ex);
                 }
 
                 if (Verbose || DryRun)
@@ -166,10 +162,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 {
                     plan = (await planRepository.GetWhereAsync(x => x.Id == id.ToString(), logger, null)).Single();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    await stderr.WriteLineAsync($"Plan not found: {id}");
-                    return;
+                    throw new Exception($"Plan not found: {id}", ex);
                 }
 
                 if (Verbose || DryRun)

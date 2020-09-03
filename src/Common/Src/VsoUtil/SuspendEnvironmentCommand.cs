@@ -49,8 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         {
             if (!Guid.TryParse(EnvironmentId, out var id))
             {
-                stderr.WriteLine($"Invalid Cloud Environment ID: {EnvironmentId}");
-                return;
+                throw new Exception($"Invalid Cloud Environment ID: {EnvironmentId}");
             }
 
             SuspendEnvironmentAsync(services, id, stdout, stderr).Wait();
@@ -73,8 +72,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 }
                 catch (Exception ex)
                 {
-                    await stderr.WriteLineAsync($"Environment not found: {EnvironmentId}. {ex.Message}");
-                    return;
+                    throw new Exception($"Environment not found: {EnvironmentId}. {ex.Message}", ex);
                 }
 
                 if (Verbose || DryRun)

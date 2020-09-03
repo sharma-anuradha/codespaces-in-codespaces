@@ -54,16 +54,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)
         {
             BannedReason reason;
-            Guid id;
 
-            try
+            if (!Guid.TryParse(SubscriptionId, out var id))
             {
-                id = Guid.Parse(SubscriptionId);
-            }
-            catch
-            {
-                stderr.WriteLine($"Invalid Subscription ID: {SubscriptionId}");
-                return;
+                throw new Exception($"Invalid Subscription ID: {SubscriptionId}");
             }
 
             if (Reason.Equals("ddos", StringComparison.OrdinalIgnoreCase))
@@ -104,8 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 }
                 catch (Exception ex)
                 {
-                    await stderr.WriteLineAsync($"Subscription not found: {SubscriptionId}. {ex.Message}");
-                    return;
+                    throw new Exception($"Subscription not found: {SubscriptionId}. {ex.Message}", ex);
                 }
 
                 if (Verbose || DryRun)

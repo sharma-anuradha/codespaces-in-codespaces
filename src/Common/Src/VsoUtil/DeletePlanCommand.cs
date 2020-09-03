@@ -50,8 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         {
             if (string.IsNullOrEmpty(PlanId) || !Guid.TryParse(PlanId, out var id))
             {
-                stderr.WriteLine($"Invalid Plan ID: {PlanId}");
-                return;
+                throw new Exception($"Invalid Plan ID: {PlanId}");
             }
 
             DeletePlanAsync(services, id, stdout, stderr).Wait();
@@ -75,8 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 }
                 catch (Exception ex)
                 {
-                    await stderr.WriteLineAsync($"Plan not found: {id}. {ex.Message}");
-                    return;
+                    throw new Exception($"Plan not found: {id}. {ex.Message}", ex);
                 }
 
                 if (Verbose || DryRun)
