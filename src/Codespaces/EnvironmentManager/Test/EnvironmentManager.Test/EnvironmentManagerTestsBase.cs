@@ -179,7 +179,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentSettings
                 );
             var environmentListAction = new EnvironmentListAction(
-               planManager,
                this.environmentRepository,
                MockUtil.MockCurrentLocationProvider(),
                MockUtil.MockCurrentUserProvider(),

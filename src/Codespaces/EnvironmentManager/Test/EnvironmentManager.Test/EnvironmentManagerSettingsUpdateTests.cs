@@ -620,7 +620,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var environmentCreateAction = new Mock<IEnvironmentCreateAction>().Object;
             var environmentDeleteRestoreAction = new Mock<IEnvironmentDeleteRestoreAction>().Object;
             var environmentListAction = new EnvironmentListAction(
-                planManager,
                 environmentRepository,
                 MockUtil.MockCurrentLocationProvider(),
                 currentUserProvider,
