@@ -45,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
             IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
+            ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -58,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
+            CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -84,6 +86,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
         private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
 
+        private ICloudEnvironmentRegionalMigrationTask CloudEnvironmentRegionalMigrationTask { get; }
+
         private ITaskHelper TaskHelper { get; }
 
         private Random Random { get; }
@@ -108,6 +112,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
             (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
             TimeSpan.FromMinutes(10));
+
+            // Job: Migrate cloud environments to the appropriate regional database
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.CloudEnvironmentRegionalMigrationTask}_run",
+                (childLogger) => CloudEnvironmentRegionalMigrationTask.RunTaskAsync(TimeSpan.FromHours(24), childLogger),
+                TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
             await Task.Delay(Random.Next(1000, 2000));

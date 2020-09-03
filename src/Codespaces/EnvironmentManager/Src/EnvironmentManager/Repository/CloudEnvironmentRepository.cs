@@ -22,7 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
     /// </summary>
     public class CloudEnvironmentRepository : ICloudEnvironmentRepository
     {
-        private RolloutStatus rolloutStatus = RolloutStatus.Phase2;
+        private RolloutStatus rolloutStatus = RolloutStatus.Phase1;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CloudEnvironmentRepository"/> class.
@@ -171,10 +171,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
         /// <inheritdoc/>
         public async Task<CloudEnvironment> GetAsync(DocumentDbKey id, IDiagnosticsLogger logger)
         {
-            var environment = await RegionalRepository.GetAsync(id, logger.NewChildLogger());
+            if (rolloutStatus == RolloutStatus.Phase1)
+            {
+                var environment = await RegionalRepository.GetAsync(id, logger.NewChildLogger());
 
-            // This returns the global repository's version of the CloudEnvironment if it doesn't exist in the regional repository which is needed for redirection to function properly.
-            return environment ?? await GlobalRepository.GetAsync(id, logger.NewChildLogger());
+                // This returns the global repository's version of the CloudEnvironment if it doesn't (yet?) exist in the regional repository since it may have just not been migrated yet.
+                return environment ?? await GlobalRepository.GetAsync(id, logger.NewChildLogger());
+            }
+            else
+            {
+                return await RegionalRepository.GetAsync(id, logger.NewChildLogger());
+            }
         }
 
         /// <inheritdoc/>
@@ -467,10 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 logger.NewChildLogger(),
                 (environment, childLogger) =>
                 {
-                    if (rolloutStatus == RolloutStatus.Phase1)
-                    {
-                        ids.Add(environment.Id);
-                    }
+                    ids.Add(environment.Id);
 
                     return itemCallback(environment, childLogger);
                 },
