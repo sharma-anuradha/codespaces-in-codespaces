@@ -12,6 +12,7 @@ prometheus:
       networkpolicies: false
       volumeattachments: false
   server:
+    retention: "24h"
     global:
       scrape_interval: 1m
   serverFiles:
