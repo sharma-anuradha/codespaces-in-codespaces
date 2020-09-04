@@ -180,17 +180,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             }
 
             var currentUserProfile = await CurrentUserProvider.GetProfileAsync();
-            string actualUserEmail = default;
-
-            // We do this, because users that we "fake", from GitHub, don't carry the same information
-            // about SKU access. This makes it easier to keep the existing logic for checking SKU access.
-            // NOTE: this call will return false, if this request IS NOT authorized by GitHub.
-            if (currentUserProfile != null && await GitHubFixedPlansMapper.IsMicrosoftInternalUserAsync(Request, User))
-            {
-                actualUserEmail = currentUserProfile.Email;
-                currentUserProfile.Email = $"{currentUserProfile.UserName}.github@microsoft.com";
-            }
-
             foreach (var sku in skusFilteredByLocation)
             {
                 var isEnabled = await SkuUtils.IsVisible(sku, planInfo, currentUserProfile);
@@ -198,11 +187,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 {
                     skus.Add(sku);
                 }
-            }
-
-            if (currentUserProfile != null)
-            {
-                currentUserProfile.Email = actualUserEmail;
             }
 
             VsoPlan vsoPlan = null;

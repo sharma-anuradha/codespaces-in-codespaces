@@ -5,11 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using Kusto.Cloud.Platform.Utils;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,6 +26,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -57,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         /// <param name="authSchemeProvider">The Auth Scheme Provider.</param>
         /// <param name="planManager">The Plan Manager.</param>
         /// <param name="gitHubFixedPlansMapper">The GitHub Plans Mapper.</param>
+        /// <param name="currentUserProvider">The Current User Provider.</param>
         public GitHubAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
@@ -67,7 +71,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             ITokenProvider tokenProvider,
             IAuthenticationSchemeProvider authSchemeProvider,
             IPlanManager planManager,
-            GitHubFixedPlansMapper gitHubFixedPlansMapper)
+            GitHubFixedPlansMapper gitHubFixedPlansMapper,
+            ICurrentUserProvider currentUserProvider)
             : base(options, logger, encoder, clock)
         {
             this.loggerFactory = Requires.NotNull(loggerFactory, nameof(loggerFactory));
@@ -82,6 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             PlanManager = Requires.NotNull(planManager, nameof(PlanManager));
             AuthenticationSchemeProvider = Requires.NotNull(authSchemeProvider, nameof(authSchemeProvider));
             GitHubFixedPlansMapper = Requires.NotNull(gitHubFixedPlansMapper, nameof(gitHubFixedPlansMapper));
+            CurrentUserProvider = Requires.NotNull(currentUserProvider, nameof(currentUserProvider));
         }
 
         private IAuthenticationSchemeProvider AuthenticationSchemeProvider { get; }
@@ -91,6 +97,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
         private IPlanManager PlanManager { get; }
 
         private GitHubFixedPlansMapper GitHubFixedPlansMapper { get; }
+
+        private ICurrentUserProvider CurrentUserProvider { get; }
 
         /// <inheritdoc/>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -140,6 +148,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 return AuthenticateResult.Fail("Missing username claim.");
             }
 
+            bool isMicrosoftInternalUser = false;
+            try
+            {
+                var orgRequest = new HttpRequestMessage(HttpMethod.Get, $"/orgs/microsoft/members/{username}");
+                orgRequest.Headers.Authorization = new AuthenticationHeaderValue("token", token);
+                var response = await this.httpClient.SendAsync(orgRequest);
+
+                isMicrosoftInternalUser = response.StatusCode == HttpStatusCode.NoContent;
+            }
+            catch
+            {
+                // NOOP
+            }
+
             var delegatedIdentity = new DelegateIdentity()
             {
                 DisplayName = username,
@@ -172,6 +194,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             // Force authentication
             var authenticationResult = await handler.AuthenticateAsync();
+            var profile = await CurrentUserProvider.GetProfileAsync();
+
+            // We do this, because users that we "fake", from GitHub, don't carry the same information
+            // about SKU access. This makes it easier to keep the existing logic for checking SKU access.
+            if (profile != null && isMicrosoftInternalUser) 
+            {
+                if (!profile.GetProgramsItem<bool>(ProfileExtensions.VisualStudioOnlineInternalWindowsSkuUserProgram))
+                {
+                    if (profile.Programs == null)
+                    {
+                        profile.Programs = new Dictionary<string, object>();
+                    }
+
+                    profile.Programs.AddOrSet(ProfileExtensions.VisualStudioOnlineInternalWindowsSkuUserProgram, true);
+                }
+            }
+
             return authenticationResult;
         }
 
