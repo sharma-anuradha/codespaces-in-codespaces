@@ -1,4 +1,4 @@
-# Onboard-LegacySubscription.ps1
+# Update-GeneratedFiles.ps1
 
 #requires -version 7.0
 
