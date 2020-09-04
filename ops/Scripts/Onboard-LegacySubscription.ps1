@@ -100,7 +100,25 @@ function Get-AdGroup([string]$DisplayName) {
     $group
 }
 
-function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
+$script:lastStatus = ""
+
+function Update-Progress([string]$currentOperation) {
+    $activity = "Onboarding legacy subscriptions"
+    if ($currentOperation) {
+        Write-Progress -Activity $activity -Status $script:status -PercentComplete $script:percentComplete -CurrentOperation $currentOperation
+
+        if ($script:status -ne $script:lastStatus) {
+            Write-Host $script:status -ForegroundColor Green
+        }
+
+        $script:lastStatus = $script:status
+    }
+    else {
+        Write-Progress -Activity $activity -Completed
+    }
+}
+
+function Invoke-OnboardLegacySubscription([string]$SubscriptionName, [int]$percentComplete) {
 
     $subscriptionInfo = New-Object SubscriptionInfo -ArgumentList $subscriptionName
 
@@ -111,38 +129,41 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
     catch {
         throw "Legacy subscription not found: ${SubscriptionName}: $_"
     }
+
     $env = $subscriptionInfo.Environment
-    Write-Host "Onboarding legacy subscription '$($sub.Subscription.Name)' for environment '$env'" -ForegroundColor Green
+    $script:status = "Onboarding legacy subscription '$($sub.Subscription.Name)' for environment '$env'"
+    $script:percentComplete = $percentComplete
 
     # Provider Registrations
     if (!$SkipRegistrations) {
+        Update-Progress "Registering default resource providers and features"
         $PartitionedData = !($subscriptionInfo.IsLegacy)
         Register-DefaultProvidersAndFeatures -PartitionedData $PartitionedData
     }
 
     # Subscription Tags
     if (!$SkipTags) {
-        Write-Host "Updating subscription tags" -ForegroundColor Green
+        Update-Progress "Updating subscription tags"
         $tags = @{
-            prefix = $subscriptionInfo.Prefix ?? ""
-            component = $subscriptionInfo.Component ?? ""
-            env = $subscriptionInfo.Environment ?? ""
-            plane = $subscriptionInfo.Plane ?? ""
-            type = $subscriptionInfo.Type ?? ""
-            region = $subscriptionInfo.Region ?? ""
-            ordinal = [string]($subscriptionInfo.Ordinal) ?? ""
+            prefix         = $subscriptionInfo.Prefix ?? ""
+            component      = $subscriptionInfo.Component ?? ""
+            env            = $subscriptionInfo.Environment ?? ""
+            plane          = $subscriptionInfo.Plane ?? ""
+            type           = $subscriptionInfo.Type ?? ""
+            region         = $subscriptionInfo.Region ?? ""
+            ordinal        = [string]($subscriptionInfo.Ordinal) ?? ""
             serviceTreeUrl = 'https://servicetree.msftcloudes.com/main.html#/ServiceModel/Home/8fa58105-2fc7-4ffb-8d9e-5654c301864b'
-            serviceTreeId = '8fa58105-2fc7-4ffb-8d9e-5654c301864b'
+            serviceTreeId  = '8fa58105-2fc7-4ffb-8d9e-5654c301864b'
         }
         Update-AzTag -ResourceId "/subscriptions/$($sub.Subscription.Id)" -Tag $tags -Operation Merge | Out-String | Write-Host -ForegroundColor DarkGray
     }
 
     # Assign RBAC
     if (!$SkipRbac) {
-        Write-Host "Assigning break-glass access control" -ForegroundColor Green
+        Update-Progress "Assigning break-glass access control"
         New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $breakGlassGroup | Out-Null
 
-        Write-Host "Assigning service principal access control" -ForegroundColor Green
+        Update-Progress "Assigning service principal access control"
         $appSp = Get-AdSp -DisplayName "vsclk-online-$env-app-sp"
         New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $appSp | Out-Null
 
@@ -152,18 +173,18 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
         }
 
         if ($env -eq "dev") {
-            Write-Host "Assigning team access control for dev" -ForegroundColor Green
+            Update-Progress "Assigning team access control for dev"
             New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $contributorsGroup | Out-Null
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
 
             if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
-                Write-Host "Assigning first-party app access for dev" -ForegroundColor Green
+                Update-Progress "Assigning first-party app access for dev"
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppDev | Out-Null
             }
         }
         elseif ($env -eq "ppe") {
-            Write-Host "Assigning team access control for ppe" -ForegroundColor Green
+            Update-Progress "Assigning team access control for ppe"
             if ($AdminOwner) {
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
             }
@@ -172,18 +193,18 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
             New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $readersGroup | Out-Null
 
             if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
-                Write-Host "Assigning first-party app access for ppe" -ForegroundColor Green
+                Update-Progress "Assigning first-party app access for ppe"
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppPpe | Out-Null
             }
         }
         elseif ($env -eq "prod") {
-            Write-Host "Assigning team access control for prod" -ForegroundColor Green
+            Update-Progress "Assigning team access control for prod"
             if ($AdminOwner) {
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Owner" -Assignee $adminsGroup | Out-Null
             }
 
             if ($subscriptionInfo.Plane -eq 'data' -and $subscriptionInfo.Type -eq 'compute') {
-                Write-Host "Assigning first-party app access for prod" -ForegroundColor Green
+                Update-Progress "Assigning first-party app access for prod"
                 New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $firstPartyAppProd | Out-Null
             }
         }
@@ -195,17 +216,21 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName) {
 
 # Get the group accounts and appids for subscription RBAC.
 if (!$SkipRbac) {
-    Write-Host "Getting group security accounts..." -ForegroundColor Green
     $script:adminsGroup = Get-AdGroup -DisplayName "vsclk-core-admin-a98a"
     $script:breakGlassGroup = Get-AdGroup -DisplayName "vsclk-core-breakglass-823b"
     $script:contributorsGroup = Get-AdGroup -DisplayName "vsclk-core-contributors-3a5d"
     $script:readersGroup = Get-AdGroup -DisplayName "vsclk-core-readers-fd84"
-    Write-Host "Getting first-party appids..." -ForegroundColor Green
     $script:firstPartyAppDev = Get-AdSpByAppId -ApplicationId "48ef7923-268f-473d-bcf1-07f0997961f4"
     $script:firstPartyAppProd = Get-AdSpByAppId -ApplicationId "9bd5ab7f-4031-4045-ace9-6bebbad202f6"
     $script:firstPartyAppPpe = $script:firstPartyAppProd
 }
 
+$index = 0
+$count = $SubscriptionNames.Length
 foreach ($SubscripionName in $SubscriptionNames) {
-    Invoke-OnboardLegacySubscription -SubscriptionName $SubscripionName
+    $index += 1
+    [int]$percentComplete = 100 * ($index / $count)
+    Invoke-OnboardLegacySubscription -SubscriptionName $SubscripionName -percentComplete $percentComplete
 }
+
+Update-Progress
