@@ -83,5 +83,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         /// Migrate cloud environments to their regional location task.
         /// </summary>
         public const string CloudEnvironmentRegionalMigrationTask = "cloud_environment_regional_migration_task";
+
+        /// <summary>
+        /// Re-syncbroken Global environment records with their regional environment records.
+        /// </summary>
+        public const string SyncRegionalEnvironmentsToGlobalTask = "cloud_environment_resync_regional_to_global_task";
     }
 }

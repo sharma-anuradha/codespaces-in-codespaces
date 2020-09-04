@@ -163,6 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IWatchDeletedPlanSecretStoresTask, WatchDeletedPlanSecretStoresTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
             services.AddSingleton<ICloudEnvironmentRegionalMigrationTask, CloudEnvironmentRegionalMigrationTask>();
+            services.AddSingleton<ISyncRegionalEnvironmentsToGlobalTask, SyncRegionalEnvironmentsToGlobalTask>();
 
             // Job warmup
             services.AddSingleton<IAsyncBackgroundWarmup, EnvironmentRegisterJobs>();

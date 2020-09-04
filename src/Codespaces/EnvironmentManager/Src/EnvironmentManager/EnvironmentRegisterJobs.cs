@@ -32,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="watchDeletedPlanSecretStoresTask">Target watch secrets stores to be deleted.</param>
         /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
         /// <param name="cloudEnvironmentRegionalMigrationTask">Migration task for cloud environments.</param>
+        /// <param name="syncRegionalEnvironmentsToGlobalTask">Sync task for cloud environments.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
@@ -46,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
             IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
             ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
+            ISyncRegionalEnvironmentsToGlobalTask syncRegionalEnvironmentsToGlobalTask,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -60,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
             CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
+            SyncRegionalEnvironmentsToGlobalTask = syncRegionalEnvironmentsToGlobalTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -87,6 +90,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
 
         private ICloudEnvironmentRegionalMigrationTask CloudEnvironmentRegionalMigrationTask { get; }
+
+        private ISyncRegionalEnvironmentsToGlobalTask SyncRegionalEnvironmentsToGlobalTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -117,6 +122,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             TaskHelper.RunBackgroundLoop(
                 $"{EnvironmentLoggingConstants.CloudEnvironmentRegionalMigrationTask}_run",
                 (childLogger) => CloudEnvironmentRegionalMigrationTask.RunTaskAsync(TimeSpan.FromHours(24), childLogger),
+                TimeSpan.FromMinutes(10));
+
+            // Job: Re-sync broken global environments with their regional records
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.SyncRegionalEnvironmentsToGlobalTask}_run",
+                (childLogger) => SyncRegionalEnvironmentsToGlobalTask.RunTaskAsync(TimeSpan.FromHours(24), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recuring tasks
