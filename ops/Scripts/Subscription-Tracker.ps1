@@ -368,9 +368,6 @@ function Build-AppSettings {
         return
     }
 
-    $appSettings = [AppSettings]::new()
-    $appSettings.dataPlaneSettings.subscriptions.Clear() | Out-Null
-
     $subs = [ordered]@{}
 
     $jsonSubscriptions | ForEach-Object {

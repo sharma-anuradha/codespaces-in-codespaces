@@ -26,31 +26,8 @@ if ($PSBoundParameters.ContainsKey('Verbose')) {
     $script:Verbose = $PsBoundParameters.Get_Item('Verbose')
 }
 
-##############################################
-# TODO: THIS BLOCK GETS REPLACED BY SubscriptionTracker.ps1
-# TODO: IT IS JUST STUBBED OUT FOR NOW
 # Import the subscripton tracker
-# . "$PSScriptRoot\SubscriptionTracker.ps1"
- function Format-ExcelToJson {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ExcelFile,
-        [string]$JsonFile
-    )
-}
-function Build-AppSettings {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('dev','ppe','prod')]
-        [string]$Environment,
-        [string]$InputJsonFile,
-        [Switch]$Canary,
-        [string]$OutputPath
-    )
-}
-##############################################
+. "$PSScriptRoot\Subscription-Tracker.ps1"
 
 function Get-ComponentsFolder {
     $folder = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\Components")
