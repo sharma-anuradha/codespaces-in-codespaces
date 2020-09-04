@@ -50,10 +50,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private const string PlanResourceType = "plans";
         private const string PlanNotFoundErrorMessage = "The plan could not be found. Please contact Azure Support if you continue to experience this issue.";
         private const string PlanCannotBeDeletedErrorMessage = "The plan could not be deleted. Please contact Azure Support if you continue to experience this issue.";
+        private const string GithubUserId = "Github";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SubscriptionsController"/> class.
         /// </summary>
+        /// <param name="appSettings">The application settings.</param>
         /// <param name="planManager">The IPlanManager interface.</param>
         /// <param name="tokenProvider">The ITokenProvider interface.</param>
         /// <param name="mapper">The IMapper interface.</param>
@@ -63,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="currentUserProvider">Current user provider.</param>
         /// <param name="superuserIdentity">Super user identity.</param>
         public SubscriptionsController(
+            AppSettings appSettings,
             IPlanManager planManager,
             ITokenProvider tokenProvider,
             IMapper mapper,
@@ -72,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             ICurrentUserProvider currentUserProvider,
             VsoSuperuserClaimsIdentity superuserIdentity)
         {
+            AppSettings = appSettings;
             PlanManager = planManager;
             TokenProvider = tokenProvider;
             Mapper = mapper;
@@ -81,6 +85,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             CurrentUserProvider = currentUserProvider;
             SuperuserIdentity = superuserIdentity;
         }
+
+        private AppSettings AppSettings { get; }
 
         private IPlanManager PlanManager { get; }
 
@@ -789,13 +795,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                         return CreateErrorResponse("PlanNotFound", "PlanNotFound", HttpStatusCode.NotFound);
                     }
 
+                    // Github SP
+                    var claimsIdentity = (ClaimsIdentity)HttpContext.User.Identity;
+                    var githubSpId = AppSettings.ControlPlaneSettings.GithubSpId;
+                    var userid = HttpContext.User.GetUserIdFromClaims();
+                    var isGithubSP = userid.Equals(githubSpId);
+                    if (isGithubSP)
+                    {
+                        claimsIdentity = SetGitHubUserIdentity(claimsIdentity);
+                    }
+
                     // TODO: Change to ReadCodespaces after the renamed scope is supported everywhere.
                     var scopes = new[] { PlanAccessTokenScopes.ReadEnvironments };
 
                     var token = await TokenProvider.GenerateVsSaaSTokenAsync(
                         plan,
                         scopes,
-                        (ClaimsIdentity)HttpContext.User.Identity,
+                        claimsIdentity,
                         expiration,
                         logger);
 
@@ -1260,6 +1276,43 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 return resource;
             }).Where((resource) => resource != null);
             return resources;
+        }
+
+        /// <summary>
+        /// Set user identity claims for github specific service principal
+        /// </summary>
+        /// <param name="identity">The service principal identity claim</param>
+        /// <returns>GitHub populated identity claim</returns>
+        private ClaimsIdentity SetGitHubUserIdentity(ClaimsIdentity identity)
+        {
+            var prefferedUserNameClaimType = "preferred_username";
+            var displayNameClaimType = "name";
+
+            var removeClaimsList = new List<Claim>();
+            foreach (var identityClaim in identity.Claims)
+            {
+                if (identityClaim is Claim claim)
+                {
+                    if (claim.Type.Equals(prefferedUserNameClaimType))
+                    {
+                        removeClaimsList.Add(claim);
+                    }
+                    else if (claim.Type.Equals(displayNameClaimType))
+                    {
+                        removeClaimsList.Add(claim);
+                    }
+                }
+            }
+
+            foreach (var claim in removeClaimsList)
+            {
+                identity.RemoveClaim(claim);
+            }
+
+            identity.AddClaim(new Claim(prefferedUserNameClaimType, GithubUserId));
+            identity.AddClaim(new Claim(displayNameClaimType, GithubUserId));
+
+            return identity;
         }
     }
 }

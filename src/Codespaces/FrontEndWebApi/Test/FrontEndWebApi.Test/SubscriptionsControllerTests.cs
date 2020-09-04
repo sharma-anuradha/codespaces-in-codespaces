@@ -405,8 +405,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             var tokenProvider = new Mock<ITokenProvider>();
             var subscriptionManager = new Mock<ISubscriptionManager>();
             var superUserIdentity = MockVsoSuperuserClaimsIdentity();
+            var appSettings = MockAppSettings();
 
             var controller = new SubscriptionsController(
+                appSettings,
                 planManager,
                 tokenProvider.Object,
                 mapper,
@@ -429,6 +431,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             };
 
             return controller;
+        }
+
+        private static AppSettings MockAppSettings()
+        {
+            var controlPlaneSettings = new ControlPlaneSettings();
+            controlPlaneSettings.GithubSpId = "github";
+            var appSettings = new AppSettings();
+            appSettings.ControlPlaneSettings = controlPlaneSettings;
+            return appSettings;
         }
 
         private static VsoSuperuserClaimsIdentity MockVsoSuperuserClaimsIdentity()
