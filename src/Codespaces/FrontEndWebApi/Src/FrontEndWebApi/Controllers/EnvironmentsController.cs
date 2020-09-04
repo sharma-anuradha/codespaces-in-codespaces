@@ -593,7 +593,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             updateRequest.Plan = plan;
             updateRequest.PlanAccessIdentity = planAccessIdentity;
 
-            var result = await EnvironmentManager.UpdateSettingsAsync(environment, updateRequest, subscription, logger);
+            var result = await EnvironmentManager.UpdateSettingsAsync(environment, updateRequest, logger);
 
             if (result.IsSuccess)
             {

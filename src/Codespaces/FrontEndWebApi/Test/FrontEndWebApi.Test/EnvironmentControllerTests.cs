@@ -429,10 +429,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
-                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
                 {
                     Assert.Equal(updateRequest.SkuName, update.SkuName);
                     Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
@@ -477,10 +476,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
-                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
                 {
                     Assert.Equal(updateRequest.SkuName, update.SkuName);
                     Assert.Equal(updateRequest.AutoShutdownDelayMinutes, update.AutoShutdownDelayMinutes);
@@ -538,10 +536,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
-                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
                 {
                     Assert.NotNull(update.Plan);
                 });
@@ -613,10 +610,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
                 .Setup(x => x.UpdateSettingsAsync(
                     It.IsAny<CloudEnvironment>(),
                     It.IsAny<CloudEnvironmentUpdate>(),
-                    It.IsAny<Subscription>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult(updateSettingsReponse))
-                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, Subscription sub, IDiagnosticsLogger log) =>
+                .Callback((CloudEnvironment env, CloudEnvironmentUpdate update, IDiagnosticsLogger log) =>
                 {
                     Assert.NotNull(update.Plan);
                 });

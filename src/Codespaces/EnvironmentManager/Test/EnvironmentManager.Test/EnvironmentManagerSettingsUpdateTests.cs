@@ -89,7 +89,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
             var manager = CreateManager(globalEnvironmentRepository: globalRepository, regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.CloudEnvironment);
@@ -111,7 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: environmentRepository.Object);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateSettingsAsync(null, update, null, Logger));
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateSettingsAsync(null, update, Logger));
         }
 
         [Fact]
@@ -131,7 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -160,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -189,7 +189,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -219,7 +219,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
@@ -245,7 +245,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: globalRepository, regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.FriendlyName, result.CloudEnvironment?.FriendlyName);
         }
@@ -270,7 +270,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment1, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment1, update, Logger);
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
             Assert.Equal(MessageCodes.EnvironmentNameAlreadyExists, result.ValidationErrors.Single());
@@ -310,7 +310,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var manager = CreateManager(globalEnvironmentRepository: globalRepository.Object, regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
 
-            var result = await manager.UpdateSettingsAsync(environment, update, null, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.FriendlyName, result.CloudEnvironment?.FriendlyName);
         }
@@ -357,11 +357,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 billingEventRepository: billingEventRepository,
                 currentUserProvider: currentUserProvider);
 
-            var subscription = new Subscription
-            {
-                Id = plan1.Subscription,
-            };
-            var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
+
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
             Assert.Equal(environmentOwnerId, environment.OwnerId);
@@ -428,11 +425,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 planRepository: planRepository,
                 billingEventRepository: billingEventRepository);
 
-            var subscription = new Subscription
-            {
-                Id = plan1.Plan.Subscription,
-            };
-            var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
             Assert.StartsWith(plan2.Tenant, environment.OwnerId);
@@ -481,11 +474,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 planRepository: planRepository,
                 billingEventRepository: billingEventRepository);
 
-            var subscription = new Subscription
-            {
-                Id = plan1.Plan.Subscription,
-            };
-            var result = await manager.UpdateSettingsAsync(environment, update, subscription, Logger);
+            var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
             Assert.Equal(update.Plan.Plan.ResourceId, result.CloudEnvironment?.PlanId);
             Assert.StartsWith(plan2.Tenant, environment.OwnerId);
@@ -521,11 +510,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 skuCatalog: skuCatalog,
                 billingEventRepository: billingEventRepository);
 
-            var subscription = new Subscription
-            {
-                Id = plan1.Subscription,
-            };
-            var result = await manager.UpdateSettingsAsync(environment1, update, subscription, Logger);
+            var result = await manager.UpdateSettingsAsync(environment1, update, Logger);
             Assert.False(result.IsSuccess);
             Assert.Single(result.ValidationErrors);
             Assert.Equal(MessageCodes.EnvironmentNameAlreadyExists, result.ValidationErrors.Single());
@@ -566,11 +551,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 billingEventRepository: billingEventRepository,
                 environmentSettings: environmentSettings);
 
-            var subscription = new Subscription
-            {
-                Id = plan1.Subscription,
-            };
-            var result = await manager.UpdateSettingsAsync(environment1, update, subscription, Logger);
+            var result = await manager.UpdateSettingsAsync(environment1, update, Logger);
             Assert.False(result.IsSuccess);
             Assert.Equal(MessageCodes.ExceededQuota, result.ValidationErrors.Single());
         }

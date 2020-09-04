@@ -397,7 +397,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public async Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
-            Subscription subscription,
             IDiagnosticsLogger logger)
         {
             Requires.NotNull(cloudEnvironment, nameof(cloudEnvironment));
@@ -432,7 +431,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             UpdateAutoShutdownDelaySetting(update, allowedUpdates),
                             UpdateAllowedSkusSetting(update, allowedUpdates),
                             await UpdatePlanIdAndNameSettingAsync(
-                                cloudEnvironment, update, subscription, childLogger),
+                                cloudEnvironment, update, childLogger),
                         };
                         foreach (var (messageCodes, transform) in updateResults)
                         {
@@ -658,11 +657,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         }
 
         /// <summary>
-        /// Checks if subscription / plan quotas allow adding the environment.
+        /// Checks if plan quotas allow adding the environment.
         /// </summary>
-        private async Task<bool> CanEnvironmentFitInQuotaAsync(
+        private async Task<bool> CanEnvironmentFitInMaxEnvironmentsQuotaAsync(
             CloudEnvironment cloudEnvironment,
-            Subscription subscription,
             VsoPlanInfo plan,
             int currentEnvironmentsInPlan,
             IDiagnosticsLogger logger)
@@ -677,23 +675,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 computeCheckEnabled = computeCheckEnabled && windowsComputeCheckEnabled;
             }
 
-            if (computeCheckEnabled)
-            {
-                var currentComputeUsed = await GetCurrentComputeUsedForSubscriptionAsync(
-                    subscription, sku, logger.NewChildLogger());
-                var subscriptionComputeMaximum = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
-                if (currentComputeUsed + sku.ComputeSkuCores > subscriptionComputeMaximum)
-                {
-                    var currentMaxQuota = subscription.CurrentMaximumQuota[sku.ComputeSkuFamily];
-                    logger.AddValue("RequestedSku", sku.SkuName);
-                    logger.AddValue("CurrentMaxQuota", currentMaxQuota.ToString());
-                    logger.AddValue("CurrentComputeUsed", currentComputeUsed.ToString());
-                    logger.AddSubscriptionId(subscription.Id);
-                    logger.LogError($"{LogBaseName}_create_exceed_compute_quota");
-                    return false;
-                }
-            }
-            else
+            // Todo: This method should be removed when we remove the computeCheck feature flag. 
+            if (computeCheckEnabled == false)
             {
                 var maxEnvironmentsForPlan = await EnvironmentManagerSettings.MaxEnvironmentsPerPlanAsync(
                     plan.Subscription, logger.NewChildLogger());
@@ -773,12 +756,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private async Task<(IEnumerable<MessageCodes>, Action<CloudEnvironment>)> UpdatePlanIdAndNameSettingAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
-            Subscription subscription,
             IDiagnosticsLogger logger)
         {
             if (update.Plan != null && update.Plan.Plan.ResourceId != cloudEnvironment.PlanId)
             {
-                Requires.NotNull(subscription, nameof(subscription));
                 var validationErrors = new List<MessageCodes>();
 
                 var destinationName = cloudEnvironment.FriendlyName;
@@ -810,8 +791,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     validationErrors.Add(MessageCodes.InvalidLocationChange);
                 }
 
-                if (!(await CanEnvironmentFitInQuotaAsync(
-                    cloudEnvironment, subscription, update.Plan.Plan, environmentsInPlan.Count(), logger)))
+                if (!(await CanEnvironmentFitInMaxEnvironmentsQuotaAsync(
+                    cloudEnvironment, update.Plan.Plan, environmentsInPlan.Count(), logger)))
                 {
                     validationErrors.Add(MessageCodes.ExceededQuota);
                 }

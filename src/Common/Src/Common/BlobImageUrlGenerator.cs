@@ -118,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
                         var blobClientProvider = new BlobStorageClientProvider(Options.Create(blobStorageClientOptions));
                         container = blobClientProvider.GetCloudBlobContainer(containerName);
-                        await cache.SetAsync(containerCacheKey, container, TimeSpan.FromHours(24), logger);
+                        await cache.SetAsync(containerCacheKey, container, TimeSpan.FromHours(72), logger);
                     }
 
                     if (expiryTime == default)

@@ -206,14 +206,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="cloudEnvironment">The cloud environment.</param>
         /// <param name="update">The update request.</param>
-        /// <param name="subscription">The subscription the environment is being moved into,
         /// or null if the update is not a move.</param>
         /// <param name="logger">The logger.</param>
         /// <returns>A <see cref="CloudEnvironmentAvailableSettingsUpdates"/> providing the allowed settings updates.</returns>
         Task<CloudEnvironmentUpdateResult> UpdateSettingsAsync(
             CloudEnvironment cloudEnvironment,
             CloudEnvironmentUpdate update,
-            Subscription subscription,
             IDiagnosticsLogger logger);
 
         /// <summary>
