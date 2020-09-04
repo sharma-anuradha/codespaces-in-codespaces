@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.Extensions.Options;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
@@ -36,9 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
         private string SubscriptionScopeConfiguration =>
             $"{RegionScopeConfiguration}-subscription";
 
-        private string PlanScopeConfiguration =>
-            $"{SubscriptionScopeConfiguration}-plan";
-
         /// <inheritdoc/>
         public string GenerateServiceScopeConfigurationKey(ConfigurationType configurationType, string componentName, string configurationName)
         {
@@ -54,48 +52,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
         /// <inheritdoc/>
         public string GenerateSubscriptionScopeConfigurationKey(ConfigurationType configurationType, string componentName, string configurationName, string subscriptionId)
         {
-            var key = GenerateConfigurationKey(configurationType, componentName, configurationName, ConfigurationScope.Subscription);
-            return $"{key}-{subscriptionId}".ToLower();
+            return GenerateConfigurationKey(configurationType, componentName, configurationName, ConfigurationScope.Subscription, subscriptionId);
         }
 
         /// <inheritdoc/>
         public string GeneratePlanScopeConfigurationKey(ConfigurationType configurationType, string componentName, string configurationName, string subscriptionId, string planName)
         {
-            var key = GenerateConfigurationKey(configurationType, componentName, configurationName, ConfigurationScope.Plan);
-            return $"{key}-{subscriptionId}-{planName}".ToLower();
+            return GenerateConfigurationKey(configurationType, componentName, configurationName, ConfigurationScope.Plan, subscriptionId, planName);
         }
 
-        private string GenerateConfigurationKey(ConfigurationType configurationType, string componentName, string configurationName, ConfigurationScope configurationScope)
+        private string GenerateConfigurationKey(ConfigurationType configurationType, string componentName, string configurationName, ConfigurationScope configurationScope, string subscriptionId = default, string planName = default)
         {
             string configType = configurationType.ToString();
-            string scope = GetScopeString(configurationScope);
+            string scope = GetScopeString(configurationScope, subscriptionId, planName);
             string keyName = $"{componentName}-{configurationName}";
             string key = $"{configType}:{scope}:{keyName}";
             return key.ToLower();
         }
 
-        private string GetScopeString(ConfigurationScope configurationScope)
+        private string GetScopeString(ConfigurationScope configurationScope, string subscriptionId, string planName)
         {
-            string scope = default;
-            switch (configurationScope)
+            return configurationScope switch
             {
-                case ConfigurationScope.Service:
-                    scope = ServiceScopeConfiguration;
-                    break;
-                case ConfigurationScope.Region:
-                    scope = RegionScopeConfiguration;
-                    break;
-                case ConfigurationScope.Subscription:
-                    scope = SubscriptionScopeConfiguration;
-                    break;
-                case ConfigurationScope.Plan:
-                    scope = PlanScopeConfiguration;
-                    break;
-                default:
-                    break;
-            }
-
-            return scope;
+                ConfigurationScope.Service => ServiceScopeConfiguration,
+                ConfigurationScope.Region => RegionScopeConfiguration,
+                ConfigurationScope.Subscription => $"{SubscriptionScopeConfiguration}-{subscriptionId}",
+                ConfigurationScope.Plan => $"{SubscriptionScopeConfiguration}-{subscriptionId}-plan-{planName}",
+                _ => throw new ArgumentException(message: "invalid enum value", paramName: nameof(configurationScope)),
+            };
         }
     }
 }
