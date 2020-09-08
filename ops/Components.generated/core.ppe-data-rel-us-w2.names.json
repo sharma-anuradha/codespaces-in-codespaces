@@ -25,7 +25,5 @@
   "prefix": "vscs",
   "region": "us-w2",
   "regionLocation": "WestUs2",
-  "regionSuffix": "w2",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED-core-ppe-data"
+  "regionSuffix": "w2"
 }

@@ -1,5 +1,5 @@
 // Auto-Generated From Template
-// "..\Components\Stub\Ev2\stub.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc"
+// "stub.{Env}-[ctl]-{Instance}-{Region}.servicemodel.jsonc"
 // with names file "stub.test-ctl-tst-us-w2.names.json"
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
@@ -34,7 +34,7 @@
       "azureResourceGroupName": "vscs-stub-test-tst-us-w2",
       "location": "WestUs2",
       "instanceOf": "vscs-stub-test-tst-us-w2-rg",
-      "azureSubscriptionId": "00000000-0000-0000-0000-000000000000",
+      "azureSubscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
       "serviceResources": [
         {
           "name": "vscs-stub-test-tst-us-w2-arm",

@@ -18,6 +18,7 @@ export class ComponentsDeployment {
       comp.prefix = jsonComp.prefix;
       comp.displayName = jsonComp.displayName;
       comp.dependsOn = jsonComp.dependsOn;
+      comp.environmentNames = jsonComp.environments;
       comp.subscriptions = subscriptions.filter(s => s.component === comp.prefix);
       this.components.push(comp);
     }
@@ -29,6 +30,7 @@ export class Component {
   displayName: string;
   dependsOn: string[];
   subscriptions: Subscription[] = [];
+  environmentNames : string[];
   environments: Environment[] = [];
   outputNames: ComponentNames;
 
@@ -52,7 +54,7 @@ export class Subscription {
   ordinal?: number;
   plane: string;
   region: string;
-  subscriptionID: string;
+  subscriptionId: string;
   subscriptionName: string;
   serviceType: string;
 }

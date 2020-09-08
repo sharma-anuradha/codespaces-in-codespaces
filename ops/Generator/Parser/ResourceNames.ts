@@ -34,8 +34,8 @@ export class PlaneNames extends EnvironmentNames {
     public readonly plane: string;
     public readonly basePlaneName: string;
     public readonly basePlaneFileName: string;
-    public readonly subscriptionName: string;
-    public readonly subscriptionId: string;
+    public readonly subscriptionName: string = null;
+    public readonly subscriptionId: string = null;
 
     constructor (environmentNames: EnvironmentNames, plane: string, subscriptionName: string, subscriptionId: string) {
         super(environmentNames, environmentNames.env);

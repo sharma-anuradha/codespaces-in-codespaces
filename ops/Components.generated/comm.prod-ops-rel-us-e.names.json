@@ -27,7 +27,5 @@
   "prefix": "vscs",
   "region": "us-e",
   "regionLocation": "EastUS",
-  "regionSuffix": "e",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED-comm-prod-ops"
+  "regionSuffix": "e"
 }

@@ -27,7 +27,5 @@
   "prefix": "vscs",
   "region": "eu-w",
   "regionLocation": "WestEurope",
-  "regionSuffix": "w",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED-comm-prod-ops"
+  "regionSuffix": "w"
 }

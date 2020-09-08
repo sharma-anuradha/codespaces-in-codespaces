@@ -11,6 +11,6 @@
   "env": "test",
   "plane": "ctl",
   "prefix": "vscs",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "subscriptionName": "UNDEFINED-stub-test-ctl"
+  "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
+  "subscriptionName": "vscs-stub-test-ctl"
 }

@@ -61,14 +61,13 @@ export default class Templates {
           names: null
         };
         names.push(name);
-        // console.log(`info: ${name.fileName} -> ${name.outputName} -> *`);
       }
 
       for (const name of names) {
         let buffer = orgBuffer;
         const commentHeader = [
           this.staticCommentHeader,
-          `"${templatePath}"`
+          `"${fileName}"`
         ];
         if (name.names?.baseFileName) {
           const withNamesFileName = `with names file "${name.names.baseFileName}.names.json"`;
@@ -257,16 +256,18 @@ export default class Templates {
 
         for (const name in names) {
           const regex = new RegExp("{{{" + name + "}}}", "g");
-          const value = namesObj.names[name];
-          if (!value) {
-            throw `error: property '${name}' is undefined in names object '${names.baseName}': template file '${namesObj.fileName}'`;
+
+          if (text.match(regex)) {
+            const value = namesObj.names[name];
+            if (!value) {
+              throw `error: property '${name}' is undefined in names object '${names.baseName}': template file '${namesObj.fileName}'`;
+            }
+            const replaceValue = typeof value === 'string' ? value : JSON.stringify(value)?.replace(/\n/g, '\r\n');
+            text = text.replace(regex, replaceValue);
           }
-          const replaceValue = typeof value === 'string' ? value : JSON.stringify(value)?.replace(/\n/g, '\r\n');
-          text = text.replace(regex, replaceValue);
         }
       } else {
         console.log(`warning: No template values found in ${namesObj.fileName}`);
-        // throw (`No template values found in ${namesObj.fileName}`);
       }
     }
 

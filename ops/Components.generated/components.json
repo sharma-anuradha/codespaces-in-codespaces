@@ -4,16 +4,29 @@
     "stub": {
       "displayName": "Stub",
       "prefix": "stub",
+      "environments": [
+        "test"
+      ],
       "dependsOn": []
     },
     "core": {
       "displayName": "Core",
       "prefix": "core",
+      "environments": [
+        "dev",
+        "ppe",
+        "prod"
+      ],
       "dependsOn": []
     },
     "comm": {
       "displayName": "Communications",
       "prefix": "comm",
+      "environments": [
+        "dev",
+        "ppe",
+        "prod"
+      ],
       "dependsOn": [
         "core"
       ]
@@ -21,15 +34,24 @@
     "collab": {
       "displayName": "Collaboration",
       "prefix": "collab",
+      "environments": [
+        "dev",
+        "ppe",
+        "prod"
+      ],
       "dependsOn": [
         "core",
         "comm"
       ],
-      "subscriptions": [
-      ]
+      "subscriptions": []
     },
     "codesp": {
       "displayName": "Codespaces",
+      "environments": [
+        "dev",
+        "ppe",
+        "prod"
+      ],
       "prefix": "codesp",
       "dependsOn": [
         "core",
