@@ -195,7 +195,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         {
             var results = new List<IAzureResourceGroup>();
             var resourceGroupNamePrefix = GetBaseResourceGroupName();
-            foreach (var subscription in AzureSubscriptionCatalog.AzureSubscriptions)
+            foreach (var subscription in AzureSubscriptionCatalog.AzureSubscriptions.Where(s => s.Enabled))
             {
                 var azure = await AzureClientFactory.GetAzureClientAsync(Guid.Parse(subscription.SubscriptionId));
                 var resourceGroups = await azure.ResourceGroups.ListAsync();
