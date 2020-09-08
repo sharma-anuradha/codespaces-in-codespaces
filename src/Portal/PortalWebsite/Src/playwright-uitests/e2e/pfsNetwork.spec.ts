@@ -33,7 +33,7 @@ describe('Network UI Tests for Port Forwarding Service', () => {
     const environment = await getEnvironment.getCodespaceEnvironment(ENVIRONMENT);
     await page.click('summary.btn.btn-sm.d-block.css-truncate >> text=' + "'" + 'production' + "'");
     await page.click('*css=[role="menuitemradio"] >> text=' + "'" + environment + "'");
-    await page.waitForEvent('requestfinished', {predicate: request => request.url().includes('https://github.com/codespaces/new?repo=')});
+    await page.waitForEvent('requestfinished', { predicate: request => request.url().includes('https://github.com/codespaces/new?repo=') });
     await page.click('[class ="btn btn-sm btn-primary js-new-codespace-submit-button js-toggle-hidden"]');
   });
 
@@ -55,11 +55,15 @@ describe('Network UI Tests for Port Forwarding Service', () => {
     await page.click('[title="Start Debugging"]');
     await page.waitForSelector('[aria-label="Debug: Request Body App/PF Echo (Headers)/Web Sockets Echo App (PlaywrightTestingApps)"]');
     await page.waitForSelector('[aria-label="Debug Call Stack"]');
-    await page.click('[aria-label="Remote Explorer"]');
+    await page.waitForSelector('[aria-label*="Debug Session Launch RequestBodyApp: yarn.js"]');
+    await page.waitForSelector('[aria-label*="Debug Session PF Echo (Headers)"]');
+    await page.waitForSelector('[aria-label*="Debug Session Launch socketio-hello-world: yarn.js"]');
     await page.waitForSelector('[aria-label="person vso-dev1"]');
   });
 
   it('Checks that request bodies are received', async () => {
+    await page.waitForSelector('[aria-label="Remote Explorer"]');
+    await page.click('[aria-label="Remote Explorer"]');
     const [newPage] = await Promise.all([
       context.waitForEvent('page'),
       page.click('[aria-label="Port: 7000 (port 7000)"]')
