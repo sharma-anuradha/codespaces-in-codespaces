@@ -183,20 +183,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 environments = environments.Where((e) => environmentIds.Contains(e.Id));
             }
 
-            return await ApplyDeletedFilter(environments, input.EnvironmentListType, logger);
+            return ApplyDeletedFilter(environments, input.EnvironmentListType, logger);
         }
 
-        private async Task<IEnumerable<CloudEnvironment>> ApplyDeletedFilter(IEnumerable<CloudEnvironment> environments, EnvironmentListType environmentListType, IDiagnosticsLogger logger)
+        private IEnumerable<CloudEnvironment> ApplyDeletedFilter(IEnumerable<CloudEnvironment> environments, EnvironmentListType environmentListType, IDiagnosticsLogger logger)
         {
             if (environmentListType == EnvironmentListType.AllEnvironments)
-            {
-                return environments;
-            }
-
-            var environmentSoftDeleteEnabled = await EnvironmentManagerSettings.EnvironmentSoftDeleteEnabled(logger.NewChildLogger());
-
-            // Return all environments if the soft delete feature flag is not enabled.
-            if (environmentSoftDeleteEnabled != true)
             {
                 return environments;
             }

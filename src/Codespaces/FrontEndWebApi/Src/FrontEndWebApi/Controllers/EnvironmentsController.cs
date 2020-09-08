@@ -169,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             var environment = await EnvironmentManager.GetAsync(environmentId, logger);
-            await ValidateEnvironmentIsNotSoftDeleted(environment, logger);
+            ValidateEnvironmentIsNotSoftDeleted(environment, logger);
 
             // Normalize state
             var checkWorkspaceStatus = await WorkspaceStatusToNormalizeEnvironmentEnabled(logger);
@@ -803,7 +803,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             if (validateSoftDeletedEnvironment)
             {
-                await ValidateEnvironmentIsNotSoftDeleted(environment, logger);
+                ValidateEnvironmentIsNotSoftDeleted(environment, logger);
             }
 
             // Normalize state
@@ -911,7 +911,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 logger);
         }
 
-        private async Task ValidateEnvironmentIsNotSoftDeleted(CloudEnvironment environment, IDiagnosticsLogger logger)
+        private void ValidateEnvironmentIsNotSoftDeleted(CloudEnvironment environment, IDiagnosticsLogger logger)
         {
             if (environment == null)
             {
@@ -920,12 +920,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             if (environment.IsDeleted == true)
             {
-                var environmentSoftDeleteEnabled = await FrontEndAppSettings.EnvironmentManagerSettings.EnvironmentSoftDeleteEnabled(logger.NewChildLogger());
-
-                if (environmentSoftDeleteEnabled == true)
-                {
-                    throw new EntityNotFoundException((int)MessageCodes.EnvironmentDoesNotExist);
-                }
+                throw new EntityNotFoundException((int)MessageCodes.EnvironmentDoesNotExist);
             }
         }
 
