@@ -3,12 +3,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -31,8 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
         /// <param name="watchDeletedPlanSecretStoresTask">Target watch secrets stores to be deleted.</param>
         /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
-        /// <param name="cloudEnvironmentRegionalMigrationTask">Migration task for cloud environments.</param>
+        /// <param name="cloudEnvironmentRegionalMigrationTask">Env regional migration task.</param>
         /// <param name="syncRegionalEnvironmentsToGlobalTask">Sync task for cloud environments.</param>
+        /// <param name="jobQueueConsumerFactory">Target Job Queue Consumer Factory.</param>
+        /// <param name="jobHandlerTargets">All the job handlers.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
             IWatchOrphanedSystemEnvironmentsTask watchOrphanedSystemEnvironmentsTask,
@@ -48,6 +52,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
             ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ISyncRegionalEnvironmentsToGlobalTask syncRegionalEnvironmentsToGlobalTask,
+            IJobQueueConsumerFactory jobQueueConsumerFactory,
+            IEnumerable<IJobHandlerTarget> jobHandlerTargets,
             ITaskHelper taskHelper)
         {
             WatchOrphanedSystemEnvironmentsTask = watchOrphanedSystemEnvironmentsTask;
@@ -63,6 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
             CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             SyncRegionalEnvironmentsToGlobalTask = syncRegionalEnvironmentsToGlobalTask;
+            JobHandlerTargets = jobHandlerTargets;
+            JobQueueConsumerFactory = jobQueueConsumerFactory;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -92,6 +100,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private ICloudEnvironmentRegionalMigrationTask CloudEnvironmentRegionalMigrationTask { get; }
 
         private ISyncRegionalEnvironmentsToGlobalTask SyncRegionalEnvironmentsToGlobalTask { get; }
+
+        private IJobQueueConsumerFactory JobQueueConsumerFactory { get; }
+
+        private IEnumerable<IJobHandlerTarget> JobHandlerTargets { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -201,6 +213,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{EnvironmentLoggingConstants.WatchSoftDeletedEnvironmentToBeHardDeletedTask}_run",
                 (childLogger) => WatchSoftDeletedEnvironmentToBeHardDeletedTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromMinutes(10));
+
+            // new job continuation handlers
+            JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);
+            JobQueueConsumerFactory.Start(JobHandlerTargets);
         }
     }
 }

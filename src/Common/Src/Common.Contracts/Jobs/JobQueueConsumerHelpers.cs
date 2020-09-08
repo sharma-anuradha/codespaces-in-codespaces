@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Register multiple job handlers.
         /// </summary>
         /// <param name="jobQueueConsumer">The job consumer instance.</param>
-        /// <param name="jobHandlers">Enumerable job handlers to regsiter.</param>
+        /// <param name="jobHandlers">Enumerable job handlers to register.</param>
         /// <returns>The modified job consumer instance..</returns>
         public static IJobQueueConsumer RegisterJobHandlers(this IJobQueueConsumer jobQueueConsumer, IEnumerable<IJobHandler> jobHandlers)
         {
@@ -68,6 +68,35 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             }
 
             return jobQueueConsumer;
+        }
+
+        /// <summary>
+        /// Register multiple job handlers to different target job consumers.
+        /// </summary>
+        /// <param name="jobQueueConsumerFactory">The job consumer factory instance.</param>
+        /// <param name="jobHandlers">Enumerable job handlers to register.</param>
+        public static void RegisterJobHandlers(this IJobQueueConsumerFactory jobQueueConsumerFactory, IEnumerable<IJobHandlerTarget> jobHandlers)
+        {
+            Requires.NotNull(jobQueueConsumerFactory, nameof(jobQueueConsumerFactory));
+            foreach (var jobHandlerTarget in jobHandlers)
+            {
+                var jobQueueConsumer = jobQueueConsumerFactory.GetOrCreate(jobHandlerTarget.QueueId, jobHandlerTarget.Location);
+                jobHandlerTarget.RegisterHandler(jobQueueConsumer);
+            }
+        }
+
+        /// <summary>
+        ///  Start all the job consumers.
+        /// </summary>
+        /// <param name="jobQueueConsumerFactory">The job consumer factory instance.</param>
+        /// <param name="jobHandlers">Enumerable job handlers to register.</param>
+        /// <param name="cancellationToken">Optional cancellation token.</param>
+        public static void Start(this IJobQueueConsumerFactory jobQueueConsumerFactory, IEnumerable<IJobHandlerTarget> jobHandlers, CancellationToken cancellationToken = default)
+        {
+            foreach (var jobHandler in jobHandlers)
+            {
+                Start(jobQueueConsumerFactory.GetOrCreate(jobHandler.QueueId, jobHandler.Location), cancellationToken);
+            }
         }
 
         /// <summary>

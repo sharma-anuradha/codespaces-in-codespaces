@@ -119,6 +119,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         int Retries { get; }
 
         /// <summary>
+        /// Gets or sets the retry timeout value.
+        /// </summary>
+        public TimeSpan? RetryTimeout { get; set; }
+
+        /// <summary>
         /// Update the job with a new visibility timeout.
         /// </summary>
         /// <param name="visibilityTimeout">The new visibility timeout.</param>

@@ -166,7 +166,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                         .FluentAddValue(JobQueueLoggerConst.JobDuration, jobDuration)
                                         .FluentAddValue(JobQueueLoggerConst.JobQueueDuration, nowUtc - job.Created)
                                         .FluentAddValue(JobQueueLoggerConst.JobDequeuedDuration, nowUtc - jobInstance.DequeueTime);
-                                    await CompleteJobAsync(jobInstance, JobCompletedStatus.Succeeded | JobCompletedStatus.Removed, null);
+                                    var status = JobCompletedStatus.Succeeded;
+                                    if (jobInstance.RetryTimeout.HasValue)
+                                    {
+                                        // keep this job message queue but retry again.
+                                        await jobInstance.UpdateVisibilityAsync(jobInstance.RetryTimeout.Value, DisposeToken);
+                                    }
+                                    else
+                                    {
+                                        // remove this job message from the queue.
+                                        status |= JobCompletedStatus.Removed;
+                                    }
+
+                                    await CompleteJobAsync(jobInstance, status, null);
                                 }
                             }
                         }
@@ -199,9 +211,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
                                 // if the job handler options has a retry timeout, otherwise it will re appear
                                 // on the consumer with the default setting how it was retrieved the first time.
-                                if (jobHandlerOptions?.RetryTimeout.HasValue == true)
+                                TimeSpan? retryTimeout = jobInstance.RetryTimeout ?? jobHandlerOptions?.RetryTimeout;
+                                if (retryTimeout.HasValue)
                                 {
-                                    await jobInstance.UpdateVisibilityAsync(jobHandlerOptions.RetryTimeout.Value, DisposeToken);
+                                    await jobInstance.UpdateVisibilityAsync(retryTimeout.Value, DisposeToken);
                                 }
                             }
 
@@ -269,8 +282,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <inheritdoc/>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.keepInvisibleJobsTask = KeepInvisibleJobsAsync();
-            return QueueMessageProducer.StartAsync(cancellationToken);
+            if (this.keepInvisibleJobsTask == null)
+            {
+                this.keepInvisibleJobsTask = KeepInvisibleJobsAsync();
+                return QueueMessageProducer.StartAsync(cancellationToken);
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>
@@ -414,6 +432,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             /// <inheritdoc/>
             public int Retries => JobPayloadInfo.Retries;
 
+            /// <inheritdoc/>
+            public TimeSpan? RetryTimeout { get; set; }
+
             public JobPayloadInfo JobPayloadInfo { get; }
 
             internal abstract JobHandlerOptions JobHandlerOptions { get; }
@@ -492,7 +513,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                 return (null, null);
             }
 
-            private static TimeSpan GetValue(TimeSpan? value, TimeSpan defaultValue)
+            private static T GetValue<T>(T? value, T defaultValue)
+                where T : struct
             {
                 return value.HasValue ? value.Value : defaultValue;
             }

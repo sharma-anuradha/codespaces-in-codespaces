@@ -1,25 +1,15 @@
-// <copyright file="StartEnvironmentContinuationInputV2.cs" company="Microsoft">
+// <copyright file="IStartEnvironmentContinuationPayloadV2.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
 {
-    /// <summary>
-    /// Base Start Environment Continuation Input.
-    /// </summary>
-    public class StartEnvironmentContinuationInputV2 : ContinuationOperationInput, IStartEnvironmentContinuationPayloadV2
+    public interface IStartEnvironmentContinuationPayloadV2 : IEnvironmentContinuationPayload
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="StartEnvironmentContinuationInputV2"/> class.
-        /// </summary>
-        /// <param name="options">Cloud environment options.</param>
-        public StartEnvironmentContinuationInputV2()
-        {
-        }
-
         /// <summary>
         /// Gets or sets when was environment state was updated last.
         /// </summary>

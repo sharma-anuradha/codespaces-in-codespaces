@@ -6,8 +6,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
+using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -20,11 +22,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public enum ContinuationJobPayloadResultState
     {
         /// <summary>
-        /// None.
-        /// </summary>
-        None,
-
-        /// <summary>
         /// The continuation succeeded.
         /// </summary>
         Succeeded,
@@ -35,9 +32,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         Failed,
 
         /// <summary>
-        /// Invalid operation on the job handler.
+        /// The continuation was cancelled.
         /// </summary>
-        InvalidOperation,
+        Cancelled,
+
+        /// <summary>
+        /// Continue to the next state.
+        /// </summary>
+        Continue,
+
+        /// <summary>
+        /// Retry this job message.
+        /// </summary>
+        Retry,
     }
 
     /// <summary>
@@ -74,6 +81,71 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     }
 
     /// <summary>
+    /// The continuation job result.
+    /// </summary>
+    /// <typeparam name="TState">Type of the state enums.</typeparam>
+    /// <typeparam name="TResult">Type of the result.</typeparam>
+    public class ContinuationJobResult<TState, TResult>
+       where TResult : class
+       where TState : struct, System.Enum
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ContinuationJobResult{TState, TResult}"/> class.
+        /// </summary>
+        /// <param name="resultState">The result state.</param>
+        /// <param name="result">Optional result content.</param>
+        /// <param name="nextState">Optional nextState.</param>
+        /// <param name="isAutoNextState">Optional auot next option.</param>
+        /// <param name="nextPayloadOptions">Optional payload options.</param>
+        /// <param name="nextQueue">Optional next queue options.</param>
+        public ContinuationJobResult(
+            ContinuationJobPayloadResultState resultState,
+            TResult result = null,
+            TState? nextState = null,
+            bool isAutoNextState = false,
+            JobPayloadOptions nextPayloadOptions = null,
+            (string, AzureLocation?)? nextQueue = null)
+        {
+            ResultState = resultState;
+            Result = result;
+            NextState = nextState;
+            IsAutoNextState = isAutoNextState;
+            NextPayloadOptions = nextPayloadOptions;
+            NextQueue = nextQueue;
+        }
+
+        /// <summary>
+        /// Gets the result state.
+        /// </summary>
+        public ContinuationJobPayloadResultState ResultState { get; }
+
+        /// <summary>
+        /// Gets the result value content.
+        /// </summary>
+        public TResult Result { get; }
+
+        /// <summary>
+        /// Gets the next state.
+        /// </summary>
+        public TState? NextState { get; }
+
+        /// <summary>
+        /// Gets the next payload options.
+        /// </summary>
+        public JobPayloadOptions NextPayloadOptions { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether auot nhext is enabled.
+        /// </summary>
+        public bool IsAutoNextState { get; }
+
+        /// <summary>
+        /// Gets the next queue info.
+        /// </summary>
+        public (string, AzureLocation?)? NextQueue { get; }
+    }
+
+    /// <summary>
     /// Base class for our continuation job handlers.
     /// </summary>
     /// <typeparam name="T">The payload type.</typeparam>
@@ -81,7 +153,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     /// <typeparam name="TResult">Type of the result.</typeparam>
     public abstract class ContinuationJobHandlerBase<T, TState, TResult> : JobHandlerBase<T>
        where T : ContinuationJobPayload<TState>
-       where TState : System.Enum
+       where TState : struct, System.Enum
        where TResult : class
     {
         private static readonly TState[] ContinuationStates = (TState[])Enum.GetValues(typeof(TState));
@@ -102,11 +174,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         }
 
         /// <summary>
-        /// Gets the completion queue id.
+        /// Gets the job queue producer factory.
         /// </summary>
-        protected virtual string CompletedQueueId => null;
-
-        private IJobQueueProducerFactory JobQueueProducerFactory { get; }
+        protected IJobQueueProducerFactory JobQueueProducerFactory { get; }
 
         /// <inheritdoc/>
         public override JobHandlerOptions GetJobOptions(IJob<T> job)
@@ -123,10 +193,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             {
                 job.Completed -= jobCompletedCallback;
 
-                // if cometion failed and will be removed from the queue we failed our result
+                // if continuation failed and it will be removed from the queue we failed our result
                 if (jobCompleted.Status.HasFlag(JobCompletedStatus.Failed) && jobCompleted.Status.HasFlag(JobCompletedStatus.Removed))
                 {
-                    await CompleteJobAsync(job, null, ContinuationJobPayloadResultState.Failed, cancellationToken);
+                    await CompleteJobAsync(job, ReturnFailed(), cancellationToken);
                 }
             };
 
@@ -134,61 +204,129 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 
             int currentStateIndex = Array.IndexOf(ContinuationStates, job.Payload.CurrentState);
 
-            var continueResult = await logger.OperationScopeAsync(
+            var continueJobResult = await logger.OperationScopeAsync(
                 "job_continuation_handler_continue",
-                (childLogger) =>
+                async (childLogger) =>
                 {
                     childLogger.FluentAddValue("JobContinuationState", job.Payload.CurrentState.ToString());
-                    return ContinueAsync(job.Payload, childLogger, cancellationToken);
+                    var result = await ContinueAsync(job, childLogger, cancellationToken);
+                    childLogger.FluentAddValue("JobContinuationResultState", result.ResultState)
+                        .FluentAddValue("JobContinuationHasResult", result.Result != null)
+                        .FluentAddValue("JobContinuationNextState", result.NextState);
+                    return result;
                 });
 
-            if (continueResult.Item2 != ContinuationJobPayloadResultState.None)
+            if (continueJobResult.ResultState == ContinuationJobPayloadResultState.Retry)
             {
-                await CompleteJobAsync(job, continueResult.Item1, continueResult.Item2, cancellationToken);
+                job.RetryTimeout = continueJobResult.NextPayloadOptions?.InitialVisibilityDelay ?? TimeSpan.FromSeconds(5);
+            }
+            else if (continueJobResult.ResultState == ContinuationJobPayloadResultState.Continue)
+            {
+                // move to next state and re queue
+                TState? nextState = continueJobResult.NextState;
+                if (!nextState.HasValue && continueJobResult.IsAutoNextState)
+                {
+                    nextState = ContinuationStates[currentStateIndex + 1];
+                }
+
+                if (nextState.HasValue)
+                {
+                    job.Payload.CurrentState = nextState.Value;
+                }
+
+                var queueInfo = GetQueueInfo(job, continueJobResult);
+                await JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(job.Payload, continueJobResult.NextPayloadOptions, cancellationToken);
             }
             else
             {
-                if ((currentStateIndex + 1) == ContinuationStates.Length)
+                if (!(continueJobResult.ResultState == ContinuationJobPayloadResultState.Succeeded && continueJobResult.Result == null))
                 {
-                    await CompleteJobAsync(job, null, ContinuationJobPayloadResultState.InvalidOperation, cancellationToken);
-                }
-                else
-                {
-                    // move to next state and re queue
-                    job.Payload.CurrentState = ContinuationStates[currentStateIndex + 1];
-                    await JobQueueProducerFactory.GetOrCreate(ContinuationQueueId(job.Payload.CurrentState) ?? GetDefaultQueueId(job)).AddJobAsync(job.Payload, null, cancellationToken);
+                    await logger.OperationScopeAsync(
+                        "job_continuation_complete",
+                        (childLogger) => CompleteJobAsync(job, continueJobResult, cancellationToken));
                 }
             }
-         }
+        }
 
         /// <summary>
-        /// Return the queue id of the next continuation.
+        /// Return next state.
         /// </summary>
-        /// <param name="state">Next state of the continuation.</param>
-        /// <returns>The queue id or null if a default value is enough.</returns>
-        protected virtual string ContinuationQueueId(TState state) => null;
+        /// <param name="state">Desired state to transition.</param>
+        /// <param name="isAutoNextState">If auto next is desired.</param>
+        /// <returns>Result tuple.</returns>
+        protected static ContinuationJobResult<TState, TResult> ReturnNextState(TState? state = null, bool isAutoNextState = false)
+        {
+            return new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Continue, nextState: state, isAutoNextState: isAutoNextState);
+        }
+
+        /// <summary>
+        /// Return a failure continuation.
+        /// </summary>
+        /// <param name="result">Result value.</param>
+        /// <returns>Result tuple.</returns>
+        protected static ContinuationJobResult<TState, TResult> ReturnFailed(TResult result = null)
+        {
+            return new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Failed, result: result);
+        }
+
+        /// <summary>
+        /// Return a cancelled continuation.
+        /// </summary>
+        /// <param name="result">Result value.</param>
+        /// <returns>Result tuple.</returns>
+        protected static ContinuationJobResult<TState, TResult> ReturnCancelled(TResult result = null)
+        {
+            return new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Cancelled, result: result);
+        }
+
+        /// <summary>
+        /// Return a retry continuation.
+        /// </summary>
+        /// <param name="retryTimeout">Optional retry timeout value.</param>
+        /// <returns>Result tuple.</returns>
+        protected static ContinuationJobResult<TState, TResult> ReturnRetry(TimeSpan? retryTimeout = null)
+        {
+            return new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Retry, nextPayloadOptions: new JobPayloadOptions() { InitialVisibilityDelay = retryTimeout });
+        }
+
+        /// <summary>
+        /// Return a succeeded continuation.
+        /// </summary>
+        /// <param name="result">Result value.</param>
+        /// <returns>Result tuple.</returns>
+        protected static ContinuationJobResult<TState, TResult> ReturnSucceeded(TResult result = null)
+        {
+            return new ContinuationJobResult<TState, TResult>(ContinuationJobPayloadResultState.Succeeded, result: result);
+        }
 
         /// <summary>
         /// Continue the next step.
         /// </summary>
-        /// <param name="payload">Current payload value.</param>
+        /// <param name="job">Job instance.</param>
         /// <param name="logger">Logger instance.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Completion task.</returns>
-        protected abstract Task<(TResult, ContinuationJobPayloadResultState)> ContinueAsync(
-            T payload,
+        protected abstract Task<ContinuationJobResult<TState, TResult>> ContinueAsync(
+            IJob<T> job,
             IDiagnosticsLogger logger,
             CancellationToken cancellationToken);
 
-        private static string GetDefaultQueueId(IJob job)
+        private static (string, AzureLocation?) GetQueueInfo(IJob job, ContinuationJobResult<TState, TResult> continueJobResult)
         {
-            return job.Queue.Id;
+            return continueJobResult.NextQueue ?? (job.Queue.Id, null);
         }
 
-        private Task CompleteJobAsync(IJob<T> job, TResult result, ContinuationJobPayloadResultState state, CancellationToken cancellationToken)
+        private Task CompleteJobAsync(IJob<T> job, ContinuationJobResult<TState, TResult> continueJobResult, CancellationToken cancellationToken)
         {
-            var resultPayload = new ContinuationJobPayloadResult<TState, TResult>() { CurrentState = job.Payload.CurrentState, CompletionState = state, Result = result };
-            return JobQueueProducerFactory.GetOrCreate(CompletedQueueId ?? GetDefaultQueueId(job)).AddJobAsync(resultPayload, null, cancellationToken);
+            var resultPayload = new ContinuationJobPayloadResult<TState, TResult>()
+            {
+                CurrentState = continueJobResult.NextState.HasValue ? continueJobResult.NextState.Value : job.Payload.CurrentState,
+                CompletionState = continueJobResult.ResultState,
+                Result = continueJobResult.Result,
+            };
+
+            var queueInfo = GetQueueInfo(job, continueJobResult);
+            return JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(resultPayload, null, cancellationToken);
         }
     }
 #pragma warning restore SA1649

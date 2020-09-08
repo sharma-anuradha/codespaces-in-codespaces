@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.Metrics\Common.Metrics.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient.Contracts\BackEndWebApiClient.Contracts.csproj" />

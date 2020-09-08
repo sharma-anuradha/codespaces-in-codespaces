@@ -5,6 +5,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
@@ -42,5 +43,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="job">The job type safe instance.</param>
         /// <returns>Handler Options to use.</returns>
         JobHandlerOptions GetJobOptions(IJob<T> job);
+    }
+
+    /// <summary>
+    /// Job handler target that define a queue id and location.
+    /// </summary>
+    public interface IJobHandlerTarget
+    {
+        /// <summary>
+        /// Gets the queue id that this job handler target.
+        /// </summary>
+        string QueueId { get; }
+
+        /// <summary>
+        /// Gets the location of the queue.
+        /// </summary>
+        AzureLocation? Location { get; }
+
+        /// <summary>
+        /// Callback to register the job handler.
+        /// </summary>
+        /// <param name="jobQueueConsumer">The job queue consumer instance.</param>
+        void RegisterHandler(IJobQueueConsumer jobQueueConsumer);
     }
 }

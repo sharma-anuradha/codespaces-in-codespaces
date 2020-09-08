@@ -4,13 +4,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {
@@ -24,36 +29,62 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// </summary>
         /// <param name="activator">Target activator.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
+        /// <param name="jobQueueProducerFactory">Job Queue producer factory instance.</param>
+        /// <param name="configurationReader">Configuration reader.</param>
         public EnvironmentContinuationOperations(
-            IContinuationTaskActivator activator)
+            IContinuationTaskActivator activator,
+            IJobQueueProducerFactory jobQueueProducerFactory,
+            IConfigurationReader configurationReader)
         {
             Activator = activator;
+            JobQueueProducerFactory = jobQueueProducerFactory;
+            ConfigurationReader = configurationReader;
         }
 
         private IContinuationTaskActivator Activator { get; }
 
+        private IJobQueueProducerFactory JobQueueProducerFactory { get; }
+
+        private IConfigurationReader ConfigurationReader { get; }
+
         /// <inheritdoc/>
-        public Task<ContinuationResult> ArchiveAsync(
+        public async Task<ContinuationResult> ArchiveAsync(
             Guid environmentId,
             DateTime lastStateUpdated,
             string reason,
             IDiagnosticsLogger logger)
         {
-            var loggingProperties = BuildLoggingProperties(environmentId, reason);
-
-            var input = new ArchiveEnvironmentContinuationInput()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                LastStateUpdated = lastStateUpdated,
-                Reason = reason,
-            };
-            var target = ArchiveEnvironmentContinuationHandler.DefaultQueueTarget;
+                await JobQueueProducerFactory.GetOrCreate(ArchiveEnvironmentContinuationJobHandler.DefaultQueueId).AddJobAsync(
+                    new ArchiveEnvironmentContinuationJobHandler.ArchiveContinuationInput()
+                    {
+                        EnvironmentId = environmentId,
+                        LastStateUpdated = lastStateUpdated,
+                        Reason = reason,
+                    },
+                    null,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var loggingProperties = BuildLoggingProperties(environmentId, reason);
 
-            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+                var input = new ArchiveEnvironmentContinuationInput()
+                {
+                    EnvironmentId = environmentId,
+                    LastStateUpdated = lastStateUpdated,
+                    Reason = reason,
+                };
+                var target = ArchiveEnvironmentContinuationHandler.DefaultQueueTarget;
+
+                return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+            }
         }
 
         /// <inheritdoc/>
-        public Task<ContinuationResult> CreateAsync(
+        public async Task<ContinuationResult> CreateAsync(
             Guid environmentId,
             DateTime lastStateUpdated,
             CloudEnvironmentOptions cloudEnvironmentOptions,
@@ -61,20 +92,39 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string reason,
             IDiagnosticsLogger logger)
         {
-            var loggingProperties = BuildLoggingProperties(environmentId, reason);
-
-            var input = new StartEnvironmentContinuationInputV2()
+            if (await IsJobContinuationHandlerEnabledAsync(logger))
             {
-                EnvironmentId = environmentId,
-                LastStateUpdated = lastStateUpdated,
-                CloudEnvironmentParameters = startCloudEnvironmentParameters,
-                Reason = reason,
-                ActionState = StartEnvironmentInputActionState.CreateNew,
-            };
+                await JobQueueProducerFactory.GetOrCreate(StartEnvironmentContinuationJobHandlerV2.DefaultQueueId).AddJobAsync(
+                    new StartEnvironmentContinuationJobHandlerV2.StartEnvironmentContinuationInput()
+                    {
+                        CloudEnvironmentOptions = cloudEnvironmentOptions,
+                        ActionState = StartEnvironmentInputActionState.CreateNew,
+                        EnvironmentId = environmentId,
+                        LastStateUpdated = lastStateUpdated,
+                        CloudEnvironmentParameters = startCloudEnvironmentParameters,
+                        Reason = reason,
+                    },
+                    null,
+                    CancellationToken.None);
+                return null;
+            }
+            else
+            {
+                var loggingProperties = BuildLoggingProperties(environmentId, reason);
 
-            var target = StartEnvironmentContinuationHandlerV2.DefaultQueueTarget;
+                var input = new StartEnvironmentContinuationInputV2()
+                {
+                    EnvironmentId = environmentId,
+                    LastStateUpdated = lastStateUpdated,
+                    CloudEnvironmentParameters = startCloudEnvironmentParameters,
+                    Reason = reason,
+                    ActionState = StartEnvironmentInputActionState.CreateNew,
+                };
 
-            return Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+                var target = StartEnvironmentContinuationHandlerV2.DefaultQueueTarget;
+
+                return await Activator.Execute(target, input, logger, input.EnvironmentId, loggingProperties);
+            }
         }
 
         /// <inheritdoc/>
@@ -155,6 +205,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     { EnvironmentLoggingPropertyConstants.EnvironmentId, resourceId.ToString() },
                     { EnvironmentLoggingPropertyConstants.OperationReason, reason },
                 };
+        }
+
+        private Task<bool> IsJobContinuationHandlerEnabledAsync(IDiagnosticsLogger logger)
+        {
+            return ConfigurationReader.ReadFeatureFlagAsync("job-continuation-handler", logger, false);
         }
     }
 }

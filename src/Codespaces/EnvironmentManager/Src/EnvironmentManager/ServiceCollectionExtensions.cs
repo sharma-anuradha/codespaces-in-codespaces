@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Repository.
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common.Repositories.AzureQueue;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -121,6 +122,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ShutdownEnvironmentContinuationHandler>();
             services.AddSingleton<IShutdownEnvironmentContinuationHandler>(x => x.GetRequiredService<ShutdownEnvironmentContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ShutdownEnvironmentContinuationHandler>());
+
+            // new job continuation handlers
+            services.AddSingleton<ArchiveEnvironmentContinuationJobHandler>();
+            services.AddSingleton<IJobHandlerTarget>(x => x.GetRequiredService<ArchiveEnvironmentContinuationJobHandler>());
+            services.AddSingleton<StartEnvironmentContinuationJobHandlerV2>();
+            services.AddSingleton<IJobHandlerTarget>(x => x.GetRequiredService<StartEnvironmentContinuationJobHandlerV2>());
 
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();

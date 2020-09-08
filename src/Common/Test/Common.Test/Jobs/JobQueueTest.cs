@@ -536,8 +536,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 return JobHandlerOptions ?? base.GetJobOptions(job);
             }
 
-            protected override Task<(ContinuationResult, ContinuationJobPayloadResultState)> ContinueAsync(ContinuationPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            protected override Task<ContinuationJobResult<ContinuationState, ContinuationResult>> ContinueAsync(IJob<ContinuationPayload> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
             {
+                var payload = job.Payload;
                 switch(payload.CurrentState)
                 {
                     case ContinuationState.None:
@@ -559,10 +560,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         break;
                     case ContinuationState.Step3:
                         var result = new ContinuationResult() { ResultStep1 = payload.Step1Value, ResultStep2 = payload.Step2Value.Value };
-                        return Task.FromResult<(ContinuationResult, ContinuationJobPayloadResultState)>((result, ContinuationJobPayloadResultState.Succeeded));
+                        return Task.FromResult(ReturnSucceeded(result));
                 }
 
-                return Task.FromResult<(ContinuationResult, ContinuationJobPayloadResultState)>((null, ContinuationJobPayloadResultState.None));
+                return Task.FromResult(ReturnNextState(isAutoNextState: true));
             }
         }
     }

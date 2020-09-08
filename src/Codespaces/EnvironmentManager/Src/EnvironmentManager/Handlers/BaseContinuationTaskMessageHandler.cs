@@ -122,27 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <returns>Reference objec to the resource.</returns>
         protected virtual async Task<EnvironmentRecordRef> FetchReferenceAsync(TI input, IDiagnosticsLogger logger)
         {
-            return await FetchReferenceAsync(input.EnvironmentId, logger);
-        }
-
-        /// <summary>
-        /// Raw fetch of the a record state management object for a Resource.
-        /// </summary>
-        /// <param name="resourceId">Target Id that should be used to obtain the resource.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Reference objec to the resource.</returns>
-        protected virtual async Task<EnvironmentRecordRef> FetchReferenceAsync(Guid resourceId, IDiagnosticsLogger logger)
-        {
-            // Pull record
-            var resource = await CloudEnvironmentRepository.GetAsync(resourceId.ToString(), logger.NewChildLogger());
-            if (resource == null)
-            {
-                logger.FluentAddValue("HandlerFailedToFindResource", true);
-
-                throw new CloudEnvironmentNotFoundException(resourceId);
-            }
-
-            return new EnvironmentRecordRef(resource);
+            return await CloudEnvironmentRepository.FetchReferenceAsync(input.EnvironmentId, logger);
         }
 
         /// <summary>
@@ -291,33 +271,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <param name="mutateRecordCallback">Target callback which mutes the state.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returned task.</returns>
-        protected async Task<bool> UpdateRecordAsync(
+        protected Task<bool> UpdateRecordAsync(
             TI input,
             EnvironmentRecordRef record,
             Func<CloudEnvironment, IDiagnosticsLogger, Task<bool>> mutateRecordCallback,
             IDiagnosticsLogger logger)
         {
-            var stateChanged = false;
-
-            // retry till we succeed
-            await logger.RetryOperationScopeAsync(
-                $"{LogBaseName}_status_update",
-                async (innerLogger) =>
-                {
-                    // Obtain a fresh record.
-                    record.Value = (await FetchReferenceAsync(input, innerLogger)).Value;
-
-                    // Mutate record
-                    stateChanged = await mutateRecordCallback(record.Value, innerLogger);
-
-                    // Only need to update things if something has changed
-                    if (stateChanged)
-                    {
-                        record.Value = await CloudEnvironmentRepository.UpdateAsync(record.Value, innerLogger.NewChildLogger());
-                    }
-                });
-
-            return stateChanged;
+            return CloudEnvironmentRepository.UpdateRecordAsync(input.EnvironmentId, record, mutateRecordCallback, logger, LogBaseName);
         }
 
         /// <summary>
