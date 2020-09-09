@@ -8,7 +8,7 @@ param(
 )
 $Content = Get-Content $AppSettingsFile
 
-Write-Host "Updating $Pattern in $AppSettingsFile"
+Write-Host "Updating $ImageName in $AppSettingsFile"
 for ($Index = 0; $Index -lt $Content.Count;) {
     if ($Content[$Index++] -match """imageName"": ""$ImageName"",") {
         $Content[$Index] = $Content[$Index] -replace '(\d{4}\.){2}\d{3}', $ImageVersion
