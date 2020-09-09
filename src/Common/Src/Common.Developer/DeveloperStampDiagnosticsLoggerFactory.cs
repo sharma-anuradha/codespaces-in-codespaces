@@ -21,11 +21,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
         /// </summary>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
         /// <param name="serviceProvider">Service provider.</param>
-        public DeveloperStampDiagnosticsLoggerFactory(IResourceNameBuilder resourceNameBuilder, IServiceProvider serviceProvider)
+        /// <param name="kustoStreaming">Enable Kusto Streaming.</param>
+        /// <param name="fileLogStreaming">Enable File Log Streaming.</param>
+        public DeveloperStampDiagnosticsLoggerFactory(IResourceNameBuilder resourceNameBuilder, IServiceProvider serviceProvider, bool kustoStreaming = false, bool fileLogStreaming = false)
         {
             ResourceNameBuilder = resourceNameBuilder;
             ServiceProvider = serviceProvider;
+            this.kustoStreaming = kustoStreaming;
+            this.fileLogStreaming = fileLogStreaming;
         }
+
+        private bool kustoStreaming;
+
+        private bool fileLogStreaming;
 
         private TextWriter KustoStreamWriter { get; set; }
 
@@ -38,13 +46,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
         /// <inheritdoc/>
         public IDiagnosticsLogger New(LogValueSet logValueSet = default)
         {
-            if (KustoStreamWriter == default)
+            if (KustoStreamWriter == default && this.kustoStreaming)
             {
                 var controlPlaneAccessor = ServiceProvider.GetService<IControlPlaneAzureResourceAccessor>();
                 KustoStreamWriter = new KustoStreamWriter(ResourceNameBuilder, controlPlaneAccessor);
             }
 
-            if (LogFileStreamWriter == default)
+            if (LogFileStreamWriter == default && this.fileLogStreaming)
             {
                 LogFileStreamWriter = new LogFileStreamWriter();
             }

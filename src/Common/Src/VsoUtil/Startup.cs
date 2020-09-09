@@ -71,7 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
             services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
             ConfigureSecretsProvider(services);
-            ConfigureCommonServices(services, appSettings, out var _, false);
+            ConfigureCommonServices(services, appSettings, false, out var _);
 
             // Job Queue consumer telemetry
             services.AddJobQueueTelemetrySummary();

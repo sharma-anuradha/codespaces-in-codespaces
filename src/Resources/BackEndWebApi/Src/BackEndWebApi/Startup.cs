@@ -107,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             }
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
-            ConfigureCommonServices(services, AppSettings, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings, null, out var loggingBaseValues);
 
             // Common services
             services.AddSingleton<IDistributedLease, DistributedLease>();

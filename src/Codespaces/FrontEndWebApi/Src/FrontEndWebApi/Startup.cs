@@ -140,7 +140,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddSingleton<ICurrentImageInfoProvider, DelegatedImageInfoProvider>();
 
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
-            ConfigureCommonServices(services, AppSettings, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings, null, out var loggingBaseValues);
 
             services.AddCors(options =>
                 {

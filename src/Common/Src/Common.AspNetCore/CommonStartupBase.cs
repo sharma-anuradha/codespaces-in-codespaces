@@ -245,16 +245,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="appSettings">App setting base.</param>
-        /// <param name="loggingBaseValues">The common logging base values.</param>
         /// <param name="kustoStreamLogging">Kusto stream logging for dev stamps.</param>
-        protected void ConfigureCommonServices(IServiceCollection services, AppSettingsBase appSettings, out LoggingBaseValues loggingBaseValues, bool kustoStreamLogging = true)
+        /// <param name="loggingBaseValues">The common logging base values.</param>
+        protected void ConfigureCommonServices(IServiceCollection services, AppSettingsBase appSettings, bool? kustoStreamLogging, out LoggingBaseValues loggingBaseValues)
         {
             services.AddSingleton(appSettings);
 
-            if (AppSettings.DeveloperPersonalStamp && kustoStreamLogging)
+            if (!kustoStreamLogging.HasValue)
             {
-                services.AddSingleton<IDiagnosticsLoggerFactory, DeveloperStampDiagnosticsLoggerFactory>();
+                kustoStreamLogging = AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto;
             }
+
+            services.AddSingleton<IDiagnosticsLoggerFactory>(x => ActivatorUtilities.CreateInstance<DeveloperStampDiagnosticsLoggerFactory>(x, kustoStreamLogging, AppSettings.RedirectStandardOutToLogsDirectory));
 
             var productInfo = new ProductInfoHeaderValue(
                 ServiceName, Assembly.GetExecutingAssembly().GetName().Version.ToString());
