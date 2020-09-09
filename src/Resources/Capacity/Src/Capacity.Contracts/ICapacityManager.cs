@@ -30,6 +30,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts
         /// Gets list of all existing resource groups in the data plane subscriptions that are owned by the current stamp.
         /// </summary>
         /// <returns>Complete list of resource groups.</returns>
-        Task<IEnumerable<IAzureResourceGroup>> GetAllDataPlaneResourceGroups();
+        Task<IEnumerable<IAzureResourceGroup>> GetAllDataPlaneResourceGroups(IDiagnosticsLogger logger);
     }
 }

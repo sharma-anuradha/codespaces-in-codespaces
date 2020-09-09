@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
@@ -21,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
     public class CapacityManager : ICapacityManager
     {
         private const int MaxResourceGroupsPerSubscription = 980;
+        private const string ConfigSettingComponentName = "capacitymanager";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CapacityManager"/> class.
@@ -30,6 +32,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         /// <param name="azureSubscriptionCapacity">The azure subscription capacity data.</param>
         /// <param name="controlPlaneInfo">The control-plane resource accessor.</param>
         /// <param name="resourceNameBuilder">resource name builder.</param>
+        /// <param name="configurationReader">A configuration reader instance.</param>
         /// <param name="capacitySettings">Capacity settings.</param>
         public CapacityManager(
             IAzureClientFactory azureClientFactory,
@@ -37,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             IAzureSubscriptionCapacityProvider azureSubscriptionCapacity,
             IControlPlaneInfo controlPlaneInfo,
             IResourceNameBuilder resourceNameBuilder,
+            IConfigurationReader configurationReader,
             CapacitySettings capacitySettings)
         {
             AzureClientFactory = Requires.NotNull(azureClientFactory, nameof(azureClientFactory));
@@ -44,6 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             AzureSubscriptionCapacity = Requires.NotNull(azureSubscriptionCapacity, nameof(azureSubscriptionCapacity));
             ControlPlaneInfo = Requires.NotNull(controlPlaneInfo, nameof(controlPlaneInfo));
             ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
+            ConfigurationReader = Requires.NotNull(configurationReader, nameof(configurationReader));
             CapacitySettings = Requires.NotNull(capacitySettings, nameof(capacitySettings));
         }
 
@@ -59,6 +64,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
         private IResourceNameBuilder ResourceNameBuilder { get; }
 
+        private IConfigurationReader ConfigurationReader { get; }
+
         private CapacitySettings CapacitySettings { get; }
 
         /// <inheritdoc/>
@@ -67,11 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
             Requires.NotNullOrEmpty(criteria, nameof(criteria));
             Requires.NotNull(logger, nameof(logger));
 
-            var enabledSubscriptionForLocation =
-                from subscription in AzureSubscriptionCatalog.AzureSubscriptions
-                where subscription.Enabled
-                where subscription.Locations.Contains(location)
-                select subscription;
+            var enabledSubscriptionForLocation = await GetEnabledSubscriptionsForLocation(location, logger);
 
             if (!enabledSubscriptionForLocation.Any())
             {
@@ -191,12 +194,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<IAzureResourceGroup>> GetAllDataPlaneResourceGroups()
+        public async Task<IEnumerable<IAzureResourceGroup>> GetAllDataPlaneResourceGroups(IDiagnosticsLogger logger)
         {
             var results = new List<IAzureResourceGroup>();
             var resourceGroupNamePrefix = GetBaseResourceGroupName();
-            foreach (var subscription in AzureSubscriptionCatalog.AzureSubscriptions.Where(s => s.Enabled))
+            foreach (var subscription in AzureSubscriptionCatalog.AzureSubscriptions)
             {
+                var subscriptionIsEnabled = await CheckSubscriptionIsEnabled(subscription, logger);
+                if (!subscriptionIsEnabled)
+                {
+                    continue;
+                }
+
                 var azure = await AzureClientFactory.GetAzureClientAsync(Guid.Parse(subscription.SubscriptionId));
                 var resourceGroups = await azure.ResourceGroups.ListAsync();
                 foreach (var resourceGroup in resourceGroups)
@@ -258,6 +267,67 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
             var theSubscription = topHalf.RandomOrDefault();
             return theSubscription;
+        }
+
+        private async Task<bool> CheckSubscriptionIsEnabled(IAzureSubscription subscription, IDiagnosticsLogger logger)
+        {
+            const string loggingName = "capacity_manager_check_subscription_enabled";
+
+            return await logger.OperationScopeAsync(
+                loggingName,
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddValue("SubscriptionId", subscription.SubscriptionId);
+
+                    var settingName = $"subscription-enabled-{subscription.SubscriptionId}";
+                    var subscriptionIsEnabled = await ConfigurationReader.ReadSettingAsync(ConfigSettingComponentName, settingName, logger, subscription.Enabled);
+
+                    childLogger.FluentAddValue("SubscriptionIsEnabledInAppSettings", subscription.Enabled)
+                        .FluentAddValue("SubscriptionIsEnabled", subscriptionIsEnabled);
+
+                    return subscriptionIsEnabled;
+                },
+                swallowException: true);
+        }
+
+        /// <summary>
+        /// Gets a list of enabled subscriptions for a given location.
+        /// </summary>
+        private async Task<IEnumerable<IAzureSubscription>> GetEnabledSubscriptionsForLocation(AzureLocation location, IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(logger, nameof(logger));
+
+            const string loggingName = "capacity_manager_get_enabled_subscriptions_for_location";
+
+            return await logger.OperationScopeAsync<IEnumerable<IAzureSubscription>>(
+                loggingName,
+                async (childLogger) =>
+                {
+                    childLogger.FluentAddBaseValue("AzureLocation", location.ToString());
+
+                    var enabledSubscriptions = new List<IAzureSubscription>();
+
+                    var subscriptions = from subscription in AzureSubscriptionCatalog.AzureSubscriptions
+                        where subscription.Locations.Contains(location)
+                        select subscription;
+
+                    foreach (var subscription in subscriptions)
+                    {
+                        var subscriptionIsEnabled = await CheckSubscriptionIsEnabled(subscription, logger);
+                        if (subscriptionIsEnabled)
+                        {
+                            enabledSubscriptions.Add(subscription);
+                        }
+                    }
+
+                    var disabledSubscriptions = subscriptions.Except(enabledSubscriptions);
+
+                    childLogger.FluentAddValue("EnabledSubscriptions", string.Join(", ", enabledSubscriptions.Select(s => s.SubscriptionId)))
+                        .FluentAddValue("DisabledSubscriptions", string.Join(", ", disabledSubscriptions.Select(s => s.SubscriptionId)));
+
+                    return enabledSubscriptions;
+                },
+                swallowException: false);
         }
 
         private string GetBaseResourceGroupName()

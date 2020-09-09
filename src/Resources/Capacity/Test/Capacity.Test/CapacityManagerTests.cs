@@ -6,6 +6,7 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Moq;
 using Xunit;
@@ -23,13 +24,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var capacitySettings = new CapacitySettings();
             var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false, "test", false));
             var azureClient = new Mock<IAzureClientFactory>().Object;
-            _ = new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, null, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, null, controlPlaneInfo, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, null, resourceNameBuilder, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, null, capacitySettings));
-            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, null));
+            var configurationReader = new Mock<IConfigurationReader>().Object;
+            _ = new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, configurationReader, capacitySettings);
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(null, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, configurationReader, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, null, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, configurationReader, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, null, controlPlaneInfo, resourceNameBuilder, configurationReader, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, null, resourceNameBuilder, configurationReader, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, null, configurationReader, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, null, capacitySettings));
+            Assert.Throws<ArgumentNullException>(() => new CapacityManager(azureClient, azureSubscriptionCatalog, azureSubscriptionCapacityProvider, controlPlaneInfo, resourceNameBuilder, configurationReader, null));
         }
 
         [Fact]
@@ -37,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
         {
             var capacityManager = CreateTestCapacityManager();
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
 
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
                 capacityManager.SelectAzureResourceLocation(null, AzureLocation.EastUs, logger));
@@ -51,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
         {
             var capacityManager = CreateTestCapacityManager();
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
  
             var badLocation = AzureLocation.EastUs2Euap;
             await Assert.ThrowsAsync<LocationNotAvailableException>(() =>
@@ -72,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
         {
             var capacityManager = CreateTestCapacityManager();
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
 
             var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
             var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-0";
@@ -88,7 +91,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             // All subscriptions, all regions report 99% used
             var capacityManager = CreateTestCapacityManager(0.99);
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
 
             await Assert.ThrowsAsync<CapacityNotAvailableException>(() => capacityManager.SelectAzureResourceLocation(criteria, location, logger));
         }
@@ -100,7 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             // *-0 subscriptions report 100% full, *-1 subscriptions report 80% full
             var capacityManager = CreateTestCapacityManager(0.8, fillZero: true);
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
 
             var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
             var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-1";
@@ -115,7 +118,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var location = AzureLocation.WestUs2;
             var capacityManager = CreateTestCapacityManager(0.10, fillZero: false);
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
 
             var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
             var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-1";
@@ -132,7 +135,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var location = AzureLocation.WestUs2;
             var capacityManager = CreateTestCapacityManager(0.10, fillZero: false, SpreadResourcesInGroups: true);    
             var criteria = CoresCriteria();
-            var logger = new Mock<IDiagnosticsLogger>().Object;
+            var logger = new DefaultLoggerFactory().New();
             var result = await capacityManager.SelectAzureResourceLocation(criteria, location, logger);
             var expectedSubscriptionNamePrefix = $"Mock-Subscription-{location}-1";
             var resourceGroupNumber = int.Parse(result.ResourceGroup.Substring(result.ResourceGroup.Length - 3));
@@ -150,7 +153,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Test
             var capacitySettings = new CapacitySettings(1, 100, SpreadResourcesInGroups);
             var resourceNameBuilder = new ResourceNameBuilder(new DeveloperPersonalStampSettings(false, "test", false));
             var azureClient = new Mock<IAzureClientFactory>().Object;
-            var capacityManager = new CapacityManager(azureClient, catalog, capacityProvider, controlPlaneInfo, resourceNameBuilder, capacitySettings);
+            var configurationReader = new Mock<IConfigurationReader>();
+            configurationReader
+                .Setup(x => x.ReadSettingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>(), It.IsAny<bool>()))
+                .Returns((string componentName, string settingName, IDiagnosticsLogger logger, bool defaultValue) => Task.FromResult(defaultValue));
+            var capacityManager = new CapacityManager(azureClient, catalog, capacityProvider, controlPlaneInfo, resourceNameBuilder, configurationReader.Object, capacitySettings);
             return capacityManager;
         }
 

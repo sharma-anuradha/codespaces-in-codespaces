@@ -82,7 +82,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 $"{LogBaseName}_run",
                 async (childLogger) =>
                 {
-                    var dataPlaneResourceGroups = await RetrieveResourceGroups();
+                    var dataPlaneResourceGroups = await RetrieveResourceGroups(childLogger);
 
                     logger.FluentAddValue("TaskCountResourceGroups", dataPlaneResourceGroups.Count().ToString());
 
@@ -124,9 +124,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 "RunResourceGroupAction", () => ProcessResourceGroupAsync(resourceGroup, logger));
         }
 
-        private async Task<IEnumerable<IAzureResourceGroup>> RetrieveResourceGroups()
+        private async Task<IEnumerable<IAzureResourceGroup>> RetrieveResourceGroups(IDiagnosticsLogger logger)
         {
-            var resourceGroups = await CapacityManager.GetAllDataPlaneResourceGroups();
+            var resourceGroups = await CapacityManager.GetAllDataPlaneResourceGroups(logger);
             return resourceGroups.Shuffle();
         }
 
