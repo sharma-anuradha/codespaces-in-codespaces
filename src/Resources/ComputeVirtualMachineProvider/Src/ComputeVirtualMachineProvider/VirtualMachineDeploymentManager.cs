@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -32,6 +33,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
     /// </summary>
     public class VirtualMachineDeploymentManager : IDeploymentManager
     {
+        private const string DeallocationInProgressStatusCode = "PowerState/deallocating";
+        private const string DeallocatedStatusCode = "PowerState/deallocated";
         private const string LogBase = "virtual_machine_manager";
 
         /// <summary>
@@ -268,6 +271,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 var phase1Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
                 var phase2Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
                 var resourceDeletionPlan = new Dictionary<int, (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)> Resources, OperationState PhaseState)>();
+
                 phase0Resources.Add(VirtualMachineConstants.VmNameKey, (input.AzureResourceInfo, OperationState.NotStarted));
 
                 // Add Queue
@@ -526,6 +530,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             return mergedTags;
         }
 
+        /// <summary>
+        /// Gets the Virtual machine's statuses.
+        /// </summary>
+        /// <param name="resourceGroup"> Resource group name.</param>
+        /// <param name="vmName"> Virtual machine name.</param>
+        /// <param name="vmComputeClient"> Vm compute client for accessing api.</param>
+        /// <param name="logger"> Logger to be used.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        private async Task<IEnumerable<InstanceViewStatus>> CheckVirtualMachineStatusAsync(string resourceGroup, string vmName, IComputeManagementClient vmComputeClient, IDiagnosticsLogger logger)
+        {
+            try
+            {
+                var instanceView = await vmComputeClient.VirtualMachines.InstanceViewAsync(resourceGroup, vmName);
+                return instanceView.Statuses;
+            }
+            catch (Exception ex)
+            {
+                // Virtual machine not found.
+                if (ex.Message.Contains("not found", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    logger.LogException($"Virtual machine {vmName} not found", ex);
+                    return new List<InstanceViewStatus>();
+                }
+                else
+                {
+                    // Azure/Network exception occurred.
+                    logger.LogException($"Azure/Network exception occurred while checking status for Virtual machine {vmName}", ex);
+                    return null;
+                }
+            }
+        }
+
         private async Task<(OperationState OperationState, NextStageInput NextInput)> CheckDeleteComputeStatusVer1Async(NextStageInput input, IDiagnosticsLogger logger)
         {
             var (computeVmLocation, resourceDeletionPlan) = JsonConvert
@@ -533,6 +569,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
             var resourceToBeDeleted = (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>)default;
             var phase = 0;
+
             for (int i = 0; i < resourceDeletionPlan.Count; i++)
             {
                 if (resourceDeletionPlan.ContainsKey(i) && resourceDeletionPlan[i].PhaseState != OperationState.Succeeded)
@@ -553,9 +590,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             foreach (var resource in resourceToBeDeleted)
             {
                 resourceDeletionStatus[resource.Key] = (resource.Value.ResourceInfo.Name, resourceToBeDeleted[resource.Key].ResourceState);
+                var vmName = resource.Value.ResourceInfo.Name;
                 var resourceGroup = resource.Value.ResourceInfo.ResourceGroup;
                 var subscriptionId = resource.Value.ResourceInfo.SubscriptionId;
-
                 var nicProperties = new AzureResourceInfoNetworkInterfaceProperties(resource.Value.ResourceInfo.Properties);
                 var isVnetInjected = nicProperties.IsVNetInjected;
 
@@ -569,12 +606,50 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                 {
                     case VirtualMachineConstants.VmNameKey:
                         var vmComputeClient = await ClientFactory.GetComputeManagementClient(subscriptionId);
-                        taskList.Add(
-                          CheckResourceStatus(
-                             (resourceName) => vmComputeClient.VirtualMachines.BeginDeleteAsync(resourceGroup, resourceName),
-                             (resourceName) => azureClient.VirtualMachines.GetByResourceGroupAsync(resourceGroup, resourceName),
-                             resourceDeletionStatus,
-                             resource.Key));
+                        var vmStatuses = await CheckVirtualMachineStatusAsync(resourceGroup, vmName, vmComputeClient, logger);
+
+                        // Network/Azure exceptions could have happened, we are supposed to get some status
+                        if (vmStatuses == null)
+                        {
+                            break;
+                        }
+
+                        // Virtual machine has already been deleted. Hence marking it as succeeded.
+                        if (!vmStatuses.Any())
+                        {
+                            resourceDeletionStatus[VirtualMachineConstants.VmNameKey] = (vmName, OperationState.Succeeded);
+                            break;
+                        }
+
+                        var isDeallocated = vmStatuses.Any(x => string.Equals(x.Code, DeallocatedStatusCode, StringComparison.OrdinalIgnoreCase));
+
+                        // Deleting the virtual machine once its deallocated to prevent file corruption.
+                        if (isDeallocated)
+                        {
+                            taskList.Add(
+                                 CheckResourceStatus(
+                                    (resourceName) => vmComputeClient.VirtualMachines.BeginDeleteAsync(resourceGroup, resourceName),
+                                    (resourceName) => azureClient.VirtualMachines.GetByResourceGroupAsync(resourceGroup, resourceName),
+                                    resourceDeletionStatus,
+                                    resource.Key));
+                            break;
+                        }
+
+                        var isDeallocationInProgress = vmStatuses.Any(x => string.Equals(x.Code, DeallocationInProgressStatusCode, StringComparison.OrdinalIgnoreCase));
+
+                        // If virtual machine is not deallocated, we are going to deallocate it.
+                        if (!isDeallocationInProgress)
+                        {
+                            try
+                            {
+                                await vmComputeClient.VirtualMachines.BeginDeallocateAsync(resourceGroup, vmName);
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogException($"Exception occurred while deallocating Virtual machine {vmName}", ex);
+                            }
+                        }
+
                         break;
                     case VirtualMachineConstants.InputQueueNameKey:
                         var queueDeleteInput = new QueueProviderDeleteInput()
