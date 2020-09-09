@@ -58,6 +58,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         public static IServiceProvider Services { get; set; }
 
         /// <summary>
+        /// Gets or sets the FrontEndAppSettings.
+        /// </summary>
+        public static FrontEndAppSettings FrontEndAppSettings { get; set; }
+
+        /// <summary>
         /// This method gets called by the runtime.
         /// Use this method to add services to the container.
         /// </summary>
@@ -79,6 +84,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             var frontEndAppSettings = appSettings.FrontEnd;
             services.AddSingleton(frontEndAppSettings);
             services.AddSingleton<ISkuUtils, SkuUtils>();
+            FrontEndAppSettings = frontEndAppSettings;
 
             // Add the environment manager and the cloud environment repository.
             services.AddEnvironmentManager(
@@ -273,38 +279,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             ConfigureAppCommon(app);
-
-            var isProduction = env.IsProduction();
-
-            // We need to enable localhost:3000 CORS headers on dev for Portal development purposes
-            // and the current stamp CORS for all environments
-            if (isProduction)
-            {
-                app.UseCors("ProdCORSPolicy");
-            }
-            else
-            {
-                app.UseCors("NonProdCORSPolicy");
-            }
-
-            // Frameworks
-            app.UseStaticFiles();
-            app.UseRouting();
-
-            // Use VS SaaS middleware.
-            app.UseVsSaaS(!isProduction);
-
-            // Finish setting up config
-            var frontEndAppSettings = app.ApplicationServices.GetService<AppSettings>().FrontEnd;
-            var systemConfig = app.ApplicationServices.GetService<ISystemConfiguration>();
-            frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
-            frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
-            frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
-
-            app.UseEndpoints(x =>
-            {
-                x.MapControllers();
-            });
         }
 
         /// <inheritdoc/>

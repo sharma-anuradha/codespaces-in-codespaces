@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
@@ -24,6 +25,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             StartupFrontEnd.Services = webHost.Services;
 
             return webHost;
+        }
+
+        protected override void OnWebHostBuilt(IWebHost webHost)
+        {
+            var systemConfig = (ISystemConfiguration)webHost.Services.GetService(typeof(ISystemConfiguration));
+            var frontEndAppSettings = StartupFrontEnd.FrontEndAppSettings;
+
+            frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
+            frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
+            frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
         }
     }
 }

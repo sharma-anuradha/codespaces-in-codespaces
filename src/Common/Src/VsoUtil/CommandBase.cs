@@ -205,6 +205,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             return webHost;
         }
 
+        protected virtual void OnWebHostBuilt(IWebHost webHost)
+        {
+        }
+
         private IWebHost BuildWebHost()
         {
             System.Environment.SetEnvironmentVariable(EnvironmentNameEnvVarName, Environment, EnvironmentVariableTarget.Process);
@@ -234,6 +238,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 
             // Mini-hack. Ends up that Startup.Configure(IApplicationBuilder) is never called.
             ApplicationServicesProvider.TrySetServiceProvider(webHost.Services);
+
+            OnWebHostBuilt(webHost);
 
             return webHost;
         }

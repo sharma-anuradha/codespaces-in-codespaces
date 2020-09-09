@@ -12,7 +12,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repositor
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repository.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
-using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 {
@@ -42,6 +41,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             StartupFrontEnd.Services = webHost.Services;
 
             return webHost;
+        }
+
+        protected override void OnWebHostBuilt(IWebHost webHost)
+        {
+            if (UseBackEnd)
+            {
+                return;
+            }
+
+            var systemConfig = (ISystemConfiguration)webHost.Services.GetService(typeof(ISystemConfiguration));
+            var frontEndAppSettings = StartupFrontEnd.FrontEndAppSettings;
+
+            frontEndAppSettings.EnvironmentManagerSettings.Init(systemConfig);
+            frontEndAppSettings.PlanManagerSettings.Init(systemConfig);
+            frontEndAppSettings.EnvironmentMonitorSettings.Init(systemConfig);
         }
 
         protected async Task UpdateSystemConfigurationAsync(IServiceProvider services, string id, string value, TextWriter stdout, TextWriter stderr)
