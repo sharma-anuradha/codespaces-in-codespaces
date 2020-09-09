@@ -193,7 +193,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı]]></Val>
+            <Val><![CDATA[Codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -202,7 +202,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace "{}" is {}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı "{}" {}.]]></Val>
+            <Val><![CDATA[Codespace "{}" {}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -211,7 +211,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace Name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı Adı]]></Val>
+            <Val><![CDATA[Codespace Adı]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -247,7 +247,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Connecting to Codespace {} failed. {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı {} ile bağlantı kurulamadı. {}]]></Val>
+            <Val><![CDATA[Codespace {} ile bağlantı kurulamadı. {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -274,7 +274,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı Oluştur]]></Val>
+            <Val><![CDATA[Codespace Oluştur]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -310,7 +310,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Creating the Codespace...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı oluşturuluyor...]]></Val>
+            <Val><![CDATA[Codespace oluşturuluyor...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -427,7 +427,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace creation based on devcontainer.json failed, please review the console for more details.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Devcontainer.json tabanlı Kod Alanını oluşturma işlemi başarısız oldu. Daha fazla ayrıntı için lütfen konsolu inceleyin.]]></Val>
+            <Val><![CDATA[Devcontainer.json tabanlı Codespace oluşturma işlemi başarısız oldu. Daha fazla ayrıntı için lütfen konsolu inceleyin.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -445,7 +445,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unknown error in Codespace creation.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı oluşturulurken bilinmeyen hata.]]></Val>
+            <Val><![CDATA[Codespace oluşturulurken bilinmeyen hata.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -517,7 +517,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Delete Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{} adlı Kod Alanını sil]]></Val>
+            <Val><![CDATA[{} adlı Codespace'i sil]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -526,7 +526,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When a plan is deleted, the associated Codespaces will be deleted as well.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bir plan silindiğinde, ilişkili Kod Alanları da silinir.]]></Val>
+            <Val><![CDATA[Bir plan silindiğinde, ilişkili Codespace'ler de silinir.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -616,7 +616,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bulut Kod Alanı yok.]]></Val>
+            <Val><![CDATA[Bulut Codespace yok.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -625,7 +625,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace already exists.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bulut Kod Alanı zaten var.]]></Val>
+            <Val><![CDATA[Bulut Codespace zaten var.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -634,7 +634,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in available state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı kullanılabilir durumda değil.]]></Val>
+            <Val><![CDATA[Codespace kullanılabilir durumda değil.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -643,7 +643,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in suspended state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı askıya alınmış durumda değil.]]></Val>
+            <Val><![CDATA[Codespace askıya alınmış durumda değil.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -661,7 +661,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You have exceeded the Codespace quota.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı kotasını aştınız.]]></Val>
+            <Val><![CDATA[Codespace kotasını aştınız.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -697,7 +697,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Fetching your Codespaces...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanlarınız getiriliyor...]]></Val>
+            <Val><![CDATA[Codespace'leriniz getiriliyor...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -769,7 +769,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace was reported as unhealthy, suspend and restart the Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı iyi durumda değil olarak bildirildi, Kod Alanını askıya alın ve yeniden başlatın.]]></Val>
+            <Val><![CDATA[Codespace iyi durumda değil olarak bildirildi, Codespace'i askıya alın ve yeniden başlatın.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -940,7 +940,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You don't have any Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanınız yok]]></Val>
+            <Val><![CDATA[Codespace'iniz yok]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1147,7 +1147,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support the requested instance type.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanının geçerli örnek türü, istenen örnek türünü desteklemiyor.]]></Val>
+            <Val><![CDATA[Codespace'in geçerli örnek türü, istenen örnek türünü desteklemiyor.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1192,7 +1192,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New and resumed codespaces will not have this environment variable applied. Are you sure?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Yeni ve sürdürülen kod alanlarına bu ortam değişkeni uygulanmayacak. Emin misiniz?]]></Val>
+            <Val><![CDATA[Yeni ve sürdürülen codespace'lere bu ortam değişkeni uygulanmayacak. Emin misiniz?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1480,7 +1480,7 @@
         <Str Cat="Text">
           <Val><![CDATA[We can send you an email when we are ready to enable Codespace creation again.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı oluşturmayı yeniden etkinleştirmek için hazır olduğumuzda size bir e-posta gönderebiliriz.]]></Val>
+            <Val><![CDATA[Codespace oluşturmayı yeniden etkinleştirmek için hazır olduğumuzda size bir e-posta gönderebiliriz.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1579,7 +1579,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[{} Kod Alanını askıya al]]></Val>
+            <Val><![CDATA[{} Codespace'i askıya al]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1588,7 +1588,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend idle Codespace after...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Boşta olan Kod Alanını şu kadar süre sonra askıya al...]]></Val>
+            <Val><![CDATA[Boşta olan Codespace'i şu kadar süre sonra askıya al...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1651,7 +1651,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to start the Codespace. Please try again in a few minutes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanı başlatılamıyor. Lütfen birkaç dakika içinde yeniden deneyin.]]></Val>
+            <Val><![CDATA[Codespace başlatılamıyor. Lütfen birkaç dakika içinde yeniden deneyin.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1660,7 +1660,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to connect to this repository. Create an empty Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Bu depoya bağlanılamıyor. Boş bir Kod Alanı oluşturun.]]></Val>
+            <Val><![CDATA[Bu depoya bağlanılamıyor. Boş bir Codespace oluşturun.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1669,7 +1669,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support any changes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Kod Alanının geçerli örnek türü, değişikliği desteklemiyor.]]></Val>
+            <Val><![CDATA[Codespace'in geçerli örnek türü, değişikliği desteklemiyor.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -139,7 +139,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Back to Codespaces ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースに戻る ]]></Val>
+            <Val><![CDATA[Codespaces に戻る ]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -193,7 +193,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペース]]></Val>
+            <Val><![CDATA[codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -202,7 +202,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace "{}" is {}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペース "{}" は {} です。]]></Val>
+            <Val><![CDATA[codespace "{}" は {} です。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -211,7 +211,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace Name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペース名]]></Val>
+            <Val><![CDATA[codespace 名]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -247,7 +247,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Connecting to Codespace {} failed. {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペース {} に接続できませんでした。{}]]></Val>
+            <Val><![CDATA[codespace {} に接続できませんでした。{}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -274,7 +274,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースの作成]]></Val>
+            <Val><![CDATA[codespace の作成]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -310,7 +310,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Creating the Codespace...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースを作成しています...]]></Val>
+            <Val><![CDATA[codespace を作成しています...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -517,7 +517,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Delete Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペース {} の削除]]></Val>
+            <Val><![CDATA[codespace {} の削除]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -526,7 +526,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When a plan is deleted, the associated Codespaces will be deleted as well.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[プランを削除すると、関連付けられているコードスペースも削除されます。]]></Val>
+            <Val><![CDATA[プランを削除すると、関連付けられている codespace も削除されます。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -571,7 +571,7 @@
         <Str Cat="Text">
           <Val><![CDATA[View dotfiles details]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[ドットファイルの詳細を表示する]]></Val>
+            <Val><![CDATA[dotfiles の詳細を表示する]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -616,7 +616,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[クラウド コードスペースは存在しません。]]></Val>
+            <Val><![CDATA[クラウド codespace は存在しません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -625,7 +625,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace already exists.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[クラウド コードスペースは既に存在します。]]></Val>
+            <Val><![CDATA[クラウド codespace は既に存在します。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -634,7 +634,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in available state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースは使用可能な状態ではありません。]]></Val>
+            <Val><![CDATA[codespace は使用可能な状態ではありません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -643,7 +643,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in suspended state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースは中断された状態ではありません。]]></Val>
+            <Val><![CDATA[codespace は中断された状態ではありません。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -697,7 +697,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Fetching your Codespaces...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[お客様のコードスペースをフェッチしています...]]></Val>
+            <Val><![CDATA[お客様の codespace をフェッチしています...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -940,7 +940,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You don't have any Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースがありません]]></Val>
+            <Val><![CDATA[codespace がありません]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1192,7 +1192,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New and resumed codespaces will not have this environment variable applied. Are you sure?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[新規および再開したコードスペースには、この環境変数は適用されません。よろしいですか?]]></Val>
+            <Val><![CDATA[新規および再開した codespace には、この環境変数は適用されません。よろしいですか?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1480,7 +1480,7 @@
         <Str Cat="Text">
           <Val><![CDATA[We can send you an email when we are ready to enable Codespace creation again.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースの作成を再び有効にする準備ができたら、電子メールをお送りすることができます。]]></Val>
+            <Val><![CDATA[codespace の作成を再び有効にする準備ができたら、電子メールをお送りすることができます。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1579,7 +1579,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペース {} の中断]]></Val>
+            <Val><![CDATA[codespace {} の中断]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1588,7 +1588,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend idle Codespace after...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[アイドル状態のコードスペースが中断状態になるまでの時間...]]></Val>
+            <Val><![CDATA[アイドル状態の codespace が中断状態になるまでの時間...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1651,7 +1651,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to start the Codespace. Please try again in a few minutes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[コードスペースを開始できません。数分後にもう一度お試しください。]]></Val>
+            <Val><![CDATA[codespace を開始できません。数分後にもう一度お試しください。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1660,7 +1660,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to connect to this repository. Create an empty Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[このリポジトリに接続できません。空のコードスペースを作成してください。]]></Val>
+            <Val><![CDATA[このリポジトリに接続できません。空の codespace を作成してください。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -40,7 +40,7 @@
         <Str Cat="Text">
           <Val><![CDATA[After {} hour]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[在 {} 小时后]]></Val>
+            <Val><![CDATA[{} 小时后]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -571,7 +571,7 @@
         <Str Cat="Text">
           <Val><![CDATA[View dotfiles details]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[查看点文件详细信息]]></Val>
+            <Val><![CDATA[查看 dotfiles 详细信息]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -861,12 +861,6 @@
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[可随处访问的云支持型开发环境]]></Val>
           </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[mock]]></Val>
         </Str>
         <Disp Icon="Str" />
       </Item>

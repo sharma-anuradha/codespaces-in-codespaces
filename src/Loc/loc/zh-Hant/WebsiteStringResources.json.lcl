@@ -40,7 +40,7 @@
         <Str Cat="Text">
           <Val><![CDATA[After {} hour]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[在 {} 小時之後]]></Val>
+            <Val><![CDATA[{} 小時後]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -49,7 +49,7 @@
         <Str Cat="Text">
           <Val><![CDATA[After {} hours]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[在 {} 小時後]]></Val>
+            <Val><![CDATA[{} 小時後]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -139,7 +139,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Back to Codespaces ]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[返回 Codespaces]]></Val>
+            <Val><![CDATA[返回 Codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -193,7 +193,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間]]></Val>
+            <Val><![CDATA[Codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -202,7 +202,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace "{}" is {}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間 "{}" 為 {}。]]></Val>
+            <Val><![CDATA[Codespace "{}" 為 {}。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -211,7 +211,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace Name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間名稱]]></Val>
+            <Val><![CDATA[Codespace 名稱]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -220,7 +220,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Codespaces]]></Val>
+            <Val><![CDATA[Codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -247,7 +247,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Connecting to Codespace {} failed. {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[連線到程式碼空間 {} 失敗。{}]]></Val>
+            <Val><![CDATA[連線到 Codespace {} 失敗。{}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -274,7 +274,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[建立程式碼空間]]></Val>
+            <Val><![CDATA[建立 Codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -310,7 +310,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Creating the Codespace...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[正在建立程式碼空間...]]></Val>
+            <Val><![CDATA[正在建立 Codespace...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -427,7 +427,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace creation based on devcontainer.json failed, please review the console for more details.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[依據 devcontainer.json 建立程式碼空間失敗。如需詳細資料，請參閱主控台。]]></Val>
+            <Val><![CDATA[依據 devcontainer.json 建立 Codespace 失敗。如需詳細資料，請參閱主控台。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -445,7 +445,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unknown error in Codespace creation.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[建立程式碼空間時發生未知的錯誤。]]></Val>
+            <Val><![CDATA[建立 Codespace 時發生未知的錯誤。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -517,7 +517,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Delete Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[刪除程式碼空間 {}]]></Val>
+            <Val><![CDATA[刪除 Codespace {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -571,7 +571,7 @@
         <Str Cat="Text">
           <Val><![CDATA[View dotfiles details]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[檢視點號檔詳細資料]]></Val>
+            <Val><![CDATA[檢視 dotfiles 詳細資料]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -616,7 +616,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[雲端程式碼空間不存在。]]></Val>
+            <Val><![CDATA[雲端 Codespace 不存在。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -625,7 +625,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace already exists.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[雲端程式碼空間已存在。]]></Val>
+            <Val><![CDATA[雲端 Codespace 已存在。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -634,7 +634,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in available state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間處於無法使用狀態。]]></Val>
+            <Val><![CDATA[Codespace 處於無法使用狀態。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -643,7 +643,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in suspended state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間未處於暫止狀態。]]></Val>
+            <Val><![CDATA[Codespace 未處於暫止狀態。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -661,7 +661,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You have exceeded the Codespace quota.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[您已超過程式碼空間配額。]]></Val>
+            <Val><![CDATA[您已超過 Codespace 配額。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -769,7 +769,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace was reported as unhealthy, suspend and restart the Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[回報指出，程式碼空間狀況不良，請暫止並重新啟動程式碼空間。]]></Val>
+            <Val><![CDATA[回報指出，Codespace 狀況不良，請暫止並重新啟動 Codespace。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1147,7 +1147,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support the requested instance type.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間目前的執行個體類型不支援要求的執行個體類型。]]></Val>
+            <Val><![CDATA[Codespace 目前的執行個體類型不支援要求的執行個體類型。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1480,7 +1480,7 @@
         <Str Cat="Text">
           <Val><![CDATA[We can send you an email when we are ready to enable Codespace creation again.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[我們會在準備好再次啟用程式碼空間建立時，傳送電子郵件給您。]]></Val>
+            <Val><![CDATA[我們會在準備好再次啟用 Codespace 建立時，傳送電子郵件給您。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1579,7 +1579,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[暫止程式碼空間 {}]]></Val>
+            <Val><![CDATA[暫止 Codespace {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1588,7 +1588,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend idle Codespace after...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[暫止閒置程式碼空間前的等候時間...]]></Val>
+            <Val><![CDATA[暫止閒置 Codespace 前的等候時間...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1651,7 +1651,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to start the Codespace. Please try again in a few minutes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[無法開啟程式碼空間。請過幾分鐘後再試一次。]]></Val>
+            <Val><![CDATA[無法開啟 Codespace。請過幾分鐘後再試一次。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1660,7 +1660,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to connect to this repository. Create an empty Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[無法連線到此存放庫。請建立空白程式碼空間。]]></Val>
+            <Val><![CDATA[無法連線到此存放庫。請建立空白 Codespace。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1669,7 +1669,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support any changes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[程式碼空間目前的執行個體類型不支援任何變更。]]></Val>
+            <Val><![CDATA[Codespace 目前的執行個體類型不支援任何變更。]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

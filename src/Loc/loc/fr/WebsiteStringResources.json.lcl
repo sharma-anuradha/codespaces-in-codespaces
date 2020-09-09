@@ -193,7 +193,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Espace de code]]></Val>
+            <Val><![CDATA[Codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -202,7 +202,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace "{}" is {}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[L'espace de code "{}" est {}.]]></Val>
+            <Val><![CDATA[Le codespace "{}" est {}.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -211,7 +211,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace Name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nom de l'espace de code]]></Val>
+            <Val><![CDATA[Nom du codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -220,7 +220,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Espaces de code]]></Val>
+            <Val><![CDATA[Codespaces]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -247,7 +247,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Connecting to Codespace {} failed. {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[La connexion à l'espace de code {} a échoué. {}]]></Val>
+            <Val><![CDATA[La connexion au codespace {} a échoué. {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -274,7 +274,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Créer un espace de code]]></Val>
+            <Val><![CDATA[Créer un codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -310,7 +310,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Creating the Codespace...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Création de l'espace de code...]]></Val>
+            <Val><![CDATA[Création du codespace...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -427,7 +427,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace creation based on devcontainer.json failed, please review the console for more details.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[La création de l'espace de code basée sur devcontainer.json a échoué. Pour plus d'informations, consultez la console.]]></Val>
+            <Val><![CDATA[La création du codespace basée sur devcontainer.json a échoué. Pour plus d'informations, consultez la console.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -445,7 +445,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unknown error in Codespace creation.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Erreur inconnue durant la création de l'espace de code.]]></Val>
+            <Val><![CDATA[Erreur inconnue durant la création du codespace.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -517,7 +517,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Delete Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Supprimer l'espace de code {}]]></Val>
+            <Val><![CDATA[Supprimer le codespace {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -526,7 +526,7 @@
         <Str Cat="Text">
           <Val><![CDATA[When a plan is deleted, the associated Codespaces will be deleted as well.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Quand un plan est supprimé, les espaces de code associés sont également supprimés.]]></Val>
+            <Val><![CDATA[Quand un plan est supprimé, les codespaces associés sont également supprimés.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -616,7 +616,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[L'espace de code cloud n'existe pas.]]></Val>
+            <Val><![CDATA[Le codespace cloud n'existe pas.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -625,7 +625,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace already exists.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[L'espace de code cloud existe déjà.]]></Val>
+            <Val><![CDATA[Le codespace cloud existe déjà.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -634,7 +634,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in available state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[L'espace de code n'est pas dans un état disponible.]]></Val>
+            <Val><![CDATA[Le codespace n'est pas dans un état disponible.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -643,7 +643,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in suspended state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[L'espace de code n'est pas dans un état interrompu.]]></Val>
+            <Val><![CDATA[Le codespace n'est pas dans un état interrompu.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -661,7 +661,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You have exceeded the Codespace quota.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vous avez dépassé le quota d'espaces de code.]]></Val>
+            <Val><![CDATA[Vous avez dépassé le quota de codespace.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -697,7 +697,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Fetching your Codespaces...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Récupération de vos espaces de code...]]></Val>
+            <Val><![CDATA[Récupération de vos codespaces...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -769,7 +769,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace was reported as unhealthy, suspend and restart the Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[L'espace de code a été signalé comme étant non sain. Interrompez, puis redémarrez l'espace de code.]]></Val>
+            <Val><![CDATA[Le codespace a été signalé comme étant non sain. Interrompez, puis redémarrez le codespace.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -864,12 +864,6 @@
         </Str>
         <Disp Icon="Str" />
       </Item>
-      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[mock]]></Val>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
       <Item ItemId=";more" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
           <Val><![CDATA[More]]></Val>
@@ -946,7 +940,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You don't have any Codespaces]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Vous n'avez aucun espace de code]]></Val>
+            <Val><![CDATA[Vous n'avez aucun codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1009,7 +1003,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Open in Desktop]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Ouvrir sur le poste de travail]]></Val>
+            <Val><![CDATA[Ouvrir sur le Bureau]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1153,7 +1147,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support the requested instance type.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Le type d'instance actuel de l'espace de code ne prend pas en charge le type d'instance demandé.]]></Val>
+            <Val><![CDATA[Le type d'instance actuel du codespace ne prend pas en charge le type d'instance demandé.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1198,7 +1192,7 @@
         <Str Cat="Text">
           <Val><![CDATA[New and resumed codespaces will not have this environment variable applied. Are you sure?]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Cette variable d'environnement n'est pas appliquée aux espaces de code nouveaux ou repris. Voulez-vous vraiment continuer ?]]></Val>
+            <Val><![CDATA[Cette variable d'environnement n'est pas appliquée aux codespaces nouveaux ou repris. Voulez-vous vraiment continuer ?]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1486,7 +1480,7 @@
         <Str Cat="Text">
           <Val><![CDATA[We can send you an email when we are ready to enable Codespace creation again.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Nous pouvons vous envoyer un e-mail une fois que nous serons prêts à réactiver la création d'espaces de code.]]></Val>
+            <Val><![CDATA[Nous pouvons vous envoyer un e-mail une fois que nous serons prêts à réactiver la création de codespace.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1585,7 +1579,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Interrompre l'espace de code {}]]></Val>
+            <Val><![CDATA[Interrompre le codespace {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1594,7 +1588,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend idle Codespace after...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Interrompre l'espace de code inactif après...]]></Val>
+            <Val><![CDATA[Interrompre le codespace inactif après...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1657,7 +1651,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to start the Codespace. Please try again in a few minutes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Impossible de démarrer l'espace de code. Réessayez dans quelques minutes.]]></Val>
+            <Val><![CDATA[Impossible de démarrer le codespace. Réessayez dans quelques minutes.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1666,7 +1660,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to connect to this repository. Create an empty Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Connexion impossible à ce dépôt. Créez un espace de code vide.]]></Val>
+            <Val><![CDATA[Connexion impossible à ce dépôt. Créez un codespace vide.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1675,7 +1669,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support any changes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[Le type d'instance actuel de l'espace de code ne prend pas en charge les changements.]]></Val>
+            <Val><![CDATA[Le type d'instance actuel du codespace ne prend pas en charge les changements.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />

@@ -193,7 +193,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간]]></Val>
+            <Val><![CDATA[codespace]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -202,7 +202,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace "{}" is {}.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 "{}"은(는) {}입니다.]]></Val>
+            <Val><![CDATA[codespace "{}"은(는) {}입니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -211,7 +211,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace Name]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 이름]]></Val>
+            <Val><![CDATA[codespace 이름]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -247,7 +247,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Connecting to Codespace {} failed. {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 {}에 연결하지 못했습니다. {}]]></Val>
+            <Val><![CDATA[codespace {}에 연결하지 못했습니다. {}]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -274,7 +274,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Create Codespace]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 만들기]]></Val>
+            <Val><![CDATA[codespace 만들기]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -310,7 +310,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Creating the Codespace...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간을 만드는 중...]]></Val>
+            <Val><![CDATA[codespace를 만드는 중...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -427,7 +427,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace creation based on devcontainer.json failed, please review the console for more details.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[devcontainer.json을 기반으로 하여 코드 공간을 만들지 못했습니다. 자세한 내용은 콘솔을 검토하세요.]]></Val>
+            <Val><![CDATA[devcontainer.json을 기반으로 하여 codespace를 만들지 못했습니다. 자세한 내용은 콘솔을 검토하세요.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -445,7 +445,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unknown error in Codespace creation.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간을 만드는 동안 알 수 없는 오류가 발생했습니다.]]></Val>
+            <Val><![CDATA[codespace를 만드는 동안 알 수 없는 오류가 발생했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -517,7 +517,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Delete Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 {} 삭제]]></Val>
+            <Val><![CDATA[codespace {} 삭제]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -571,7 +571,7 @@
         <Str Cat="Text">
           <Val><![CDATA[View dotfiles details]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[dot 파일 세부 정보 보기]]></Val>
+            <Val><![CDATA[dotfiles 세부 정보 보기]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -616,7 +616,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace does not exist.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[클라우드 코드 공간이 없습니다.]]></Val>
+            <Val><![CDATA[클라우드 codespace가 없습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -625,7 +625,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Cloud Codespace already exists.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[클라우드 코드 공간이 이미 있습니다.]]></Val>
+            <Val><![CDATA[클라우드 codespace가 이미 있습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -634,7 +634,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in available state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간이 사용 가능한 상태가 아닙니다.]]></Val>
+            <Val><![CDATA[codespace가 사용 가능한 상태가 아닙니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -643,7 +643,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace is not in suspended state.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간이 일시 중단된 상태가 아닙니다.]]></Val>
+            <Val><![CDATA[codespace가 일시 중단된 상태가 아닙니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -661,7 +661,7 @@
         <Str Cat="Text">
           <Val><![CDATA[You have exceeded the Codespace quota.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 할당량을 초과했습니다.]]></Val>
+            <Val><![CDATA[codespace 할당량을 초과했습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -769,7 +769,7 @@
         <Str Cat="Text">
           <Val><![CDATA[The Codespace was reported as unhealthy, suspend and restart the Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간이 비정상 상태로 보고되었습니다. 코드 공간을 일시 중단하고 다시 시작하세요.]]></Val>
+            <Val><![CDATA[codespace가 비정상 상태로 보고되었습니다. codespace를 일시 중단하고 다시 시작하세요.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -861,12 +861,6 @@
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[어디서나 액세스할 수 있는 클라우드 기반 개발 환경]]></Val>
           </Tgt>
-        </Str>
-        <Disp Icon="Str" />
-      </Item>
-      <Item ItemId=";mock" ItemType="0" PsrId="306" Leaf="true">
-        <Str Cat="Text">
-          <Val><![CDATA[mock]]></Val>
         </Str>
         <Disp Icon="Str" />
       </Item>
@@ -1153,7 +1147,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support the requested instance type.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간의 현재 인스턴스 형식이 요청한 인스턴스 형식을 지원하지 않습니다.]]></Val>
+            <Val><![CDATA[codespace의 현재 인스턴스 형식이 요청한 인스턴스 형식을 지원하지 않습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1486,7 +1480,7 @@
         <Str Cat="Text">
           <Val><![CDATA[We can send you an email when we are ready to enable Codespace creation again.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 만들기를 다시 사용할 수 있도록 준비되면 전자 메일을 보내드릴 수 있습니다.]]></Val>
+            <Val><![CDATA[codespace 만들기를 다시 사용할 수 있도록 준비되면 전자 메일을 보내드릴 수 있습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1585,7 +1579,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend Codespace {}]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간 {} 일시 중단]]></Val>
+            <Val><![CDATA[codespace {} 일시 중단]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1594,7 +1588,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Suspend idle Codespace after...]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[다음 시간 후 유휴 코드 공간 일시 중단...]]></Val>
+            <Val><![CDATA[다음 시간 후 유휴 codespace 일시 중단...]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1657,7 +1651,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to start the Codespace. Please try again in a few minutes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간을 시작할 수 없습니다. 몇 분 후에 다시 시도하세요.]]></Val>
+            <Val><![CDATA[codespace를 시작할 수 없습니다. 몇 분 후에 다시 시도하세요.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1666,7 +1660,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Unable to connect to this repository. Create an empty Codespace.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[이 리포지토리에 연결할 수 없습니다. 빈 코드 공간을 만드세요.]]></Val>
+            <Val><![CDATA[이 리포지토리에 연결할 수 없습니다. 빈 codespace를 만드세요.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -1675,7 +1669,7 @@
         <Str Cat="Text">
           <Val><![CDATA[Codespace's current instance type does not support any changes.]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[코드 공간의 현재 인스턴스 형식이 변경 내용을 지원하지 않습니다.]]></Val>
+            <Val><![CDATA[codespace의 현재 인스턴스 형식이 변경 내용을 지원하지 않습니다.]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
