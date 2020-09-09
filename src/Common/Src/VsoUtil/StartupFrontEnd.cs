@@ -202,7 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
             // Add front-end/back-end common services -- secrets, service principal, control-plane resources.
             services.AddCapacityManager(develperPersonalStamp: developerPersonalStampSettings.DeveloperStamp, mocksSettings: null);
             ConfigureSecretsProvider(services);
-            ConfigureCommonServices(services, AppSettings, AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto, out var loggingBaseValues);
+            ConfigureCommonServices(services, AppSettings, out var loggingBaseValues, false);
 
             var databaseId = new ResourceNameBuilder(developerPersonalStampSettings).GetCosmosDocDBName(Requires.NotNull(appSettings.AzureCosmosDbDatabaseId, nameof(appSettings.AzureCosmosDbDatabaseId)));
 

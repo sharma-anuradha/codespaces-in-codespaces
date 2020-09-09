@@ -245,18 +245,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
         /// </summary>
         /// <param name="services">The service collection.</param>
         /// <param name="appSettings">App setting base.</param>
-        /// <param name="kustoStreamLogging">Kusto stream logging for dev stamps..</param>
         /// <param name="loggingBaseValues">The common logging base values.</param>
-        protected void ConfigureCommonServices(IServiceCollection services, AppSettingsBase appSettings, bool? kustoStreamLogging, out LoggingBaseValues loggingBaseValues)
+        /// <param name="kustoStreamLogging">Kusto stream logging for dev stamps.</param>
+        protected void ConfigureCommonServices(IServiceCollection services, AppSettingsBase appSettings, out LoggingBaseValues loggingBaseValues, bool kustoStreamLogging = true)
         {
             services.AddSingleton(appSettings);
 
-            if (!kustoStreamLogging.HasValue)
-            {
-                kustoStreamLogging = AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto;
-            }
-
-            if (kustoStreamLogging == true)
+            if (AppSettings.DeveloperPersonalStamp && kustoStreamLogging)
             {
                 services.AddSingleton<IDiagnosticsLoggerFactory, DeveloperStampDiagnosticsLoggerFactory>();
             }
@@ -336,28 +331,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             {
                 options.MdsdEventSource = AppSettings.MetricsLoggerMdsdEventSource;
             });
-
-            // Enable common Standard Out to Logs support.
-            if (AppSettings.RedirectStandardOutToLogsDirectory)
-            {
-                if (kustoStreamLogging == true)
-                {
-                    throw new InvalidOperationException("Only enable DeveloperKusto or RedirectStandardOutToLogsDirectory");
-                }
-
-                var assemblyFolder = new DirectoryInfo(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
-                var directory = Path.Combine(assemblyFolder.Parent.Parent.Parent.FullName, "logs", $"{Assembly.GetEntryAssembly().GetName().Name}");
-                var logDirectory = Path.GetFullPath(directory);
-                var logFile = $"{DateTime.Now.ToString("s").Replace(":", ".")}.txt";
-                var logFileDirectory = Path.Combine(logDirectory, logFile);
-
-                Directory.CreateDirectory(logDirectory);
-                Console.WriteLine($"Output redirected to Logs at {logFileDirectory}...");
-                var filestream = new FileStream(logFileDirectory, FileMode.OpenOrCreate, FileAccess.Write);
-                var writer = new StreamWriter(filestream);
-                writer.AutoFlush = true;
-                Console.SetOut(writer);
-            }
 
             // Job Scheduler support
             services.AddJobScheduler();
