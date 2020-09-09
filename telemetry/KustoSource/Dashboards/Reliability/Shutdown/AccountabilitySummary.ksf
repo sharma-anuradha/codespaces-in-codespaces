@@ -1,8 +1,0 @@
-// Counts the number of unclassified issues in shutdown.
-// #include("BuildingBlocks\ShutdownOutcomeClassifiedEvents.ksf")
-ShutdownOutcomeClassifiedEvents
-    | where EventAtShutdownRequestStop_ResponseCode != 307
-    | where EventAtShutdownSkuResolve_SkuName contains "linux"
-    | where EventAtShutdownRequestStart_Time < ago(1h)
-    | where ShutdownOutcome == "Bug: Shutdown (unknown/unclassified)" or ResponseOutcome == "Bug: unclassified response"
-    | count

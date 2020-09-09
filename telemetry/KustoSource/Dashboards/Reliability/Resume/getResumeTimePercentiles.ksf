@@ -1,0 +1,11 @@
+#function("Tabulate resume time durations from request start to enviornment available. Kitchen sink.")
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string, EventAtStartingToAvailable_Time: datetime, EventAtResumeRequestStart_Time: datetime))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | where ResumeOutcome == "Available" and ResponseOutcome == "Success"
+    | extend DurationInSeconds = (EventAtStartingToAvailable_Time - EventAtResumeRequestStart_Time) / 1s
+    | summarize percentiles(DurationInSeconds, 50, 90, 99) by bin (TimeStamp, 1h)
+    // "TODO: vmconfigurationmanager-selected events are not emitted at the resume time"
+}

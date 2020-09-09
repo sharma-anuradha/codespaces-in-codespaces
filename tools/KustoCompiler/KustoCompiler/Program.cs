@@ -1,6 +1,11 @@
+using Kusto.Data;
 using Microsoft.Extensions.CommandLineUtils;
+using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.VsCloudKernel.Services.KustoCompiler;
 using System;
+using System.Globalization;
+using System.Net;
 
 namespace KustoCompiler
 {
@@ -20,9 +25,9 @@ namespace KustoCompiler
                 ExecuteCompileCommand(command);
             });
 
-            app.Command("runQuery", (command) =>
+            app.Command("runFunctionUpdate", (command) =>
             {
-                ExecuteRunQueryCommand(command);
+                ExecuteFunctionUpdateCommand(command);
             });
 
 
@@ -57,21 +62,19 @@ namespace KustoCompiler
             });
         }
 
-        private static void ExecuteRunQueryCommand(CommandLineApplication command)
+        private static void ExecuteFunctionUpdateCommand(CommandLineApplication command)
         {
-            command.Description = "This command executes the kusto query (.kql)";
+            command.Description = "This command executes function update queries (.csl)";
             command.HelpOption("-?|-h|--help");
 
             var inputOption = command.Option("-i|--input", "Input file or folder.", CommandOptionType.SingleValue);
-            var outputOption = command.Option("-o|--output", "Output file or folder.", CommandOptionType.SingleValue);
 
             command.OnExecute(() =>
             {
                 var input = inputOption.Value();
-                var output = outputOption.Value();
 
                 var run = new RunKustoQuery();
-                run.Execute(input, output);
+                run.ExecuteAsync(input).Wait();
                 return 0;
             });
         }

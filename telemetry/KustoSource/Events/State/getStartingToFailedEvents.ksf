@@ -1,0 +1,31 @@
+#function("Gets starting to failed state transition events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string,
+    ComputeResourceId: string,
+    CloudEnvironmentOldState: string,
+    CloudEnvironmentNewState: string,
+    CloudEnvironmentId: string,
+    CloudEnvironmentFailedStateReason: string,
+    CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Starting", toState="Failed")
+        | extend EventAtStartingToFailed = 1
+        | extend EventAtStartingToFailed_UserAttributed = iff(CloudEnvironmentFailedStateReason == "user", 1, 0)
+        | extend EventAtStartingToFailed_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtStartingToFailed_Time = ['time']
+        | extend EventAtStartingToFailed_CorrelationId = CorrelationId
+        | extend EventAtStartingToFailed_WorkspaceId = WorkspaceId
+        | extend EventAtStartingToFailed_ComputeResourceId = ComputeResourceId
+        | project EventAtStartingToFailed, 
+            EventAtStartingToFailed_UserAttributed, 
+            EventAtStartingToFailed_ViaHeartbeat, 
+            EventAtStartingToFailed_Time, 
+            EventAtStartingToFailed_CorrelationId, 
+            EventAtStartingToFailed_WorkspaceId,
+            EventAtStartingToFailed_ComputeResourceId
+}

@@ -1,0 +1,49 @@
+#function("Gets classified create request events and outcome.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpResponseStatus: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    Service: string,
+    CommitId: string,
+    ServiceEnvironment: string,
+    ServiceInstance: string,
+    ServiceStamp: string,
+    ServiceLocation: string,
+    BuildId: string,
+    ErrorException: string,
+    ErrorMessage: string,
+    ErrorDetail: string,
+    level: string,
+    ComputeResourceId: string,
+    ComputeId: string))
+{
+    getCreateOutcomeEvents(T)
+    | extend ResponseOutcome = "unknown"
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 201, "Success", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 307, "Redirect", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 400, "User: Failed 400", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 401, "User: Failed 401", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 403, "User: Failed 403", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 409, "User: Failed 409", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 500, "Infrastructure: Unknown failure 500", ResponseOutcome)
+    | extend ResponseOutcome = iff(EventAtCreateRequestStop_ResponseCode == 503, "Infrastructure: Out of capacity 503", ResponseOutcome)
+    | extend ResponseOutcome = iff(ResponseOutcome == "unknown", "Bug: unclassified response", ResponseOutcome)
+    | extend CreateOutcome = iff(EventAtCreateRequestStop_ResponseCode != 201, "Non-success response", "unknown")
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToAvailable == 1, "Available", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToFailed == 1 and EventAtProvisioningToFailed_UserAttributed == 1, "User: Failed", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToFailed == 1 and EventAtProvisioningToFailed_UserAttributed != 1, "Infrastructure: Failed", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToDeleted == 1 and EventAtProvisioningToDeleted_UserInitiated == 1, "User: Deleted", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToDeleted == 1 and EventAtProvisioningToDeleted_UserInitiated != 1, "Infrastructure: Deleted", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToShutdown == 1 and EventAtProvisioningToShutdown_UserInitiated == 1, "User: Deleted", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown" and EventAtProvisioningToShutdown == 1 and EventAtProvisioningToShutdown_UserInitiated != 1, "User: Infrastructure", CreateOutcome)
+    | extend CreateOutcome = iff(CreateOutcome == "unknown", "Bug: unknown/unclassified", CreateOutcome)
+}

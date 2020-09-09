@@ -1,0 +1,11 @@
+.create-or-alter function
+with (docstring = 'Lists CorrelationId of the create requests which failed unexpectedly.', folder='Dashboards/Reliability/Create')
+getCreateRequestErrors
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, EventAtCreateRequestStart_CorrelationId: string, BuildId: string))
+{
+    T
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | where TimeStamp < ago(1h)
+    | where EventAtCreateRequestStop_ResponseCode >= 500
+    | project EventAtCreateRequestStart_CorrelationId, EventAtCreateRequestStop_ResponseCode, BuildId
+}

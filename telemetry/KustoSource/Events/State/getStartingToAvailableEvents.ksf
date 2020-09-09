@@ -1,0 +1,31 @@
+#function("Gets starting to available state transition events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string,
+    ComputeResourceId: string,
+    CloudEnvironmentOldState: string,
+    CloudEnvironmentNewState: string,
+    CloudEnvironmentId: string,
+    CloudEnvironmentFailedStateReason: string,
+    CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Starting", toState="Available")
+        | extend EventAtStartingToAvailable = 1
+        | extend EventAtStartingToAvailable_Time = ['time']
+        | extend EventAtStartingToAvailable_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtStartingToAvailable_WorkspaceId = WorkspaceId
+        | extend EventAtStartingToAvailable_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtStartingToAvailable_CorrelationId = CorrelationId
+        | extend EventAtStartingToAvailable_ComputeResourceId = ComputeResourceId
+        | project EventAtStartingToAvailable, 
+            EventAtStartingToAvailable_Time, 
+            EventAtStartingToAvailable_ViaHeartbeat, 
+            EventAtStartingToAvailable_WorkspaceId, 
+            EventAtStartingToAvailable_CloudEnvironmentId, 
+            EventAtStartingToAvailable_CorrelationId,
+            EventAtStartingToAvailable_ComputeResourceId
+        | summarize arg_min(EventAtStartingToAvailable_Time, *) by EventAtStartingToAvailable_WorkspaceId, EventAtStartingToAvailable_CloudEnvironmentId
+}

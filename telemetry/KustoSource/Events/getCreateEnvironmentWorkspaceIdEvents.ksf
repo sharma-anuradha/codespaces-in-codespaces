@@ -1,0 +1,20 @@
+#function("Gets Create Environment request workspace id events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, WorkspaceId: string, CloudEnvironmentId: string, ComputeResourceId: string, HttpRequestMethod:string, HttpRequestUri: string))
+{
+    getCreateEnvironmentPOSTRequestEvents(T)
+        | where msg == "environmentstatemanager_setenvironmentstateasync"
+        | where WorkspaceId != ""
+        | extend EventAtCreateHasWorkspace = 1
+        | extend EventAtCreateHasWorkspace_CorrelationId = CorrelationId
+        | extend EventAtCreateHasWorkspace_Time = ["time"]
+        | extend EventAtCreateHasWorkspace_WorkspaceId = WorkspaceId
+        | extend EventAtCreateHasWorkspace_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtCreateHasWorkspace_ComputeResourceId = ComputeResourceId
+        | project EventAtCreateHasWorkspace, 
+            EventAtCreateHasWorkspace_CorrelationId, 
+            EventAtCreateHasWorkspace_Time, 
+            EventAtCreateHasWorkspace_WorkspaceId, 
+            EventAtCreateHasWorkspace_CloudEnvironmentId,
+            EventAtCreateHasWorkspace_ComputeResourceId
+        | summarize arg_max(EventAtCreateHasWorkspace_Time, *) by EventAtCreateHasWorkspace_CorrelationId, EventAtCreateHasWorkspace_WorkspaceId
+}

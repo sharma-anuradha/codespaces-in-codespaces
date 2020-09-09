@@ -1,0 +1,11 @@
+.create-or-alter function
+with (docstring = 'Counts the number of unclassified issues in Resume.', folder='Dashboards/Reliability/Resume')
+getResumeAccountabilitySummary
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string))
+{
+    T 
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | where TimeStamp < ago(1h)
+    | where ResumeOutcome == "Bug: Stuck in Starting state (unknown/unclassified)" or ResponseOutcome == "Bug: unclassified response"
+    | count
+}

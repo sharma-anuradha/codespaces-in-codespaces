@@ -1,0 +1,9 @@
+#function("Check and balance number of requests received and responses sent.")
+(T:(EventAtShutdownRequestStop_ResponseCode: int, TimeStamp: datetime, EventAtShutdownRequestStart: int, EventAtShutdownRequestStop: int))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | summarize StartCount = sum(EventAtShutdownRequestStart), StopCount = sum(EventAtShutdownRequestStop)
+    | extend Unaccounted = abs(StartCount - StopCount)
+    | project Unaccounted
+}

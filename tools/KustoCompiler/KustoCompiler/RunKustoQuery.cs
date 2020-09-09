@@ -1,12 +1,26 @@
+using Microsoft.VsCloudKernel.Services.KustoCompiler.Runner;
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Microsoft.VsCloudKernel.Services.KustoCompiler
 {
     public class RunKustoQuery
     {
-        public void Execute(string input, string output)
+        public async Task ExecuteAsync(string input)
         {
-            throw new NotImplementedException();
+            var upload = new Upload();
+
+            if (Directory.Exists(input))
+            {
+                var inputDirectory = Path.GetFullPath(input);
+                await upload.ExecuteAllControlQueriesAsync(inputDirectory);
+            }
+            else if (File.Exists(input))
+            {
+                var inputFile = Path.GetFullPath(input);
+                await upload.ExecuteAllControlQueriesAsync(inputFile);
+            }
         }
     }
 }

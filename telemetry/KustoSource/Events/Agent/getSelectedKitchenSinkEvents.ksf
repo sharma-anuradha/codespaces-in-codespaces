@@ -1,0 +1,17 @@
+#function("Gets agent selected kitchen sink image events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, ComputeId: string))
+{
+    T
+        | where msg == "vmconfigurationmanager-selected-kitchensink-info"
+        | extend EventAtSelectedKitchenSink = 1
+        | extend EventAtSelectedKitchenSink_Time = ["time"]
+        | extend EventAtSelectedKitchenSink_CorrelationId = CorrelationId
+        | extend EventAtSelectedKitchenSink_ComputeId = ComputeId
+        | extend EventAtSelectedKitchenSink_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtSelectedKitchenSink, 
+            EventAtSelectedKitchenSink_Time, 
+            EventAtSelectedKitchenSink_CorrelationId,
+            EventAtSelectedKitchenSink_ComputeId,
+            EventAtSelectedKitchenSink_CloudEnvironmentId
+        | summarize arg_max(EventAtSelectedKitchenSink_Time, *) by EventAtSelectedKitchenSink_CorrelationId
+}

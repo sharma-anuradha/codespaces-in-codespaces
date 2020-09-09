@@ -1,5 +1,0 @@
-// Breakdown of all the responses
-// #include("BuildingBlocks\ShutdownOutcomeClassifiedEvents.ksf")
-ShutdownOutcomeClassifiedEvents
-    | where EventAtShutdownSkuResolve_SkuName contains "linux"
-    | summarize count() by EventAtShutdownRequestStop_ResponseCode

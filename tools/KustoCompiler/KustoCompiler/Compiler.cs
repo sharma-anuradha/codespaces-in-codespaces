@@ -31,8 +31,9 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler
 
         private void ProcessFile(string inputFile, string outputFile)
         {
-            var output = preProcessor.Process(inputFile);
-            WriteFinalOutput(output, inputFile, outputFile, Path.GetDirectoryName(inputFile));
+            var basePath = Path.GetDirectoryName(inputFile);
+            var output = preProcessor.Process(inputFile, basePath);
+            WriteFinalOutput(output.Content, inputFile, outputFile, basePath);
         }
 
         private string GetHeader(string inputFile)
@@ -50,24 +51,33 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler
             foreach (var sourceFile in sourceFiles)
             {
                 var relativePath = sourceFile.Remove(0, inputPath.Length);
-                var compiledFile = Path.ChangeExtension($"{outputPath}{relativePath}", ".kql");
-                Console.WriteLine($"Processing {sourceFile} --> {compiledFile}");
-                var output = preProcessor.Process(sourceFile);
+ 
+                var dbFunctionFolder = Path.GetDirectoryName(sourceFile).Remove(0, inputPath.Length).Replace("\\", "/");
+                Console.WriteLine($"Processing {sourceFile}");
 
+                var output = preProcessor.Process(sourceFile, dbFunctionFolder);
+
+                var compiledFile = Path.ChangeExtension($"{outputPath}{relativePath}", GetOutputExtension(output));
                 var compiledFileDirectory = Path.GetDirectoryName(compiledFile);
                 if (!Directory.Exists(compiledFileDirectory))
                 {
                     Directory.CreateDirectory(compiledFileDirectory);
                 }
 
-                WriteFinalOutput(output, sourceFile, compiledFile, inputPath);
+                WriteFinalOutput(output.Content, sourceFile, compiledFile, inputPath);
             }
+        }
+
+        private string GetOutputExtension(PreprocessedFileInfo preprocessedFileInfo)
+        {
+            return preprocessedFileInfo.IsFunction ? ".csl" : ".kql";
         }
 
         private void WriteFinalOutput(string content, string inputFile, string outputFile, string baseFolder)
         {
+            Console.WriteLine($"Writing {outputFile}.");
             var sb = new StringBuilder();
-            sb.Append(GetHeader(inputFile.Remove(0, baseFolder.Length)));
+            //sb.Append(GetHeader(inputFile.Remove(0, baseFolder.Length)));
             sb.Append(content);
             File.WriteAllText(outputFile, sb.ToString());
         }

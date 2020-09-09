@@ -1,8 +1,0 @@
-#include("..\Raw\ScopedRawEvents_7Days.ksf")
-let GetStateTransitionToEvents = (toState: string) { 
-    ScopedRawEvents
-        | where msg == "environmentstatemanager_setenvironmentstateasync"
-        | where CloudEnvironmentNewState == toState
-        | project CloudEnvironmentOldState, CloudEnvironmentNewState, ['time'], WorkspaceId, CloudEnvironmentFailedStateReason, HttpRequestMethod, HttpRequestUri, CorrelationId, CloudEnvironmentId, CloudEnvironmentNewUpdatedTrigger, SkuName, ContinuationPayloadTrackingInstanceId
-        | summarize arg_max(['time'], *) by CloudEnvironmentOldState, CloudEnvironmentNewState, WorkspaceId, CorrelationId, CloudEnvironmentId
-};

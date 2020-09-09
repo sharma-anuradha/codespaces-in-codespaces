@@ -1,0 +1,12 @@
+#function("Gets Create Environment request start events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, Service: string, CommitId: string, ServiceEnvironment: string, ServiceInstance: string, ServiceStamp: string, ServiceLocation: string, BuildId: string, HttpRequestMethod:string, HttpRequestUri: string))
+{
+    getCreateEnvironmentPOSTRequestEvents(T)
+        | where msg == "request_start" 
+        | extend EventAtCreateRequestStart = 1
+        | extend EventAtCreateRequestStart_Time = ["time"]
+        | extend EventAtCreateRequestStart_CorrelationId = CorrelationId
+        | project EventAtCreateRequestStart_Time, EventAtCreateRequestStart_CorrelationId, EventAtCreateRequestStart,
+            Service, CommitId, ServiceEnvironment, ServiceInstance, ServiceStamp, ServiceLocation, BuildId
+        | summarize arg_min(EventAtCreateRequestStart_Time, *) by EventAtCreateRequestStart_CorrelationId
+}

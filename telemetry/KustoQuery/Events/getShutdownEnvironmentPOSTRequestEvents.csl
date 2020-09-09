@@ -1,0 +1,8 @@
+.create-or-alter function
+with (docstring = 'Gets Shutdown Environment POST request events.', folder='Events')
+getShutdownEnvironmentPOSTRequestEvents
+(T:(HttpRequestMethod:string, HttpRequestUri: string))
+{
+    T
+        | where HttpRequestMethod == "POST" and HttpRequestUri startswith "/api/v1/environments" and HttpRequestUri endswith "/shutdown"
+}

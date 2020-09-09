@@ -1,9 +1,0 @@
-// Accountability for RequestStart and RequestEnd.
-// Result: Sum of both Start/Stop count should be the same.
-// #include("BuildingBlocks\ResumeOutcomeClassifiedEvents.ksf")
-ResumeOutcomeClassifiedEvents
-    | where EventAtResumeStartRequest_Time < ago(1h)
-    | where EventAtResumeSkuResolve_SkuName contains "linux"
-    | summarize StartCount = sum(EventAtResumeRequestStart), StopCount = sum(EventAtResumeRequestStop)
-    | extend Unaccounted = abs(StartCount - StopCount)
-    | project Unaccounted

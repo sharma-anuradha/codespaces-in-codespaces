@@ -1,0 +1,13 @@
+#function("Counts the total infrastructure failures or bugs for create.")
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string))
+{
+    T
+        | where EventAtCreateRequestStop_ResponseCode != 307
+        | where TimeStamp < ago(1h)
+        | where 
+            ResponseOutcome startswith "Infrastructure:" or 
+            ResponseOutcome startswith "Bug:" or 
+            CreateOutcome startswith "Infrastructure:" or 
+            CreateOutcome startswith "Bug:"
+        | summarize count()
+}

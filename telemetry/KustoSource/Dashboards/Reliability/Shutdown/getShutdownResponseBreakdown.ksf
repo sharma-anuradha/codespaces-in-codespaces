@@ -1,0 +1,7 @@
+#function("Breakdown of the shutdown request responses, excluding 307.")
+(T:(EventAtShutdownRequestStop_ResponseCode: int))
+{
+    T
+    | where EventAtShutdownRequestStop_ResponseCode != 307
+    | summarize count() by EventAtShutdownRequestStop_ResponseCode
+}

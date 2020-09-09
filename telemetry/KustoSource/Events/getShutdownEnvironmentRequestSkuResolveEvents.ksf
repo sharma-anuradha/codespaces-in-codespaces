@@ -1,0 +1,25 @@
+#function("Gets Shutdown Environment sku resolve events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    WorkspaceId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string))
+{
+    getShutdownEnvironmentPOSTRequestEvents(T)
+        | where msg == "environmentstatemanager_setenvironmentstateasync"
+        | extend EventAtShutdownSkuResolve = 1
+        | extend EventAtShutdownSkuResolve_Time = ["time"]
+        | extend EventAtShutdownSkuResolve_CorrelationId = CorrelationId
+        | extend EventAtShutdownSkuResolve_SkuName = SkuName
+        | extend EventAtShutdownSkuResolve_WorkspaceId = WorkspaceId
+        | extend EventAtShutdownSkuResolve_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtShutdownSkuResolve, 
+            EventAtShutdownSkuResolve_Time, 
+            EventAtShutdownSkuResolve_CorrelationId, 
+            EventAtShutdownSkuResolve_SkuName, 
+            EventAtShutdownSkuResolve_WorkspaceId,
+            EventAtShutdownSkuResolve_CloudEnvironmentId
+}

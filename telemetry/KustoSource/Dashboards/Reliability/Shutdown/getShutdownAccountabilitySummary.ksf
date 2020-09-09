@@ -1,0 +1,8 @@
+#function("Counts the number of unclassified issues in Shutdown.")
+(T:(TimeStamp: datetime, ResponseOutcome: string, ShutdownOutcome: string))
+{
+    T 
+    | where TimeStamp < ago(1h)
+    | where ShutdownOutcome == "Bug: Shutdown (unknown/unclassified)" or ResponseOutcome == "Bug: unclassified response"
+    | count
+}

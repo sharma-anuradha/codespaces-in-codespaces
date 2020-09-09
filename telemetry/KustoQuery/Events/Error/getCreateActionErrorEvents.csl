@@ -1,0 +1,23 @@
+.create-or-alter function
+with (docstring = 'Last error on the create action events.', folder='Events/Error')
+getCreateActionErrorEvents
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, ErrorException: string, ErrorMessage: string, ErrorDetail:string, level: string))
+{
+    T
+        | where level == "error"
+        | where msg == "environment_create_action_error" 
+        | where CorrelationId != ""
+        | extend EventAtCreateActionError = 1
+        | extend EventAtCreateActionError_Time = ["time"]
+        | extend EventAtCreateActionError_CorrelationId = CorrelationId
+        | extend EventAtCreateActionError_ErrorException = ErrorException
+        | extend EventAtCreateActionError_ErrorMessage = ErrorMessage
+        | extend EventAtCreateActionError_ErrorDetail = ErrorDetail
+        | project EventAtCreateActionError, 
+            EventAtCreateActionError_Time, 
+            EventAtCreateActionError_CorrelationId,
+            EventAtCreateActionError_ErrorException,
+            EventAtCreateActionError_ErrorMessage,
+            EventAtCreateActionError_ErrorDetail
+        | summarize arg_max(EventAtCreateActionError_Time, *) by EventAtCreateActionError_CorrelationId
+}

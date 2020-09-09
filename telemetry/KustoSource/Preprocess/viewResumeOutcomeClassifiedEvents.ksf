@@ -1,0 +1,7 @@
+#function("view resume request events and outcome.")
+()
+{
+    // This is used for preprocessing DefaultEvents table into ResumeOutcomeClassifiedEvents.
+    let allEvents = DefaultEvent;
+    getResumeOutcomeClassifiedEvents(allEvents)
+}

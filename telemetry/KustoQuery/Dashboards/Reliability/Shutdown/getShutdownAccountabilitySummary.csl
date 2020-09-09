@@ -1,0 +1,10 @@
+.create-or-alter function
+with (docstring = 'Counts the number of unclassified issues in Shutdown.', folder='Dashboards/Reliability/Shutdown')
+getShutdownAccountabilitySummary
+(T:(TimeStamp: datetime, ResponseOutcome: string, ShutdownOutcome: string))
+{
+    T 
+    | where TimeStamp < ago(1h)
+    | where ShutdownOutcome == "Bug: Shutdown (unknown/unclassified)" or ResponseOutcome == "Bug: unclassified response"
+    | count
+}

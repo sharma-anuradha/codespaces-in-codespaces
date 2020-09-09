@@ -1,0 +1,10 @@
+.create-or-alter function
+with (docstring = 'Lists CorrelationId of the resume process which failed unexpectedly.', folder='Dashboards/Reliability/Resume')
+getResumeUnclassifiedIssues
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, EventAtResumeRequestStart_CorrelationId: string, BuildId: string, CodespaceId: string, ResumeOutcome: string))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where ResumeOutcome == "Bug: Stuck in Starting state (unknown/unclassified)"
+    | project ResumeOutcome, EventAtResumeRequestStart_CorrelationId, BuildId
+}

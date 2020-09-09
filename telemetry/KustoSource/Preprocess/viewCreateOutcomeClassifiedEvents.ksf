@@ -1,0 +1,7 @@
+#function("view create request events and outcome.")
+()
+{
+    // This is used for preprocessing DefaultEvents table into CreateOutcomeClassifiedEvents.
+    let allEvents = DefaultEvent;
+    getCreateOutcomeClassifiedEvents(allEvents)
+}

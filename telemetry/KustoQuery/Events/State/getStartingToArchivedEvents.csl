@@ -1,0 +1,31 @@
+.create-or-alter function
+with (docstring = 'Gets starting to archived state transition events.', folder='Events/State')
+getStartingToArchivedEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string,
+    ComputeResourceId: string,
+    CloudEnvironmentOldState: string,
+    CloudEnvironmentNewState: string,
+    CloudEnvironmentId: string,
+    CloudEnvironmentFailedStateReason: string,
+    CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Starting", toState="Archived")
+        | extend EventAtStartingToArchived = 1
+        | extend EventAtStartingToArchived_Time = ['time']
+        | extend EventAtStartingToArchived_UserInitiated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestUri endswith "/shutdown" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtStartingToArchived_CorrelationId = CorrelationId
+        | extend EventAtStartingToArchived_WorkspaceId = WorkspaceId
+        | extend EventAtStartingToArchived_ComputeResourceId = ComputeResourceId
+        | project EventAtStartingToArchived,
+            EventAtStartingToArchived_Time, 
+            EventAtStartingToArchived_UserInitiated, 
+            EventAtStartingToArchived_CorrelationId, 
+            EventAtStartingToArchived_WorkspaceId,
+            EventAtStartingToArchived_ComputeResourceId
+}

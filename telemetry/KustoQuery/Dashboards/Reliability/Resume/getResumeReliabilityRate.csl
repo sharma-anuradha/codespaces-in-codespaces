@@ -1,0 +1,15 @@
+.create-or-alter function
+with (docstring = 'Computes total reliability rate of resume.', folder='Dashboards/Reliability/Resume')
+getResumeReliabilityRate
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string))
+{
+    T
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | where TimeStamp < ago(1h)
+    | summarize 
+        Total = count(), 
+        Failed =  countif(ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:" or ResponseOutcome startswith "Infrastructure:" or ResponseOutcome startswith "Bug:")
+    | extend Success = Total - Failed
+    | extend Rate = (Success * 100.0) / Total
+    | project Rate
+}

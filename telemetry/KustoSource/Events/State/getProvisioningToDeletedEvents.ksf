@@ -1,0 +1,16 @@
+#function("Gets provisioning to deleted state transition events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, SkuName: string, HttpResponseStatus: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, CloudEnvironmentOldState: string, CloudEnvironmentNewState: string, CloudEnvironmentFailedStateReason: string, CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Provisioning", toState="Deleted")
+        | extend EventAtProvisioningToDeleted = 1
+        | extend EventAtProvisioningToDeleted_Time = ['time']
+        | extend EventAtProvisioningToDeleted_UserInitiated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestMethod == "DELETE", 1, 0)
+        | extend EventAtProvisioningToDeleted_CorrelationId = CorrelationId
+        | extend EventAtProvisioningToDeleted_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtProvisioningToDeleted, 
+            EventAtProvisioningToDeleted_Time, 
+            EventAtProvisioningToDeleted_UserInitiated, 
+            EventAtProvisioningToDeleted_CorrelationId,
+            EventAtProvisioningToDeleted_CloudEnvironmentId
+        | summarize arg_max(EventAtProvisioningToDeleted_Time, *) by EventAtProvisioningToDeleted_CorrelationId
+}

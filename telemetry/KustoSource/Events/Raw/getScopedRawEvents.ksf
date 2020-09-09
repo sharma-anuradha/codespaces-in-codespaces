@@ -1,0 +1,9 @@
+#function("Gets scoped raw events based on given criteria.")
+(ring: string = "vsclk-online-prod", startTime: datetime = datetime(null), stopTime: datetime = datetime(null))
+{
+    let startAt = iff(isnull(startTime), ago(1d), startTime);
+    let stopAt = iff(isnull(startTime), now(), stopTime);
+    DefaultEvent
+        | where ServiceEnvironment == ring
+        | where ['time'] between (startAt .. stopAt)
+}

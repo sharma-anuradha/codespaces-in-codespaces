@@ -1,0 +1,23 @@
+.create-or-alter function
+with (docstring = 'Gets state transition events for the given environment.', folder='Utilities')
+getStateTransitionsForEnvironment
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    HttpRequestMethod: string, 
+    HttpRequestUri: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    ComputeResourceId: string),
+    CodespaceId: string) 
+{ 
+    T
+        | where msg == "environmentstatemanager_setenvironmentstateasync"
+        | where CloudEnvironmentId == CodespaceId
+        | project CloudEnvironmentOldState, CloudEnvironmentNewState, ['time'], WorkspaceId, CloudEnvironmentFailedStateReason, HttpRequestMethod, HttpRequestUri, CorrelationId, CloudEnvironmentId, CloudEnvironmentNewUpdatedTrigger, ComputeResourceId
+        | summarize arg_max(['time'], *) by CloudEnvironmentOldState, CloudEnvironmentNewState, WorkspaceId, CorrelationId, CloudEnvironmentId
+}

@@ -1,0 +1,11 @@
+#function("Tabulate creation time durations from request start to enviornment available. Kitchen sink.")
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string, EventAtProvisioningToAvailable_Time: datetime, EventAtCreateRequestStart_Time: datetime, EventAtSelectedKitchenSink: long))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | where CreateOutcome == "Available" and ResponseOutcome == "Success"
+    | where EventAtSelectedKitchenSink == 1
+    | extend DurationInSeconds = (EventAtProvisioningToAvailable_Time - EventAtCreateRequestStart_Time) / 1s
+    | summarize percentiles(DurationInSeconds, 50, 90, 99) by bin (TimeStamp, 1h)
+}

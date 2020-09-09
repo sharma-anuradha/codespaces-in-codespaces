@@ -1,0 +1,26 @@
+.create-or-alter function
+with (docstring = 'Gets Resume Environment request compute resource id events.', folder='Events')
+getResumeEnvironmentComputeResourceEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string,
+    CloudEnvironmentId: string, 
+    ComputeResourceId: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string))
+{
+    getCreateEnvironmentPOSTRequestEvents(T)
+        | where msg == "HeartbeatMonitor_complete"
+        | extend EventAtResumeComputeResource = 1
+        | extend EventAtResumeComputeResource_Time = ["time"]
+        | extend EventAtResumeComputeResource_CorrelationId = CorrelationId
+        | where ComputeResourceId != ""
+        | extend EventAtResumeComputeResource_ComputeResourceId = ComputeResourceId
+        | extend EventAtResumeComputeResource_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtResumeComputeResource, 
+            EventAtResumeComputeResource_CorrelationId, 
+            EventAtResumeComputeResource_Time, 
+            EventAtResumeComputeResource_CloudEnvironmentId,
+            EventAtResumeComputeResource_ComputeResourceId
+        | summarize arg_max(EventAtResumeComputeResource_Time, *) by EventAtResumeComputeResource_CorrelationId, EventAtResumeComputeResource_ComputeResourceId
+}

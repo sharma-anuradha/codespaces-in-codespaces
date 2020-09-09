@@ -1,0 +1,30 @@
+#function("Gets available to shuttingdown state transition events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    HttpResponseStatus: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string,
+    CloudEnvironmentOldState: string,
+    CloudEnvironmentNewState: string,
+    CloudEnvironmentId: string,
+    CloudEnvironmentFailedStateReason: string,
+    CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Available", toState="ShuttingDown")
+        | extend EventAtAvailableToShuttingDown = 1
+        | extend EventAtAvailableToShuttingDown_Time = ['time']
+        | extend EventAtAvailableToShuttingDown_UserInitiated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestUri endswith "/shutdown" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtAvailableToShuttingDown_UserInitiatedDelete = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestMethod == "DELETE", 1, 0)
+        | extend EventAtAvailableToShuttingDown_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtAvailableToShuttingDown_CorrelationId = CorrelationId
+        | extend EventAtAvailableToShuttingDown_WorkspaceId = WorkspaceId
+        | project EventAtAvailableToShuttingDown, 
+            EventAtAvailableToShuttingDown_Time, 
+            EventAtAvailableToShuttingDown_UserInitiated, 
+            EventAtAvailableToShuttingDown_UserInitiatedDelete,
+            EventAtAvailableToShuttingDown_ViaHeartbeat,
+            EventAtAvailableToShuttingDown_CorrelationId,
+            EventAtAvailableToShuttingDown_WorkspaceId
+}

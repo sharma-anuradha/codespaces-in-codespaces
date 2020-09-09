@@ -1,0 +1,20 @@
+.create-or-alter function
+with (docstring = 'Gets Resume Environment request stop events.', folder='Events')
+getResumeEnvironmentRequestStopEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpResponseStatus: string, 
+    HttpRequestMethod:string, 
+    HttpRequestUri: string))
+{
+    getResumeEnvironmentPOSTRequestEvents(T)
+        | where msg == "request_stop"
+        | extend EventAtResumeRequestStop_Time = ["time"]
+        | extend EventAtResumeRequestStop_ResponseCode = toint(HttpResponseStatus)
+        | extend EventAtResumeRequestStop = 1
+        | extend EventAtResumeRequestStop_CorrelationId = CorrelationId
+        | project EventAtResumeRequestStop_ResponseCode, EventAtResumeRequestStop_CorrelationId, EventAtResumeRequestStop_Time, EventAtResumeRequestStop
+        | summarize arg_max(EventAtResumeRequestStop_Time, *) by EventAtResumeRequestStop_CorrelationId
+}

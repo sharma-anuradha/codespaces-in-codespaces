@@ -1,0 +1,8 @@
+.create-or-alter function
+with (docstring = 'Gets Create Environment POST request events.', folder='Events')
+getCreateEnvironmentPOSTRequestEvents
+(T:(HttpRequestMethod:string, HttpRequestUri: string))
+{
+    T
+        | where HttpRequestMethod == "POST" and HttpRequestUri == "/api/v1/environments"
+}

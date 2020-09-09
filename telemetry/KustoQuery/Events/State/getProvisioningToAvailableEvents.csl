@@ -1,0 +1,21 @@
+.create-or-alter function
+with (docstring = 'Gets provisioning to available state transition events.', folder='Events/State')
+getProvisioningToAvailableEvents
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, SkuName: string, HttpResponseStatus: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, CloudEnvironmentOldState: string, CloudEnvironmentNewState: string, CloudEnvironmentFailedStateReason: string, CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Provisioning", toState="Available")
+        | where WorkspaceId != ""
+        | extend EventAtProvisioningToAvailable = 1
+        | extend EventAtProvisioningToAvailable_Time = ['time']
+        | extend EventAtProvisioningToAvailable_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtProvisioningToAvailable_CorrelationId = CorrelationId
+        | extend EventAtProvisioningToAvailable_WorkspaceId = WorkspaceId
+        | extend EventAtProvisioningToAvailable_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtProvisioningToAvailable,
+            EventAtProvisioningToAvailable_Time,
+            EventAtProvisioningToAvailable_ViaHeartbeat,
+            EventAtProvisioningToAvailable_CorrelationId,
+            EventAtProvisioningToAvailable_WorkspaceId,
+            EventAtProvisioningToAvailable_CloudEnvironmentId
+        | summarize arg_min(EventAtProvisioningToAvailable_Time, *) by EventAtProvisioningToAvailable_CorrelationId, EventAtProvisioningToAvailable_WorkspaceId
+}

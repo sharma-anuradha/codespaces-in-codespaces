@@ -1,0 +1,31 @@
+.create-or-alter function
+with (docstring = 'Gets starting to deleted state transition events.', folder='Events/State')
+getStartingToDeletedEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string,
+    ComputeResourceId: string,
+    CloudEnvironmentOldState: string,
+    CloudEnvironmentNewState: string,
+    CloudEnvironmentId: string,
+    CloudEnvironmentFailedStateReason: string,
+    CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Starting", toState="Deleted")
+        | extend EventAtStartingToDeleted = 1
+        | extend EventAtStartingToDeleted_Time = ['time']
+        | extend EventAtStartingToDeleted_UserInitated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestMethod == "DELETE", 1, 0)
+        | extend EventAtStartingToDeleted_CorrelationId = CorrelationId
+        | extend EventAtStartingToDeleted_WorkspaceId = WorkspaceId
+        | extend EventAtStartingToDeleted_ComputeResourceId = ComputeResourceId
+        | project EventAtStartingToDeleted, 
+            EventAtStartingToDeleted_Time, 
+            EventAtStartingToDeleted_UserInitated, 
+            EventAtStartingToDeleted_CorrelationId, 
+            EventAtStartingToDeleted_WorkspaceId,
+            EventAtStartingToDeleted_ComputeResourceId
+        | summarize arg_min(EventAtStartingToDeleted_Time, *) by EventAtStartingToDeleted_CorrelationId
+}

@@ -1,0 +1,21 @@
+#function("Last error on the resume action events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, ErrorException: string, ErrorMessage: string, ErrorDetail:string, level: string))
+{
+    T
+        | where level == "error"
+        | where msg == "environment_resume_action_error" 
+        | where CorrelationId != ""
+        | extend EventAtResumeActionError = 1
+        | extend EventAtResumeActionError_Time = ["time"]
+        | extend EventAtResumeActionError_CorrelationId = CorrelationId
+        | extend EventAtResumeActionError_ErrorException = ErrorException
+        | extend EventAtResumeActionError_ErrorMessage = ErrorMessage
+        | extend EventAtResumeActionError_ErrorDetail = ErrorDetail
+        | project EventAtResumeActionError, 
+            EventAtResumeActionError_Time, 
+            EventAtResumeActionError_CorrelationId,
+            EventAtResumeActionError_ErrorException,
+            EventAtResumeActionError_ErrorMessage,
+            EventAtResumeActionError_ErrorDetail
+        | summarize arg_max(EventAtResumeActionError_Time, *) by EventAtResumeActionError_CorrelationId
+}

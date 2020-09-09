@@ -1,0 +1,8 @@
+#function("Breakdown of all the responses, excluding 307.")
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string))
+{
+    T
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | where TimeStamp < ago(1h)
+    | summarize count() by ResponseOutcome
+}

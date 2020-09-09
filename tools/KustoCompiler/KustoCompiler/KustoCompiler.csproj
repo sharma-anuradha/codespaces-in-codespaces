@@ -8,8 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Kusto.Data" Version="8.1.2" />
+    <PackageReference Include="Microsoft.Azure.Kusto.Language" Version="8.1.5" />
     <PackageReference Include="Microsoft.Azure.Kusto.Tools" Version="4.1.5" />
     <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.17.1" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

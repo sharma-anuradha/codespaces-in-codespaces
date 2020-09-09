@@ -1,0 +1,9 @@
+.create-or-alter function
+with (docstring = 'Breakdown of the resume request responses, excluding 307.', folder='Dashboards/Reliability/Resume')
+getResponseBreakdown
+(T:(EventAtResumeRequestStop_ResponseCode: int, ResponseOutcome: string))
+{
+    T
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | summarize count() by ResponseOutcome
+}

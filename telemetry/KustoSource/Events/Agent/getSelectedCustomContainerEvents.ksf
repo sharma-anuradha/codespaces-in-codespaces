@@ -1,0 +1,17 @@
+#function("Gets agent selected custom container events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, ComputeId: string))
+{
+    T
+        | where msg == "vmconfigurationmanager-selected-custom-container-info" or msg == "vmconfigurationmanager-selected-dockerCompose-info"
+        | extend EventAtSelectedCustomContainer = 1
+        | extend EventAtSelectedCustomContainer_Time = ["time"]
+        | extend EventAtSelectedCustomContainer_CorrelationId = CorrelationId
+        | extend EventAtSelectedCustomContainer_ComputeId = ComputeId
+        | extend EventAtSelectedCustomContainer_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtSelectedCustomContainer, 
+            EventAtSelectedCustomContainer_Time, 
+            EventAtSelectedCustomContainer_CorrelationId,
+            EventAtSelectedCustomContainer_ComputeId,
+            EventAtSelectedCustomContainer_CloudEnvironmentId
+        | summarize arg_max(EventAtSelectedCustomContainer_Time, *) by EventAtSelectedCustomContainer_CorrelationId
+}

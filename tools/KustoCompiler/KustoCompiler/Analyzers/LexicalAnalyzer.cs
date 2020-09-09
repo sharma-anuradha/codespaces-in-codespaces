@@ -22,14 +22,22 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Analyzers
                 {
                     token = IncludeFileToken.Extract(line);
                 }
-                else if (!string.IsNullOrWhiteSpace(line) && line.TrimStart().StartsWith(DefineToken.Token))
+                else if (!string.IsNullOrWhiteSpace(line) && line.TrimStart().StartsWith(FunctionToken.FunctionVerb))
                 {
-                    token = DefineToken.Extract(line);
+                    token = FunctionToken.Extract(line);
                 }
-                else if (!string.IsNullOrWhiteSpace(line) && line.TrimStart().StartsWith(UndefineToken.Token))
+                else if (!string.IsNullOrWhiteSpace(line) && line.TrimStart().StartsWith(OverrideFunctionToken.OverrideFunctionVerb))
                 {
-                    token = UndefineToken.Extract(line);
+                    token = OverrideFunctionToken.Extract(line);
                 }
+                //else if (!string.IsNullOrWhiteSpace(line) && line.TrimStart().StartsWith(DefineToken.Token))
+                //{
+                //    token = DefineToken.Extract(line);
+                //}
+                //else if (!string.IsNullOrWhiteSpace(line) && line.TrimStart().StartsWith(UndefineToken.Token))
+                //{
+                //    token = UndefineToken.Extract(line);
+                //}
                 else
                 {
                     token = new LineToken()

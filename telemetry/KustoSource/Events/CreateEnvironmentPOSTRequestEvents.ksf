@@ -1,3 +1,0 @@
-#include("Raw\ScopedRawEvents_7Days.ksf")
-let CreateEnvironmentPOSTRequestEvents = ScopedRawEvents
-    | where HttpRequestMethod == "POST" and HttpRequestUri == "/api/v1/environments";

@@ -1,0 +1,11 @@
+.create-or-alter function
+with (docstring = 'Shutdown codespaces - orders the infrastructure or bugs by hitcount', folder='Dashboards/Reliability/Shutdown')
+getShutdownProcessErrors
+(T:(TimeStamp: datetime, ShutdownOutcome: string))
+{
+    T
+    | where TimeStamp  < ago(1h)
+    | where ShutdownOutcome startswith "Infrastructure:" or ShutdownOutcome startswith "Bug:"
+    | summarize HitCount = count() by ShutdownOutcome
+    | order by HitCount desc
+}

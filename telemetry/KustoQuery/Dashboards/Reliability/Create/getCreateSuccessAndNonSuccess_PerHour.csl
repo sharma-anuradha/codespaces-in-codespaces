@@ -1,0 +1,14 @@
+.create-or-alter function
+with (docstring = 'Codespace Creation - Success and NonSuccess per hour includes infra and user failures.', folder='Dashboards/Reliability/Create')
+getCreateSuccessAndNonSuccess_PerHour
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string, EventAtProvisioningToAvailable_Time: datetime, EventAtCreateRequestStart_Time: datetime, EventAtSelectedCustomContainer: long))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | extend SuccessResult = iff(CreateOutcome == "Available" and ResponseOutcome == "Success", 1, 0)
+    | extend TotalRequests = 1
+    | summarize Success = sum(SuccessResult), Total = sum(TotalRequests) by bin(TimeStamp, 1h)
+    | extend NonSuccess = Total - Success
+    | project Success, NonSuccess, TimeStamp
+}

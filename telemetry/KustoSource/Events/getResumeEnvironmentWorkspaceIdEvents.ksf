@@ -1,0 +1,26 @@
+#function("Gets Resume Environment request workspace id events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    WorkspaceId: string, 
+    ComputeResourceId: string, 
+    ContinuationPayloadTrackingInstanceId: string,
+    HttpRequestMethod:string, 
+    HttpRequestUri: string))
+{
+    T
+        | where msg == "HeartbeatMonitor_complete"
+        | where WorkspaceId != "" and ContinuationPayloadTrackingInstanceId != ""
+        | where CorrelationId == ""
+        | extend EventAtResumeHasWorkspace = 1
+        | extend EventAtResumeHasWorkspace_Time = ["time"]
+        | extend EventAtResumeHasWorkspace_WorkspaceId = WorkspaceId
+        | extend EventAtResumeHasWorkspace_ComputeResourceId = ComputeResourceId
+        | extend EventAtResumeHasWorkspace_ContinuationPayloadTrackingInstanceId = ContinuationPayloadTrackingInstanceId
+        | project EventAtResumeHasWorkspace, 
+                EventAtResumeHasWorkspace_Time, 
+                EventAtResumeHasWorkspace_WorkspaceId,
+                EventAtResumeHasWorkspace_ComputeResourceId,
+                EventAtResumeHasWorkspace_ContinuationPayloadTrackingInstanceId
+        | summarize arg_max(EventAtResumeHasWorkspace_Time, *) by EventAtResumeHasWorkspace_ContinuationPayloadTrackingInstanceId, EventAtResumeHasWorkspace_WorkspaceId
+}

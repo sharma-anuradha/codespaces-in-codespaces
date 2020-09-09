@@ -1,0 +1,8 @@
+#function("Lists CorrelationId of the resume process which failed unexpectedly.")
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, EventAtShutdownRequestStart_CorrelationId: string, BuildId: string, ShutdownOutcome: string))
+{
+    T
+    | where TimeStamp  < ago(1h)
+    | where ShutdownOutcome == "Bug: Shutdown (unknown/unclassified)"
+    | project ShutdownOutcome, EventAtShutdownRequestStart_CorrelationId, BuildId
+}

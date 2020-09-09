@@ -1,0 +1,6 @@
+#function("Gets Create Environment POST request events.")
+(T:(HttpRequestMethod:string, HttpRequestUri: string))
+{
+    T
+        | where HttpRequestMethod == "POST" and HttpRequestUri == "/api/v1/environments"
+}

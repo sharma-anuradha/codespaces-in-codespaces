@@ -1,0 +1,23 @@
+#function("Gets Shutdown Environment request start events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    Service: string, 
+    CommitId: string, 
+    ServiceEnvironment: string, 
+    ServiceInstance: string, 
+    ServiceStamp: string, 
+    ServiceLocation: string, 
+    BuildId: string, 
+    HttpRequestMethod:string, 
+    HttpRequestUri: string))
+{
+    getShutdownEnvironmentPOSTRequestEvents(T)
+        | where msg == "request_start" 
+        | extend EventAtShutdownRequestStart = 1
+        | extend EventAtShutdownRequestStart_Time = ["time"]
+        | extend EventAtShutdownRequestStart_CorrelationId = CorrelationId
+        | project EventAtShutdownRequestStart, EventAtShutdownRequestStart_Time, EventAtShutdownRequestStart_CorrelationId,
+            Service, CommitId, ServiceEnvironment, ServiceInstance, ServiceStamp, ServiceLocation, BuildId
+        | summarize arg_min(EventAtShutdownRequestStart_Time, *) by EventAtShutdownRequestStart_CorrelationId
+}

@@ -3,6 +3,7 @@ using Microsoft.VsCloudKernel.Services.KustoCompiler.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
@@ -22,13 +23,28 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
         }
     }
 
+    public class PreprocessedFileInfo
+    {
+        public string Content
+        {
+            get;
+            set;
+        }
+
+        public bool IsFunction
+        {
+            get;
+            set;
+        }
+    }
+
     public class PreProcessor
     {
         private readonly LexicalAnalyzer lexicalAnalyzer = new LexicalAnalyzer();
 
         private readonly Dictionary<string, KustoSourceFileLexicalInfo> lexMap = new Dictionary<string, KustoSourceFileLexicalInfo>();
 
-        public string Process(string inputFile)
+        public PreprocessedFileInfo Process(string inputFile, string basePath)
         {
             Console.WriteLine($"  Processing: {inputFile}");
 
@@ -64,11 +80,22 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
                         var absolutePath = GetAbsolutePathBasedOn(fileToProcess, includeFileToken.File);
                         processQueue.Enqueue(absolutePath);
                     }
+                    else if (token is OverrideFunctionToken overrideFunctionToken)
+                    {
+                        var absolutePath = GetAbsolutePathBasedOn(fileToProcess, overrideFunctionToken.File);
+                        processQueue.Enqueue(absolutePath);
+                    }
                 }
             }
 
             var includedSet = new List<string>();
-            return GenerateFor(inputFile, inputFile, includedSet);
+            var content = GenerateFor(inputFile, inputFile, includedSet, basePath);
+
+            return new PreprocessedFileInfo()
+            {
+                Content = content,
+                IsFunction = lexMap[inputFile].Tokens.FirstOrDefault() is FunctionToken,
+            };
         }
 
         private static string GetAbsolutePathBasedOn(string rootedFile, string target)
@@ -76,7 +103,7 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
             return Path.GetFullPath(Path.Combine(Path.GetDirectoryName(rootedFile), target));
         }
 
-        private string GenerateFor(string sourceFile, string includedFile, List<string> includedSet)
+        private string GenerateFor(string sourceFile, string includedFile, List<string> includedSet, string basePath, bool isFunctionOverride = false)
         {
             var absolutePath = GetAbsolutePathBasedOn(sourceFile, includedFile);
 
@@ -100,16 +127,44 @@ namespace Microsoft.VsCloudKernel.Services.KustoCompiler.Processor
                 }
                 else if (token is IncludeFileToken includeFileToken)
                 {
-                    var includedFileContent = GenerateFor(absolutePath, includeFileToken.File, includedSet);
+                    var includedFileContent = GenerateFor(absolutePath, includeFileToken.File, includedSet, basePath);
                     if (includedFileContent != default)
                     {
                         final.AppendLine(includedFileContent.TrimEnd());
+                    }
+                }
+                else if (token is FunctionToken functionToken)
+                {
+                    var functionName = Path.GetFileNameWithoutExtension(sourceFile);
+
+                    if (isFunctionOverride)
+                    {
+                        final.AppendLine($"let {functionName} = ");
+                    }
+                    else
+                    {
+                        final.AppendLine(".create-or-alter function");
+                        final.AppendLine($"with (docstring = '{functionToken.DocumentString}', folder='{basePath}')");
+                        final.AppendLine(functionName);
+                    }
+                }
+                else if (token is OverrideFunctionToken overrideFunctionToken)
+                {
+                    var overrideFunctionContent = GenerateFor(absolutePath, overrideFunctionToken.File, includedSet, basePath, true);
+                    if (overrideFunctionContent != default)
+                    {
+                        final.AppendLine(overrideFunctionContent.TrimEnd());
                     }
                 }
                 else
                 {
                     throw new InvalidOperationException("Unknown token.");
                 }
+            }
+
+            if (isFunctionOverride)
+            {
+                final.AppendLine(";");
             }
 
             return final.ToString();

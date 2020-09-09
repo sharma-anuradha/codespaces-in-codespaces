@@ -1,0 +1,13 @@
+.create-or-alter function
+with (docstring = 'Resume codespaces - orders the infrastructure or bugs by hitcount', folder='Dashboards/Reliability/Resume')
+getResumeProcessErrors
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResumeOutcome: string, CodespaceId: string))
+{
+    T
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | where TimeStamp < ago(1h)
+    | where ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:"
+    | summarize HitCount = count() by ResumeOutcome, CodespaceId
+    | project HitCount, ResumeOutcome, CodespaceId
+    | order by HitCount desc
+}

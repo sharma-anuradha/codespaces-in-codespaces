@@ -1,0 +1,57 @@
+.create-or-alter function
+with (docstring = 'Gets create request events and outcome.', folder='BuildingBlocks')
+getCreateOutcomeEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpResponseStatus: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    Service: string,
+    CommitId: string,
+    ServiceEnvironment: string,
+    ServiceInstance: string,
+    ServiceStamp: string,
+    ServiceLocation: string,
+    BuildId: string,
+    ErrorException: string,
+    ErrorMessage: string,
+    ErrorDetail: string,
+    level: string,
+    ComputeResourceId: string,
+    ComputeId: string))
+{
+    let CreateEnvironmentRequestStartEvents = getCreateEnvironmentRequestStartEvents(T);
+    let CreateEnvironmentRequestStopEvents = getCreateEnvironmentRequestStopEvents(T);
+    let CreateActionErrorEvents = getCreateActionErrorEvents(T);
+    let CreateEnvironmentWorkspaceIdEvents = getCreateEnvironmentWorkspaceIdEvents(T);
+    let ProvisioningToAvailableEvents = getProvisioningToAvailableEvents(T);
+    let ProvisioningToDeletedEvents = getProvisioningToDeletedEvents(T);
+    let ProvisioningToShutdownEvents = getProvisioningToShutdownEvents(T);
+    let ProvisioningToFailedEvents = getProvisioningToFailedEvents(T);
+    let SelectedKitchenSinkEvents = getSelectedKitchenSinkEvents(T);
+    let SelectedCustomContainerEvents = getSelectedCustomContainerEvents(T);
+    CreateEnvironmentRequestStartEvents
+        | join kind=leftouter (CreateEnvironmentRequestStopEvents) on $left.EventAtCreateRequestStart_CorrelationId == $right.EventAtCreateRequestStop_CorrelationId
+        | join kind=leftouter (CreateActionErrorEvents) on $left.EventAtCreateRequestStart_CorrelationId == $right.EventAtCreateActionError_CorrelationId
+        | where EventAtCreateRequestStop_SkuName contains "linux" // Bug: Static environment causes joins to work incorrectly because of empty workspace id.
+        | join kind=leftouter (CreateEnvironmentWorkspaceIdEvents) on $left.EventAtCreateRequestStart_CorrelationId == $right.EventAtCreateHasWorkspace_CorrelationId
+        | join kind=leftouter (ProvisioningToAvailableEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToAvailable_WorkspaceId and $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtProvisioningToAvailable_CloudEnvironmentId
+        | join kind=leftouter (ProvisioningToDeletedEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtProvisioningToDeleted_CloudEnvironmentId
+        | join kind=leftouter (ProvisioningToShutdownEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToShutdown_WorkspaceId
+        | join kind=leftouter (ProvisioningToFailedEvents) on $left.EventAtCreateHasWorkspace_WorkspaceId == $right.EventAtProvisioningToFailed_WorkspaceId
+        | join kind=leftouter (SelectedKitchenSinkEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtSelectedKitchenSink_CloudEnvironmentId and $left.EventAtCreateHasWorkspace_ComputeResourceId == $right.EventAtSelectedKitchenSink_ComputeId
+        | join kind=leftouter (SelectedCustomContainerEvents) on $left.EventAtCreateHasWorkspace_CloudEnvironmentId == $right.EventAtSelectedCustomContainer_CloudEnvironmentId and $left.EventAtCreateHasWorkspace_ComputeResourceId == $right.EventAtSelectedCustomContainer_ComputeId
+        | extend SkuName = EventAtCreateRequestStop_SkuName
+        | extend CodespaceId = EventAtCreateHasWorkspace_CloudEnvironmentId
+        | extend WorkspaceId = EventAtCreateHasWorkspace_WorkspaceId
+        | extend TimeStamp = EventAtCreateRequestStart_Time
+        | summarize arg_max(TimeStamp, *) by EventAtCreateRequestStart_CorrelationId
+}

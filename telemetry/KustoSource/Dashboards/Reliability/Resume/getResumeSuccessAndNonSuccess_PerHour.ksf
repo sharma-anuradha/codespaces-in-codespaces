@@ -1,0 +1,12 @@
+#function("Tabulates success vs. non-success of resuming a codespace per hour")
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | extend SuccessResult = iff(ResumeOutcome == "Available" and ResponseOutcome == "Success", 1, 0)
+    | extend TotalRequests = 1
+    | summarize Success = sum(SuccessResult), Total = sum(TotalRequests) by bin(TimeStamp, 1h)
+    | extend NonSuccess = Total - Success
+    | project Success, NonSuccess, TimeStamp
+}

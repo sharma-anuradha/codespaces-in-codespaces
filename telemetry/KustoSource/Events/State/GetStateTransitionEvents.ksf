@@ -1,8 +1,22 @@
-#include("..\Raw\ScopedRawEvents_7Days.ksf")
-let GetStateTransitionEvents = (fromState: string, toState: string) { 
-    ScopedRawEvents
+#function("Gets state transition events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    HttpRequestMethod: string, 
+    HttpRequestUri: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    ComputeResourceId: string),
+    fromState: string, 
+    toState: string) 
+{ 
+    T
         | where msg == "environmentstatemanager_setenvironmentstateasync"
         | where CloudEnvironmentOldState == fromState and CloudEnvironmentNewState == toState
-        | project CloudEnvironmentOldState, CloudEnvironmentNewState, ['time'], WorkspaceId, CloudEnvironmentFailedStateReason, HttpRequestMethod, HttpRequestUri, CorrelationId, CloudEnvironmentId, CloudEnvironmentNewUpdatedTrigger
+        | project CloudEnvironmentOldState, CloudEnvironmentNewState, ['time'], WorkspaceId, CloudEnvironmentFailedStateReason, HttpRequestMethod, HttpRequestUri, CorrelationId, CloudEnvironmentId, CloudEnvironmentNewUpdatedTrigger, ComputeResourceId
         | summarize arg_max(['time'], *) by CloudEnvironmentOldState, CloudEnvironmentNewState, WorkspaceId, CorrelationId, CloudEnvironmentId
-};
+}

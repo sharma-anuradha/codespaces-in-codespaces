@@ -1,9 +1,0 @@
-#include("ResumeEnvironmentPOSTRequestEvents.ksf")
-let ResumeEnvironmentRequestStartEvents = ResumeEnvironmentPOSTRequestEvents
-    | where msg == "request_start" 
-    | extend EventAtResumeStartRequest_Time = ["time"]
-    | extend EventAtResumeRequestStart_CorrelationId = CorrelationId
-    | extend EventAtResumeRequestStart = 1
-    | project EventAtResumeStartRequest_Time, EventAtResumeRequestStart_CorrelationId, EventAtResumeRequestStart,
-        Service, CommitId, ServiceEnvironment, ServiceInstance, ServiceStamp, ServiceLocation, BuildId
-    | summarize arg_min(EventAtResumeStartRequest_Time, *) by EventAtResumeRequestStart_CorrelationId;

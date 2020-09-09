@@ -1,8 +1,0 @@
-// #include("BuildingBlocks\ShutdownOutcomeClassifiedEvents.ksf")
-ShutdownOutcomeClassifiedEvents
-    | where EventAtShutdownSkuResolve_SkuName contains "linux"
-    | where EventAtShutdownRequestStop_ResponseCode != 307
-    | where EventAtShutdownRequestStart_Time  < ago(1h)
-    | where EventAtShutdownRequestStop_ResponseCode >= 500
-    | join kind=leftouter (LastErrorInRequestEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.LastErrorInRequestEvents_CorrelationId
-    | summarize count() by LastErrorInRequestEvents_ErrorException

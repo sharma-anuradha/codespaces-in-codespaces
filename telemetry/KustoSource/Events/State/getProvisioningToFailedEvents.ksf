@@ -1,0 +1,17 @@
+#function("Gets provisioning to failed state transition events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, SkuName: string, HttpResponseStatus: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, CloudEnvironmentOldState: string, CloudEnvironmentNewState: string, CloudEnvironmentFailedStateReason: string, CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Provisioning", toState="Failed")
+        | extend EventAtProvisioningToFailed = 1
+        | extend EventAtProvisioningToFailed_Time = ['time']
+        | extend EventAtProvisioningToFailed_UserAttributed = iff(CloudEnvironmentFailedStateReason == "user", 1, 0)
+        | extend EventAtProvisioningToFailed_ViaHeartbeat = iff(HttpRequestUri == "/api/v1/heartbeat" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtProvisioningToFailed_CorrelationId = CorrelationId
+        | extend EventAtProvisioningToFailed_WorkspaceId = WorkspaceId
+        | project EventAtProvisioningToFailed, 
+            EventAtProvisioningToFailed_Time, 
+            EventAtProvisioningToFailed_UserAttributed, 
+            EventAtProvisioningToFailed_ViaHeartbeat, 
+            EventAtProvisioningToFailed_CorrelationId,
+            EventAtProvisioningToFailed_WorkspaceId
+}

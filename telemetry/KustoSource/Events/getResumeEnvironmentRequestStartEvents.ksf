@@ -1,0 +1,23 @@
+ #function("Gets Resume Environment request start events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    Service: string, 
+    CommitId: string, 
+    ServiceEnvironment: string, 
+    ServiceInstance: string, 
+    ServiceStamp: string, 
+    ServiceLocation: string, 
+    BuildId: string, 
+    HttpRequestMethod:string, 
+    HttpRequestUri: string))
+{
+    getResumeEnvironmentPOSTRequestEvents(T)
+        | where msg == "request_start" 
+        | extend EventAtResumeRequestStart_Time = ["time"]
+        | extend EventAtResumeRequestStart_CorrelationId = CorrelationId
+        | extend EventAtResumeRequestStart = 1
+        | project EventAtResumeRequestStart_Time, EventAtResumeRequestStart_CorrelationId, EventAtResumeRequestStart,
+            Service, CommitId, ServiceEnvironment, ServiceInstance, ServiceStamp, ServiceLocation, BuildId
+        | summarize arg_min(EventAtResumeRequestStart_Time, *) by EventAtResumeRequestStart_CorrelationId
+}

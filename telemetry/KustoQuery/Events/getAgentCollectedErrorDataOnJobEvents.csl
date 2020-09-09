@@ -1,0 +1,19 @@
+.create-or-alter function
+with (docstring = 'Gets Error received from agent events.', folder='Events')
+getAgentCollectedErrorDataOnJobEvents
+(T:(msg: string,
+    CorrelationId: string,
+    JobCollectedData: string))
+{
+    T
+        | where msg == "start_environment_handler_process_complete"
+        | project CorrelationId, JobCollectedData
+        | where JobCollectedData != ""
+        | extend ParsedJobCollectedData = parse_json(JobCollectedData)
+        | extend JobErrors = ParsedJobCollectedData.errors
+        | where JobErrors != "[]"
+        | extend EventAtAgentCollectedError_JobError = JobErrors[0]
+        | extend EventAtAgentCollectedError = 1
+        | extend EventAtAgentCollectedError_CorrelationId = CorrelationId
+        | project EventAtAgentCollectedError_CorrelationId, EventAtAgentCollectedError_JobError, EventAtAgentCollectedError
+}

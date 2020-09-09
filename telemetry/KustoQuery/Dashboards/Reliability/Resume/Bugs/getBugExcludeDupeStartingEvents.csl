@@ -1,0 +1,25 @@
+.create-or-alter function
+with (docstring = 'Bug which identifies incorrect state transition from starting to starting', folder='Dashboards/Reliability/Resume/Bugs')
+getBugExcludeDupeStartingEvents
+(T:(msg: string,
+     ["time"]: datetime, 
+     CloudEnvironmentOldState: string,
+     CloudEnvironmentNewState: string,
+     WorkspaceId: string,
+     CloudEnvironmentFailedStateReason: string,
+     HttpRequestMethod: string, 
+     HttpRequestUri: string, 
+     CorrelationId: string, 
+     CloudEnvironmentId: string, 
+     SkuName: string))
+{
+    // Bug incorrect state transition from "Starting to Starting" 
+    // Projects correlationIds for it to be used against the master classification query.
+    getStitchedStateTransitionEvents(T)
+        | where PreviousNewState != CurrentOldState
+        | where PreviousNewState == "Starting"
+        | extend EventAtBugExcludeDupeStartingEvent = 1
+        | extend EventAtBugExcludeDupeStartingEvent_CurrentCorrelationId = CurrentCorrelationId
+        | extend EventAtBugExcludeDupeStartingEvent_PreviousCorrelationId = PreviousCorrelationId
+        | project EventAtBugExcludeDupeStartingEvent, CurrentCorrelationId, PreviousCorrelationId
+}

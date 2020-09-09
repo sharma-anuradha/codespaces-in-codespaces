@@ -1,0 +1,9 @@
+.create-or-alter function
+with (docstring = 'View shutdown request events and outcome.', folder='Preprocess')
+viewShutdownOutcomeClassifiedEvents
+()
+{
+    // This is used for preprocessing DefaultEvents table into ShutdownOutcomeClassifiedEvents.
+    let allEvents = DefaultEvent;
+    getShutdownOutcomeClassifiedEvents(allEvents)
+}

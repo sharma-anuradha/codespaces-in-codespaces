@@ -1,0 +1,24 @@
+#function("Gets Resume Environment sku resolve events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    WorkspaceId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string))
+{
+    getResumeEnvironmentPOSTRequestEvents(T)
+        | where msg == "docdb_VsoPlan_query"
+        | extend EventAtResumeSkuResolve = 1
+        | extend EventAtResumeSkuResolve_CorrelationId = CorrelationId
+        | extend EventAtResumeSkuResolve_Time = ["time"]
+        | extend EventAtResumeSkuResolve_SkuName = SkuName
+        | extend EventAtResumeSkuResolve_CloudEnvironmentId = CloudEnvironmentId
+        | project EventAtResumeSkuResolve,
+            EventAtResumeSkuResolve_Time, 
+            EventAtResumeSkuResolve_CorrelationId, 
+            EventAtResumeSkuResolve_SkuName, 
+            EventAtResumeSkuResolve_CloudEnvironmentId
+        | summarize arg_max(EventAtResumeSkuResolve_Time, *) by EventAtResumeSkuResolve_CorrelationId
+}

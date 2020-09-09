@@ -1,0 +1,11 @@
+#function("Counts the total infrastructure failures or bugs for shutdown.")
+(T:(TimeStamp: datetime, ResponseOutcome: string, ShutdownOutcome: string))
+{
+    T
+    | where TimeStamp  < ago(1h)
+    | where ResponseOutcome startswith "Infrastructure:" or 
+            ResponseOutcome startswith "Bug:" or 
+            ShutdownOutcome startswith "Infrastructure:" or 
+            ShutdownOutcome startswith "Bug:"
+    | summarize count()
+}

@@ -1,0 +1,8 @@
+#function("Lists CorrelationId of the resume requests which failed unexpectedly.")
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, EventAtResumeRequestStart_CorrelationId: string, BuildId: string, CodespaceId: string))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where EventAtResumeRequestStop_ResponseCode >= 500
+    | project EventAtResumeRequestStart_CorrelationId, EventAtResumeRequestStop_ResponseCode, BuildId, CodespaceId
+}

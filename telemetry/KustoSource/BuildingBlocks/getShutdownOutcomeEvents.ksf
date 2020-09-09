@@ -1,0 +1,55 @@
+#function("Gets shutdown request events and outcome.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpResponseStatus: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    Service: string,
+    CommitId: string,
+    ServiceEnvironment: string,
+    ServiceInstance: string,
+    ServiceStamp: string,
+    ServiceLocation: string,
+    BuildId: string,
+    ErrorException: string,
+    ErrorMessage: string,
+    ErrorDetail: string,
+    level: string,
+    ComputeResourceId: string,
+    ComputeId: string))
+{
+    let ShutdownEnvironmentRequestStartEvents = getShutdownEnvironmentRequestStartEvents(T);
+    let ShutdownEnvironmentRequestSkuResolveEvents = getShutdownEnvironmentRequestSkuResolveEvents(T);
+    let ShutdownEnvironmentRequestStopEvents = getShutdownEnvironmentRequestStopEvents(T);
+    let AvailableToShuttingDownEvents = getAvailableToShuttingDownEvents(T);
+    let UnavailableToShutDownEvents = getUnavailableToShutdownEvents(T);
+    let StartingToShutdownEvents = getStartingToShutdownEvents(T);
+    let StartingToArchivedEvents = getStartingToArchivedEvents(T);
+    let ShuttingDownToShutdownEvents = getShuttingDownToShutdownEvents(T);
+    let ShuttingDownToDeletedEvents = getShuttingDownToDeletedEvents(T);
+    let SelectedKitchenSinkEvents = getSelectedKitchenSinkEvents(T);
+    let SelectedCustomContainerEvents = getSelectedCustomContainerEvents(T);
+
+    ShutdownEnvironmentRequestStartEvents
+        | join kind=leftouter (ShutdownEnvironmentRequestSkuResolveEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtShutdownSkuResolve_CorrelationId
+        | join kind=leftouter (ShutdownEnvironmentRequestStopEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtShutdownRequestStop_CorrelationId
+        | join kind=leftouter (AvailableToShuttingDownEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtAvailableToShuttingDown_CorrelationId
+        | join kind=leftouter (UnavailableToShutDownEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtUnavailableToShutdown_CorrelationId
+        | join kind=leftouter (StartingToShutdownEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtStartingToShutdown_CorrelationId
+        | join kind=leftouter (StartingToArchivedEvents) on $left.EventAtShutdownRequestStart_CorrelationId == $right.EventAtStartingToArchived_CorrelationId
+        | join kind=leftouter (ShuttingDownToShutdownEvents) on $left.EventAtShutdownSkuResolve_WorkspaceId == $right.EventAtShuttingDownToShutdown_WorkspaceId
+        | join kind=leftouter (ShuttingDownToDeletedEvents) on $left.EventAtShutdownSkuResolve_WorkspaceId == $right.EventAtShuttingDownToDeleted_WorkspaceId
+        | extend SkuName = EventAtShutdownSkuResolve_SkuName
+        | extend CodespaceId = EventAtShutdownSkuResolve_CloudEnvironmentId
+        | extend WorkspaceId = EventAtShutdownSkuResolve_WorkspaceId
+        | extend TimeStamp = EventAtShutdownRequestStart_Time
+        | summarize arg_max(TimeStamp, *) by EventAtShutdownRequestStart_CorrelationId
+}

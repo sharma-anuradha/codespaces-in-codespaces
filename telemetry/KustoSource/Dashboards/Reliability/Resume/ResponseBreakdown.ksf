@@ -1,6 +1,0 @@
-// Breakdown of all the responses, excluding 307.
-// #include("BuildingBlocks\ResumeOutcomeClassifiedEvents.ksf")
-ResumeOutcomeClassifiedEvents 
-    | where EventAtResumeRequestStop_ResponseCode != 307
-    | where EventAtResumeSkuResolve_SkuName contains "linux"
-    | summarize count() by ResponseOutcome

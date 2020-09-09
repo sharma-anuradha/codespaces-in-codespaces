@@ -1,0 +1,9 @@
+.create-or-alter function
+with (docstring = 'view resume request events and outcome.', folder='Preprocess')
+viewResumeOutcomeClassifiedEvents
+()
+{
+    // This is used for preprocessing DefaultEvents table into ResumeOutcomeClassifiedEvents.
+    let allEvents = DefaultEvent;
+    getResumeOutcomeClassifiedEvents(allEvents)
+}

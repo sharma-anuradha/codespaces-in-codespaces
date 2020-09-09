@@ -1,0 +1,51 @@
+.create-or-alter function
+with (docstring = 'Gets classified shutdown request events and outcome.', folder='BuildingBlocks')
+getShutdownOutcomeClassifiedEvents
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    SkuName: string, 
+    HttpResponseStatus: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string, 
+    CloudEnvironmentId: string, 
+    CloudEnvironmentOldState: string, 
+    CloudEnvironmentNewState: string, 
+    CloudEnvironmentFailedStateReason: string, 
+    CloudEnvironmentNewUpdatedTrigger: string,
+    Service: string,
+    CommitId: string,
+    ServiceEnvironment: string,
+    ServiceInstance: string,
+    ServiceStamp: string,
+    ServiceLocation: string,
+    BuildId: string,
+    ErrorException: string,
+    ErrorMessage: string,
+    ErrorDetail: string,
+    level: string,
+    ComputeResourceId: string,
+    ComputeId: string))
+{
+    getShutdownOutcomeEvents(T)
+        | extend ResponseOutcome = "unknown"
+        | extend ResponseOutcome = iff(EventAtShutdownRequestStop_ResponseCode == 200, "Success", ResponseOutcome)
+        | extend ResponseOutcome = iff(EventAtShutdownRequestStop_ResponseCode == 307, "Redirect", ResponseOutcome)
+        | extend ResponseOutcome = iff(ResponseOutcome == "unknown", "Bug: unclassified response", ResponseOutcome)
+        | extend ShutdownOutcome = iff(EventAtShutdownRequestStop_ResponseCode != 200, "Non-success response", "unknown")
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToShutdown == 1 and EventAtShuttingDownToShutdown_Forced != 1, "Clean Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToShutdown == 1 and EventAtShuttingDownToShutdown_Forced == 1, "Forced Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToShutdown == 1 and EventAtShuttingDownToShutdown_Forced == 1 and EventAtShuttingDownToShutdown_UserInitiated == 1, "User: Forced Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToShutdown == 1 and EventAtShuttingDownToShutdown_Forced == 1 and EventAtShuttingDownToShutdown_UserInitiated != 1, "Infrastructure: Forced Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToShutdown != 1, "Bug: Missing Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtUnavailableToShutdown == 1 and EventAtUnavailableToShutdown_UserInitiated == 1, "User: Unavailable to Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtUnavailableToShutdown == 1 and EventAtUnavailableToShutdown_UserInitiated != 1, "Infrastructure: Unavailable to Shutdown", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_UserInitiated == 1 , "User: Shutdown on Starting", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtStartingToShutdown == 1 and EventAtStartingToShutdown_UserInitiated == 1 , "Infrastructure: Shutdown on Starting", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtStartingToArchived == 1 and EventAtStartingToArchived_UserInitiated == 1 , "User: Shutdown on Archived", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtStartingToArchived == 1 and EventAtStartingToArchived_UserInitiated != 1 , "Infrastructure: Shutdown on Archived", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToDeleted == 1 and EventAtShuttingDownToDeleted_UserInitiatedDelete == 1, "User: Shutting down to delete", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(EventAtAvailableToShuttingDown == 1 and EventAtShuttingDownToDeleted == 1 and EventAtShuttingDownToDeleted_UserInitiatedDelete != 1, "Infrastructure: Shutting down to delete", ShutdownOutcome)
+        | extend ShutdownOutcome = iff(ShutdownOutcome == "unknown", "Bug: Shutdown (unknown/unclassified)", ShutdownOutcome)
+}

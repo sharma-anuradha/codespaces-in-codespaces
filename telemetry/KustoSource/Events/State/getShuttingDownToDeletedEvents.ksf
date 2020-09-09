@@ -1,0 +1,25 @@
+#function("Gets shuttingdown to deleted state transition events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    HttpRequestUri: string, 
+    HttpRequestMethod: string, 
+    WorkspaceId: string,
+    CloudEnvironmentOldState: string,
+    CloudEnvironmentNewState: string,
+    CloudEnvironmentId: string,
+    CloudEnvironmentFailedStateReason: string,
+    CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="ShuttingDown", toState="Deleted")
+        | extend EventAtShuttingDownToDeleted = 1
+        | extend EventAtShuttingDownToDeleted_Time = ['time']
+        | extend EventAtShuttingDownToDeleted_UserInitiatedDelete = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestMethod == "DELETE", 1, 0)
+        | extend EventAtShuttingDownToDeleted_CorrelationId = CorrelationId
+        | extend EventAtShuttingDownToDeleted_WorkspaceId = WorkspaceId
+        | project EventAtShuttingDownToDeleted, 
+            EventAtShuttingDownToDeleted_Time,
+            EventAtShuttingDownToDeleted_UserInitiatedDelete,
+            EventAtShuttingDownToDeleted_CorrelationId,
+            EventAtShuttingDownToDeleted_WorkspaceId
+}

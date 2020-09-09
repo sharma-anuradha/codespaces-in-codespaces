@@ -1,0 +1,9 @@
+#function("Counts the number of unclassified issues in Create.")
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string))
+{
+    T
+    | where EventAtCreateRequestStop_ResponseCode != 307
+    | where TimeStamp < ago(1h)
+    | where ResponseOutcome == "Bug: unclassified response" or CreateOutcome == "Bug: unknown/unclassified"
+    | count
+}

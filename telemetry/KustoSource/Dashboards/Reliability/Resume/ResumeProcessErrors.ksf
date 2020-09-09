@@ -1,9 +1,0 @@
-// Orders the Infrastructure or Bugs by hitcount
-// #include("BuildingBlocks\ResumeOutcomeClassifiedEvents.ksf")
-ResumeOutcomeClassifiedEvents 
-    | where EventAtResumeRequestStop_ResponseCode != 307
-    | where EventAtResumeSkuResolve_SkuName contains "linux"
-    | where EventAtResumeStartRequest_Time < ago(1h)
-    | where ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:"
-    | summarize HitCount = count() by ResumeOutcome
-    | order by HitCount desc

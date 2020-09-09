@@ -1,0 +1,18 @@
+#function("Gets provisioning to shutdown state transition events.")
+(T:(msg: string, ["time"]: datetime, CorrelationId: string, SkuName: string, HttpResponseStatus: string, HttpRequestUri: string, HttpRequestMethod: string, WorkspaceId: string, CloudEnvironmentId: string, CloudEnvironmentOldState: string, CloudEnvironmentNewState: string, CloudEnvironmentFailedStateReason: string, CloudEnvironmentNewUpdatedTrigger: string))
+{
+    getStateTransitionEvents(T, fromState="Provisioning", toState="Shutdown")
+        | extend EventAtProvisioningToShutdown = 1
+        | extend EventAtProvisioningToShutdown_Time = ['time']
+        | extend EventAtProvisioningToShutdown_UserInitiated = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestUri endswith "/shutdown" and HttpRequestMethod == "POST", 1, 0)
+        | extend EventAtProvisioningToShutdown_UserInitiatedDelete = iff(HttpRequestUri startswith "/api/v1/environments/" and HttpRequestMethod == "DELETE", 1, 0)
+        | extend EventAtProvisioningToShutdown_CorrelationId = CorrelationId
+        | extend EventAtProvisioningToShutdown_WorkspaceId = WorkspaceId
+        | project EventAtProvisioningToShutdown, 
+            EventAtProvisioningToShutdown_Time, 
+            EventAtProvisioningToShutdown_UserInitiated, 
+            EventAtProvisioningToShutdown_UserInitiatedDelete, 
+            EventAtProvisioningToShutdown_CorrelationId,
+            EventAtProvisioningToShutdown_WorkspaceId
+        | summarize arg_min(EventAtProvisioningToShutdown_Time, *) by EventAtProvisioningToShutdown_CorrelationId
+}

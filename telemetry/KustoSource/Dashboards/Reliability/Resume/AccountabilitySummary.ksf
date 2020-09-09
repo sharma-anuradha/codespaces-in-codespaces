@@ -1,8 +1,0 @@
-// Counts the number of unclassified issues in resume.
-// #include("BuildingBlocks\ResumeOutcomeClassifiedEvents.ksf")
-ResumeOutcomeClassifiedEvents 
-    | where EventAtResumeRequestStop_ResponseCode != 307
-    | where EventAtResumeSkuResolve_SkuName contains "linux"
-    | where EventAtResumeStartRequest_Time < ago(1h)
-    | where ResumeOutcome == "Bug: Stuck in Starting state (unknown/unclassified)" or ResponseOutcome == "Bug: unclassified response"
-    | count

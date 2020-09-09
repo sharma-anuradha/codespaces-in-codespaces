@@ -1,0 +1,11 @@
+.create-or-alter function
+with (docstring = 'Check and balance number of requests received and responses sent.', folder='Dashboards/Reliability/Resume')
+getRequestStartStopAccountability
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, EventAtResumeRequestStart: int, EventAtResumeRequestStop: int))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | summarize StartCount = sum(EventAtResumeRequestStart), StopCount = sum(EventAtResumeRequestStop)
+    | extend Unaccounted = abs(StartCount - StopCount)
+    | project Unaccounted
+}

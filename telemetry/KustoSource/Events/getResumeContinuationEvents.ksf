@@ -1,0 +1,27 @@
+#function("Gets Resume Environment continuation events.")
+(T:(msg: string, 
+    ["time"]: datetime, 
+    CorrelationId: string, 
+    WorkspaceId: string,
+    CloudEnvironmentId: string,
+    SkuName: string,
+    ContinuationPayloadTrackingInstanceId: string,
+    HttpRequestMethod: string,
+    HttpRequestUri: string))
+{
+    getResumeEnvironmentPOSTRequestEvents(T)
+        | where msg == "azurequeue_environment_create_complete"
+        | extend EventAtResumeContinuation = 1
+        | extend EventAtResumeContinuation_CorrelationId = CorrelationId
+        | extend EventAtResumeContinuation_Time = ["time"]
+        | extend EventAtResumeContinuation_SkuName = SkuName
+        | extend EventAtResumeContinuation_CloudEnvironmentId = CloudEnvironmentId
+        | extend EventAtResumeContinuation_ContinuationPayloadTrackingInstanceId = ContinuationPayloadTrackingInstanceId
+        | project EventAtResumeContinuation,
+            EventAtResumeContinuation_Time, 
+            EventAtResumeContinuation_CorrelationId, 
+            EventAtResumeContinuation_SkuName, 
+            EventAtResumeContinuation_CloudEnvironmentId,
+            EventAtResumeContinuation_ContinuationPayloadTrackingInstanceId
+        | summarize arg_max(EventAtResumeContinuation_Time, *) by EventAtResumeContinuation_ContinuationPayloadTrackingInstanceId
+}

@@ -1,0 +1,8 @@
+.create-or-alter function
+with (docstring = 'Gets Resume Environment POST request events.', folder='Events')
+getResumeEnvironmentPOSTRequestEvents
+(T:(HttpRequestMethod:string, HttpRequestUri: string))
+{
+    T
+        | where HttpRequestMethod == "POST" and HttpRequestUri startswith "/api/v1/environments" and HttpRequestUri endswith "/start"
+}

@@ -1,0 +1,7 @@
+#function("Breakdown of the resume request responses, excluding 307.")
+(T:(EventAtResumeRequestStop_ResponseCode: int, ResponseOutcome: string))
+{
+    T
+    | where EventAtResumeRequestStop_ResponseCode != 307
+    | summarize count() by ResponseOutcome
+}
