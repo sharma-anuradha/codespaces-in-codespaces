@@ -37,6 +37,9 @@
     },
     "networkInterfaceRG": {
       "type": "string"
+    },
+    "imageReference": {
+      "type": "object"
     }
   },
   "resources": [
@@ -59,12 +62,7 @@
               "storageAccountType": "Premium_LRS"
             }
           },
-          "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
-            "version": "latest"
-          }
+          "imageReference": "[parameters('imageReference')]"
         },
         "networkProfile": {
           "networkInterfaces": [

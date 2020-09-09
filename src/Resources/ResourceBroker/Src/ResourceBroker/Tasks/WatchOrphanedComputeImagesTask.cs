@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
@@ -165,8 +164,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddBaseValue("ImageLocation", location)
                         .FluentAddBaseValue("ImageTaskId", Guid.NewGuid());
 
-                    var resourceGroupName = ControlPlaneInfo.Stamp.GetResourceGroupNameForWindowsImages(location);
-                    var galleryName = ControlPlaneInfo.Stamp.GetImageGalleryNameForWindowsImages(location);
+                    var resourceGroupName = ControlPlaneInfo.Stamp.GetResourceGroupNameForCustomVmImages(location);
+                    var galleryName = ControlPlaneInfo.Stamp.GetImageGalleryNameForCustomVmImages(location);
                     var imageDefinitions = new HashSet<GalleryImageInner>();
                     var imageDefinitionSubList = default(IPage<GalleryImageInner>);
                     var nextPagelink = string.Empty;
@@ -191,6 +190,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     {
                         await ProcessImageDefinitionsAsync(computeManagementClient, resourceGroupName, galleryName, imageDefinition.Name, childLogger);
                     }
+
+                    // Process orphaned images
+                    await ProcessOrphanImageAsync(computeManagementClient, resourceGroupName, galleryName, imageDefinitions, childLogger);
                 });
         }
 
@@ -201,7 +203,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                async (childLogger) =>
                {
                    var activeImageVersions = await GetActiveImageVersionsAsync(logger);
-                   var activeImages = new HashSet<string>();
 
                    // Fetch all the ImageInfo
                    var lookupImageInfo = await FetchLookupImageInfo(computeManagementClient, resourceGroupName, galleryName, imageDefinitionName);
@@ -220,27 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                            index,
                            MinimumImageCountToBeRetained,
                            activeImageVersions,
-                           activeImages,
                            childLogger);
-                   }
-
-                   // Fetch all the images and find out the orphan images (images that has no versions) and delete them, if they are not active.
-                   var images = await computeManagementClient.Images.ListByResourceGroupAsync(resourceGroupName);
-                   var imagesWithVersions = lookupImageInfo.Values.ToImmutableHashSet();
-                   var imagesWithNoVersions = images
-                                       .Where(x => !imagesWithVersions.Contains(x.Name))
-                                       .OrderByDescending(x => x.Name).ToList();
-
-                   for (var index = 0; index < imagesWithNoVersions.Count(); index++)
-                   {
-                        await ProcessOrphanImageAsync(
-                            computeManagementClient,
-                            resourceGroupName,
-                            imagesWithNoVersions.ElementAt(index).Name,
-                            index,
-                            MinimumImageCountToBeRetained,
-                            activeImages,
-                            childLogger);
                    }
                });
         }
@@ -254,7 +235,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             int index,
             int imageIndexToBeRetained,
             IEnumerable<string> activeImageVersions,
-            HashSet<string> activeImages,
             IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
@@ -280,12 +260,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddValue("ImageVersionPosition", index)
                         .FluentAddValue("ImageVersionShouldDelete", shouldDelete);
 
-                    // This list is used to prevent while deleting orphan images, if they are active.
-                    if (isActiveImage)
-                    {
-                        activeImages.Add(imageName);
-                    }
-
                     if (shouldDelete)
                     {
                         // Deleting the image versions that are not anymore needed.
@@ -302,42 +276,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 });
         }
 
-        private Task ProcessOrphanImageAsync(
-           IComputeManagementClient computeManagementClient,
-           string resourceGroupName,
-           string imageName,
-           int index,
-           int imageIndexToBeRetained,
-           IEnumerable<string> activeImages,
-           IDiagnosticsLogger logger)
+        private Task ProcessOrphanImageAsync(IComputeManagementClient computeManagementClient, string resourceGroupName, string galleryName, HashSet<GalleryImageInner> imageDefinitions, IDiagnosticsLogger logger)
         {
+            // These are the images that dont have image versions (i,e) they are not being shared using shared image gallery.
+            // Hence they dont have to be retained, if they are not active.
             return logger.OperationScopeAsync(
-                $"{LogBaseName}_delete_orphan_images",
-                async (childLogger) =>
-                {
-                    // These are the images that dont have image versions (i,e) they are not being shared using shared image gallery.
-                    // Hence they dont have to be retained, if they are not active.
-                    // We are having these values for telemetry purpose.
-                    var isActiveImage = activeImages.Any((activeImage) => string.Equals(activeImage, imageName, StringComparison.OrdinalIgnoreCase));
-                    var isToBeRetained = index < imageIndexToBeRetained;
-                    var shouldDelete = !isActiveImage && !isToBeRetained;
+               $"{LogBaseName}_delete_orphan_images",
+               async (childLogger) =>
+               {
+                   var imagesWithVersions = new List<string>();
+                   foreach (var imageDefinition in imageDefinitions)
+                   {
+                       var lookupImageInfos = await FetchLookupImageInfo(
+                           computeManagementClient,
+                           resourceGroupName,
+                           galleryName,
+                           imageDefinition.Name);
 
-                    childLogger
-                        .FluentAddValue("ImageName", imageName)
-                        .FluentAddValue("ImageHasVersion", false)
-                        .FluentAddValue("ImageIsActive", isActiveImage)
-                        .FluentAddValue("ImagesToKeep", imageIndexToBeRetained)
-                        .FluentAddValue("ImagePosition", index)
-                        .FluentAddValue("ImageShouldDelete", shouldDelete);
+                       imagesWithVersions.AddRange(lookupImageInfos.Values.ToArray());
+                   }
 
-                    if (shouldDelete)
-                    {
-                        await computeManagementClient.Images.DeleteAsync(resourceGroupName, imageName);
+                   // Fetch all the images and find out the orphan images (images that has no versions) and delete them, if they are not active.
+                   var images = await computeManagementClient.Images.ListByResourceGroupAsync(resourceGroupName);
+                   var imagesWithNoVersions = images
+                                       .Where(x => !imagesWithVersions.Contains(x.Name))
+                                       .OrderByDescending(x => x.Name).ToList();
 
-                        // Slow down for rate limit & Database RUs
-                        await Task.Delay(LoopDelay);
-                    }
-                });
+                   int countOfImages = imagesWithNoVersions.Count();
+                   for (var index = MinimumImageCountToBeRetained; index < countOfImages; index++)
+                   {
+                       var imageName = imagesWithNoVersions.ElementAt(index).Name;
+
+                       childLogger
+                           .FluentAddValue("ImageName", imageName)
+                           .FluentAddValue("ImageHasVersion", false);
+
+                       await computeManagementClient.Images.DeleteAsync(resourceGroupName, imageName);
+
+                       // Slow down for rate limit
+                       await Task.Delay(LoopDelay);
+                   }
+               });
         }
 
         private async Task<Dictionary<GalleryImageVersionInner, string>> FetchLookupImageInfo(IComputeManagementClient computeManagementClient, string resourceGroupName, string galleryName, string imageDefinitionName)

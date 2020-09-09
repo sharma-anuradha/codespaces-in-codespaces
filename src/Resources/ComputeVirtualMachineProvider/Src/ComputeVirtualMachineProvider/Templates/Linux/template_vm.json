@@ -31,6 +31,9 @@
     },
     "resourceTags": {
       "type": "object"
+    },
+    "imageReference": {
+      "type": "object"
     }
   },
   "variables": {
@@ -120,12 +123,7 @@
               "storageAccountType": "Premium_LRS"
             }
           },
-          "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
-            "version": "latest"
-          }
+          "imageReference": "[parameters('imageReference')]"
         },
         "networkProfile": {
           "networkInterfaces": [

@@ -1,9 +1,10 @@
-﻿// <copyright file="CreateLinuxVirtualMachineBasicStrategy.cs" company="Microsoft">
+// <copyright file="CreateLinuxVirtualMachineBasicStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts;
@@ -45,6 +46,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
            IDictionary<string, string> resourceTags,
            string vmInitScript)
         {
+            var imageReference = new ImageReferenceInner(input.AzureVirtualMachineImage);
+
             return new Dictionary<string, Dictionary<string, object>>()
                 {
                     { "adminUserName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, AdminUserName } } },
@@ -57,6 +60,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                     { "virtualMachineSize", new Dictionary<string, object>() { { VirtualMachineConstants.Key, input.AzureSkuName } } },
                     { "vmSetupScript", new Dictionary<string, object>() { { VirtualMachineConstants.Key, vmInitScript } } },
                     { "resourceTags", new Dictionary<string, object>() { { VirtualMachineConstants.Key, resourceTags } } },
+                    { "imageReference", new Dictionary<string, object>() { { VirtualMachineConstants.Key, imageReference } } },
                 };
         }
     }

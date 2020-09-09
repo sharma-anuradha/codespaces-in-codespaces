@@ -1,9 +1,10 @@
-﻿// <copyright file="CreateLinuxVirtualMachineWithNicStrategy.cs" company="Microsoft">
+// <copyright file="CreateLinuxVirtualMachineWithNicStrategy.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider.Contracts;
@@ -48,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
             string vmInitScript)
         {
             var networkInterface = input.CustomComponents.Where(c => c.ComponentType == ResourceType.NetworkInterface).Single();
+            var imageReference = new ImageReferenceInner(input.AzureVirtualMachineImage);
 
             return new Dictionary<string, Dictionary<string, object>>()
                 {
@@ -63,6 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine.Stra
                     { "networkInterfaceName", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.Name } } },
                     { "networkInterfaceSub", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.SubscriptionId } } },
                     { "networkInterfaceRG", new Dictionary<string, object>() { { VirtualMachineConstants.Key, networkInterface.AzureResourceInfo.ResourceGroup } } },
+                    { "imageReference", new Dictionary<string, object>() { { VirtualMachineConstants.Key, imageReference } } },
                 };
         }
     }

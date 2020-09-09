@@ -1,0 +1,30 @@
+{
+  "adminUsername": {
+    "value": "cloudenv"
+  },
+  "adminPublicKeyPath": {
+    "value": "/home/cloudenv/.ssh/authorized_keys"
+  },
+  "adminPublicKey": {
+    "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPYyB2V9q43oWBJINIZMzJ4zrYoNptGCK9i28qxj9cS2Af/FkrVYTSSRMPJforJRVkyY/6M63TFzfIeMe6b93g9Q4nDoxyUDMJ5SEkLp3kw3caxrimLQF2yJz4QySoiqaFlhfot9bP3En9i8AQYjogQtxQqpw77RRzQOkinP5gyga5W2Ia/inNGBRwF2guqZccsOrTI2WF6dnHTB28LIxhHox/WH+0CmMKQrP8yX3bzoReXvsmm8RztC6PWb3G9FzEXK6fDdaLApSIvO/sc5MSEEdbwx7yo2phWsv96x7wY3QZtUGg+ZZnrtr/RE05xQPHm+ufh7qwbF87Ekt70h9R vsonline@machine"
+  },
+  "location": {
+    "value": "WestUs2"
+  },
+  "virtualMachineSize": {
+    "value": "Standard_F4s_v2"
+  },
+  "resourceTags": {
+    "value": {
+      "type": "ubuntu-linux-image-source"
+    }
+  },
+  "imageReference": {
+    "value": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "18.04-LTS",
+      "version": "latest"
+    }
+  }
+}

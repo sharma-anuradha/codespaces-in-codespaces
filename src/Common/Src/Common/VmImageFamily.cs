@@ -1,4 +1,4 @@
-﻿// <copyright file="VmImageFamily.cs" company="Microsoft">
+// <copyright file="VmImageFamily.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -86,6 +86,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         {
             var imageName = await GetCurrentImageNameAsync(logger);
             var imageVersion = await GetCurrentImageVersionAsync(logger);
+            var customImageVersionBaseUrl = $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{StampInfo.GetResourceGroupNameForCustomVmImages(location)}/providers/Microsoft.Compute/galleries/{StampInfo.GetImageGalleryNameForCustomVmImages(location)}/images";
 
             switch (ImageKind)
             {
@@ -93,7 +94,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                     return $"{imageName}:{imageVersion}";
 
                 case ImageKind.Custom:
-                    return $"subscriptions/{VmImageSubscriptionId}/resourceGroups/{StampInfo.GetResourceGroupNameForWindowsImages(location)}/providers/Microsoft.Compute/galleries/{StampInfo.GetImageGalleryNameForWindowsImages(location)}/images/windows/versions/{imageVersion}";
+                    return $"{customImageVersionBaseUrl}/windows/versions/{imageVersion}";
+
+                case ImageKind.Ubuntu:
+                    return $"{customImageVersionBaseUrl}/{ImageKind.ToString().ToLower()}/versions/{imageVersion}";
 
                 default:
                     throw new NotSupportedException($"Image kind '{ImageKind}' is not supported.");

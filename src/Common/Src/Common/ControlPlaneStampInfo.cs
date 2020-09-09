@@ -108,7 +108,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private string AccountShortUniquePrefix { get; }
 
         /// <inheritdoc/>
-        public string GetImageGalleryNameForWindowsImages(AzureLocation azureLocation)
+        public string GetImageGalleryNameForCustomVmImages(AzureLocation azureLocation)
         {
             ValidateLocation(azureLocation);
 
@@ -116,7 +116,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public string GetResourceGroupNameForWindowsImages(AzureLocation azureLocation)
+        public string GetResourceGroupNameForCustomVmImages(AzureLocation azureLocation)
         {
             ValidateLocation(azureLocation);
 
