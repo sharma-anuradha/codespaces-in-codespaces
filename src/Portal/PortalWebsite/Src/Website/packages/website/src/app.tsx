@@ -126,7 +126,7 @@ class AppRoot extends Component<AppProps, AppState> {
             <div>
                 <MessageBar messageBarType={MessageBarType.warning}>
                     {injectMessageParametersJSX(translation('vsoSunset'),
-                        <Link href='https://github.com/codespaces' target='_blank'>
+                        <Link href='https://github.com/features/codespaces' target='_blank'>
                             GitHub
                         </Link>
                     )}
