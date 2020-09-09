@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -21,29 +19,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// Delete a Codespace Plan.
     /// </summary>
     [Verb("delete-plan", HelpText = "Delete a Codespace Plan.")]
-    public class DeletePlanCommand : CommandBase
+    public class DeletePlanCommand : FrontEndCommandBase
     {
         /// <summary>
         /// Gets or sets a value indicating the plan to delete.
         /// </summary>
         [Option('p', "plan", HelpText = "The plan id (GUID).", Required = true)]
         public string PlanId { get; set; }
-
-        /// <summary>
-        /// Creates the web host.
-        /// </summary>
-        /// <param name="webHostArgs">The web host arguments.</param>
-        /// <returns>The built web host.</returns>
-        protected override IWebHost CreateWebHost(string[] webHostArgs)
-        {
-            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
-                .UseStartup<StartupFrontEnd>()
-                .Build();
-
-            StartupFrontEnd.Services = webHost.Services;
-
-            return webHost;
-        }
 
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)

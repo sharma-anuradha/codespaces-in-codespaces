@@ -6,8 +6,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -20,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// Delete a Cloud Environment.
     /// </summary>
     [Verb("delete-environment", HelpText = "Delete a Cloud Environment.")]
-    public class DeleteEnvironmentCommand : CommandBase
+    public class DeleteEnvironmentCommand : FrontEndCommandBase
     {
         /// <summary>
         /// Gets or sets a value indicating the environment to delete.
@@ -33,22 +31,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// </summary>
         [Option("hard", HelpText = "Hard delete the environment.")]
         public bool HardDelete { get; set; }
-
-        /// <summary>
-        /// Creates the web host.
-        /// </summary>
-        /// <param name="webHostArgs">The web host arguments.</param>
-        /// <returns>The built web host.</returns>
-        protected override IWebHost CreateWebHost(string[] webHostArgs)
-        {
-            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
-                .UseStartup<StartupFrontEnd>()
-                .Build();
-
-            StartupFrontEnd.Services = webHost.Services;
-
-            return webHost;
-        }
 
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)

@@ -6,8 +6,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -20,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// Ban a subscription.
     /// </summary>
     [Verb("ban-subscription", HelpText = "Ban a subscription.")]
-    public class BanSubscriptionCommand : CommandBase
+    public class BanSubscriptionCommand : FrontEndCommandBase
     {
         /// <summary>
         /// Gets or sets a value indicating the subscription to ban.
@@ -33,22 +31,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// </summary>
         [Option('r', "reason", HelpText = "[ddos, fraud, other]", Required = true)]
         public string Reason { get; set; }
-
-        /// <summary>
-        /// Creates the web host.
-        /// </summary>
-        /// <param name="webHostArgs">The web host arguments.</param>
-        /// <returns>The built web host.</returns>
-        protected override IWebHost CreateWebHost(string[] webHostArgs)
-        {
-            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
-                .UseStartup<StartupFrontEnd>()
-                .Build();
-
-            StartupFrontEnd.Services = webHost.Services;
-
-            return webHost;
-        }
 
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)

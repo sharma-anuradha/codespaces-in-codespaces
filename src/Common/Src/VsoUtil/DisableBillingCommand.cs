@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -23,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// Delete a Cloud Environment.
     /// </summary>
     [Verb("disable-billing", HelpText = "Disable billing for a plan or subscription.")]
-    public class DisableBillingCommand : CommandBase
+    public class DisableBillingCommand : FrontEndCommandBase
     {
         /// <summary>
         /// Gets or sets a value indicating the plan to disable billing for.
@@ -42,22 +40,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// </summary>
         [Option('d', "duration", HelpText = "The amount of time to disable billing in 'hh:mm:ss' format. The override will start from the start of the current hour.", Required = true)]
         public string Duration { get; set; }
-
-        /// <summary>
-        /// Creates the web host.
-        /// </summary>
-        /// <param name="webHostArgs">The web host arguments.</param>
-        /// <returns>The built web host.</returns>
-        protected override IWebHost CreateWebHost(string[] webHostArgs)
-        {
-            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
-                .UseStartup<StartupFrontEnd>()
-                .Build();
-
-            StartupFrontEnd.Services = webHost.Services;
-
-            return webHost;
-        }
 
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)

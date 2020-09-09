@@ -6,8 +6,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
@@ -20,29 +18,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// Suspend a Cloud Environment.
     /// </summary>
     [Verb("suspend-environment", HelpText = "Suspend a Cloud Environment.")]
-    public class SuspendEnvironmentCommand : CommandBase
+    public class SuspendEnvironmentCommand : FrontEndCommandBase
     {
         /// <summary>
         /// Gets or sets a value indicating the environment to suspend.
         /// </summary>
         [Option('i', "id", HelpText = "The cloud environment id.", Required = true)]
         public string EnvironmentId { get; set; }
-
-        /// <summary>
-        /// Creates the web host.
-        /// </summary>
-        /// <param name="webHostArgs">The web host arguments.</param>
-        /// <returns>The built web host.</returns>
-        protected override IWebHost CreateWebHost(string[] webHostArgs)
-        {
-            var webHost = WebHost.CreateDefaultBuilder(webHostArgs)
-                .UseStartup<StartupFrontEnd>()
-                .Build();
-
-            StartupFrontEnd.Services = webHost.Services;
-
-            return webHost;
-        }
 
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)
