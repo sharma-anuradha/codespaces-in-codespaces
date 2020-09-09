@@ -1,4 +1,4 @@
-﻿// <copyright file="VsoPlanInfo.cs" company="Microsoft">
+// <copyright file="VsoPlanInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -64,7 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         /// Gets or sets the geo-location (region) that the plan resource is in.
         /// </summary>
         /// <remarks>
-        /// All environments associated with an plan must be in the same region as the plan.
+        /// All environments associated with an plan must be in the same region as per the plan.
         /// <para/>
         /// At least initially there will be a separate database per region, so all entities in
         /// the same database will have the location value. But this property can allow for
@@ -75,7 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
         public AzureLocation Location { get; set; }
 
         /// <summary>
-        /// Gets the Azure resource ID (path) of the plan, which is in the form
+        /// Gets the Azure resource ID (path) of the plan, which is in the format
         /// `/subscriptions/{Subscription}/resourceGroups/{ResourceGroup}/providers/{ProviderName}/{PlanResourceType}/{Name}`.
         /// </summary>
         [JsonIgnore]
@@ -229,7 +229,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Plans
 
         private static bool IsValidPlanName(string planName)
         {
-            // Prevent a query string (API version) from being inadvertantly concatenated an the plan name.
+            // Prevent a query string (API version) from being inadvertantly concatenated the plan name.
             return !string.IsNullOrWhiteSpace(planName) && planName.IndexOf('?') < 0;
         }
     }

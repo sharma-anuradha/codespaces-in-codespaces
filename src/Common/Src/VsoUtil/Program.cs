@@ -5,6 +5,7 @@
 using System;
 using CommandLine;
 using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil;
+using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.BillingPlans;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
 {
@@ -45,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                     typeof(GetSkuImageVersionCommand),
                     typeof(CleanResourceGroups),
                     typeof(ManagePreviewUsersCommand),
+                    typeof(ManageBillingPlansCommand),
                     typeof(DeleteEnvironmentCommand),
                     typeof(SuspendEnvironmentCommand),
                     typeof(BanSubscriptionCommand),
@@ -73,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil
                 .WithParsed<GetSkuImageVersionCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<CleanResourceGroups>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<ManagePreviewUsersCommand>(command => command.Execute(Console.Out, Console.Error))
+                .WithParsed<ManageBillingPlansCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<DeleteEnvironmentCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<SuspendEnvironmentCommand>(command => command.Execute(Console.Out, Console.Error))
                 .WithParsed<BanSubscriptionCommand>(command => command.Execute(Console.Out, Console.Error))

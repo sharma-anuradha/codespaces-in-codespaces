@@ -7,15 +7,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Identity.Client;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
 using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models.PrivatePreview;
 using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.PrivatePreview;
-using Newtonsoft.Json;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 {
@@ -23,8 +20,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
     /// Onboard / Offboard Private Preview users.
     /// </summary>
     [Verb("managepreviewusers", HelpText = "Onboard / Offboard Private Preview users..")]
-    public class ManagePreviewUsersCommand : CommandBase
+    public class ManagePreviewUsersCommand : ManageDatabaseCommandBase
     {
+        private const string DatabaseSettingsFileName = "appsettings.privatepreview.json";
+
         /// <summary>
         /// Default preview key.
         /// </summary>
@@ -64,20 +63,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         {
             try
             {
-                var settings = LoadAppSettings();
+                var aadToken = await ExecuteAuthenticationAsync(stdout, stderr);
+                var container = await GetDatabaseContainerAsync(DatabaseSettingsFileName, TargetEnvironment, aadToken, stderr);
 
-                var databaseInfo = settings.Databases.FirstOrDefault(x => x.LiveShareEnvironment == TargetEnvironment);
-
-                if (databaseInfo == default)
-                {
-                    throw new Exception($"Invalid target environment: '{TargetEnvironment}'");
-                }
-
-                var aadToken = await AquireAadTokenAsync(settings, stdout);
-                var azureClient = new AzureManagementHttpClient(aadToken);
-                var dbCredentials = await azureClient.FetchDatabaseCredentials(databaseInfo.AzureInfo);
-
-                databaseInfo.Credentials = dbCredentials;
                 OnboardInputFile = GetFullFilePath(OnboardInputFile);
                 OffboardInputFile = GetFullFilePath(OffboardInputFile);
 
@@ -88,14 +76,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 stdout.WriteLine($"Dry-run: {DryRun}");
                 stdout.WriteLine($"-----------------------------------------------");
 
-                var cosmosClient = new CosmosClient(databaseInfo.Uri, databaseInfo.Credentials.PrimaryMasterKey);
-
-                // Get the database
-                var database = cosmosClient.GetDatabase(databaseInfo.DatabaseId);
-
-                // Get the container
-                var container = database.GetContainer(databaseInfo.ContainerId);
-
                 // Process add and remove
                 await ProcessAddAsync(container, PrivatePreviewSkuKey ?? DefaultPrivatePreviewSkuKey, stdout, stderr);
                 await ProcessRemoveAsync(container, PrivatePreviewSkuKey ?? DefaultPrivatePreviewSkuKey, stdout, stderr);
@@ -103,47 +83,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             catch (Exception ex)
             {
                 stderr.WriteLine($"Failed to process private preview users.\n{ex.Message}");
-            }
-        }
-
-        private string GetFullFilePath(string file)
-        {
-            if (string.IsNullOrWhiteSpace(file) || Path.IsPathFullyQualified(file))
-            {
-                return file;
-            }
-
-            return Path.GetFullPath(file);
-        }
-
-        private ManagePrivatePreviewUsersSettings LoadAppSettings()
-        {
-            var path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "appsettings.privatepreview.json");
-            var jsonData = File.ReadAllText(path);
-            return JsonConvert.DeserializeObject<ManagePrivatePreviewUsersSettings>(jsonData);
-        }
-
-        private async Task<string> AquireAadTokenAsync(ManagePrivatePreviewUsersSettings settings, TextWriter stdout)
-        {
-            var app = PublicClientApplicationBuilder
-              .Create(settings.AzureClientId)
-              .WithAuthority(settings.AzureAuthority)
-              .WithDefaultRedirectUri()
-              .Build();
-
-            var tokenAcquisitionHelper = new PublicAppUsingDeviceCodeFlow(app);
-            var authenticationResult = await tokenAcquisitionHelper.AcquireATokenFromCacheOrDeviceCodeFlowAsync(settings.AadScopes, stdout);
-            if (authenticationResult != default)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                stdout.WriteLine($"{authenticationResult.Account.Username} successfully signed-in");
-                Console.ResetColor();
-
-                return authenticationResult.AccessToken;
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("Failed to login to Azure.");
             }
         }
 
@@ -299,13 +238,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                     }
                 }
             }
-        }
-
-        private void WriteOutPut(string message, ConsoleColor consoleColor, TextWriter stdout)
-        {
-            Console.ForegroundColor = consoleColor;
-            stdout.WriteLine(message);
-            Console.ResetColor();
         }
 
         private IEnumerable<string> GetEmailIdsFromFile(string fileName, TextWriter stdout, TextWriter stderr)

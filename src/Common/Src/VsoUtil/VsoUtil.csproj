@@ -48,6 +48,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.aad.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.codespaces.db.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="capacity.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

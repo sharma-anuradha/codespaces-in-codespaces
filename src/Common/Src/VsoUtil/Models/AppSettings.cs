@@ -1,4 +1,4 @@
-﻿// <copyright file="AppSettings.cs" company="Microsoft">
+// <copyright file="AppSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -55,7 +55,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
     }
 
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-
     public class FrontEnd
     {
         public string BackEndWebApiBaseAddress { get; set; }

@@ -1,4 +1,4 @@
-// <copyright file="ManagePrivatePreviewUsersSettings.cs" company="Microsoft">
+// <copyright file="ManageToolSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,21 +13,15 @@ using Newtonsoft.Json.Serialization;
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models.PrivatePreview
 {
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class ManagePrivatePreviewUsersSettings
+    public class ManageToolSettings
     {
         public IList<DatabaseInfo> Databases { get; set; }
-
-        public IList<string> AadScopes { get; set; }
-
-        public string AzureClientId { get; set; }
-
-        public string AzureAuthority { get; set; }
     }
 
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class DatabaseInfo
     {
-        public string LiveShareEnvironment { get; set; }
+        public string Environment { get; set; }
 
         public string Uri { get; set; }
 
@@ -59,6 +53,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models.PrivatePrev
         public string PrimaryReadonlyMasterKey { get; set; }
 
         public string SecondaryReadonlyMasterKey { get; set; }
+    }
+
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class AadAppSettings
+    {
+        public IList<string> AadScopes { get; set; }
+
+        public string AzureClientId { get; set; }
+
+        public string AzureAuthority { get; set; }
     }
 }
 #pragma warning restore SA1649 // File name should match first type name

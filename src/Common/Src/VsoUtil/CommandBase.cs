@@ -1,17 +1,20 @@
-﻿// <copyright file="CommandBase.cs" company="Microsoft">
+// <copyright file="CommandBase.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Identity.Client;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models.PrivatePreview;
+using Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.PrivatePreview;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
