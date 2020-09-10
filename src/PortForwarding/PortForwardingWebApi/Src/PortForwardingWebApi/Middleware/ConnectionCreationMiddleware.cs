@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
 using System.Text.Json;
@@ -17,6 +18,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Extensions;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Clients;
 using Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common.Models;
@@ -66,6 +68,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
             PortForwardingAppSettings appSettings)
         {
             var logger = context.GetLogger();
+
+            // We can check for the codespace state before proceeding.
+            if (context.Request.Headers.TryGetValue(PortForwardingHeaders.CodespaceState, out var stateValues) &&
+                !string.IsNullOrWhiteSpace(stateValues.ToString()) &&
+                !string.Equals(CloudEnvironmentState.Available.ToString(), stateValues.ToString(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                context.Response.Headers.TryAdd(PortForwardingHeaders.CodespaceState, stateValues);
+
+                logger.AddValue("CodespaceState", stateValues.ToString());
+                logger.LogInfo("codespace_unavailable");
+
+                await context.Response.CompleteAsync();
+
+                return;
+            }
 
             // 1. Extract connection information from the request context.
             var token = string.Empty;

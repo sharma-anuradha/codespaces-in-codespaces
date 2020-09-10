@@ -40,6 +40,52 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         }
 
         [Fact]
+        public async Task InvokeAsync_UnavailableCodespace_503()
+        {
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
+            var mappingClient = new Mock<IAgentMappingClient>();
+            var hostEnvironment = new Mock<IHostEnvironment>();
+            var context = CreateMockContext();
+
+            context.Request.Headers.Add(PortForwardingHeaders.CodespaceState, "Shutdown");
+
+            await middleware.InvokeAsync(
+                context,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
+                mappingClient.Object,
+                hostEnvironment.Object,
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
+
+            Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
+        }
+
+        [Fact]
+        public async Task InvokeAsync_AvailableCodespace_NotAuthenticated_401()
+        {
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
+            var mappingClient = new Mock<IAgentMappingClient>();
+            var hostEnvironment = new Mock<IHostEnvironment>();
+            var context = CreateMockContext(isAuthenticated: false);
+
+            context.Request.Headers.Add(PortForwardingHeaders.CodespaceState, "Available");
+
+            await middleware.InvokeAsync(
+                context,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
+                mappingClient.Object,
+                hostEnvironment.Object,
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
+
+            Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
+        }
+
+        [Fact]
         public async Task InvokeAsync_NoToken_401()
         {
             var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
@@ -295,7 +341,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             {
                 context.Request.Headers.Add(PortForwardingHeaders.Token, "super_secret_token");
             }
-
 
             return context;
         }

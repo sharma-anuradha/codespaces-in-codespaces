@@ -38,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwarding.Common
         /// Gets header name for original url header.
         /// </summary>
         public static string OriginalUrl { get => "X-Original-URL"; }
+
+        /// <summary>
+        /// Gets header name for codespace state.
+        /// </summary>
+        public static string CodespaceState { get => "X-Codespaces-State"; }
     }
 }

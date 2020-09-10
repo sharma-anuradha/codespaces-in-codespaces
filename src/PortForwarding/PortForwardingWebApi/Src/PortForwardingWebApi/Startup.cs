@@ -13,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using Microsoft.VsSaaS.AspNetCore.Diagnostics;
 using Microsoft.VsSaaS.AspNetCore.Hosting;
 using Microsoft.VsSaaS.AspNetCore.Http;
 using Microsoft.VsSaaS.Caching;
@@ -262,7 +261,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi
 
             app.Use(async (httpContext, next) =>
             {
-                if (!httpContext.Request.Cookies.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
+                if (!httpContext.Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
                     string.IsNullOrEmpty(correlationIdHeader))
                 {
                     if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&

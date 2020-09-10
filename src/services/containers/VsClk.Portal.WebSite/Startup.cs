@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -163,25 +164,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                 await next();
             });
 
+            // First we try to get correlation id from query string param cid.
+            // We don't override existing correlation id headers though. That would be bad.
             app.Use(async (httpContext, next) =>
             {
-                if (!httpContext.Request.Cookies.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
-                    string.IsNullOrEmpty(correlationIdHeader))
-                {
-                    if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&
-                        !string.IsNullOrWhiteSpace(cookieCorrelationId))
-                    {
-                        // VsSaaS SDK middleware overrides correlation id by this header or request id.
-                        httpContext.Request.Headers.Add(HttpConstants.CorrelationIdHeader, cookieCorrelationId);
-                    }
-                }
-
-                await next();
-            });
-
-            app.Use(async (httpContext, next) =>
-            {
-                if (!httpContext.Request.Cookies.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
+                if (!httpContext.Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
                     string.IsNullOrEmpty(correlationIdHeader))
                 {
                     if (httpContext.Request.Query.TryGetValue("cid", out var requestCorrelationId))
@@ -190,8 +177,26 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite
                         if (!string.IsNullOrWhiteSpace(correlationId))
                         {
                             // VsSaaS SDK middleware overrides correlation id by this header or request id.
-                            httpContext.Request.Headers.Add(HttpConstants.CorrelationIdHeader, correlationId);
+                            httpContext.Request.Headers.TryAdd(HttpConstants.CorrelationIdHeader, correlationId);
                         }
+                    }
+                }
+
+                await next();
+            });
+
+            // Then we try to get correlation id from a cookie.
+            // We don't override existing correlation id headers though. Still bad.
+            app.Use(async (httpContext, next) =>
+            {
+                if (!httpContext.Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationIdHeader) ||
+                    string.IsNullOrEmpty(correlationIdHeader))
+                {
+                    if (httpContext.Request.Cookies.TryGetValue("codespaces_correlation_id", out var cookieCorrelationId) &&
+                        !string.IsNullOrWhiteSpace(cookieCorrelationId))
+                    {
+                        // VsSaaS SDK middleware overrides correlation id by this header or request id.
+                        httpContext.Request.Headers.TryAdd(HttpConstants.CorrelationIdHeader, cookieCorrelationId);
                     }
                 }
 

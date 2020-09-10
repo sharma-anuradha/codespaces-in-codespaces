@@ -436,6 +436,9 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
 
                             throw new InvalidOperationException("Couldn't verify connection session id.");
                         }
+
+                        Response.Headers.Add(PortForwardingHeaders.CodespaceState, codespace.State);
+                        logger.AddBaseValue("CodespaceState", codespace.State);
                     }
 
                     // Since we don't get the WorkspaceId from the host, we'll take it from the cookie.

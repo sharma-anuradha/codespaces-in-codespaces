@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Codespaces\CodespacesApiClient\CodespacesApiClient.csproj" />
+    <ProjectReference Include="..\..\..\..\Codespaces\EnvironmentManager\Src\EnvironmentManager.Contracts\EnvironmentManager.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\Codespaces\UserProfile\Src\UserProfile\UserProfile.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Auth\Auth.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.AspNetCore\Common.AspNetCore.csproj" />
