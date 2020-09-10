@@ -317,14 +317,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Guid storageResourceId,
             Guid? archiveStorageResourceId,
             string exportedEnvironmentUrl,
+            string exportedBranch,
             IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotEmpty(storageResourceId, nameof(storageResourceId));
             Requires.NotNull(logger, nameof(logger));
-            Requires.NotNull(exportedEnvironmentUrl, nameof(exportedEnvironmentUrl));
 
-            return EnvironmentFinalizeExportAction.RunAsync(environmentId, storageResourceId, archiveStorageResourceId, exportedEnvironmentUrl, logger);
+            return EnvironmentFinalizeExportAction.RunAsync(environmentId, storageResourceId, archiveStorageResourceId, exportedEnvironmentUrl, exportedBranch, logger);
         }
 
         /// <inheritdoc/>

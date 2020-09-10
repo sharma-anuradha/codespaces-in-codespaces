@@ -87,12 +87,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
         /// <inheritdoc/>
         protected override VirtualMachineProviderStartComputeInput CreateStartComputeInput(StartExportContinuationInput input, ResourceRecordRef compute, ShareConnectionInfo shareConnectionInfo, ComputeOS computeOs, AzureLocation azureLocation)
         {
-            // Do not pass in user secrets since user is exporting.
             return new VirtualMachineProviderStartComputeInput(
                    compute.Value.AzureResourceInfo,
                    shareConnectionInfo,
                    input.EnvironmentVariables,
-                   null,
+                   input.UserSecrets,
                    computeOs,
                    azureLocation,
                    compute.Value.SkuName,

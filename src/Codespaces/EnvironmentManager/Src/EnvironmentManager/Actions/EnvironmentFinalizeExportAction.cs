@@ -54,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             Guid storageResourceId,
             Guid? archiveStorageResourceId,
             string environmentExportBlobUrl,
+            string exportedBranch,
             IDiagnosticsLogger logger)
         {
             var input = new EnvironmentFinalizeExportActionInput(environmentId)
@@ -61,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 StorageResourceId = storageResourceId,
                 ArchiveStorageResourceId = archiveStorageResourceId,
                 EnvironmentExportBlobUrl = environmentExportBlobUrl,
+                ExportedBranch = exportedBranch,
             };
 
             return RunAsync(input, logger);
@@ -78,6 +80,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             // Update export blob url and last state updated for exporting action.
             env.ExportedBlobUrl = input.EnvironmentExportBlobUrl;
+            env.ExportedBranch = input.ExportedBranch;
             env.LastStateUpdateReason = "Done exporting";
             var updatedEnvironment = await Repository.UpdateAsync(env, logger.NewChildLogger());
 
@@ -88,7 +91,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             ValidationUtil.IsTrue(input.Id != default, "Environment Id is required");
             ValidationUtil.IsTrue(input.StorageResourceId != default, "StorageResourceId is required");
-            ValidationUtil.IsTrue(input.EnvironmentExportBlobUrl != default, "ExportedBlobUrl is required");
         }
     }
 }

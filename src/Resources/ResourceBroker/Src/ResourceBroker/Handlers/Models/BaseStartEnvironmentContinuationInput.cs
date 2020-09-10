@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Models
 {
@@ -36,5 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
         /// Gets or sets the os disk source id.
         /// </summary>
         public Guid? OSDiskResourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user secrets.
+        /// </summary>
+        public IEnumerable<UserSecretData> UserSecrets { get; set; }
     }
 }

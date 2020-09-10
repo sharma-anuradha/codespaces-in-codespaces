@@ -173,6 +173,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid? storageResourceId,
             Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
+            IEnumerable<UserSecretData> userSecrets,
             string reason,
             IDiagnosticsLogger logger,
             IDictionary<string, string> loggingProperties)
@@ -191,6 +192,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 StorageResourceId = storageResourceId,
                 ArchiveStorageResourceId = archiveStorageResourceId,
                 EnvironmentVariables = environmentVariables,
+                UserSecrets = userSecrets,
                 Reason = reason,
             };
             var target = ExportEnvironmentContinuationHandler.DefaultQueueTarget;

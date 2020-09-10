@@ -20,6 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// <param name="storageResourceId">Target new storage that should be swapped in.</param>
         /// <param name="archiveStorageResourceId">Target archive storage resource id if waking from archive.</param>
         /// <param name="exportedEnvironmentUrl">Exported environment url.</param>
+        /// <param name="exportedBranch">The exported branch name.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>The resumed environment.</returns>
         Task<CloudEnvironment> RunAsync(
@@ -27,6 +28,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
             Guid storageResourceId,
             Guid? archiveStorageResourceId,
             string exportedEnvironmentUrl,
+            string exportedBranch,
             IDiagnosticsLogger logger);
     }
 }

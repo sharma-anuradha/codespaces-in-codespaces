@@ -87,7 +87,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             var computeResourceId = payloadStageResult.Data.GetValueOrDefault("ComputeResourceId");
                             var storageResourceId = payloadStageResult.Data.GetValueOrDefault("StorageResourceId");
                             var archiveStorageResourceId = payloadStageResult.Data.GetValueOrDefault("StorageArchiveResourceId");
+
                             var exportSasToken = payloadStageResult.Data.GetValueOrDefault("storageExportReadAccountSasToken");
+                            var branchName = payloadStageResult.Data.GetValueOrDefault("BRANCH_NAME");
 
                             logger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
                                 .FluentAddBaseValue("StorageResourceId", storageResourceId)
@@ -101,6 +103,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                                     storageResourceIdGuid,
                                     string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
                                     exportSasToken,
+                                    branchName,
                                     childLogger.NewChildLogger());
 
                                 // Call suspend async to shut down environment after exporting is done.
@@ -118,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                         if (cloudEnvironment.State == CloudEnvironmentState.Exporting)
                         {
                             // Shutdown the environment if the environment has failed to start.
-                            handlerContext.CloudEnvironment = await environmentManager.ForceSuspendAsync(Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
+                            handlerContext.CloudEnvironment = await environmentManager.SuspendAsync(Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
 
                             // Track failure
                             var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.ExportEnvironmentGenericError.ToString();

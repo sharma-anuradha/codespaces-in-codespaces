@@ -173,9 +173,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="storageResourceId">Target new storage that should be swapped in.</param>
         /// <param name="archiveStorageResourceId">Target archive storage resource id if waking from archive.</param>
         /// <param name="exportedEnvironmentUrl">Exported environment url.</param>
+        /// <param name="exportedBranch">The exported git branch.</param>
         /// <param name="logger">The diagnostics logger.</param>
         /// <returns>Cloud environment service result.</returns>
-        Task<CloudEnvironment> ExportCallbackAsync(Guid cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, string exportedEnvironmentUrl, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> ExportCallbackAsync(Guid cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, string exportedEnvironmentUrl, string exportedBranch, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Shuts down an environment.

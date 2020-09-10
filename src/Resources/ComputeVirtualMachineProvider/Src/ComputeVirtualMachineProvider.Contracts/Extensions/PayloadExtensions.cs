@@ -127,6 +127,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             {
                 Command = ExportEnvironmentCommand,
                 Parameters = jobParameters,
+                UserSecrets = startComputeInput.UserSecrets,
             };
 
             return queueMessage;

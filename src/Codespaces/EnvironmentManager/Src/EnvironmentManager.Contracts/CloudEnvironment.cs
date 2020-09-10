@@ -281,6 +281,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public string ExportedBlobUrl { get; set; }
 
         /// <summary>
+        /// The branch where changes were exported.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "exportedBranch")]
+        public string ExportedBranch { get; set; }
+
+        /// <summary>
         /// Gets or sets the last time the record is updated based on heartbeat.
         /// </summary>
         [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]

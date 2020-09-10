@@ -35,7 +35,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Constants;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Environments;
-using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
@@ -305,10 +304,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             [FromServices] IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
-
             if (FrontEndAppSettings.EnableExporting)
             {
-                ExportCloudEnvironmentParameters exportEnvParams = await GetExportCloudEnvironmentParametersAsync();
+                // Manually read the request body
+                ExportCloudEnvironmentBody requestBody;
+                try
+                {
+                    StreamReader bodyReader = new StreamReader(Request.Body);
+                    requestBody = JsonConvert.DeserializeObject<ExportCloudEnvironmentBody>(await bodyReader.ReadToEndAsync());
+                }
+                catch
+                {
+                    logger.AddReason($"{HttpStatusCode.BadRequest}: The request body was not able to be parsed.");
+                    return BadRequest();
+                }
+
+                var environment = await GetEnvironmentAsync(
+                    environmentId.ToString(),
+                    validateSoftDeletedEnvironment: true,
+                    normalizeEnvironmentState: false,
+                    logger);
+
+                ExportCloudEnvironmentParameters exportEnvParams = await GetExportCloudEnvironmentParametersAsync(requestBody, environment, logger);
+
                 var result = await EnvironmentManager.ExportAsync(
                     environmentId,
                     exportEnvParams,
@@ -868,7 +886,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             };
         }
 
-        private async Task<ExportCloudEnvironmentParameters> GetExportCloudEnvironmentParametersAsync()
+        private async Task<ExportCloudEnvironmentParameters> GetExportCloudEnvironmentParametersAsync(ExportCloudEnvironmentBody requestBody, CloudEnvironment environment, IDiagnosticsLogger logger)
         {
             var currentStamp = ControlPlaneInfo.GetOwningControlPlaneStamp(CurrentLocationProvider.CurrentLocation);
 
@@ -886,6 +904,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var currentUserProfile = await CurrentUserProvider?.GetProfileAsync();
 
+            var secretValues = new List<SecretDataBody>();
+
+            var exportType = requestBody?.Type ?? ExportType.Workspace;
+
+            logger.AddBaseValue("EXPORT_TYPE", exportType.ToString());
+
+            secretValues.Add(new SecretDataBody()
+            {
+                Type = SecretType.EnvironmentVariable,
+                Name = "EXPORT_TYPE",
+                Value = exportType.ToString(),
+            });
+
+            if (exportType == ExportType.GitPush)
+            {
+                secretValues.Add(new SecretDataBody()
+                {
+                    Type = SecretType.EnvironmentVariable,
+                    Name = "BRANCH_NAME",
+                    Value = requestBody.BranchName,
+                });
+
+                secretValues.Add(new SecretDataBody()
+                {
+                    Type = SecretType.EnvironmentVariable,
+                    Name = "REPOSITORY_NAME",
+                    Value = environment.Connection.ConnectionSessionPath.Trim().Split('/').Last(),
+                });
+
+                secretValues.AddRange(requestBody.Secrets);
+            }
+
             return new ExportCloudEnvironmentParameters
             {
                 UserProfile = currentUserProfile,
@@ -893,6 +943,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 CallbackUriFormat = callbackUriFormat,
                 UserAuthToken = CurrentUserProvider.BearerToken,
                 CurrentUserIdSet = CurrentUserProvider.CurrentUserIdSet,
+                Secrets = secretValues,
             };
         }
 

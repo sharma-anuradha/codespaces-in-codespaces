@@ -120,7 +120,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             ResourceId = computeResourceId,
                             Variables = environmentVariables,
                             FilterSecrets = filterSecrets,
-                            Secrets = (startAction == StartEnvironmentAction.StartCompute) ? ((StartCloudEnvironmentParameters)startCloudEnvironmentParameters).Secrets : null,
+                            Secrets = startCloudEnvironmentParameters.Secrets,
                         },
                     };
 

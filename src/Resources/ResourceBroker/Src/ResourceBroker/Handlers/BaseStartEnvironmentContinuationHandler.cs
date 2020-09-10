@@ -134,7 +134,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                     storageResult.StorageFileServiceHost);
             }
 
-            // Pass user secrets to VirtualMachineProviderStartComputeInput only if environment is starting.
             return CreateStartComputeInput(input, compute, shareConnectionInfo, computeOs, azureLocation);
         }
 

@@ -25,5 +25,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets exported environment blob url.
         /// </summary>
         public string EnvironmentExportBlobUrl { get; set; }
+
+        /// <summary>
+        /// The resulting branch where the changes were pushed
+        /// </summary>
+        public string ExportedBranch { get; set; }
     }
 }

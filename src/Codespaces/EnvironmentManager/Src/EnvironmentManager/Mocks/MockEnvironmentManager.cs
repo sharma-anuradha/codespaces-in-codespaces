@@ -163,7 +163,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
-        public Task<CloudEnvironment> ExportCallbackAsync(Guid cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, string exportedEnvironmentUrl, IDiagnosticsLogger logger)
+        public Task<CloudEnvironment> ExportCallbackAsync(Guid cloudEnvironment, Guid storageResourceId, Guid? archiveStorageResourceId, string exportedEnvironmentUrl, string exportedBranch, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

@@ -3,7 +3,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.SecretManager;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
@@ -36,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets the user id set.
         /// </summary>
         public UserIdSet CurrentUserIdSet { get; set; }
+
+        /// <summary>
+        /// Gets or sets the secrets sent from Create/Resume request.
+        /// </summary>
+        public IEnumerable<SecretDataBody> Secrets { get; set; }
     }
 }

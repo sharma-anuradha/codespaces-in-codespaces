@@ -135,6 +135,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     .FluentAddBaseValue("OSDiskResourceId", osDiskResource.Resource?.ResourceId)
                                     .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResource.Resource?.ResourceId);
 
+                                var userSecrets = default(IEnumerable<UserSecretData>);
+
+                                // If secrets are sent from Create/Resume request payload
+                                if (computeResource.Resource.Secrets?.Any() == true)
+                                {
+                                    userSecrets = computeResource.Resource.Secrets;
+                                }
+
                                 // Trigger environment export
                                 await ResourceContinuationOperations.StartExportAsync(
                                     environmentId,
@@ -143,6 +151,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     storageResource.Resource?.ResourceId,
                                     archiveStorageResource.Resource?.ResourceId,
                                     computeResource.Resource.Variables,
+                                    userSecrets,
                                     trigger,
                                     childLogger.NewChildLogger(),
                                     loggingProperties);

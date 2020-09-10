@@ -15,11 +15,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
     public class StartCloudEnvironmentParameters : CloudEnvironmentParameters
     {
         /// <summary>
-        /// Gets or sets the secrets sent from Create/Resume request.
-        /// </summary>
-        public IEnumerable<SecretDataBody> Secrets { get; set; }
-
-        /// <summary>
         /// Gets or sets the connection service (Live Share) uri.
         /// </summary>
         public Uri ConnectionServiceUri { get; set; }
