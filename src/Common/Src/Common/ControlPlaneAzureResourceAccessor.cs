@@ -10,7 +10,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Azure.Management.Batch.Fluent;
+using Microsoft.Azure.Management.Batch;
 using Microsoft.Azure.Management.CosmosDB.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -502,7 +502,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 
             var subscriptionId = await GetCurrentSubscriptionIdAsync();
             var azureCredentials = await GetAzureCredentialsAsync();
-            BatchManagementClient = new BatchManagementClient(ConfigureRestClient(azureCredentials))
+            BatchManagementClient = new BatchManagementClient(azureCredentials)
             {
                 SubscriptionId = subscriptionId,
             };

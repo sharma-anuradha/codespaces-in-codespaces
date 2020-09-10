@@ -8,7 +8,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Azure.Management.Batch;
 using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Blob;
@@ -125,16 +128,42 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             return catalogMoq;
         }
 
-        private static Mock<IControlPlaneAzureResourceAccessor> GetMockControlPlaneAzureResourceAccessor(IAzure azure)
+        private static Mock<IControlPlaneAzureResourceAccessor> GetMockControlPlaneAzureResourceAccessor()
         {
             var resourceAccessor = new Mock<IControlPlaneAzureResourceAccessor>();
             resourceAccessor.Setup(x => x.GetStampBatchAccountAsync(It.IsAny<AzureLocation>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(async () =>
                 {
-                    var batch = await azure.BatchAccounts.GetByResourceGroupAsync(batchAccountResourceGroup, batchAccountName);
-                    var batchKey = batch.GetKeys().Primary;
-                    return (batch.Name, batchKey, $"https://{batch.AccountEndpoint}");
+                    // Get Credentials 
+                    var config = InitConfiguration();
+                    var clientId = config["CLIENT_ID"];
+                    var tenantId = config["TENANT_ID"];
+                    var clientSecret = config["CLIENT_SECRET"];
+
+                    // Create client to access batch
+                    var creds = new AzureCredentialsFactory()
+                    .FromServicePrincipal(
+                        clientId,
+                        clientSecret,
+                        tenantId,
+                        AzureEnvironment.AzureGlobalCloud);
+                    var batchManagementClient = new BatchManagementClient(creds)
+                    {
+                        SubscriptionId = srcAzureSubscriptionId,
+                    };
+
+                    // Get return values from batch client
+                    var batchAccount = await batchManagementClient.BatchAccount.GetAsync(
+                        batchAccountResourceGroup,
+                        batchAccountName);
+                    var accountKeys = await batchManagementClient.BatchAccount.GetKeysAsync(
+                        batchAccountResourceGroup,
+                        batchAccountName);
+                    var batchKey = accountKeys.Primary;
+
+                    return (batchAccount.Name, batchKey, $"https://{batchAccount.AccountEndpoint}");
                 });
+            
             return resourceAccessor;
         }
 
@@ -181,7 +210,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
             var azureClientFactory = new AzureClientFactory(catalogMoq.Object.AzureSubscriptionCatalog);
             var storageProviderSettings = new StorageProviderSettings() { WorkerBatchPoolId = batchPoolId };
             var srcAzureClient = await GetAzureClient(azureClientFactory, srcAzureSubscriptionId);
-            var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor(srcAzureClient);
+            var resourceAccessorMoq = GetMockControlPlaneAzureResourceAccessor();
             var batchClientFactory = new BatchClientFactory(resourceAccessorMoq.Object);
 
             // construct the real StorageFileShareProviderHelper
