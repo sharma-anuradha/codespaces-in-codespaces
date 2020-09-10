@@ -277,7 +277,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
                 loggingName,
                 async (childLogger) =>
                 {
-                    childLogger.FluentAddValue("SubscriptionId", subscription.SubscriptionId);
+                    childLogger.FluentAddValue("SubscriptionId", subscription.SubscriptionId)
+                        .FluentAddValue("SubscriptionName", subscription.DisplayName);
 
                     var settingName = $"subscription-enabled-{subscription.SubscriptionId}";
                     var subscriptionIsEnabled = await ConfigurationReader.ReadSettingAsync(ConfigSettingComponentName, settingName, logger, subscription.Enabled);
@@ -322,8 +323,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Capacity
 
                     var disabledSubscriptions = subscriptions.Except(enabledSubscriptions);
 
-                    childLogger.FluentAddValue("EnabledSubscriptions", string.Join(", ", enabledSubscriptions.Select(s => s.SubscriptionId)))
-                        .FluentAddValue("DisabledSubscriptions", string.Join(", ", disabledSubscriptions.Select(s => s.SubscriptionId)));
+                    childLogger.FluentAddValue("EnabledSubscriptions", string.Join(",", enabledSubscriptions.Select(s => s.SubscriptionId)))
+                        .FluentAddValue("DisabledSubscriptions", string.Join(",", disabledSubscriptions.Select(s => s.SubscriptionId)));
 
                     return enabledSubscriptions;
                 },
