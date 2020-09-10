@@ -11,6 +11,7 @@ import { removeDefaultSplashScreen } from './utils/removeDefaultSplashScreen';
 import { credentialsProvider } from '../../../vscode/providers/credentialsProvider/credentialsProvider';
 import { ServerlessSplashscreen } from '../ServerlessSplashscreen/ServerlessSplashscreen';
 import { featureFlags, FeatureFlags } from 'vso-workbench/src/config/featureFlags';
+import { authService } from 'vso-workbench/src/auth/authService';
 
 export interface IWorkbenchPageRenderProps {
     className?: string;
@@ -74,7 +75,7 @@ export class WorkbenchPageRender extends React.Component<
 
         if (
             !this.state.isServerlessSplashScreenShown &&
-            await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) &&
+            (await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled)) &&
             this.props.environmentInfo?.state === EnvironmentStateInfo.Provisioning
         ) {
             this.setState({ isServerlessSplashScreenShown: true });
@@ -116,6 +117,7 @@ export class WorkbenchPageRender extends React.Component<
                 <ServerlessSplashscreen
                     environment={this.props.environmentInfo}
                     credentialsProvider={credentialsProvider}
+                    getGithubToken={authService.getCachedGithubToken}
                 />
             );
         }

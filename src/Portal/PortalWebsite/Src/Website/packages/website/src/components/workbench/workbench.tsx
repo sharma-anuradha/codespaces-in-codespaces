@@ -98,7 +98,7 @@ export interface WorkbenchProps extends WithTranslation {
     workbenchFavicon: string;
     autoStart: boolean;
     SplashScreenComponent: React.JSXElementConstructor<IWorkbenchSplashScreenProps>;
-    ServerlessSplashscreenComponent: React.JSXElementConstructor<IServerlessSplashscreenProps>;
+    ServerlessSplashscreenComponent: React.ComponentType<IServerlessSplashscreenProps>;
     PageNotFoundComponent: React.JSXElementConstructor<{}>;
     liveShareEndpoint: string;
     apiEndpoint: string;
