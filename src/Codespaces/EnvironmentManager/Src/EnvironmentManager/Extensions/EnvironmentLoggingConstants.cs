@@ -50,6 +50,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensi
         public const string WatchDeletedPlanSecretStoresTask = "watch_deleted_plan_secret_stores_task";
 
         /// <summary>
+        /// Watch export blobs Task.
+        /// </summary>
+        public const string WatchExportBlobsTask = "watch_export_blobs_task";
+
+        /// <summary>
         /// Continuation Task Message Handler Archive.
         /// </summary>
         public const string ContinuationTaskMessageHandlerArchive = "continuation_task_message_handler_archive";

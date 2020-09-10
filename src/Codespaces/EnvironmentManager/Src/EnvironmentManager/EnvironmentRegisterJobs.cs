@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="cloudEnvironmentRegionalMigrationTask">Env regional migration task.</param>
         /// <param name="syncRegionalEnvironmentsToGlobalTask">Sync task for cloud environments.</param>
         /// <param name="jobQueueConsumerFactory">Target Job Queue Consumer Factory.</param>
+        /// <param name="watchExportBlobsTask">Target watch export blobs task.</param>
         /// <param name="jobHandlerTargets">All the job handlers.</param>
         /// <param name="taskHelper">The task helper that runs the scheduled jobs.</param>
         public EnvironmentRegisterJobs(
@@ -53,6 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ISyncRegionalEnvironmentsToGlobalTask syncRegionalEnvironmentsToGlobalTask,
             IJobQueueConsumerFactory jobQueueConsumerFactory,
+            IWatchExportBlobsTask watchExportBlobsTask,
             IEnumerable<IJobHandlerTarget> jobHandlerTargets,
             ITaskHelper taskHelper)
         {
@@ -71,6 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             SyncRegionalEnvironmentsToGlobalTask = syncRegionalEnvironmentsToGlobalTask;
             JobHandlerTargets = jobHandlerTargets;
             JobQueueConsumerFactory = jobQueueConsumerFactory;
+            WatchExportBlobsTask = watchExportBlobsTask;
             TaskHelper = taskHelper;
             Random = new Random();
         }
@@ -104,6 +107,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IJobQueueConsumerFactory JobQueueConsumerFactory { get; }
 
         private IEnumerable<IJobHandlerTarget> JobHandlerTargets { get; }
+
+        private IWatchExportBlobsTask WatchExportBlobsTask { get; }
 
         private ITaskHelper TaskHelper { get; }
 
@@ -217,6 +222,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // new job continuation handlers
             JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);
             JobQueueConsumerFactory.Start(JobHandlerTargets);
+
+            // Job: Watch Export Blobs to be deleted from export storage account and wipe out export blob url from DB
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.WatchExportBlobsTask}_run",
+                (childLogger) => WatchExportBlobsTask.RunTaskAsync(TimeSpan.FromDays(1), childLogger),
+                TimeSpan.FromDays(1));
         }
     }
 }

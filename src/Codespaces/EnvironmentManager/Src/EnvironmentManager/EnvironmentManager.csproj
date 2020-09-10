@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VsSaaS.Azure.Storage.DocumentDB" Version="$(VsSaaSPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="$(AzureStoragePackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>
