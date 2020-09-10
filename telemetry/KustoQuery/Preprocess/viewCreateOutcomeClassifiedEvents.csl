@@ -4,8 +4,6 @@ viewCreateOutcomeClassifiedEvents
 ()
 {
     // This is used for preprocessing DefaultEvents table into CreateOutcomeClassifiedEvents.
-    // Note: When copying this query into the Lens Orchestrator for preprocessing, remove the scopes,
-    // so that the data is preprocessed for the entire duration and for all the rings.
     let allEvents = DefaultEvent;
     getCreateOutcomeClassifiedEvents(allEvents)
 }

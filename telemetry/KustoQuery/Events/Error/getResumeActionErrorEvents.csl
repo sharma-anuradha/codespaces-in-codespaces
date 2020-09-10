@@ -5,7 +5,6 @@ getResumeActionErrorEvents
 {
     T
         | where level == "error"
-        | where msg == "environment_resume_action_error" 
         | where CorrelationId != ""
         | extend EventAtResumeActionError = 1
         | extend EventAtResumeActionError_Time = ["time"]

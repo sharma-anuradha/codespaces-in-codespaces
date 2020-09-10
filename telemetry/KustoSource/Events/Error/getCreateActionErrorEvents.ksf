@@ -3,7 +3,6 @@
 {
     T
         | where level == "error"
-        | where msg == "environment_create_action_error" 
         | where CorrelationId != ""
         | extend EventAtCreateActionError = 1
         | extend EventAtCreateActionError_Time = ["time"]
