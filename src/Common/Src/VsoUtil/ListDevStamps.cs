@@ -1,4 +1,4 @@
-﻿// <copyright file="ListDevStamps.cs" company="Microsoft">
+// <copyright file="ListDevStamps.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -79,18 +79,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             {
                 var subscriptionId = catalog.SubscriptionId;
 
-                var azure = await azureClientFactory.GetAzureClientAsync(Guid.Parse(subscriptionId));
-                foreach (var resourceGroup in await azure.ResourceGroups.ListAsync())
+                try
                 {
-                    if (resourceGroup.Name.EndsWith($"-{ResourceNameBuilder.ResourceGroupPostFix}"))
+                    var azure = await azureClientFactory.GetAzureClientAsync(Guid.Parse(subscriptionId));
+                    foreach (var resourceGroup in await azure.ResourceGroups.ListAsync())
                     {
-                        var alias = resourceGroup.Name.Replace($"-{ResourceNameBuilder.ResourceGroupPostFix}", string.Empty);
-                        aliasStamps.Add(alias);
-
-                        if (!this.BareOutput)
+                        if (resourceGroup.Name.EndsWith($"-{ResourceNameBuilder.ResourceGroupPostFix}"))
                         {
-                            await stdout.WriteLineAsync($"Found dev stamp resource group {resourceGroup.Name} in subscription {subscriptionId}");
+                            var alias = resourceGroup.Name.Replace($"-{ResourceNameBuilder.ResourceGroupPostFix}", string.Empty);
+                            aliasStamps.Add(alias);
+
+                            if (!this.BareOutput)
+                            {
+                                await stdout.WriteLineAsync($"Found dev stamp resource group {resourceGroup.Name} in subscription {subscriptionId}");
+                            }
                         }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!this.BareOutput)
+                    {
+                        await stdout.WriteLineAsync($"Error enumerating stamps in subscription {subscriptionId} - Exception: {ex}");
                     }
                 }
             }
