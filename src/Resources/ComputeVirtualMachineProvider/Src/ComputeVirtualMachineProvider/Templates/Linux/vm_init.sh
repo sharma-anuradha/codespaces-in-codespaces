@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# External dependecies are pre-baked to the custom VM image by .pipelines/vm_setuo.sh
+# External dependecies are pre-baked to the custom VM image by .pipelines/vm_setup.sh
 
 echo "Set script to fail if command in script returns non zero return code"
 set -exu pipefall
@@ -31,42 +31,58 @@ mkdir -p $containerTmp
 chmod o+rwt $containerTmp
 setfacl -dR -m o::rw $containerTmp
 
-echo "Download vso agent ..."
-mkdir -p /.vsonline/vsoagent/bin
-cd /.vsonline/vsoagent/bin
+echo "Download codespaces agent ..."
+mkdir -p /.codespaces/agent/bin
+cd /.codespaces/agent/bin
 wget -qO- -O tmp.zip $SCRIPT_PARAM_VMAGENT_BLOB_URL && unzip tmp.zip && rm tmp.zip
 
+echo "Create codespaces shared folder with appropriate permissions"
+codespacesSharedFolder=~/.codespaces/shared
+mkdir -p $codespacesSharedFolder
+chmod o+rw $codespacesSharedFolder
+setfacl -dR -m o::rw $codespacesSharedFolder
+
+# BACKWARDS COMPATIBILITY
+# Needed for old containers that reference the old folder.
 echo "Create vso shared folder with appropriate permissions"
 vsoSharedFolder=~/.vsonline/.vsoshared
 mkdir -p $vsoSharedFolder
 chmod o+rw $vsoSharedFolder
 setfacl -dR -m o::rw $vsoSharedFolder
 
-echo "Install vso agent ..."
+echo "Install codespaces agent ..."
 chmod +x install_codespaces_agent.sh uninstall_codespaces_agent.sh
 ./install_codespaces_agent.sh
 
+echo "Make copy of codespaces agent..."
+mkdir -p /.codespaces/agent/mount
+cp -a /.codespaces/agent/bin/. /.codespaces/agent/mount
+
+# BACKWARDS COMPATIBILITY
+# Needed for old containers that reference the old folder.
 echo "Make copy of vso agent..."
 mkdir -p /.vsonline/vsoagent/mount
-cp -a /.vsonline/vsoagent/bin/. /.vsonline/vsoagent/mount
+cp -a /.codespaces/agent/bin/. /.vsonline/vsoagent/mount
+
+codespacesAgentIni=/.codespaces/agent/bin/config.ini
 
 echo "Create configuration file ..."
-echo "[ENVAGENTSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
-echo "INPUTQUEUENAME=$SCRIPT_PARAM_VM_QUEUE_NAME" >> /.vsonline/vsoagent/bin/config.ini
-echo "INPUTQUEUEURL=$SCRIPT_PARAM_VM_QUEUE_URL" >> /.vsonline/vsoagent/bin/config.ini
-echo "INPUTQUEUESASTOKEN=$SCRIPT_PARAM_VM_QUEUE_SASTOKEN" >> /.vsonline/vsoagent/bin/config.ini
+echo "[ENVAGENTSETTINGS]">> $codespacesAgentIni
+echo "INPUTQUEUENAME=$SCRIPT_PARAM_VM_QUEUE_NAME" >> $codespacesAgentIni
+echo "INPUTQUEUEURL=$SCRIPT_PARAM_VM_QUEUE_URL" >> $codespacesAgentIni
+echo "INPUTQUEUESASTOKEN=$SCRIPT_PARAM_VM_QUEUE_SASTOKEN" >> $codespacesAgentIni
 if [ $SCRIPT_PARAM_VM_USE_OUTPUT_QUEUE -eq 1 ]
  then
-      echo "OUTPUTQUEUENAME=$SCRIPT_PARAM_VM_OUTPUT_QUEUE_NAME" >> /.vsonline/vsoagent/bin/config.ini
-      echo "OUTPUTQUEUEURL=$SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL" >> /.vsonline/vsoagent/bin/config.ini
-      echo "OUTPUTQUEUESASTOKEN=$SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN" >> /.vsonline/vsoagent/bin/config.ini
+      echo "OUTPUTQUEUENAME=$SCRIPT_PARAM_VM_OUTPUT_QUEUE_NAME" >> $codespacesAgentIni
+      echo "OUTPUTQUEUEURL=$SCRIPT_PARAM_VM_OUTPUT_QUEUE_URL" >> $codespacesAgentIni
+      echo "OUTPUTQUEUESASTOKEN=$SCRIPT_PARAM_VM_OUTPUT_QUEUE_SASTOKEN" >> $codespacesAgentIni
 fi
-echo "[HEARTBEATSETTINGS]">> /.vsonline/vsoagent/bin/config.ini
-echo "VMTOKEN=$SCRIPT_PARAM_VMTOKEN" >> /.vsonline/vsoagent/bin/config.ini
-echo "RESOURCEID=$SCRIPT_PARAM_RESOURCEID" >> /.vsonline/vsoagent/bin/config.ini
-echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> /.vsonline/vsoagent/bin/config.ini
+echo "[HEARTBEATSETTINGS]">> $codespacesAgentIni
+echo "VMTOKEN=$SCRIPT_PARAM_VMTOKEN" >> $codespacesAgentIni
+echo "RESOURCEID=$SCRIPT_PARAM_RESOURCEID" >> $codespacesAgentIni
+echo "SERVICEHOSTNAME=$SCRIPT_PARAM_FRONTEND_DNSHOSTNAME" >> $codespacesAgentIni
 
-echo "Start vso agent"
+echo "Start codespaces agent"
 # Switch to daemon process until service permission issue is fixed.
 bash -c 'nohup ./codespaces vmagent &>/dev/null & jobs -p %1'
 

@@ -185,7 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
                 var dockerCopyCommandLine = new StringBuilder();
                 dockerCopyCommandLine.Append("cp ");
                 dockerCopyCommandLine.Append($"{cliPublishedpath}/. "); // Added /. to copy the contents of the directory
-                dockerCopyCommandLine.Append($"{containerName}:/.vsonline/bin ");
+                dockerCopyCommandLine.Append($"{containerName}:/.codespaces/bin ");
                 var dockerCopyProcess = Process.Start(DockerCLI, dockerCopyCommandLine.ToString());
                 dockerCopyProcess.WaitForExit();
                 if (dockerCopyProcess.ExitCode != 0)
@@ -233,7 +233,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
             }
 
             createCommandLine.Append($"--name {containerName} ");
-            createCommandLine.Append($"{image} /.vsonline/bin/vso bootstrap");
+            createCommandLine.Append($"{image} /.codespaces/bin/vso bootstrap");
             return createCommandLine.ToString();
         }
     }
