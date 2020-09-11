@@ -1,6 +1,12 @@
 # Subscription-Tracker.ps1
 # Tracks subscriptions information.
 
+#requires -version 7.0
+
+Set-StrictMode -Version Latest
+
+. ".\OpsUtilities.ps1"
+
 #  The Azure service type supported by the subscription.
 enum ServiceType {
     # Azure Compute
@@ -33,7 +39,45 @@ class Subscription {
     [string]$storagePartitionedDnsFlag
     [System.Guid]$subscriptionId
     [string]$subscriptionName
+    [string]$subscriptionOldName
     [string]$vnetInjection
+}
+
+function ConvertTo-AzureLocation {
+    [CmdletBinding()]
+    param(
+        [string]$Region
+    )
+
+    switch ($Region) {
+        "ap-se" { return "southeastasia" }
+        "eu-w" { return "westeurope" }
+        "us-e" { return "eastus" }
+        "us-e2c" { return "eastus2euap" }
+        "us-w2" { return "westus2" }
+        "global" { return "" }
+        "" { return "" }
+    }
+
+    throw "Unsupported region: $Region"
+}
+
+function ConvertTo-AzureRegion {
+    [CmdletBinding()]
+    param(
+        [string]$location
+    )
+
+    switch ($location) {
+        "southeastasia" { return "ap-se" }
+        "westeurope" { return "eu-w" }
+        "eastus" { return "us-e" }
+        "eastus2euap" { return "us-e2c" }
+        "westus2" { return "us-w2" }
+        "" { return "global" }
+    }
+
+    throw "Unsupported location: $location"
 }
 
 # Generate Json data from Excel file
@@ -89,20 +133,6 @@ function Format-ExcelToJson {
             }
 
             return $value
-        }
-
-        function ConvertTo-AzureLocation([string]$Region) {
-            switch ($Region) {
-                "ap-se" { return "southeastasia" }
-                "eu-w" { return "westeurope" }
-                "us-e" { return "eastus" }
-                "us-e2c" { return "eastus2euap" }
-                "us-w2" { return "westus2" }
-                "global" { return "" }
-                "" { return "" }
-            }
-
-            throw "Unsupported region: $Region"
         }
 
         $subscriptions = [System.Collections.ArrayList]@()
@@ -165,6 +195,7 @@ function Format-ExcelToJson {
             # If Subscription has old name, and rename isn't completeted,
             # keep using old name for now.
             $subscriptionOldName = Get-CellValue $dataTable.Rows[$i] $subscriptionOldNameColumn
+            $subscription.subscriptionOldName = $subscriptionOldName
             if ($null -ne $subscriptionOldName -and $subscriptionOldName.Trim().Length -ne 0) {
                 $renameDoneValue = Get-CellValue $dataTable.Rows[$i] $subscriptionRenameDoneColumn
                 [bool]$renameDone = $false
@@ -255,21 +286,121 @@ function Get-Subscriptions {
         [Parameter(Position=1, ParameterSetName='SubscriptionId')]
         [System.Guid]$SubscriptionId = [System.Guid]::Empty,
         [Parameter(Position=2, ParameterSetName='SubscriptionName')]
-        [string]$SubscriptionName
+        [string]$SubscriptionName,
+        [Parameter(Position=3, ParameterSetName='default')]
+        [Parameter(Position=3, ParameterSetName='SubscriptionName')]
+        [ValidateSet('dev','ppe','prod')]
+        [string]$Environment,
+        [Parameter(Position=4, ParameterSetName='default')]
+        [Parameter(Position=4, ParameterSetName='SubscriptionName')]
+        [string]$Plane,
+        [Parameter(Position=5, ParameterSetName='default')]
+        [Parameter(Position=5, ParameterSetName='SubscriptionName')]
+        [string]$Generation,
+        [Parameter(Position=6, ParameterSetName='default')]
+        [Parameter(Position=6, ParameterSetName='SubscriptionName')]
+        [Switch]$Canary = $false,
+        [Switch]$UseAppSettingsFilters = $false
     )
 
     $subscriptions = Get-Content $SubscriptionJsonFile | Out-String | ConvertFrom-Json
     if ( [System.Guid]::Empty -ne $SubscriptionId) {
-        $subscriptions = $subscriptions |  Where-Object { $_.subscriptionId -eq $SubscriptionId }
+        $subscriptions = $subscriptions |  Where-Object {
+            $_.subscriptionId -eq $SubscriptionId
+        }
     }
 
     if ($SubscriptionName.Length -ne 0) {
-        $subscriptions = $subscriptions |  Where-Object { $_.subscriptionName -like "$($SubscriptionName)" }
+        $subscriptions = $subscriptions |  Where-Object {
+            $_.subscriptionName -like "$($SubscriptionName)"
+        }
+    }
+
+    if ($Environment.Length -ne 0) {
+        $subscriptions = $subscriptions | Where-Object {
+            $_.environment -eq $Environment
+        }
+    }
+
+    if ($Plane.Length -ne 0) {
+        $subscriptions = $subscriptions | Where-Object {
+            $_.plane -eq $Plane
+        }
+    }
+
+    if ($Generation.Length -ne 0) {
+        $subscriptions = $subscriptions | Where-Object {
+            $_.generation -like "$($Generation)"
+        }
+    }
+
+    if ($Canary) {
+        $subscriptions = $subscriptions | Where-Object {
+            $_.ordinal -eq 1
+        }
+     }
+
+    if ($UseAppSettingsFilters) {
+        $subscriptions = $subscriptions | Where-Object {
+            $_.generation -ne "v2"
+        }
+
+        $subscriptions = $subscriptions | Where-Object {
+            $_.serviceType -ne "compute" -or ($_.serviceType -eq "compute" -and $_.vnetInjection -eq "done")
+        }
+
+        $subscriptions = $subscriptions | Where-Object {
+            $_.serviceType -ne "storage" -or ($_.serviceType -eq "storage" -and $_.premiumFilesInternalSettings -eq "done" -and $_.storagePartitionedDnsFlag -eq "done")
+        }
     }
 
     $subscriptions | ForEach-Object {
         [Subscription]$subscription = [Subscription]$_
         Write-Output $subscription
+    }
+}
+
+function Test-Any {
+    [CmdletBinding()]
+    param($EvaluateCondition,
+        [Parameter(ValueFromPipeline = $true)] $ObjectToTest)
+    begin {
+        $any = $false
+    }
+    process {
+        if (-not $any -and (& $EvaluateCondition $ObjectToTest)) {
+            $any = $true
+        }
+    }
+    end {
+        $any
+    }
+}
+
+function Test-All {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Process {
+        $Subscription | Test-Airs | Test-SubscriptionName | Test-Tags | Test-ResourceGroup | Test-CoreQuotas | Test-ResourceProviders | Test-Rbac | Test-32GbFlags | Test-PartionedDns | Test-VnetInjection
+    }
+}
+
+function Get-SubscriptionMessage {
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription,
+        [Parameter(Mandatory=$true)]
+        [string]$Message
+    )
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            Write-Output "Subscription $($sub.subscriptionOldName) ($($sub.subscriptionId)) $Message"
+        }
     }
 }
 
@@ -286,12 +417,140 @@ function Test-Airs {
 
     Process {
         ForEach ($sub in $Subscription) {
-            $found = $azureSubscriptions |  Where-Object { $_.id -eq $sub.subscriptionId }
+            $found = $azureSubscriptions |  Where-Object {
+                $_.id -eq $sub.subscriptionId
+            }
+
             if (!$found) {
-                Write-Error "Unable to find subscription:`'$($sub.subscriptionName)`' id:`'$($sub.subscriptionId)`'"
+                $sub | Get-SubscriptionMessage -Message "was not found" | Write-Error
             } else {
                 Write-Output $sub
             }
+        }
+    }
+}
+
+function Test-SubscriptionName {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Begin {
+        $azureSubscriptions = az account list -o json | ConvertFrom-Json
+    }
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            $azSub = $azureSubscriptions |  Where-Object {
+                $_.id -eq $sub.subscriptionId
+            }
+
+            if (!$azSub) {
+                $sub | Get-SubscriptionMessage -Message "was not found" | Write-Error
+            } else {
+                if ($sub.subscriptionOldName -eq $azSub.name) {
+                    $sub | Get-SubscriptionMessage -Message "contains legacy name and needs to be renamed." | Write-Warning
+                } else {
+                    if ($sub.subscriptionName  -ne $azSub.name) {
+                        Write-Error "Subscription:`'$($sub.subscriptionId)`' has incorrect name. Expected:`'$($sub.subscriptionName)`', Actual:`'$($azSub.name)`'"
+                    }
+                }
+
+                Write-Output $sub
+            }
+        }
+    }
+}
+
+function Test-Tags {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Begin {
+        $azureSubscriptions = az account list -o json | ConvertFrom-Json
+    }
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            $azSub = $azureSubscriptions |  Where-Object {
+                $_.id -eq $sub.subscriptionId
+            }
+
+            if (!$azSub) {
+                $sub | Get-SubscriptionMessage -Message "was not found" | Write-Error
+            } else {
+                $tags = az tag list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
+
+                $warningTagNames = "component", "env", "ordinal", "plane", "prefix", "region", "type", "serviceTreeId", "serviceTreeUrl"
+                $expectedTagValues = "$($sub.component)", "$($sub.environment)", "$($sub.ordinal)", "$($sub.plane)", "vscs", "$(ConvertTo-AzureRegion $sub.location)", "$($sub.serviceType)", $null, $null
+
+                # Validate all expected tags
+                for ($i = 0; $i -lt $warningTagNames.Count; $i++) {
+                    $tagName = $warningTagNames[$i]
+                    $tag = $tags | Where-Object {
+                        $_.tagName -eq $tagName
+                    }
+
+                    if (!$tag) {
+                        $sub | Get-SubscriptionMessage -Message "doesn't have Tag:`'$($tagName)`'" | Write-Warning
+                    } else {
+                        if ($null -ne $expectedTagValues[$i] -and $tag.values.tagValue -ne $expectedTagValues[$i]) {
+                            $sub | Get-SubscriptionMessage -Message "contains Tag:`'$($tagName)`' with invalid value. Expected:`'$( $expectedTagValues[$i])`', Actual:`'$($tag.values.tagValue)`'" | Write-Warning
+                        }
+                    }
+                }
+
+                Write-Output $sub
+            }
+        }
+    }
+}
+
+function Test-ResourceGroup {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            $result = az account set --subscription $sub.subscriptionId
+            if ($null -ne $result) {
+                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                continue
+            }
+
+            # Todo validate ResourceGroup
+
+            Write-Output $sub
+        }
+    }
+}
+
+function Test-CoreQuotas {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            $result = az account set --subscription $sub.subscriptionId
+            if ($null -ne $result) {
+                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                continue
+            }
+
+            # Todo validate CoreQuotas
+
+            Write-Output $sub
         }
     }
 }
@@ -303,16 +562,33 @@ function Test-ResourceProviders {
         [Subscription]$Subscription
     )
 
+    Begin {
+        # TODO: Update this to reflect different defaults per resource type
+        $defaultRPs = Get-DefaultResourceProviders
+    }
+
     Process {
         ForEach ($sub in $Subscription) {
-            $result = az account set --subscription $sub.subscriptionId
-            if ($null -ne $result) {
-                Write-Error "Invalid subscription:`'$($sub.subscriptionName)`' id:`'$($sub.subscriptionId)`'"
+            if ($sub.generation -eq "v1-legacy") {
+                Write-Output $sub
                 continue
             }
 
-            #$storageAccounts = az storage account list -o json | ConvertFrom-Json
-            # Todo validate Storage Accounts
+            $result = az account set --subscription $sub.subscriptionId
+            if ($null -ne $result) {
+                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+                continue
+            }
+
+            $registeredRPs = az provider list --query "[].{Provider:namespace, Status:registrationState}" --out json | ConvertFrom-Json | Where-Object {$_.Status -eq "Registered"}
+
+            ForEach ($provider in $defaultRPs) {
+                if (!($registeredRPs | Test-Any {$_.Provider -like $provider})) {
+                    $sub | Get-SubscriptionMessage -Message "missing provider $provider" | Write-Error
+                }
+            }
+
+            Write-Output $sub
         }
     }
 }
@@ -327,6 +603,80 @@ function Test-Rbac {
     Process {
         ForEach ($sub in $Subscription) {
             #TODO
+
+            Write-Output $sub
+        }
+    }
+}
+
+function Test-32GbFlags {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Begin {
+        $featureFlag = "PremiumFilesInternalSettings"
+    }
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            if (-not $sub.premiumFilesInternalSettings -like "done") {
+                Write-Output $sub
+                continue
+            }
+
+            $response = az feature show --namespace Microsoft.Storage -n $featureFlag --subscription $sub.subscriptionId | ConvertFrom-Json
+            if (-not $response.properties.state -like "registered") {
+                $sub | Get-SubscriptionMessage -Message "missing feature flag $featureFlag" | Write-Error
+            }
+
+            Write-Output $sub
+        }
+    }
+}
+
+function Test-PartionedDns {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Begin {
+        $featureFlag = "PartitionedDns"
+    }
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            if (-not $sub.storagePartitionedDnsFlag -like "done") {
+                Write-Output $sub
+                continue
+            }
+
+            $response = az feature show --namespace Microsoft.Storage -n $featureFlag --subscription $sub.subscriptionId | ConvertFrom-Json
+            if (-not $response.properties.state -like "registered") {
+                $sub | Get-SubscriptionMessage -Message "missing feature flag $featureFlag" | Write-Error
+            }
+
+            Write-Output $sub
+        }
+    }
+}
+
+function Test-VnetInjection {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [Subscription]$Subscription
+    )
+
+    Process {
+        ForEach ($sub in $Subscription) {
+            #TODO
+
+            Write-Output $sub
         }
     }
 }
@@ -354,32 +704,16 @@ function Build-AppSettings {
         [Switch]$UpdateDatabse = $false
     )
 
-    $jsonSubscriptions = Get-Content $InputJsonFile | Out-String | ConvertFrom-Json
+    $subscriptions = Get-Subscriptions -SubscriptionJsonFile:$InputJsonFile -Environment:$Environment -Plane:"data" -Canary:$Canary -UseAppSettingsFilters:$true
 
-    $jsonSubscriptions = $jsonSubscriptions | Where-Object {
-        $_.environment -eq $Environment -and $_.plane -eq "data" -and $_.generation -ne "v2"
-    }
-
-    $jsonSubscriptions = $jsonSubscriptions | Where-Object {
-        $_.serviceType -ne "compute" -or ($_.serviceType -eq "compute" -and $_.vnetInjection -eq "done")
-    }
-
-    $jsonSubscriptions = $jsonSubscriptions | Where-Object {
-        $_.serviceType -ne "storage" -or ($_.serviceType -eq "storage" -and $_.premiumFilesInternalSettings -eq "done" -and $_.storagePartitionedDnsFlag -eq "done")
-    }
-
-    if ($Canary) {
-        $jsonSubscriptions = $jsonSubscriptions | Where-Object { $_.ordinal -eq 1 }
-     }
-
-    if ($jsonSubscriptions.Count -eq 0) {
+    if ($subscriptions.Count -eq 0) {
         Write-Host "No subscription found."
         return
     }
 
     $subs = [ordered]@{}
 
-    $jsonSubscriptions | ForEach-Object {
+    $subscriptions | ForEach-Object {
         $subscription = $_
 
         $azureSubscriptionSettings = [PSCustomObject]@{
@@ -445,7 +779,7 @@ function Enable-Subscription {
 
     Process {
         ForEach ($sub in $Subscription) {
-            
+
             $options = ""
             if ($null -eq $sub.dbEnabled) {
                 $options = "--remove"

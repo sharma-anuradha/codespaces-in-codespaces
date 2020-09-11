@@ -290,29 +290,34 @@ function Select-AzureSubscription(
   $sub
 }
 
+# TODO: Narrow down based on service/data type. Also keep in sync with runtime.
+function Get-DefaultResourceProviders([string]$DataType) {
+  (
+    "Microsoft.Batch",
+    "Microsoft.Compute",
+    "Microsoft.ContainerInstance",
+    "Microsoft.ContainerRegistry",
+    "Microsoft.DocumentDB",
+    "Microsoft.Keyvault",
+    "Microsoft.Kubernetes",
+    "Microsoft.ManagedIdentity",
+    "Microsoft.Maps",
+    "Microsoft.Network",
+    "Microsoft.Relay",
+    "Microsoft.ServiceBus",
+    "Microsoft.SignalRService",
+    "Microsoft.Storage",
+    "Microsoft.VirtualMachineImages"
+  )
+}
+
 function Register-DefaultProvidersAndFeatures(
   [bool]$PartitionedData = $true) {
   Write-Host
   Write-Host "Registering resource providers and features..."
   # Register Resource Providers
   # TODO: how to make these specific to Component and Plane?
-  (
-      "Microsoft.Batch",
-      "Microsoft.Compute",
-      "Microsoft.ContainerInstance",
-      "Microsoft.ContainerRegistry",
-      "Microsoft.DocumentDB",
-      "Microsoft.Keyvault",
-      "Microsoft.Kubernetes",
-      "Microsoft.ManagedIdentity",
-      "Microsoft.Maps",
-      "Microsoft.Network",
-      "Microsoft.Relay",
-      "Microsoft.ServiceBus",
-      "Microsoft.SignalRService",
-      "Microsoft.Storage",
-      "Microsoft.VirtualMachineImages"
-  ) | ForEach-Object {
+  Get-DefaultResourceProviders | ForEach-Object {
       Write-Host $_ -ForegroundColor DarkGray
       Register-AzResourceProvider -ProviderNamespace $_ | Out-Null
   }
