@@ -73,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.RequestRecordId, resource.Id);
 
                    var poolName = resourcePool.Details.GetPoolDefinition();
-                   var poolQueue = await ResourceRequestQueueProvider.GetPoolQueueAsync(poolName);
+                   var poolQueue = ResourceRequestQueueProvider.GetPoolQueue(poolName, logger.NewChildLogger());
 
                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolQueueName, poolQueue.Name);
 
@@ -109,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                    var poolName = resource.PoolReference?.Code;
 
                    // check if there is any request for pool definition
-                   var poolQueue = await ResourceRequestQueueProvider.GetPoolQueueAsync(poolName);
+                   var poolQueue = ResourceRequestQueueProvider.GetPoolQueue(poolName, logger.NewChildLogger());
                    if (poolQueue == default)
                    {
                        // Queue initialization is not complete, so do nothing.

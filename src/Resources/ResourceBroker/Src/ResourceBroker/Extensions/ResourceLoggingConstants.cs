@@ -174,6 +174,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// </summary>
         public const string EnvironmentId = "EnvironmentId";
 
+        /// <summary>
+        /// Request correlation id.
+        /// </summary>
+        public const string RequestCorrelationId = "RequestCorrelationId";
+
 // Deprecated
 
         /// <summary>

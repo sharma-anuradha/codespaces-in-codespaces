@@ -90,7 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public Task<CloudQueue> GetPoolQueueAsync(string poolName)
+        public CloudQueue GetPoolQueue(string poolName, IDiagnosticsLogger logger)
         {
             if (InitializeQueueTask.Status != TaskStatus.RanToCompletion)
             {
@@ -100,10 +100,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             var queueFound = InitializeQueueTask.Result.TryGetValue(poolName, out var poolQueue);
             if (!queueFound)
             {
-                throw new InvalidOperationException($"No Request queue allocated for  pool {poolName}");
+                logger.LogErrorWithDetail($"{LogBase}_get_pool_queue_error", $"No Request queue allocated for pool {poolName}");
+                return default;
             }
 
-            return Task.FromResult(poolQueue);
+            return poolQueue;
         }
 
         /// <inheritdoc/>
@@ -125,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public async Task<int> GetPendingRequestCountForPoolAsync(string poolCode, IDiagnosticsLogger logger)
         {
-            var poolQueue = await GetPoolQueueAsync(poolCode);
+            var poolQueue = GetPoolQueue(poolCode, logger.NewChildLogger());
             await poolQueue.FetchAttributesAsync();
             var pendingRequestCount = poolQueue.ApproximateMessageCount;
             return pendingRequestCount ?? 0;

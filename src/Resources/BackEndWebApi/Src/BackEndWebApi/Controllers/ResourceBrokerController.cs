@@ -422,7 +422,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi.Controllers
 
             if (Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationId))
             {
-                loggingProperties.Add(HttpConstants.CorrelationIdHeader, correlationId.First());
+                loggingProperties.Add(ResourceLoggingConstants.RequestCorrelationId, correlationId.First());
             }
 
             return loggingProperties;
