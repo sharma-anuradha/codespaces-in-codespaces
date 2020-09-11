@@ -16,6 +16,9 @@ ingress:
       - signlr-ppe.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
 
+authentication:
+  authenticateProfileServiceUri: https://ppe.liveshare.vsengsaas.visualstudio.com/api/v1.2/profile
+
 config:
   aspNetEnv: Production
   keyVaultName: vsclk-signlr-ppe-kv

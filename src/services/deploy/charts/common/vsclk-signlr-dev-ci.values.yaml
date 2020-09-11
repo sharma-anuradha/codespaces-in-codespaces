@@ -16,6 +16,9 @@ ingress:
       - signlr.dev.core.vsengsaas.visualstudio.com
       secretName: ssl-cert
 
+authentication:
+  authenticateProfileServiceUri: https://ci.dev.liveshare.vsengsaas.visualstudio.com/api/v1.2/profile
+
 config:
   aspNetEnv: Development
   keyVaultName: vsclk-signlr-dev-kv
