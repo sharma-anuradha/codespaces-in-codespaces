@@ -87,8 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             if (connectionInfo != default)
             {
                 logger
-                    .AddNewSessionId(connectionInfo?.ConnectionSessionId)
-                    .AddNewWorkspaceId(connectionInfo?.WorkspaceId);
+                    .AddNewSessionId(connectionInfo.ConnectionSessionId)
+                    .AddNewWorkspaceId(connectionInfo.WorkspaceId);
             }
 
             return logger;

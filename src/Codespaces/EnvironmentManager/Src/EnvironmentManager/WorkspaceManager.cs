@@ -57,10 +57,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         ExpiresAt = DateTime.UtcNow.AddDays(PersistentSessionExpiresInDays),
                     };
 
-                    var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest, authToken, logger);
+                    var workspaceResponse = await WorkspaceRepository.CreateAsync(workspaceRequest, authToken, childLogger);
                     if (string.IsNullOrWhiteSpace(workspaceResponse.Id))
                     {
-                        logger
+                        childLogger
                             .AddEnvironmentId(environmentId)
                             .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateWorkspaceAsync)), "Failed to create workspace");
                         return null;
@@ -76,10 +76,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         GuestUsers = guestUsers,
                     };
 
-                    var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, authToken, logger);
+                    var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, authToken, childLogger);
                     if (string.IsNullOrWhiteSpace(workspaceInvitationId))
                     {
-                        logger
+                        childLogger
                             .AddEnvironmentId(workspaceResponse.Id)
                             .LogErrorWithDetail(GetType().FormatLogErrorMessage(nameof(CreateWorkspaceAsync)), "Failed to create invitation id");
                         return null;
@@ -95,7 +95,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         ConnectionSessionPath = sessionPath,
                     };
 
-                    logger
+                    childLogger
                         .AddNewConnectionInfo(connectionInfo)
                         .LogInfo($"{LogBaseName}_created_new_workspace");
 
@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_status_workspace",
                 async (childLogger) =>
                 {
-                    return await WorkspaceRepository.GetStatusAsync(workspaceId, logger);
+                    return await WorkspaceRepository.GetStatusAsync(workspaceId, childLogger);
                 },
                 swallowException: false);
         }
@@ -125,7 +125,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 $"{LogBaseName}_delete_workspace",
                 async (childLogger) =>
                 {
-                    await WorkspaceRepository.DeleteAsync(workspaceId, logger);
+                    await WorkspaceRepository.DeleteAsync(workspaceId, childLogger);
                 },
                 swallowException: false);
         }
