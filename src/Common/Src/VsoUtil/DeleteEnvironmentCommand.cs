@@ -7,9 +7,12 @@ using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.VsoUtil;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
@@ -45,6 +48,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
 
         private async Task DeleteEnvironmentAsync(IServiceProvider services, Guid id, TextWriter stdout, TextWriter stderr)
         {
+            var crossRegionMessagePump = services.GetRequiredService<ICrossRegionContinuationTaskMessagePump>();
+            var continuationInput = new EnvironmentContinuationInput { EnvironmentId = id.ToString() };
             var superuserIdentity = services.GetRequiredService<VsoSuperuserClaimsIdentity>();
             var currentIdentityProvider = services.GetRequiredService<ICurrentUserProvider>();
             var manager = services.GetRequiredService<IEnvironmentManager>();
@@ -86,7 +91,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
                 }
                 else
                 {
-                    await manager.SoftDeleteAsync(id, logger);
+                    var trackingId = Guid.NewGuid();
+
+                    var payload = new ContinuationQueuePayload
+                    {
+                        TrackingId = trackingId.ToString(),
+                        TrackingInstanceId = trackingId.ToString(),
+                        Created = DateTime.UtcNow,
+                        Status = null,
+                        Input = continuationInput,
+                        Target = SoftDeleteEnvironmentContinuationHandler.DefaultQueueTarget,
+                        LoggerProperties = null,
+                    };
+
+                    await crossRegionMessagePump.PushMessageToControlPlaneRegionAsync(payload, environment.Location, TimeSpan.Zero, logger);
                 }
             }
         }
