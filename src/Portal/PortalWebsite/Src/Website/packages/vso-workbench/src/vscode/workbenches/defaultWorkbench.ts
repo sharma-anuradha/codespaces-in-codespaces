@@ -1,4 +1,4 @@
-import { isHostedOnGithub, getCurrentEnvironmentId, IEnvironment, IVSCodeConfig } from 'vso-client-core';
+import { getCurrentEnvironmentId, IEnvironment, IVSCodeConfig } from 'vso-client-core';
 import { registerServiceWorker } from 'vso-service-worker-client';
 import { getVSCodeVersion } from '../../utils/getVSCodeVersion';
 import { AuthenticationError } from '../../errors/AuthenticationError';
@@ -37,7 +37,7 @@ interface IDefaultWorkbenchOptions {
 export class Workbench {
     private workbench: VSCodeWorkbench | null = null;
 
-    constructor(private readonly options: IDefaultWorkbenchOptions) { }
+    constructor(private readonly options: IDefaultWorkbenchOptions) {}
 
     public getProviders(
         environmentInfo: IEnvironment,
@@ -78,7 +78,7 @@ export class Workbench {
                     environmentInfo,
                     token,
                     connector,
-                    options.liveShareEndpoint,
+                    options.liveShareEndpoint
                 );
                 resolveExternalUri = (uri: URI): Promise<URI> => {
                     return externalUriProvider.resolveExternalUri(uri);
@@ -111,17 +111,11 @@ export class Workbench {
             };
 
             return providers;
-        }
+        };
     }
 
     public connect = async () => {
-        const {
-            getToken,
-            domElementId,
-            liveShareEndpoint,
-            onConnection,
-            onError,
-        } = this.options;
+        const { getToken, domElementId, liveShareEndpoint, onConnection, onError } = this.options;
 
         try {
             const vscodeConfig = await getVSCodeVersion();

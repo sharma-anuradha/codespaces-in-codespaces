@@ -85,6 +85,7 @@ import {
 import './workbench.css';
 import { telemetryMarks } from 'vso-workbench/src/telemetry/telemetryMarks';
 import { withTranslation, WithTranslation } from 'react-i18next';
+import { TunnelProvider } from '../../providers/tunnelProvider';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -127,7 +128,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             connectError: null,
             connectRequested: false,
             isServerlessSplashScreenShown: false,
-            environmentState: props.environmentInfo?.state
+            environmentState: props.environmentInfo?.state,
         };
     }
 
@@ -288,7 +289,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             this.pollForActivatingEnvironment(environmentInfo);
         }
     }
-    
+
     pollTransitioningState(codespaceInfo: ILocalEnvironment) {
         if (this.interval) {
             return;
@@ -465,7 +466,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 environmentInfo,
                 token,
                 envConnector,
-                liveShareEndpoint,
+                liveShareEndpoint
             );
             resolveExternalUri = (uri: URI): Promise<URI> => {
                 return externalUriProvider.resolveExternalUri(uri);
@@ -499,6 +500,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             urlCallbackProvider: new UrlCallbackProvider(),
             resourceUriProvider,
             resolveExternalUri,
+            tunnelProvider: new TunnelProvider(),
             resolveCommonTelemetryProperties,
             homeIndicator,
             commands,
@@ -551,9 +553,11 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         } else {
             this.connectionAdapter =
                 this.connectionAdapter || new SplashCommunicationProvider(this.onCommandReceived);
-            const environmentInfoWithState =
-                {...environmentInfo, state: this.state.environmentState || environmentInfo.state};
-            return(
+            const environmentInfoWithState = {
+                ...environmentInfo,
+                state: this.state.environmentState || environmentInfo.state,
+            };
+            return (
                 <SplashScreenComponent
                     onRetry={this.handleClickToRetry}
                     onConnect={this.handleOnSplashScreenConnect}

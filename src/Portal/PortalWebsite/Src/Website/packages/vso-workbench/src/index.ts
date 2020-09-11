@@ -31,7 +31,10 @@ export { AuthService } from './auth/authService';
 export { EnvConnector } from './clients/envConnector';
 export { VSLSWebSocket } from './clients/VSLSWebSocket';
 
-export { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID, DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID } from './constants';
+export {
+    DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+    DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
+} from './constants';
 
 export { RenderSplashScreen } from './react-app/components/SplashScreenShell/RenderSplashScreen';
 export { ConnectionAdapter } from './react-app/components/SplashScreenShell/ConnectionAdapter';

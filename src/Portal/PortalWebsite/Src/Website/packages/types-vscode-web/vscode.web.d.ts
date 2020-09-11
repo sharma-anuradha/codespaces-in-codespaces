@@ -1,8 +1,8 @@
 declare module 'vscode-web' {
     interface IProductConfiguration {
         readonly sendASmile?: {
-            readonly reportIssueUrl: string,
-            readonly requestFeatureUrl: string
+            readonly reportIssueUrl: string;
+            readonly requestFeatureUrl: string;
         };
     }
 
@@ -318,6 +318,50 @@ declare module 'vscode-web' {
         create(options?: Partial<URI>): URI;
     }
 
+    interface ITunnelProvider {
+        /**
+         * Support for creating tunnels.
+         */
+        tunnelFactory?: ITunnelFactory;
+        /**
+         * Support for filtering candidate ports
+         */
+        showPortCandidate?: IShowPortCandidate;
+    }
+
+    export interface ITunnelFactory {
+        (tunnelOptions: ITunnelOptions): Promise<ITunnel> | undefined;
+    }
+
+    export interface IShowPortCandidate {
+        (host: string, port: number, detail: string): Promise<boolean>;
+    }
+
+    export interface ITunnelOptions {
+        remoteAddress: { port: number; host: string };
+
+        /**
+         * The desired local port. If this port can't be used, then another will be chosen.
+         */
+        localAddressPort?: number;
+
+        label?: string;
+    }
+
+    export interface ITunnel extends IDisposable {
+        remoteAddress: { port: number; host: string };
+
+        /**
+         * The complete local address(ex. localhost:1234)
+         */
+        localAddress: string;
+
+        /**
+         * Implementers of Tunnel should fire onDidDispose when dispose is called.
+         */
+        onDidDispose: Event<void>;
+    }
+
     export enum LogLevel {
         Trace,
         Debug,
@@ -430,7 +474,7 @@ declare module 'vscode-web' {
         /**
          * @internal
          */
-        new(
+        new (
             scheme: string,
             authority?: string,
             path?: string,
@@ -442,12 +486,12 @@ declare module 'vscode-web' {
         /**
          * @internal
          */
-        new(components: UriComponents): URI;
+        new (components: UriComponents): URI;
 
         /**
          * @internal
          */
-        new(
+        new (
             schemeOrData: string | UriComponents,
             authority?: string,
             path?: string,
@@ -563,28 +607,28 @@ declare module 'vscode-web' {
         visible?: boolean;
         containers?: (
             | {
-                id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
-                active: true;
-                order?: number;
-                views?: {
-                    id: string;
-                    order?: number;
-                    visible?: boolean;
-                    collapsed?: boolean;
-                }[];
-            }
+                  id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+                  active: true;
+                  order?: number;
+                  views?: {
+                      id: string;
+                      order?: number;
+                      visible?: boolean;
+                      collapsed?: boolean;
+                  }[];
+              }
             | {
-                id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
-                active?: false | undefined;
-                order?: number;
-                visible?: boolean;
-                views?: {
-                    id: string;
-                    order?: number;
-                    visible?: boolean;
-                    collapsed?: boolean;
-                }[];
-            }
+                  id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+                  active?: false | undefined;
+                  order?: number;
+                  visible?: boolean;
+                  views?: {
+                      id: string;
+                      order?: number;
+                      visible?: boolean;
+                      collapsed?: boolean;
+                  }[];
+              }
         )[];
     }
 
@@ -592,16 +636,16 @@ declare module 'vscode-web' {
         visible?: boolean;
         containers?: (
             | {
-                id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
-                order?: number;
-                active: true;
-            }
+                  id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+                  order?: number;
+                  active: true;
+              }
             | {
-                id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
-                order?: number;
-                active?: false | undefined;
-                visible?: boolean;
-            }
+                  id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+                  order?: number;
+                  active?: false | undefined;
+                  visible?: boolean;
+              }
         )[];
     }
 
@@ -749,6 +793,12 @@ declare module 'vscode-web' {
          * Optional override for the product configuration properties.
          */
         readonly productConfiguration?: Partial<IProductConfiguration>;
+
+        /**
+         * A provider for supplying tunneling functionality,
+         * such as creating tunnels and showing candidate ports to forward.
+         */
+        readonly tunnelProvider?: ITunnelProvider;
     }
 
     export interface IWorkbench {
