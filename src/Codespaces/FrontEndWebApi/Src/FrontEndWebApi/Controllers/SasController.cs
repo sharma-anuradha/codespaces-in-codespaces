@@ -34,7 +34,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     public class SasController : ControllerBase
     {
         private static readonly string StorageMountableShareName = "cloudenvdata";
-        private static readonly string StorageLinuxMountableFilename = "dockerlib";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SasController"/> class.
@@ -91,8 +90,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 // Get file reference
                 var fileShareName = StorageMountableShareName;
                 var fileShare = fileClient.GetShareReference(fileShareName);
-                var fileName = StorageLinuxMountableFilename;
-                var fileReference = fileShare.GetRootDirectoryReference().GetFileReference(fileName);
 
                 // Get file sas token
                 var srcFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
@@ -100,7 +97,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                     Permissions = SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Delete,
                     SharedAccessExpiryTime = DateTime.UtcNow.AddHours(2),
                 });
-                var token = fileReference.Uri.AbsoluteUri + srcFileSas;
+                var token = srcFileSas.StartsWith("?") ? srcFileSas.Substring(1) : srcFileSas;
 
                 accountToSasDictionary.Add(name, token);
             }
