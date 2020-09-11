@@ -9,6 +9,7 @@ ingress:
     - "*.workspaces-ppe.github.com"
     - "*.codespaces-ppe.github.com"
     - "*.ppe.github.dev"
+    - "*.ppe.builder.code.com"
     - vsclk-online-ppe-rel-tm.trafficmanager.net
   tls:
     - hosts:
@@ -23,6 +24,9 @@ ingress:
     - hosts:
         - "*.ppe.github.dev"
       secretName: ssl-cert-github-dot-dev
+    - hosts:
+      - "*.ppe.builder.code.com"
+      secretName: ssl-cert-salesforce-builder-com
 
 githubAuthEndpoint:
   hosts:

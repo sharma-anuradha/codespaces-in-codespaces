@@ -160,6 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("http://github.localhost");
                     currentOrigins.Add("https://garage.github.com");
                     currentOrigins.Add("https://*.review-lab.github.com");
+                    currentOrigins.Add("https://*.local.builder.code.com");
 
                     // workspaces.github.com
                     currentOrigins.Add("https://*.workspaces.github.com");
@@ -178,6 +179,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
                     currentOrigins.Add("https://*.ppe.github.dev");
                     currentOrigins.Add("https://*.dev.github.dev");
                     currentOrigins.Add("https://*.github.localhost");
+
+                    // builder.code.com
+                    currentOrigins.Add("https://*.builder.code.com");
+                    currentOrigins.Add("https://*.ppe.builder.code.com");
+                    currentOrigins.Add("https://*.dev.builder.code.com");
 
                     options.AddPolicy(
                         "ProdCORSPolicy",

@@ -27,7 +27,11 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
             "~/",
             "*.github.dev",
             "*.github.localhost",
-            "*.codespaces.visualstudio.com"
+            "*.codespaces.visualstudio.com",
+            "*.dev.builder.code.com",
+            "*.ppe.builder.code.com",
+            "*.builder.code.com",
+            "*.local.builder.code.com"
         )]
         public Task<ActionResult> Index() => FetchStaticAsset("workbench.html", "text/html");
 
