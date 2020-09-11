@@ -9,6 +9,7 @@ import { GitCredentialHelperStrategy } from './strategies/GitServiceCredentialsS
 import { LiveShareGithubAuthStrategy } from './strategies/CascadeAuthStrategy';
 import { GitHubStrategy } from './strategies/GitHubStrategy';
 import { NativeVSCodeProvidersStrategy } from './strategies/NativeVSCodeProvidersStrategy';
+import { SettingsSyncStrategy } from './strategies/SettingsSyncStrategy';
 
 const trace = createTrace('credentials-provider:info');
 
@@ -116,6 +117,13 @@ export const credentialsProvider = new CredentialsProvider([
      *  - The native GitHub auth provider (GHPR extension uses it to auth)
      */
     new GitHubStrategy(),
+    /**
+     * For performance reasons, VSCode Settings Sync Service reads the default auth session
+     * that meant to be used for the settings sync using the `${getVSCodeScheme()}.login` key
+     * directly from `keytar`, hence this strategy fulfills that requests, see comment above
+     * the class definition for more info.
+     */
+    new SettingsSyncStrategy(),
     /**
      * Used to add the default authentication sessions used by the Native VSCode
      * authentication providers, these data is coming from partner info payload.

@@ -795,6 +795,11 @@ declare module 'vscode-web' {
         readonly productConfiguration?: Partial<IProductConfiguration>;
 
         /**
+         * Optional configuration default overrides contributed to the workbench.
+         */
+        readonly configurationDefaults?: Record<string, any>;
+
+        /**
          * A provider for supplying tunneling functionality,
          * such as creating tunnels and showing candidate ports to forward.
          */

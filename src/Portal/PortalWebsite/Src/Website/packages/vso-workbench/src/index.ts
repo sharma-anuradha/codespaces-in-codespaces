@@ -1,6 +1,5 @@
 export { vscode } from './vscode/vscodeAssets/vscode';
 
-export { UserDataProvider } from './vscode/providers/userDataProvider/userDataProvider';
 export { WorkspaceProvider } from './vscode/providers/workspaceProvider/workspaceProvider';
 export { UrlCallbackProvider } from './vscode/providers/userDataProvider/urlCallbackProvider';
 export { resourceUriProviderFactory } from './vscode/providers/resourceUriProvider/resourceUriProviderFactory';
@@ -47,3 +46,4 @@ export { getWorkbenchDefaultLayout } from './utils/getWorkbenchDefaultLayout';
 
 export { ServerlessWorkbench, ServerlessWorkbenchProps, RepoType_QueryParam } from './vscode/workbenches/serverlessWorkbench';
 export { IServerlessSplashscreenProps, ServerlessSplashscreen } from './react-app/components/ServerlessSplashscreen/ServerlessSplashscreen';
+export { codespaceInitializationTracker } from './utils/CodespaceInitializationTracker/CodespaceInitializationTracker';

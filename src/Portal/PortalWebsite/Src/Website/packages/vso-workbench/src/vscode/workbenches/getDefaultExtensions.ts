@@ -4,10 +4,13 @@
  * specify the default extensions in the payload.
  */
 
-import { getCurrentEnvironmentId, authService, arrayUnique } from 'vso-client-core';
+import {
+    getCurrentEnvironmentId,
+    authService,
+    arrayUnique,
+} from 'vso-client-core';
 
 import { PLATFORM_REQUIRED_EXTENSIONS } from '../../constants';
-import { getSettingsSyncExtensions } from '../../api/SettingsSyncService';
 
 const getDefaultSettingsExtensions = async (): Promise<string[]> => {
     const info = await authService.getCachedPartnerInfo(getCurrentEnvironmentId());
@@ -61,11 +64,9 @@ export const getExtensions = async (isFirstRun: boolean): Promise<string[]> => {
         return [...requiredExtensions];
     }
 
-    const settingsSyncExtensions = await getSettingsSyncExtensions(requiredExtensions);
     const result = arrayUnique([
         ...requiredExtensions,
         ...settingsDefaultExtensions,
-        ...settingsSyncExtensions,
     ]);
 
     return result

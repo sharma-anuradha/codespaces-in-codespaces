@@ -16,13 +16,13 @@ import { credentialsProvider } from '../providers/credentialsProvider/credential
 import { URI, IWorkbenchConstructionOptions } from 'vscode-web';
 import { telemetry } from '../../telemetry/telemetry';
 import { getHomeIndicator } from './getHomeIndicator';
-import { getUserDataProvider } from './getUserDataProvider';
-import { DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID } from '../../constants';
 import { getExtensions } from './getDefaultExtensions';
 import { getWorkbenchDefaultLayout } from '../../utils/getWorkbenchDefaultLayout';
 import { commands } from './workbenchCommands';
-import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 import { getProductConfiguration } from './getProductConfiguration';
+import { getDefaultSettings } from './getDefaultSettings';
+import { authService } from '../../auth/authService';
+import { codespaceInitializationTracker } from '../../utils/CodespaceInitializationTracker/CodespaceInitializationTracker';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -44,7 +44,6 @@ export class Workbench {
         vscodeConfig: IVSCodeConfig,
         token: string,
         options: IDefaultWorkbenchOptions,
-        userDataProvider: UserDataProvider
     ) {
         return async (connector: EnvConnector) => {
             const workspaceProvider = new WorkspaceProvider(
@@ -91,23 +90,41 @@ export class Workbench {
 
             const defaultLayout = getWorkbenchDefaultLayout(
                 environmentInfo,
-                userDataProvider.isFirstRun
+                await codespaceInitializationTracker.isFirstCodespaceLoad(),
             );
+
+            const [
+                homeIndicator,
+                productConfiguration,
+                configurationDefaults,
+            ] = await Promise.all([
+                getHomeIndicator(),
+                getProductConfiguration(),
+                getDefaultSettings(),
+            ]);
+
+            // `authenticationSessionId` API is deprecated and
+            // can be removed with VSCode Stable 1.49.x release
+            const defaultSettingsSyncSession = await authService.getSettingsSyncSession();
+            const authenticationSessionId = (defaultSettingsSyncSession)
+                ? defaultSettingsSyncSession.id
+                : undefined;
 
             const providers: IWorkbenchConstructionOptions = {
                 credentialsProvider,
-                userDataProvider,
                 workspaceProvider,
                 urlCallbackProvider,
                 resourceUriProvider,
                 resolveExternalUri,
                 resolveCommonTelemetryProperties,
-                homeIndicator: await getHomeIndicator(),
-                productConfiguration: await getProductConfiguration(),
-                authenticationSessionId: DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
+                authenticationSessionId,
                 enableSyncByDefault: true,
+                configurationDefaults,
+                homeIndicator: homeIndicator,
+                productConfiguration,
                 defaultLayout,
                 commands,
+                logLevel: 0,
             };
 
             return providers;
@@ -129,14 +146,13 @@ export class Workbench {
                 token
             );
 
-            const userDataProvider = await getUserDataProvider();
-            const extensions = await getExtensions(userDataProvider.isFirstRun);
+            const isFirstLoad = await codespaceInitializationTracker.isFirstCodespaceLoad();
+            const extensions = await getExtensions(isFirstLoad);
             const providersFunc = this.getProviders(
                 environmentInfo,
                 vscodeConfig,
                 token,
                 this.options,
-                userDataProvider
             );
 
             this.workbench = new VSCodeWorkbench({

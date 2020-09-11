@@ -135,7 +135,7 @@ export class VSLSWebSocket implements IWebSocket {
 
         const timeout = new Promise((_, reject) => {
             // tslint:disable-next-line: no-string-based-set-timeout
-            setTimeout(reject, 20 * 1000, new Error('VSLSSocketTimeout'));
+            setTimeout(reject, 30 * 1000, new Error('VSLSSocketTimeout'));
         });
 
         const environmentCheck = this.getEnvironmentInfo(getCurrentEnvironmentId()).then(

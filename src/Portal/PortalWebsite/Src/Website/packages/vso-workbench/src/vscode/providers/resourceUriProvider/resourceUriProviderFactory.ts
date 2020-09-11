@@ -16,6 +16,7 @@ export function resourceUriProviderFactory(
     connector.onVSCodeServerStarted(({ port }) => {
         portNumber = port;
     });
+
     return (uri: URI): URI => {
         portNumber = portNumber || connector.remotePort;
 

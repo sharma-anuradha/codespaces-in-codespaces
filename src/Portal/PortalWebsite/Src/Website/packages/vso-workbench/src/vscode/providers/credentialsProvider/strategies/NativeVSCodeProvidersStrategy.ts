@@ -1,11 +1,10 @@
 import { VSCodeDefaultAuthSession } from 'vs-codespaces-authorization';
 
-import { getVSCodeScheme } from 'vso-client-core';
+import { getVSCodeScheme, TSupportedNativeVSCodeAuthProviders } from 'vso-client-core';
 
 import { IAuthStrategy } from '../../../../interfaces/IAuthStrategy';
 
 import { authService } from '../../../../auth/authService';
-import { TSupportedNativeVSCodeAuthProviders } from '../../../../../../vso-client-core/src/interfaces/IPartnerInfo';
 import { DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID } from '../../../../../src/constants';
 import { featureFlags, FeatureFlags } from '../../../../../src/config/featureFlags';
 
@@ -25,12 +24,8 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
         return result;
     };
 
-    private isGitHubService = (service: string) => {
-        return service === `${getVSCodeScheme()}-github.login`;
-    };
-
-    private isMicrosoftService = (service: string) => {
-        return service === `${getVSCodeScheme()}-microsoft.login`;
+    private isService = (service:string, serviceName: TSupportedNativeVSCodeAuthProviders) => {
+        return service === `${getVSCodeScheme()}-${serviceName}.login`;
     };
 
     private getDefaultSession = async (): Promise<VSCodeDefaultAuthSession[] | null> => {
@@ -64,13 +59,13 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
             return false;
         }
 
-        if (this.isGitHubService(service)) {
+        if (this.isService(service, 'github')) {
             const ghTokens = this.getSessions(sessions, 'github');
 
             return !!ghTokens.length;
         }
 
-        if (this.isMicrosoftService(service)) {
+        if (this.isService(service, 'microsoft')) {
             const msTokens = this.getSessions(sessions, 'microsoft');
 
             return !!msTokens.length;
@@ -85,11 +80,11 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
             return null;
         }
 
-        if (this.isGitHubService(service)) {
+        if (this.isService(service, 'github')) {
             const ghTokens = this.getSessions(sessions, 'github');
 
             // Add session that is required for github-browser extension
-            if (await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled) && ghTokens.length > 0) {
+            if (await featureFlags.isEnabled(FeatureFlags.ServerlessEnabled)) {
                 const githubSessionRepo: VSCodeDefaultAuthSession = {
                     id: DEFAULT_GITHUB_BROWSER_AUTH_PROVIDER_ID,
                     accessToken: ghTokens[0].accessToken,
@@ -102,7 +97,7 @@ export class NativeVSCodeProvidersStrategy implements IAuthStrategy {
             return JSON.stringify(ghTokens);
         }
 
-        if (this.isMicrosoftService(service)) {
+        if (this.isService(service, 'microsoft')) {
             const msTokens = this.getSessions(sessions, 'microsoft');
 
             return JSON.stringify(msTokens);

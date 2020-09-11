@@ -18,7 +18,6 @@ import {
     VSLSWebSocket,
     SplashCommunicationProvider,
     CommunicationAdapter,
-    UserDataProvider,
     UrlCallbackProvider,
     WorkspaceProvider,
     resourceUriProviderFactory,
@@ -27,6 +26,7 @@ import {
     getExtensions,
     DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
     getWorkbenchDefaultLayout,
+    codespaceInitializationTracker,
 } from 'vso-workbench';
 
 import * as envRegService from '../../services/envRegService';
@@ -377,12 +377,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             new BrowserSyncService(sourceEventService);
         });
 
-        const defaultSettings = isHostedOnGithub()
-            ? '{"workbench.colorTheme": "GitHub Light", "workbench.startupEditor": "none"}'
-            : '';
-
-        const userDataProvider = new UserDataProvider(async () => defaultSettings);
-        await userDataProvider.initializeDBProvider();
+        const isFirstCodespaceLoad = await codespaceInitializationTracker.isFirstCodespaceLoad();
 
         // We start setting up the LiveShare connection here, so loading workbench assets and creating connection can go in parallel.
         envConnector.ensureConnection(
@@ -390,7 +385,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             token,
             liveShareEndpoint,
             getVSCodeVersion(),
-            getExtensions(userDataProvider.isFirstRun),
+            getExtensions(isFirstCodespaceLoad),
             apiEndpoint
         );
 
@@ -433,7 +428,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                     envConnector,
                     logger.verbose,
                     getEnvironment,
-                    getExtensions(userDataProvider.isFirstRun),
+                    getExtensions(isFirstCodespaceLoad),
                     apiEndpoint
                 );
             },
@@ -483,7 +478,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
 
         const defaultLayout = getWorkbenchDefaultLayout(
             environmentInfo,
-            userDataProvider.isFirstRun
+            await codespaceInitializationTracker.isFirstCodespaceLoad(),
         );
 
         const authenticationSessionId = isHostedOnGithub()
@@ -496,7 +491,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             connectionToken: vscodeVersion.commit,
             workspaceProvider,
             credentialsProvider,
-            userDataProvider,
             urlCallbackProvider: new UrlCallbackProvider(),
             resourceUriProvider,
             resolveExternalUri,

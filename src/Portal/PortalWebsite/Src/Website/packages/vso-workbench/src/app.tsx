@@ -5,7 +5,6 @@ import { updateFavicon } from 'vso-client-core';
 
 import { telemetry } from './telemetry/telemetry';
 
-import { checkTemporaryGitHubIFrameHandshake } from './utils/temp__checkGitHubIFrameHandshake';
 import { initAMDConfig } from './amdconfig';
 import { WorkbenchPage } from './react-app/components/WorkbenchPage/WorkbenchPage';
 import { authService } from './auth/authService';
@@ -14,7 +13,6 @@ import './react-app/style/index.css';
 import { getFaviconPath } from './utils/getFaviconPath';
 
 initAMDConfig();
-checkTemporaryGitHubIFrameHandshake();
 
 telemetry.initializeTelemetry((_: string) => null);
 

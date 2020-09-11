@@ -9,9 +9,8 @@ import { updateFavicon } from 'vso-client-core';
 
 import { telemetry, sendTelemetry } from '../../telemetry/telemetry';
 import { getVSCodeAssetPath } from '../../utils/getVSCodeAssetPath';
-import { getVSCodeVersion, getVSCodeVersionString } from '../../utils/getVSCodeVersion';
+import { getVSCodeVersionString } from '../../utils/getVSCodeVersion';
 import { vscode } from '../vscodeAssets/vscode';
-import { UserDataProvider } from '../providers/userDataProvider/userDataProvider';
 import { FolderWorkspaceProvider } from '../providers/folderWorkspaceProvider';
 import { UrlCallbackProvider } from '../providers/userDataProvider/urlCallbackProvider';
 
@@ -117,12 +116,6 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
 
         this.workbenchMounted = true;
 
-        const userDataProvider = new UserDataProvider(async () => {
-            return '';
-        });
-
-        await userDataProvider.initializeDBProvider();
-
         const resolveCommonTelemetryProperties = telemetry.resolveCommonProperties.bind(telemetry);
 
         const workspaceProvider = new FolderWorkspaceProvider(
@@ -163,7 +156,6 @@ export class ServerlessWorkbench extends Component<ServerlessWorkbenchProps> {
             workspaceProvider,
             urlCallbackProvider,
             credentialsProvider,
-            userDataProvider,
             resolveExternalUri,
             resolveCommonTelemetryProperties,
             staticExtensions,

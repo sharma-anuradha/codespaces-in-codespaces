@@ -36,6 +36,7 @@ export { RequestStore } from './utils/RequestStore';
 export { arrayUnique } from './utils/arrayUnique';
 export { updateFavicon } from './utils/updateFavicon';
 export { getTopLevelDomain } from './utils/getTopLevelDomain';
+export { cookies } from './utils/cookies';
 
 // interfaces
 export { IKeychain } from './interfaces/IKeychain';
@@ -78,7 +79,7 @@ export { IVSCodeConfig } from './interfaces/IVSCodeConfig';
 export { ICredentialsProvider } from './interfaces/ICredentialsProvider';
 export { IGitCredential } from './interfaces/IGitCredential';
 export { TPostMessageChannelMessages } from './interfaces/TPostMessageChannelMessages';
-export { IPartnerInfo } from './interfaces/IPartnerInfo';
+export { IPartnerInfo, TSupportedNativeVSCodeAuthProviders } from './interfaces/IPartnerInfo';
 export { EnvironmentType, EnvironmentErrorCodes } from './interfaces/IEnvironment';
 export { FeatureSet } from './interfaces/FeatureSet';
 export { TCodespaceInfo } from './interfaces/TCodespaceInfo';
