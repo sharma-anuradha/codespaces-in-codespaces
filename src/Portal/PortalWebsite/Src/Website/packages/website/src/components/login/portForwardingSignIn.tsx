@@ -8,7 +8,7 @@ import './portForwardingSignIn.css';
 
 type SignInProps = RouteComponentProps<{ environmentId: string }>;
 
-export const PortFowardingSingInPage: React.SFC<SignInProps> = (props) => {
+export const PortForwardingSingInPage: React.FunctionComponent<SignInProps> = (props) => {
     var formRef = useRef<HTMLFormElement>(null);
 
     const environmentId = props.match.params.environmentId;
@@ -33,7 +33,16 @@ export const PortFowardingSingInPage: React.SFC<SignInProps> = (props) => {
         }
     }, [token]);
 
-    if (!portString) {
+    const parsedPort =
+        portString != null && portString.length > 0 ? Number.parseInt(portString, 10) : -1;
+
+    if (
+        parsedPort < 0 ||
+        parsedPort >= 65535 ||
+        isNaN(parsedPort) ||
+        // Number.parseInt will trim non-number trailing characters.
+        parsedPort.toString().length != portString?.length
+    ) {
         return <Redirect to={`/environment/${environmentId}`} />;
     }
 

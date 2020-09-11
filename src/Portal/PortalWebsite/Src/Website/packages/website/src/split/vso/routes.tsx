@@ -33,7 +33,7 @@ import {
 
 import { IRoute } from '../../interfaces/IRoute';
 import { RouterConfig } from './routerConfig';
-import { PortFowardingSingInPage } from '../../components/login/portForwardingSignIn';
+import { PortForwardingSingInPage } from '../../components/login/portForwardingSignIn';
 
 export const routes: IRoute[] = [
     {
@@ -112,7 +112,7 @@ export const routes: IRoute[] = [
         authenticated: true,
         path: portForwardingSignIn,
         exact: true,
-        component: PortFowardingSingInPage,
+        component: PortForwardingSingInPage,
     },
     {
         authenticated: false,
