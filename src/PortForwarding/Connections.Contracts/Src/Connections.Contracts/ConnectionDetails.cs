@@ -38,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts
         /// Gets or sets agent Uid.
         /// </summary>
         public string AgentUid { get; set; } = default!;
+
+        /// <summary>
+        /// Gets or sets target server hints.
+        /// </summary>
+        public ServerHints? Hints { get; set; }
     }
 }
