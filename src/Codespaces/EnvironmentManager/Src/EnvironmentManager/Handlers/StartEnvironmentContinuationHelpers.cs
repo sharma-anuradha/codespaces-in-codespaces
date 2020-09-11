@@ -313,6 +313,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     cloudEnvironmentParameters.ConnectionServiceUri,
                     record.Value.Connection?.ConnectionSessionPath,
                     operationInput.CloudEnvironmentParameters.UserProfile.Email,
+                    operationInput.CloudEnvironmentParameters.UserProfile.Id,
                     operationInput.CloudEnvironmentParameters.UserAuthToken,
                     logger.NewChildLogger());
 

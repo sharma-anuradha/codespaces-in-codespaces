@@ -39,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Uri connectionServiceUri,
             string sessionPath,
             string emailAddress,
+            string profileId,
             string authToken,
             IDiagnosticsLogger logger)
         {
@@ -66,14 +67,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return null;
                     }
 
-                    var guestUsers = string.IsNullOrWhiteSpace(emailAddress)
-                        ? null // TODO - use user Ids once LS supports it
-                        : new string[] { emailAddress };
+                    string[] guestUsers = null;
+                    string[] guestUserIds = null;
+
+                    if (!string.IsNullOrWhiteSpace(profileId))
+                    {
+                        guestUserIds = new string[] { profileId };
+                    }
+                    else if (!string.IsNullOrWhiteSpace(emailAddress))
+                    {
+                        guestUsers = new string[] { emailAddress };
+                    }
+                    else
+                    {
+                        childLogger.LogWarning($"{LogBaseName}_missing_profileid_and_email_address");
+                    }
 
                     var invitationLinkInfo = new SharedInvitationLinkInfo()
                     {
                         WorkspaceId = workspaceResponse.Id,
                         GuestUsers = guestUsers,
+                        GuestUserIds = guestUserIds,
                     };
 
                     var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, authToken, childLogger);

@@ -354,6 +354,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 input.StartEnvironmentParams.ConnectionServiceUri,
                 record.Value.Connection.ConnectionSessionPath,
                 input.StartEnvironmentParams.UserProfile.Email,
+                input.StartEnvironmentParams.UserProfile.Id,
                 null,
                 logger.NewChildLogger());
 
@@ -427,6 +428,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 input.StartEnvironmentParams.ConnectionServiceUri,
                 record.Value.Connection?.ConnectionSessionPath,
                 input.StartEnvironmentParams.UserProfile.Email,
+                input.StartEnvironmentParams.UserProfile.Id,
                 null,
                 logger.NewChildLogger());
 

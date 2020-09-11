@@ -1,4 +1,4 @@
-﻿// <copyright file="IWorkspaceManager.cs" company="Microsoft">
+// <copyright file="IWorkspaceManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -24,6 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="connectionServiceUri">connection uri.</param>
         /// <param name="sessionPath">session path.</param>
         /// <param name="emailAddress">email address of the host.</param>
+        /// <param name="profileId">profile id.</param>
         /// <param name="authToken">auth token.</param>
         /// <param name="logger">logger.</param>
         /// <returns>result.</returns>
@@ -34,6 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Uri connectionServiceUri,
             string sessionPath,
             string emailAddress,
+            string profileId,
             string authToken,
             IDiagnosticsLogger logger);
 

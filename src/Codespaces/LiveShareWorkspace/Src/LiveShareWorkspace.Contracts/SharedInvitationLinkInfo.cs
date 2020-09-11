@@ -1,4 +1,4 @@
-﻿// <copyright file="SharedInvitationLinkInfo.cs" company="Microsoft">
+// <copyright file="SharedInvitationLinkInfo.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -23,5 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.LiveShareWorkspace.Contrac
         /// </summary>
         [JsonProperty(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
         public string[] GuestUsers { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of guest users id allowed to connect using this link.
+        /// </summary>
+        [JsonProperty(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+        public string[] GuestUserIds { get; set; }
     }
 }
