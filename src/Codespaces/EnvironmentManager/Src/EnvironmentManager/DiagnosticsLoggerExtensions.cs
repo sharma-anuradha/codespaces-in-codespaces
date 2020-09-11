@@ -19,7 +19,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
     {
         private const string LogValueCloudEnvironmentId = "CloudEnvironmentId";
         private const string LogValueSessionId = "SessionId";
+        private const string LogValueNewSessionId = "NewSessionId";
         private const string LogValueWorkspaceId = "WorkspaceId";
+        private const string LogValueNewWorkspaceId = "NewWorkspaceId";
         private const string LogValueComputeResourceId = "ComputeResourceId";
         private const string LogValueStorageResourceId = "StorageResourceId";
         private const string LogValueArchiveStorageResourceId = "ArchiveStorageResourceId";
@@ -67,6 +69,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddCountryCode(cloudEnvironment.CreationMetrics?.IsoCountryCode)
                     .AddAzureGeography(cloudEnvironment.CreationMetrics?.AzureGeography)
                     .AddVsoClientType(cloudEnvironment.CreationMetrics?.VsoClientType);
+            }
+
+            return logger;
+        }
+
+        /// <summary>
+        /// Add logging fields for ConnectionInfo instance.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="connectionInfo">The connection info.</param>
+        /// <returns>The logger.</returns>
+        public static IDiagnosticsLogger AddNewConnectionInfo(this IDiagnosticsLogger logger, ConnectionInfo connectionInfo)
+        {
+            Requires.NotNull(logger, nameof(logger));
+
+            if (connectionInfo != default)
+            {
+                logger
+                    .AddNewSessionId(connectionInfo?.ConnectionSessionId)
+                    .AddNewWorkspaceId(connectionInfo?.WorkspaceId);
             }
 
             return logger;
@@ -233,6 +255,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <returns>The <paramref name="logger"/>.</returns>
         public static IDiagnosticsLogger AddVsoClientType(this IDiagnosticsLogger logger, VsoClientType? value)
             => logger.FluentAddValue(LogValueVsoClientType, value);
+
+        /// <summary>
+        /// Add the newly created environment connection session id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="sessionId">The session id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddNewSessionId(this IDiagnosticsLogger logger, string sessionId)
+            => logger.FluentAddBaseValue(LogValueNewSessionId, sessionId);
+
+        /// <summary>
+        /// Add the newly environment connection invitation id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="workspaceId">The workspace id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddNewWorkspaceId(this IDiagnosticsLogger logger, string workspaceId)
+            => logger.FluentAddBaseValue(LogValueNewWorkspaceId, workspaceId);
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironmentUpdate"/> instance.

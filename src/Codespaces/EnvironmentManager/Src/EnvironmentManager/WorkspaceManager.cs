@@ -1,4 +1,4 @@
-﻿// <copyright file="WorkspaceManager.cs" company="Microsoft">
+// <copyright file="WorkspaceManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -85,7 +85,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         return null;
                     }
 
-                    return new ConnectionInfo
+                    var connectionInfo = new ConnectionInfo
                     {
                         ConnectionServiceUri = connectionServiceUri.AbsoluteUri,
                         ConnectionComputeId = computeResourceId.ToString(),
@@ -94,6 +94,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         WorkspaceId = workspaceResponse.Id,
                         ConnectionSessionPath = sessionPath,
                     };
+
+                    logger
+                        .AddNewConnectionInfo(connectionInfo)
+                        .LogInfo($"{LogBaseName}_created_new_workspace");
+
+                    return connectionInfo;
                 },
                 swallowException: false);
         }
