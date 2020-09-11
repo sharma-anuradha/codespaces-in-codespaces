@@ -169,6 +169,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                     try
                     {
                         var session = await errorsSessionsClient.AcceptMessageSessionAsync(context.GetCorrelationId(), TimeSpan.FromSeconds(60));
+                        if (session == default)
+                        {
+                            return null;
+                        }
+
                         var message = await session.ReceiveAsync();
                         if (message != default)
                         {
@@ -205,9 +210,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 {
                     case (V1Endpoints endpoint, null):
                         var ip = endpoint.Subsets.First().Addresses.First().Ip;
-                        var port = endpoint.Subsets.First().Ports.First().Port;
+                        var portDefinition = endpoint.Subsets.First().Ports.First();
+                        var port = portDefinition.Port;
+                        var scheme = portDefinition.Name.StartsWith("https-", StringComparison.InvariantCultureIgnoreCase)
+                            ? Uri.UriSchemeHttps
+                            : Uri.UriSchemeHttp;
 
-                        var uriBuilder = new UriBuilder(context.Request.Scheme, ip, port)
+                        var uriBuilder = new UriBuilder(scheme, ip, port)
                         {
                             Path = context.Request.Path,
                             Query = context.Request.QueryString.ToString(),

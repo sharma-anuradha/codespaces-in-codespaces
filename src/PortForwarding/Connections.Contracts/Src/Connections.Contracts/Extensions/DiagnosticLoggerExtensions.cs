@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 
@@ -33,13 +34,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts.Exte
         /// <returns>The logger with additional values.</returns>
         public static IDiagnosticsLogger AddConnectionDetails(this IDiagnosticsLogger logger, ConnectionDetails connectionDetails)
         {
+            var scheme = connectionDetails.Hints?.UseHttps == true ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
+
             return logger
                 .FluentAddValue("ConnectionId", connectionDetails.WorkspaceId)
                 .FluentAddValue("EnvironmentId", connectionDetails.EnvironmentId)
                 .FluentAddValue("SourcePort", connectionDetails.SourcePort)
                 .FluentAddValue("DestinationPort", connectionDetails.DestinationPort)
                 .FluentAddValue("AgentName", connectionDetails.AgentName)
-                .FluentAddValue("AgentUid", connectionDetails.AgentUid);
+                .FluentAddValue("AgentUid", connectionDetails.AgentUid)
+                .FluentAddValue("ServiceScheme", scheme);
         }
 
         /// <summary>

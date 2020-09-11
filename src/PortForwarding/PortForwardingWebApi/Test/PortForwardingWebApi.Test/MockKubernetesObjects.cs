@@ -1,4 +1,4 @@
-﻿using k8s.Models;
+using k8s.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test
 {
@@ -20,7 +20,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test
                         },
                         Ports = new[]
                         {
-                            new V1EndpointPort(443),
+                            new V1EndpointPort(443, name: "https-443"),
                         },
                     },
                 },

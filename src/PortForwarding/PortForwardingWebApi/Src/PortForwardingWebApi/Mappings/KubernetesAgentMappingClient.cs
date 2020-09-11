@@ -5,11 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
 using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.Rest;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Connections.Contracts;
@@ -26,57 +28,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
         private const string NameLabelKey = "vsonline.port-forwarding/agent-name";
         private const string UidLabelKey = "vsonline.port-forwarding/agent-uid";
         private const string DeploymentNameLabelKey = "app.kubernetes.io/name";
-        private readonly Dictionary<string, string> nginxIngressAnnotations = new Dictionary<string, string>
-        {
-            ["kubernetes.io/ingress.class"] = "nginx",
-            ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
-            ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin?cid=$request_id",
-            ["nginx.ingress.kubernetes.io/upstream-vhost"] = "localhost",
-            ["nginx.ingress.kubernetes.io/configuration-snippet"] = @"
-                set $new_cookie $http_cookie;
-
-                if ($new_cookie ~ ""(.*)(?:^|;)\s*use_vso_pfs=[^;]+(.*)"") {
-                    set $new_cookie $1$2;
-                }
-                if ($new_cookie ~ ""(.*)(?:^|;)\s*VstsSession=[^;]+(.*)"") {
-                    set $new_cookie $1$2;
-                }
-                if ($new_cookie ~ ""(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)"") {
-                    set $new_cookie $1$2;
-                }
-                if ($new_cookie ~ ""(.*)(?:^|;)\s*codespaces_correlation_id=[^;]+(.*)"") {
-                    set $new_cookie $1$2;
-                }
-                if ($new_cookie ~ "";\s*(.+);?\s*"") {
-                    set $new_cookie $1;
-                }
-
-                # Enable webpack-dev-server live reload without allowing PF host on dev side.
-                proxy_set_header origin ""http://localhost"";
-                proxy_set_header Cookie $new_cookie;
-            ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '),
-            ["nginx.ingress.kubernetes.io/server-snippet"] = @"
-                location /signin {
-                    set $http_correlation_id $request_id;
-
-                    if ($arg_cid) {
-                        set $http_correlation_id $arg_cid;
-                    }
-
-                    proxy_set_header X-Request-ID $http_correlation_id;
-                    proxy_pass http://portal-vsclk-portal-website.default.svc.cluster.local;
-                }
-                location /authenticate-codespace {
-                    proxy_pass_request_body on;
-                    proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
-                    proxy_set_header Host $http_host;
-
-                    proxy_buffer_size          128k;
-                    proxy_buffers              4 256k;
-                    proxy_busy_buffers_size    256k;
-                }
-            ".Replace("\r\n", "\n").Replace($"                ", string.Empty).Trim('\n', ' '), // We clean up indentation and normalize new lines for kubernetes use
-        };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KubernetesAgentMappingClient"/> class.
@@ -131,6 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
 
             logger.AddConnectionDetails(mapping);
 
+            var scheme = mapping.Hints?.UseHttps == true ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
+
             await Task.WhenAll(
                 logger.OperationScopeAsync(
                     "kubernetes_create_agent_endpoint",
@@ -156,15 +109,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                                     },
                                     Ports = new[]
                                     {
-                                        new V1EndpointPort(mapping.DestinationPort),
+                                        new V1EndpointPort(mapping.DestinationPort, name: $"{scheme}-{mapping.DestinationPort}"),
                                     },
                                 },
                             },
                         };
 
-                        await KubernetesClient.CreateNamespacedEndpointsAsync(endpoints, DefaultNamespace);
+                        try
+                        {
+                            await KubernetesClient.CreateNamespacedEndpointsAsync(endpoints, DefaultNamespace);
+                        }
+                        catch (HttpOperationException ex) when (ex.Response.StatusCode == HttpStatusCode.Conflict)
+                        {
+                            childLogger.LogInfo("kubernetes_create_agent_endpoint_conflict");
+                        }
                     },
-                    swallowException: true),
+                    swallowException: false),
                 logger.OperationScopeAsync(
                     "kubernetes_create_agent_service",
                     async (childLogger) =>
@@ -189,9 +149,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                             },
                         };
 
-                        await KubernetesClient.CreateNamespacedServiceAsync(service, DefaultNamespace);
+                        try
+                        {
+                            await KubernetesClient.CreateNamespacedServiceAsync(service, DefaultNamespace);
+                        }
+                        catch (HttpOperationException ex) when (ex.Response.StatusCode == HttpStatusCode.Conflict)
+                        {
+                            childLogger.LogInfo("kubernetes_create_agent_service_conflict");
+                        }
                     },
-                    swallowException: true),
+                    swallowException: false),
                 logger.OperationScopeAsync(
                     "kubernetes_create_agent_ingress",
                     async (childLogger) =>
@@ -235,7 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                             {
                                 Name = mapping.GetKubernetesServiceName(),
                                 OwnerReferences = new List<V1OwnerReference> { mapping.ToOwnerReference() },
-                                Annotations = nginxIngressAnnotations,
+                                Annotations = GetNginxAnnotations(scheme),
                             },
                             Spec = new Extensionsv1beta1IngressSpec
                             {
@@ -244,9 +211,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                             },
                         };
 
-                        await KubernetesClient.CreateNamespacedIngressAsync(ingress, DefaultNamespace);
+                        try
+                        {
+                            await KubernetesClient.CreateNamespacedIngressAsync(ingress, DefaultNamespace);
+                        }
+                        catch (HttpOperationException ex) when (ex.Response.StatusCode == HttpStatusCode.Conflict)
+                        {
+                            childLogger.LogInfo("kubernetes_create_agent_ingress_conflict");
+                        }
                     },
-                    swallowException: true));
+                    swallowException: false));
         }
 
         /// <inheritdoc/>
@@ -459,6 +433,77 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Mappi
                         return await taskSource.Task;
                     }
                 });
+        }
+
+        private Dictionary<string, string> GetNginxAnnotations(string scheme)
+        {
+            var annotations = new Dictionary<string, string>
+            {
+                ["kubernetes.io/ingress.class"] = "nginx",
+                ["nginx.ingress.kubernetes.io/auth-url"] = "http://portal-vsclk-portal-website.default.svc.cluster.local/auth",
+                ["nginx.ingress.kubernetes.io/auth-signin"] = "/signin?cid=$request_id",
+                ["nginx.ingress.kubernetes.io/upstream-vhost"] = "localhost",
+                ["nginx.ingress.kubernetes.io/configuration-snippet"] = CleanUpIndentation(@"
+                    set $new_cookie $http_cookie;
+
+                    if ($new_cookie ~ ""(.*)(?:^|;)\s*use_vso_pfs=[^;]+(.*)"") {
+                        set $new_cookie $1$2;
+                    }
+                    if ($new_cookie ~ ""(.*)(?:^|;)\s*VstsSession=[^;]+(.*)"") {
+                        set $new_cookie $1$2;
+                    }
+                    if ($new_cookie ~ ""(.*)(?:^|;)\s*__Host-vso-pf=[^;]+(.*)"") {
+                        set $new_cookie $1$2;
+                    }
+                    if ($new_cookie ~ ""(.*)(?:^|;)\s*codespaces_correlation_id=[^;]+(.*)"") {
+                        set $new_cookie $1$2;
+                    }
+                    if ($new_cookie ~ "";\s*(.+);?\s*"") {
+                        set $new_cookie $1;
+                    }
+
+                    # Enable webpack-dev-server live reload without allowing PF host on dev side.
+                    proxy_set_header origin ""{localhost_origin_value}"";
+                    proxy_set_header Cookie $new_cookie;
+                ").Replace("{localhost_origin_value}", $"{scheme}://localhost"),
+                ["nginx.ingress.kubernetes.io/server-snippet"] = CleanUpIndentation(@"
+                    location /signin {
+                        set $http_correlation_id $request_id;
+
+                        if ($arg_cid) {
+                            set $http_correlation_id $arg_cid;
+                        }
+
+                        proxy_set_header X-Request-ID $http_correlation_id;
+                        proxy_pass http://portal-vsclk-portal-website.default.svc.cluster.local;
+                    }
+                    location /authenticate-codespace {
+                        proxy_pass_request_body on;
+                        proxy_pass 'http://portal-vsclk-portal-website.default.svc.cluster.local';
+                        proxy_set_header Host $http_host;
+
+                        proxy_buffer_size          128k;
+                        proxy_buffers              4 256k;
+                        proxy_busy_buffers_size    256k;
+                    }
+                "),
+            };
+
+            if (scheme.Equals(Uri.UriSchemeHttps, StringComparison.InvariantCultureIgnoreCase))
+            {
+                annotations.Add("nginx.ingress.kubernetes.io/backend-protocol", "HTTPS");
+            }
+
+            return annotations;
+
+            string CleanUpIndentation(string str)
+            {
+                // We clean up indentation and normalize new lines for kubernetes use
+                // The spaces are the indentation between beginning of the line and first char.
+                // e.g. <                    s> for set $new_cookie ...
+                // or <                    l> for location /signin {
+                return str.Replace("\r\n", "\n").Replace("                    ", string.Empty).Trim('\n', ' ');
+            }
         }
     }
 }

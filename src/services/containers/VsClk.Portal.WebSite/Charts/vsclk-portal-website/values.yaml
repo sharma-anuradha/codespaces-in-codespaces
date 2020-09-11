@@ -78,11 +78,17 @@ pfingress:
 
         # Enable webpack-dev-server live reload without allowing PF host on dev side.
         proxy_set_header Host "localhost";
-        proxy_set_header origin "http://localhost";
+
+        set $new_origin "http://localhost";
+        if ($upstream_http_location ~* "^(?<pfa_scheme>https):\/\/(?<pfa_service>[^\/]+)(?<path>\/.*)$") {
+            set $new_origin "https://localhost";
+        }
+
+        proxy_set_header origin $new_origin;
 
         proxy_connect_timeout 5s;
-        if ($upstream_http_location ~* "^https?:\/\/(?<pfa_service>[^\/]+)(?<path>\/.*)$") {
-          proxy_pass 'http://$pfa_service';
+        if ($upstream_http_location ~* "^(?<pfa_scheme>https?):\/\/(?<pfa_service>[^\/]+)(?<path>\/.*)$") {
+          proxy_pass '$pfa_scheme://$pfa_service';
         }
       }
       location /authenticate-port-forwarder {

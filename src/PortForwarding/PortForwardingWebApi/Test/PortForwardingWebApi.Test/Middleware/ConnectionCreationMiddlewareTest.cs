@@ -6,6 +6,7 @@ using System;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using k8s.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Hosting;
@@ -124,6 +125,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockKubernetesObjects.Endpoint);
 
+            var errorsSessionClient = new Mock<ISessionClient>();
+            connectionErrorsSessionClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<ISessionClient>(() => errorsSessionClient.Object));
+
             await middleware.InvokeAsync(
                 context,
                 newConnectionsQueueClientProvider.Object,
@@ -200,6 +206,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                 .Setup(c => c.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync(MockKubernetesObjects.Endpoint);
 
+            var errorsSessionClient = new Mock<ISessionClient>();
+            connectionErrorsSessionClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<ISessionClient>(() => errorsSessionClient.Object));
+
             await middleware.InvokeAsync(
                 context,
                 newConnectionsQueueClientProvider.Object,
@@ -259,6 +270,101 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
         }
 
         [Fact]
+        public async Task InvokeAsync_ValidConfiguration_RedirectsToHttp()
+        {
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
+            var hostEnvironment = new Mock<IHostEnvironment>();
+            var queueClient = new Mock<IQueueClient>();
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
+
+            var mappingClient = new Mock<IAgentMappingClient>();
+            mappingClient
+                .Setup(i => i.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(new V1Endpoints
+                {
+                    Subsets = new[]
+                    {
+                        new V1EndpointSubset
+                        {
+                            Addresses = new[]
+                            {
+                                new V1EndpointAddress { Ip = "10.0.0.1" },
+                            },
+                            Ports = new[]
+                            {
+                                new V1EndpointPort { Port = 5000, Name = "http-5000" }
+                            }
+                        },
+                    },
+                });
+
+            var context = CreateMockContext(path: "/");
+
+            await middleware.InvokeAsync(
+                context,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
+                mappingClient.Object,
+                hostEnvironment.Object,
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
+
+            Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
+            Assert.Equal("http://10.0.0.1:5000/", context.Response.Headers.GetValueOrDefault("Location").ToString());
+        }
+
+
+        [Fact]
+        public async Task InvokeAsync_ValidConfiguration_RedirectsToHttps()
+        {
+            var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
+            var connectionErrorsSessionClientProvider = new Mock<IConnectionErrorsSessionClientProvider>();
+            var hostEnvironment = new Mock<IHostEnvironment>();
+            var queueClient = new Mock<IQueueClient>();
+            newConnectionsQueueClientProvider
+                .SetupGet(provider => provider.Client)
+                .Returns(new AsyncLazy<IQueueClient>(() => queueClient.Object));
+
+            var mappingClient = new Mock<IAgentMappingClient>();
+            mappingClient
+                .Setup(i => i.WaitForEndpointReadyAsync(It.IsAny<string>(), It.IsAny<IDiagnosticsLogger>()))
+                .ReturnsAsync(new V1Endpoints
+                {
+                    Subsets = new[]
+                    {
+                        new V1EndpointSubset
+                        {
+                            Addresses = new[]
+                            {
+                                new V1EndpointAddress { Ip = "10.0.0.1" },
+                            },
+                            Ports = new[]
+                            {
+                                new V1EndpointPort { Port = 5000, Name = "https-5000" }
+                            }
+                        },
+                    },
+                });
+
+            var context = CreateMockContext(path: "/");
+
+            await middleware.InvokeAsync(
+                context,
+                newConnectionsQueueClientProvider.Object,
+                connectionErrorsSessionClientProvider.Object,
+                mappingClient.Object,
+                hostEnvironment.Object,
+                hostUtils,
+                MockPortForwardingAppSettings.Settings);
+
+            Assert.Equal(StatusCodes.Status302Found, context.Response.StatusCode);
+            Assert.Equal("https://10.0.0.1:5000/", context.Response.Headers.GetValueOrDefault("Location").ToString());
+        }
+
+        [Fact]
         public async Task InvokeAsync_ValidConfiguration_AgentError()
         {
             var newConnectionsQueueClientProvider = new Mock<INewConnectionsQueueClientProvider>();
@@ -311,7 +417,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
             Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
         }
 
-        private HttpContext CreateMockContext(bool invalidHeaders = false, bool isAuthenticated = true, IDiagnosticsLogger logger = null)
+        private HttpContext CreateMockContext(bool invalidHeaders = false, bool isAuthenticated = true, string path = "/test/path", IDiagnosticsLogger logger = null)
         {
             var context = new DefaultHttpContext
             {
@@ -321,7 +427,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Test.
                     Scheme = "https",
                     Host = new HostString("testhost"),
                     PathBase = new PathString(string.Empty),
-                    Path = new PathString("/test/path"),
+                    Path = new PathString(path),
                     QueryString = new QueryString(string.Empty)
                 }
             };
