@@ -2,11 +2,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Storage;
+using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.File;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -17,8 +20,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Middleware;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider;
-using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 {
@@ -32,6 +33,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("sas_controller")]
     public class SasController : ControllerBase
     {
+        private static readonly string StorageMountableShareName = "cloudenvdata";
+        private static readonly string StorageLinuxMountableFilename = "dockerlib";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SasController"/> class.
         /// </summary>
@@ -67,8 +71,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         public async Task<IActionResult> GetDataAsync([FromServices] IDiagnosticsLogger logger)
         {
             var githubSpId = AppSettings.ControlPlaneSettings.GithubSpId;
-            var subscriptionId = AppSettings.ControlPlaneSettings.SubscriptionId;
-            var provider = new StorageFileShareProviderHelper(this.AzureClientFactory);
 
             var userid = HttpContext.User.GetUserIdFromClaims();
             if (!userid.Equals(githubSpId))
@@ -78,10 +80,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
 
             var accountToSasDictionary = new Dictionary<string, string>();
             var accounts = await AzureResourceAccessor.GetAllStampStorageAccountForPartner("gh");
-            foreach (var (resourceGroupName, name, key) in accounts)
+            foreach (var (name, key) in accounts)
             {
-                var resourceInfo = new AzureResourceInfo(subscriptionId, resourceGroupName, name);
-                var (token, _, _) = await provider.FetchStorageFileShareSasTokenAsync(resourceInfo, key, StorageType.Linux, SharedAccessFilePermissions.Read, string.Empty, logger);
+                // Get file client for storage account
+                var storageCreds = new StorageCredentials(name, key);
+                var cloudStorageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
+
+                var fileClient = cloudStorageAccount.CreateCloudFileClient();
+
+                // Get file reference
+                var fileShareName = StorageMountableShareName;
+                var fileShare = fileClient.GetShareReference(fileShareName);
+                var fileName = StorageLinuxMountableFilename;
+                var fileReference = fileShare.GetRootDirectoryReference().GetFileReference(fileName);
+
+                // Get file sas token
+                var srcFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
+                {
+                    Permissions = SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Delete,
+                    SharedAccessExpiryTime = DateTime.UtcNow.AddHours(2),
+                });
+                var token = fileReference.Uri.AbsoluteUri + srcFileSas;
+
                 accountToSasDictionary.Add(name, token);
             }
 

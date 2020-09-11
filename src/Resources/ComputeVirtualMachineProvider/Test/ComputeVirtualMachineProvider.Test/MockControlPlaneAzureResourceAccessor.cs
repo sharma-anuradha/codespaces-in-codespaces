@@ -121,7 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
-        public Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger) 
+        public Task<string> GetStampServiceBusConnectionStringAsync(IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }
@@ -141,14 +141,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<(string, string, string)>> GetAllStampStorageAccountForPartner(string partnerId)
+        public Task<IEnumerable<(string, string)>> GetAllStampStorageAccountForPartner(string partnerId)
         {
             throw new NotImplementedException();
         }
-        
-         public Task<QueueStorageInfo> GetStampStorageAccountForPoolQueuesAsync(IDiagnosticsLogger logger)
-         {
+
+        public Task<QueueStorageInfo> GetStampStorageAccountForPoolQueuesAsync(IDiagnosticsLogger logger)
+        {
             throw new NotImplementedException();
-         }
+        }
     }
 }

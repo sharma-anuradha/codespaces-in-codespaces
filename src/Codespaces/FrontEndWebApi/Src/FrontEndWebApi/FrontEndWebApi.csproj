@@ -35,7 +35,6 @@
     <ProjectReference Include="..\..\..\..\Common\Src\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\Common.InnerLoop\Common.InnerLoop.csproj" />
     <ProjectReference Include="..\..\..\..\Common\Src\HttpContracts\HttpContracts.csproj" />
-    <ProjectReference Include="..\..\..\..\Resources\StorageFileShareProvider\Src\StorageFileShareProvider\StorageFileShareProvider.csproj" />
     <ProjectReference Include="..\..\..\BackEndWebApiClient\Src\BackEndWebApiClient\BackEndWebApiClient.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing.Contracts\Billing.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Billing\Src\Billing\Billing.csproj" />

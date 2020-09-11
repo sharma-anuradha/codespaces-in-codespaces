@@ -115,8 +115,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         ///  Gets all stamp-level storage account used for github.
         /// </summary>
         /// <param name="partnerId">A two character string to distinguish partner storage accounts.</param>
-        /// <returns>A list of tuple of the resource group name, account name and the account key.</returns>
-        Task<IEnumerable<(string, string, string)>> GetAllStampStorageAccountForPartner(string partnerId);
+        /// <returns>A list of tuple of the account name and the account key.</returns>
+        Task<IEnumerable<(string accountName, string key)>> GetAllStampStorageAccountForPartner(string partnerId);
 
         /// <summary>
         /// Gets the stamp-level storage account used for github.

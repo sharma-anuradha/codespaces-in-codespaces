@@ -325,16 +325,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<(string, string, string)>> GetAllStampStorageAccountForPartner(string partnerId)
+        public async Task<IEnumerable<(string accountName, string key)>> GetAllStampStorageAccountForPartner(string partnerId)
         {
-            var list = new List<(string, string, string)>();
+            var list = new List<(string, string)>();
             foreach (var stamp in ControlPlaneInfo.AllStamps)
             {
                 var location = stamp.Key;
                 var resourceGroupName = stamp.Value.StampResourceGroupName;
                 var storageAccountName = stamp.Value.GetStampStorageAccountNameForPartner(location, partnerId);
                 var account = await GetStorageAccountAsync(resourceGroupName, storageAccountName);
-                list.Add((resourceGroupName, account.Item1, account.Item2));
+                list.Add((account.Item1, account.Item2));
             }
 
             return list;
