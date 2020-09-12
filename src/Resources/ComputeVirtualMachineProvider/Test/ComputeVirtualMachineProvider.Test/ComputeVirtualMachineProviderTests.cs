@@ -235,6 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 new ShareConnectionInfo("val1", "val2", "val3", "val4", "val5"),
                 new Dictionary<string, string>(),
                 new HashSet<UserSecretData>(),
+                String.Empty,
                 ComputeOS.Linux,
                 AzureLocation.WestUs2,
                 "Standard_D4s_v3",

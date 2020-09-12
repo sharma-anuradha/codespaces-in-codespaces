@@ -55,6 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     {
         private const string LoggingBaseName = "environments_controller";
         private const int MaxEnvironmentVariablesSecrets = 10;
+        private const int MaxDevContainerSize = 5120;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentsController"/> class.
@@ -373,6 +374,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             logger.AddSkuName(environmentCreateDetails.SkuName);
 
             IsSecretQuotaReached(createEnvironmentInput.Secrets);
+            IsDevContainerTooLong(logger, environmentCreateDetails.DevContainer);
 
             // Build metrics manager
             var metricsInfo = await GetMetricsInfoAsync(logger);
@@ -380,6 +382,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             // Get start environment parameters
             StartCloudEnvironmentParameters startEnvironmentParams = await GetStartCloudEnvironmentParametersAsync();
             startEnvironmentParams.Secrets = environmentCreateDetails.Secrets;
+            startEnvironmentParams.DevContainer = environmentCreateDetails.DevContainer;
 
             // Create environment
             var cloudEnvironment = await EnvironmentManager.CreateAsync(
@@ -987,6 +990,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 throw new ForbiddenException(
                             (int)MessageCodes.ExceededSecretsQuota,
                             message: $"Quota reached for the secrets type '{SecretType.EnvironmentVariable}'");
+            }
+        }
+
+        private void IsDevContainerTooLong(IDiagnosticsLogger logger, string devcontainer)
+        {
+            if (!string.IsNullOrEmpty(devcontainer) && devcontainer.Length > MaxDevContainerSize)
+            {
+                logger.LogError("Devcontainer max length exceeded.");
+
+                throw new ForbiddenException(
+                    (int)MessageCodes.ExceededOrgDevContainerMaxLength,
+                    message: "Devcontainer max length exceeded.");
             }
         }
     }

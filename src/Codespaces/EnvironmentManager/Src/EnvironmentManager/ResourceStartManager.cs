@@ -121,6 +121,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             Variables = environmentVariables,
                             FilterSecrets = filterSecrets,
                             Secrets = startCloudEnvironmentParameters.Secrets,
+                            DevContainer = ((StartCloudEnvironmentParameters)startCloudEnvironmentParameters).DevContainer,
                         },
                     };
 

@@ -161,5 +161,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Generic message when we don't know the exact reason.
         /// </summary>
         ExportEnvironmentGenericError = 29,
+
+        /// <summary>
+        /// The org devcontainer.json max length was exceeded.
+        /// </summary>
+        ExceededOrgDevContainerMaxLength = 30,
     }
 }

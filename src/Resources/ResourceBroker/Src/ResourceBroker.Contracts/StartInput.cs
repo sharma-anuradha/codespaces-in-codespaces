@@ -32,5 +32,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// Gets or sets the secrets from Create/Resume request payload.
         /// </summary>
         public IEnumerable<UserSecretData> Secrets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the devcontainer JSON.
+        /// </summary>
+        public string DevContainer { get; set; }
     }
 }

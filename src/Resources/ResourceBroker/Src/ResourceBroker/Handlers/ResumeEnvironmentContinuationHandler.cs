@@ -71,6 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers
                 shareConnectionInfo,
                 input.EnvironmentVariables,
                 input.UserSecrets,
+                input.DevContainer,
                 computeOs,
                 azureLocation,
                 compute.Value.SkuName,

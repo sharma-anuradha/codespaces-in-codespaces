@@ -180,6 +180,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                                 var userSecrets = default(IEnumerable<UserSecretData>);
 
+                                var devcontainerJson = computeResource.Resource.DevContainer;
+
                                 // If secrets are sent from Create/Resume request payload
                                 if (computeResource.Resource.Secrets?.Any() == true)
                                 {
@@ -200,6 +202,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     archiveStorageResource.Resource?.ResourceId,
                                     computeResource.Resource.Variables,
                                     userSecrets,
+                                    devcontainerJson,
                                     trigger,
                                     childLogger.NewChildLogger(),
                                     loggingProperties);

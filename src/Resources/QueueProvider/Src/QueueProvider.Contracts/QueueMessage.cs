@@ -1,4 +1,4 @@
-﻿// <copyright file="QueueMessage.cs" company="Microsoft">
+// <copyright file="QueueMessage.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -37,5 +37,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.QueueProvider.Contracts
         /// </summary>
         [DataMember(IsRequired = false, EmitDefaultValue = false)]
         public IEnumerable<UserSecretData> UserSecrets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the devcontainer json.
+        /// </summary>
+        [DataMember(IsRequired = false, EmitDefaultValue = false)]
+        public string DevContainer { get; set; }
     }
 }

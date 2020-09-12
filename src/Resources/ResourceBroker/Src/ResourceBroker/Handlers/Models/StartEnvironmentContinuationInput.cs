@@ -9,5 +9,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Handlers.Mo
     /// </summary>
     public class StartEnvironmentContinuationInput : BaseStartEnvironmentContinuationInput
     {
+        /// <summary>
+        /// Gets or sets the devcontainer JSON.
+        /// </summary>
+        public string DevContainer { get; set; }
     }
 }

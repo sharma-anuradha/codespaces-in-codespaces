@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -130,6 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                         { "GIT_CONFIG_USER_EMAIL",  GetConfigOrDefault("USER_EMAIL","GIT_CONFIG_USER_EMAIL")},
                    },
                 new HashSet<UserSecretData>(),
+                null,
                 ComputeOS.Linux,
                 testContext.Location,
                 "Standard_D4s_v3",

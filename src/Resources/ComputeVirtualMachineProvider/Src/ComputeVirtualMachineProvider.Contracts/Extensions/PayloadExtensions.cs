@@ -106,6 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
                 Command = StartEnvironmentCommand,
                 Parameters = jobParameters,
                 UserSecrets = startComputeInput.UserSecrets,
+                DevContainer = startComputeInput.DevContainer,
             };
 
             // Temporary: Add sku so the vm agent can limit memory on DS4_v3 VMs.

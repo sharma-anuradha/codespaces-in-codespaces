@@ -49,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="archiveStorageResourceId">Target blob storage resource id.</param>
         /// <param name="environmentVariables">Input environment variables for the compute.</param>
         /// <param name="userSecrets">User secrets applicable to the environment.</param>
+        /// <param name="devcontainerJson">Dev container JSON.</param>
         /// <param name="reason">Trigger for operation.</param>
         /// <param name="logger">Target logger.</param>
         /// <param name="loggingProperties">The dictionary of logging properties.</param>
@@ -61,6 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
             IEnumerable<UserSecretData> userSecrets,
+            string devcontainerJson,
             string reason,
             IDiagnosticsLogger logger,
             IDictionary<string, string> loggingProperties = null);

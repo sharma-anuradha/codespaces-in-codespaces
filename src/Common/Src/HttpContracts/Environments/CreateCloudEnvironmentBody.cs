@@ -89,5 +89,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Envir
         /// Gets or sets the secrets from Create/Resume request.
         /// </summary>
         public IEnumerable<SecretDataBody> Secrets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the devcontainer.
+        /// </summary>
+        public string DevContainer { get; set; }
     }
 }

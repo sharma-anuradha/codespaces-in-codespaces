@@ -1,4 +1,4 @@
-﻿// <copyright file="VirtualMachineProviderStartComputeInput.cs" company="Microsoft">
+// <copyright file="VirtualMachineProviderStartComputeInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -39,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             ShareConnectionInfo shareConnectionInfo,
             IDictionary<string, string> inputParams,
             IEnumerable<UserSecretData> userSecrets,
+            string devcontainer,
             ComputeOS computeOS,
             AzureLocation location,
             string skuName,
@@ -49,6 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
             FileShareConnection = shareConnectionInfo;
             VmInputParams = Requires.NotNull(inputParams, nameof(inputParams));
             UserSecrets = userSecrets;
+            DevContainer = devcontainer;
             ComputeOS = computeOS;
             Location = location;
             SkuName = Requires.NotNull(skuName, nameof(skuName));
@@ -73,6 +75,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         /// Gets or sets the user secrets.
         /// </summary>
         public IEnumerable<UserSecretData> UserSecrets { get; set; }
+
+        /// <summary>
+        /// Gets or sets the devcontainer json.
+        /// </summary>
+        public string DevContainer { get; set; }
 
         /// <summary>
         /// Gets or sets the ComputeOS.

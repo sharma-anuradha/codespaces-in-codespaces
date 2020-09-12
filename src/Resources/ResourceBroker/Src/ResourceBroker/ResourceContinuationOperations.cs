@@ -139,6 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             Guid? archiveStorageResourceId,
             IDictionary<string, string> environmentVariables,
             IEnumerable<UserSecretData> userSecrets,
+            string devcontainerJson,
             string reason,
             IDiagnosticsLogger logger,
             IDictionary<string, string> loggingProperties)
@@ -158,6 +159,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 ArchiveStorageResourceId = archiveStorageResourceId,
                 EnvironmentVariables = environmentVariables,
                 UserSecrets = userSecrets,
+                DevContainer = devcontainerJson,
                 Reason = reason,
             };
             var target = ResumeEnvironmentContinuationHandler.DefaultQueueTarget;

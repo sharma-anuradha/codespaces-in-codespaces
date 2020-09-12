@@ -18,5 +18,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Gets or sets the connection service (Live Share) uri.
         /// </summary>
         public Uri ConnectionServiceUri { get; set; }
+
+        /// <summary>
+        /// Gets or sets the devcontainer json.
+        /// </summary>
+        public string DevContainer { get; set; }
     }
 }
