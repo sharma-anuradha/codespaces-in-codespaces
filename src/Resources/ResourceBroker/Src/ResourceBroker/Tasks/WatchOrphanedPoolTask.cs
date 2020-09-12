@@ -90,6 +90,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 {
                     // Fetch distinct list of pool codes
                     var poolCodes = await ResourceRepository.GetPoolCodesForUnassignedAsync(childLogger.NewChildLogger());
+                    var poolQueueCodes = await ResourceRepository.GetAllPoolQueueCodesAsync(childLogger.NewChildLogger());
+
+                    var allPoolcodes = new HashSet<string>(poolCodes);
+                    
+                    // Add pool codes for pools, that do not contain any unassigned resources, but have pool queues. 
+                    foreach (var poolQueueCode in poolQueueCodes)
+                    {
+                        var poolCode = poolQueueCode.GetPoolCodeForQueue();
+
+                        if (!allPoolcodes.Contains(poolCode))
+                        {
+                            allPoolcodes.Add(poolCode);
+                        }
+                    }
 
                     // Fetch active pools in the system
                     var resourcePools = await ResourcePoolDefinitionStore.RetrieveDefinitionsAsync();
@@ -100,7 +114,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         // Run through found resources in the background
                         await TaskHelper.RunConcurrentEnumerableAsync(
                             $"{LogBaseName}_run_unit_check",
-                            poolCodes,
+                            allPoolcodes,
                             async (poolCode, itemLogger) => await CoreRunUnitAsync(poolCode, resourcePools, itemLogger),
                             childLogger,
                             (pool, itemLogger) => ObtainLeaseAsync($"{LeaseBaseName}-{pool}", claimSpan, itemLogger));
@@ -112,10 +126,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 swallowException: true);
         }
 
-        /// <inheritdoc/>
-        public override void Dispose()
+        private async Task CoreRunUnitAsync(string poolReferenceCode, IEnumerable<ResourcePool> resourcePools, IDiagnosticsLogger logger)
         {
-            Disposed = true;
+            // Determine if the pool is still configured in the system
+            var isActive = IsActivePool(poolReferenceCode, resourcePools);
+
+            logger.FluentAddBaseValue("TaskResourcePoolIsToBeDeleted", !isActive);
+
+            if (!isActive)
+            {
+                await ProcessPoolRecordsAsync(poolReferenceCode, logger);
+            }
+        }
+
+        /// <summary>
+        /// Checks whether the given pool is active or not.
+        /// </summary>
+        /// <param name="poolReferenceCode">PoolReferenceCode.</param>
+        /// <param name="resourcePools">List of resource pools that are active.</param>
+        /// <returns>A boolean to know if its active.</returns>
+        public bool IsActivePool(string poolReferenceCode, IEnumerable<ResourcePool> resourcePools)
+        {
+            return resourcePools.Any(pool => pool.Id == poolReferenceCode);
         }
 
         /// <summary>
@@ -126,9 +158,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task ProcessPoolRecordsAsync(string poolReferenceCode, IDiagnosticsLogger logger)
         {
-            // Get record so we can tell if it exists and unAssigned.
+            // Queries for resources that
+            // 1. belongs to resourcePool and exists and unAssigned.
+            // 2. represenrs poolQueue for this resource pool.
             await ResourceRepository.ForEachAsync(
-                x => (x.PoolReference.Code == poolReferenceCode || x.PoolReference.Code == poolReferenceCode.GetPoolQueueDefinition()) && x.IsAssigned == false && x.IsDeleted == false,
+                x => (x.PoolReference.Code == poolReferenceCode &&
+                    x.IsAssigned == false &&
+                    x.IsDeleted == false) ||
+                    x.PoolReference.Code == poolReferenceCode.GetPoolQueueDefinition(),
                 logger.NewChildLogger(),
                 (resource, innerLogger) =>
                 {
@@ -146,17 +183,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <summary>
-        /// Checks whether the given pool is active or not.
-        /// </summary>
-        /// <param name="poolReferenceCode">PoolReferenceCode.</param>
-        /// <param name="resourcePools">List of resource pools that are active.</param>
-        /// <returns>A boolean to know if its active.</returns>
-        public bool IsActivePool(string poolReferenceCode, IEnumerable<ResourcePool> resourcePools)
-        {
-            return resourcePools.Any(pool => pool.Id == poolReferenceCode);
-        }
-
-        /// <summary>
         /// Deletes the resource with ResourceContinuationOperation,
         /// just marked as delete untill the dependent resources are deleted in Azure.
         /// </summary>
@@ -168,12 +194,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var resourceRecord = await ResourceRepository.GetAsync(id, logger);
             var isAssigned = resourceRecord?.IsAssigned == true;
             var isDeleted = resourceRecord?.IsDeleted == true;
-            var shouldDelete = !isAssigned && !isDeleted;
+            var isPoolQueue = resourceRecord?.Type == ResourceType.PoolQueue;
+
+            // Delete if resource exists and not assigned or if it is a pool queue resource
+            var shouldDelete = (!isAssigned && !isDeleted) || isPoolQueue;
             string deletedResourceId = null;
 
             logger
                 .FluentAddBaseValue("PoolIsAssigned", isAssigned)
                 .FluentAddBaseValue("PoolIsDeleted", isDeleted)
+                .FluentAddBaseValue("PoolQueue", isPoolQueue)
                 .FluentAddBaseValue("PoolShouldDelete", shouldDelete);
 
             // Double checking to make sure for deletion.
@@ -196,23 +226,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             return deletedResourceId;
         }
 
-        private async Task CoreRunUnitAsync(string poolReferenceCode, IEnumerable<ResourcePool> resourcePools, IDiagnosticsLogger logger)
-        {
-            // Determine if the pool is still configured in the system
-            var isActive = IsActivePool(poolReferenceCode, resourcePools);
-
-            logger.FluentAddBaseValue("TaskResourcePoolIsToBeDeleted", !isActive);
-
-            if (!isActive)
-            {
-                await ProcessPoolRecordsAsync(poolReferenceCode, logger);
-            }
-        }
-
         private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
             return ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
+        }
+
+        /// <inheritdoc/>
+        public override void Dispose()
+        {
+            Disposed = true;
         }
     }
 }

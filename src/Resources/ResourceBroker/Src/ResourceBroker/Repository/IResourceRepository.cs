@@ -24,6 +24,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository
         Task<IEnumerable<string>> GetPoolCodesForUnassignedAsync(IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Fetch a list of pool reference codes that are ununsed.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Returns a list of distinct pool reference code.</returns>
+        Task<IEnumerable<string>> GetAllPoolQueueCodesAsync(IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Gets the PoolReadyUnassigned.
         /// </summary>
         /// <param name="poolCode">Pool Reference Code.</param>

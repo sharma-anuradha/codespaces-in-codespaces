@@ -164,7 +164,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         resourcePools,
                         (resourcePool, itemLogger) => CreatePoolQueueRecordIfNotExist(queueStorageInfo, resourcePool, allocationQueues, itemLogger),
                         childLogger,
-                        (resourcePool, itemLogger) => ObtainLeaseAsync($"{LogBase}-lease-{resourcePool.Details.GetPoolDefinition()}", TimeSpan.FromMinutes(10), itemLogger));
+                        (resourcePool, itemLogger) => ObtainLeaseAsync($"{LogBase}-lease-{allocationQueues[resourcePool.Details.GetPoolDefinition()].Name}", TimeSpan.FromMinutes(10), itemLogger));
 
                      return new ReadOnlyDictionary<string, CloudQueue>(allocationQueues);
                  },

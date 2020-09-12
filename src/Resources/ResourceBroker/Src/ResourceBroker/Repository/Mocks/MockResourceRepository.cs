@@ -48,6 +48,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
                 .Select(x => x.Id);
         }
 
+        public async Task<IEnumerable<string>> GetAllPoolQueueCodesAsync(IDiagnosticsLogger logger)
+        {
+            await Task.Delay(Random.Next(100, 1000));
+
+            return Store
+                .Select(x => x.Value)
+                .Where(x => x.Type == Common.Contracts.ResourceType.PoolQueue)
+                .Select(x => x.Id);
+        }
+
         /// <inheritdoc/>
         public async Task<ResourceRecord> GetPoolReadyUnassignedAsync(string poolCode, IDiagnosticsLogger logger)
         {
@@ -310,6 +320,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository.
         }
 
         public Task<IEnumerable<SystemResourceCountByDimensions>> GetComponentCountByDimensionsAsync(IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<ResourceRecord>> GetAllPoolQueueRecordsAsync(string poolCode, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();
         }

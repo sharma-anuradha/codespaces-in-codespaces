@@ -64,13 +64,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         }
 
         /// <summary>
-        /// Get code for pool queue resource.
+        /// Get code for pool queue resource that respresents resource type PoolQueue.
         /// </summary>
         /// <param name="poolCode">pool code.</param>
         /// <returns>pool queue code.</returns>
         public static string GetPoolQueueDefinition(this string poolCode)
         {
             return $"{poolCode}-PoolQueue";
+        }
+
+        /// <summary>
+        /// Get poolCode for resource pool, that uses this poolQueue for queue resource allocation.
+        /// </summary>
+        /// <param name="poolQueueCode">pool code.</param>
+        /// <returns>pool queue code.</returns>
+        public static string GetPoolCodeForQueue(this string poolQueueCode)
+        {
+            var codeComponent = poolQueueCode.Split("-");
+            if (codeComponent.Length != 2)
+            {
+                return default;
+            }
+
+            return codeComponent[0];
         }
     }
 }

@@ -497,7 +497,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 {
                     logger.FluentAddValue("LeaseNotFound", lease == null);
 
-                    // Obnly execute if we have somethin g to do
+                    // Obnly execute if we have something to do
                     if (lease != null)
                     {
                         await logger.OperationScopeAsync(name, wrappedCallback);
