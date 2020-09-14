@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string sessionPath,
             string emailAddress,
             string profileId,
-            bool scopeForProfileId,
+            bool excludeScopes,
             string authToken,
             IDiagnosticsLogger logger)
         {
@@ -71,14 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     string[] guestUsers = null;
                     string[] guestUserIds = null;
 
-                    if (scopeForProfileId)
-                    {
-                        if (!string.IsNullOrWhiteSpace(profileId))
-                        {
-                            guestUserIds = new string[] { profileId };
-                        }
-                    }
-                    else
+                    if (!excludeScopes)
                     {
                         // Only add email if it is not github. True for non github customers.
                         if (!string.IsNullOrWhiteSpace(emailAddress))
@@ -87,6 +80,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                             guestUsers = new string[] { emailAddress };
                         }
                     }
+
+                    // TODO: janraj, fix to use profileid.
+                    // else
+                    // {
+                    //     if (!string.IsNullOrWhiteSpace(profileId))
+                    //     {
+                    //         guestUserIds = new string[] { profileId };
+                    //     }
+                    // }
 
                     var invitationLinkInfo = new SharedInvitationLinkInfo()
                     {

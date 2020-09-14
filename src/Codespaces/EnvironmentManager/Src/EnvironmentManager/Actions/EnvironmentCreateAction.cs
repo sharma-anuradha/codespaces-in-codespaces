@@ -355,7 +355,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 record.Value.Connection.ConnectionSessionPath,
                 input.StartEnvironmentParams.UserProfile.Email,
                 input.StartEnvironmentParams.UserProfile.Id,
-                record.Value.Partner == Partner.GitHub,
+                record.Value.SkuName.Contains("windows", StringComparison.OrdinalIgnoreCase),
                 null,
                 logger.NewChildLogger());
 
@@ -430,7 +430,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 record.Value.Connection?.ConnectionSessionPath,
                 input.StartEnvironmentParams.UserProfile.Email,
                 input.StartEnvironmentParams.UserProfile.Id,
-                record.Value.Partner == Partner.GitHub,
+                record.Value.SkuName.Contains("windows", StringComparison.OrdinalIgnoreCase),
                 null,
                 logger.NewChildLogger());
 

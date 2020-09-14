@@ -315,7 +315,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     record.Value.Connection?.ConnectionSessionPath,
                     operationInput.CloudEnvironmentParameters.UserProfile.Email,
                     operationInput.CloudEnvironmentParameters.UserProfile.Id,
-                    record.Value.Partner == Partner.GitHub,
+                    record.Value.SkuName.Contains("windows", StringComparison.OrdinalIgnoreCase),
                     operationInput.CloudEnvironmentParameters.UserAuthToken,
                     logger.NewChildLogger());
 
