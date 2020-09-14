@@ -260,87 +260,88 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
              VirtualMachineProviderDeleteInput input,
              IDiagnosticsLogger logger)
         {
-            try
-            {
-                var vmName = input.AzureResourceInfo.Name;
-                var vmResourceGroup = input.AzureResourceInfo.ResourceGroup;
-                var vmSubscriptionId = input.AzureResourceInfo.SubscriptionId;
-
-                // Save resource state for continuation token.
-                var phase0Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
-                var phase1Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
-                var phase2Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
-                var resourceDeletionPlan = new Dictionary<int, (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)> Resources, OperationState PhaseState)>();
-
-                phase0Resources.Add(VirtualMachineConstants.VmNameKey, (input.AzureResourceInfo, OperationState.NotStarted));
-
-                // Add Queue
-                var queueResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.InputQueue).SingleOrDefault();
-                if (queueResourceInfo != default && !queueResourceInfo.Preserve)
+            return await logger.OperationScopeAsync(
+                $"{LogBase}_begin_delete_compute",
+                async (childLogger) =>
                 {
-                    phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (queueResourceInfo.AzureResourceInfo, OperationState.NotStarted));
-                }
-                else if (queueResourceInfo == default)
-                {
-                    var queueDetailsInput = new QueueProviderGetDetailsInput()
+                    var vmName = input.AzureResourceInfo.Name;
+                    var vmResourceGroup = input.AzureResourceInfo.ResourceGroup;
+                    var vmSubscriptionId = input.AzureResourceInfo.SubscriptionId;
+
+                    // Save resource state for continuation token.
+                    var phase0Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
+                    var phase1Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
+                    var phase2Resources = new Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>();
+                    var resourceDeletionPlan = new Dictionary<int, (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)> Resources, OperationState PhaseState)>();
+
+                    phase0Resources.Add(VirtualMachineConstants.VmNameKey, (input.AzureResourceInfo, OperationState.NotStarted));
+
+                    // Add Queue
+                    var queueResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.InputQueue).SingleOrDefault();
+                    if (queueResourceInfo != default && !queueResourceInfo.Preserve)
                     {
-                        AzureLocation = input.AzureVmLocation,
-                        Name = VirtualMachineResourceNames.GetInputQueueName(vmName),
-                    };
-
-                    var queueDetailsResult = await QueueProvider.GetDetailsAsync(queueDetailsInput, logger.NewChildLogger());
-                    phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (queueDetailsResult.AzureResourceInfo, OperationState.NotStarted));
-                }
-
-                // Add NIC
-                var nicResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.NetworkInterface).SingleOrDefault()?.AzureResourceInfo;
-                if (nicResourceInfo != null)
-                {
-                    var nicInfoProperties = new AzureResourceInfoNetworkInterfaceProperties(nicResourceInfo.Properties);
-
-                    phase1Resources.Add(VirtualMachineConstants.NicNameKey, (nicResourceInfo, OperationState.NotStarted));
-
-                    if (!nicInfoProperties.IsVNetInjected)
-                    {
-                        phase2Resources.Add(VirtualMachineConstants.NsgNameKey, (new AzureResourceInfo() { Name = nicInfoProperties.Nsg, ResourceGroup = nicResourceInfo.ResourceGroup, SubscriptionId = nicResourceInfo.SubscriptionId }, OperationState.NotStarted));
-                        phase2Resources.Add(VirtualMachineConstants.VnetNameKey, (new AzureResourceInfo() { Name = nicInfoProperties.VNet, ResourceGroup = nicResourceInfo.ResourceGroup, SubscriptionId = nicResourceInfo.SubscriptionId }, OperationState.NotStarted));
+                        phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (queueResourceInfo.AzureResourceInfo, OperationState.NotStarted));
                     }
-                }
-                else
-                {
-                    phase1Resources.Add(VirtualMachineConstants.NicNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetNetworkInterfaceName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
-                    phase2Resources.Add(VirtualMachineConstants.NsgNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetNetworkSecurityGroupName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
-                    phase2Resources.Add(VirtualMachineConstants.VnetNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetVirtualNetworkName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
-                }
+                    else if (queueResourceInfo == default)
+                    {
+                        var queueDetailsInput = new QueueProviderGetDetailsInput()
+                        {
+                            AzureLocation = input.AzureVmLocation,
+                            Name = VirtualMachineResourceNames.GetInputQueueName(vmName),
+                        };
 
-                // Add Disk
-                var diskResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.OSDisk).SingleOrDefault();
-                if (diskResourceInfo != default && !diskResourceInfo.Preserve)
-                {
-                    phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (diskResourceInfo.AzureResourceInfo, OperationState.NotStarted));
-                }
-                else if (diskResourceInfo == default)
-                {
-                    phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetOsDiskName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
-                }
+                        var queueDetailsResult = await QueueProvider.GetDetailsAsync(queueDetailsInput, childLogger.NewChildLogger());
+                        phase0Resources.Add(VirtualMachineConstants.InputQueueNameKey, (queueDetailsResult.AzureResourceInfo, OperationState.NotStarted));
+                    }
 
-                resourceDeletionPlan.Add(0, (phase0Resources, OperationState.NotStarted));
-                resourceDeletionPlan.Add(1, (phase1Resources, OperationState.NotStarted));
-                resourceDeletionPlan.Add(2, (phase2Resources, (phase0Resources.Count == 0) ? OperationState.Succeeded : OperationState.NotStarted));
+                    // Add NIC
+                    var nicResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.NetworkInterface).SingleOrDefault()?.AzureResourceInfo;
+                    if (nicResourceInfo != null)
+                    {
+                        var nicInfoProperties = new AzureResourceInfoNetworkInterfaceProperties(nicResourceInfo.Properties);
 
-                var trackingId = JsonConvert.SerializeObject((input.AzureVmLocation, resourceDeletionPlan));
-                return (OperationState.InProgress, new NextStageInput()
-                {
-                    TrackingId = trackingId,
-                    AzureResourceInfo = input.AzureResourceInfo,
-                    Version = NextStageInput.CurrentVersion,
-                });
-            }
-            catch (Exception ex)
-            {
-                logger.LogException($"{LogBase}_begin_delete_compute_error", ex);
-                throw;
-            }
+                        phase1Resources.Add(VirtualMachineConstants.NicNameKey, (nicResourceInfo, OperationState.NotStarted));
+
+                        if (!nicInfoProperties.IsVNetInjected)
+                        {
+                            phase2Resources.Add(VirtualMachineConstants.NsgNameKey, (new AzureResourceInfo() { Name = nicInfoProperties.Nsg, ResourceGroup = nicResourceInfo.ResourceGroup, SubscriptionId = nicResourceInfo.SubscriptionId }, OperationState.NotStarted));
+                            phase2Resources.Add(VirtualMachineConstants.VnetNameKey, (new AzureResourceInfo() { Name = nicInfoProperties.VNet, ResourceGroup = nicResourceInfo.ResourceGroup, SubscriptionId = nicResourceInfo.SubscriptionId }, OperationState.NotStarted));
+                        }
+                    }
+                    else
+                    {
+                        phase1Resources.Add(VirtualMachineConstants.NicNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetNetworkInterfaceName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
+                        phase2Resources.Add(VirtualMachineConstants.NsgNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetNetworkSecurityGroupName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
+                        phase2Resources.Add(VirtualMachineConstants.VnetNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetVirtualNetworkName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
+                    }
+
+                    // Add Disk
+                    var diskResourceInfo = input.CustomComponents?.Where(c => c != default && c.ComponentType == ResourceType.OSDisk).SingleOrDefault();
+                    if (diskResourceInfo != default && !diskResourceInfo.Preserve)
+                    {
+                        phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (diskResourceInfo.AzureResourceInfo, OperationState.NotStarted));
+                    }
+                    else if (diskResourceInfo == default)
+                    {
+                        phase1Resources.Add(VirtualMachineConstants.DiskNameKey, (new AzureResourceInfo() { Name = VirtualMachineResourceNames.GetOsDiskName(vmName), ResourceGroup = vmResourceGroup, SubscriptionId = vmSubscriptionId }, OperationState.NotStarted));
+                    }
+
+                    resourceDeletionPlan.Add(0, (phase0Resources, OperationState.NotStarted));
+                    resourceDeletionPlan.Add(1, (phase1Resources, OperationState.NotStarted));
+                    resourceDeletionPlan.Add(2, (phase2Resources, (phase0Resources.Count == 0) ? OperationState.Succeeded : OperationState.NotStarted));
+
+                    var trackingId = JsonConvert.SerializeObject((input.AzureVmLocation, resourceDeletionPlan));
+
+                    childLogger.FluentAddValue("TrackingId", trackingId);
+
+                    return (OperationState.InProgress, new NextStageInput()
+                    {
+                        TrackingId = trackingId,
+                        AzureResourceInfo = input.AzureResourceInfo,
+                        Version = NextStageInput.CurrentVersion,
+                    });
+                },
+                swallowException: false);
         }
 
         /// <inheritdoc/>
@@ -348,45 +349,58 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
             NextStageInput input,
             IDiagnosticsLogger logger)
         {
-            try
-            {
-                if (input.Version == NextStageInput.CurrentVersion)
+            return await logger.OperationScopeAsync(
+                $"{LogBase}_check_delete_compute",
+                async (childLogger) =>
                 {
-                    return await CheckDeleteComputeStatusVer1Async(input, logger);
-                }
-                else
+                    if (input.Version == NextStageInput.CurrentVersion)
+                    {
+                        return await CheckDeleteComputeStatusVer1Async(input, childLogger.NewChildLogger());
+                    }
+                    else
+                    {
+                        throw new ArgumentException($"{nameof(input)} version {input.Version} is not valid.");
+                    }
+                },
+                (ex, childLogger) =>
                 {
-                    throw new ArgumentException($"{nameof(input)} version {input.Version} is not valid.");
-                }
-            }
-            catch (ArgumentException)
-            {
-                throw;
-            }
-            catch (AggregateException ex)
-            {
-                var s = new StringBuilder();
-                foreach (var e in ex.Flatten().InnerExceptions)
-                {
-                    s.AppendLine("Exception type: " + e.GetType().FullName);
-                    s.AppendLine("Message       : " + e.Message);
-                    s.AppendLine("Stacktrace:");
-                    s.AppendLine(e.StackTrace);
-                    s.AppendLine();
-                }
+                    if (ex is ArgumentException)
+                    {
+                        throw ex;
+                    }
+                    else if (ex is AggregateException aggEx)
+                    {
+                        var s = new StringBuilder();
+                        foreach (var e in aggEx.Flatten().InnerExceptions)
+                        {
+                            s.AppendLine("Exception type: " + e.GetType().FullName);
+                            s.AppendLine("Message       : " + e.Message);
+                            s.AppendLine("Stacktrace:");
+                            s.AppendLine(e.StackTrace);
+                            s.AppendLine();
+                        }
 
-                logger.LogErrorWithDetail($"{LogBase}__error", s.ToString());
-                var nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1)
-                {
-                    Version = NextStageInput.CurrentVersion,
-                };
-                if (input.RetryAttempt < 5)
-                {
-                    return (OperationState.InProgress, nextStageInput);
-                }
+                        logger
+                            .FluentAddValue("RetryAttempt", input.RetryAttempt)
+                            .LogErrorWithDetail($"{LogBase}_check_delete_compute_error", s.ToString());
 
-                throw;
-            }
+                        var nextStageInput = new NextStageInput(input.TrackingId, input.AzureResourceInfo, input.RetryAttempt + 1)
+                        {
+                            Version = NextStageInput.CurrentVersion,
+                        };
+                        if (input.RetryAttempt < 5)
+                        {
+                            return Task.FromResult((OperationState.InProgress, nextStageInput));
+                        }
+
+                        throw aggEx;
+                    }
+                    else
+                    {
+                        throw ex;
+                    }
+                },
+                swallowException: false);
         }
 
         /// <inheritdoc/>
@@ -465,15 +479,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
         /// <param name="checkResourceFunc">check resource delegate.</param>
         /// <param name="resourcesToBeDeleted">list of resources to be deleted.</param>
         /// <param name="resourceNameKey">resource name key.</param>
+        /// <param name="logger">a diagnostics logger to which new columns are added - it should NOT be a new logger.</param>
         /// <returns>A task.</returns>
         private static Task CheckResourceStatus<TResult>(
            Func<string, Task> deleteResourceFunc,
            Func<string, Task<TResult>> checkResourceFunc,
            Dictionary<string, VmResourceState> resourcesToBeDeleted,
-           string resourceNameKey)
+           string resourceNameKey,
+           IDiagnosticsLogger logger)
         {
             var resourceName = resourcesToBeDeleted[resourceNameKey].Name;
             var resourceState = resourcesToBeDeleted[resourceNameKey].State;
+
+            logger.FluentAddValue("ResourceOriginalOperationState", resourceState.ToString());
+
             if (resourceState == OperationState.NotStarted)
             {
                 var beginDeleteTask = deleteResourceFunc(resourceName);
@@ -482,10 +501,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         {
                             if (task.IsCompleted)
                             {
+                                logger.FluentAddValue("ResourceNewOperationState", OperationState.InProgress.ToString());
                                 resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.InProgress);
                             }
                             else if (task.IsFaulted || task.IsCanceled)
                             {
+                                logger.FluentAddValue("ResourceNewOperationState", OperationState.NotStarted.ToString());
                                 resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.NotStarted);
                             }
                         });
@@ -498,6 +519,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
                         {
                             if (task.IsCompleted && task.Result == null)
                             {
+                                logger.FluentAddValue("ResourceNewOperationState", OperationState.Succeeded.ToString());
                                 resourcesToBeDeleted[resourceNameKey] = (resourceName, OperationState.Succeeded);
                             }
                         });
@@ -564,164 +586,188 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachine
 
         private async Task<(OperationState OperationState, NextStageInput NextInput)> CheckDeleteComputeStatusVer1Async(NextStageInput input, IDiagnosticsLogger logger)
         {
-            var (computeVmLocation, resourceDeletionPlan) = JsonConvert
+            return await logger.OperationScopeAsync(
+                $"{LogBase}_check_delete_compute_v1",
+                async (childLogger) =>
+                {
+                    var (computeVmLocation, resourceDeletionPlan) = JsonConvert
                             .DeserializeObject<(AzureLocation, Dictionary<int, (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)> Resources, OperationState PhaseState)>)>(input.TrackingId);
 
-            var resourceToBeDeleted = (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>)default;
-            var phase = 0;
+                    var resourceToBeDeleted = (Dictionary<string, (AzureResourceInfo ResourceInfo, OperationState ResourceState)>)default;
+                    var phase = 0;
 
-            for (int i = 0; i < resourceDeletionPlan.Count; i++)
-            {
-                if (resourceDeletionPlan.ContainsKey(i) && resourceDeletionPlan[i].PhaseState != OperationState.Succeeded)
-                {
-                    resourceToBeDeleted = resourceDeletionPlan[i].Resources;
-                    phase = i;
-                    break;
-                }
-            }
-
-            if (resourceToBeDeleted == default || resourceToBeDeleted.Count == 0)
-            {
-                return (OperationState.Succeeded, input);
-            }
-
-            var taskList = new List<Task>();
-            var resourceDeletionStatus = new Dictionary<string, VmResourceState>();
-            foreach (var resource in resourceToBeDeleted)
-            {
-                resourceDeletionStatus[resource.Key] = (resource.Value.ResourceInfo.Name, resourceToBeDeleted[resource.Key].ResourceState);
-                var vmName = resource.Value.ResourceInfo.Name;
-                var resourceGroup = resource.Value.ResourceInfo.ResourceGroup;
-                var subscriptionId = resource.Value.ResourceInfo.SubscriptionId;
-                var nicProperties = new AzureResourceInfoNetworkInterfaceProperties(resource.Value.ResourceInfo.Properties);
-                var isVnetInjected = nicProperties.IsVNetInjected;
-
-                var azureClient = resource.Key == VirtualMachineConstants.InputQueueNameKey ?
-                    default :
-                    isVnetInjected ?
-                    await ClientFPAFactory.GetAzureClientAsync(subscriptionId, logger.NewChildLogger()) :
-                    await ClientFactory.GetAzureClientAsync(subscriptionId, logger.NewChildLogger());
-
-                switch (resource.Key)
-                {
-                    case VirtualMachineConstants.VmNameKey:
-                        var vmComputeClient = await ClientFactory.GetComputeManagementClient(subscriptionId);
-                        var vmStatuses = await CheckVirtualMachineStatusAsync(resourceGroup, vmName, vmComputeClient, logger);
-
-                        // Network/Azure exceptions could have happened, we are supposed to get some status
-                        if (vmStatuses == null)
+                    for (int i = 0; i < resourceDeletionPlan.Count; i++)
+                    {
+                        if (resourceDeletionPlan.ContainsKey(i) && resourceDeletionPlan[i].PhaseState != OperationState.Succeeded)
                         {
+                            resourceToBeDeleted = resourceDeletionPlan[i].Resources;
+                            phase = i;
                             break;
                         }
+                    }
 
-                        // Virtual machine has already been deleted. Hence marking it as succeeded.
-                        if (!vmStatuses.Any())
-                        {
-                            resourceDeletionStatus[VirtualMachineConstants.VmNameKey] = (vmName, OperationState.Succeeded);
-                            break;
-                        }
+                    childLogger.FluentAddBaseValue("Phase", phase);
 
-                        var isDeallocated = vmStatuses.Any(x => string.Equals(x.Code, DeallocatedStatusCode, StringComparison.OrdinalIgnoreCase));
+                    if (resourceToBeDeleted == default || resourceToBeDeleted.Count == 0)
+                    {
+                        return (OperationState.Succeeded, input);
+                    }
 
-                        // Deleting the virtual machine once its deallocated to prevent file corruption.
-                        if (isDeallocated)
-                        {
-                            taskList.Add(
-                                 CheckResourceStatus(
-                                    (resourceName) => vmComputeClient.VirtualMachines.BeginDeleteAsync(resourceGroup, resourceName),
-                                    (resourceName) => azureClient.VirtualMachines.GetByResourceGroupAsync(resourceGroup, resourceName),
-                                    resourceDeletionStatus,
-                                    resource.Key));
-                            break;
-                        }
-
-                        var isDeallocationInProgress = vmStatuses.Any(x => string.Equals(x.Code, DeallocationInProgressStatusCode, StringComparison.OrdinalIgnoreCase));
-
-                        // If virtual machine is not deallocated, we are going to deallocate it.
-                        if (!isDeallocationInProgress)
-                        {
-                            try
+                    var resourceDeletionStatus = new Dictionary<string, VmResourceState>();
+                    await Task.WhenAll(resourceToBeDeleted.Select(async (resource) =>
+                    {
+                        await childLogger.OperationScopeAsync(
+                            $"{LogBase}_check_delete_compute_v1_resource",
+                            async (resourceLogger) =>
                             {
-                                await vmComputeClient.VirtualMachines.BeginDeallocateAsync(resourceGroup, vmName);
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.LogException($"Exception occurred while deallocating Virtual machine {vmName}", ex);
-                            }
-                        }
+                                resourceDeletionStatus[resource.Key] = (resource.Value.ResourceInfo.Name, resourceToBeDeleted[resource.Key].ResourceState);
+                                var resourceName = resource.Value.ResourceInfo.Name;
+                                var resourceGroup = resource.Value.ResourceInfo.ResourceGroup;
+                                var subscriptionId = resource.Value.ResourceInfo.SubscriptionId;
+                                var nicProperties = new AzureResourceInfoNetworkInterfaceProperties(resource.Value.ResourceInfo.Properties);
+                                var isVnetInjected = nicProperties.IsVNetInjected;
 
-                        break;
-                    case VirtualMachineConstants.InputQueueNameKey:
-                        var queueDeleteInput = new QueueProviderDeleteInput()
+                                resourceLogger
+                                    .FluentAddBaseValue("SubscriptionId", subscriptionId)
+                                    .FluentAddBaseValue("ResourceGroup", resourceGroup)
+                                    .FluentAddBaseValue("ResourceName", resourceName)
+                                    .FluentAddBaseValue("ResourceStepKey", resource.Key);
+
+                                var azureClient = resource.Key == VirtualMachineConstants.InputQueueNameKey ?
+                                    default :
+                                    isVnetInjected ?
+                                    await ClientFPAFactory.GetAzureClientAsync(subscriptionId, resourceLogger.NewChildLogger()) :
+                                    await ClientFactory.GetAzureClientAsync(subscriptionId, resourceLogger.NewChildLogger());
+
+                                switch (resource.Key)
+                                {
+                                    case VirtualMachineConstants.VmNameKey:
+                                        var vmComputeClient = await ClientFactory.GetComputeManagementClient(subscriptionId);
+                                        var vmStatuses = await CheckVirtualMachineStatusAsync(resourceGroup, resourceName, vmComputeClient, logger);
+
+                                        // Network/Azure exceptions could have happened, we are supposed to get some status
+                                        if (vmStatuses == null)
+                                        {
+                                            break;
+                                        }
+
+                                        // Virtual machine has already been deleted. Hence marking it as succeeded.
+                                        if (!vmStatuses.Any())
+                                        {
+                                            resourceDeletionStatus[VirtualMachineConstants.VmNameKey] = (resourceName, OperationState.Succeeded);
+                                            break;
+                                        }
+
+                                        var isDeallocated = vmStatuses.Any(x => string.Equals(x.Code, DeallocatedStatusCode, StringComparison.OrdinalIgnoreCase));
+
+                                        // Deleting the virtual machine once its deallocated to prevent file corruption.
+                                        if (isDeallocated)
+                                        {
+                                            await CheckResourceStatus(
+                                                (resourceName) => vmComputeClient.VirtualMachines.BeginDeleteAsync(resourceGroup, resourceName),
+                                                (resourceName) => azureClient.VirtualMachines.GetByResourceGroupAsync(resourceGroup, resourceName),
+                                                resourceDeletionStatus,
+                                                resource.Key,
+                                                resourceLogger);
+                                            break;
+                                        }
+
+                                        var isDeallocationInProgress = vmStatuses.Any(x => string.Equals(x.Code, DeallocationInProgressStatusCode, StringComparison.OrdinalIgnoreCase));
+
+                                        // If virtual machine is not deallocated, we are going to deallocate it.
+                                        if (!isDeallocationInProgress)
+                                        {
+                                            try
+                                            {
+                                                await vmComputeClient.VirtualMachines.BeginDeallocateAsync(resourceGroup, resourceName);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                logger.LogException($"Exception occurred while deallocating Virtual machine {resourceName}", ex);
+                                            }
+                                        }
+
+                                        break;
+                                    case VirtualMachineConstants.InputQueueNameKey:
+                                        var queueDeleteInput = new QueueProviderDeleteInput()
+                                        {
+                                            AzureResourceInfo = resource.Value.ResourceInfo,
+                                        };
+
+                                        await CheckResourceStatus(
+                                            (resourceName) => QueueProvider.DeleteAsync(queueDeleteInput, logger),
+                                            (resourceName) => QueueProvider.ExistsAync(resource.Value.ResourceInfo, logger),
+                                            resourceDeletionStatus,
+                                            resource.Key,
+                                            resourceLogger);
+                                        break;
+                                    case VirtualMachineConstants.DiskNameKey:
+                                        var diskComputeClient = await ClientFactory.GetComputeManagementClient(subscriptionId);
+                                        await CheckResourceStatus(
+                                            (resourceName) => diskComputeClient.Disks.BeginDeleteAsync(resourceGroup, resourceName),
+                                            (resourceName) => azureClient.Disks.GetByResourceGroupAsync(resourceGroup, resourceName),
+                                            resourceDeletionStatus,
+                                            resource.Key,
+                                            resourceLogger);
+                                        break;
+                                    case VirtualMachineConstants.NicNameKey:
+
+                                        var nicClient = isVnetInjected ?
+                                            await ClientFPAFactory.GetNetworkManagementClient(subscriptionId, resourceLogger.NewChildLogger()) :
+                                            await ClientFactory.GetNetworkManagementClient(subscriptionId, resourceLogger.NewChildLogger());
+                                        await CheckResourceStatus(
+                                            (resourceName) => nicClient.NetworkInterfaces.BeginDeleteAsync(resourceGroup, resourceName),
+                                            (resourceName) => azureClient.NetworkInterfaces.GetByResourceGroupAsync(resourceGroup, resourceName),
+                                            resourceDeletionStatus,
+                                            resource.Key,
+                                            resourceLogger);
+                                        break;
+                                    case VirtualMachineConstants.NsgNameKey:
+                                        var nsgClient = await ClientFactory.GetNetworkManagementClient(subscriptionId, resourceLogger.NewChildLogger());
+                                        await CheckResourceStatus(
+                                            (resourceName) => nsgClient.NetworkSecurityGroups.BeginDeleteAsync(resourceGroup, resourceName),
+                                            (resourceName) => azureClient.NetworkSecurityGroups.GetByResourceGroupAsync(resourceGroup, resourceName),
+                                            resourceDeletionStatus,
+                                            resource.Key,
+                                            resourceLogger);
+                                        break;
+                                    case VirtualMachineConstants.VnetNameKey:
+                                        var vnetClient = await ClientFactory.GetNetworkManagementClient(subscriptionId, resourceLogger.NewChildLogger());
+                                        await CheckResourceStatus(
+                                            (resourceName) => vnetClient.VirtualNetworks.BeginDeleteAsync(resourceGroup, resourceName),
+                                            (resourceName) => azureClient.Networks.GetByResourceGroupAsync(resourceGroup, resourceName),
+                                            resourceDeletionStatus,
+                                            resource.Key,
+                                            resourceLogger);
+                                        break;
+                                }
+                            });
+                    }));
+
+                    foreach (var resource in resourceDeletionStatus)
+                    {
+                        if (resource.Value.State != resourceToBeDeleted[resource.Key].ResourceState)
                         {
-                            AzureResourceInfo = resource.Value.ResourceInfo,
-                        };
+                            resourceToBeDeleted[resource.Key] = (resourceToBeDeleted[resource.Key].ResourceInfo, resource.Value.State);
+                        }
+                    }
 
-                        taskList.Add(
-                            CheckResourceStatus(
-                               (resourceName) => QueueProvider.DeleteAsync(queueDeleteInput, logger),
-                               (resourceName) => QueueProvider.ExistsAync(resource.Value.ResourceInfo, logger),
-                               resourceDeletionStatus,
-                               resource.Key));
-                        break;
-                    case VirtualMachineConstants.DiskNameKey:
-                        var diskComputeClient = await ClientFactory.GetComputeManagementClient(subscriptionId);
-                        taskList.Add(CheckResourceStatus(
-                            (resourceName) => diskComputeClient.Disks.BeginDeleteAsync(resourceGroup, resourceName),
-                            (resourceName) => azureClient.Disks.GetByResourceGroupAsync(resourceGroup, resourceName),
-                            resourceDeletionStatus,
-                            resource.Key));
-                        break;
-                    case VirtualMachineConstants.NicNameKey:
+                    var resultState = GetFinalState(resourceDeletionStatus);
+                    resourceDeletionPlan[phase] = (resourceToBeDeleted, resultState);
+                    var trackingId = JsonConvert.SerializeObject((computeVmLocation, resourceDeletionPlan));
 
-                        var nicClient = isVnetInjected ?
-                            await ClientFPAFactory.GetNetworkManagementClient(subscriptionId, logger.NewChildLogger()) :
-                            await ClientFactory.GetNetworkManagementClient(subscriptionId, logger.NewChildLogger());
-                        taskList.Add(CheckResourceStatus(
-                          (resourceName) => nicClient.NetworkInterfaces.BeginDeleteAsync(resourceGroup, resourceName),
-                          (resourceName) => azureClient.NetworkInterfaces.GetByResourceGroupAsync(resourceGroup, resourceName),
-                          resourceDeletionStatus,
-                          resource.Key));
-                        break;
-                    case VirtualMachineConstants.NsgNameKey:
-                        var nsgClient = await ClientFactory.GetNetworkManagementClient(subscriptionId, logger.NewChildLogger());
-                        taskList.Add(
-                           CheckResourceStatus(
-                           (resourceName) => nsgClient.NetworkSecurityGroups.BeginDeleteAsync(resourceGroup, resourceName),
-                           (resourceName) => azureClient.NetworkSecurityGroups.GetByResourceGroupAsync(resourceGroup, resourceName),
-                           resourceDeletionStatus,
-                           resource.Key));
-                        break;
-                    case VirtualMachineConstants.VnetNameKey:
-                        var vnetClient = await ClientFactory.GetNetworkManagementClient(subscriptionId, logger.NewChildLogger());
-                        taskList.Add(
-                            CheckResourceStatus(
-                            (resourceName) => vnetClient.VirtualNetworks.BeginDeleteAsync(resourceGroup, resourceName),
-                            (resourceName) => azureClient.Networks.GetByResourceGroupAsync(resourceGroup, resourceName),
-                            resourceDeletionStatus,
-                            resource.Key));
-                        break;
-                }
-            }
+                    childLogger
+                        .FluentAddValue("ResultState", resultState.ToString())
+                        .FluentAddValue("TrackingId", trackingId);
 
-            await Task.WhenAll(taskList);
-            foreach (var resource in resourceDeletionStatus)
-            {
-                if (resource.Value.State != resourceToBeDeleted[resource.Key].ResourceState)
-                {
-                    resourceToBeDeleted[resource.Key] = (resourceToBeDeleted[resource.Key].ResourceInfo, resource.Value.State);
-                }
-            }
-
-            var resultState = GetFinalState(resourceDeletionStatus);
-            resourceDeletionPlan[phase] = (resourceToBeDeleted, resultState);
-            var trackingId = JsonConvert.SerializeObject((computeVmLocation, resourceDeletionPlan));
-            return (OperationState.InProgress, new NextStageInput()
-            {
-                TrackingId = trackingId,
-                AzureResourceInfo = input.AzureResourceInfo,
-                Version = NextStageInput.CurrentVersion,
-            });
+                    return (OperationState.InProgress, new NextStageInput()
+                    {
+                        TrackingId = trackingId,
+                        AzureResourceInfo = input.AzureResourceInfo,
+                        Version = NextStageInput.CurrentVersion,
+                    });
+                },
+                swallowException: false);
         }
     }
 }
