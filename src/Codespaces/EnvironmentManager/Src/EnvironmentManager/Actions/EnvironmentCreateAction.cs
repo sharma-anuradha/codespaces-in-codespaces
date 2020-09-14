@@ -355,6 +355,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 record.Value.Connection.ConnectionSessionPath,
                 input.StartEnvironmentParams.UserProfile.Email,
                 input.StartEnvironmentParams.UserProfile.Id,
+                record.Value.Partner == Partner.GitHub,
                 null,
                 logger.NewChildLogger());
 
@@ -429,6 +430,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 record.Value.Connection?.ConnectionSessionPath,
                 input.StartEnvironmentParams.UserProfile.Email,
                 input.StartEnvironmentParams.UserProfile.Id,
+                record.Value.Partner == Partner.GitHub,
                 null,
                 logger.NewChildLogger());
 

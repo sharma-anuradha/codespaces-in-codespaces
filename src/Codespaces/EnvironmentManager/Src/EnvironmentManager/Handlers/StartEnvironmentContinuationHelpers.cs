@@ -16,6 +16,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
@@ -314,6 +315,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     record.Value.Connection?.ConnectionSessionPath,
                     operationInput.CloudEnvironmentParameters.UserProfile.Email,
                     operationInput.CloudEnvironmentParameters.UserProfile.Id,
+                    record.Value.Partner == Partner.GitHub,
                     operationInput.CloudEnvironmentParameters.UserAuthToken,
                     logger.NewChildLogger());
 

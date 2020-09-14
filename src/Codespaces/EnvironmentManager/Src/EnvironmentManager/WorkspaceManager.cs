@@ -40,6 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string sessionPath,
             string emailAddress,
             string profileId,
+            bool scopeForProfileId,
             string authToken,
             IDiagnosticsLogger logger)
         {
@@ -70,17 +71,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     string[] guestUsers = null;
                     string[] guestUserIds = null;
 
-                    if (!string.IsNullOrWhiteSpace(profileId))
+                    if (scopeForProfileId)
                     {
-                        guestUserIds = new string[] { profileId };
-                    }
-                    else if (!string.IsNullOrWhiteSpace(emailAddress))
-                    {
-                        guestUsers = new string[] { emailAddress };
+                        if (!string.IsNullOrWhiteSpace(profileId))
+                        {
+                            guestUserIds = new string[] { profileId };
+                        }
                     }
                     else
                     {
-                        childLogger.LogWarning($"{LogBaseName}_missing_profileid_and_email_address");
+                        // Only add email if it is not github. True for non github customers.
+                        if (!string.IsNullOrWhiteSpace(emailAddress))
+                        {
+                            // Note: Going forward this will not be passed around.
+                            guestUsers = new string[] { emailAddress };
+                        }
                     }
 
                     var invitationLinkInfo = new SharedInvitationLinkInfo()
@@ -89,6 +94,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         GuestUsers = guestUsers,
                         GuestUserIds = guestUserIds,
                     };
+
+                    LogInvitationInfo(invitationLinkInfo, logger);
 
                     var workspaceInvitationId = await WorkspaceRepository.GetInvitationLinkAsync(invitationLinkInfo, authToken, childLogger);
                     if (string.IsNullOrWhiteSpace(workspaceInvitationId))
@@ -142,6 +149,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     await WorkspaceRepository.DeleteAsync(workspaceId, childLogger);
                 },
                 swallowException: false);
+        }
+
+        /// <summary>
+        /// Add logging fields for Invitation link info instance.
+        /// </summary>
+        /// <param name="invitationLinkInfo">The connection info.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>The logger.</returns>
+        private IDiagnosticsLogger LogInvitationInfo(SharedInvitationLinkInfo invitationLinkInfo, IDiagnosticsLogger logger)
+        {
+            const string InvitationHasGuestEmail = nameof(InvitationHasGuestEmail);
+            const string InvitationHasGuestProfileId = nameof(InvitationHasGuestProfileId);
+
+            Requires.NotNull(logger, nameof(logger));
+
+            if (invitationLinkInfo != default)
+            {
+                logger
+                    .FluentAddValue(InvitationHasGuestEmail, invitationLinkInfo?.GuestUsers?.Length > 0)
+                    .FluentAddValue(InvitationHasGuestProfileId, invitationLinkInfo?.GuestUserIds?.Length > 0);
+            }
+
+            return logger;
         }
     }
 }

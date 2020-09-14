@@ -25,6 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="sessionPath">session path.</param>
         /// <param name="emailAddress">email address of the host.</param>
         /// <param name="profileId">profile id.</param>
+        /// <param name="scopeForProfileId">scope connection only with profile id.</param>
         /// <param name="authToken">auth token.</param>
         /// <param name="logger">logger.</param>
         /// <returns>result.</returns>
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             string sessionPath,
             string emailAddress,
             string profileId,
+            bool scopeForProfileId,
             string authToken,
             IDiagnosticsLogger logger);
 

@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
@@ -129,6 +130,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                            record.Value.Connection?.ConnectionSessionPath,
                            input.StartEnvironmentParams.UserProfile.Email,
                            input.StartEnvironmentParams.UserProfile.Id,
+                           record.Value.Partner == Partner.GitHub,
                            null,
                            logger.NewChildLogger());
             record.PushTransition((environment) =>
