@@ -106,6 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             };
             job.Metadata = jobMetadata;
             job.Constraints = new JobConstraints(maxWallClockTime: TimeSpan.FromDays(90));
+            job.Priority = 200;
 
             return job;
         }

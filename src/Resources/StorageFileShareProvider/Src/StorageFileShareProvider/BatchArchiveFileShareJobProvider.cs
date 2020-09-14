@@ -90,6 +90,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
                 WaitForSuccess = true,
                 UserIdentity = new UserIdentity(new AutoUserSpecification(elevationLevel: ElevationLevel.Admin)),
             };
+            job.Priority = 100;
 
             return job;
         }
