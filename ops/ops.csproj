@@ -18,12 +18,18 @@
     <ComponentsGeneratorFolder>$([System.IO.Path]::Combine($(OpsFolder),'Generator'))</ComponentsGeneratorFolder>
     <ComponentGeneratorScript>$([System.IO.Path]::Combine($(ComponentsGeneratorFolder),'index.ts'))</ComponentGeneratorScript>
     <GenerateComponentsRealOutputFolder>$(OutputPath)\$(GenerateComponentsOutputFolderName)</GenerateComponentsRealOutputFolder>
+    <OpsScriptsFolderName>Scripts</OpsScriptsFolderName>
+    <OpsScriptsFolder>$([System.IO.Path]::Combine($(OpsFolder),$(OpsScriptsFolderName)))</OpsScriptsFolder>
   </PropertyGroup>
 
   <!-- Ensure static outputs are copied to the output directory. -->
   <ItemGroup Condition="'$(GenerateComponentsOnBuild)'!='true'">
     <Content Include="$(GenerateComponentsOutputFolder)\**" Exclude="*.csproj">
       <Link>$(GenerateComponentsOutputFolderName)\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(OpsScriptsFolder)\**">
+      <Link>$(OpsScriptsFolderName)\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
