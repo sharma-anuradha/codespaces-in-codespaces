@@ -2,6 +2,7 @@ export { vscode } from './vscode/vscodeAssets/vscode';
 
 export { WorkspaceProvider } from './vscode/providers/workspaceProvider/workspaceProvider';
 export { UrlCallbackProvider } from './vscode/providers/userDataProvider/urlCallbackProvider';
+export { TunnelProvider } from './vscode/providers/tunnelProvider';
 export { resourceUriProviderFactory } from './vscode/providers/resourceUriProvider/resourceUriProviderFactory';
 export { CredentialsProvider } from './vscode/providers/credentialsProvider/credentialsProvider';
 export {

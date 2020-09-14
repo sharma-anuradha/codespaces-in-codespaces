@@ -1,5 +1,5 @@
 import { ITunnelProvider, ITunnel, ITunnelOptions } from 'vscode-web';
-import { Emitter, Event } from 'vscode-jsonrpc';
+import { Emitter } from 'vscode-jsonrpc';
 
 const onDidDispose = new Emitter<void>();
 // const onDidDispose: changeEventEmitter.EventEmitter<void> = new changeEventEmitter.EventEmitter();

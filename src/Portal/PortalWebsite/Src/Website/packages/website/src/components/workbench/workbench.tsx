@@ -27,6 +27,7 @@ import {
     DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID,
     getWorkbenchDefaultLayout,
     codespaceInitializationTracker,
+    TunnelProvider,
 } from 'vso-workbench';
 
 import * as envRegService from '../../services/envRegService';
@@ -85,7 +86,6 @@ import {
 import './workbench.css';
 import { telemetryMarks } from 'vso-workbench/src/telemetry/telemetryMarks';
 import { withTranslation, WithTranslation } from 'react-i18next';
-import { TunnelProvider } from '../../providers/tunnelProvider';
 
 export interface IWorkbenchState {
     connectError: string | null;
@@ -513,7 +513,12 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
         }
 
         if (this.state.isServerlessSplashScreenShown) {
-            return <ServerlessSplashscreenComponent environment={environmentInfo} credentialsProvider={credentialsProvider} />;
+            return (
+                <ServerlessSplashscreenComponent
+                    environment={environmentInfo}
+                    credentialsProvider={credentialsProvider}
+                />
+            );
         }
 
         if (isHostedOnGithub()) {
@@ -535,7 +540,12 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
                 </div>
             );
         } else if (this.state.isServerlessSplashScreenShown) {
-            return <ServerlessSplashscreenComponent environment={environmentInfo} credentialsProvider={credentialsProvider} />;
+            return (
+                <ServerlessSplashscreenComponent
+                    environment={environmentInfo}
+                    credentialsProvider={credentialsProvider}
+                />
+            );
         } else {
             this.connectionAdapter =
                 this.connectionAdapter || new SplashCommunicationProvider(this.onCommandReceived);

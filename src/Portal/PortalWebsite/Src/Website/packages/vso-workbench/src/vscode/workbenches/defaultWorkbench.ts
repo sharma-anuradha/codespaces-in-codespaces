@@ -23,6 +23,7 @@ import { getProductConfiguration } from './getProductConfiguration';
 import { getDefaultSettings } from './getDefaultSettings';
 import { authService } from '../../auth/authService';
 import { codespaceInitializationTracker } from '../../utils/CodespaceInitializationTracker/CodespaceInitializationTracker';
+import { TunnelProvider } from '../providers/tunnelProvider';
 
 interface IDefaultWorkbenchOptions {
     readonly domElementId: string;
@@ -106,6 +107,7 @@ export class Workbench {
                 urlCallbackProvider,
                 resourceUriProvider,
                 resolveExternalUri,
+                tunnelProvider: new TunnelProvider(),
                 resolveCommonTelemetryProperties,
                 enableSyncByDefault: true,
                 configurationDefaults,
