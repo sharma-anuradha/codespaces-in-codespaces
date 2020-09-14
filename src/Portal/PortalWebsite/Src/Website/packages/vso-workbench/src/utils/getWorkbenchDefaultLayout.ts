@@ -57,14 +57,17 @@ const getEditors = (environmentInfo: IEnvironment) => {
 
 const getPanel = (environmentInfo: IEnvironment) => {
     const githubUrl = environmentInfo.seed?.moniker;
-    if (!isGitHubPRUrl(githubUrl)) {
-        return;
+    if (isGitHubPRUrl(githubUrl)) {
+        return {
+            visible: true,
+            containers: [{ id: 'comments', order: 0, active: true }]
+        };
     }
 
     return {
         visible: true,
-        containers: [{ id: 'comments', order: 0, active: true }]
-    };
+        containers: [{ id: 'terminal', order: 0, active: true }]
+    };    
 }
 
 export const getWorkbenchDefaultLayout = (environmentInfo: IEnvironment) => {
