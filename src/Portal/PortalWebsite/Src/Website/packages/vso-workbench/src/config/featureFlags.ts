@@ -1,7 +1,7 @@
 import { authService } from '../auth/authService';
 
 class FeatureFlagsAccessor {
-    public async isEnabled(flagName: FeatureFlags): Promise<boolean> {
+    public async isEnabled(flagName: FeatureFlags, defaultValue?: boolean): Promise<boolean> {
         const partnerInfo = await authService.getPartnerInfo();
 
         if (!partnerInfo || !('featureFlags' in partnerInfo)) {
@@ -10,7 +10,9 @@ class FeatureFlagsAccessor {
 
         const { featureFlags = {} as Record<FeatureFlags, boolean | undefined> } = partnerInfo;
 
-        return !!featureFlags[flagName];
+        const value = (flagName in featureFlags) ? featureFlags[flagName] : defaultValue;
+
+        return !!value;
     }
 }
 

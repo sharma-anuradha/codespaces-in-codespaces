@@ -32,16 +32,16 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 { "environment", this.WebHostEnvironment.EnvironmentName.ToLower()},
             };
 
-            var portForwardingServiceEnabled = AppSettings.PortForwardingServiceEnabled == "true";
-            configuration.Add("portForwardingServiceEnabled", portForwardingServiceEnabled);
             switch (HttpContext.GetPartner())
             {
                 case Partners.GitHub:
+                    configuration.Add("portForwardingServiceEnabled", AppSettings.GitHubPortForwardingServiceEnabled == "true");
                     configuration.Add("portForwardingDomainTemplate", AppSettings.GitHubPortForwardingDomainTemplate);
                     configuration.Add("portForwardingManagementEndpoint", AppSettings.GitHubPortForwardingManagementEndpoint);
                     configuration.Add("enableEnvironmentPortForwarding", AppSettings.GitHubportForwardingEnableEnvironmentEndpoints == "true");
                     break;
                 case Partners.VSOnline:
+                    configuration.Add("portForwardingServiceEnabled", AppSettings.PortForwardingServiceEnabled == "true");
                     configuration.Add("portForwardingDomainTemplate", AppSettings.PortForwardingDomainTemplate);
                     configuration.Add("portForwardingManagementEndpoint", AppSettings.PortForwardingManagementEndpoint);
                     configuration.Add("enableEnvironmentPortForwarding", AppSettings.PortForwardingEnableEnvironmentEndpoints == "true");

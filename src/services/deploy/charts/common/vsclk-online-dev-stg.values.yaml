@@ -94,6 +94,7 @@ config:
   portForwardingEnableEnvironmentEndpoints: "true"
   gitHubportForwardingEnableEnvironmentEndpoints: "true"
   portForwardingServiceEnabled: "true"
+  gitHubPortForwardingServiceEnabled: "true"
 
 azure-secrets:
   # vsclk-core-dev

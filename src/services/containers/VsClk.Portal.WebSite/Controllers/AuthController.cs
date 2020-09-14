@@ -134,7 +134,7 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
         public class FeatureFlags
         {
             [JsonProperty("portForwardingServiceEnabled")]
-            public bool PortForwardingServiceEnabled { get; set; }
+            public bool? PortForwardingServiceEnabled { get; set; }
         }
 
         // TODO: add exception to authentication
@@ -232,8 +232,21 @@ namespace Microsoft.VsCloudKernel.Services.Portal.WebSite.Controllers
                 partner = HttpContext.GetPartner();
             }
 
-            var flags = !string.IsNullOrEmpty(featureFlags) ? JsonConvert.DeserializeObject<FeatureFlags>(featureFlags) : new FeatureFlags();
-            if (flags.PortForwardingServiceEnabled || (AppSettings.PortForwardingServiceEnabled == "true" && partner == Partners.VSOnline))
+            bool pfsEnabled = partner switch
+            {
+                Partners.GitHub => AppSettings.GitHubPortForwardingServiceEnabled == "true",
+                Partners.VSOnline => AppSettings.PortForwardingServiceEnabled == "true",
+                _ => false
+            };
+            if (!string.IsNullOrEmpty(featureFlags))
+            {
+                var flags = JsonConvert.DeserializeObject<FeatureFlags>(featureFlags);
+                if (flags.PortForwardingServiceEnabled.HasValue)
+                {
+                    pfsEnabled = flags.PortForwardingServiceEnabled.Value;
+                }
+            }
+            if (pfsEnabled)
             {
                 Response.Cookies.Append(Constants.PFSCookieName, Constants.PFSCookieValue);
             }

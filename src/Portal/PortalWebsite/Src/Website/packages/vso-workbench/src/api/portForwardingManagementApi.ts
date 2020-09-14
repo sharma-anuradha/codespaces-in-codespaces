@@ -6,7 +6,8 @@ import { HttpError } from '../errors/HttpError';
 export class PortForwardingManagementApi {
     public async warmupConnection(codespaceId: string, port: number, token: string) {
         const isPortForwardingServiceEnabled = await featureFlags.isEnabled(
-            FeatureFlags.PortForwardingService
+            FeatureFlags.PortForwardingService,
+            config.portForwardingServiceEnabled
         );
 
         if (!isPortForwardingServiceEnabled) {
