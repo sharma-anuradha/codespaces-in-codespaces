@@ -5,7 +5,7 @@
 
 Set-StrictMode -Version Latest
 
-. ".\OpsUtilities.ps1"
+. "$PSScriptRoot\OpsUtilities.ps1"
 
 #  The Azure service type supported by the subscription.
 enum ServiceType {

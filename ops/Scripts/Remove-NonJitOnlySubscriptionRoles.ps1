@@ -21,7 +21,7 @@ trap {
 }
 
 # Utilities
-# . ".\OpsUtilities.ps1"
+# . "$PSScriptRoot\OpsUtilities.ps1"
 
 # Preamble
 Set-StrictMode -Version Latest
