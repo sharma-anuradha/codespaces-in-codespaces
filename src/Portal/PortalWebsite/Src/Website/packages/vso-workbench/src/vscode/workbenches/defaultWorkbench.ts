@@ -88,10 +88,7 @@ export class Workbench {
                 telemetry
             );
 
-            const defaultLayout = getWorkbenchDefaultLayout(
-                environmentInfo,
-                await codespaceInitializationTracker.isFirstCodespaceLoad(),
-            );
+            const defaultLayout = getWorkbenchDefaultLayout(environmentInfo);
 
             const [
                 homeIndicator,
@@ -103,13 +100,6 @@ export class Workbench {
                 getDefaultSettings(),
             ]);
 
-            // `authenticationSessionId` API is deprecated and
-            // can be removed with VSCode Stable 1.49.x release
-            const defaultSettingsSyncSession = await authService.getSettingsSyncSession();
-            const authenticationSessionId = (defaultSettingsSyncSession)
-                ? defaultSettingsSyncSession.id
-                : undefined;
-
             const providers: IWorkbenchConstructionOptions = {
                 credentialsProvider,
                 workspaceProvider,
@@ -117,7 +107,6 @@ export class Workbench {
                 resourceUriProvider,
                 resolveExternalUri,
                 resolveCommonTelemetryProperties,
-                authenticationSessionId,
                 enableSyncByDefault: true,
                 configurationDefaults,
                 homeIndicator: homeIndicator,

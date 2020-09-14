@@ -476,14 +476,7 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
               }
             : undefined;
 
-        const defaultLayout = getWorkbenchDefaultLayout(
-            environmentInfo,
-            await codespaceInitializationTracker.isFirstCodespaceLoad(),
-        );
-
-        const authenticationSessionId = isHostedOnGithub()
-            ? DEFAULT_GITHUB_VSCODE_AUTH_PROVIDER_ID
-            : undefined;
+        const defaultLayout = getWorkbenchDefaultLayout(environmentInfo);
 
         const config: IWorkbenchConstructionOptions = {
             remoteAuthority: `vsonline+${environmentInfo.id}`,
@@ -498,7 +491,6 @@ class WorkbenchView extends Component<WorkbenchProps, IWorkbenchState> {
             resolveCommonTelemetryProperties,
             homeIndicator,
             commands,
-            authenticationSessionId,
             enableSyncByDefault: false,
             defaultLayout,
         };

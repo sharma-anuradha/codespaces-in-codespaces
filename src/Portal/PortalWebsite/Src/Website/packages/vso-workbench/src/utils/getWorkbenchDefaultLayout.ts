@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { IEnvironment } from 'vso-client-core';
 
-import { IDefaultEditor } from 'vscode-web';
+import { IDefaultEditor, IDefaultLayout } from 'vscode-web';
 import { SupportedGitService, getSupportedGitService } from 'vso-ts-agent';
 
 import { vscode } from '../vscode/vscodeAssets/vscode';
@@ -37,14 +37,17 @@ const getContainers = (environmentInfo: IEnvironment) => {
 const getEditors = (environmentInfo: IEnvironment) => {
     const sessionPath = environmentInfo.connection?.sessionPath || '';
 
+    const authority = getUriAuthority(environmentInfo);
+    const fsPath = path.join(sessionPath, 'README.md');
+
     const readmeEditor: IDefaultEditor = {
         uri: vscode.URI.from({
             scheme: 'vscode-remote',
-            authority: getUriAuthority(environmentInfo),
-            path: path.join(sessionPath, 'README.md'),
+            authority,
+            // URI constructor requires the `path` component to start with `/`
+            path: path.join('/', fsPath),
         }),
         openOnlyIfExists: true,
-        active: true,
     };
 
     return [
@@ -64,13 +67,8 @@ const getPanel = (environmentInfo: IEnvironment) => {
     };
 }
 
-export const getWorkbenchDefaultLayout = (environmentInfo: IEnvironment, isFirstRun: boolean) => {
-    if (!isFirstRun) {
-        return;
-    }
-
-    const result = {
-        firstRun: true,
+export const getWorkbenchDefaultLayout = (environmentInfo: IEnvironment) => {
+    const result: IDefaultLayout = {
         sidebar: {
             visible: true,
             containers: getContainers(environmentInfo),

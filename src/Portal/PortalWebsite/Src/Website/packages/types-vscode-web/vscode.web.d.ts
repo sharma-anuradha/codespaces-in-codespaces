@@ -605,60 +605,61 @@ declare module 'vscode-web' {
 
     interface IDefaultSideBarLayout {
         visible?: boolean;
-        containers?: (
-            | {
-                  id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
-                  active: true;
-                  order?: number;
-                  views?: {
-                      id: string;
-                      order?: number;
-                      visible?: boolean;
-                      collapsed?: boolean;
-                  }[];
-              }
-            | {
-                  id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
-                  active?: false | undefined;
-                  order?: number;
-                  visible?: boolean;
-                  views?: {
-                      id: string;
-                      order?: number;
-                      visible?: boolean;
-                      collapsed?: boolean;
-                  }[];
-              }
-        )[];
+        containers?: ({
+            id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+            active: true;
+            order?: number;
+            views?: {
+                id: string;
+                order?: number;
+                visible?: boolean;
+                collapsed?: boolean;
+            }[];
+        } | {
+            id: 'explorer' | 'run' | 'scm' | 'search' | 'extensions' | 'remote' | string;
+            active?: false;
+            order?: number;
+            visible?: boolean;
+            views?: {
+                id: string;
+                order?: number;
+                visible?: boolean;
+                collapsed?: boolean;
+            }[];
+        })[];
     }
 
     interface IDefaultPanelLayout {
         visible?: boolean;
-        containers?: (
-            | {
-                  id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
-                  order?: number;
-                  active: true;
-              }
-            | {
-                  id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
-                  order?: number;
-                  active?: false | undefined;
-                  visible?: boolean;
-              }
-        )[];
+        containers?: ({
+            id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+            order?: number;
+            active: true;
+        } | {
+            id: 'terminal' | 'debug' | 'problems' | 'output' | 'comments' | string;
+            order?: number;
+            active?: false;
+            visible?: boolean;
+        })[];
+    }
+
+    interface IDefaultView {
+        readonly id: string;
     }
 
     interface IDefaultEditor {
         readonly uri: UriComponents;
         readonly openOnlyIfExists?: boolean;
-        readonly active: boolean;
+        readonly openWith?: string;
     }
 
     interface IDefaultLayout {
-        sidebar?: IDefaultSideBarLayout;
-        panel?: IDefaultPanelLayout;
-        // editors?: IDefaultWorkspaceEditorsLayout
+        /** @deprecated Use views instead (TODO@eamodio remove eventually) */
+        readonly sidebar?: IDefaultSideBarLayout;
+        /** @deprecated Use views instead (TODO@eamodio remove eventually) */
+        readonly panel?: IDefaultPanelLayout;
+        readonly views?: IDefaultView[];
+        readonly editors?: IDefaultEditor[];
     }
 
     export interface IProductQualityChangeHandler {
@@ -711,6 +712,7 @@ declare module 'vscode-web' {
 
         /**
          * Session id of the current authenticated user
+         * @deprecated
          */
         readonly authenticationSessionId?: string;
 
