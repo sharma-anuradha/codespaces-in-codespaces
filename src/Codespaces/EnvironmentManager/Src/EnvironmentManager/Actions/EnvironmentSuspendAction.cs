@@ -80,16 +80,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
 
-            var input = new EnvironmentSuspendActionInput(environmentId, computeResourceId);
+            var input = new EnvironmentSuspendActionInput(environmentId, false, computeResourceId);
             return await RunAsync(input, logger);
         }
 
         /// <inheritdoc/>
-        public async Task<CloudEnvironment> RunAsync(Guid environmentId, IDiagnosticsLogger logger)
+        public async Task<CloudEnvironment> RunAsync(Guid environmentId, bool isClientSuspend, IDiagnosticsLogger logger)
         {
             Requires.NotEmpty(environmentId, nameof(environmentId));
 
-            var input = new EnvironmentSuspendActionInput(environmentId, default);
+            var input = new EnvironmentSuspendActionInput(environmentId, isClientSuspend, default);
             return await RunAsync(input, logger);
         }
 
@@ -106,28 +106,55 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
             EnvironmentAccessManager.AuthorizeEnvironmentAccess(record.Value, nonOwnerScopes: null, logger);
 
-            // No action required if the environment is alredy suspended.
-            if (record.Value.IsShutdown())
+            switch (record.Value.State)
             {
-                return record.Value;
+                case CloudEnvironmentState.Starting:
+                case CloudEnvironmentState.ShuttingDown:
+                    if (!IsTimedOut(record.Value))
+                    {
+                        if (input.IsClientSuspend)
+                        {
+                            return record.Value;
+                        }
+                        else
+                        {
+                            // Wait until timeout, then continue suspend
+                            var timeUntilTimeout = RegularSuspendTimeout - (DateTime.UtcNow - record.Value.LastStateUpdated);
+                            await Task.Delay(timeUntilTimeout >= TimeSpan.Zero ? timeUntilTimeout : TimeSpan.Zero);
+                        }
+                    }
+
+                    break;
+
+                case CloudEnvironmentState.Failed:
+                case CloudEnvironmentState.Provisioning:
+                case CloudEnvironmentState.Deleted:
+                    if (input.IsClientSuspend)
+                    {
+                        throw new CodedValidationException((int)MessageCodes.ActionNotAllowedInThisState);
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                case CloudEnvironmentState.Available:
+                case CloudEnvironmentState.Awaiting:
+                case CloudEnvironmentState.Unavailable:
+                    break;
+
+                default:
+                    throw new CodedValidationException((int)MessageCodes.ActionNotAllowedInThisState);
             }
 
-            // If the environment is already suspending, allow it to finish or timeout, before triggering force suspend
-            if (IsSuspending(record.Value))
+            if (record.Value.State == CloudEnvironmentState.ShuttingDown ||
+                record.Value.State == CloudEnvironmentState.Failed ||
+                record.Value.State == CloudEnvironmentState.Provisioning ||
+                record.Value.State == CloudEnvironmentState.Deleted ||
+                (record.Value.Compute.ResourceId == default && input.AllocatedComputeResourceId == default))
             {
-                return record.Value;
-            }
-
-            if (record.Value.State != CloudEnvironmentState.Available)
-            {
-                // If the environment is not in an available state during shutdown,
-                // force clean the environment details, to put it in a recoverable state.
-                return await EnvironmentForceSuspendAction.RunAsync(input, logger.NewChildLogger());
-            }
-            else if (record.Value.Compute.ResourceId == default && input.AllocatedComputeResourceId == default)
-            {
-                // If the allocated compute is missing for the environment,
-                // force clean the environment details, to put it in a recoverable state.
+                // If the allocated compute is missing for the environment or the environment is otherwise unrecoverable,
+                // force clean the environment details to put it in a recoverable state.
                 return await EnvironmentForceSuspendAction.RunAsync(input, logger.NewChildLogger());
             }
             else
@@ -171,10 +198,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
         }
 
-        private bool IsSuspending(CloudEnvironment environment)
+        // Returns true if environment has been in current state for longer than the suspend timeout.
+        private bool IsTimedOut(CloudEnvironment environment)
         {
-            return environment.State == CloudEnvironmentState.ShuttingDown &&
-                environment.LastStateUpdated.Add(RegularSuspendTimeout) >= DateTime.UtcNow;
+            return environment.LastStateUpdated.Add(RegularSuspendTimeout) < DateTime.UtcNow;
         }
 
         private void ValidateEnvironment(CloudEnvironment environment)

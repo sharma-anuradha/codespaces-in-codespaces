@@ -187,6 +187,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         Task<CloudEnvironment> SuspendAsync(Guid environmentId, IDiagnosticsLogger logger);
 
         /// <summary>
+        /// Shuts down an environment.
+        /// </summary>
+        /// <param name="environmentId">The environment Id.</param>
+        /// <param name="isClientSuspend">True if the client initiated the suspend.</param>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <returns>The cloud environment record.</returns>
+        Task<CloudEnvironment> SuspendAsync(Guid environmentId, bool isClientSuspend, IDiagnosticsLogger logger);
+
+        /// <summary>
         /// Callback to be executed after running shutdown on the vm.
         /// </summary>
         /// <param name="cloudEnvironment">The environment.</param>

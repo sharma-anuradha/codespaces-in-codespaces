@@ -166,5 +166,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The org devcontainer.json max length was exceeded.
         /// </summary>
         ExceededOrgDevContainerMaxLength = 30,
+
+        /// <summary>
+        /// This action is not allowed in the environment's current state.
+        /// <summary>
+        ActionNotAllowedInThisState = 31,
     }
 }

@@ -349,7 +349,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             Requires.NotEmpty(environmentId, nameof(environmentId));
             Requires.NotNull(logger, nameof(logger));
 
-            return EnvironmentSuspendAction.RunAsync(environmentId, logger);
+            return EnvironmentSuspendAction.RunAsync(environmentId, false, logger);
+        }
+
+        /// <inheritdoc/>
+        public Task<CloudEnvironment> SuspendAsync(
+            Guid environmentId,
+            bool isClientSuspend,
+            IDiagnosticsLogger logger)
+        {
+            Requires.NotEmpty(environmentId, nameof(environmentId));
+            Requires.NotNull(logger, nameof(logger));
+
+            return EnvironmentSuspendAction.RunAsync(environmentId, isClientSuspend, logger);
         }
 
         /// <inheritdoc/>

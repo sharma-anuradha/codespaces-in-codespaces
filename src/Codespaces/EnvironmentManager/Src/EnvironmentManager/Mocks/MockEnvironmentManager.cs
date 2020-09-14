@@ -151,6 +151,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         }
 
         /// <inheritdoc/>
+        public Task<CloudEnvironment> SuspendAsync(Guid environmentId, bool isClientSuspend, IDiagnosticsLogger logger)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
         public Task<CloudEnvironment> ForceSuspendAsync(Guid environmentId, IDiagnosticsLogger logger)
         {
             throw new NotImplementedException();

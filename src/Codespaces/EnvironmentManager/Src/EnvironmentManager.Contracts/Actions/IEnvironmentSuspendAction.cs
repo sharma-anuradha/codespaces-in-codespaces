@@ -26,8 +26,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// Suspend an environment.
         /// </summary>
         /// <param name="environmentId">Target environment Id.</param>
+        /// <param name="isClientSuspend">True if suspend was initiated by the client.</param>
         /// <param name="logger">Target logger.</param>
         /// <returns>Returns run result from action.</returns>
-        Task<CloudEnvironment> RunAsync(Guid environmentId, IDiagnosticsLogger logger);
+        Task<CloudEnvironment> RunAsync(Guid environmentId, bool isClientSuspend, IDiagnosticsLogger logger);
     }
 }

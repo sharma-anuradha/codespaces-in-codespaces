@@ -20,10 +20,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
         /// The compute resource id allocated to the environment.
         /// This is optional if the compute is already persisted on the environment record.
         /// </param>
-        public EnvironmentSuspendActionInput(Guid id, Guid computeResourceId = default)
+        public EnvironmentSuspendActionInput(Guid id, bool isClientSuspend = false, Guid computeResourceId = default)
         {
             Id = id;
             AllocatedComputeResourceId = computeResourceId;
+            IsClientSuspend = isClientSuspend;
         }
 
         /// <summary>
@@ -34,5 +35,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contrac
 
         /// <inheritdoc/>
         public Guid Id { get; }
+
+        /// <summary>
+        /// True if the suspend was initiated by the client.
+        /// </summary>
+        public bool IsClientSuspend { get; }
     }
 }

@@ -228,8 +228,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             Requires.NotEmpty(environmentId, nameof(environmentId));
             await ValidateEnvironmentIsNotSoftDeleted(environmentId, logger);
 
-            var result = await EnvironmentManager.SuspendAsync(
-                environmentId, logger.NewChildLogger());
+            var result = await EnvironmentManager.SuspendAsync(environmentId, true, logger.NewChildLogger());
 
             return Ok(Mapper.Map<CloudEnvironment, CloudEnvironmentResult>(result));
         }
