@@ -471,42 +471,30 @@ function Test-Tags {
         [Subscription]$Subscription
     )
 
-    Begin {
-        $azureSubscriptions = az account list -o json | ConvertFrom-Json
-    }
-
     Process {
         ForEach ($sub in $Subscription) {
-            $azSub = $azureSubscriptions |  Where-Object {
-                $_.id -eq $sub.subscriptionId
-            }
+            $tags = az tag list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
 
-            if (!$azSub) {
-                $sub | Get-SubscriptionMessage -Message "was not found" | Write-Error
-            } else {
-                $tags = az tag list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
+            $warningTagNames = "component", "env", "ordinal", "plane", "prefix", "region", "type", "serviceTreeId", "serviceTreeUrl"
+            $expectedTagValues = "$($sub.component)", "$($sub.environment)", "$($sub.ordinal)", "$($sub.plane)", "vscs", "$(ConvertTo-AzureRegion $sub.location)", "$($sub.serviceType)", $null, $null
 
-                $warningTagNames = "component", "env", "ordinal", "plane", "prefix", "region", "type", "serviceTreeId", "serviceTreeUrl"
-                $expectedTagValues = "$($sub.component)", "$($sub.environment)", "$($sub.ordinal)", "$($sub.plane)", "vscs", "$(ConvertTo-AzureRegion $sub.location)", "$($sub.serviceType)", $null, $null
-
-                # Validate all expected tags
-                for ($i = 0; $i -lt $warningTagNames.Count; $i++) {
-                    $tagName = $warningTagNames[$i]
-                    $tag = $tags | Where-Object {
-                        $_.tagName -eq $tagName
-                    }
-
-                    if (!$tag) {
-                        $sub | Get-SubscriptionMessage -Message "doesn't have Tag:`'$($tagName)`'" | Write-Warning
-                    } else {
-                        if ($null -ne $expectedTagValues[$i] -and $tag.values.tagValue -ne $expectedTagValues[$i]) {
-                            $sub | Get-SubscriptionMessage -Message "contains Tag:`'$($tagName)`' with invalid value. Expected:`'$( $expectedTagValues[$i])`', Actual:`'$($tag.values.tagValue)`'" | Write-Warning
-                        }
-                    }
+            # Validate all expected tags
+            for ($i = 0; $i -lt $warningTagNames.Count; $i++) {
+                $tagName = $warningTagNames[$i]
+                $tag = $tags | Where-Object {
+                    $_.tagName -eq $tagName
                 }
 
-                Write-Output $sub
+                if (!$tag) {
+                    $sub | Get-SubscriptionMessage -Message "doesn't have Tag:`'$($tagName)`'" | Write-Warning
+                } else {
+                    if ($null -ne $expectedTagValues[$i] -and $tag.values.tagValue -ne $expectedTagValues[$i]) {
+                        $sub | Get-SubscriptionMessage -Message "contains Tag:`'$($tagName)`' with invalid value. Expected:`'$( $expectedTagValues[$i])`', Actual:`'$($tag.values.tagValue)`'" | Write-Warning
+                    }
+                }
             }
+
+            Write-Output $sub
         }
     }
 }

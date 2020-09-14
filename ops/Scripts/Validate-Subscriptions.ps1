@@ -18,4 +18,21 @@ if ($PSBoundParameters.ContainsKey('Verbose')) {
 . ".\Subscription-Tracker.ps1"
 
 $devSubscriptions = Get-Subscriptions -Environment:"dev" -Plane:"data" -UseAppSettingsFilters:$true
-$devSubscriptions | Test-All
+
+Write-Host
+Write-Host "Full list of subscriptions to validate:"
+$devSubscriptions | Select-Object subscriptionId | Write-Host
+Write-Host
+
+$validDevSubscriptions = $devSubscriptions | Test-All
+$invalidDevSubscriptions = $devSubscriptions | Where-Object { $validDevSubscriptions -notcontains $_ }
+
+Write-Host
+Write-Host "Valid Subscriptions:"
+$validDevSubscriptions | Select-Object subscriptionId | Write-Host
+Write-Host
+
+Write-Host
+Write-Host "Invalid Subscriptions:"
+$invalidDevSubscriptions | Select-Object subscriptionId | Write-Host
+Write-Host
