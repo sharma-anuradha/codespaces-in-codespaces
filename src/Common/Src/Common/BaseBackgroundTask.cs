@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         /// </summary>
         protected abstract string ConfigurationBaseName { get; }
 
-        private IConfigurationReader ConfigurationReader { get; }
+        protected IConfigurationReader ConfigurationReader { get; }
 
         /// <inheritdoc/>
         public abstract void Dispose();

@@ -103,11 +103,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<DeleteResourceContinuationHandler>();
             services.AddSingleton<IDeleteResourceContinuationHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteResourceContinuationHandler>());
-            services.AddSingleton<DeleteOrphanedResourceContinuationHandler>();
             services.AddSingleton<CleanupResourceContinuationHandler>();
             services.AddSingleton<ICleanupResourceContinuationHandler>(x => x.GetRequiredService<CleanupResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CleanupResourceContinuationHandler>());
-            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<DeleteOrphanedResourceContinuationHandler>());
 
             // Create resource strategies
             services.AddSingleton<ICreateResourceStrategy, CreateStorageFileShareStrategy>();

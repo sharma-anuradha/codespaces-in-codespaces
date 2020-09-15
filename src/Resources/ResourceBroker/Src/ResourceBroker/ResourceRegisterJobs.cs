@@ -207,7 +207,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Job: Watch Orphaned Azure Resources
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.WatchOrphanedAzureResourceTask}_run",
-                (childLogger) => WatchOrphanedAzureResourceTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
+                (childLogger) => WatchOrphanedAzureResourceTask.RunTaskAsync(TimeSpan.FromMinutes(30), childLogger),
                 TimeSpan.FromMinutes(10));
 
             // Offset to help distribute inital load of recurring tasks

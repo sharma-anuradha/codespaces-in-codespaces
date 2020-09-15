@@ -270,37 +270,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
-        /// <inheritdoc/>
-        public async Task<ContinuationResult> DeleteOrphanedResourceAsync(
-            Guid resourceId,
-            Guid subscriptionId,
-            string resourceGroup,
-            string name,
-            AzureLocation location,
-            IDictionary<string, string> resourceTags,
-            ResourceType resourceType,
-            string reason,
-            IDiagnosticsLogger logger)
-        {
-            var loggingProperties = BuildLoggingProperties(
-                resourceId,
-                resourceType,
-                resourceTags,
-                reason);
-
-            var input = new DeleteOrphanedResourceContinuationInput()
-            {
-                AzureResourceInfo = new AzureResourceInfo(subscriptionId, resourceGroup, name),
-                Reason = reason,
-                Type = resourceType,
-                ResourceTags = resourceTags,
-                AzureLocation = location,
-            };
-            var target = DeleteOrphanedResourceContinuationHandler.DefaultQueueTarget;
-
-            return await Activator.Execute(target, input, logger, resourceId, loggingProperties);
-        }
-
         private IDictionary<string, string> BuildLoggingProperties(
             Guid resourceId,
             ResourceType type,

@@ -144,31 +144,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IDictionary<string, string> loggingProperties = null);
 
         /// <summary>
-        /// Delete orphaned resource by invoking the continuation activator.
-        /// </summary>
-        /// <param name="resourceId">Target resource id.</param>
-        /// <param name="subscriptionId">The azure subscription id.</param>
-        /// <param name="resourceGroup">The azure resource group.</param>
-        /// <param name="name">The resource name.</param>
-        /// <param name="azureLocation">Azure location.</param>
-        /// <param name="resourceTags">Azure resource tags.</param>
-        /// <param name="resourceType">Resource type.</param>
-        /// <param name="reason">Trigger for operation.</param>
-        /// <param name="logger">Target logger.</param>
-        /// <returns>Resulting continuation result.</returns>
-        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<ContinuationResult> DeleteOrphanedResourceAsync(
-            Guid resourceId,
-            Guid subscriptionId,
-            string resourceGroup,
-            string name,
-            AzureLocation azureLocation,
-            IDictionary<string, string> resourceTags,
-            ResourceType resourceType,
-            string reason,
-            IDiagnosticsLogger logger);
-
-        /// <summary>
         /// Create custom resources.
         /// </summary>
         /// <param name="resourceId">resource id.</param>
