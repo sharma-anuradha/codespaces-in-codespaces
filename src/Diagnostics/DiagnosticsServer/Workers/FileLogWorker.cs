@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Workers
     {
         private readonly string logFolder;
         private readonly FileSystemWatcher fileSystemWatcher;
-
+        private readonly object logLock = new object();
         private readonly FileLogScannerFactory fileLogScannerFactory;
 
         private List<FileLogScanner> scanners = new List<FileLogScanner>();
@@ -48,17 +48,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.DiagnosticsServer.Workers
         /// </summary>
         public void Start()
         {
-            foreach (var folder in Directory.GetDirectories(this.logFolder))
+            lock (this.logLock)
             {
-                if (this.scanners.Any(n => n.Directory == folder))
+                foreach (var folder in Directory.GetDirectories(this.logFolder))
                 {
-                    continue;
-                }
+                    if (this.scanners.ToList().Any(n => n.Directory == folder))
+                    {
+                        continue;
+                    }
 
-                Debug.WriteLine($"Directory Found: {folder}");
-                var logger = this.fileLogScannerFactory.New(folder);
-                Task.Run(() => logger.Execute());
-                this.scanners.Add(logger);
+                    Debug.WriteLine($"Directory Found: {folder}");
+                    var logger = this.fileLogScannerFactory.New(folder);
+                    Task.Run(() => logger.Execute());
+                    this.scanners.Add(logger);
+                }
             }
         }
 

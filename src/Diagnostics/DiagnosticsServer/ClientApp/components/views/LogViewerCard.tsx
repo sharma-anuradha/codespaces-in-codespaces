@@ -32,7 +32,7 @@ class LogViewerCard extends React.Component<{
   hub?: Hub;
 }> {
   @observable totalNumber: number = 0;
-  @observable items: any[] = [];
+  items: any[] = [];
   @observable isEnabled: boolean = true;
   @observable newFilter: Filter = new Filter();
 
@@ -89,7 +89,6 @@ class LogViewerCard extends React.Component<{
 
   monitorLogs(item: any) {
     if (!this.isEnabled) { return; }
-    this.totalNumber = this.totalNumber + 1;
     if (!this.filterItem(item)) { return; }
     if (this.card.options.groupBy && this.card.options.groupBy.length > 0) {
       Actions.groupBy(this.card.options.groupBy, item, this.items);
@@ -98,6 +97,7 @@ class LogViewerCard extends React.Component<{
       this.items.unshift(item);
       if (this.items.length >= 100) { this.items.pop(); }
     }
+    this.totalNumber = this.totalNumber + 1;
   }
 
   filterItem(item: any) {
