@@ -1,4 +1,4 @@
-﻿// <copyright file="CleanDevStamp.cs" company="Microsoft">
+// <copyright file="CleanDevStamp.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -113,6 +113,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
             if (span.Seconds > 0)
             {
                 sb.AppendFormat("{0} second{1} ", span.Seconds, span.Seconds > 1 ? "s" : string.Empty);
+            }
+            else if (span.Milliseconds > 0)
+            {
+                sb.AppendFormat("{0} millisecond{1} ", span.Milliseconds, span.Milliseconds > 1 ? "s" : string.Empty);
             }
 
             return sb.ToString();
@@ -637,44 +641,51 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         {
             return Task.Run(async () =>
             {
-                var dbName = resourceNameBuilder.GetCosmosDocDBName(CloudEnvironmentDbName);
-                var controlPlaneAzureResourceAccessor = GetControlPlaneAzureResourceAccessorForRegion(region, resourceNameBuilder);
-                var (hostUrl, authKey) = await controlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync();
-                var cosmosApplicationRegion = region.ToLower() switch
+                try
                 {
-                    "westeurope" => Regions.WestEurope,
-                    "westus2" => Regions.WestUS2,
-                    _ => throw new ArgumentException("Invalid region parameter")
-                };
-
-                using (var cosmosClient = new CosmosClient(
-                    hostUrl,
-                    authKey,
-                    new CosmosClientOptions()
+                    var dbName = resourceNameBuilder.GetCosmosDocDBName(CloudEnvironmentDbName);
+                    var controlPlaneAzureResourceAccessor = GetControlPlaneAzureResourceAccessorForRegion(region, resourceNameBuilder);
+                    var (hostUrl, authKey) = await controlPlaneAzureResourceAccessor.GetStampCosmosDbAccountAsync();
+                    var cosmosApplicationRegion = region.ToLower() switch
                     {
-                        ApplicationRegion = cosmosApplicationRegion,
-                    }))
+                        "westeurope" => Regions.WestEurope,
+                        "westus2" => Regions.WestUS2,
+                        _ => throw new ArgumentException("Invalid region parameter")
+                    };
+
+                    using (var cosmosClient = new CosmosClient(
+                        hostUrl,
+                        authKey,
+                        new CosmosClientOptions()
+                        {
+                            ApplicationRegion = cosmosApplicationRegion,
+                        }))
+                    {
+                        var db = cosmosClient.GetDatabase(dbName);
+                        await stdout.WriteLineAsync($"Got db {db.Id} in region \"{cosmosApplicationRegion}\"");
+                        try
+                        {
+                            await stdout.WriteLineAsync($"Attempting to delete Db {db.Id}...");
+
+                            await DoWithDryRun(() => db.DeleteAsync());
+                            await stdout.WriteLineAsync($"Deleting db {db.Id} was successful.");
+                        }
+                        catch (CosmosException e)
+                        {
+                            if (e.StatusCode == HttpStatusCode.NotFound)
+                            {
+                                await stdout.WriteLineAsync($"db with id {db.Id} in region \"{cosmosApplicationRegion}\" was not found.");
+                            }
+                            else
+                            {
+                                await stderr.WriteLineAsync($"Deleting DB {db.Id} threw exception. {e}");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var db = cosmosClient.GetDatabase(dbName);
-                    await stdout.WriteLineAsync($"Got db {db.Id} in region \"{cosmosApplicationRegion}\"");
-                    try
-                    {
-                        await stdout.WriteLineAsync($"Attempting to delete Db {db.Id}...");
-
-                        await DoWithDryRun(() => db.DeleteAsync());
-                        await stdout.WriteLineAsync($"Deleting db {db.Id} was successful.");
-                    }
-                    catch (CosmosException e)
-                    {
-                        if (e.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            await stdout.WriteLineAsync($"db with id {db.Id} in region \"{cosmosApplicationRegion}\" was not found.");
-                        }
-                        else
-                        {
-                            await stderr.WriteLineAsync($"Deleting DB {db.Id} threw exception. {e}");
-                        }
-                    }
+                    await stderr.WriteLineAsync($"Error deleting regional db! - Exception: {ex}");
                 }
             });
         }
