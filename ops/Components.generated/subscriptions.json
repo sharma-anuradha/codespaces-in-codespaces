@@ -2,6 +2,7 @@
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2",
@@ -15,11 +16,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b47d56d7-0429-47f0-a6cf-c32531f2aebe",
     "subscriptionName": "vscs-codesp-dev-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -33,11 +36,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "308ee0d8-a7f1-4c68-905f-52baaf4ffacc",
     "subscriptionName": "vscs-codesp-dev-data-compute-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": "checked in"
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -51,11 +56,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fd021d77-a2be-4d7b-adfb-bd4277b6c359",
     "subscriptionName": "vscs-codesp-dev-data-compute-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": "checked in"
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -69,11 +76,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "cd6a254d-0a70-4179-aea8-376a13fabe11",
     "subscriptionName": "vscs-codesp-dev-data-keyvault-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -87,11 +96,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9913076c-ae80-4ba8-9205-a7b92a80ab64",
     "subscriptionName": "vscs-codesp-dev-data-keyvault-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -105,11 +116,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a58a7754-44fc-4c38-aecf-e641f305ab7b",
     "subscriptionName": "vscs-codesp-dev-data-network-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -123,11 +136,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "105133ff-05aa-4fe9-89f9-f1483f96041f",
     "subscriptionName": "vscs-codesp-dev-data-network-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -141,11 +156,13 @@
     "storagePartitionedDnsFlag": "done",
     "subscriptionId": "f554e696-6d86-49f9-89e3-66f5c9d08345",
     "subscriptionName": "vscs-codesp-dev-data-storage-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "dev",
     "generation": "v2-hybrid",
@@ -159,11 +176,13 @@
     "storagePartitionedDnsFlag": "done",
     "subscriptionId": "6cb4f993-a8bb-422a-9864-1346e1b4dd2c",
     "subscriptionName": "vscs-codesp-dev-data-storage-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2",
@@ -177,11 +196,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd",
     "subscriptionName": "vscs-codesp-ppe-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -195,11 +216,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "085fb03a-556b-4e52-9e84-85963fb55b8a",
     "subscriptionName": "vscs-codesp-ppe-data-compute-ap-se-001",
+    "subscriptionOldName": "",
     "vnetInjection": "checked in"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -213,11 +236,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "7264bead-b412-4662-b67a-3dece2352f37",
     "subscriptionName": "vscs-codesp-ppe-data-compute-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": "checked in"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -231,11 +256,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2a27e16d-9b98-4928-b87a-64c21f15a58b",
     "subscriptionName": "vscs-codesp-ppe-data-compute-us-e-001",
+    "subscriptionOldName": "",
     "vnetInjection": "checked in"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -249,11 +276,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2ef64798-57d4-46ee-9c93-995f2df01a16",
     "subscriptionName": "vscs-codesp-ppe-data-compute-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": "checked in"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -267,11 +296,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d98f29c5-7bc0-4551-ac62-8ec6ad95cc75",
     "subscriptionName": "vscs-codesp-ppe-data-keyvault-ap-se-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -285,11 +316,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "33993d0e-64f2-4ea5-8c56-61fb81d54bc0",
     "subscriptionName": "vscs-codesp-ppe-data-keyvault-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -303,11 +336,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b6601ce2-bd40-4575-b050-83d7e3b5b387",
     "subscriptionName": "vscs-codesp-ppe-data-keyvault-us-e-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -321,11 +356,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b54f6c7b-4a4d-46c2-a3e4-57467a714dfe",
     "subscriptionName": "vscs-codesp-ppe-data-keyvault-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -339,11 +376,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "69f8fa94-9d26-4d1b-9db5-600299c7c0aa",
     "subscriptionName": "vscs-codesp-ppe-data-network-ap-se-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -357,11 +396,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "4b050960-f3c2-4b20-8fbf-1d4517557c97",
     "subscriptionName": "vscs-codesp-ppe-data-network-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -375,11 +416,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "8f7da8bc-3497-4d09-a10a-2cdc88123b0e",
     "subscriptionName": "vscs-codesp-ppe-data-network-us-e-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -393,11 +436,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e59bcf31-832e-45ec-92c1-34e15607ca2c",
     "subscriptionName": "vscs-codesp-ppe-data-network-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -411,11 +456,13 @@
     "storagePartitionedDnsFlag": "done",
     "subscriptionId": "eb17ab07-3d86-422b-98a5-a15756e6b45b",
     "subscriptionName": "vscs-codesp-ppe-data-storage-ap-se-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -429,11 +476,13 @@
     "storagePartitionedDnsFlag": "done",
     "subscriptionId": "fd9b3ba4-5d14-485f-9e41-a26e15887d68",
     "subscriptionName": "vscs-codesp-ppe-data-storage-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -447,11 +496,13 @@
     "storagePartitionedDnsFlag": "done",
     "subscriptionId": "aaae65a5-5b55-41b6-bf69-fb12c5685089",
     "subscriptionName": "vscs-codesp-ppe-data-storage-us-e-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v2-hybrid",
@@ -465,11 +516,13 @@
     "storagePartitionedDnsFlag": "done",
     "subscriptionId": "2ec970a2-3e72-43b3-868e-7bed6ac9d349",
     "subscriptionName": "vscs-codesp-ppe-data-storage-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2",
@@ -483,11 +536,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "4b957fae-cce2-4865-9570-3add886016a4",
     "subscriptionName": "vscs-codesp-ppe-ops",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2",
@@ -501,11 +556,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "babc8408-303e-4acc-9d13-194c075c1cce",
     "subscriptionName": "vscs-codesp-prod-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -519,11 +576,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5013dd79-5a04-40a5-b8e8-aa4ac342981f",
     "subscriptionName": "vscs-codesp-prod-data-keyvault-ap-se-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -537,11 +596,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "c4b66ba2-c81e-492c-924c-59a2a068e092",
     "subscriptionName": "vscs-codesp-prod-data-keyvault-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -555,11 +616,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0918971d-ddf2-4bfa-b320-96d7104d4813",
     "subscriptionName": "vscs-codesp-prod-data-keyvault-us-e-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -573,11 +636,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9efa1094-8682-445a-9003-fb1a7fc0b8af",
     "subscriptionName": "vscs-codesp-prod-data-keyvault-us-e2c-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -591,11 +656,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "17c34b26-5f95-42bf-8e91-3bbd312a35f4",
     "subscriptionName": "vscs-codesp-prod-data-keyvault-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -609,11 +676,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "069611b7-14f8-436e-aa5f-4e8d5a2abef6",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-010",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -627,11 +696,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "98591f2c-2985-4cc8-93e8-3db47de1bdef",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-011",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -645,11 +716,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fa0c4d94-38f0-4a2b-951b-41fd32d3d1f5",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-012",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -663,11 +736,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "3bb621a5-e7fc-4bc4-a167-01391e05d099",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -681,11 +756,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e971dcc3-ca28-4928-befa-e4ec11058f9f",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -699,11 +776,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "25afec94-4a85-40ac-b8ac-73f36ce59a9a",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -717,11 +796,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "06874964-1c5c-4ad3-aa53-8ab5589cd83c",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -735,11 +816,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ca951e85-3a9e-4075-9878-c3c302e44590",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -753,11 +836,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b4288b03-8e5d-4ef0-86eb-9f879271e7fc",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -771,11 +856,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "88738b82-6c7f-4f1c-8ca8-4c08ca5aef1d",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -789,11 +876,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a1f18e3f-cc1c-4945-835b-31360ee38876",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -807,11 +896,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e8621de1-b21d-4813-99d3-f81dd8871cde",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-021",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -825,11 +916,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5cb12cb4-e5ba-4dfc-b0d1-0264d523612e",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-022",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -843,11 +936,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "03db6e6f-5c97-414b-bec1-17e210752dd6",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-023",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -861,11 +956,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "c62e88c2-780b-4eb6-8bfb-d81421d60499",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-024",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -879,11 +976,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f13c9bdd-c449-4494-a84a-ae5e110e05ef",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-025",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -897,11 +996,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ed0f56f1-3228-4ef9-be1e-bdbd1d4930b9",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-026",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -915,11 +1016,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1c136cbd-abed-4ba4-b20f-444081c8f017",
     "subscriptionName": "vscs-codesp-prod-data-network-ap-se-027",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -933,11 +1036,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "87197dfd-0f45-4974-aa79-af8c8e152286",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -951,11 +1056,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e0333fb6-c94e-47e7-a692-baf2e55e7a8c",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -969,11 +1076,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a3a67d84-d94f-42d3-98e6-75aed21a31ab",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -987,11 +1096,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "51b16341-3267-4c77-a11b-c3a700dbaa73",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1005,11 +1116,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f1f08bac-6f73-490c-9fe9-4c284a4ff923",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1023,11 +1136,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "05fd7a76-7c16-4c12-b0c4-ff8b714bfc91",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1041,11 +1156,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f543d431-5386-4fdf-ad36-d3fb0ccfe6b6",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1059,11 +1176,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a4e9f4ea-d443-41c6-96b1-1bd58ce75486",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1077,11 +1196,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e8f1ef15-2d8f-4a1f-8f54-d53eccb9603e",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-021",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1095,11 +1216,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1fce3628-f890-4ac9-8311-e82861ed7f7d",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-022",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1113,11 +1236,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5d85d201-fe88-4e4c-b327-584299d61f0f",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-023",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1131,11 +1256,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "858cd3f6-b9b7-4be7-b220-3a800f40e9d3",
     "subscriptionName": "vscs-codesp-prod-data-network-eu-w-024",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1149,11 +1276,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "30be792e-6314-4250-91e5-3786e1350b27",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1167,11 +1296,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "10afecaa-62d2-4966-9641-dc3c1c7b20b8",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1185,11 +1316,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0d64d139-c0cb-450d-850e-9fd1e6b24b01",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1203,11 +1336,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "4983b5ec-1c47-41d1-8ae8-58c122f7bc4f",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1221,11 +1356,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2a574cf7-566a-4aee-b6a8-c63bd1296fc8",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1239,11 +1376,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "6a8239a5-7975-4b9e-8dc2-a5f61a69b4f8",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1257,11 +1396,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "20b5fdb9-bb18-4ffb-bcb7-0ff0c28ffcbb",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1275,11 +1416,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2bba674e-f48f-4b9b-b9dc-71937ce51481",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-021",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1293,11 +1436,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b86eec2e-5ee8-4dd8-b71f-899f36bbe763",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-022",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1311,11 +1456,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e4a3d5a4-8184-4ea0-a4dc-f4841af9969a",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-023",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1329,11 +1476,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9139809f-2de2-455d-a6f3-553b520483b4",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-024",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1347,11 +1496,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a017ac37-dcec-4e2e-abb4-639fd5bd0a2b",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e-025",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1365,11 +1516,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ab772fc1-15c0-4ac1-bcf3-e3b3f1c7f20f",
     "subscriptionName": "vscs-codesp-prod-data-network-us-e2c-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1383,11 +1536,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "8d243f3c-e918-4e86-8f7b-457e77b1232b",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-006",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1401,11 +1556,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f9a6a458-e1d3-4fc4-a0ff-6d5fe6c2eda7",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-007",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1419,11 +1576,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fb9b4853-cf54-42c9-a624-4e23a140bca3",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-008",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1437,11 +1596,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f5563dd4-f8a5-419b-a34c-c3dec506e0ba",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-009",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1455,11 +1616,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0a568fe7-1154-4846-9111-7b0fb43af195",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-010",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1473,11 +1636,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "211b7a6e-ceca-4920-b214-5561d226cb43",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-011",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1491,11 +1656,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d51b64ac-860e-452b-8722-854a921211ce",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-012",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1509,11 +1676,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d98a61a4-f60c-4ce1-a31b-c4463e22433f",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1527,11 +1696,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fdbc5e92-d336-4b91-8262-bcf9baba0b62",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1545,11 +1716,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "569ee0d8-a75d-4755-99f3-41a5a3f0afd5",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1563,11 +1736,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fe8737dc-dfe8-4ebd-872a-9138739898ac",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1581,11 +1756,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5e8ad2bc-5882-403a-ba0a-8d4a13e688eb",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1599,11 +1776,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ac667073-731f-4f7b-915f-a474161063bc",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1617,11 +1796,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9989cc0a-f869-40a4-9d59-49f724b414f2",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1635,11 +1816,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "7ef0eb7c-c69b-4115-8332-4e3006782876",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1653,11 +1836,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5a53b056-c948-4aa7-9c20-aa7f6021e47e",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-021",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1671,11 +1856,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ce9d303e-745a-4d55-b3c1-2abc979b0f04",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-022",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1689,11 +1876,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "174d2a13-f488-407d-b80d-e2d0848d2b32",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-023",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1707,11 +1896,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "620247e6-5b92-4b5f-b6e3-4221b9b8b4c4",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-024",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1725,11 +1916,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "29640035-edce-4f9a-b347-b220d77d9d0d",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-025",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1743,11 +1936,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "30391e61-2ce4-4aa9-b998-cd0a6f76359e",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-026",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1761,11 +1956,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "733ca21b-da17-41e8-9d0d-1129444e7344",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-027",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1779,11 +1976,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a537d272-7386-4588-8591-3c0137efc888",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-028",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1797,11 +1996,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5c186d78-74cf-4a12-87a0-e8513f7b8a91",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-029",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1815,11 +2016,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "643c0124-5909-429b-8ebe-38eb4e968b73",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-030",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1833,11 +2036,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "4e1ec2b1-3229-41e1-99db-f8c91f2f27e1",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-031",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1851,11 +2056,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fe815803-1711-47dd-a524-be61691578a2",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-032",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1869,11 +2076,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0533728e-0155-4ec5-86b8-cc3ea3d71750",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-033",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1887,11 +2096,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "47215eeb-b8fb-456f-9dec-c9552b77ba14",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-034",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1905,11 +2116,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1a597b95-b8c6-4073-9a9c-5850ad789670",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-035",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1923,11 +2136,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a3ab3c9b-5584-471c-a8aa-fdeedba6cb5f",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-036",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1941,11 +2156,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "59e9fb47-8c13-4a11-895c-978c2182ea2f",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-037",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1959,11 +2176,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0fb0efe0-0dd1-43d9-adcd-06c2649f64a7",
     "subscriptionName": "vscs-codesp-prod-data-network-us-w2-038",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1977,11 +2196,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "3006c40a-e298-4d16-b3a6-42b2d2bc7929",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -1995,11 +2216,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "98a4c78e-6ebe-4e3b-947c-539c4554210e",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-002",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2013,11 +2236,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "de38c38e-36ce-48e9-a088-d69536fdc729",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-003",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2031,11 +2256,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "6da73a66-4914-4fab-beb8-326ca50d8d01",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-004",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2049,11 +2276,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "536a3277-4236-472a-a380-f3885a60f93e",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-005",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2067,11 +2296,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2ffe6df5-7ec3-457e-96ba-9ea2ecbc99cd",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-006",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2085,11 +2316,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0bfe3a4f-1532-41ad-ab12-c70d00bdbc09",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-007",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2103,11 +2336,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "047fc0a8-4ef4-47b6-bd37-869869504e91",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-008",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2121,11 +2356,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ea1d90f6-c782-45f7-b996-d61d7ddfffb7",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-009",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2139,11 +2376,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5bc848fb-b35a-420a-bced-dbc95b52c68c",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-010",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2157,11 +2396,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "67581270-dcf0-407d-81a2-bc8ce99a9f11",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-011",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2175,11 +2416,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "63d33b88-d87e-41ee-ada6-0e0091f81ae8",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-012",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2193,11 +2436,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "12caa0b9-d661-4bbd-b0ce-58e43d72c09e",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2211,11 +2456,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "466f40c2-956b-4748-a5db-f33651531aff",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2229,11 +2476,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a151e524-317e-450c-9af9-6c176827777d",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2247,11 +2496,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ee11f2b0-621a-4dfc-904b-836e28a1e997",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2265,11 +2516,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "7db3dcc3-31e5-4e58-a077-8a1e361bc742",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2283,11 +2536,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "04b3c449-f208-4b19-9b8f-ae82172c4e88",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2301,11 +2556,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "becafd58-b7e8-4074-b82b-f6585d73b823",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2319,11 +2576,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "4bd7868f-14a8-4ee2-8e8a-3eab3b40033c",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2337,11 +2596,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1d705109-9997-476f-8f45-d5aadd03940e",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-021",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2355,11 +2616,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "215cea90-414a-4d03-897a-0fdc81041e70",
     "subscriptionName": "vscs-codesp-prod-data-storage-ap-se-022",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2373,11 +2636,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "118b780b-0bdf-4927-8f1e-a1aa0a821916",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2391,11 +2656,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "20418f2d-a4e7-439a-9399-994fb9a32d68",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-002",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2409,11 +2676,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9d53ab0e-d8ab-436d-b620-9dc694a04841",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-003",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2427,11 +2696,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "306d1121-f7cf-48de-b603-0b0c2a7e6fa9",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-004",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2445,11 +2716,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "3839ac56-8768-4a8c-8567-1942728171b7",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-005",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2463,11 +2736,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1b48bfb0-145f-4d8a-8723-84c5bd8393d0",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-006",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2481,11 +2756,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2e85659e-1bd4-489c-8b2f-41fb42eeaefa",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-007",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2499,11 +2776,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "273562d9-26da-43e6-a5ff-6e523c25fc5a",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-008",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2517,11 +2796,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "41ebdbbb-efaf-436b-aec5-1f3234dbe4e1",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-009",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2535,11 +2816,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b1f2a529-33db-45df-88ca-1ef55b9f99d6",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-010",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2553,11 +2836,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d480f831-8796-486f-a4c8-e57abe13dba4",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-011",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2571,11 +2856,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d65a2719-bf2b-4089-96a4-d422cbcc2281",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-012",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2589,11 +2876,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "cb172a38-d546-494c-a42d-7fc7cd670b8f",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2607,11 +2896,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "996a7a62-7958-48d5-9ea9-843a85675266",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2625,11 +2916,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f0471b10-6af8-4465-9859-97501daa4031",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2643,11 +2936,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f8406cb3-628d-4162-b93d-f7a70d09e8d8",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2661,11 +2956,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "58cf0e0a-6bdd-438c-8c2d-5976163346fa",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2679,11 +2976,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "cf5ec712-2a96-4617-a822-3d91f2c34360",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2697,11 +2996,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fd93098a-ee5b-4fd1-bde5-d817de0fff0c",
     "subscriptionName": "vscs-codesp-prod-data-storage-eu-w-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2715,11 +3016,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "94f02be7-2a72-412f-82df-af3fcf97167b",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2733,11 +3036,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "80daec0b-56f3-4837-bc0b-6e60aae2c0dd",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-002",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2751,11 +3056,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e8791c4d-b38e-4806-9e33-8e1a273d13ae",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-003",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2769,11 +3076,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "a64af558-a8ca-4583-81d5-00b1c0efea19",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-004",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2787,11 +3096,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2f321653-4fe1-460f-be05-d3ef73816909",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-005",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2805,11 +3116,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d2b8d152-d3ff-4c3c-b059-54bd2b7b9280",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-006",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2823,11 +3136,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "40c14917-4f7e-4f97-ae43-953604469dfa",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-007",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2841,11 +3156,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1a297bac-154e-45e5-8d35-d0292c9a5f8e",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-008",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2859,11 +3176,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "bcb6c332-25e9-4b67-8d7b-5edfcbab08c5",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-009",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2877,11 +3196,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d2ec8646-9f26-4120-a0fe-4d47142f6618",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-010",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2895,11 +3216,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "8ae95643-334d-4f2d-b82e-7f887707eb72",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-011",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2913,11 +3236,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "91249570-b600-4156-b641-83a922c3a890",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-012",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2931,11 +3256,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "fc4ee68a-c793-4be7-90c2-c4bf631e4dc4",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2949,11 +3276,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f4d7f33e-e82f-477a-9302-6a6e377c546c",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2967,11 +3296,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "6bd3f703-b5f7-4bd1-8328-92331b46eef0",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -2985,11 +3316,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "768d1c01-794e-44d7-a737-aa9a9ae246ed",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3003,11 +3336,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "960d5a00-6eba-44bb-8cab-75d01f64c843",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3021,11 +3356,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d3a2c457-da4f-4050-9e72-748a0766deba",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3039,11 +3376,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "bf41e269-54f0-440f-b178-dfdcb4e66da0",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3057,11 +3396,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "787ccdf5-5dff-4d47-b236-3382b627d0b1",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3075,11 +3416,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "27d27eb6-441a-498b-87d8-d947aec0831e",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-e2c-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3093,11 +3436,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "79910d50-849b-45ab-bff9-ed7028769a81",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-001",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3111,11 +3456,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "01f3e4ff-a9e9-4281-a7b5-4f018fca7e8a",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-002",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3129,11 +3476,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "35513e36-d6ae-4d8a-923a-1d9b3ff59e4a",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-003",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3147,11 +3496,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b3a87d1a-0aee-4ad7-94a4-1960e4af7f7d",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-004",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3165,11 +3516,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "bf6fb180-06be-49b9-a4d3-b86e220fa5ed",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-005",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3183,11 +3536,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d1ce5e0c-3f76-4b0b-b9ae-9cf705bd4907",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-006",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3201,11 +3556,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "6dd1ca97-d0c2-4e29-bd47-5d4cd1565e13",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-007",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3219,11 +3576,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5c2c5e0b-2dfc-47c9-be86-95a86ae7ab55",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-008",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3237,11 +3596,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "c5362d0e-003e-4bdf-b9d0-429d40b019c6",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-009",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3255,11 +3616,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5326e846-8eff-4cfe-a06b-39f3d70cba4a",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-010",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3273,11 +3636,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "339a9361-2d91-46d4-a5a5-18ecde5abf3c",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-011",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3291,11 +3656,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "aca66e23-978b-446e-899d-503dcebd5b90",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-012",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3309,11 +3676,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2d47428d-a57b-4165-828f-59a3de010dad",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-013",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3327,11 +3696,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "1d7c9c85-73a0-48b2-bd8a-1dccee404b15",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-014",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3345,11 +3716,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "f52c7a92-06e2-4239-b668-60d6cf6883d6",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-015",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3363,11 +3736,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "bb5a34e6-3969-4d7e-a891-f951a1b6b354",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-016",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3381,11 +3756,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "03c9826c-8510-489d-bfe0-348093dfd5f5",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-017",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3399,11 +3776,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "49f76cc7-86ae-4d27-8518-9415c642075b",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-018",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3417,11 +3796,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "74c5697b-77cf-4eb8-b3b2-dd2a268bd971",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-019",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3435,11 +3816,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "79bd89c5-2e21-4d8b-91f3-bbbab1802b2a",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-020",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3453,11 +3836,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9f6bd112-f4f6-462e-9819-cb3e6a058922",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-021",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3471,11 +3856,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b7796689-eb7d-410f-b709-4f4e48b7b2db",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-022",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3489,11 +3876,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "9e03dd41-a9cf-4c26-a163-a25737bd911e",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-023",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3507,11 +3896,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "2014f0aa-f872-4467-a86c-8f0509291b78",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-024",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3525,11 +3916,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "33fe2342-81cd-4b0b-9d99-774272f273e8",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-025",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3543,11 +3936,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "46d34d4a-3dbd-4a10-91f4-dd81a1d09597",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-026",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3561,11 +3956,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5d48287e-a5d4-4ab6-a060-3ecc8ff19206",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-027",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3579,11 +3976,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "d8605bde-3837-4c79-9ead-a7c662dc60ac",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-028",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3597,11 +3996,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e89fc3fc-a283-4a9b-b4f3-61f482b350e5",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-029",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2-hybrid",
@@ -3615,11 +4016,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "acae8948-d222-4736-be15-7282019140b7",
     "subscriptionName": "vscs-codesp-prod-data-storage-us-w2-030",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2",
@@ -3633,11 +4036,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "5f625617-0786-46cc-815e-c969b3f01e12",
     "subscriptionName": "vscs-codesp-prod-ops",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2",
@@ -3651,11 +4056,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c",
     "subscriptionName": "vscs-core-dev-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2",
@@ -3669,11 +4076,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "03f9b555-3a9a-44c4-b410-a53acc2a32eb",
     "subscriptionName": "vscs-core-dev-ops",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "dev",
     "generation": "v2",
@@ -3687,11 +4096,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "c97073a5-23d2-4c41-9a78-63993e4762c5",
     "subscriptionName": "vscs-core-dev-ops-monitoring",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2",
@@ -3705,11 +4116,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
     "subscriptionName": "vscs-core-ppe-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2",
@@ -3723,11 +4136,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b37129d5-ec65-4920-bd6c-42aa7a4bdd73",
     "subscriptionName": "vscs-core-ppe-ops",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "ppe",
     "generation": "v2",
@@ -3741,11 +4156,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "92a1a031-cf8f-4fb0-9090-064dcf817241",
     "subscriptionName": "vscs-core-ppe-ops-monitoring",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2",
@@ -3759,11 +4176,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
     "subscriptionName": "vscs-core-prod-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2",
@@ -3777,11 +4196,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "b5e134ee-9729-42cf-b4c1-6371f7e2afa7",
     "subscriptionName": "vscs-core-prod-ops",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": true,
     "component": "core",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v2",
@@ -3795,11 +4216,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "0b34e0a0-707b-4e5f-97ae-7e39dc9c90f8",
     "subscriptionName": "vscs-core-prod-ops-monitoring",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "stub",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "test",
     "generation": "v2",
@@ -3813,11 +4236,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
     "subscriptionName": "vscs-stub-test-ctl",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "stub",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "test",
     "generation": "v2",
@@ -3831,11 +4256,13 @@
     "storagePartitionedDnsFlag": "",
     "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",
     "subscriptionName": "vscs-stub-test-ops",
+    "subscriptionOldName": "",
     "vnetInjection": ""
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "dev",
     "generation": "v1-legacy",
@@ -3849,11 +4276,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "391ef925-0b71-4920-8e81-93cb44d896c0",
     "subscriptionName": "vso-dev-data-001-00",
+    "subscriptionOldName": "vso-dev-data-001-00",
     "vnetInjection": "done"
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "dev",
     "generation": "v1-legacy",
@@ -3867,11 +4296,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "e4c062b5-2f72-415d-8a4a-ad37c8caf10a",
     "subscriptionName": "vso-dev-data-001-01",
+    "subscriptionOldName": "vso-dev-data-001-01",
     "vnetInjection": "done"
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "dev",
     "generation": "v1-legacy",
@@ -3885,11 +4316,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "aba3d4d1-6475-4832-a5bb-41040601aa77",
     "subscriptionName": "vso-dev-data-001-02",
+    "subscriptionOldName": "vso-dev-data-001-02",
     "vnetInjection": "done"
   },
   {
     "ame": false,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "dev",
     "generation": "v1-legacy",
@@ -3903,11 +4336,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "6fd2d429-5fd3-4334-bdfa-867cefdb69e2",
     "subscriptionName": "vso-dev-data-001-03",
+    "subscriptionOldName": "vso-dev-data-001-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v1-legacy",
@@ -3921,11 +4356,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "637c1a9c-ba08-4653-8a7e-921a07cbf19a",
     "subscriptionName": "vso-ppe-data-001-00",
+    "subscriptionOldName": "vso-ppe-data-001-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v1-legacy",
@@ -3939,11 +4376,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "3b9f3d0e-d120-4375-af32-58156f1d6f54",
     "subscriptionName": "vso-ppe-data-001-01",
+    "subscriptionOldName": "vso-ppe-data-001-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v1-legacy",
@@ -3957,11 +4396,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "e859fec8-3e18-4979-a299-211812aeb75b",
     "subscriptionName": "vso-ppe-data-001-02",
+    "subscriptionOldName": "vso-ppe-data-001-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "ppe",
     "generation": "v1-legacy",
@@ -3975,11 +4416,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "38b943e5-50a4-49e8-8601-57d2a62aabe3",
     "subscriptionName": "vso-ppe-data-001-03",
+    "subscriptionOldName": "vso-ppe-data-001-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "prod",
     "generation": "v1-legacy",
@@ -3993,11 +4436,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "7f4e3558-29c6-4377-8270-8f0212dbddc2",
     "subscriptionName": "vso-prod-data-001-00",
+    "subscriptionOldName": "vso-prod-data-001-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4011,11 +4456,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "44ae3970-dc20-4366-b8ed-b075521d10dc",
     "subscriptionName": "vso-prod-data-001-01",
+    "subscriptionOldName": "vso-prod-data-001-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4029,11 +4476,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "cb974ee6-ab77-4604-b4c2-144290c0055a",
     "subscriptionName": "vso-prod-data-001-02",
+    "subscriptionOldName": "vso-prod-data-001-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4047,11 +4496,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "6be71a6e-27d7-41ae-81ea-ea147c4f8802",
     "subscriptionName": "vso-prod-data-001-03",
+    "subscriptionOldName": "vso-prod-data-001-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "prod",
     "generation": "v1-legacy",
@@ -4065,11 +4516,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "6d0a7086-3524-47c7-916f-9bafcdad1b81",
     "subscriptionName": "vso-prod-data-002-00",
+    "subscriptionOldName": "vso-prod-data-002-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4083,11 +4536,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "bba1f707-266e-44e2-8e23-01c8a89cf1dd",
     "subscriptionName": "vso-prod-data-002-01",
+    "subscriptionOldName": "vso-prod-data-002-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4101,11 +4556,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "46cdf8ad-6c60-44e5-9095-5e8cda0b672e",
     "subscriptionName": "vso-prod-data-002-02",
+    "subscriptionOldName": "vso-prod-data-002-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4119,11 +4576,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "813f47ae-a5f8-43b0-a230-8ae3131d05d0",
     "subscriptionName": "vso-prod-data-002-03",
+    "subscriptionOldName": "vso-prod-data-002-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "prod",
     "generation": "v1-legacy",
@@ -4137,11 +4596,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "a81f2b0c-8b33-411d-8ebc-233e103ffb15",
     "subscriptionName": "vso-prod-data-003-00",
+    "subscriptionOldName": "vso-prod-data-003-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4155,11 +4616,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "298dbdff-51e6-4469-b28e-deffbcd5d2e8",
     "subscriptionName": "vso-prod-data-003-01",
+    "subscriptionOldName": "vso-prod-data-003-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4173,11 +4636,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "5d3f8f41-08bd-41ef-acee-863c985cf298",
     "subscriptionName": "vso-prod-data-003-02",
+    "subscriptionOldName": "vso-prod-data-003-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4191,11 +4656,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "94190981-2bfd-44f4-ab5a-06ef390b313b",
     "subscriptionName": "vso-prod-data-003-03",
+    "subscriptionOldName": "vso-prod-data-003-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": true,
     "environment": "prod",
     "generation": "v1-legacy",
@@ -4209,11 +4676,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "9e87f0e3-c941-47a1-8749-08070817da63",
     "subscriptionName": "vso-prod-data-004-00",
+    "subscriptionOldName": "vso-prod-data-004-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4227,11 +4696,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "2d7d8ddc-c538-475d-a203-c0e815876e05",
     "subscriptionName": "vso-prod-data-004-01",
+    "subscriptionOldName": "vso-prod-data-004-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4245,11 +4716,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "fcbd5424-2a5c-4997-a694-40dfeb615c1c",
     "subscriptionName": "vso-prod-data-004-02",
+    "subscriptionOldName": "vso-prod-data-004-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4263,11 +4736,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "a77c92a3-935a-41bb-8607-05a71035915e",
     "subscriptionName": "vso-prod-data-004-03",
+    "subscriptionOldName": "vso-prod-data-004-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4281,11 +4756,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "cdb4cc5f-b42d-48b9-9ac1-87f402134df8",
     "subscriptionName": "vso-prod-data-005-00",
+    "subscriptionOldName": "vso-prod-data-005-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4299,11 +4776,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "9c7b40d0-125e-459d-9f57-f26e7ab5dbda",
     "subscriptionName": "vso-prod-data-005-01",
+    "subscriptionOldName": "vso-prod-data-005-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4317,11 +4796,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "48e05739-4aa5-4b23-b7f8-e6d323d5eac0",
     "subscriptionName": "vso-prod-data-005-02",
+    "subscriptionOldName": "vso-prod-data-005-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4335,11 +4816,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "3839c308-8d23-4403-baa2-43c63a17f16d",
     "subscriptionName": "vso-prod-data-005-03",
+    "subscriptionOldName": "vso-prod-data-005-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4353,11 +4836,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "a6855511-a107-4152-bb0c-0074cdf2cbec",
     "subscriptionName": "vso-prod-data-006-00",
+    "subscriptionOldName": "vso-prod-data-006-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4371,11 +4856,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "d8bba7c7-ed35-4b30-aabc-2d85f4dc786a",
     "subscriptionName": "vso-prod-data-006-01",
+    "subscriptionOldName": "vso-prod-data-006-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4389,11 +4876,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "4eb5bfbf-9a49-4f72-b707-0e45e9016e98",
     "subscriptionName": "vso-prod-data-006-02",
+    "subscriptionOldName": "vso-prod-data-006-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4407,11 +4896,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "cb299af9-5f46-4b56-9398-119e9b102562",
     "subscriptionName": "vso-prod-data-006-03",
+    "subscriptionOldName": "vso-prod-data-006-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4425,11 +4916,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "8c8f9cc9-e40d-499a-80b3-1c1a0ecda9c5",
     "subscriptionName": "vso-prod-data-007-00",
+    "subscriptionOldName": "vso-prod-data-007-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4443,11 +4936,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "ff8f1b2a-b2b1-4437-ad0e-09e104c35a41",
     "subscriptionName": "vso-prod-data-007-01",
+    "subscriptionOldName": "vso-prod-data-007-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4461,11 +4956,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "9c331a3a-2fa1-4d82-b77c-17e7ae89a245",
     "subscriptionName": "vso-prod-data-007-02",
+    "subscriptionOldName": "vso-prod-data-007-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4479,11 +4976,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "0054c1d3-8a22-4943-bce5-3d0141f84c5d",
     "subscriptionName": "vso-prod-data-007-03",
+    "subscriptionOldName": "vso-prod-data-007-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4497,11 +4996,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "ed5e3298-7b29-4ed4-b9c5-6cdb98ebdd6e",
     "subscriptionName": "vso-prod-data-008-00",
+    "subscriptionOldName": "vso-prod-data-008-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4515,11 +5016,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "57f27a99-a03d-4a6a-acd9-405bb9a85a12",
     "subscriptionName": "vso-prod-data-008-01",
+    "subscriptionOldName": "vso-prod-data-008-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4533,11 +5036,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "26b0a666-2fec-4a9c-83fc-6f9b47c5ef1c",
     "subscriptionName": "vso-prod-data-008-02",
+    "subscriptionOldName": "vso-prod-data-008-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4551,11 +5056,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "1e5e373f-27e1-45cb-bd11-84a8eb015b2d",
     "subscriptionName": "vso-prod-data-008-03",
+    "subscriptionOldName": "vso-prod-data-008-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4569,11 +5076,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "b8b14211-f868-4311-bba6-6d148187b226",
     "subscriptionName": "vso-prod-data-009-00",
+    "subscriptionOldName": "vso-prod-data-009-00",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4587,11 +5096,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "e95e3a02-b04f-4693-abdb-b2623e9178f8",
     "subscriptionName": "vso-prod-data-009-01",
+    "subscriptionOldName": "vso-prod-data-009-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4605,11 +5116,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "40a185a3-1816-4e04-9862-8b0e6366d42f",
     "subscriptionName": "vso-prod-data-009-02",
+    "subscriptionOldName": "vso-prod-data-009-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4623,11 +5136,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "583a0519-4c74-4996-b0ee-fa6f5bb6e816",
     "subscriptionName": "vso-prod-data-009-03",
+    "subscriptionOldName": "vso-prod-data-009-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4641,11 +5156,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "205ab7a1-3f0c-4ef2-97fe-a8e0f52da462",
     "subscriptionName": "vso-prod-data-100-01",
+    "subscriptionOldName": "vso-prod-data-100-01",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4659,11 +5176,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "fd6ff98b-f757-4f9e-8f91-cc4011065187",
     "subscriptionName": "vso-prod-data-100-02",
+    "subscriptionOldName": "vso-prod-data-100-02",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4677,11 +5196,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "81068cd0-7c4f-4f8d-a417-bf2df33dd819",
     "subscriptionName": "vso-prod-data-100-03",
+    "subscriptionOldName": "vso-prod-data-100-03",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4695,11 +5216,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "a474a831-2093-4aad-9103-b04a2837229d",
     "subscriptionName": "vso-prod-data-100-04",
+    "subscriptionOldName": "vso-prod-data-100-04",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4713,11 +5236,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "e7083301-3a4a-4a83-98fe-c2e1eb3cf2f5",
     "subscriptionName": "vso-prod-data-100-05",
+    "subscriptionOldName": "vso-prod-data-100-05",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4731,11 +5256,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "849194e6-77dc-4d03-aaab-68dbf95cd6ed",
     "subscriptionName": "vso-prod-data-100-06",
+    "subscriptionOldName": "vso-prod-data-100-06",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4749,11 +5276,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "6c289174-6c2d-40a3-aee2-39168bf411c0",
     "subscriptionName": "vso-prod-data-100-07",
+    "subscriptionOldName": "vso-prod-data-100-07",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4767,11 +5296,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "5c239914-d45f-41d8-9b6c-427a9b62065b",
     "subscriptionName": "vso-prod-data-100-08",
+    "subscriptionOldName": "vso-prod-data-100-08",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4785,11 +5316,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "a909a4fc-a6ff-4669-955b-c8723fe8ee78",
     "subscriptionName": "vso-prod-data-100-09",
+    "subscriptionOldName": "vso-prod-data-100-09",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4803,11 +5336,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "c48e1b7f-e7b2-4bea-96d1-dd06c7b72dc5",
     "subscriptionName": "vso-prod-data-100-10",
+    "subscriptionOldName": "vso-prod-data-100-10",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4821,11 +5356,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "69a5bce5-3034-4c3a-b277-41cf411fe162",
     "subscriptionName": "vso-prod-data-100-11",
+    "subscriptionOldName": "vso-prod-data-100-11",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4839,11 +5376,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "aed45f15-0980-468f-b3e4-b4e2b375d5aa",
     "subscriptionName": "vso-prod-data-100-12",
+    "subscriptionOldName": "vso-prod-data-100-12",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4857,11 +5396,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "44cf333e-92ef-4f80-8d03-e31ef90833df",
     "subscriptionName": "vso-prod-data-100-13",
+    "subscriptionOldName": "vso-prod-data-100-13",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4875,11 +5416,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "b13acfb9-89f6-4551-a721-28f584b55a77",
     "subscriptionName": "vso-prod-data-100-14",
+    "subscriptionOldName": "vso-prod-data-100-14",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4893,11 +5436,13 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "b4d9dbfd-383d-4e95-92aa-9288f870a389",
     "subscriptionName": "vso-prod-data-100-15",
+    "subscriptionOldName": "vso-prod-data-100-15",
     "vnetInjection": "done"
   },
   {
     "ame": true,
     "component": "codesp",
+    "dbEnabled": null,
     "enabled": false,
     "environment": "prod",
     "generation": "v1-hybrid",
@@ -4911,6 +5456,7 @@
     "storagePartitionedDnsFlag": "must not set!",
     "subscriptionId": "492ab927-fbc8-4d5d-8839-f64d6f137df4",
     "subscriptionName": "vso-prod-data-100-16",
+    "subscriptionOldName": "vso-prod-data-100-16",
     "vnetInjection": "done"
   }
 ]
