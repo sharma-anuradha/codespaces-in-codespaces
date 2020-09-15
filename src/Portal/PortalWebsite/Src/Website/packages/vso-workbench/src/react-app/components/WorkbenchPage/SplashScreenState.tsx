@@ -63,7 +63,6 @@ const isLightThemeColor = (
     return true;
 };
 
-
 export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
     props: ISplashScreenProps
 ) => {
@@ -192,7 +191,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             }, []);
 
             return (
-                <SplashScreenShell isGithubSplashScreen={isLightTheme}>
+                <SplashScreenShell isLightTheme={isLightTheme}>
                     <VSOSplashScreen connection={connection} />
                 </SplashScreenShell>
             );

@@ -5,7 +5,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -347,7 +347,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -693,7 +693,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -1035,7 +1035,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -1374,7 +1374,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -1716,7 +1716,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -2058,7 +2058,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -2400,7 +2400,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender environment state
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -2742,7 +2742,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -3094,7 +3094,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -3436,7 +3436,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "
@@ -3778,7 +3778,7 @@ exports[`WorkbenchPageRender should render WorkbenchPageRender workbench states 
   className=""
 >
   <div
-    className="vso-splash-screen is-logo"
+    className="vso-splash-screen "
   >
     <div
       className="container "

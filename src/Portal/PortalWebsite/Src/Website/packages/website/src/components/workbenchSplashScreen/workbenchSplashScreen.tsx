@@ -20,7 +20,7 @@ interface IConnectSplashScreen {
 
 export const ConnectSplashScreen: React.FunctionComponent<IConnectSplashScreen> = (props) => {
     return (
-        <RenderSplashScreen isOnVSCodespaces={props.isOnVSCodespaces}>
+        <RenderSplashScreen isLightTheme={!props.isOnVSCodespaces} isLogo={isHostedOnGithub()}>
             <Stack
                     className={'connection-stack'}
                     horizontalAlign='center'
@@ -75,7 +75,7 @@ export const WorkbenchSplashScreen: React.FC<IWorkbenchSplashScreenProps> = (pro
         );
     } else {
         return (
-                <RenderSplashScreen isOnVSCodespaces={isOnVSCodespaces}>
+                <RenderSplashScreen isLightTheme={!isOnVSCodespaces} isLogo={isHostedOnGithub()}>
                     <VSOSplashScreen connection={connection} github={!isOnVSCodespaces}></VSOSplashScreen>
                 </RenderSplashScreen>
         );

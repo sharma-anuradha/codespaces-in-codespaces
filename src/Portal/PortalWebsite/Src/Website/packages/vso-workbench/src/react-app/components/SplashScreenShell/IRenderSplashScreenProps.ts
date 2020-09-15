@@ -1,3 +1,4 @@
 export interface IRenderSplashScreenProps {
-    isOnVSCodespaces: boolean;
+    isLightTheme: boolean;
+    isLogo: boolean;
 }

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FunctionComponent } from 'react';
 
 import { ISplashScreenProps } from '../../../interfaces/ISplashScreenProps';
+import { isHostedOnGithub } from 'vso-client-core';
 
 import { IButtonLinkProps, ButtonLink } from '../ButtonLink/ButtonLink';
 import { RenderSplashScreen } from '../SplashScreenShell/RenderSplashScreen';
@@ -71,7 +72,7 @@ export const SplashScreenMessage: FunctionComponent<ISplashScreenMessageProps> =
     const { isLightTheme } = props;
 
     return (
-        <RenderSplashScreen isOnVSCodespaces={!isLightTheme}>
+        <RenderSplashScreen isLightTheme={isLightTheme} isLogo={isHostedOnGithub()}>
             <div className='vso-splash-screen__steps'>
                 <h4>Preparing your Codespace</h4>
                 <ul>

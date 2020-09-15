@@ -2,7 +2,7 @@ import * as React from 'react';
 import { VSOSplashScreen } from '@vs/vso-splash-screen'
 
 import {
-    ILocalEnvironment, randomString,
+    ILocalEnvironment, isHostedOnGithub
 } from 'vso-client-core';
 
 import { ConnectionAdapter } from './ConnectionAdapter';
@@ -13,23 +13,23 @@ import './SplashScreenShell.css';
 export interface IWorkbenchSplashScreenProps {
     environment?: ILocalEnvironment;
     connectError?: string;
+    isLightTheme: boolean;
     onRetry?: () => void;
     onConnect?: () => void;
-    isGithubSplashScreen: boolean;
 }
 
 export const SplashScreenShell: React.FC<IWorkbenchSplashScreenProps> = (props: IWorkbenchSplashScreenProps) => {
     const connection = React.useMemo(() => { return new ConnectionAdapter() }, []);
 
     const {
-        isGithubSplashScreen,
+        isLightTheme,
     } = props;
 
     return (
-        <RenderSplashScreen isOnVSCodespaces={!isGithubSplashScreen}>
+        <RenderSplashScreen isLightTheme={isLightTheme} isLogo={isHostedOnGithub()}>
             <VSOSplashScreen
                 connection={connection}
-                github={isGithubSplashScreen}
+                github={isLightTheme}
             />
         </RenderSplashScreen>
     );
