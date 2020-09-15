@@ -27,10 +27,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Start the job consumer processing and fprget the returned task.
         /// </summary>
         /// <param name="jobQueueConsumer">The job consumer instance.</param>
+        /// <param name="queueMessageProducerSettings">The queue message producer settings.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
-        public static void Start(this IJobQueueConsumer jobQueueConsumer, CancellationToken cancellationToken = default)
+        public static void Start(this IJobQueueConsumer jobQueueConsumer, QueueMessageProducerSettings queueMessageProducerSettings, CancellationToken cancellationToken = default)
         {
-            Task.Run(() => jobQueueConsumer.StartAsync(cancellationToken));
+            Task.Run(() => jobQueueConsumer.StartAsync(queueMessageProducerSettings, cancellationToken));
         }
 
         /// <summary>
@@ -90,12 +91,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <param name="jobQueueConsumerFactory">The job consumer factory instance.</param>
         /// <param name="jobHandlers">Enumerable job handlers to register.</param>
+        /// <param name="queueMessageProducerSettings">The queue message producer settings.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
-        public static void Start(this IJobQueueConsumerFactory jobQueueConsumerFactory, IEnumerable<IJobHandlerTarget> jobHandlers, CancellationToken cancellationToken = default)
+        public static void Start(this IJobQueueConsumerFactory jobQueueConsumerFactory, IEnumerable<IJobHandlerTarget> jobHandlers, QueueMessageProducerSettings queueMessageProducerSettings, CancellationToken cancellationToken = default)
         {
             foreach (var jobHandler in jobHandlers)
             {
-                Start(jobQueueConsumerFactory.GetOrCreate(jobHandler.QueueId, jobHandler.Location), cancellationToken);
+                Start(jobQueueConsumerFactory.GetOrCreate(jobHandler.QueueId, jobHandler.Location), queueMessageProducerSettings, cancellationToken);
             }
         }
 

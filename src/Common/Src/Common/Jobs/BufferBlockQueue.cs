@@ -118,12 +118,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         {
             if (InvisibleMessages.TryGetValue(queueMessage.Id, out var invisibleQueue))
             {
+                DateTime visibilityDateTime;
                 if (updateContent)
                 {
                     invisibleQueue.Item1.Content = queueMessage.Content;
+                    visibilityDateTime = invisibleQueue.Item2;
+                }
+                else
+                {
+                    visibilityDateTime = DateTime.Now.Add(visibilityTimeout);
                 }
 
-                InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(invisibleQueue.Item1, DateTime.Now.Add(visibilityTimeout));
+                InvisibleMessages[queueMessage.Id] = new Tuple<QueueMessage, DateTime>(invisibleQueue.Item1, visibilityDateTime);
             }
 
             return Task.CompletedTask;

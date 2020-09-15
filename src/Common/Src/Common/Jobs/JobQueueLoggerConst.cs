@@ -85,6 +85,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         public const string JobAverageProcessTime = "JobAverageProcessTime";
 
         /// <summary>
+        /// Job average dequeud duration.
+        /// </summary>
+        public const string JobAverageDequeuedDuration = "JobAverageDequeuedDuration";
+
+        /// <summary>
         /// Jobs that failed.
         /// </summary>
         public const string JobFailuresCount = "JobFailuresCount";

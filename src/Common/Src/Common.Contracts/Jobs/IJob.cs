@@ -14,6 +14,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     [Flags]
     public enum JobCompletedStatus
     {
+        None = 0,
+
         /// <summary>
         /// The job completed successfully.
         /// </summary>

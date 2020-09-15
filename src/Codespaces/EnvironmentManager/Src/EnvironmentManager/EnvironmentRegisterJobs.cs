@@ -221,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             // new job continuation handlers
             JobQueueConsumerFactory.RegisterJobHandlers(JobHandlerTargets);
-            JobQueueConsumerFactory.Start(JobHandlerTargets);
+            JobQueueConsumerFactory.Start(JobHandlerTargets, QueueMessageProducerSettings.Default);
 
             // Job: Watch Export Blobs to be deleted from export storage account and wipe out export blob url from DB
             TaskHelper.RunBackgroundLoop(

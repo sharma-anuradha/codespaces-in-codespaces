@@ -16,21 +16,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Initializes a new instance of the <see cref="QueueMessageProducerFactory"/> class.
         /// </summary>
         /// <param name="queueFactory">A queue factroy instance.</param>
-        /// <param name="queueMessageProducerSettings">Settings to apply on each queue message producer.</param>
-        public QueueMessageProducerFactory(IQueueFactory queueFactory, QueueMessageProducerSettings queueMessageProducerSettings = null)
+        public QueueMessageProducerFactory(IQueueFactory queueFactory)
         {
             QueueFactory = Requires.NotNull(queueFactory, nameof(queueFactory));
-            Settings = queueMessageProducerSettings ?? QueueMessageProducerSettings.Default;
         }
 
         private IQueueFactory QueueFactory { get; }
 
-        private QueueMessageProducerSettings Settings { get; }
-
         /// <inheritdoc/>
         public IQueueMessageProducer Create(string queueId, AzureLocation? azureLocation)
         {
-            return new QueueMessageProducer(QueueFactory.GetOrCreate(queueId, azureLocation), Settings);
+            return new QueueMessageProducer(QueueFactory.GetOrCreate(queueId, azureLocation));
         }
     }
 }

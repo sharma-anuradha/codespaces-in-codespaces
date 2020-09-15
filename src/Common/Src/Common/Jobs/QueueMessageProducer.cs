@@ -16,37 +16,46 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     /// </summary>
     public class QueueMessageProducer : DisposableBase, IQueueMessageProducer
     {
-        private readonly BufferBlock<(QueueMessage, TimeSpan)> bufferBlock = new BufferBlock<(QueueMessage, TimeSpan)>();
+        private BufferBlock<(QueueMessage, TimeSpan)> bufferBlock;
         private Task getMessagesTask;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueueMessageProducer"/> class.
         /// </summary>
         /// <param name="queue">A queue instance.</param>
-        /// <param name="settings">Queue producer settings.</param>
-        public QueueMessageProducer(IQueue queue, QueueMessageProducerSettings settings)
+        public QueueMessageProducer(IQueue queue)
         {
             Queue = Requires.NotNull(queue, nameof(queue));
-            Settings = Requires.NotNull(settings, nameof(settings));
         }
 
         /// <inheritdoc/>
         public IQueue Queue { get; }
 
         /// <inheritdoc/>
-        public ISourceBlock<(QueueMessage, TimeSpan)> Messages => this.bufferBlock;
+        public ISourceBlock<(QueueMessage, TimeSpan)> Messages
+        {
+            get
+            {
+                if (this.bufferBlock == null)
+                {
+                    throw new InvalidOperationException("Queue message producer not started");
+                }
 
-        private QueueMessageProducerSettings Settings { get; set; }
+                return this.bufferBlock;
+            }
+        }
 
         /// <inheritdoc/>
-        public Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(QueueMessageProducerSettings queueMessageProducerSettings, CancellationToken cancellationToken)
         {
+            Requires.NotNull(queueMessageProducerSettings, nameof(queueMessageProducerSettings));
+
             if (this.getMessagesTask != null)
             {
                 throw new InvalidOperationException("Already started");
             }
 
-            this.getMessagesTask = StartInternalAsync(cancellationToken);
+            this.getMessagesTask = StartInternalAsync(queueMessageProducerSettings, cancellationToken);
             return this.getMessagesTask;
         }
 
@@ -65,18 +74,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
         }
 
-        private async Task StartInternalAsync(CancellationToken cancellationToken)
+        private async Task StartInternalAsync(QueueMessageProducerSettings settings, CancellationToken cancellationToken)
         {
+            this.bufferBlock = settings.MessageOptions != null ? new BufferBlock<(QueueMessage, TimeSpan)>(settings.MessageOptions) : new BufferBlock<(QueueMessage, TimeSpan)>();
+            var boundedCapacity = settings.MessageOptions?.BoundedCapacity;
+
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, DisposeToken))
             {
                 while (!cts.Token.IsCancellationRequested)
                 {
-                    var queueMessages = await Queue.GetMessagesAsync(Settings.MessageCount, Settings.VisibilityTimeout, Settings.Timeout, cts.Token);
+                    var messageCount = boundedCapacity.HasValue ? boundedCapacity.Value - this.bufferBlock.Count : settings.MessageCount;
+                    if (messageCount == 0)
+                    {
+                        // Note: if we don't have any available slot to buffer a message is better to not even dequeue
+                        // any additional message from the cloud
+                        await Task.Delay(settings.Timeout, cancellationToken);
+                        continue;
+                    }
+
+                    var queueMessages = await Queue.GetMessagesAsync(messageCount, settings.VisibilityTimeout, settings.Timeout, cts.Token);
                     if (queueMessages.Any())
                     {
                         foreach (var queueMessage in queueMessages)
                         {
-                            await this.bufferBlock.SendAsync((queueMessage, Settings.VisibilityTimeout), cts.Token);
+                            await this.bufferBlock.SendAsync((queueMessage, settings.VisibilityTimeout), cts.Token);
                         }
                     }
                 }

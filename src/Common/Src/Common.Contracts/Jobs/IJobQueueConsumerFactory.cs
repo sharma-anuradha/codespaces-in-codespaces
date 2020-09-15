@@ -58,9 +58,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <summary>
         /// Start the job queue consumer processing.
         /// </summary>
+        /// <param name="queueMessageProducerSettings">The queue message producer settings.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>Completion task.</returns>
-        Task StartAsync(CancellationToken cancellationToken);
+        Task StartAsync(QueueMessageProducerSettings queueMessageProducerSettings, CancellationToken cancellationToken);
     }
 
     /// <summary>
@@ -82,6 +83,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the accumulated job handler process time so far.
         /// </summary>
         TimeSpan ProcessTime { get; }
+
+        /// <summary>
+        /// Gets the accumulated job handler dequeued duration so far.
+        /// </summary>
+        TimeSpan DequeuedDuration { get; }
 
         /// <summary>
         /// Gets all the job process times.

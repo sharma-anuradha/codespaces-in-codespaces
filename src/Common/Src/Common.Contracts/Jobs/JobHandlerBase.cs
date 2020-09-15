@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -83,6 +84,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         protected JobHandlerBase(ExecutionDataflowBlockOptions dataflowBlockOptions = null, JobHandlerOptions options = null)
         {
             DataflowBlockOptions = dataflowBlockOptions ?? DefaultDataflowBlockOptions;
+
+            var errorCallbacks = GetType()
+                .GetCustomAttributes(typeof(JobHandlerErrorCallbackAttribute), true).Cast<JobHandlerErrorCallbackAttribute>()
+                .Select(attr => (IJobHandlerErrorCallback)Activator.CreateInstance(attr.ErrorTypeCallback));
+            if (errorCallbacks.Any())
+            {
+                if (options == null)
+                {
+                    options = new JobHandlerOptions()
+                    {
+                        ErrorCallbacks = errorCallbacks,
+                    };
+                }
+                else
+                {
+                    // merge the options.
+                    if (options.ErrorCallbacks != null)
+                    {
+                        errorCallbacks = errorCallbacks.Union(options.ErrorCallbacks);
+                    }
+
+                    options = new JobHandlerOptions()
+                    {
+                        HandlerTimeout = options.HandlerTimeout,
+                        MaxHandlerRetries = options.MaxHandlerRetries,
+                        RetryTimeout = options.RetryTimeout,
+                        InvisibleThreshold = options.InvisibleThreshold,
+                        ErrorCallbacks = errorCallbacks,
+                    };
+                }
+            }
+
             this.options = options;
         }
 

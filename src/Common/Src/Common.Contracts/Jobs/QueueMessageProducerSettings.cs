@@ -3,14 +3,20 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks.Dataflow;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
     /// <summary>
     /// Settings for the Queue message producer.
     /// </summary>
     public class QueueMessageProducerSettings
     {
+        /// <summary>
+        /// Default message count.
+        /// </summary>
+        public const int DefaultMessageCount = 5;
+
         /// <summary>
         /// Gets the default timeout.
         /// </summary>
@@ -25,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Gets the default settings.
         /// </summary>
         public static readonly QueueMessageProducerSettings Default =
-            new QueueMessageProducerSettings(5, DefaultVisibilityTimeout, DefaultTimeout);
+            new QueueMessageProducerSettings(DefaultMessageCount, DefaultVisibilityTimeout, DefaultTimeout, null);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueueMessageProducerSettings"/> class.
@@ -33,11 +39,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// <param name="messageCount">The message count.</param>
         /// <param name="visibilityTimeout">The visibility timeout.</param>
         /// <param name="timeout">The timeout.</param>
-        public QueueMessageProducerSettings(int messageCount, TimeSpan visibilityTimeout, TimeSpan timeout)
+        /// <param name="messageOptions">Message dataflow block options.</param>
+        public QueueMessageProducerSettings(int messageCount, TimeSpan visibilityTimeout, TimeSpan timeout, DataflowBlockOptions messageOptions = null)
         {
             MessageCount = messageCount;
             VisibilityTimeout = visibilityTimeout;
             Timeout = timeout;
+            MessageOptions = messageOptions;
         }
 
         /// <summary>
@@ -54,5 +62,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Gets the timeout.
         /// </summary>
         public TimeSpan Timeout { get; }
+
+        /// <summary>
+        /// Gets the message dataflow block options.
+        /// </summary>
+        public DataflowBlockOptions MessageOptions { get; }
+
+        public static QueueMessageProducerSettings Create(
+            int? messageCount = null,
+            TimeSpan? visibilityTimeout = null,
+            TimeSpan? timeout = null,
+            DataflowBlockOptions messageOptions = null)
+        {
+            return new QueueMessageProducerSettings(
+                messageCount ?? DefaultMessageCount,
+                visibilityTimeout ?? DefaultVisibilityTimeout,
+                timeout ?? DefaultTimeout,
+                messageOptions);
+        }
     }
 }

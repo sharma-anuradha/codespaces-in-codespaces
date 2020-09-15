@@ -42,8 +42,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <summary>
         /// Start the queue message processing.
         /// </summary>
+        /// <param name="queueMessageProducerSettings">The queue message producer settings.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>Completion task.</returns>
-        Task StartAsync(CancellationToken cancellationToken);
+        Task StartAsync(QueueMessageProducerSettings queueMessageProducerSettings, CancellationToken cancellationToken);
     }
 }

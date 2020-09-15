@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -30,6 +31,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets or sets the invisible threshold time span.
         /// </summary>
         public TimeSpan? InvisibleThreshold { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional set of error callbacks.
+        /// </summary>
+        public IEnumerable<IJobHandlerErrorCallback> ErrorCallbacks { get; set; }
 
         /// <summary>
         /// Create job handler options with max retries.

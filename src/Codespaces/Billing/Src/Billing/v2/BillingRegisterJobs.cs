@@ -5,6 +5,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks;
@@ -18,6 +19,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingRegisterJobs : IAsyncBackgroundWarmup
     {
+        private const int MaxMessagesProduced = 32; // cache only 32 dequeued messages
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingRegisterJobs"/> class.
         /// </summary>
@@ -70,23 +73,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             if (await BillingSettings.V2BillingManagementProducerIsEnabledAsync(logger))
             {
+                // Create a custom message producer settings
+                var billingProducerSettings = QueueMessageProducerSettings.Create(
+                    messageOptions: 
+                        new DataflowBlockOptions() { BoundedCapacity = MaxMessagesProduced });
+
                 // Register: Queue handlers
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingManagermentQueue)
                     .RegisterJobHandler(BillingManagementConsumer)
-                    .Start();
+                    .Start(billingProducerSettings);
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanBatchQueue)
                     .RegisterJobHandler(BillingPlanBatchConsumer)
-                    .Start();
+                    .Start(billingProducerSettings);
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanSummaryQueue)
                     .RegisterJobHandler(BillingPlanSummaryConsumer)
-                    .Start();
+                    .Start(billingProducerSettings);
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanCleanupQueue)
                     .RegisterJobHandler(BillingPlanCleanupConsumer)
-                     .Start();
+                    .Start(billingProducerSettings);
 
                 // Job: Start Billing Management Producer
                 TaskHelper.RunBackgroundLoop(

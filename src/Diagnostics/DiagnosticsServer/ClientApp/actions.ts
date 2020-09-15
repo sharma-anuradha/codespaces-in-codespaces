@@ -234,7 +234,7 @@ export class Actions {
                         placeHolder: "",
                     },
                 ],
-                columnSettings: "Service,Queue,JobType,JobQueueMinInputCount,JobQueueMaxInputCount,JobProcessedCount,JobAverageProcessTime,JobPercentile50Time,JobPercentile90Time,JobPercentile99Time,JobFailuresCount,JobRetriesCount,JobCancelledCount,JobExpiredCount,JobKeepInvisibleCount,time",
+                columnSettings: "Service,Queue,JobType,JobQueueMinInputCount,JobQueueMaxInputCount,JobProcessedCount,JobAverageProcessTime,JobAverageDequeuedDuration,JobPercentile50Time,JobPercentile90Time,JobPercentile99Time,JobFailuresCount,JobRetriesCount,JobCancelledCount,JobExpiredCount,JobKeepInvisibleCount,time",
             },
             id: "",
         },

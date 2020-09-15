@@ -77,6 +77,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         }
 
         [Fact]
+        public Task JobPayloadErrorCallbackAsync()
+        {
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                var jobsCompleted = new BufferBlock<(IJob, IJobCompleted)>();
+                jobQueueConsumer.JobCreated += (job) =>
+                {
+                    job.Completed += (jobCompleted, ct) =>
+                    {
+                        return jobsCompleted.SendAsync((job, jobCompleted), ct);
+                    };
+                };
+
+                jobQueueConsumer.RegisterJobHandler<JobContentPayload<int>>(
+                    (job, logger, ct) =>
+                    {
+                        if (job.Payload.Content == 10)
+                        {
+                            throw new NotImplementedException();
+                        }
+                        else if (job.Payload.Content == 20)
+                        {
+                            throw new MyJobHandlerException();
+                        }
+
+                        return Task.CompletedTask;
+
+                    },dataflowBlockOptions: new ExecutionDataflowBlockOptions()
+                    {
+                        MaxDegreeOfParallelism = 1,
+                    }, options: new JobHandlerOptions()
+                    {
+                        MaxHandlerRetries = 1,
+                        ErrorCallbacks = new IJobHandlerErrorCallback[] { new MyJobHandlerErrorCallback(2) },
+                    });
+
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(10));
+                var jobCompleted = await jobsCompleted.ReceiveAsync(ReceiveTimeout);
+
+                Assert.Equal(JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.RetryExhausted, jobCompleted.Item2.Status);
+                Assert.IsType<NotImplementedException>(jobCompleted.Item2.Error);
+                await jobQueueProducer.AddJobAsync(new JobContentPayload<int>(20));
+                jobCompleted = await jobsCompleted.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(JobCompletedStatus.Failed | JobCompletedStatus.Retry, jobCompleted.Item2.Status);
+                Assert.Equal(1, jobCompleted.Item1.Retries);
+                jobCompleted = await jobsCompleted.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(JobCompletedStatus.Failed | JobCompletedStatus.Retry, jobCompleted.Item2.Status);
+                Assert.Equal(2, jobCompleted.Item1.Retries);
+                jobCompleted = await jobsCompleted.ReceiveAsync(ReceiveTimeout);
+                Assert.Equal(JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.RetryExhausted, jobCompleted.Item2.Status);
+            });
+        }
+
+        [Fact]
         public Task JobPayloadHandlerTimeoutAsync()
         {
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
@@ -178,14 +232,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         {
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
             {
-                var otherQueueMessageProducer = new QueueMessageProducer(queue, QueueMessageProducerSettings.Default);
+                var otherQueueMessageProducer = new QueueMessageProducer(queue);
                 var otherJobQueueConsumer = new JobQueueConsumer(otherQueueMessageProducer, new NullLogger());
                 var executionDataflowBlockOptions = new ExecutionDataflowBlockOptions()
                 {
                     MaxDegreeOfParallelism = 1
                 };
 
-                otherJobQueueConsumer.Start();
+                otherJobQueueConsumer.Start(QueueMessageProducerSettings.Default);
 
                 var payloadsProcessed1Counter = 0;
                 var payloadsProcessed2Counter = 0;
@@ -220,7 +274,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         }
 
         [Fact]
-        public Task JobHandlerUpdateVisbilityAsync()
+        public Task JobHandlerUpdateVisibilityAsync()
         {
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
             {
@@ -330,7 +384,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             return RunJobQueueFactoryTest(async (jobQueueProducerFactory, jobQueueConsumerFactory, queue) =>
             {
                 var jobQueueConsumer = jobQueueConsumerFactory.GetOrCreate(queue.Id, null);
-                jobQueueConsumer.Start();
+                jobQueueConsumer.Start(QueueMessageProducerSettings.Default);
                 var continuationJobHandler = new ContinuationJobHandler(jobQueueProducerFactory);
                 jobQueueConsumer.RegisterJobHandler(continuationJobHandler);
 
@@ -445,7 +499,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             foreach (var location in new AzureLocation[] { AzureLocation.WestUs2, AzureLocation.WestEurope })
             {
                 var jobQueueConsumer = (JobQueueConsumer)jobQueueConsumerFactory.GetOrCreate(queueId, location);
-                jobQueueConsumer.Start();
+                jobQueueConsumer.Start(QueueMessageProducerSettings.Default);
                 disposables.Add(jobQueueConsumer);
 
                 jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
@@ -469,28 +523,86 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             await Task.WhenAll(disposables.Select(i => i.DisposeAsync().AsTask()));
         }
 
+        [Fact]
+        public Task LimitQueueMessagesProducerSettingsAsync()
+        {
+            var producerSettings =
+                new QueueMessageProducerSettings(
+                    5,
+                    QueueMessageProducerSettings.DefaultVisibilityTimeout,
+                    QueueMessageProducerSettings.DefaultTimeout,
+                    new DataflowBlockOptions() { BoundedCapacity = 5 });
+
+            return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
+            {
+                int payloadCount = 0;
+                var tcs = new TaskCompletionSource<bool>();
+
+                var payloadsProcessed = new BufferBlock<JobContentPayload<int>>();
+                jobQueueConsumer.RegisterJobPayloadHandler<JobContentPayload<int>>(
+                    async (payload, logger, ct) =>
+                    {
+                        await payloadsProcessed.SendAsync(payload);
+                        if (Interlocked.Increment(ref payloadCount) <= 5)
+                        {
+                            await tcs.Task;
+                        }
+                    }, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 5 } );
+
+                var jobPayload = new JobContentPayload<int>(100);
+                for (int i = 0; i < 7; ++i)
+                {
+                    await jobQueueProducer.AddJobAsync(jobPayload);
+                }
+
+                // receive the non blocked items
+                for (int i = 0; i < 5; ++i)
+                {
+                    await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                }
+
+                // next line should timeout
+                await Assert.ThrowsAsync<TimeoutException>(() => payloadsProcessed.ReceiveAsync(TimeSpan.FromSeconds(1)));
+
+                // unblock all of the job handlers and so have the producer to queue the 2 last jobs
+                tcs.SetResult(true);
+
+                // receive the blocked items
+                await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+
+            }, producerSettings);
+        }
+
+        [Fact]
+        public void JobHandlerErrorCallbackAttribute()
+        {
+            var jobHandler = new MyJobHandler();
+            Assert.NotEmpty(jobHandler.GetJobOptions(null).ErrorCallbacks);
+            Assert.NotNull(jobHandler.GetJobOptions(null).ErrorCallbacks.FirstOrDefault(i => i is MyJobHandlerErrorCallback));
+        }
+
         protected Task RunJobQueueTest(Func<JobQueueProducer, JobQueueConsumer, IQueue, Task> testCallback,
             QueueMessageProducerSettings queueMessageProducerSettings = null)
         {
             return RunQueueTest(async (queue) =>
             {
                 var jobQueueProducer = new JobQueueProducer(queue, new NullLogger());
-                var queueMessageProducer = new QueueMessageProducer(queue, queueMessageProducerSettings ?? QueueMessageProducerSettings.Default);
+                var queueMessageProducer = new QueueMessageProducer(queue);
                 var jobQueueConsumer = new JobQueueConsumer(queueMessageProducer, new NullLogger());
-                jobQueueConsumer.Start(default);
+                jobQueueConsumer.Start(queueMessageProducerSettings ?? QueueMessageProducerSettings.Default, default);
                 await testCallback(jobQueueProducer, jobQueueConsumer, queue);
                 await jobQueueProducer.DisposeAsync();
                 await jobQueueConsumer.DisposeAsync();
             });
         }
 
-        protected Task RunJobQueueFactoryTest(Func<JobQueueProducerFactory, JobQueueConsumerFactory, IQueue, Task> testCallback,
-            QueueMessageProducerSettings queueMessageProducerSettings = null)
+        protected Task RunJobQueueFactoryTest(Func<JobQueueProducerFactory, JobQueueConsumerFactory, IQueue, Task> testCallback)
         {
             return RunQueueTest(async (queue) =>
             {
                 var jobQueueProducerFactory = new JobQueueProducerFactory(QueueFactory, new NullLogger());
-                var queueMessageProducerFactory = new QueueMessageProducerFactory(QueueFactory, queueMessageProducerSettings ?? QueueMessageProducerSettings.Default);
+                var queueMessageProducerFactory = new QueueMessageProducerFactory(QueueFactory);
                 var jobQueueConsumerFactory = new JobQueueConsumerFactory(queueMessageProducerFactory, new NullLogger());
                 await testCallback(jobQueueProducerFactory, jobQueueConsumerFactory, queue);
             });
@@ -564,6 +676,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 }
 
                 return Task.FromResult(ReturnNextState(isAutoNextState: true));
+            }
+        }
+
+        private class MyJobHandlerException : Exception
+        {
+        }
+
+        public class MyJobHandlerErrorCallback : JobHandlerErrorCallbackBase
+        {
+            private readonly int maxFailures;
+            private int failures;
+
+            public MyJobHandlerErrorCallback(int maxFailures)
+            {
+                this.maxFailures = maxFailures;
+            }
+
+            public MyJobHandlerErrorCallback()
+                : this(-1)
+            {
+            }
+
+            protected override bool DidRetryException(Exception error, out TimeSpan retryTimeout)
+            {
+                retryTimeout = TimeSpan.FromSeconds(2);
+                if (error is MyJobHandlerException)
+                {
+                    ++this.failures;
+                    return (this.maxFailures == -1 || this.failures <= this.maxFailures);
+                }
+
+                return false;
+            }
+        }
+
+        [JobHandlerErrorCallback(typeof(MyJobHandlerErrorCallback))]
+        private class MyJobHandler : JobHandlerBase<JobContentPayload<int>>
+        {
+            public override Task HandleJobAsync(IJob<JobContentPayload<int>> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
             }
         }
     }

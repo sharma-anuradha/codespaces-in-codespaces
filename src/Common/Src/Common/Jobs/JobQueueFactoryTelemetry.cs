@@ -71,6 +71,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                                 .FluentAddValue(JobQueueLoggerConst.JobQueueMaxInputCount, jobPayloadHandlerMetrics.MaxInputCount)
                                                 .FluentAddValue(JobQueueLoggerConst.JobProcessedCount, jobPayloadHandlerMetrics.Processed)
                                                 .FluentAddValue(JobQueueLoggerConst.JobAverageProcessTime, jobPayloadHandlerMetrics.Processed == 0 ? string.Empty : Math.Round(jobPayloadHandlerMetrics.ProcessTime.TotalMilliseconds / jobPayloadHandlerMetrics.Processed, 2).ToString())
+                                                .FluentAddValue(JobQueueLoggerConst.JobAverageDequeuedDuration, jobPayloadHandlerMetrics.Processed == 0 ? string.Empty : Math.Round(jobPayloadHandlerMetrics.DequeuedDuration.TotalMilliseconds / jobPayloadHandlerMetrics.Processed, 2).ToString())
                                                 .FluentAddValue(JobQueueLoggerConst.JobFailuresCount, jobPayloadHandlerMetrics.Failures)
                                                 .FluentAddValue(JobQueueLoggerConst.JobRetriesCount, jobPayloadHandlerMetrics.Retries)
                                                 .FluentAddValue(JobQueueLoggerConst.JobCancelledCount, jobPayloadHandlerMetrics.Cancelled)
