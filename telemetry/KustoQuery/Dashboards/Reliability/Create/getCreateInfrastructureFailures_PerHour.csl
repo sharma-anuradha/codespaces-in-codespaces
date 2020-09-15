@@ -1,6 +1,6 @@
 .create-or-alter function
-with (docstring = 'Counts the total infrastructure failures or bugs for create per day.', folder='Dashboards/Reliability/Create')
-getCreateInfrastructureFailures_PerDay
+with (docstring = 'Counts the total infrastructure failures or bugs for create per hour.', folder='Dashboards/Reliability/Create')
+getCreateInfrastructureFailures_PerHour
 (T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string))
 {
     T
@@ -11,5 +11,5 @@ getCreateInfrastructureFailures_PerDay
             ResponseOutcome startswith "Bug:" or 
             CreateOutcome startswith "Infrastructure:" or 
             CreateOutcome startswith "Bug:"
-        | summarize count() by bin(TimeStamp, 1d)
+        | summarize count() by bin(TimeStamp, 1h)
 }

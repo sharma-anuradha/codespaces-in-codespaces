@@ -1,4 +1,4 @@
-#function("Counts the total infrastructure failures or bugs for create per day.")
+#function("Counts the total infrastructure failures or bugs for create per hour.")
 (T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, CreateOutcome: string))
 {
     T
@@ -9,5 +9,5 @@
             ResponseOutcome startswith "Bug:" or 
             CreateOutcome startswith "Infrastructure:" or 
             CreateOutcome startswith "Bug:"
-        | summarize count() by bin(TimeStamp, 1d)
+        | summarize count() by bin(TimeStamp, 1h)
 }

@@ -1,0 +1,13 @@
+.create-or-alter function
+with (docstring = 'Tabulates success vs. failure for resume process per hour', folder='Dashboards/Reliability/Resume')
+getResumeProcessSuccessFailure_PerHour
+(T:(EventAtResumeRequestStop_ResponseCode: int, TimeStamp: datetime, ResponseOutcome: string, ResumeOutcome: string))
+{
+    T
+    | where TimeStamp < ago(1h)
+    | where EventAtResumeRequestStop_ResponseCode == 200
+    | summarize 
+        Success = count(ResumeOutcome == "Available"), 
+        Failed =  countif(ResumeOutcome startswith "Infrastructure:" or ResumeOutcome startswith "Bug:")
+        by bin(TimeStamp, 1h)
+}

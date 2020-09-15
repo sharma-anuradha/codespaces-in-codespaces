@@ -52,7 +52,7 @@ getResumeOutcomeEvents
         | join kind=leftouter (ResumeEnvironmentWorkspaceIdEvents) on $left.EventAtResumeContinuation_ContinuationPayloadTrackingInstanceId == $right.EventAtResumeHasWorkspace_ContinuationPayloadTrackingInstanceId
         //| join kind=leftouter (ComputeResourceForResumeEvents) on $left.EventAtResumeRequestStart_CorrelationId == $right.EventAtResumeComputeResource_CorrelationId
         | join kind=leftouter (StartingToAvailableEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToAvailable_WorkspaceId
-        | join kind=leftouter (StartingToDeletedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToDeleted_WorkspaceId
+        | join kind=leftouter (StartingToDeletedEvents) on $left.EventAtResumeSkuResolve_CloudEnvironmentId == $right.EventAtStartingToDeleted_CodespaceId
         | join kind=leftouter (StartingToFailedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToFailed_WorkspaceId
         | join kind=leftouter (StartingToShutdownEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToShutdown_WorkspaceId
         | join kind=leftouter (StartingToArchivedEvents) on $left.EventAtResumeHasWorkspace_WorkspaceId == $right.EventAtStartingToArchived_WorkspaceId

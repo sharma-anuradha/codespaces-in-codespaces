@@ -1,0 +1,10 @@
+#function("Create codespaces - process infrastructure error  per hour")
+(T:(EventAtCreateRequestStop_ResponseCode: int, TimeStamp: datetime, CreateOutcome: string))
+{
+    T
+    | where EventAtCreateRequestStop_ResponseCode == 201
+    | where TimeStamp < ago(1h)
+    | summarize 
+        Success = countif(CreateOutcome == "Available"),
+        Failure = countif(CreateOutcome startswith "Infrastructure:" or CreateOutcome startswith "Bug:") by bin(TimeStamp, 1h)
+}

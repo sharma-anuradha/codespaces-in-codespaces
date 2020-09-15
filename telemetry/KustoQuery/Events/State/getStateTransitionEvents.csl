@@ -1,6 +1,6 @@
 .create-or-alter function
 with (docstring = 'Gets state transition events.', folder='Events/State')
-GetStateTransitionEvents
+getStateTransitionEvents
 (T:(msg: string, 
     ["time"]: datetime, 
     CorrelationId: string, 
