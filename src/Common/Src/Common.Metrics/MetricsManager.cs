@@ -1,4 +1,4 @@
-﻿// <copyright file="MetricsManager.cs" company="Microsoft">
+// <copyright file="MetricsManager.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -137,9 +137,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Metrics
                         }
                         catch (Exception ex)
                         {
-                            logger.LogException("metrics_manager_error", ex);
-
-                            // continue wihtout location data...
+                            // Logging it as a warning & continue without location data...
+                            logger.LogWarning("metrics_manager_error", ex);
                         }
                     }
 
