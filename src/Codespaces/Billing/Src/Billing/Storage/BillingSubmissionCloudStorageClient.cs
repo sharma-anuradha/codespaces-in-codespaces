@@ -55,7 +55,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             catch (Exception e)
             {
-                logger.LogErrorWithDetail("BillSubmission-Table-Retrieve-Error", e.Message);
+                logger.LogException("BillSubmission-Table-Retrieve-Error", e);
                 throw;
             }
         }
@@ -107,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             }
             catch (StorageException e)
             {
-                logger.LogErrorWithDetail("BillSubmission-Table-Insert-Error", e.Message);
+                logger.LogException("BillSubmission-Table-Insert-Error", e);
                 throw;
             }
         }

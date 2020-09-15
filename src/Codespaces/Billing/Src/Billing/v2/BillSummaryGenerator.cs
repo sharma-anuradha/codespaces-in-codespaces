@@ -811,7 +811,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                .FluentAddValue("ResourceId", plan.ResourceId)
                                .FluentAddValue("Subscription", plan.Subscription)
                                .FluentAddValue("Meter", meter)
-                               .LogInfo("billiSummarySubmission");
+                               .LogInfo("billSummarySubmission");
                      }
                  }
 
