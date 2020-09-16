@@ -148,6 +148,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
                 return AuthenticateResult.Fail("Missing username claim.");
             }
 
+            if (!ReadClaim(user, CustomClaims.DisplayName, CustomClaims.DisplayName, out string displayName))
+            {
+                return AuthenticateResult.Fail("Missing displayname claim.");
+            }
+
+            if (!ReadClaim(user, CustomClaims.Id, CustomClaims.Id, out string id))
+            {
+                return AuthenticateResult.Fail("Missing id claim.");
+            }
+
             bool isMicrosoftInternalUser = false;
             try
             {
@@ -164,8 +174,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             var delegatedIdentity = new DelegateIdentity()
             {
-                DisplayName = username,
-                Id = username,
+                DisplayName = displayName,
+                Id = id,
                 Username = username,
             };
 
@@ -175,7 +185,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
             var tx = await TokenProvider.GenerateDelegatedVsSaaSTokenAsync(
                 plan,
                 Partner.GitHub,
-                plan.Tenant,
+                "github",   // TODO: janraj const
                 new[] { "write:environments" },
                 delegatedIdentity,
                 null,

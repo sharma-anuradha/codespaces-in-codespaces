@@ -50,6 +50,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         public const string DisplayName = "name";
 
         /// <summary>
+        /// The user's id.
+        /// </summary>
+        public const string Id = "id";
+
+        /// <summary>
         /// The user's email address.
         /// </summary>
         public const string Email = "email";
