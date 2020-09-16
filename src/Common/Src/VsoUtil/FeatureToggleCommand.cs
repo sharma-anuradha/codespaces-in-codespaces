@@ -24,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// Gets or sets a value indicating for the feature.
         /// </summary>
         [Option("value", HelpText = "True if the feature should be enabled or False otherwise.")]
-        public bool Value { get; set; }
+        public string Value { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the feature-flag entry should be removed from the database.
@@ -35,7 +35,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil
         /// <inheritdoc/>
         protected override void ExecuteCommand(IServiceProvider services, TextWriter stdout, TextWriter stderr)
         {
-            string value = Remove ? null : (Value ? "true" : "false");
+            string value;
+
+            if (Remove)
+            {
+                if (Value != null)
+                {
+                    throw new Exception("Invalid use of both --remove and --value.");
+                }
+
+                value = null;
+            }
+            else if (!string.IsNullOrEmpty(Value))
+            {
+                if (!bool.TryParse(Value, out var enabled))
+                {
+                    throw new Exception($"Invalid value specified for --value: {Value}");
+                }
+
+                value = enabled ? "true" : "false";
+            }
+            else
+            {
+                throw new Exception($"No value specified.");
+            }
 
             UpdateSystemConfigurationAsync(services, $"featureflag:{Feature}", value, stdout, stderr).Wait();
         }

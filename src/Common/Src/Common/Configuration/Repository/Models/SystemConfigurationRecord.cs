@@ -1,4 +1,4 @@
-﻿// <copyright file="SystemConfigurationRecord.cs" company="Microsoft">
+// <copyright file="SystemConfigurationRecord.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,5 +17,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
         /// </summary>
         [JsonProperty(PropertyName = "value")]
         public string Value { get; set; }
+
+        /// <summary>
+        /// Gets or sets the configuration comment.
+        /// </summary>
+        [JsonProperty(PropertyName = "comment")]
+        public string Comment { get; set; }
     }
 }
