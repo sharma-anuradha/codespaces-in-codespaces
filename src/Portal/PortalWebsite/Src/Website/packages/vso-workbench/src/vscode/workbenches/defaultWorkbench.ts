@@ -115,7 +115,6 @@ export class Workbench {
                 productConfiguration,
                 defaultLayout,
                 commands,
-                logLevel: 0,
             };
 
             return providers;
