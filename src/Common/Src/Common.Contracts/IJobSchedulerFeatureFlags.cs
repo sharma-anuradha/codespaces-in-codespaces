@@ -15,14 +15,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
     public interface IJobSchedulerFeatureFlags
     {
         /// <summary>
-        /// Return a wrapped payload factory that would check a feature flag option.
-        /// </summary>
-        /// <param name="jobSchedulePayloadFactory">The original job payload factory.</param>
-        /// <param name="featureFlagName">Name of the feature flag to check.</param>
-        /// <returns>An instance of a job paylaod factpry that will return empty if the feature flags is enabled.</returns>
-        IJobSchedulePayloadFactory CreateFeatureFlagsPayloadFactory(IJobSchedulePayloadFactory jobSchedulePayloadFactory, string featureFlagName);
-
-        /// <summary>
         /// Return if a feature flag name is enabled.
         /// </summary>
         /// <param name="featureFlagName">The feature flag name.</param>

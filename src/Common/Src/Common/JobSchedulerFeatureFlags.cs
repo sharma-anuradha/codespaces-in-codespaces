@@ -43,15 +43,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         private IDiagnosticsLogger Logger { get; }
 
         /// <inheritdoc/>
-        public IJobSchedulePayloadFactory CreateFeatureFlagsPayloadFactory(IJobSchedulePayloadFactory jobSchedulePayloadFactory, string featureFlagName)
-        {
-            Requires.NotNull(jobSchedulePayloadFactory, nameof(jobSchedulePayloadFactory));
-            Requires.NotNullOrEmpty(featureFlagName, nameof(featureFlagName));
-
-            return new FeatureFlagsPayloadFactory(this, jobSchedulePayloadFactory, featureFlagName);
-        }
-
-        /// <inheritdoc/>
         public Task<bool> IsFeatureFlagEnabledAsync(string featureFlagName, bool defaultValue = false)
         {
             return ConfigurationReader.ReadSettingAsync(featureFlagName, ConfigurationConstants.EnabledSettingName, Logger, defaultValue);
@@ -71,31 +62,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 jobName,
                 queueName,
                 claimSpan,
-                CreateFeatureFlagsPayloadFactory(jobSchedulePayloadFactory, featureFlagName));
-        }
-
-        private class FeatureFlagsPayloadFactory : IJobSchedulePayloadFactory
-        {
-            private readonly JobSchedulerFeatureFlags jobSchedulerFeatureFlags;
-            private readonly IJobSchedulePayloadFactory jobSchedulePayloadFactory;
-            private readonly string featureFlagName;
-
-            public FeatureFlagsPayloadFactory(JobSchedulerFeatureFlags jobSchedulerFeatureFlags, IJobSchedulePayloadFactory jobSchedulePayloadFactory, string featureFlagName)
-            {
-                this.jobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
-                this.jobSchedulePayloadFactory = jobSchedulePayloadFactory;
-                this.featureFlagName = featureFlagName;
-            }
-
-            public async Task<IEnumerable<(JobPayload, JobPayloadOptions)>> CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, IDiagnosticsLogger logger, CancellationToken cancellationToken)
-            {
-                if (await jobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(this.featureFlagName))
-                {
-                    return await this.jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, scheduleRun, serviceProvider, logger, cancellationToken);
-                }
-
-                return Array.Empty<(JobPayload, JobPayloadOptions)>();
-            }
+                jobSchedulePayloadFactory,
+                (dt) => string.IsNullOrEmpty(featureFlagName) ? Task.FromResult(true) : IsFeatureFlagEnabledAsync(featureFlagName));
         }
     }
 }

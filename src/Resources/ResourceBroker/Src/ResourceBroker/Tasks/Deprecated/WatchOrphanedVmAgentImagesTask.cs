@@ -1,4 +1,4 @@
-// <copyright file="WatchOrphanedStorageImagesTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedVmAgentImagesTask.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -16,12 +16,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contr
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
-    /// WatchOrphanedArtifactImagesTask to delete artifacts(kitchen sink images/blobs).
+    /// WatchOrphanedArtifactImagesTask to delete artifact VSO agent images/blobs.
     /// </summary>
-    public class WatchOrphanedStorageImagesTask : BaseResourceImageTask
+    public class WatchOrphanedVmAgentImagesTask : BaseResourceImageTask
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchOrphanedStorageImagesTask"/> class.
+        /// Initializes a new instance of the <see cref="WatchOrphanedVmAgentImagesTask"/> class.
         /// </summary>
         /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
         /// <param name="taskHelper">Task helper.</param>
@@ -30,21 +30,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="controlPlaneAzureResourceAccessor">Gets storage accounts.</param>
         /// <param name="controlPlaneInfo">Gets control plan info.</param>
         /// <param name="skuCatalog">Gets skuCatalog that has active image info.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         /// <param name="configurationReader">Configuration reader.</param>
-        public WatchOrphanedStorageImagesTask(
-            ResourceBrokerSettings resourceBrokerSettings,
-            ITaskHelper taskHelper,
-            IClaimedDistributedLease claimedDistributedLease,
-            IResourceNameBuilder resourceNameBuilder,
-            IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
-            IControlPlaneInfo controlPlaneInfo,
-            ISkuCatalog skuCatalog,
-            IConfigurationReader configurationReader)
+        public WatchOrphanedVmAgentImagesTask(
+           ResourceBrokerSettings resourceBrokerSettings,
+           ITaskHelper taskHelper,
+           IClaimedDistributedLease claimedDistributedLease,
+           IResourceNameBuilder resourceNameBuilder,
+           IControlPlaneAzureResourceAccessor controlPlaneAzureResourceAccessor,
+           IControlPlaneInfo controlPlaneInfo,
+           ISkuCatalog skuCatalog,
+           IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
+           IConfigurationReader configurationReader)
             : base(
                   resourceBrokerSettings,
                   taskHelper,
                   claimedDistributedLease,
                   resourceNameBuilder,
+                  jobSchedulerFeatureFlags,
                   configurationReader)
         {
             SkuCatalog = Requires.NotNull(skuCatalog, nameof(skuCatalog));
@@ -53,25 +56,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override string TaskName { get; } = nameof(WatchOrphanedStorageImagesTask);
+        protected override string TaskName { get; } = nameof(WatchOrphanedVmAgentImagesTask);
 
         /// <inheritdoc/>
-        protected override string ConfigurationBaseName => "WatchOrphanedStorageImagesTask";
+        protected override string ConfigurationBaseName => "WatchOrphanedVmAgentImagesTask";
 
         /// <inheritdoc/>
-        protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedStorageImagesTask;
+        protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedVmAgentImagesTask;
 
         /// <inheritdoc/>
         protected override DateTime CutOffTime => DateTime.Now.AddMonths(-1).ToUniversalTime();
 
         /// <summary>
-        /// Gets the SkuCatalog to access the active image info.
+        /// Gets controPlane info.
         /// </summary>
-        protected ISkuCatalog SkuCatalog { get; }
-
         private IControlPlaneInfo ControlPlaneInfo { get; }
 
+        /// <summary>
+        /// Gets Control plane accessor.
+        /// </summary>
         private IControlPlaneAzureResourceAccessor ControlPlaneAzureResourceAccessor { get; }
+
+        /// <summary>
+        /// Gets the SkuCatalog to access the active image info.
+        /// </summary>
+        private ISkuCatalog SkuCatalog { get; }
+
+        /// <inheritdoc/>
+        protected override string GetContainerName()
+        {
+            return ControlPlaneInfo.VirtualMachineAgentContainerName;
+        }
 
         /// <inheritdoc/>
         protected override async Task<IEnumerable<ShareConnectionInfo>> GetStorageAccountsAsync()
@@ -81,8 +96,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
             foreach (var location in locations)
             {
-                var (accountName, accountKey) = await ControlPlaneAzureResourceAccessor
-                        .GetStampStorageAccountForStorageImagesAsync(location);
+                var (accountName, accountKey) = await ControlPlaneAzureResourceAccessor.GetStampStorageAccountForComputeVmAgentImagesAsync(location);
                 var account = new ShareConnectionInfo();
                 account.StorageAccountName = accountName;
                 account.StorageAccountKey = accountKey;
@@ -96,7 +110,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         protected override async Task<IEnumerable<string>> GetActiveImagesAsync(IDiagnosticsLogger logger)
         {
             var activeImages = new HashSet<string>();
-            foreach (var item in SkuCatalog.BuildArtifactStorageImageFamilies.Values)
+            foreach (var item in SkuCatalog.BuildArtifactVmAgentImageFamilies.Values)
             {
                 activeImages.Add(await item.GetCurrentImageNameAsync(logger));
             }
@@ -105,21 +119,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        protected override string GetContainerName()
-        {
-            return ControlPlaneInfo.FileShareTemplateContainerName;
-        }
-
-        /// <inheritdoc/>
         protected override IEnumerable<ImageFamilyType> GetArtifactTypesToCleanup()
         {
-            return new List<ImageFamilyType> { ImageFamilyType.Storage, };
+            return new List<ImageFamilyType> { ImageFamilyType.VmAgent, };
         }
 
         /// <inheritdoc/>
-        protected override int GetMinimumBlobCountToBeRetained() => 15;
+        protected override int GetMinimumBlobCountToBeRetained() => 10;
 
         /// <inheritdoc/>
-        protected override ImageFamilyType GetImageFamilyType() => ImageFamilyType.Storage;
+        protected override ImageFamilyType GetImageFamilyType() => ImageFamilyType.VmAgent;
     }
 }

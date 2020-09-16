@@ -25,13 +25,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         /// <param name="queueName">Job Queue name to use.</param>
         /// <param name="claimSpan">Time to hold the claim.</param>
         /// <param name="jobSchedulePayloadFactory">A factory instance to return all the job payloads.</param>
+        /// <param name="isEnabledCallback">Optional callback to evalaute if the recurring job is enabled.</param>
         /// <returns>A scheduled job instance.</returns>
         IScheduleJob AddRecurringJobPayload(
             string expression,
             string jobName,
             string queueName,
             TimeSpan claimSpan,
-            IJobSchedulePayloadFactory jobSchedulePayloadFactory);
+            IJobSchedulePayloadFactory jobSchedulePayloadFactory,
+            Func<DateTime, Task<bool>> isEnabledCallback = null);
     }
 
     /// <summary>

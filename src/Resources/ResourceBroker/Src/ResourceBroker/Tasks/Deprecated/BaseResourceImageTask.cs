@@ -31,12 +31,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <param name="taskHelper">Task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="resourceNameBuilder">Resource name builder.</param>
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         /// <param name="configurationReader">Configuration reader.</param>
         public BaseResourceImageTask(
             ResourceBrokerSettings resourceBrokerSettings,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
             : base(configurationReader)
         {
@@ -44,6 +46,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             TaskHelper = Requires.NotNull(taskHelper, nameof(taskHelper));
             ClaimedDistributedLease = Requires.NotNull(claimedDistributedLease, nameof(claimedDistributedLease));
             ResourceNameBuilder = Requires.NotNull(resourceNameBuilder, nameof(resourceNameBuilder));
+            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
         /// <summary>
@@ -75,6 +78,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IClaimedDistributedLease ClaimedDistributedLease { get; }
 
         private IResourceNameBuilder ResourceNameBuilder { get; }
+
+        private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
         private bool Disposed { get; set; }
 
@@ -145,9 +150,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// <returns>ImageFamilyType enum.</returns>
         protected abstract ImageFamilyType GetImageFamilyType();
 
-        private Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
+        private async Task<IDisposable> ObtainLeaseAsync(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
-            return ClaimedDistributedLease.Obtain(
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(BaseResourceImageProducer.FeatureFlagName))
+            {
+                return null;
+            }
+
+            return await ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
 

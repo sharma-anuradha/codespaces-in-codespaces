@@ -23,6 +23,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     {
         private const string JobQueueConsumerMessage = "job_queue_consumer";
 
+        /// <summary>
+        /// Default max number of retries
+        /// </summary>
+        private const int DefaultMaxRetries = 5;
+
         private readonly BroadcastBlock<IJob> blockJobs = new BroadcastBlock<IJob>(job => job);
         private readonly IDiagnosticsLogger logger;
         private readonly Dictionary<Type, IJobHandler> registeredPayloadTypes = new Dictionary<Type, IJobHandler>();
@@ -82,7 +87,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
 
                 var jobHandlerOptions = jobInstance.JobHandlerOptions;
                 var handlerTimout = jobHandlerOptions != null ? jobHandlerOptions.HandlerTimeout : jobPayloadOptions?.HandlerTimeout;
-                var maxHandlerRetries = jobHandlerOptions != null ? jobHandlerOptions.MaxHandlerRetries : jobPayloadOptions?.MaxHandlerRetries;
+                var maxHandlerRetriesOptions = jobHandlerOptions != null ? jobHandlerOptions.MaxHandlerRetries : jobPayloadOptions?.MaxHandlerRetries;
+                var maxHandlerRetries = maxHandlerRetriesOptions ?? DefaultMaxRetries;
 
                 var failed = false;
                 var retries = 0;
@@ -199,8 +205,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
                                     await jobInstance.UpdateContentAsync(DisposeToken);
                                 }
                             } // Check first if we reach the max numbers of retries
-                            else if (maxHandlerRetries.HasValue == true &&
-                                jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries.Value)
+                            else if (jobInstance.JobPayloadInfo.Retries >= maxHandlerRetries)
                             {
                                 // apply 'Exhaust' and 'Removed' flag status.
                                 // This code path will force the payload to be removed permanently from the queue.

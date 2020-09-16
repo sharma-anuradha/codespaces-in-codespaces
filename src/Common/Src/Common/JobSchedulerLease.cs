@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
@@ -42,7 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             string jobName,
             string queueName,
             TimeSpan claimSpan,
-            IJobSchedulePayloadFactory jobSchedulePayloadFactory)
+            IJobSchedulePayloadFactory jobSchedulePayloadFactory,
+            Func<DateTime, Task<bool>> isEnabledCallback)
         {
             return JobScheduler.AddRecurringJobPayload(
                 expression,
@@ -50,17 +52,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 JobQueueProducerFactory.GetOrCreate(queueName),
                 JobSchedulerProducerHelpers.CreateJobSchedulePayloadFactory(async (jobRunId, dt, srvcProvider, logger, ct) =>
                 {
-                    using (var lease = await JobSchedulerLeaseProvider.ObtainAsync(jobName, claimSpan, logger, ct))
+                    if (isEnabledCallback == null || await isEnabledCallback(dt))
                     {
-                        logger.AddValue("jobRunLeaseObtaioned", (lease != null).ToString());
-                        if (lease != null)
+                        using (var lease = await JobSchedulerLeaseProvider.ObtainAsync(jobName, claimSpan, logger, ct))
                         {
-                            var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvcProvider, logger, ct);
-                            return jobPayloadInfos;
+                            logger.AddValue("jobRunLeaseObtaioned", (lease != null).ToString());
+                            if (lease != null)
+                            {
+                                var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvcProvider, logger, ct);
+                                return jobPayloadInfos;
+                            }
                         }
-
-                        return Array.Empty<(JobPayload, JobPayloadOptions)>();
                     }
+
+                    return Array.Empty<(JobPayload, JobPayloadOptions)>();
                 }));
         }
     }

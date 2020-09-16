@@ -82,6 +82,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, WatchFailedResourcesJobHandler>();
             services.AddSingleton<IJobHandler, WatchPoolSizeJobHandler>();
             services.AddSingleton<IJobHandler, WatchPoolStateJobHandler>();
+            services.AddSingleton<IJobHandler, WatchOrphanedVmAgentImagesJobHandler>();
+            services.AddSingleton<IJobHandler, WatchOrphanedStorageImagesJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -125,6 +127,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             // Job schedule Registration
             services.AddSingleton<IJobSchedulerRegister, WatchPoolJobScheduleRegister>();
+            services.AddSingleton<IJobSchedulerRegister, WatchOrphanedStorageImagesProducer>();
+            services.AddSingleton<IJobSchedulerRegister, WatchOrphanedVmAgentImagesProducer>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
@@ -132,8 +136,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();
             services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
-            services.AddSingleton<WatchOrphanedVmAgentImagesTask>();
-            services.AddSingleton<WatchOrphanedStorageImagesTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
             services.AddSingleton<ILogSystemResourceStateTask, LogSystemResourceStateTask>();
@@ -143,6 +145,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();
             services.AddSingleton<IWatchPoolStateTask, WatchPoolStateTask>();
             services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
+            services.AddSingleton<WatchOrphanedVmAgentImagesTask>();
+            services.AddSingleton<WatchOrphanedStorageImagesTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {
