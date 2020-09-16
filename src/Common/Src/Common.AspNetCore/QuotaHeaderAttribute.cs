@@ -38,27 +38,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                   var result = (CloudEnvironmentResult)((ObjectResult)context.Result)?.Value;
                   if (result?.SubscriptionData != null)
                   {
-                      var computeUsage = result.SubscriptionData.ComputeUsage;
-                      var computeQuota = result.SubscriptionData.ComputeQuota;
+                      var computeUsage = result.SubscriptionData.ComputeUsage.ToString();
+                      var computeQuota = result.SubscriptionData.ComputeQuota.ToString();
                       var subscriptionId = result.SubscriptionData.SubscriptionId;
-                      if (computeUsage != default)
-                      {
-                          context.HttpContext.Response.Headers.Add(CoreUsageHeader, computeUsage.ToString());
-                      }
 
-                      if (computeQuota != default)
-                      {
-                          context.HttpContext.Response.Headers.Add(CoreLimitHeader, computeQuota.ToString());
-                      }
+                      context.HttpContext.Response.Headers.Add(CoreUsageHeader, computeUsage);
+                      context.HttpContext.Response.Headers.Add(CoreLimitHeader, computeQuota);
 
-                      logger.AddValue("SubscriptionId", subscriptionId);
-                      logger.AddValue("CurrentComputeUsage", computeUsage.ToString());
-                      logger.AddValue("CurrentComputeQuota", computeQuota.ToString());
+                      childLogger.FluentAddValue("SubscriptionId", subscriptionId)
+                            .FluentAddValue("CurrentComputeUsage", computeUsage)
+                            .FluentAddValue("CurrentComputeQuota", computeQuota);
                   }
                   else
                   {
-                      logger.AddErrorDetail("CloudEnvironmentResult was null.");
-                      logger.LogError($"{logName}_on_action_executed_error");
+                      childLogger.AddErrorDetail("CloudEnvironmentResult was null.");
+                      childLogger.LogError($"{logName}_on_action_executed_error");
                   }
 
                   return Task.CompletedTask;
