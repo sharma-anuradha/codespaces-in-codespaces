@@ -149,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             var subscriptionId = azureSubscriptionId.ToString();
             var azureSub = this.SubscriptionCatalog
                     .AzureSubscriptionsIncludingInfrastructure()
-                    .Single(sub => sub != default && sub.SubscriptionId == subscriptionId && sub.Enabled);
+                    .Single(sub => sub != default && sub.SubscriptionId == subscriptionId);
             return azureSub.ServicePrincipal;
         }
     }
