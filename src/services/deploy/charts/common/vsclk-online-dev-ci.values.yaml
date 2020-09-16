@@ -27,6 +27,9 @@ ingress:
     - hosts:
       - "*.dev.builder.code.com"
       secretName: ssl-cert-salesforce-builder-com
+    - hosts:
+      - "*.local.builder.code.com"
+      secretName: ssl-cert-local-salesforce-builder-com
 
 githubAuthEndpoint:
   hosts:
