@@ -13,11 +13,41 @@
   "baseRegionName": "vscs-core-ppe-rel-us-w2",
   "baseRegionStorageName": "corepperelusw2",
   "component": "core",
+  "containerRegistryName": "vscscoreppeacr",
+  "containerRegistryReplications": [
+    {
+      "name": "WestEurope",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "WestEurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "WestUs2",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "WestUs2",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    }
+  ],
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "eu-w",
     "us-w2"
   ],

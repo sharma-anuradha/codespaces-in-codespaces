@@ -20,10 +20,18 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-core-prod-rel-us-w2-arm",
+      "name": "network",
       "targetType": "ServiceResource",
-      "targetName": "vscs-core-prod-rel-us-w2-arm",
-      "actions": [ "deploy" ]
+      "targetName": "vscs-core-prod-rel-us-w2-network",
+      "actions": [ "deploy" ],
+      "dependsOn": []
+    },
+    {
+      "name": "cluster",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-core-prod-rel-us-w2-cluster",
+      "actions": [ "deploy" ],
+      "dependsOn": [ "network" ]
     }
   ]
 }

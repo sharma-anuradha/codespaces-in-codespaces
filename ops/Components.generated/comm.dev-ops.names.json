@@ -9,6 +9,10 @@
   "basePlaneName": "vscs-comm-dev-ops",
   "component": "comm",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs"
 }

@@ -7,5 +7,10 @@
   "baseName": "vscs-collab-ppe",
   "component": "collab",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }

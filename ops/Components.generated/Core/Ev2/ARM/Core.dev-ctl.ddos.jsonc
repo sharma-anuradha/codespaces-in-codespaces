@@ -1,0 +1,33 @@
+// Auto-Generated From Template
+// "Core.{Env}-[ctl].ddos.jsonc"
+// with names file "core.dev-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "ddosProtectionPlanName": {
+      "defaultValue": "vscs-core-dev-ddos",
+      "type": "string"
+    }
+  },
+
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "ddosProtectionPlaneName": "[parameters('ddosProtectionPlanName')]",
+  },
+
+  "resources": [
+    // Shared DDos Protection Plan, used with multiple virtual networks
+    {
+      "name": "[variables('ddosProtectionPlaneName')]",
+      "type": "Microsoft.Network/ddosProtectionPlans",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
+      "properties": {
+      }
+    }
+  ]
+}

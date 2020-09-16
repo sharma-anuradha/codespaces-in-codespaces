@@ -250,7 +250,7 @@ export default class Templates {
       if (matches?.length > 0) {
         for (const match of matches) {
           if (!Object.keys(names).includes(match)) {
-            throw `error: property '${match}' does not exist in names object '${names.baseName}': template file '${namesObj.fileName}'`;
+            throw `error: property '${match}' does not exist in names object '${names.baseFileName}.names.json': template file '${namesObj.fileName}'`;
           }
         }
 

@@ -1,0 +1,37 @@
+// Auto-Generated From Template
+// "core.{Env}-[ctl].rolloutspec.jsonc"
+// with names file "core.ppe-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+
+  "rolloutMetadata": {
+    "serviceModelPath": "core.ppe-ctl.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-core-ppe Rollout 1.0.0.0",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "ddos",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-core-ppe-ddos",
+      "actions": [ "deploy" ],
+      "dependsOn": []
+    },
+    {
+      "name": "acr",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-core-ppe-acr",
+      "actions": [ "deploy" ],
+      "dependsOn": []
+    }
+  ]
+}

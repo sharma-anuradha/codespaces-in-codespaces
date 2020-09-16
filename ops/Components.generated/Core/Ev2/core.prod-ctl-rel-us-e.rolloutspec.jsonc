@@ -20,10 +20,18 @@
   },
   "orchestratedSteps": [
     {
-      "name": "Deploy vscs-core-prod-rel-us-e-arm",
+      "name": "network",
       "targetType": "ServiceResource",
-      "targetName": "vscs-core-prod-rel-us-e-arm",
-      "actions": [ "deploy" ]
+      "targetName": "vscs-core-prod-rel-us-e-network",
+      "actions": [ "deploy" ],
+      "dependsOn": []
+    },
+    {
+      "name": "cluster",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-core-prod-rel-us-e-cluster",
+      "actions": [ "deploy" ],
+      "dependsOn": [ "network" ]
     }
   ]
 }

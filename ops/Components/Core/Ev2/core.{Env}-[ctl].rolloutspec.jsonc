@@ -1,0 +1,32 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+
+  "rolloutMetadata": {
+    "serviceModelPath": "{{{basePlaneFileName}}}.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "{{{basePlaneName}}} Rollout 1.0.0.0",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "ddos",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-ddos",
+      "actions": [ "deploy" ],
+      "dependsOn": []
+    },
+    {
+      "name": "acr",
+      "targetType": "ServiceResource",
+      "targetName": "{{{basePlaneName}}}-acr",
+      "actions": [ "deploy" ],
+      "dependsOn": []
+    }
+  ]
+}

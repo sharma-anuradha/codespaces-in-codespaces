@@ -7,5 +7,10 @@
   "baseName": "vscs-core-ppe",
   "component": "core",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }

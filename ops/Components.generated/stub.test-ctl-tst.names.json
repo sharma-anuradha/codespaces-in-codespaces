@@ -11,9 +11,16 @@
   "basePlaneName": "vscs-stub-test",
   "component": "stub",
   "env": "test",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "instance": "tst",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "us-w2"
   ],
   "plane": "ctl",

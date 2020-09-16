@@ -14,10 +14,19 @@
   "baseRegionStorageName": "commppedatarelusw2",
   "component": "comm",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "eu-w",
     "us-w2"
   ],

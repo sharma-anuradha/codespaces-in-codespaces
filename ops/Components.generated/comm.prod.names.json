@@ -7,5 +7,12 @@
   "baseName": "vscs-comm-prod",
   "component": "comm",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }

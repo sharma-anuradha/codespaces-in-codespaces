@@ -36,8 +36,7 @@ export default abstract class Names {
             FileHandler.GenerateJson(outputDir, `${planeJson.baseFileName}.names.json`, planeJson);
 
             for (const instance of plane.instances) {
-              const instanceRegions = instance.stamps.flatMap((n) => n.location);
-              const instanceJson = instance.generateNamesJson(plane.outputNames, instanceRegions);
+              const instanceJson = instance.generateNamesJson(plane.outputNames);
               FileHandler.GenerateJson(outputDir, `${instanceJson.baseFileName}.names.json`, instanceJson);
 
               for (const stamp of instance.stamps) {

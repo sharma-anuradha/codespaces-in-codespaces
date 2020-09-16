@@ -17,10 +17,19 @@
       "name": "vscs-core-ppe-rel-eu-w-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-ppe-rel-eu-w-arm",
+          "name": "vscs-core-ppe-rel-eu-w-cluster",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.ppe-ctl-rel-eu-w.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-ppe-rel-eu-w-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.ppe-ctl-rel-eu-w.network.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
@@ -37,8 +46,12 @@
       "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
       "serviceResources": [
         {
-          "name": "vscs-core-ppe-rel-eu-w-arm",
-          "instanceOf": "vscs-core-ppe-rel-eu-w-arm"
+          "name": "vscs-core-ppe-rel-eu-w-cluster",
+          "instanceOf": "vscs-core-ppe-rel-eu-w-cluster"
+        },
+        {
+          "name": "vscs-core-ppe-rel-eu-w-network",
+          "instanceOf": "vscs-core-ppe-rel-eu-w-network"
         }
       ]
     }

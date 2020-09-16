@@ -25,10 +25,7 @@
         "tst": {
           "stamps": {
             "us-w2": {
-              "location": "us-w2",
-              "dataLocations": [
-                "us-w2"
-              ]
+              "location": "us-w2"
             }
           }
         }
@@ -41,10 +38,7 @@
         "ci": {
           "stamps": {
             "us-w2": {
-              "location": "us-w2",
-              "dataLocations": [
-                "us-w2"
-              ]
+              "location": "us-w2"
             }
           }
         }
@@ -57,16 +51,10 @@
         "rel": {
           "stamps": {
             "eu-w": {
-              "location": "eu-w",
-              "dataLocations": [
-                "eu-w"
-              ]
+              "location": "eu-w"
             },
             "us-w2": {
-              "location": "us-w2",
-              "dataLocations": [
-                "us-w2"
-              ]
+              "location": "us-w2"
             }
           }
         }
@@ -79,28 +67,16 @@
         "rel": {
           "stamps": {
             "ap-se": {
-              "location": "ap-se",
-              "dataLocations": [
-                "ap-se"
-              ]
+              "location": "ap-se"
             },
             "eu-w": {
-              "location": "eu-w",
-              "dataLocations": [
-                "eu-w"
-              ]
+              "location": "eu-w"
             },
             "us-e": {
-              "location": "us-e",
-              "dataLocations": [
-                "us-e"
-              ]
+              "location": "us-e"
             },
             "us-w2": {
-              "location": "us-w2",
-              "dataLocations": [
-                "us-w2"
-              ]
+              "location": "us-w2"
             }
           }
         }

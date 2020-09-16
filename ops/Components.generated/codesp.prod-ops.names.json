@@ -9,6 +9,13 @@
   "basePlaneName": "vscs-codesp-prod-ops",
   "component": "codesp",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs",
   "subscriptionId": "5f625617-0786-46cc-815e-c969b3f01e12",

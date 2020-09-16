@@ -9,6 +9,11 @@
   "basePlaneName": "vscs-core-ppe-ops",
   "component": "core",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs",
   "subscriptionId": "b37129d5-ec65-4920-bd6c-42aa7a4bdd73",

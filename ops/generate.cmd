@@ -1,32 +1,28 @@
 @echo off
 setlocal
 
-::Run from generator dir
-set ROOT=%~dp0
-set GENERATOR=%ROOT%Generator\
-
-pushd "%GENERATOR%"
-set INPUT=..\Components\
-set OUTPUT=..\Components.generated\
-
-::Install
-call npm install > NUL
-if errorlevel 1 (
-    echo npm install failed
-    popd
-    exit 1
-)
-
-::Clean
-if exist "%OUTPUT%" (
-    echo deleting "%OUTPUT%"
-    rd /s /q "%OUTPUT%"
-)
-
-::Generate
-echo generating "%OUTPUT%"
-set CMD=ts-node-script index.ts -i %INPUT% -o %OUTPUT%
-echo %CMD%
+::Update-GeneratedFiles
+set CMD=pwsh -f "%~dp0%Scripts\Update-GeneratedFiles.ps1" -UpdateComponents
+echo call %CMD%
 call %CMD%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
 
-popd
+::build
+set CMD=dotnet build /m "%~dp0%ops.csproj"
+echo call %CMD%
+call %CMD%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+::Test-ServiceRollout
+set CMD=powershell -f "%~dp0%Scripts\Test-ServiceRollout.ps1" -Component core
+echo call %CMD%
+call %CMD%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+
+exit /b 0

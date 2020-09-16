@@ -9,6 +9,11 @@
   "basePlaneName": "vscs-collab-ppe-ops",
   "component": "collab",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs"
 }

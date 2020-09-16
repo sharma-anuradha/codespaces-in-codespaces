@@ -8,7 +8,53 @@
   "basePlaneFileName": "core.prod-ctl",
   "basePlaneName": "vscs-core-prod",
   "component": "core",
+  "containerRegistryName": "vscscoreprodacr",
+  "containerRegistryReplications": [
+    {
+      "name": "SoutheastAsia",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "SoutheastAsia",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "WestEurope",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "WestEurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "EastUS",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "EastUS",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "WestUs2",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "WestUs2",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    }
+  ],
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "plane": "ctl",
   "prefix": "vscs",
   "subscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",

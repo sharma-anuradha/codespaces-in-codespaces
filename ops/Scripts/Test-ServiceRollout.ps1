@@ -8,7 +8,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Component,
     [string]$RolloutSpecName = "*.rolloutspec.jsonc",
-    [string]$ComponentsGeneratedFolder ="$PSScriptRoot\..\..\bin\debug\ops\Components.generated",
+    [string]$ComponentsGeneratedFolder,
     [string]$Ev2SubFolder = "Ev2"
 )
 
@@ -60,6 +60,10 @@ function Import-AzureDeploymentExpressClient {
         "Install the Ev2 powershell cmdlets from https://ev2docs.azure.net/references/cmdlets/Intro.html" | Write-Host -ForegroundColor Red
         throw
     }
+}
+
+if (!$ComponentsGeneratedFolder) {
+    $ComponentsGeneratedFolder ="$PSScriptRoot\..\..\bin\debug\ops\Components.generated"
 }
 
 $ComponentsGeneratedFolder | Write-Host -ForegroundColor Yellow

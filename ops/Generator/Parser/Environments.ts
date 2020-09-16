@@ -1,3 +1,5 @@
+// Environments.ts
+
 import { find, cloneDeep } from "lodash";
 import ResourceNames, { EnvironmentNames, InstanceNames, RegionNames, PlaneNames, ComponentNames } from "./ResourceNames";
 
@@ -6,7 +8,7 @@ export class EnvironmentsDeployment implements IEnvironmentsDeployment {
     environments: Environment[] = [];
     geographies: Geography[] = [];
 
-    constructor(environments: any) {
+    constructor(environments: Record<string, undefined>) {
         this.parseEnvironmentsDeploymentsJson(environments);
     }
 
@@ -18,7 +20,7 @@ export class EnvironmentsDeployment implements IEnvironmentsDeployment {
         return find(geo.regions, ["name", name]);
     }
 
-    private parseEnvironmentsDeploymentsJson(env: any) {
+    private parseEnvironmentsDeploymentsJson(env: Record<string, undefined>) {
         this.parseGeographiesJson(env.geographies);
         this.parseEnvironmentsJson(env.environments);
     }
@@ -33,45 +35,33 @@ export class EnvironmentsDeployment implements IEnvironmentsDeployment {
         return dl;
     }
 
-    private parseEnvironmentsJson(environments: any) {
+    private parseEnvironmentsJson(environments: Record<string, any>) {
         for (const envName in environments) {
-            const env = new Environment();
-            env.name = envName;
             const envObj = environments[envName];
-            env.pme = envObj.pme;
-            const envLocation = this.getDataLocation(envObj.location).region.fullName;
+            const envLocation = this.getDataLocation(envObj.location);
+            const env = new Environment(envName, envObj.pme, envLocation);
             for (const plane of env.planes) {
                 for (const instanceName in envObj.instances) {
-                    const instance = envObj.instances[instanceName];
-                    const inst = new Instance();
-                    inst.name = instanceName;
-                    inst.location = envLocation;
-                    for (const stampName in instance.stamps) {
-                        const smp = new Stamp();
-                        smp.name = stampName;
-                        const stamp = instance.stamps[stampName];
-                        smp.location = this.getDataLocation(stamp.location);
-                        for (const data of stamp.dataLocations) {
-                            smp.dataLocations.push(this.getDataLocation(data));
-                        }
-                        inst.stamps.push(smp);
+                    const instanceObj = envObj.instances[instanceName];
+                    const instance = new Instance(instanceName, plane);
+                    for (const stampName in instanceObj.stamps) {
+                        const stampLocation = this.getDataLocation(instanceObj.stamps[stampName].location);
+                        const stamp = new Stamp(stampName, stampLocation);
+                        instance.addStamp(stamp);
                     }
-                    plane.instances.push(inst);
+                    plane.addInstance(instance);
                 }
             }
             this.environments.push(env);
         }
     }
 
-    private parseGeographiesJson(geos: any) {
+    private parseGeographiesJson(geos: Record<string, Record<string, string>>) {
         for (const geoName in geos) {
-            const geo = new Geography();
-            geo.name = geoName;
+            const geo = new Geography(geoName);
             for (const regName in geos[geoName]) {
-                const reg = new Region();
-                reg.name = regName;
-                reg.fullName = geos[geoName][regName];
-                geo.regions.push(reg);
+                const reg = new Region(regName, geos[geoName][regName]);
+                geo.addRegion(reg);
             }
             this.geographies.push(geo);
         }
@@ -84,24 +74,44 @@ export interface IEnvironmentsDeployment {
 }
 
 export class Geography {
-    name: string;
+    readonly name: string;
     regions: Region[] = [];
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    addRegion(region: Region): void {
+        this.regions.push(region);
+    }
 }
 
 export class Region {
-    name: string;
-    fullName: string;
+    readonly name: string;
+    readonly azureLocation: string;
+
+    constructor(regionName: string, azureLocation: string) {
+        this.name = regionName;
+        this.azureLocation = azureLocation;
+    }
+
 }
 
 export class Plane {
-    name: string;
-    instances: Instance[] = [];
+    readonly name: string;
+    readonly environment: Environment;
+    readonly instances: Instance[] = [];
     outputNames: PlaneNames;
     subscriptionName: string;
     subscriptionId: string;
 
-    constructor(name: string) {
+    constructor(name: string, environment: Environment) {
         this.name = name;
+        this.environment = environment;
+    }
+
+    addInstance(instance: Instance): void {
+        this.instances.push(instance);
     }
 
     generateNamesJson(environmentNames: EnvironmentNames): PlaneNames {
@@ -109,36 +119,77 @@ export class Plane {
         return this.outputNames;
     }
 
-    clone() : Plane {
+    clone(): Plane {
         return cloneDeep<Plane>(this);
     }
 }
 
 export class Environment {
-    name: string;
-    pme: boolean;
-    planes: Plane[] = [new Plane("ops"), new Plane("ctl"), new Plane("data")];
+    readonly name: string;
+    readonly pme: boolean;
+    readonly primaryLocation: DataLocation;
+    readonly planes: Plane[] = [new Plane("ops", this), new Plane("ctl", this), new Plane("data", this)];
     outputNames: EnvironmentNames;
 
+    constructor(name: string, pme: boolean, primaryLocation: DataLocation) {
+        this.name = name;
+        this.pme = pme;
+        this.primaryLocation = primaryLocation;
+    }
+
+    get allStampAzureLocations(): string[] {
+        const allInstances = this.planes.flatMap(p => p.instances);
+        const allStamps = allInstances.flatMap(i => i.stamps);
+        const allStampAzureLocations = Array.from(new Set(allStamps.map(s => s.location.azureLocation)));
+        return allStampAzureLocations;
+    }
+
     generateNamesJson(componentNames: ComponentNames): EnvironmentNames {
-        this.outputNames = ResourceNames.sortKeys(new EnvironmentNames(componentNames, this.name));
+        this.outputNames = ResourceNames.sortKeys(new EnvironmentNames(componentNames, this.name, this.primaryLocation.azureLocation, this.allStampAzureLocations));
         return this.outputNames;
     }
 
-    clone() : Environment {
+    clone(): Environment {
         return cloneDeep<Environment>(this);
     }
 }
 
 export class Instance {
-    name: string;
-    stamps: Stamp[] = [];
-    location: string;
+    readonly name: string;
+    readonly plane: Plane;
+    readonly stamps: Stamp[] = [];
+    readonly primaryLocation: DataLocation;
     outputNames: InstanceNames;
 
-    generateNamesJson(planeNames: PlaneNames, regions: DataLocation[]): InstanceNames {
-        const instanceRegions = regions.map(n => `${n.geography.name}-${n.region.name}`);
-        this.outputNames = ResourceNames.sortKeys(new InstanceNames(planeNames, this.name, this.location, instanceRegions));
+    constructor(name: string, plane: Plane) {
+        this.name = name;
+        this.plane = plane;
+        this.primaryLocation = this.plane.environment.primaryLocation;
+    }
+
+    get instanceLocations(): DataLocation[] {
+        return this.stamps.flatMap((n) => n.location);
+    }
+
+    get instanceRegions(): string[] {
+        return this.instanceLocations.map(n => `${n.geography.name}-${n.region.name}`);
+    }
+
+    get instanceAzureLocations(): string[] {
+        return this.instanceLocations.map(n => n.region.azureLocation);
+    }
+
+    addStamp(stamp: Stamp): void {
+        this.stamps.push(stamp);
+    }
+
+    generateNamesJson(planeNames: PlaneNames): InstanceNames {
+        this.outputNames = ResourceNames.sortKeys(new InstanceNames(
+            planeNames,
+            this.name,
+            this.primaryLocation.azureLocation,
+            this.instanceRegions,
+            this.instanceAzureLocations));
         return this.outputNames;
     }
 
@@ -148,9 +199,18 @@ export class Instance {
 }
 
 export class Stamp {
-    name: string;
-    location: DataLocation;
-    dataLocations: DataLocation[] = [];
+    readonly name: string;
+    readonly location: DataLocation;
+
+    constructor(name: string, location: DataLocation) {
+        this.name = name;
+        this.location = location;
+    }
+
+    get dataLocation(): DataLocation {
+        // The stamp data plane location must be the same as the stamp control plane location
+        return this.location;
+    }
 
     clone(): Stamp {
         return cloneDeep<Stamp>(this);
@@ -162,12 +222,17 @@ export class DataLocation {
     region: Region;
     outputNames: RegionNames;
 
+    get azureLocation(): string {
+        return this.region.azureLocation;
+    }
+
     generateNamesJson(instanceNames: InstanceNames): RegionNames {
         const geo = this.geography.name;
         const regionSuffix = this.region.name;
         const regionName = `${geo}-${regionSuffix}`;
-        const regionLocation = this.region.fullName;
-        this.outputNames = ResourceNames.sortKeys(new RegionNames(instanceNames, regionName, geo, regionSuffix, regionLocation));
+        const regionLocation = this.region.azureLocation;
+        this.outputNames = ResourceNames.sortKeys(new RegionNames(
+            instanceNames, regionName, geo, regionSuffix, regionLocation));
         return this.outputNames;
     }
 

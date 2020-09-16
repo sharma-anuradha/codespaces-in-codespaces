@@ -1,3 +1,4 @@
+// ResourceNames.ts
 
 export class ComponentNames {
     public baseName: string;
@@ -7,11 +8,11 @@ export class ComponentNames {
     public readonly baseComponentName: string;
     public readonly baseComponentFileName: string;
 
-    constructor (prefix: string, component: string) {
+    constructor(prefix: string, component: string) {
         this.prefix = prefix;
         this.component = component;
         const baseComponentNames = ResourceNames.makeResourceNames(prefix, component);
-        this.baseName = this.baseComponentName = baseComponentNames.resourceName;;
+        this.baseName = this.baseComponentName = baseComponentNames.resourceName;
         this.baseFileName = this.baseComponentFileName = baseComponentNames.fileName;
     }
 }
@@ -20,13 +21,17 @@ export class EnvironmentNames extends ComponentNames {
     public readonly env: string;
     public readonly baseEnvironmentName: string;
     public readonly baseEnvironmentFileName: string;
+    public readonly environmentLocation: string;
+    public readonly environmentStampLocations: string[];
 
-    constructor (componentNames: ComponentNames, env: string) {
+    constructor(componentNames: ComponentNames, env: string, environmentLocation: string, allStampLocations: string[]) {
         super(componentNames.prefix, componentNames.component);
         this.env = env;
         const baseEnvironmentNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env);
         this.baseName = this.baseEnvironmentName = baseEnvironmentNames.resourceName;
         this.baseFileName = this.baseEnvironmentFileName = baseEnvironmentNames.fileName;
+        this.environmentLocation = environmentLocation;
+        this.environmentStampLocations = allStampLocations;
     }
 }
 
@@ -37,29 +42,52 @@ export class PlaneNames extends EnvironmentNames {
     public readonly subscriptionName: string = null;
     public readonly subscriptionId: string = null;
 
-    constructor (environmentNames: EnvironmentNames, plane: string, subscriptionName: string, subscriptionId: string) {
-        super(environmentNames, environmentNames.env);
+    constructor(environmentNames: EnvironmentNames, plane: string, subscriptionName: string, subscriptionId: string) {
+        super(environmentNames, environmentNames.env, environmentNames.environmentLocation, environmentNames.environmentStampLocations);
         this.plane = plane;
         this.subscriptionName = subscriptionName;
         this.subscriptionId = subscriptionId;
         const basePlaneNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env, this.plane);
         this.baseName = this.basePlaneName = basePlaneNames.resourceName;
         this.baseFileName = this.basePlaneFileName = basePlaneNames.fileName;
+        this.setContainerRegistryReplications();
+    }
+
+    // Environment ACR replications, one for each instance location
+    setContainerRegistryReplications(): void {
+        if (this.component === "core" && this.plane === "ctl") {
+            const replications = this.environmentStampLocations.map(location => {
+                return {
+                    name: location,
+                    type: "Microsoft.ContainerRegistry/registries/replications",
+                    apiVersion: "2019-12-01-preview",
+                    location: location,
+                    properties: {
+                        regionEndpointEnabled: true
+                    }
+                };
+            });
+
+            (this as Record<string, unknown>).containerRegistryName = (this.basePlaneName + "acr").replace(/-/g, '');
+            (this as Record<string, unknown>).containerRegistryReplications = replications;
+        }
     }
 }
 
 export class InstanceNames extends PlaneNames {
     public readonly instance: string;
     public readonly instanceLocation: string;
-    public readonly instanceRegions: string[];
+    public readonly instanceStampRegions: string[];
+    public readonly instanceStampLocations: string[];
     public readonly baseInstanceName: string;
     public readonly baseInstanceFileName: string;
 
-    constructor(planeNames: PlaneNames, instance: string, instanceLocation: string, instanceRegions: string[]) {
+    constructor(planeNames: PlaneNames, instance: string, instanceLocation: string, instanceRegions: string[], instanceLocations: string[]) {
         super(planeNames, planeNames.plane, planeNames.subscriptionName, planeNames.subscriptionId);
         this.instance = instance;
         this.instanceLocation = instanceLocation;
-        this.instanceRegions = instanceRegions;
+        this.instanceStampLocations = instanceLocations;
+        this.instanceStampRegions = instanceRegions;
         const baseInstanceNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env, this.plane, this.instance);
         this.baseName = this.baseInstanceName = baseInstanceNames.resourceName;
         this.baseFileName = this.baseInstanceFileName = baseInstanceNames.fileName;
@@ -74,8 +102,8 @@ export class RegionNames extends InstanceNames {
     public readonly baseRegionName: string;
     public readonly baseRegionFileName: string;
     public readonly baseRegionStorageName: string;
-    constructor(instanceNames: InstanceNames, region:string, geo: string, regionSuffix: string, regionLocation: string) {
-        super(instanceNames, instanceNames.instance, instanceNames.instanceLocation, instanceNames.instanceRegions);
+    constructor(instanceNames: InstanceNames, region: string, geo: string, regionSuffix: string, regionLocation: string) {
+        super(instanceNames, instanceNames.instance, instanceNames.instanceLocation, instanceNames.instanceStampRegions, instanceNames.instanceStampLocations);
         this.region = region;
         this.geo = geo;
         this.regionSuffix = regionSuffix;
@@ -123,13 +151,13 @@ export default abstract class ResourceNames {
         geography: string = null,
         regionSuffix: string = null,
         typeSuffix: string = null
-        ): { resourceName:string; storageName:string; fileName:string } {
+    ): { resourceName: string; storageName: string; fileName: string } {
 
         let resourceName = this.makeResourceName(prefix, component, env, plane, instance, geography, regionSuffix, typeSuffix);
         const fileName = this.makeBaseFileName(resourceName, prefix, component);
 
         if (plane === "ctl") {
-            resourceName = resourceName.replace('-ctl','');
+            resourceName = resourceName.replace('-ctl', '');
         }
 
         const storageName = this.convertToStorageResourceName(prefix, resourceName);

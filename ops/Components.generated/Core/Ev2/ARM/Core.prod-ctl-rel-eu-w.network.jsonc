@@ -1,0 +1,139 @@
+// Auto-Generated From Template
+// "Core.{Env}-[ctl]-{Instance}-{Region}.network.jsonc"
+// with names file "core.prod-ctl-rel-eu-w.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "nsgName": {
+      "defaultValue": "vscs-core-prod-rel-eu-w-nsg",
+      "type": "string"
+    },
+    "vnetName": {
+      "defaultValue": "vscs-core-prod-rel-eu-w-vnet",
+      "type": "string"
+    },
+    "ipAddressName": {
+      "defaultValue": "vscs-core-prod-rel-eu-w-ip",
+      "type": "string"
+    },
+    "ddosProtectionPlanName": {
+      "defaultValue": "vscs-core-prod-ddos",
+      "type": "string"
+    },
+    "environmentResourceGroup": {
+      "defaultValue": "vscs-core-prod",
+      "type": "string"
+    }
+  },
+
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "nsgName": "[parameters('nsgName')]",
+    "vnetName": "[parameters('vnetName')]",
+    "ipAddressName": "[parameters('ipAddressName')]",
+    "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "ddosProtectionPlanId": "[resourceId(subscription().id,parameters('environmentResourceGroup'),'Microsoft.Network/ddosProtectionPlans',parameters('ddosProtectionPlanName'))]",
+    "idleTimeoutInMinutes": 5
+  },
+
+  "resources": [
+    // Cluster Network Security Group
+    {
+      "apiVersion": "2020-05-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Http",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow HTTP",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "direction": "Inbound",
+              "priority": 500,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "Internet",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "Https",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow HTTPS",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "443",
+              "direction": "Inbound",
+              "priority": 501,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "Internet",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      }
+    },
+
+    // Cluster Virtual Network
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/8"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.240.0.0/16",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgId')]"
+              }
+            }
+          }
+        ]
+      },
+      "virtualNetworkPeerings": [],
+      "enableDdosProtection": true,
+      "enableVmProtection": false,
+      "ddosProtectionPlan": {
+        "id": "[variables('ddosProtectionPlanId')]"
+      },
+      "dependsOn": [
+        "[variables('nsgId')]"
+      ]
+    },
+
+    // Public Static IP Address
+    {
+      "name": "[variables('ipAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('ipAddressName')]",
+          "fqdn": "[concat(variables('ipAddressName'),'.',variables('location'),'.cloudapp.azure.com')]"
+        },
+        "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutes')]"
+      }
+    }
+  ]
+}

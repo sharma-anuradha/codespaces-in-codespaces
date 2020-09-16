@@ -9,6 +9,11 @@
   "basePlaneName": "vscs-codesp-ppe",
   "component": "codesp",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "plane": "ctl",
   "prefix": "vscs",
   "subscriptionId": "c57ef400-af62-4b47-a0b6-24ae55e7b8fd",

@@ -9,6 +9,10 @@
   "basePlaneName": "vscs-codesp-dev-data",
   "component": "codesp",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "plane": "data",
   "prefix": "vscs"
 }

@@ -7,5 +7,12 @@
   "baseName": "vscs-collab-prod",
   "component": "collab",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }

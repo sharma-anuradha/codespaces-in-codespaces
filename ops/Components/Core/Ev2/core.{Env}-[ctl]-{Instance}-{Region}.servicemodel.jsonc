@@ -12,10 +12,19 @@
       "name": "{{{baseRegionName}}}-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "{{{baseRegionName}}}-arm",
+          "name": "{{{baseRegionName}}}-cluster",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\{{{baseRegionFileName}}}.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\{{{baseRegionFileName}}}.network.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
@@ -32,8 +41,12 @@
       "azureSubscriptionId": "{{{subscriptionId}}}",
       "serviceResources": [
         {
-          "name": "{{{baseRegionName}}}-arm",
-          "instanceOf": "{{{baseRegionName}}}-arm"
+          "name": "{{{baseRegionName}}}-cluster",
+          "instanceOf": "{{{baseRegionName}}}-cluster"
+        },
+        {
+          "name": "{{{baseRegionName}}}-network",
+          "instanceOf": "{{{baseRegionName}}}-network"
         }
       ]
     }

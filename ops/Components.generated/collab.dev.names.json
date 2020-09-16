@@ -7,5 +7,9 @@
   "baseName": "vscs-collab-dev",
   "component": "collab",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }

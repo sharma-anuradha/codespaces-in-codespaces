@@ -17,10 +17,19 @@
       "name": "vscs-core-prod-rel-ap-se-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-prod-rel-ap-se-arm",
+          "name": "vscs-core-prod-rel-ap-se-cluster",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.prod-ctl-rel-ap-se.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-prod-rel-ap-se-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.prod-ctl-rel-ap-se.network.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
@@ -37,8 +46,12 @@
       "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
       "serviceResources": [
         {
-          "name": "vscs-core-prod-rel-ap-se-arm",
-          "instanceOf": "vscs-core-prod-rel-ap-se-arm"
+          "name": "vscs-core-prod-rel-ap-se-cluster",
+          "instanceOf": "vscs-core-prod-rel-ap-se-cluster"
+        },
+        {
+          "name": "vscs-core-prod-rel-ap-se-network",
+          "instanceOf": "vscs-core-prod-rel-ap-se-network"
         }
       ]
     }

@@ -17,10 +17,19 @@
       "name": "vscs-core-ppe-rel-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-ppe-rel-us-w2-arm",
+          "name": "vscs-core-ppe-rel-us-w2-cluster",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.ppe-ctl-rel-us-w2.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-ppe-rel-us-w2-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.ppe-ctl-rel-us-w2.network.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
@@ -37,8 +46,12 @@
       "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
       "serviceResources": [
         {
-          "name": "vscs-core-ppe-rel-us-w2-arm",
-          "instanceOf": "vscs-core-ppe-rel-us-w2-arm"
+          "name": "vscs-core-ppe-rel-us-w2-cluster",
+          "instanceOf": "vscs-core-ppe-rel-us-w2-cluster"
+        },
+        {
+          "name": "vscs-core-ppe-rel-us-w2-network",
+          "instanceOf": "vscs-core-ppe-rel-us-w2-network"
         }
       ]
     }

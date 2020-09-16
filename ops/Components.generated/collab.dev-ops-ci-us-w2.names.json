@@ -14,10 +14,17 @@
   "baseRegionStorageName": "collabdevopsciusw2",
   "component": "collab",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "geo": "us",
   "instance": "ci",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "us-w2"
   ],
   "plane": "ops",

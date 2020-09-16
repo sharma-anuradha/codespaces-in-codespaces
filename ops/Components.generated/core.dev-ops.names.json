@@ -9,6 +9,10 @@
   "basePlaneName": "vscs-core-dev-ops",
   "component": "core",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs",
   "subscriptionId": "03f9b555-3a9a-44c4-b410-a53acc2a32eb",

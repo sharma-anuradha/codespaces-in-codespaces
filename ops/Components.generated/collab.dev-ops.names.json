@@ -9,6 +9,10 @@
   "basePlaneName": "vscs-collab-dev-ops",
   "component": "collab",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs"
 }

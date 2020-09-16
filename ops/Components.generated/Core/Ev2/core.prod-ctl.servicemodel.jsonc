@@ -1,0 +1,56 @@
+// Auto-Generated From Template
+// "core.{Env}-[ctl].servicemodel.jsonc"
+// with names file "core.prod-ctl.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "vscs-core-prod-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-core-prod-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-core-prod-ddos",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.prod-ctl.ddos.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-prod-acr",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.prod-ctl.acr.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-core-prod",
+      "location": "WestUs2",
+      "instanceOf": "vscs-core-prod-rg",
+      "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
+      "serviceResources": [
+        {
+          "name": "vscs-core-prod-ddos",
+          "instanceOf": "vscs-core-prod-ddos"
+        },
+        {
+          "name": "vscs-core-prod-acr",
+          "instanceOf": "vscs-core-prod-acr"
+        }
+      ]
+    }
+  ]
+}

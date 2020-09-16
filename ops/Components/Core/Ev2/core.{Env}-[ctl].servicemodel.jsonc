@@ -1,0 +1,51 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "{{{basePlaneName}}}-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{basePlaneName}}}-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{basePlaneName}}}-ddos",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\{{{basePlaneFileName}}}.ddos.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "{{{basePlaneName}}}-acr",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\{{{basePlaneFileName}}}.acr.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{basePlaneName}}}",
+      "location": "{{{environmentLocation}}}",
+      "instanceOf": "{{{basePlaneName}}}-rg",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{basePlaneName}}}-ddos",
+          "instanceOf": "{{{basePlaneName}}}-ddos"
+        },
+        {
+          "name": "{{{basePlaneName}}}-acr",
+          "instanceOf": "{{{basePlaneName}}}-acr"
+        }
+      ]
+    }
+  ]
+}

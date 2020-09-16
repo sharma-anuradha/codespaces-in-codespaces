@@ -7,5 +7,9 @@
   "baseName": "vscs-codesp-dev",
   "component": "codesp",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }

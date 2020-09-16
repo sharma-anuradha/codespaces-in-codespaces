@@ -14,10 +14,23 @@
   "baseRegionStorageName": "commprodopsrelusw2",
   "component": "comm",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "ap-se",
     "eu-w",
     "us-e",

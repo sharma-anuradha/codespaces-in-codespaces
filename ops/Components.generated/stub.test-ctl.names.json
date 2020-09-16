@@ -9,6 +9,10 @@
   "basePlaneName": "vscs-stub-test",
   "component": "stub",
   "env": "test",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "plane": "ctl",
   "prefix": "vscs",
   "subscriptionId": "ebf675df-782e-47f7-a68d-b4c4696a28e2",

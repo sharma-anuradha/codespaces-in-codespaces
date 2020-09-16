@@ -11,9 +11,22 @@
   "basePlaneName": "vscs-collab-prod-ops",
   "component": "collab",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "instance": "rel",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "ap-se",
     "eu-w",
     "us-e",

@@ -11,9 +11,18 @@
   "basePlaneName": "vscs-codesp-ppe",
   "component": "codesp",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "instance": "rel",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "eu-w",
     "us-w2"
   ],

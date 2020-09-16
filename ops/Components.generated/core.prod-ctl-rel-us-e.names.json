@@ -13,11 +13,63 @@
   "baseRegionName": "vscs-core-prod-rel-us-e",
   "baseRegionStorageName": "coreprodreluse",
   "component": "core",
+  "containerRegistryName": "vscscoreprodacr",
+  "containerRegistryReplications": [
+    {
+      "name": "SoutheastAsia",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "SoutheastAsia",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "WestEurope",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "WestEurope",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "EastUS",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "EastUS",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    },
+    {
+      "name": "WestUs2",
+      "type": "Microsoft.ContainerRegistry/registries/replications",
+      "apiVersion": "2019-12-01-preview",
+      "location": "WestUs2",
+      "properties": {
+        "regionEndpointEnabled": true
+      }
+    }
+  ],
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "ap-se",
     "eu-w",
     "us-e",

@@ -11,9 +11,16 @@
   "basePlaneName": "vscs-core-dev-ops",
   "component": "core",
   "env": "dev",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestUs2"
+  ],
   "instance": "ci",
   "instanceLocation": "WestUs2",
-  "instanceRegions": [
+  "instanceStampLocations": [
+    "WestUs2"
+  ],
+  "instanceStampRegions": [
     "us-w2"
   ],
   "plane": "ops",

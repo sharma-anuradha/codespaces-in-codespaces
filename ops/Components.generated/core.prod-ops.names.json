@@ -9,6 +9,13 @@
   "basePlaneName": "vscs-core-prod-ops",
   "component": "core",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "plane": "ops",
   "prefix": "vscs",
   "subscriptionId": "b5e134ee-9729-42cf-b4c1-6371f7e2afa7",

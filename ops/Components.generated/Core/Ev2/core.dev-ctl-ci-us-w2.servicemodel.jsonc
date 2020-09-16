@@ -17,10 +17,19 @@
       "name": "vscs-core-dev-ci-us-w2-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-dev-ci-us-w2-arm",
+          "name": "vscs-core-dev-ci-us-w2-cluster",
           "composedOf": {
             "arm": {
               "templatePath": "ARM\\core.dev-ctl-ci-us-w2.cluster.jsonc",
+              "parametersPath": "ARM\\empty.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-dev-ci-us-w2-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "ARM\\core.dev-ctl-ci-us-w2.network.jsonc",
               "parametersPath": "ARM\\empty.parameters.jsonc"
             }
           }
@@ -37,8 +46,12 @@
       "azureSubscriptionId": "4546508f-1ae3-4117-a658-3cff37c4cc5c",
       "serviceResources": [
         {
-          "name": "vscs-core-dev-ci-us-w2-arm",
-          "instanceOf": "vscs-core-dev-ci-us-w2-arm"
+          "name": "vscs-core-dev-ci-us-w2-cluster",
+          "instanceOf": "vscs-core-dev-ci-us-w2-cluster"
+        },
+        {
+          "name": "vscs-core-dev-ci-us-w2-network",
+          "instanceOf": "vscs-core-dev-ci-us-w2-network"
         }
       ]
     }

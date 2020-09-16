@@ -9,6 +9,11 @@
   "basePlaneName": "vscs-comm-ppe-data",
   "component": "comm",
   "env": "ppe",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "WestEurope",
+    "WestUs2"
+  ],
   "plane": "data",
   "prefix": "vscs"
 }

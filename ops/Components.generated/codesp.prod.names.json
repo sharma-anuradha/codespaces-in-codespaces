@@ -7,5 +7,12 @@
   "baseName": "vscs-codesp-prod",
   "component": "codesp",
   "env": "prod",
+  "environmentLocation": "WestUs2",
+  "environmentStampLocations": [
+    "SoutheastAsia",
+    "WestEurope",
+    "EastUS",
+    "WestUs2"
+  ],
   "prefix": "vscs"
 }
