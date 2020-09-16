@@ -165,10 +165,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                 var errorMessageTask = logger.OperationScopeAsync("connection_creation_middleware_subscribe_to_errors", async (childLogger) =>
                 {
                     var errorsSessionsClient = await connectionErrorsSessionClientProvider.Client.Value;
-
+                    IMessageSession? session = null;
                     try
                     {
-                        var session = await errorsSessionsClient.AcceptMessageSessionAsync(context.GetCorrelationId(), TimeSpan.FromSeconds(60));
+                        session = await errorsSessionsClient.AcceptMessageSessionAsync(context.GetRequestId(), TimeSpan.FromSeconds(60));
                         if (session == default)
                         {
                             return null;
@@ -190,6 +190,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PortForwardingWebApi.Middl
                         logger.LogWarning("connection_creation_middleware_subscribe_to_errors_failed");
 
                         return null;
+                    }
+                    finally
+                    {
+                        if (session != null && !session.IsClosedOrClosing)
+                        {
+                            await session.CloseAsync();
+                        }
                     }
                 });
 
