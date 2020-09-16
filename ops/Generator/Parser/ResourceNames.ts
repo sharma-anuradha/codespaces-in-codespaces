@@ -56,19 +56,25 @@ export class PlaneNames extends EnvironmentNames {
     // Environment ACR replications, one for each instance location
     setContainerRegistryReplications(): void {
         if (this.component === "core" && this.plane === "ctl") {
+
+            const containerRegistryName = (this.basePlaneName + "acr").replace(/-/g, '');
+
             const replications = this.environmentStampLocations.map(location => {
                 return {
-                    name: location,
+                    name: `${containerRegistryName}/${location}`,
                     type: "Microsoft.ContainerRegistry/registries/replications",
                     apiVersion: "2019-12-01-preview",
                     location: location,
                     properties: {
                         regionEndpointEnabled: true
-                    }
+                    },
+                    dependsOn: [
+                        `[resourceId('Microsoft.ContainerRegistry/registries','${containerRegistryName}')]`
+                    ]
                 };
             });
 
-            (this as Record<string, unknown>).containerRegistryName = (this.basePlaneName + "acr").replace(/-/g, '');
+            (this as Record<string, unknown>).containerRegistryName = containerRegistryName;
             (this as Record<string, unknown>).containerRegistryReplications = replications;
         }
     }

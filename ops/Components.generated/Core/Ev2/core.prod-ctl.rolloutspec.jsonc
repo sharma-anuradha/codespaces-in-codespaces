@@ -20,14 +20,14 @@
   },
   "orchestratedSteps": [
     {
-      "name": "ddos",
+      "name": "vscs-core-prod-network",
       "targetType": "ServiceResource",
-      "targetName": "vscs-core-prod-ddos",
+      "targetName": "vscs-core-prod-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "acr",
+      "name": "vscs-core-prod-acr",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-prod-acr",
       "actions": [ "deploy" ],

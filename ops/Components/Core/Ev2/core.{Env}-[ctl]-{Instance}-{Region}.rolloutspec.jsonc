@@ -15,18 +15,18 @@
   },
   "orchestratedSteps": [
     {
-      "name": "network",
+      "name": "{{{baseRegionName}}}-network",
       "targetType": "ServiceResource",
       "targetName": "{{{baseRegionName}}}-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "cluster",
+      "name": "{{{baseRegionName}}}-cluster",
       "targetType": "ServiceResource",
       "targetName": "{{{baseRegionName}}}-cluster",
       "actions": [ "deploy" ],
-      "dependsOn": [ "network" ]
+      "dependsOn": [ "{{{baseRegionName}}}-network" ]
     }
   ]
 }

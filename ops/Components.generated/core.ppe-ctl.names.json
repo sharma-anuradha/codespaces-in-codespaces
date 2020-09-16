@@ -11,22 +11,28 @@
   "containerRegistryName": "vscscoreppeacr",
   "containerRegistryReplications": [
     {
-      "name": "WestEurope",
+      "name": "vscscoreppeacr/WestEurope",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
       "location": "WestEurope",
       "properties": {
         "regionEndpointEnabled": true
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscoreppeacr')]"
+      ]
     },
     {
-      "name": "WestUs2",
+      "name": "vscscoreppeacr/WestUs2",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
       "location": "WestUs2",
       "properties": {
         "regionEndpointEnabled": true
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscoreppeacr')]"
+      ]
     }
   ],
   "env": "ppe",

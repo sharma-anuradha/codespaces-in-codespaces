@@ -13,40 +13,52 @@
   "containerRegistryName": "vscscoreprodacr",
   "containerRegistryReplications": [
     {
-      "name": "SoutheastAsia",
+      "name": "vscscoreprodacr/SoutheastAsia",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
       "location": "SoutheastAsia",
       "properties": {
         "regionEndpointEnabled": true
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscoreprodacr')]"
+      ]
     },
     {
-      "name": "WestEurope",
+      "name": "vscscoreprodacr/WestEurope",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
       "location": "WestEurope",
       "properties": {
         "regionEndpointEnabled": true
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscoreprodacr')]"
+      ]
     },
     {
-      "name": "EastUS",
+      "name": "vscscoreprodacr/EastUS",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
       "location": "EastUS",
       "properties": {
         "regionEndpointEnabled": true
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscoreprodacr')]"
+      ]
     },
     {
-      "name": "WestUs2",
+      "name": "vscscoreprodacr/WestUs2",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
       "location": "WestUs2",
       "properties": {
         "regionEndpointEnabled": true
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerRegistry/registries','vscscoreprodacr')]"
+      ]
     }
   ],
   "env": "prod",

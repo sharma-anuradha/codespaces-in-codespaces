@@ -20,18 +20,18 @@
   },
   "orchestratedSteps": [
     {
-      "name": "network",
+      "name": "vscs-core-prod-rel-us-w2-network",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-prod-rel-us-w2-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "cluster",
+      "name": "vscs-core-prod-rel-us-w2-cluster",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-prod-rel-us-w2-cluster",
       "actions": [ "deploy" ],
-      "dependsOn": [ "network" ]
+      "dependsOn": [ "vscs-core-prod-rel-us-w2-network" ]
     }
   ]
 }

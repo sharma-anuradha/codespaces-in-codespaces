@@ -20,8 +20,8 @@
           "name": "vscs-core-prod-rel-us-w2-cluster",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\core.prod-ctl-rel-us-w2.cluster.jsonc",
-              "parametersPath": "ARM\\empty.parameters.jsonc"
+              "templatePath": "ARM\\core.prod-ctl-rel-us-w2.cluster.json",
+              "parametersPath": "ARM\\empty.parameters.json"
             }
           }
         },
@@ -29,8 +29,8 @@
           "name": "vscs-core-prod-rel-us-w2-network",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\core.prod-ctl-rel-us-w2.network.jsonc",
-              "parametersPath": "ARM\\empty.parameters.jsonc"
+              "templatePath": "ARM\\core.prod-ctl-rel-us-w2.network.json",
+              "parametersPath": "ARM\\empty.parameters.json"
             }
           }
         }

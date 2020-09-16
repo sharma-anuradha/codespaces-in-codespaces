@@ -20,18 +20,18 @@
   },
   "orchestratedSteps": [
     {
-      "name": "network",
+      "name": "vscs-core-ppe-rel-eu-w-network",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-ppe-rel-eu-w-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "cluster",
+      "name": "vscs-core-ppe-rel-eu-w-cluster",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-ppe-rel-eu-w-cluster",
       "actions": [ "deploy" ],
-      "dependsOn": [ "network" ]
+      "dependsOn": [ "vscs-core-ppe-rel-eu-w-network" ]
     }
   ]
 }

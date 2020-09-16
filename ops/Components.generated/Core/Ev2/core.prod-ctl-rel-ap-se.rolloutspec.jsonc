@@ -20,18 +20,18 @@
   },
   "orchestratedSteps": [
     {
-      "name": "network",
+      "name": "vscs-core-prod-rel-ap-se-network",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-prod-rel-ap-se-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "cluster",
+      "name": "vscs-core-prod-rel-ap-se-cluster",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-prod-rel-ap-se-cluster",
       "actions": [ "deploy" ],
-      "dependsOn": [ "network" ]
+      "dependsOn": [ "vscs-core-prod-rel-ap-se-network" ]
     }
   ]
 }

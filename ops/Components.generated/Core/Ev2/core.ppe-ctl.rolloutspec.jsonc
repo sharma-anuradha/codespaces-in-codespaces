@@ -20,14 +20,14 @@
   },
   "orchestratedSteps": [
     {
-      "name": "ddos",
+      "name": "vscs-core-ppe-network",
       "targetType": "ServiceResource",
-      "targetName": "vscs-core-ppe-ddos",
+      "targetName": "vscs-core-ppe-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "acr",
+      "name": "vscs-core-ppe-acr",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-ppe-acr",
       "actions": [ "deploy" ],

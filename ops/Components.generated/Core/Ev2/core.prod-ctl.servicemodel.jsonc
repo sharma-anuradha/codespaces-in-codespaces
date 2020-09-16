@@ -15,11 +15,11 @@
       "name": "vscs-core-prod-rg",
       "serviceResourceDefinitions": [
         {
-          "name": "vscs-core-prod-ddos",
+          "name": "vscs-core-prod-network",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\core.prod-ctl.ddos.jsonc",
-              "parametersPath": "ARM\\empty.parameters.jsonc"
+              "templatePath": "ARM\\core.prod-ctl.network.json",
+              "parametersPath": "ARM\\empty.parameters.json"
             }
           }
         },
@@ -27,8 +27,8 @@
           "name": "vscs-core-prod-acr",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\core.prod-ctl.acr.jsonc",
-              "parametersPath": "ARM\\empty.parameters.jsonc"
+              "templatePath": "ARM\\core.prod-ctl.acr.json",
+              "parametersPath": "ARM\\empty.parameters.json"
             }
           }
         }
@@ -43,8 +43,8 @@
       "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
       "serviceResources": [
         {
-          "name": "vscs-core-prod-ddos",
-          "instanceOf": "vscs-core-prod-ddos"
+          "name": "vscs-core-prod-network",
+          "instanceOf": "vscs-core-prod-network"
         },
         {
           "name": "vscs-core-prod-acr",

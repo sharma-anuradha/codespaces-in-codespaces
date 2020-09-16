@@ -15,8 +15,8 @@
           "name": "{{{baseRegionName}}}-cluster",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\{{{baseRegionFileName}}}.cluster.jsonc",
-              "parametersPath": "ARM\\empty.parameters.jsonc"
+              "templatePath": "ARM\\{{{baseRegionFileName}}}.cluster.json",
+              "parametersPath": "ARM\\empty.parameters.json"
             }
           }
         },
@@ -24,8 +24,8 @@
           "name": "{{{baseRegionName}}}-network",
           "composedOf": {
             "arm": {
-              "templatePath": "ARM\\{{{baseRegionFileName}}}.network.jsonc",
-              "parametersPath": "ARM\\empty.parameters.jsonc"
+              "templatePath": "ARM\\{{{baseRegionFileName}}}.network.json",
+              "parametersPath": "ARM\\empty.parameters.json"
             }
           }
         }

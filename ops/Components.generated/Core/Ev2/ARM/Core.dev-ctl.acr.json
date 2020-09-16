@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "containerRegistryName": {
+      "defaultValue": "vscscoredevacr",
+      "type": "string"
+    }
+  },
+
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "containerRegistryName": "[parameters('containerRegistryName')]"
+  },
+
+  "resources": [
+    // Shared Container Registry
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2019-12-01-preview",
+      "name": "[variables('containerRegistryName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Premium",
+        "tier": "Premium"
+      },
+      "properties": {
+        "adminUserEnabled": false,
+        "networkRuleSet": {
+          "defaultAction": "Allow",
+          "virtualNetworkRules": [],
+          "ipRules": []
+        },
+        "policies": {
+          "quarantinePolicy": {
+            "status": "disabled"
+          },
+          "trustPolicy": {
+            "type": "Notary",
+            "status": "disabled"
+          },
+          "retentionPolicy": {
+            "days": 7,
+            "status": "disabled"
+          }
+        },
+        "encryption": {
+          "status": "disabled"
+        },
+        "dataEndpointEnabled": false,
+        "publicNetworkAccess": "Enabled"
+      },
+
+      // Child resources, regional replications, computed in ResourceNames.ts
+      "resources": [{"name":"vscscoredevacr/WestUs2","type":"Microsoft.ContainerRegistry/registries/replications","apiVersion":"2019-12-01-preview","location":"WestUs2","properties":{"regionEndpointEnabled":true},"dependsOn":["[resourceId('Microsoft.ContainerRegistry/registries','vscscoredevacr')]"]}]
+    }
+  ]
+}

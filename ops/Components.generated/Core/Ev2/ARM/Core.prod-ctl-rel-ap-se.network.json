@@ -1,26 +1,26 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
 
   "parameters": {
     "nsgName": {
-      "defaultValue": "{{{baseRegionName}}}-nsg",
+      "defaultValue": "vscs-core-prod-rel-ap-se-nsg",
       "type": "string"
     },
     "vnetName": {
-      "defaultValue": "{{{baseRegionName}}}-vnet",
+      "defaultValue": "vscs-core-prod-rel-ap-se-vnet",
       "type": "string"
     },
     "ipAddressName": {
-      "defaultValue": "{{{baseRegionName}}}-ip",
+      "defaultValue": "vscs-core-prod-rel-ap-se-ip",
       "type": "string"
     },
     "ddosProtectionPlanName": {
-      "defaultValue": "{{{basePlaneName}}}-ddos",
+      "defaultValue": "vscs-core-prod-ddos",
       "type": "string"
     },
     "environmentResourceGroup": {
-      "defaultValue": "{{{basePlaneName}}}",
+      "defaultValue": "vscs-core-prod",
       "type": "string"
     }
   },
@@ -31,7 +31,7 @@
     "vnetName": "[parameters('vnetName')]",
     "ipAddressName": "[parameters('ipAddressName')]",
     "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
-    "ddosProtectionPlanId": "[resourceId(subscription().id,parameters('environmentResourceGroup'),'Microsoft.Network/ddosProtectionPlans',parameters('ddosProtectionPlanName'))]",
+    "ddosProtectionPlanId": "[resourceId(subscription().subscriptionId,parameters('environmentResourceGroup'),'Microsoft.Network/ddosProtectionPlans',parameters('ddosProtectionPlanName'))]",
     "idleTimeoutInMinutes": 5
   },
 
@@ -98,13 +98,13 @@
               }
             }
           }
-        ]
-      },
-      "virtualNetworkPeerings": [],
-      "enableDdosProtection": true,
-      "enableVmProtection": false,
-      "ddosProtectionPlan": {
-        "id": "[variables('ddosProtectionPlanId')]"
+        ],
+        "virtualNetworkPeerings": [],
+        "enableVmProtection": false,
+        "enableDdosProtection": true,
+        "ddosProtectionPlan": {
+          "id": "[variables('ddosProtectionPlanId')]"
+        }
       },
       "dependsOn": [
         "[variables('nsgId')]"

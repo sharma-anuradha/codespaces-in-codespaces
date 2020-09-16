@@ -1,23 +1,18 @@
-// Auto-Generated From Template
-// "Core.{Env}-[ctl]-{Instance}-{Region}.cluster.jsonc"
-// with names file "core.prod-ctl-rel-us-w2.names.json"
-// Do not edit this generated file. Edit the source file and rerun the generator instead.
-
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
 
   "parameters": {
     "clusterName": {
-      "defaultValue": "vscs-core-prod-rel-us-w2-cluster",
+      "defaultValue": "vscs-core-dev-ci-us-w2-cluster",
       "type": "string"
     },
     "vnetName": {
-      "defaultValue": "vscs-core-prod-rel-us-w2-vnet",
+      "defaultValue": "vscs-core-dev-ci-us-w2-vnet",
       "type": "string"
     },
     "ipAddressName": {
-      "defaultValue": "vscs-core-prod-rel-us-w2-ip",
+      "defaultValue": "vscs-core-dev-ci-us-w2-ip",
       "type": "string"
     }
   },
@@ -27,9 +22,8 @@
     "clusterName": "[parameters('clusterName')]",
     "vnetName": "[parameters('vnetName')]",
     "ipAddressName": "[parameters('ipAddressName')]",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-    "vnetSubnetIdDefault": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('vnetName'),'default')]",
-    "ipAddressId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ipAddressName'))]",
+    "vnetSubnetIdDefault": "[resourceId(subscription().subscriptionid,resourceGroup().name,'Microsoft.Network/virtualNetworks/subnets/',variables('vnetName'),'default')]",
+    "ipAddressId": "[resourceId(subscription().subscriptionid,resourceGroup().name,'Microsoft.Network/publicIPAddresses',variables('ipAddressName'))]",
     "kubernetesVersion": "1.18.6",
     "idleTimeoutInMinutes": 5
   },
@@ -41,8 +35,8 @@
       "name": "[variables('clusterName')]",
       "apiVersion": "2020-07-01",
       "location": "[variables('location')]",
-      "tags": {
-        "loadBalancerIpAddress": "[reference(variables('ipAddressId'),'2020-05-01').ipAddress]"
+      "identity": {
+        "type": "SystemAssigned"
       },
       "properties": {
         // General
@@ -56,9 +50,6 @@
         // Identity and RBAC
         "enableRBAC": true,
         "aadProfile": null,
-        "identity": {
-          "type": "SystemAssigned"
-        },
 
         // System Node Pool
         "agentPoolProfiles": [
@@ -109,22 +100,21 @@
           "dockerBridgeCidr": "172.17.0.1/16",
           "loadBalancerSku": "Standard",
           "loadBalancerProfile": {
+            "outboundIPs": {
+              "publicIPs": [
+                "[variables('ipAddressId')]"
+              ]
+            },
             "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutes')]"
           }
-        },
-
+        }
         // Unused features
-        "linuxProfile": null,
-        "windowsProfile": null,
-        "servicePrincipalProfile": null,
-        "addOnProfiles": null,
-        "diskEncryptionSetID": null
-      },
-
-      "dependsOn": [
-        "[variables('vnetId')]",
-        "[variables('ipAddressId')]"
-      ]
+        // "linuxProfile": null,
+        // "windowsProfile": null,
+        // "servicePrincipalProfile": null,
+        // "addOnProfiles": null,
+        // "diskEncryptionSetID": null
+      }
     }
   ]
 }

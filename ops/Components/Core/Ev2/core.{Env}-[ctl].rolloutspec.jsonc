@@ -15,14 +15,14 @@
   },
   "orchestratedSteps": [
     {
-      "name": "ddos",
+      "name": "{{{basePlaneName}}}-network",
       "targetType": "ServiceResource",
-      "targetName": "{{{basePlaneName}}}-ddos",
+      "targetName": "{{{basePlaneName}}}-network",
       "actions": [ "deploy" ],
       "dependsOn": []
     },
     {
-      "name": "acr",
+      "name": "{{{basePlaneName}}}-acr",
       "targetType": "ServiceResource",
       "targetName": "{{{basePlaneName}}}-acr",
       "actions": [ "deploy" ],

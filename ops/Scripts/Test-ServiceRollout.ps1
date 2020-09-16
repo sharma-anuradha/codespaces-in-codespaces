@@ -9,7 +9,8 @@ param(
     [string]$Component,
     [string]$RolloutSpecName = "*.rolloutspec.jsonc",
     [string]$ComponentsGeneratedFolder,
-    [string]$Ev2SubFolder = "Ev2"
+    [string]$Ev2SubFolder = "Ev2",
+    [switch]$Online
 )
 
 # Preamble
@@ -23,7 +24,7 @@ trap {
     exit 1
 }
 
-if ($PSVersionTable.PSVersion.Major  -gt 5) {
+if ($PSVersionTable.PSVersion.Major -gt 5) {
     throw "The Ev2 cmdlets require PowerShell 5.1 with full .NET Framework :("
 }
 
@@ -63,7 +64,7 @@ function Import-AzureDeploymentExpressClient {
 }
 
 if (!$ComponentsGeneratedFolder) {
-    $ComponentsGeneratedFolder ="$PSScriptRoot\..\..\bin\debug\ops\Components.generated"
+    $ComponentsGeneratedFolder = "$PSScriptRoot\..\..\bin\debug\ops\Components.generated"
 }
 
 $ComponentsGeneratedFolder | Write-Host -ForegroundColor Yellow
@@ -81,12 +82,19 @@ $rolloutSpecs | Out-String | Write-Host -ForegroundColor DarkGray
 
 $goodRolloutSpecs = @()
 $badRolloutSpecs = @()
-$rolloutSpecs | %{
+$rolloutSpecs | ForEach-Object {
     $rolloutSpec = $_
     try {
-        "Validating $rolloutSpec" | Write-Host -ForegroundColor DarkBlue
-        Test-AzureServiceRollout -ServiceGroupRoot $serviceGroupRoot -RolloutSpec $rolloutSpec -ClientMode -EnableStrictValidation -TreatWarningAsError
-        $goodRolloutSpecs += $rolloutSpec
+        if ($Online) {
+            "Validating $rolloutSpec" | Write-Host -ForegroundColor DarkBlue
+            Test-AzureServiceRollout -ServiceGroupRoot $serviceGroupRoot -RolloutSpec $rolloutSpec -EnableStrictValidation -TreatWarningAsError -RolloutInfra 'Test' -CreateResourceGroupIfRequired $true -WaitToComplete
+            $goodRolloutSpecs += $rolloutSpec
+        }
+        else {
+            "Validating $rolloutSpec" | Write-Host -ForegroundColor DarkBlue
+            Test-AzureServiceRollout -ServiceGroupRoot $serviceGroupRoot -RolloutSpec $rolloutSpec -ClientMode -EnableStrictValidation -TreatWarningAsError
+            $goodRolloutSpecs += $rolloutSpec
+        }
     }
     catch {
         "Error validating ${rolloutSpec}: $($_ | Out-String)" | Write-Host -ForegroundColor Red
