@@ -10,6 +10,7 @@ ingress:
     - "*.codespaces-dev.github.com"
     - "*.dev.github.dev"
     - "*.dev.builder.code.com"
+    - "*.local.builder.code.com"
     - vsclk-online-dev-ci-tm.trafficmanager.net
   tls:
     - hosts:
