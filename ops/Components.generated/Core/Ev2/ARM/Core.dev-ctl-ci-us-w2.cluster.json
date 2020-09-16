@@ -102,7 +102,9 @@
           "loadBalancerProfile": {
             "outboundIPs": {
               "publicIPs": [
-                "[variables('ipAddressId')]"
+                {
+                  "id": "[variables('ipAddressId')]"
+                }
               ]
             },
             "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutes')]"
