@@ -167,9 +167,12 @@ function Invoke-OnboardLegacySubscription([string]$SubscriptionName, [int]$perce
         $appSp = Get-AdSp -DisplayName "vsclk-online-$env-app-sp"
         New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $appSp | Out-Null
 
+        $opsSp = Get-AdSp -DisplayName "vsclk-online-$env-devops-sp"
         if (!($subscriptionInfo.Plane -eq 'data')) {
-            $opsSp = Get-AdSp -DisplayName "vsclk-online-$env-devops-sp"
             New-SubscriptionRoleAssignment -RoleDefinitionName "Contributor" -Assignee $opsSp | Out-Null
+        }
+        else {
+            New-SubscriptionRoleAssignment -RoleDefinitionName "Reader" -Assignee $opsSp | Out-Null
         }
 
         if ($env -eq "dev") {

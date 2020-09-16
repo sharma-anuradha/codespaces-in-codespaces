@@ -4,9 +4,9 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, ParameterSetName="Names")]
+    [Parameter(Mandatory = $true, ParameterSetName = "Names")]
     [string[]]$SubscriptionNames,
-    [Parameter(Mandatory = $true, ParameterSetName="Query")]
+    [Parameter(Mandatory = $true, ParameterSetName = "Query")]
     [switch]$All,
     [switch]$AllowNonProd,
     [switch]$AllowNonVscs,
@@ -52,20 +52,28 @@ function Test-ShouldRemoveNonJitRole() {
         return $false
     }
 
-    if ($Role.ObjectType -eq "Group") {
-        if ($Role.DisplayName.StartsWith('ESJIT-')) {
-            return $false
-        }
-        if ($Role.DisplayName.StartsWith('BG-')) {
-            return $false
-        }
-        if ($Role.DisplayName.Contains('breakglass')) {
-            return $false
-        }
+    if ($Role.ObjectType -eq "ServicePrincipal") {
+        "Not removing role '$($Role.DisplayName)' because it is a service principal." | Write-Verbose -Verbose:$verbose
+        return $false
     }
 
-    if ($Role.ObjectType -eq "ServicePrincipal") {
-        return $false
+    # Remove group owners
+    if ($Role.ObjectType -eq "Group") {
+
+        if ($Role.DisplayName.StartsWith('ESJIT-')) {
+            "Not removing role '$($Role.DisplayName)' because it is an ESJIT group." | Write-Verbose -Verbose:$verbose
+            return $false
+        }
+
+        if ($Role.DisplayName.StartsWith('BG-')) {
+            "Not removing role '$($Role.DisplayName)' because it is break glass group." | Write-Verbose -Verbose:$verbose
+            return $false
+        }
+
+        if ($Role.DisplayName.Contains('breakglass')) {
+            "Not removing role '$($Role.DisplayName)' because it is break glass group." | Write-Verbose -Verbose:$verbose
+            return $false
+        }
     }
 
     return $true
@@ -82,6 +90,8 @@ function Remove-NonJitOnlySubscriptionRolesInternal([string]$SubscriptionName) {
         throw "Subscription not found: ${SubscriptionName}: $_"
     }
 
+    "Removing non-JIT roles from ${SubscriptionName}" | Write-Host -ForegroundColor Green
+
     # Get all roles
     $scope = "/subscriptions/$subscriptionId"
     $roles = Get-AzRoleAssignment -Scope $scope
@@ -89,14 +99,38 @@ function Remove-NonJitOnlySubscriptionRolesInternal([string]$SubscriptionName) {
     # Filter to non-JIT roles
     $rolesToRemove = $roles | Where-Object { Test-ShouldRemoveNonJitRole -Role $_ -Scope $scope }
 
-    # Remove roles
+    # Remove non-owner roles
     if ($rolesToRemove) {
-        "Removing non-JIT roles from ${SubscriptionName}" | Write-Host -ForegroundColor Green
-        foreach ($role in $rolesToRemove) {
+
+        # Remove non owners first
+        $nonOwnersToRemove = $rolesToRemove | Where-Object { $_.RoleDefinitionName -ne "Owner" }
+        foreach ($role in $nonOwnersToRemove) {
             "Removing role '$($role.RoleDefinitionName)' from '$($role.DisplayName)' ($($role.ObjectId))" | Write-Verbose -Verbose:$verbose
-            $role | Remove-AzRoleAssignment -WhatIf:$whatif -Confirm:$confirm -Verbose:$verbose
+            try {
+                $role | Remove-AzRoleAssignment -WhatIf:$whatif -Confirm:$confirm -Verbose:$verbose
+            }
+            catch {
+                $_.Exception.Message | Out-String | Write-Host -ForegroundColor Red
+            }
+        }
+
+        # Remove owners last in case the identity running this script requires that owner role
+        $ownersToRemove = $rolesToRemove | Where-Object { $_.RoleDefinitionName -eq "Owner" }
+        foreach ($role in $ownersToRemove) {
+            "Removing role '$($role.RoleDefinitionName)' from '$($role.DisplayName)' ($($role.ObjectId))" | Write-Verbose -Verbose:$verbose
+            try {
+                $role | Remove-AzRoleAssignment -WhatIf:$whatif -Confirm:$confirm -Verbose:$verbose
+            }
+            catch {
+                $_.Exception.Message | Out-String | Write-Host -ForegroundColor Red
+            }
         }
     }
+    else {
+        "No roles to remove from ${SubscriptionName}" | Write-Verbose -Verbose:$verbose
+    }
+
+    Write-Host
 }
 
 
@@ -120,7 +154,7 @@ if ($VscsOnly) {
 $ProdOnly = !$AllowNonProd
 if ($ProdOnly) {
     $skipped = $SubscriptionNames | Where-Object { !$_.Contains('-prod-') }
-    $SubscriptionNames = $SubscriptionNames | Where-Object { $_.Contains('-prod-')}
+    $SubscriptionNames = $SubscriptionNames | Where-Object { $_.Contains('-prod-') }
     if ($skipped) {
         "Skipping non-production subscriptions:" | Write-Verbose -Verbose:$verbose
         $skipped | Write-Verbose -Verbose:$verbose
