@@ -60,8 +60,10 @@ export class PlaneNames extends EnvironmentNames {
             const containerRegistryName = (this.basePlaneName + "acr").replace(/-/g, '');
 
             const replications = this.environmentStampLocations.map(location => {
+                location = location.toLowerCase();
                 return {
                     name: `${containerRegistryName}/${location}`,
+                    condition: `[not(equals(toLower(variables('location')),'${location}'))]`,
                     type: "Microsoft.ContainerRegistry/registries/replications",
                     apiVersion: "2019-12-01-preview",
                     location: location,

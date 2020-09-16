@@ -16,10 +16,11 @@
   "containerRegistryName": "vscscoreprodacr",
   "containerRegistryReplications": [
     {
-      "name": "vscscoreprodacr/SoutheastAsia",
+      "name": "vscscoreprodacr/southeastasia",
+      "condition": "[not(equals(toLower(variables('location')),'southeastasia'))]",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
-      "location": "SoutheastAsia",
+      "location": "southeastasia",
       "properties": {
         "regionEndpointEnabled": true
       },
@@ -28,10 +29,11 @@
       ]
     },
     {
-      "name": "vscscoreprodacr/WestEurope",
+      "name": "vscscoreprodacr/westeurope",
+      "condition": "[not(equals(toLower(variables('location')),'westeurope'))]",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
-      "location": "WestEurope",
+      "location": "westeurope",
       "properties": {
         "regionEndpointEnabled": true
       },
@@ -40,10 +42,11 @@
       ]
     },
     {
-      "name": "vscscoreprodacr/EastUS",
+      "name": "vscscoreprodacr/eastus",
+      "condition": "[not(equals(toLower(variables('location')),'eastus'))]",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
-      "location": "EastUS",
+      "location": "eastus",
       "properties": {
         "regionEndpointEnabled": true
       },
@@ -52,10 +55,11 @@
       ]
     },
     {
-      "name": "vscscoreprodacr/WestUs2",
+      "name": "vscscoreprodacr/westus2",
+      "condition": "[not(equals(toLower(variables('location')),'westus2'))]",
       "type": "Microsoft.ContainerRegistry/registries/replications",
       "apiVersion": "2019-12-01-preview",
-      "location": "WestUs2",
+      "location": "westus2",
       "properties": {
         "regionEndpointEnabled": true
       },

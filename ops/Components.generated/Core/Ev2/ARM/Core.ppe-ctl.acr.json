@@ -53,7 +53,7 @@
       },
 
       // Child resources, regional replications, computed in ResourceNames.ts
-      "resources": [{"name":"vscscoreppeacr/WestEurope","type":"Microsoft.ContainerRegistry/registries/replications","apiVersion":"2019-12-01-preview","location":"WestEurope","properties":{"regionEndpointEnabled":true},"dependsOn":["[resourceId('Microsoft.ContainerRegistry/registries','vscscoreppeacr')]"]},{"name":"vscscoreppeacr/WestUs2","type":"Microsoft.ContainerRegistry/registries/replications","apiVersion":"2019-12-01-preview","location":"WestUs2","properties":{"regionEndpointEnabled":true},"dependsOn":["[resourceId('Microsoft.ContainerRegistry/registries','vscscoreppeacr')]"]}]
+      "resources": [{"name":"vscscoreppeacr/westeurope","condition":"[not(equals(toLower(variables('location')),'westeurope'))]","type":"Microsoft.ContainerRegistry/registries/replications","apiVersion":"2019-12-01-preview","location":"westeurope","properties":{"regionEndpointEnabled":true},"dependsOn":["[resourceId('Microsoft.ContainerRegistry/registries','vscscoreppeacr')]"]},{"name":"vscscoreppeacr/westus2","condition":"[not(equals(toLower(variables('location')),'westus2'))]","type":"Microsoft.ContainerRegistry/registries/replications","apiVersion":"2019-12-01-preview","location":"westus2","properties":{"regionEndpointEnabled":true},"dependsOn":["[resourceId('Microsoft.ContainerRegistry/registries','vscscoreppeacr')]"]}]
     }
   ]
 }
