@@ -613,6 +613,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
 
             var repository = GetCloudEnvironmentRepository(location.Value, logger);
 
+            if (repository == null)
+            {
+                var errorLogger = logger.NewChildLogger().FluentAddValue("RegionalLocation", location.Value.ToString());
+                errorLogger.LogWarning($"{LogBaseName}_list_by_plan_repository_location_lookup");
+                return Enumerable.Empty<CloudEnvironment>();
+            }
+
             return await repository.GetWhereAsync(where, logger.NewChildLogger());
         }
 
@@ -624,6 +631,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             foreach (var plan in plans.Where(x => !x.IsDeleted))
             {
                 var repository = GetCloudEnvironmentRepository(plan.Plan.Location, logger);
+
+                if (repository == null)
+                {
+                    var errorLogger = logger.NewChildLogger().FluentAddValue("RegionalLocation", plan.Plan.Location.ToString());
+                    errorLogger.LogWarning($"{LogBaseName}_list_by_userid_repository_location_lookup");
+                    continue;
+                }
 
                 await logger.OperationScopeAsync(
                     $"{LogBaseName}_list_by_userid",
