@@ -62,7 +62,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public const string testAccessToken = "test-token";
         public readonly Uri testServiceUri = new Uri("http://localhost/");
         public const string testCallbackUriFormat = "http://localhost/{0}";
-        bool createdPlan;
 
         public static readonly VsoPlanInfo testPlan = new VsoPlanInfo
         {
@@ -120,11 +119,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
 
-            this.planRepository = new MockPlanRepository();
             this.globalEnvironmentRepository = new MockGlobalCloudEnvironmentRepository();
             this.regionalEnvironmentRepository = new MockRegionalCloudEnvironmentRepository();
-            var repoFactory = new Mock<IRegionalCloudEnvironmentRepositoryFactory>();
-            this.environmentRepository = new CloudEnvironmentRepository(this.planRepository, repoFactory.Object, this.globalEnvironmentRepository, this.regionalEnvironmentRepository, null);
+            this.environmentRepository = new CloudEnvironmentRepository(this.globalEnvironmentRepository, this.regionalEnvironmentRepository);
+            this.planRepository = new MockPlanRepository();
             this.billingEventRepository = new MockBillingEventRepository();
             this.billingEventManager = new BillingEventManager(this.billingEventRepository,
                                                                 new MockBillingOverrideRepository());
@@ -200,7 +198,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 );
 
             var environmentCreateAction = new EnvironmentCreateAction(
-                planManager,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
                 environmentListAction,
@@ -241,7 +239,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockControlPlaneInfo(),
                 environmentAccessManager,
                 environmentListAction,
-                planManager,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 environmentActionValidator,
                 environmentSettings);
 
@@ -283,7 +281,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
-                planManager,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 workspaceManager,
                 environmentMonitor,
                 environmentContinuationOperations.Object,
@@ -303,7 +301,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
-                planManager,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 workspaceManager,
                 environmentMonitor,
                 environmentContinuationOperations.Object,
@@ -324,7 +322,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentResumeAction,
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
-                planManager,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 MockUtil.MockSubscriptionManager(),
                 environmentSubscriptionManager,
                 environmentSettings
@@ -340,7 +338,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentExportAction,
                 MockUtil.MockSkuCatalog(),
                 MockUtil.MockSkuUtils(true),
-                planManager,
+                MockUtil.MockPlanManager(() => MockUtil.GeneratePlan()),
                 MockUtil.MockSubscriptionManager(),
                 environmentSubscriptionManager,
                 environmentSettings);
@@ -404,13 +402,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 );
         }
 
-        public async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test", string skuName = "windows")
+        public async Task<CloudEnvironment> CreateTestEnvironmentAsync(string name = "Test", string skuName = "testSkuName")
         {
-            if (!createdPlan)
-            {
-                await planRepository.CreateAsync(testVsoPlan, logger);
-                createdPlan = true;
-            }
 
             var cloudEnvironment = await environmentManager.CreateAsync(
                 new EnvironmentCreateDetails

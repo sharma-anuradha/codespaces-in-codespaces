@@ -33,6 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="watchSoftDeletedEnvironmentToBeDeletedTask"> Target watch soft deleted environments to be terminated task.</param>
         /// <param name="watchDeletedPlanSecretStoresTask">Target watch secrets stores to be deleted.</param>
         /// <param name="refreshKeyVaultSecretCacheTask">Refresh key vault secret cache task.</param>
+        /// <param name="cloudEnvironmentRegionalMigrationTask">Env regional migration task.</param>
         /// <param name="syncRegionalEnvironmentsToGlobalTask">Sync task for cloud environments.</param>
         /// <param name="jobQueueConsumerFactory">Target Job Queue Consumer Factory.</param>
         /// <param name="watchExportBlobsTask">Target watch export blobs task.</param>
@@ -50,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IContinuationTaskWorkerPoolManager continuationTaskWorkerPoolManager,
             IWatchSoftDeletedEnvironmentToBeHardDeletedTask watchSoftDeletedEnvironmentToBeDeletedTask,
             IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
+            ICloudEnvironmentRegionalMigrationTask cloudEnvironmentRegionalMigrationTask,
             ISyncRegionalEnvironmentsToGlobalTask syncRegionalEnvironmentsToGlobalTask,
             IJobQueueConsumerFactory jobQueueConsumerFactory,
             IWatchExportBlobsTask watchExportBlobsTask,
@@ -67,6 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             ContinuationTaskWorkerPoolManager = continuationTaskWorkerPoolManager;
             WatchSoftDeletedEnvironmentToBeHardDeletedTask = watchSoftDeletedEnvironmentToBeDeletedTask;
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
+            CloudEnvironmentRegionalMigrationTask = cloudEnvironmentRegionalMigrationTask;
             SyncRegionalEnvironmentsToGlobalTask = syncRegionalEnvironmentsToGlobalTask;
             JobHandlerTargets = jobHandlerTargets;
             JobQueueConsumerFactory = jobQueueConsumerFactory;
@@ -96,6 +99,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IWatchSoftDeletedEnvironmentToBeHardDeletedTask WatchSoftDeletedEnvironmentToBeHardDeletedTask { get; }
 
         private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
+
+        private ICloudEnvironmentRegionalMigrationTask CloudEnvironmentRegionalMigrationTask { get; }
 
         private ISyncRegionalEnvironmentsToGlobalTask SyncRegionalEnvironmentsToGlobalTask { get; }
 
@@ -129,6 +134,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             $"{EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask}_run",
             (childLogger) => WatchOrphanedSystemEnvironmentsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
             TimeSpan.FromMinutes(10));
+
+            // Job: Migrate cloud environments to the appropriate regional database
+            TaskHelper.RunBackgroundLoop(
+                $"{EnvironmentLoggingConstants.CloudEnvironmentRegionalMigrationTask}_run",
+                (childLogger) => CloudEnvironmentRegionalMigrationTask.RunTaskAsync(TimeSpan.FromHours(24), childLogger),
+                TimeSpan.FromMinutes(10));
 
             // Job: Re-sync broken global environments with their regional records
             TaskHelper.RunBackgroundLoop(

@@ -201,7 +201,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         {
             AuditAttribute.SetTargetResourceId(HttpContext, CurrentUserProvider?.CurrentUserIdSet?.PreferredUserId);
             var deletedFilter = deleted ? EnvironmentListType.DeletedEnvironments : EnvironmentListType.ActiveEnvironments;
-            var environmentsList = await EnvironmentManager.ListAsync(planId, null, name, null, deletedFilter, logger.NewChildLogger());
+            var environmentsList = await EnvironmentManager.ListAsync(planId, name, null, deletedFilter, logger.NewChildLogger());
 
             return Ok(Mapper.Map<CloudEnvironmentResult[]>(environmentsList));
         }

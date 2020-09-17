@@ -70,13 +70,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var activeSku = MockSku(skuName: "ActiveSku", skuTransitions: new[] { targetSku.SkuName });
 
             var skuCatalog = MockSkuCatalog(targetSku, activeSku);
+
+            var globalRepository = new MockGlobalCloudEnvironmentRepository();
+
             var environment = MockEnvironment(
                 skuName: activeSku.SkuName,
                 state: CloudEnvironmentState.Shutdown,
                 autoShutdownDelayMinutes: 0);
 
-            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
-            environment = await regionalRepository.CreateAsync(environment, Logger);
+            environment = await globalRepository.CreateAsync(environment, Logger);
 
             var update = new CloudEnvironmentUpdate
             {
@@ -84,7 +86,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 SkuName = targetSku.SkuName,
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
+            var manager = CreateManager(globalEnvironmentRepository: globalRepository, regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
+
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
             Assert.True(result.IsSuccess);
@@ -96,7 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task UpdateEnironmentSettings_NotFound()
         {
-            var environmentRepository = new Mock<IRegionalCloudEnvironmentRepository>();
+            var environmentRepository = new Mock<IGlobalCloudEnvironmentRepository>();
             environmentRepository
                 .Setup(x => x.GetAsync(It.IsAny<DocumentDbKey>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(Task.FromResult((CloudEnvironment)null));
@@ -105,7 +109,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             {
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: environmentRepository.Object);
+            var manager = CreateManager(globalEnvironmentRepository: environmentRepository.Object);
 
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await manager.UpdateSettingsAsync(null, update, Logger));
         }
@@ -115,16 +119,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
-            var environment = MockEnvironment(skuName: sku.SkuName, state: CloudEnvironmentState.Available);
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
 
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
+
+            var environment = MockEnvironment(skuName: sku.SkuName, state: CloudEnvironmentState.Available);
             environment = await environmentRepository.CreateAsync(environment, Logger);
 
             var update = new CloudEnvironmentUpdate
             {
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
+            var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
@@ -137,11 +142,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public async Task UpdateEnironmentSettings_InvalidAutoShutdown()
         {
             var sku = MockSku();
+
             var skuCatalog = MockSkuCatalog(sku);
+
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
+
             var environment = MockEnvironment(
                 skuName: sku.SkuName,
                 state: CloudEnvironmentState.Shutdown);
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
 
             environment = await environmentRepository.CreateAsync(environment, Logger);
 
@@ -150,7 +158,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 AutoShutdownDelayMinutes = -1,
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
+            var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
@@ -163,12 +171,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         public async Task UpdateEnironmentSettings_SkuUpdateNotAllowed()
         {
             var sku = MockSku();
+
             var skuCatalog = MockSkuCatalog(sku);
+
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
+
             var environment = MockEnvironment(
                 skuName: sku.SkuName,
                 state: CloudEnvironmentState.Shutdown);
 
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
             environment = await environmentRepository.CreateAsync(environment, Logger);
 
             var update = new CloudEnvironmentUpdate
@@ -176,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 SkuName = "some sku",
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
+            var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
@@ -190,12 +201,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var targetSku = MockSku(skuName: "TargetSku");
             var activeSku = MockSku(skuName: "ActiveSku", skuTransitions: new[] { targetSku.SkuName });
+
             var skuCatalog = MockSkuCatalog(targetSku, activeSku);
+
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
+
             var environment = MockEnvironment(
                 skuName: activeSku.SkuName,
                 state: CloudEnvironmentState.Shutdown);
 
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
             environment = await environmentRepository.CreateAsync(environment, Logger);
 
             var update = new CloudEnvironmentUpdate
@@ -203,7 +217,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 SkuName = "bad sku name",
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
+            var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
 
@@ -217,10 +231,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
+            var globalRepository = new MockGlobalCloudEnvironmentRepository();
             var environment = MockEnvironment(skuName: sku.SkuName);
-            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
 
-            environment = await regionalRepository.CreateAsync(environment, Logger);
+            environment = await globalRepository.CreateAsync(environment, Logger);
             environment.State = CloudEnvironmentState.Shutdown;
 
             var update = new CloudEnvironmentUpdate
@@ -228,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 FriendlyName = "XYZ",
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
+            var manager = CreateManager(globalEnvironmentRepository: globalRepository, regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
@@ -238,19 +253,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         [Fact]
         public async Task RenameEnvironment_Conflict()
         {
-            var planInfo = MockPlan();
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
-            var environment1 = MockEnvironment(id: "env1", name: "name1", location: planInfo.Location, skuName: sku.SkuName, ownerId: "mock-profile-id", planId: planInfo.ResourceId);
-            var environment2 = MockEnvironment(id: "env2", name: "name2", location: planInfo.Location, skuName: sku.SkuName, ownerId: "mock-profile-id", planId: planInfo.ResourceId);
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment1.Location);
-            var planRepository = new MockPlanRepository();
-            var plan = new VsoPlan {
-                Id = Guid.NewGuid().ToString(),
-                Plan = planInfo,
-            };
-
-            await planRepository.CreateAsync(plan, Logger);
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
+            var environment1 = MockEnvironment(id: "env1", name: "name1", skuName: sku.SkuName, ownerId: "mock-profile-id");
+            var environment2 = MockEnvironment(id: "env2", name: "name2", skuName: sku.SkuName, ownerId: "mock-profile-id");
 
             environment1 = await environmentRepository.CreateAsync(environment1, Logger);
             environment2 = await environmentRepository.CreateAsync(environment2, Logger);
@@ -261,7 +268,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 FriendlyName = environment2.FriendlyName,
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog, planRepository: planRepository);
+            var manager = CreateManager(globalEnvironmentRepository: environmentRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment1, update, Logger);
             Assert.False(result.IsSuccess);
@@ -275,19 +282,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
             var environment = MockEnvironment(skuName: sku.SkuName);
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
             environment.State = CloudEnvironmentState.Shutdown;
 
-            var regionalRepository = new Mock<IRegionalCloudEnvironmentRepository>();
-            regionalRepository
-                .SetupGet(x => x.ControlPlaneLocation)
-                .Returns(environment.Location);
-
-            regionalRepository
+            var globalRepository = new Mock<IGlobalCloudEnvironmentRepository>();
+            globalRepository
                 .Setup(x => x.GetAsync(It.IsAny<DocumentDbKey>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns(() => Task.FromResult(environment));
 
             int attempt = 0;
-            regionalRepository
+            globalRepository
                 .Setup(x => x.UpdateAsync(It.IsAny<CloudEnvironment>(), It.IsAny<IDiagnosticsLogger>()))
                 .Returns((CloudEnvironment cloudEnvironmentUpdate, IDiagnosticsLogger logger) =>
                 {
@@ -304,7 +308,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 FriendlyName = "XYZ",
             };
 
-            var manager = CreateManager(regionalEnvironmentRepository: regionalRepository.Object, skuCatalog: skuCatalog);
+            var manager = CreateManager(globalEnvironmentRepository: globalRepository.Object, regionalEnvironmentRepository: regionalRepository, skuCatalog: skuCatalog);
 
             var result = await manager.UpdateSettingsAsync(environment, update, Logger);
             Assert.True(result.IsSuccess);
@@ -316,18 +320,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
+            var globalRepository = new MockGlobalCloudEnvironmentRepository();
             var billingEventRepository = new MockBillingEventRepository();
 
             var plan1 = MockPlan(name: "plan1");
             var plan2 = MockPlan(name: "plan2");
 
             var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.ResourceId);
-            var globalRepository = new MockGlobalCloudEnvironmentRepository();
-            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
             var environmentOwnerId = environment.OwnerId;
 
-            await globalRepository.CreateAsync(environment, Logger);
-            environment = await regionalRepository.CreateAsync(environment, Logger);
+            environment = await globalRepository.CreateAsync(environment, Logger);
             environment.State = CloudEnvironmentState.Shutdown;
 
             var update = new CloudEnvironmentUpdate
@@ -385,6 +388,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
+            var globalRepository = new MockGlobalCloudEnvironmentRepository();
             var billingEventRepository = new MockBillingEventRepository();
 
             var planRepository = new MockPlanRepository();
@@ -401,12 +405,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             }, Logger);
 
             var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.Plan.ResourceId);
-            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
 
             // Test with an owner ID that uses the plan ID as the tenant ID.
             environment.OwnerId = plan1.Id + "_" + Guid.Empty;
 
-            environment = await regionalRepository.CreateAsync(environment, Logger);
+            environment = await globalRepository.CreateAsync(environment, Logger);
             environment.State = CloudEnvironmentState.Shutdown;
 
             var update = new CloudEnvironmentUpdate
@@ -415,6 +419,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             };
 
             var manager = CreateManager(
+                globalEnvironmentRepository: globalRepository,
                 regionalEnvironmentRepository: regionalRepository,
                 skuCatalog: skuCatalog,
                 planRepository: planRepository,
@@ -431,6 +436,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
+            var globalRepository = new MockGlobalCloudEnvironmentRepository();
             var billingEventRepository = new MockBillingEventRepository();
 
             var planRepository = new MockPlanRepository();
@@ -448,12 +454,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             }, Logger);
 
             var environment = MockEnvironment(skuName: sku.SkuName, planId: plan1.Plan.ResourceId);
-            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.Location);
+            var regionalRepository = new MockRegionalCloudEnvironmentRepository(environment.ControlPlaneLocation);
 
             // Test with an owner ID that uses the plan's Tenant property as the tenant ID.
             environment.OwnerId = plan1.Tenant + "_" + Guid.Empty;
 
-            environment = await regionalRepository.CreateAsync(environment, Logger);
+            environment = await globalRepository.CreateAsync(environment, Logger);
             environment.State = CloudEnvironmentState.Shutdown;
 
             var update = new CloudEnvironmentUpdate
@@ -462,6 +468,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             };
 
             var manager = CreateManager(
+                globalEnvironmentRepository: globalRepository,
                 regionalEnvironmentRepository: regionalRepository,
                 skuCatalog: skuCatalog,
                 planRepository: planRepository,
@@ -479,26 +486,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
             var billingEventRepository = new MockBillingEventRepository();
 
-            var plan1Info = MockPlan(name: "plan1");
-            var plan1 = new VsoPlan {
-                Id = Guid.NewGuid().ToString(),
-                Plan = plan1Info,
-            };
-            var plan2Info = MockPlan(name: "plan2");
-            var plan2 = new VsoPlan {
-                Id = Guid.NewGuid().ToString(),
-                Plan = plan2Info,
-            };
+            var plan1 = MockPlan(name: "plan1");
+            var plan2 = MockPlan(name: "plan2");
 
-            var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1Info.ResourceId, location: plan1Info.Location, skuName: sku.SkuName, ownerId: "mock-profile-id");
-            var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2Info.ResourceId, location: plan2Info.Location, skuName: sku.SkuName, ownerId: "mock-profile-id");
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment1.Location);
-            var planRepository = new MockPlanRepository();
-
-            await planRepository.CreateAsync(plan1, Logger);
-            await planRepository.CreateAsync(plan2, Logger);
+            var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1.ResourceId, skuName: sku.SkuName, ownerId: "mock-profile-id");
+            var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2.ResourceId, skuName: sku.SkuName, ownerId: "mock-profile-id");
 
             environment1 = await environmentRepository.CreateAsync(environment1, Logger);
             environment2 = await environmentRepository.CreateAsync(environment2, Logger);
@@ -507,13 +502,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             var update = new CloudEnvironmentUpdate
             {
                 FriendlyName = environment2.FriendlyName,
-                Plan = new VsoPlan { Plan = plan2Info, Tenant = Guid.Empty.ToString() },
+                Plan = new VsoPlan { Plan = plan2, Tenant = Guid.Empty.ToString() },
             };
 
             var manager = CreateManager(
-                regionalEnvironmentRepository: environmentRepository,
+                globalEnvironmentRepository: environmentRepository,
                 skuCatalog: skuCatalog,
-                planRepository: planRepository,
                 billingEventRepository: billingEventRepository);
 
             var result = await manager.UpdateSettingsAsync(environment1, update, Logger);
@@ -527,6 +521,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
         {
             var sku = MockSku();
             var skuCatalog = MockSkuCatalog(sku);
+            var environmentRepository = new MockGlobalCloudEnvironmentRepository();
             var billingEventRepository = new MockBillingEventRepository();
 
             var plan1 = MockPlan(name: "plan1");
@@ -534,7 +529,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
 
             var environment1 = MockEnvironment(id: "env1", name: "name1", planId: plan1.ResourceId, skuName: sku.SkuName);
             var environment2 = MockEnvironment(id: "env2", name: "name2", planId: plan2.ResourceId, skuName: sku.SkuName);
-            var environmentRepository = new MockRegionalCloudEnvironmentRepository(environment1.Location);
 
             environment1 = await environmentRepository.CreateAsync(environment1, Logger);
             environment2 = await environmentRepository.CreateAsync(environment2, Logger);
@@ -552,7 +546,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             };
 
             var manager = CreateManager(
-                regionalEnvironmentRepository: environmentRepository,
+                globalEnvironmentRepository: environmentRepository,
                 skuCatalog: skuCatalog,
                 billingEventRepository: billingEventRepository,
                 environmentSettings: environmentSettings);
@@ -592,12 +586,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             planSettings.Init(mockSystemConfiguration.Object);
             environmentSettings.Init(mockSystemConfiguration.Object);
 
-            planRepository ??= new MockPlanRepository();
             globalEnvironmentRepository = globalEnvironmentRepository ?? new MockGlobalCloudEnvironmentRepository();
             regionalEnvironmentRepository = regionalEnvironmentRepository ?? new MockRegionalCloudEnvironmentRepository();
-            var repoFactory = new Mock<IRegionalCloudEnvironmentRepositoryFactory>();
-            var environmentRepository = new CloudEnvironmentRepository(planRepository, repoFactory.Object, globalEnvironmentRepository, regionalEnvironmentRepository, null);
+            var environmentRepository = new CloudEnvironmentRepository(globalEnvironmentRepository, regionalEnvironmentRepository);
             currentUserProvider ??= MockUtil.MockCurrentUserProvider();
+            planRepository ??= new MockPlanRepository();
             billingEventRepository ??= new MockBillingEventRepository();
             skuCatalog ??= MockSkuCatalog();
 
@@ -751,6 +744,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             string name = "env-name",
             string id = "env-id",
             AzureLocation location = AzureLocation.WestUs2,
+            AzureLocation controlPlanLocation = AzureLocation.CentralUs,
             string planId = null,
             string ownerId = "owner-id",
             string skuName = "sku-name",
@@ -762,13 +756,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 Id = id,
                 FriendlyName = name,
                 Location = location,
-                ControlPlaneLocation = location,
+                ControlPlaneLocation = controlPlanLocation,
                 SkuName = skuName,
                 PlanId = planId ?? MockPlan().ResourceId,
                 OwnerId = ownerId,
                 State = state,
-                AutoShutdownDelayMinutes = autoShutdownDelayMinutes,
-                IsMigrated = true
+                AutoShutdownDelayMinutes = autoShutdownDelayMinutes
             };
         }
 

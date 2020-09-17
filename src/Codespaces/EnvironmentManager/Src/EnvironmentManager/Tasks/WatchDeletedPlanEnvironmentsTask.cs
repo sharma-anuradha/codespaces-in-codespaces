@@ -126,7 +126,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
                     childLogger.AddVsoPlan(plan);
 
                     var environments = await EnvironmentManager.ListAsync(
-                        plan.Plan.ResourceId, plan.Plan.Location, null, null, EnvironmentListType.ActiveEnvironments, childLogger.NewChildLogger());
+                        plan.Plan.ResourceId, null, null, EnvironmentListType.ActiveEnvironments, childLogger.NewChildLogger());
                     var nonDeletedEnvironments = environments.Where(t => t.State != CloudEnvironmentState.Deleted).ToList();
                     var deletionsSuccessful = true;
                     if (nonDeletedEnvironments.Any())

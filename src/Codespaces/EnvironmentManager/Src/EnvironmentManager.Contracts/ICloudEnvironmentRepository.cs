@@ -50,20 +50,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets the list of environments for the specified plan.
         /// </summary>
         /// <param name="planId">The plan resource id.</param>
-        /// <param name="location">The plan location, if known.</param>
         /// <param name="logger">The logger.</param>
         /// <returns>The list of environments.</returns>
-        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, AzureLocation? location, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the list of environments for the specified plan.
         /// </summary>
         /// <param name="planId">The plan resource id.</param>
-        /// <param name="location">The plan location, if known.</param>
         /// <param name="friendlyNameInLowerCase">The lowercased friendly name of the environment.</param>
         /// <param name="logger">The logger.</param>
         /// <returns>The list of environments.</returns>
-        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, AzureLocation? location, string friendlyNameInLowerCase, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, string friendlyNameInLowerCase, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the list of environments for the specified user.
@@ -86,22 +84,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Gets the list of environments for the specified plan and user.
         /// </summary>
         /// <param name="planId">The plan resource id.</param>
-        /// <param name="location">The plan location, if known.</param>
         /// <param name="userIdSet">The user id.</param>
         /// <param name="logger">The logger.</param>
         /// <returns>The list of environments.</returns>
-        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, AzureLocation? location, UserIdSet userIdSet, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, UserIdSet userIdSet, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets the list of environments for the specified plan and user.
         /// </summary>
         /// <param name="planId">The plan resource id.</param>
-        /// <param name="location">The plan location, if known.</param>
         /// <param name="userIdSet">The user id.</param>
         /// <param name="friendlyNameInLowerCase">The lowercased friendly name of the environment.</param>
         /// <param name="logger">The logger.</param>
         /// <returns>The list of environments.</returns>
-        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, AzureLocation? location, UserIdSet userIdSet, string friendlyNameInLowerCase, IDiagnosticsLogger logger);
+        Task<IEnumerable<CloudEnvironment>> ListAsync(string planId, UserIdSet userIdSet, string friendlyNameInLowerCase, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Gets all environments that belong to a specific subscription.

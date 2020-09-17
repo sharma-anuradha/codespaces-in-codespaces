@@ -156,13 +156,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <inheritdoc/>
         public async Task<IEnumerable<CloudEnvironment>> ListAsync(
             string planId,
-            AzureLocation? location,
             string name,
             UserIdSet userIdSet,
             EnvironmentListType environmentListType,
             IDiagnosticsLogger logger)
         {
-            return await EnvironmentListAction.RunAsync(planId, location, name, identity: null, userIdSet, environmentListType, logger);
+            return await EnvironmentListAction.RunAsync(
+                planId, name, identity: null, userIdSet, environmentListType, logger);
         }
 
         /// <inheritdoc/>
@@ -777,7 +777,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 var destinationName = cloudEnvironment.FriendlyName;
                 var environmentsInPlan = await EnvironmentListAction.RunAsync(
                     update.Plan.Plan.ResourceId,
-                    update.Plan.Plan.Location,
                     name: null,
                     update.PlanAccessIdentity,
                     userIdSet: null,
@@ -849,7 +848,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
             else if (!string.IsNullOrWhiteSpace(update.FriendlyName) && update.FriendlyName != cloudEnvironment.FriendlyName)
             {
-                var duplicateNamesInPlan = await ListAsync(cloudEnvironment.PlanId, null, update.FriendlyName, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
+                var duplicateNamesInPlan = await ListAsync(cloudEnvironment.PlanId, update.FriendlyName, null, EnvironmentListType.ActiveEnvironments, logger.NewChildLogger());
                 if (!duplicateNamesInPlan.Any())
                 {
                     return (null, (cloudEnvironment) =>

@@ -371,7 +371,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             moq
                 .Setup(x => x.RunAsync(
                     It.IsAny<string>(),
-                    It.IsAny<AzureLocation?>(),
                     It.IsAny<string>(),
                     It.IsAny<VsoClaimsIdentity>(),
                     It.IsAny<UserIdSet>(),
@@ -379,7 +378,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     string planId,
-                    AzureLocation? location,
                     string name,
                     VsoClaimsIdentity identity,
                     UserIdSet userIdSet,
