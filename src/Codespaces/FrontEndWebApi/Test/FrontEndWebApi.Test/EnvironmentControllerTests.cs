@@ -823,10 +823,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             skuUtils ??= MockUtil.MockSkuUtils(true);
             var metrics = MockUtil.MockMetricsManager();
             var subManager = MockUtil.MockSubscriptionManager();
+            var planRepository = new MockPlanRepository();
             var environmentAccessManager = new EnvironmentAccessManager(currentUserProvider);
             var globalRepository = new MockGlobalCloudEnvironmentRepository();
             var regionalRepository = new MockRegionalCloudEnvironmentRepository();
-            var environmentRepositoryManager = new CloudEnvironmentRepository(globalRepository, regionalRepository);
+            var repoFactory = new Mock<IRegionalCloudEnvironmentRepositoryFactory>();
+            var environmentRepositoryManager = new CloudEnvironmentRepository(planRepository, repoFactory.Object, globalRepository, regionalRepository, null);
             var billingEventManager = new BillingEventManager(new MockBillingEventRepository(),
                                                                 new MockBillingOverrideRepository());
             var workspaceManager = new WorkspaceManager(new MockClientWorkspaceRepository());

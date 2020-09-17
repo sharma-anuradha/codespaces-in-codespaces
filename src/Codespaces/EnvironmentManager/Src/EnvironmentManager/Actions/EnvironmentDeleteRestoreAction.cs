@@ -122,6 +122,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
 
                     var environmentsInPlan = await EnvironmentListAction.RunAsync(
                         record.Value.PlanId,
+                        planDetails.Plan.Location,
                         name: null,
                         identity: null,
                         userIdSet: null,

@@ -113,7 +113,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
                         map?.ProfileId ?? userIdSet.ProfileId,
                         map?.ProfileProviderId ?? userIdSet.ProfileProviderId);
 
-                    var environments = await EnvironmentManager.ListAsync(null, null, updatedUserIdSet, EnvironmentListType.AllEnvironments, logger.NewChildLogger());
+                    var environments = await EnvironmentManager.ListAsync(null, null, null, updatedUserIdSet, EnvironmentListType.AllEnvironments, logger.NewChildLogger());
                     allEnvironments.AddRange(environments);
                 }
 
@@ -136,7 +136,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
                     affectedEntitiesCount += 1;
                 }
 
-                var environments = await EnvironmentManager.ListAsync(null, null, userIdSet, EnvironmentListType.AllEnvironments, logger.NewChildLogger());
+                var environments = await EnvironmentManager.ListAsync(null, null, null, userIdSet, EnvironmentListType.AllEnvironments, logger.NewChildLogger());
                 if (environments.Any())
                 {
                     exportObject.Add("environments", CreateExport(environments));

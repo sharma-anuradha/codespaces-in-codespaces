@@ -338,18 +338,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Test
             moq
                 .Setup(obj => obj.ListAsync(
                     It.IsAny<string>(),
+                    It.IsAny<AzureLocation?>(),
                     It.IsAny<string>(),
                     It.IsAny<UserIdSet>(),
                     It.IsAny<EnvironmentListType>(),
                     It.IsAny<IDiagnosticsLogger>()))
                 .ReturnsAsync((
                     string planId,
+                    AzureLocation? location,
                     string name,
                     UserIdSet userIdSet,
                     EnvironmentListType environmentListType,
                     IDiagnosticsLogger logger) =>
                 {
-                    var mockEnv = MockCloudEnvironment();
+                    var mockEnv = MockCloudEnvironment(planId: planId);
                     return new[] { mockEnv };
                 });
 

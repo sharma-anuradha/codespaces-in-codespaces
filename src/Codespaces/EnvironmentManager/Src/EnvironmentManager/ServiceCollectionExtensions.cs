@@ -66,6 +66,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 services.AddSingleton<ICrossRegionStorageQueueClientProvider, CrossRegionStorageQueueClientProvider>();
             }
 
+            services.AddSingleton<IRegionalCloudEnvironmentRepositoryFactory, RegionalCloudEnvironmentRepositoryFactory>();
+            services.AddSingleton<IRegionalDocumentDbClientProviderFactory, RegionalDocumentDbClientProviderFactory>();
             services.AddSingleton<ICloudEnvironmentRepository, CloudEnvironmentRepository>();
             services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();
 
@@ -169,7 +171,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IWatchSoftDeletedEnvironmentToBeHardDeletedTask, WatchEnvironmentsToBeHardDeleteTask>();
             services.AddSingleton<IWatchDeletedPlanSecretStoresTask, WatchDeletedPlanSecretStoresTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
-            services.AddSingleton<ICloudEnvironmentRegionalMigrationTask, CloudEnvironmentRegionalMigrationTask>();
             services.AddSingleton<ISyncRegionalEnvironmentsToGlobalTask, SyncRegionalEnvironmentsToGlobalTask>();
             services.AddSingleton<IWatchExportBlobsTask, WatchExportBlobsTask>();
 
