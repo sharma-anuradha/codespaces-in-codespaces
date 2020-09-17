@@ -58,7 +58,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             }
 
             await logger.OperationScopeAsync(
-                "watch_poool_job_handler",
+                "watch_pool_job_handler",
                 (childLogger) => HandleJobAsync(resourcePool, childLogger, cancellationToken));
         }
 

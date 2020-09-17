@@ -90,13 +90,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             LogSystemResourceStateTask = logSystemResourceStateTask;
         }
 
-        private IDeleteResourceGroupDeploymentsTask DeleteResourceGroupDeploymentsTask { get; }
-
         private IEnumerable<IJobSchedulerRegister> JobSchedulersRegisters { get; }
 
         private IWatchOrphanedPoolTask WatchOrphanedPoolTask { get; }
-
-        private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
 
         private WatchOrphanedVmAgentImagesTask WatchOrphanedVmAgentImagesTask { get; }
 
@@ -132,6 +128,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private IWatchPoolStateTask WatchPoolStateTask { get; }
 
         private IWatchFailedResourcesTask WatchFailedResourcesTask { get; }
+
+        private IWatchOrphanedAzureResourceTask WatchOrphanedAzureResourceTask { get; }
+
+        private IDeleteResourceGroupDeploymentsTask DeleteResourceGroupDeploymentsTask { get; }
 
         /// <inheritdoc/>
         public async Task BackgroundWarmupCompletedAsync(IDiagnosticsLogger logger)
@@ -202,7 +202,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
             // Offset to help distribute inital load of recurring tasks
             await Task.Delay(Random.Next(5000, 7500));
-#endif
 
             // Job: Watch Orphaned Azure Resources
             TaskHelper.RunBackgroundLoop(
@@ -213,20 +212,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             // Offset to help distribute inital load of recurring tasks
             await Task.Delay(Random.Next(5000, 7500));
 
-            // Job: Watch Orphaned System Resources
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
-                (childLogger) => WatchOrphanedSystemResourceTask.RunTaskAsync(TimeSpan.FromHours(2), childLogger),
-                TimeSpan.FromMinutes(20));
-
-            // Offset to help distribute inital load of recurring tasks
-            await Task.Delay(Random.Next(5000, 7500));
-
             // Job: Delete Resource Group Deployments
             TaskHelper.RunBackgroundLoop(
                 $"{ResourceLoggingConstants.DeleteResourceGroupDeploymentsTask}_run",
                 (childLogger) => DeleteResourceGroupDeploymentsTask.RunTaskAsync(TimeSpan.FromHours(1), childLogger),
                 TimeSpan.FromMinutes(10));
+
+            // Offset to help distribute inital load of recurring tasks
+            await Task.Delay(Random.Next(5000, 7500));
+#endif
+
+            // Job: Watch Orphaned System Resources
+            TaskHelper.RunBackgroundLoop(
+                $"{ResourceLoggingConstants.WatchOrphanedSystemResourceTask}_run",
+                (childLogger) => WatchOrphanedSystemResourceTask.RunTaskAsync(TimeSpan.FromHours(2), childLogger),
+                TimeSpan.FromMinutes(20));
 
             // Offset to help distribute inital load of recurring tasks
             await Task.Delay(Random.Next(5000, 7500));

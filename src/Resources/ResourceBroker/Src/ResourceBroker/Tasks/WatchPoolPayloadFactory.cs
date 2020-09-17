@@ -27,7 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         /// </summary>
         /// <param name="resourceScalingStore">Resource scalling store.</param>
         /// <param name="taskHelper">Task helper.</param>
-        /// <param name="jobSchedulerLeaseFactory">The job scheduler lease factory instance.</param>
         public WatchPoolPayloadFactory(
             IResourcePoolDefinitionStore resourceScalingStore,
             ITaskHelper taskHelper)
@@ -108,7 +107,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var jobPayloadOptions = new JobPayloadOptions()
             {
                 InitialVisibilityDelay = payloadVisibilitCallback(),
-                ExpireTimeout = TimeSpan.FromMinutes(2),
+                ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
             };
 
             return (jobPayload, jobPayloadOptions);

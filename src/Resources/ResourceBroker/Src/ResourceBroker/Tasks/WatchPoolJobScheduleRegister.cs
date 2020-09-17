@@ -15,7 +15,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     public class WatchPoolJobScheduleRegister : IJobSchedulerRegister
     {
         /// <summary>
-        /// Feature flag to control wheather the job pools are enabled.
+        /// Feature flag to control whether the job pools are enabled.
         /// </summary>
         public const string WatchPoolJobsEnabledFeatureFlagName = "WatchPoolJobs";
 

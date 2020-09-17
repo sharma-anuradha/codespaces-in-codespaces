@@ -1,4 +1,4 @@
-// <copyright file="WatchOrphanedAzureResourceTask.cs" company="Microsoft">
+// <copyright file="WatchOrphanedAzureResourceJobHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -15,21 +16,18 @@ using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Capacity.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.KeyVaultProvider.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
-using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 {
     /// <summary>
     /// Watches for Orphaned Azure Resources.
     /// </summary>
-    public class WatchOrphanedAzureResourceTask : BaseDataPlaneResourceGroupTask, IWatchOrphanedAzureResourceTask
+    public class WatchOrphanedAzureResourceJobHandler : BaseDataPlaneResourceGroupJobHandler<WatchOrphanedAzureResourceJobHandler>
     {
         private readonly Dictionary<string, string> apiVersionCache = new Dictionary<string, string>();
 
@@ -44,76 +42,54 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private static readonly string DefaultEnabledResourceTypesToDeleteConfigValue = string.Join(",", DefaultEnabledResourceTypesToDelete);
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="WatchOrphanedAzureResourceTask"/> class.
+        /// Initializes a new instance of the <see cref="WatchOrphanedAzureResourceJobHandler"/> class.
         /// </summary>
-        /// <param name="resourceBrokerSettings">Target resource broker settings.</param>
         /// <param name="resourceRepository">Target resource repository.</param>
-        /// <param name="resourceContinuationOperations">Target continuation task activator.</param>
-        /// <param name="taskHelper">Task helper.</param>
-        /// <param name="capacityManager">Target capacity manager.</param>
-        /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
         /// <param name="azureClientFactory">Azure client factory.</param>
-        /// <param name="resourceNameBuilder">Resource name builder.</param>
-        /// <param name="configurationReader">Configuration reader.</param>
-        public WatchOrphanedAzureResourceTask(
-            ResourceBrokerSettings resourceBrokerSettings,
+        /// <param name="configurationReader">Configuration reader</param>
+        /// <param name="jobQueueProducerFactory">Job queue producer factory.</param>
+        public WatchOrphanedAzureResourceJobHandler(
             IResourceRepository resourceRepository,
-            IResourceContinuationOperations resourceContinuationOperations,
-            ITaskHelper taskHelper,
-            ICapacityManager capacityManager,
-            IClaimedDistributedLease claimedDistributedLease,
             IAzureClientFactory azureClientFactory,
-            IResourceNameBuilder resourceNameBuilder,
-            IConfigurationReader configurationReader)
-            : base(
-                  resourceBrokerSettings,
-                  taskHelper,
-                  capacityManager,
-                  claimedDistributedLease,
-                  resourceNameBuilder,
-                  configurationReader)
+            IConfigurationReader configurationReader,
+            IJobQueueProducerFactory jobQueueProducerFactory)
         {
             AzureClientFactory = azureClientFactory;
-            ResourceContinuationOperations = resourceContinuationOperations;
             ResourceRepository = resourceRepository;
+            ConfigurationReader = configurationReader;
+            JobQueueProducer = jobQueueProducerFactory.GetOrCreate(ResourceJobQueueConstants.GenericQueueName);
         }
 
-        /// <inheritdoc/>
-        protected override string TaskName { get; } = nameof(WatchOrphanedAzureResourceTask);
-
-        /// <inheritdoc/>
-        protected override string ConfigurationBaseName => "WatchOrphanedAzureResourceTask";
-
-        /// <inheritdoc/>
-        protected override string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedAzureResourceTask;
+        private string LogBaseName { get; } = ResourceLoggingConstants.WatchOrphanedAzureResourceJobHandler;
 
         private IAzureClientFactory AzureClientFactory { get; }
 
-        private IResourceContinuationOperations ResourceContinuationOperations { get; }
-
         private IResourceRepository ResourceRepository { get; }
 
+        private IConfigurationReader ConfigurationReader { get; }
+
+        private IJobQueueProducer JobQueueProducer { get; }
+
+        private string ConfigurationBaseName => "WatchOrphanedAzureResourceTask";
+
         /// <inheritdoc/>
-        protected override async Task ProcessResourceGroupAsync(IAzureResourceGroup resourceGroup, IDiagnosticsLogger logger)
+        protected override async Task HandleJobAsync(string subscriptionId, string resourceGroupName, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             await logger.OperationScopeAsync(
                 $"{LogBaseName}_run_unit_check",
                 async (childLogger) =>
                 {
                     childLogger
-                        .FluentAddBaseValue("SubscriptionId", resourceGroup.Subscription.SubscriptionId)
-                        .FluentAddBaseValue("ResourceGroup", resourceGroup.ResourceGroup);
+                        .FluentAddBaseValue("SubscriptionId", subscriptionId)
+                        .FluentAddBaseValue("ResourceGroup", resourceGroupName);
 
-                    var azure = await AzureClientFactory.GetResourceManagementClient(Guid.Parse(resourceGroup.Subscription.SubscriptionId));
+                    var azure = await AzureClientFactory.GetResourceManagementClient(Guid.Parse(subscriptionId));
 
-                    var (resourcesById, resourcesWithoutId) = await FetchAzureResourcesAsync(azure, resourceGroup.ResourceGroup, childLogger.NewChildLogger());
+                    var (resourcesById, resourcesWithoutId) = await FetchAzureResourcesAsync(azure, resourceGroupName, childLogger.NewChildLogger());
 
                     foreach (var group in resourcesById)
                     {
                         await RunOrphanedCheckAsync(azure, group.Key, group.Value, childLogger.NewChildLogger());
-
-                        // Slow down for Database RUs
-                        await Task.Delay(LoopDelay);
                     }
 
                     childLogger
@@ -221,7 +197,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             {
                                 foreach (var resource in azureResources)
                                 {
-                                    await DeleteResourceAsync(azure, resource, childLogger.NewChildLogger());
+                                    await DeleteResourceProducerAsync(azure, resource, childLogger.NewChildLogger());
                                 }
                             }
                             else
@@ -246,10 +222,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 swallowException: true);
         }
 
-        private async Task DeleteResourceAsync(IResourceManagementClient azure, GenericResourceInner azureResource, IDiagnosticsLogger logger)
+        private async Task DeleteResourceProducerAsync(IResourceManagementClient azure, GenericResourceInner azureResource, IDiagnosticsLogger logger)
         {
             await logger.OperationScopeAsync(
-                $"{LogBaseName}_run_delete_orphan",
+                $"{LogBaseName}_delete_orphan_producer",
                 async (childLogger) =>
                 {
                     var canDeleteResource = await CanDeleteResourceType(azureResource.Type, childLogger.NewChildLogger());
@@ -261,9 +237,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         .FluentAddBaseValue("ResourceDeleteAttempted", canDeleteResource);
 
                     if (canDeleteResource)
-                    {
-                        var apiVersion = await GetApiVersionForResourceTypeAsync(azure, azureResource.Type);
-                        await azure.Resources.BeginDeleteByIdAsync(azureResource.Id, apiVersion);
+                    { 
+                        var jobPayload = new DeleteOneAzureResourcePayload()
+                        {
+                            SubscriptionId = azure.SubscriptionId,
+                            AzureResource = azureResource,
+                        };
+                        var jobPayloadOptions = new JobPayloadOptions()
+                        {
+                            ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
+                        };
+
+                        await JobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, default);
                     }
                 },
                 swallowException: true);
@@ -283,47 +268,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             var isEnabled = enabledResourceTypeList.Any((enabledType) => string.Equals(enabledType, resourceType, StringComparison.OrdinalIgnoreCase));
 
             return isEnabled;
-        }
-
-        private async Task<string> GetApiVersionForResourceTypeAsync(IResourceManagementClient azure, string resourceType)
-        {
-            if (apiVersionCache.TryGetValue(resourceType, out var apiVersion))
-            {
-                return apiVersion;
-            }
-
-            // Format is "providerName/kind" - e.g. Microsoft.Compute/virtualMachines
-            var parts = resourceType.Split('/');
-            if (parts.Length != 2)
-            {
-                throw new FormatException($"Azure resource type in unexpected format: {resourceType}");
-            }
-
-            var providerName = parts[0];
-
-            var provider = await azure.Providers.GetAsync(providerName);
-            if (provider == null)
-            {
-                throw new NotFoundException($"Azure Provider not found: {providerName}");
-            }
-
-            // Cache all resource types in the provider as we use many types with the same provider
-            var apiVersionsForTypes = provider.ResourceTypes
-                .Select((type) => ($"{providerName}/{type.ResourceType}", type.ApiVersions.OrderByDescending(v => v).FirstOrDefault()))
-                .Where((pair) => !string.IsNullOrEmpty(pair.Item2));
-
-            foreach (var (type, version) in apiVersionsForTypes)
-            {
-                apiVersionCache[type] = version;
-            }
-
-            if (apiVersionCache.TryGetValue(resourceType, out apiVersion))
-            {
-                return apiVersion;
-            }
-
-            // Provider was found, but couldn't find this specific type in it
-            throw new NotFoundException($"Azure resource type not found in Provider: {resourceType}");
         }
     }
 }

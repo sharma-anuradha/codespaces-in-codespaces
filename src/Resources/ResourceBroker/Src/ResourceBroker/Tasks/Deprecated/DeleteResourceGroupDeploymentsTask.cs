@@ -44,6 +44,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
             IAzureClientFactory azureClientFactory,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
             : base(
                   resourceBrokerSettings,
@@ -51,6 +52,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                   capacityManager,
                   claimedDistributedLease,
                   resourceNameBuilder,
+                  jobSchedulerFeatureFlags,
                   configurationReader)
         {
             AzureClientFactory = azureClientFactory;

@@ -10,11 +10,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
     public static class ResourceLoggingConstants
     {
         /// <summary>
-        /// Watch Orphaned Azure Resource Task.
-        /// </summary>
-        public const string DeleteResourceGroupDeploymentsTask = "delete_resource_group_deployments_task";
-
-        /// <summary>
         /// Resource Broker.
         /// </summary>
         public const string ResourceBroker = "resource_broker";
@@ -83,11 +78,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Watch orphan pool Task.
         /// </summary>
         public const string WatchOrphanedPoolTask = "watch_orphaned_pool_task";
-
-        /// <summary>
-        /// Watch Orphaned Azure Resource Task.
-        /// </summary>
-        public const string WatchOrphanedAzureResourceTask = "watch_orphaned_azure_resource_task";
 
         /// <summary>
         /// Watch Orphaned Build Artifact Image Task.
@@ -179,7 +169,32 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// </summary>
         public const string RequestCorrelationId = "RequestCorrelationId";
 
-// Deprecated
+        /// <summary>
+        /// Data Plane Resource Group Producer Task.
+        /// </summary>
+        public const string DataPlaneResourceGroupProducerTask = "data_plane_resource_group_producer_task";
+
+        /// <summary>
+        /// Delete Resource Group Deployments Job handler.
+        /// </summary>
+        public const string DeleteResourceGroupDeploymentsJobHandler = "delete_resource_group_deployments_job_handler";
+
+        /// <summary>
+        /// Delete One Deployment Job handler.
+        /// </summary>
+        public const string DeleteOneDeploymentJobHandler = "delete_one_deployment_job_handler";
+
+        /// <summary>
+        /// Watch Orphaned Azure Resource Job Handler.
+        /// </summary>
+        public const string WatchOrphanedAzureResourceJobHandler = "watch_orphaned_azure_resource_job_handler";
+
+        /// <summary>
+        /// Delete One Resource Job handler.
+        /// </summary>
+        public const string DeleteOneAzureResourceJobHandler = "delete_one_azure_resource_job_handler";
+
+        // Deprecated
 
         /// <summary>
         /// Watch Pool Size Task.
@@ -210,5 +225,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// Log System Resource State Task.
         /// </summary>
         public const string LogSystemResourceStateTask = "log_system_resource_state_task";
+
+        /// <summary>
+        /// Watch Orphaned Azure Resource Task.
+        /// </summary>
+        public const string DeleteResourceGroupDeploymentsTask = "delete_resource_group_deployments_task";
+
+        /// <summary>
+        /// Watch Orphaned Azure Resource Task.
+        /// </summary>
+        public const string WatchOrphanedAzureResourceTask = "watch_orphaned_azure_resource_task";
     }
 }

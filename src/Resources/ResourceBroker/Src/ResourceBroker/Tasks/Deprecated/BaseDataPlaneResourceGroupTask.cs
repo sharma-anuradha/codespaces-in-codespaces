@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             ICapacityManager capacityManager,
             IClaimedDistributedLease claimedDistributedLease,
             IResourceNameBuilder resourceNameBuilder,
+            IJobSchedulerFeatureFlags jobSchedulerFeatureFlags,
             IConfigurationReader configurationReader)
             : base(configurationReader)
         {
@@ -44,6 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             CapacityManager = capacityManager;
             ClaimedDistributedLease = claimedDistributedLease;
             ResourceNameBuilder = resourceNameBuilder;
+            JobSchedulerFeatureFlags = jobSchedulerFeatureFlags;
         }
 
         /// <summary>
@@ -72,6 +74,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IClaimedDistributedLease ClaimedDistributedLease { get; }
 
         private IResourceNameBuilder ResourceNameBuilder { get; }
+
+        private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
         private bool Disposed { get; set; }
 
@@ -132,6 +136,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private async Task<IDisposable> ObtainLease(string leaseName, TimeSpan claimSpan, IDiagnosticsLogger logger)
         {
+            if (await JobSchedulerFeatureFlags.IsFeatureFlagEnabledAsync(DataPlaneResourceGroupJobProducer.DataPlaneResourceGroupJobsEnabledFeatureFlagName))
+            {
+                return null;
+            }
+
             return await ClaimedDistributedLease.Obtain(
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }

@@ -84,6 +84,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, WatchPoolStateJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedVmAgentImagesJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedStorageImagesJobHandler>();
+            services.AddSingleton<IJobHandler, DeleteResourceGroupDeploymentsJobHandler>();
+            services.AddSingleton<IJobHandler, DeleteOneDeploymentJobHandler>();
+            services.AddSingleton<IJobHandler, WatchOrphanedAzureResourceJobHandler>();
+            services.AddSingleton<IJobHandler, DeleteOneAzureResourceJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -129,12 +133,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobSchedulerRegister, WatchPoolJobScheduleRegister>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedStorageImagesProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedVmAgentImagesProducer>();
+            services.AddSingleton<IJobSchedulerRegister, DeleteResourceGroupDeploymentsJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, WatchOrphanedAzureResourceJobProducer>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
-            services.AddSingleton<IDeleteResourceGroupDeploymentsTask, DeleteResourceGroupDeploymentsTask>();
-            services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();
-            services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
+            services.AddSingleton<IWatchOrphanedPoolTask, WatchOrphanedPoolTask>();  
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
@@ -147,6 +151,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IWatchFailedResourcesTask, WatchFailedResourcesTask>();
             services.AddSingleton<WatchOrphanedVmAgentImagesTask>();
             services.AddSingleton<WatchOrphanedStorageImagesTask>();
+            services.AddSingleton<IDeleteResourceGroupDeploymentsTask, DeleteResourceGroupDeploymentsTask>();
+            services.AddSingleton<IWatchOrphanedAzureResourceTask, WatchOrphanedAzureResourceTask>();
 
             if (mocksSettings?.UseMocksForResourceProviders == true)
             {

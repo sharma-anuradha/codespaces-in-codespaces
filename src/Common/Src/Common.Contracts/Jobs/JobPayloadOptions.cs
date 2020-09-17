@@ -12,6 +12,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public class JobPayloadOptions : JobHandlerOptions
     {
         /// <summary>
+        /// Default expire timeout.
+        /// </summary>
+        public static readonly TimeSpan DefaultJobPayloadExpireTimeout = TimeSpan.FromMinutes(2);
+
+        /// <summary>
         ///  Gets or sets the initial visbility timeout.
         /// </summary>
         public TimeSpan? InitialVisibilityDelay { get; set; }
