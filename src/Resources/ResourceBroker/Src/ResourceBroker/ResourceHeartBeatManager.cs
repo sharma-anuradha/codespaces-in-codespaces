@@ -5,8 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Azure.Documents;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -59,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                       throw new ArgumentNullException(nameof(heartBeatInput));
                   }
 
-                  var resourceRecord = await ResourceRepository.GetAsync(heartBeatInput.ResourceId.ToString(), logger.NewChildLogger());
+                  var resourceRecord = await ResourceRepository.GetAsync(heartBeatInput.ResourceId.ToString(), childLogger.NewChildLogger());
                   if (resourceRecord == null)
                   {
                       var message = $"No resources found with id {heartBeatInput.ResourceId} specified in the heartbeat";
@@ -85,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                   var osDiskRecordId = computeDetails.OSDiskRecordId;
                   if (osDiskRecordId != default)
                   {
-                      var osDiskResourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), logger.NewChildLogger());
+                      var osDiskResourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), childLogger.NewChildLogger());
                       if (osDiskResourceRecord != default)
                       {
                           if (!osDiskResourceRecord.IsReady)
@@ -97,18 +100,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                           // Copies over heartbeat information to OSDisk as well. When compute is gone, we will rely on the information in the OSDisk.
                           osDiskResourceRecord.HeartBeatSummary = heartBeatSummaryRecord;
 
-                          await ResourceRepository.UpdateAsync(osDiskResourceRecord, logger.NewChildLogger());
+                          await ResourceRepository.UpdateAsync(osDiskResourceRecord, childLogger.NewChildLogger());
                       }
                   }
 
                   if (!resourceRecord.IsReady)
                   {
                       // Update resource status.
-                      await ResourceStateManager.MarkResourceReady(resourceRecord, "HeartbeatReceived", logger.NewChildLogger());
+                      await ResourceStateManager.MarkResourceReady(resourceRecord, "HeartbeatReceived", childLogger.NewChildLogger());
                   }
                   else
                   {
-                      await ResourceRepository.UpdateAsync(resourceRecord, logger.NewChildLogger());
+                      var updateLogger = childLogger.NewChildLogger();
+
+                      await Retry.DoAsync(
+                         async (int attemptNumber) =>
+                         {
+                             updateLogger.AddAttempt(attemptNumber);
+
+                             await ResourceRepository.UpdateAsync(resourceRecord, updateLogger.NewChildLogger());
+                         },
+                         async (attemptNumber, ex) =>
+                         {
+                             updateLogger.AddAttempt(attemptNumber);
+
+                             if (ex is DocumentClientException dcex && dcex.StatusCode == HttpStatusCode.PreconditionFailed)
+                             {
+                                 resourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), updateLogger.NewChildLogger());
+                                 resourceRecord.HeartBeatSummary = heartBeatSummaryRecord;
+                             }
+                         });
                   }
               });
         }

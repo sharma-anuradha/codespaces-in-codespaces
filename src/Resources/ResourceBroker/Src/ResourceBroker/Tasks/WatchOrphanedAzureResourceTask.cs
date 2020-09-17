@@ -5,10 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Microsoft.Rest.Azure;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
@@ -207,25 +210,38 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     // Get record so we can tell if it exists
                     var record = await ResourceRepository.GetAsync(resourceId, childLogger.NewChildLogger());
 
-                    childLogger
-                        .FluentAddBaseValue("ResourceExists", record != null);
-
-                    // If it doesn't exist, trigger delete, otherwise update keepalive
-                    if (record == null)
-                    {
-                        foreach (var resource in azureResources)
+                    await Retry.DoAsync(
+                        async (int attemptNumber) =>
                         {
-                            await DeleteResourceAsync(azure, resource, childLogger.NewChildLogger());
-                        }
-                    }
-                    else
-                    {
-                        // Update datetime
-                        record.KeepAlives.AzureResourceAlive = DateTime.UtcNow;
+                            childLogger.FluentAddBaseValue("ResourceExists", record != null);
+                            childLogger.AddAttempt(attemptNumber);
 
-                        // Update database record
-                        await ResourceRepository.UpdateAsync(record, childLogger.NewChildLogger());
-                    }
+                            // If it doesn't exist, trigger delete, otherwise update keepalive
+                            if (record == null)
+                            {
+                                foreach (var resource in azureResources)
+                                {
+                                    await DeleteResourceAsync(azure, resource, childLogger.NewChildLogger());
+                                }
+                            }
+                            else
+                            {
+                                // Update datetime
+                                record.KeepAlives.AzureResourceAlive = DateTime.UtcNow;
+
+                                // Update database record
+                                await ResourceRepository.UpdateAsync(record, childLogger.NewChildLogger());
+                            }
+                        },
+                        async (int attemptNumber, Exception ex) =>
+                        {
+                            childLogger.AddAttempt(attemptNumber);
+
+                            if (ex is DocumentClientException dcex && dcex.StatusCode == HttpStatusCode.PreconditionFailed)
+                            {
+                                record = await ResourceRepository.GetAsync(resourceId, childLogger.NewChildLogger());
+                            }
+                        });
                 },
                 swallowException: true);
         }
