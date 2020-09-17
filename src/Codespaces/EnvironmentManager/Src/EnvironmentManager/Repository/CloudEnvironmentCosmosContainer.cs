@@ -1,4 +1,4 @@
-﻿// <copyright file="CloudEnvironmentCosmosContainer.cs" company="Microsoft">
+// <copyright file="CloudEnvironmentCosmosContainer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -61,7 +61,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             var queryDefinition = new QueryDefinition(
                 @"SELECT COUNT(1) AS count, c.skuName, c.location, c.state, c.partner, c.creationMetrics.isoCountryCode, c.creationMetrics.azureGeography
                     FROM c
-                    WHERE c.location = @location
+                    WHERE c.location = @location AND (NOT c.isDeleted OR NOT IS_DEFINED(c.isDeleted))
                     GROUP BY c.skuName, c.location, c.state, c.partner, c.creationMetrics.isoCountryCode, c.creationMetrics.azureGeography")
                 .WithParameter("@location", location.ToString());
 
