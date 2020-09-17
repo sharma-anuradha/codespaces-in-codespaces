@@ -7,6 +7,9 @@ Set-StrictMode -Version Latest
 
 . "$PSScriptRoot\OpsUtilities.ps1"
 
+# Define here the number of instance environments.
+[hashtable]$instanceEnvironments = [ordered]@{ dev = 2; ppe = 2; prod = 1}
+
 #  The Azure service type supported by the subscription.
 enum ServiceType {
     # Azure Compute
@@ -514,7 +517,25 @@ function Test-ResourceGroup {
                 continue
             }
 
-            # Todo validate ResourceGroup
+            # Check if subscription has a limit of maximum resource groups
+            if ($null -ne $sub.maxResourceGroupCount) {
+
+                # Some environments may have more than 1 instance, in this case we should take that in factor to calculate the maximum
+                $instances = $instanceEnvironments["$($sub.environment)"]
+                if ($null -eq $instances) {
+                    Write-Error "Invalid environemnt $($sub.environment), unable to find number of instance environments."
+                    Write-Output $sub
+                    continue
+                }
+
+                $maximum = $sub.maxResourceGroupCount * $instances
+
+                # If we are over capacity we should error out requesting immediate attention and move resources out of the subscription if possible.
+                $resourceGroups = az group list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
+                if ($resourceGroups.Count -gt $maximum) {
+                    Write-Error "Subscription:`'$($sub.subscriptionId)`' has more resource groups than allowed. Expected:`'$($maximum)`', Actual:`'$($resourceGroups.Count)`'"
+                }
+            }
 
             Write-Output $sub
         }
