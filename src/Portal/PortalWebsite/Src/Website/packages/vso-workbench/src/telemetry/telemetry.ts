@@ -12,4 +12,8 @@ export const telemetry = new TelemetryService({
     portalVersion: packageJSON.version,
     vscodeCommit: vscodeConfig.commit,
     vscodeQuality: vscodeConfig.quality,
+    stableVSCodeCommitId: packageJSON.vscodeCommit['stable'],
+    insiderVSCodeCommitId: packageJSON.vscodeCommit['insider'],
+    gitCommitId: `${process.env.VSCS_GIT_SHA}`,
+    gitBranch: `${process.env.VSCS_GIT_BRANCH}`,
 });

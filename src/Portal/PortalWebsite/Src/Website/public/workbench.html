@@ -47,7 +47,7 @@
 
         // currently only GH has the shimmer logo, when we expose the homeindicator to more partners,
         // we will need to revisit this logic, to show up a specific branding icon
-        if (location.hostname.endsWith('.github.dev')) {
+        if (location.hostname.endsWith('.github.dev') || location.hostname.endsWith('.github.localhost')) {
             shimmerEl.classList.add('is-logo');
         }
 

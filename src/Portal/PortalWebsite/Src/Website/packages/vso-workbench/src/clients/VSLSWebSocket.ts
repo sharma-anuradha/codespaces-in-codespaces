@@ -26,6 +26,15 @@ export interface IWebSocket {
 const TRACE_NAME = 'vsls-web-socket';
 const { verbose, info, error } = createTrace(TRACE_NAME);
 
+const isReconnection = (urlString: string) => {
+    try {
+        const url = new URL(urlString);
+        return url.searchParams.get('reconnection') === 'true';
+    } catch {
+        return true;
+    }
+};
+
 export class VSLSWebSocket implements IWebSocket {
     private id: number;
 
@@ -133,9 +142,15 @@ export class VSLSWebSocket implements IWebSocket {
 
         let disposables = [];
 
+        // vscode `remoteAgentConnection` has different timeouts for `initial` vs `subsequent` connections:
+        // https://github.com/microsoft/vscode/blob/master/src/vs/platform/remote/common/remoteAgentConnection.ts#L19
+        const timeoutSeconds = (isReconnection(url))
+            ? 30
+            : 120;
+
         const timeout = new Promise((_, reject) => {
             // tslint:disable-next-line: no-string-based-set-timeout
-            setTimeout(reject, 30 * 1000, new Error('VSLSSocketTimeout'));
+            setTimeout(reject, timeoutSeconds * 1000, new Error('VSLSSocketTimeout'));
         });
 
         const environmentCheck = this.getEnvironmentInfo(getCurrentEnvironmentId()).then(
