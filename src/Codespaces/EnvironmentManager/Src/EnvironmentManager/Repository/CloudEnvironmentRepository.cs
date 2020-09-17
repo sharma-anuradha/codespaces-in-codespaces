@@ -54,7 +54,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             /// Any environment that exists in the RegionalRepository is considered the official record and so GlobalRepository
             /// records are only used if/when they do not (yet) exist in the RegionalRepository.
             /// </summary>
-            Phase1,
+            Phase1 = 1,
 
             /// <summary>
             /// During this phase, all environments are assumed to have been migrated to the RegionalRepositories but the GlobalRepository
@@ -62,13 +62,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
             /// CloudEnvironments that get created in the GlobalRepository will only contain the minimal subset of information needed by
             /// the EnvironmentsController to do access checks and HTTP redirection.
             /// </summary>
-            Phase2,
+            Phase2 = 2,
 
             /// <summary>
             /// This is the final phase. By this point, the need for the GlobalRepository has been eliminated by the switch-over to Cascade
             /// tokens which contain the region location information thereby eliminating the need for GlobalRepository lookups.
             /// </summary>
-            Phase3,
+            Phase3 = 3,
         }
 
         /// <inheritdoc/>
@@ -552,7 +552,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Reposit
                 $"{LogBaseName}_get_rollout_status",
                 async (childLogger) =>
                 {
-                    return await ConfigurationReader.ReadSettingAsync(nameof(CloudEnvironmentRepository), "rollout-status", childLogger.NewChildLogger(), DefaultRolloutStatus);
+                    var value = await ConfigurationReader.ReadSettingAsync(nameof(CloudEnvironmentRepository), "rollout-status", childLogger.NewChildLogger(), (int)DefaultRolloutStatus);
+
+                    return (RolloutStatus)value;
                 },
                 swallowException: true);
         }
