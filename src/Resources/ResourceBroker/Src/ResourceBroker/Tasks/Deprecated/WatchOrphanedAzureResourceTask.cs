@@ -126,9 +126,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         // There are some resources which don't have tags (either correctly or incorrectly) which
                         // we can't confidently just delete. Log them here instead to track.
 
-                        childLogger
-                            .FluentAddValue("AzureResourceId", resource.Id)
-                            .FluentAddValue("AzureResourceType", resource.Type)
+                        childLogger.NewChildLogger()
+                            .AddBaseAzureResource(resource)
                             .FluentAddValue("ResourceDeleteAttempted", false)
                             .FluentAddValue("ResourceExists", "unknown")
                             .LogInfo($"{LogBaseName}_unknown_resource");
@@ -257,9 +256,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var canDeleteResource = await CanDeleteResourceType(azureResource.Type, childLogger.NewChildLogger());
 
                     childLogger
-                        .FluentAddBaseValue("AzureResourceType", azureResource.Type)
-                        .FluentAddBaseValue("AzureResourceId", azureResource.Id)
-                        .FluentAddBaseValue("ResourceLocation", azureResource.Location)
+                        .AddBaseAzureResource(azureResource)
                         .FluentAddBaseValue("ResourceDeleteAttempted", canDeleteResource);
 
                     if (canDeleteResource)

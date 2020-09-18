@@ -3,7 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,14 +39,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         protected override async Task HandleJobAsync(DeleteOneAzureResourcePayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             await logger.OperationScopeAsync(
-               $"{LogBaseName}_run_delete",
-               async (childLogger) =>
-               {
+                $"{LogBaseName}_run_delete",
+                async (childLogger) =>
+                {
+                    childLogger.AddBaseAzureResource(payload.AzureResource);
+
                     var azure = await AzureClientFactory.GetResourceManagementClient(Guid.Parse(payload.SubscriptionId));
                     var apiVersion = await GetApiVersionForResourceTypeAsync(azure, payload.AzureResource.Type);
                     await azure.Resources.BeginDeleteByIdAsync(payload.AzureResource.Id, apiVersion);  
-               },
-               swallowException: true);
+                },
+                swallowException: true);
         }
 
         private async Task<string> GetApiVersionForResourceTypeAsync(IResourceManagementClient azure, string resourceType)

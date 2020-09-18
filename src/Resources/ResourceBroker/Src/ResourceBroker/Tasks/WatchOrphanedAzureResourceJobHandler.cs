@@ -18,6 +18,7 @@ using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEnd.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Repository;
@@ -100,9 +101,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                         // There are some resources which don't have tags (either correctly or incorrectly) which
                         // we can't confidently just delete. Log them here instead to track.
 
-                        childLogger
-                            .FluentAddValue("AzureResourceId", resource.Id)
-                            .FluentAddValue("AzureResourceType", resource.Type)
+                        childLogger.NewChildLogger()
+                            .AddBaseAzureResource(resource)
                             .FluentAddValue("ResourceDeleteAttempted", false)
                             .FluentAddValue("ResourceExists", "unknown")
                             .LogInfo($"{LogBaseName}_unknown_resource");
@@ -231,9 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                     var canDeleteResource = await CanDeleteResourceType(azureResource.Type, childLogger.NewChildLogger());
 
                     childLogger
-                        .FluentAddBaseValue("AzureResourceType", azureResource.Type)
-                        .FluentAddBaseValue("AzureResourceId", azureResource.Id)
-                        .FluentAddBaseValue("ResourceLocation", azureResource.Location)
+                        .AddBaseAzureResource(azureResource)
                         .FluentAddBaseValue("ResourceDeleteAttempted", canDeleteResource);
 
                     if (canDeleteResource)
@@ -248,7 +246,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
                         };
 
-                        await JobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, childLogger, default);
+                        var message = await JobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, childLogger.NewChildLogger(), default);
+                        childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, message.Id);
                     }
                 },
                 swallowException: true);

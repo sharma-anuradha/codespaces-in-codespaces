@@ -7,7 +7,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     /// <summary>
     /// Logger constants for the Job Queue telemetry.
     /// </summary>
-    internal static class JobQueueLoggerConst
+    public static class JobQueueLoggerConst
     {
         /// <summary>
         /// The job id column.
