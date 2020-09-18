@@ -1,0 +1,18 @@
+config:
+  AzSecPack_GCS_cert_name: "vsclk-core-prod-monitoring"
+  AzSecPack_GCS_cert: "/secrets/certs/vsclk-core-prod-monitoring"
+  AzSecPack_GCS_key: "/secrets/keys/vsclk-core-prod-monitoring"
+  AzSecPack_GCS_Environment: "DiagnosticsProd"
+  AzSecPack_GCS_Account: "VsOnlineProd"
+  AzSecPack_EventVersion: "1"
+  AzSecPack_Timestamp: "2018-05-07T00:00:00Z"
+  AzSecPack_Namespace: "VsOnlineSignalrProd"
+  AzSecPack_AuditMoniker: "vsonlinesignalrprodaudit"
+  AzSecPack_DiagnosticsMoniker: "vsonlinesignalrproddiag"
+  AzSecPack_SecurityMoniker: "vsonlinesignalrprodsecurity"
+  AzSecPack_Tenant: "72f988bf-86f1-41af-91ab-2d7cd011db47"
+  AzSecPack_Role: "vsonlinesignalrprodsecurity"
+  KeyVault: "https://vsclk-core-prod-kv.vault.azure.net/"
+  Geneva_Mdm_Account: "VsOnlineProd"
+
+

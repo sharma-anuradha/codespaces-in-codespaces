@@ -1,0 +1,68 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+  "serviceMetadata": {
+    "serviceGroup": "{{{baseInstanceName}}}-service-group",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{baseInstanceName}}}-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{baseInstanceName}}}-arm",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseInstanceFileName}}}/stub.instance.arm.jsonc",
+              "parametersPath": "empty.arm.parameters.jsonc"
+            }
+          }
+        },
+        {
+          "name": "{{{baseInstanceName}}}-script",
+          "composedOf": {
+            "arm": {
+              "templatePath": "empty.arm.jsonc",
+              "parametersPath": "empty.arm.parameters.jsonc"
+            },
+            "extension": {
+              "rolloutParametersPath": "{{{baseInstanceFileName}}}/stub.instance.rolloutparameters.jsonc",
+              "allowedTypes": [
+                {
+                  "Type": "scripts/stub-script"
+                }
+              ],
+              "shell": [
+                {
+                  "type": "sub-script",
+                  "properties": {
+                    "imageName": "adm-ubuntu-1804-l",
+                    "imageVersion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{baseInstanceName}}}",
+      "location": "{{{instanceLocation}}}",
+      "instanceOf": "{{{baseInstanceName}}}-rg",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{baseInstanceName}}}-arm",
+          "instanceOf": "{{{baseInstanceName}}}-arm"
+        },
+        {
+          "name": "{{{baseInstanceName}}}-script",
+          "instanceOf": "{{{baseInstanceName}}}-script"
+        }
+      ]
+    }
+  ]
+}

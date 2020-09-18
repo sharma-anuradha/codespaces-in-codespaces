@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-ingress-controller-proxy-set-headers
+  labels:
+    k8s-app: nginx-ingress-controller
+    {{ template "labelvalues" . }}
+data:
+  Connection: "Keep-Alive"
+  Proxy-Connection: "Keep-Alive"

@@ -17,7 +17,16 @@ if errorlevel 1 (
     exit /b %ERRORLEVEL%
 )
 
-::Test-ServiceRollout
+::Test-ServiceRollout for Stub
+set CMD=powershell -f "%~dp0%Scripts\Test-ServiceRollout.ps1" -Component stub
+echo call %CMD%
+call %CMD%
+if errorlevel 1 (
+    exit /b %ERRORLEVEL%
+)
+echo.
+
+::Test-ServiceRollout for Core
 set CMD=powershell -f "%~dp0%Scripts\Test-ServiceRollout.ps1" -Component core
 echo call %CMD%
 call %CMD%
@@ -27,12 +36,12 @@ if errorlevel 1 (
 echo.
 
 ::ARM templates for dev environment
-for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\Ev2\ARM\Core.dev-ctl.*.json) do (
+for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\core.dev-ctl\arm\*.arm.json) do (
     call :az_deployment_group_validate vscs-core-dev-ctl vscs-core-dev %%f
 )
 
 ::ARM templates for dev instances
-for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\Ev2\ARM\Core.dev-ctl-ci.*.json) do (
+for %%f in (%~dp0..\bin\debug\ops\Components.generated\Core\core.dev-ctl-ci\arm\*.arm.json) do (
     call :az_deployment_group_validate vscs-core-dev-ctl vscs-core-dev-ci %%f
 )
 

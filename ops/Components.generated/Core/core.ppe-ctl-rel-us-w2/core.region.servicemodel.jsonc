@@ -1,0 +1,59 @@
+// Auto-Generated From Template
+// "core.region.servicemodel.jsonc"
+// with names file "core.ppe-ctl-rel-us-w2.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "vscs-core-ppe-rel-us-w2-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-core-ppe-rel-us-w2-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-core-ppe-rel-us-w2-cluster",
+          "composedOf": {
+            "arm": {
+              "templatePath": "core.ppe-ctl-rel-us-w2/ARM/core.cluster.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-ppe-rel-us-w2-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "core.ppe-ctl-rel-us-w2/ARM/core.network.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-core-ppe-rel-us-w2",
+      "location": "WestUs2",
+      "instanceOf": "vscs-core-ppe-rel-us-w2-rg",
+      "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
+      "serviceResources": [
+        {
+          "name": "vscs-core-ppe-rel-us-w2-cluster",
+          "instanceOf": "vscs-core-ppe-rel-us-w2-cluster"
+        },
+        {
+          "name": "vscs-core-ppe-rel-us-w2-network",
+          "instanceOf": "vscs-core-ppe-rel-us-w2-network"
+        }
+      ]
+    }
+  ]
+}

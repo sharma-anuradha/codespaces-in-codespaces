@@ -18,8 +18,8 @@ class StaticMatch {
 }
 
 class NameMatch {
-  fileName: string;
-  outputName: string;
+  folderName: string;
+  outputFolderName: string;
   names: any;
 }
 
@@ -43,25 +43,50 @@ export default class Templates {
   }
 
   public Generate(): void {
-    const templateFiles = this.getTemplateList(this.inputDir);
+    // Components template structure must be
+    // Level 1: root:       ./*
+    // Level 2: component   ./{component}/*
+    // Level 3: templates   ./{components}/{template}/**
 
-    for (const templatePath of templateFiles) {
-      const fileName = templatePath.split("\\").pop();
-      const filetype = fileName.split(".").pop();
-      const orgBuffer = FileHandler.GetFile(templatePath);
-      const outputDir = templatePath
-        .replace(this.inputDir, this.outputDir)
-        .replace(fileName, "");
+    // Level 1
+    const rootDir = path.resolve(this.inputDir);
+    this.GenerateFolder(rootDir, false);
 
-      const names = this.getNames(fileName);
-      if (!names?.length) {
-        const name = {
-          fileName: fileName,
-          outputName: fileName,
-          names: null
-        };
-        names.push(name);
+    // Level 2
+    const componentFolders = FileHandler.GetDirectories(rootDir);
+    for (const componentFolderName of componentFolders)
+    {
+      const componentFolderDir = path.join(rootDir, componentFolderName);
+      this.GenerateFolder(componentFolderDir, false);
+
+      // Level 3
+      const componentTemplateFolders = FileHandler.GetDirectories(componentFolderDir);
+      for (const componentTemplateFolderName of componentTemplateFolders)
+      {
+        const componentTemplateDir = path.join(componentFolderDir, componentTemplateFolderName);
+        this.GenerateFolder(componentTemplateDir, true);
       }
+    }
+  }
+
+  private GenerateFolder(folderPath: string, recurse: boolean): void {
+
+    const folderName = folderPath.split(path.sep).pop();
+    const names = recurse ? this.getNames(folderName) : [];
+    if (!names?.length) {
+      const name = {
+        folderName: folderName,
+        outputFolderName: folderName,
+        names: null
+      };
+      names.push(name);
+    }
+
+    const templateFiles = this.getTemplateList(folderPath, recurse);
+    for (const templatePath of templateFiles) {
+      const fileName = path.basename(templatePath);
+      const filetype = path.extname(templatePath);
+      const orgBuffer = FileHandler.GetFile(templatePath);
 
       for (const name of names) {
         let buffer = orgBuffer;
@@ -76,7 +101,7 @@ export default class Templates {
         commentHeader.push(this.staticCommentFooter);
 
         switch (filetype) {
-          case "jsonc":
+          case ".jsonc":
             buffer = this.textHeader(buffer, commentHeader);
             buffer = this.textReplacement(buffer, name);
             break;
@@ -84,14 +109,19 @@ export default class Templates {
             buffer = this.textReplacement(buffer, name);
             break;
         }
-        FileHandler.CreateDirectory(outputDir);
-        writeFileSync(path.join(outputDir, name.outputName), buffer);
+
+        const outputFile = path.resolve(templatePath)
+          .replace(path.resolve(this.inputDir), path.resolve(this.outputDir))
+          .replace(folderName, name.outputFolderName);
+
+        FileHandler.CreateDirectory(path.dirname(outputFile));
+        writeFileSync(outputFile, buffer);
       }
     }
   }
 
-  private getNames(fileName: string): NameMatch[] {
-    const compComponentsName = fileName.split(".")[0]?.toLowerCase();
+  private getNames(folderName: string): NameMatch[] {
+    const compComponentsName = folderName.split(".")[0]?.toLowerCase();
     if (!compComponentsName) {
       // console.log(`warning: filename contains no component name: ${fileName}`);
       return [];
@@ -105,7 +135,7 @@ export default class Templates {
       return [];
     }
 
-    const compComponentsTemplate = fileName.split(".")[1];
+    const compComponentsTemplate = folderName.split(".")[1];
     if (!compComponentsTemplate) {
       // console.log(`warning: filename contains no component template: ${fileName}`);
       return [];
@@ -139,7 +169,7 @@ export default class Templates {
 
     if (!hasEnvironments && !hasPlanes && !hasInstances && !hasRegions) {
       // no replacement pattern match;
-      console.log(`warning: the file pattern ${compComponentsTemplate} is not valid: ${fileName}`)
+      console.log(`warning: the file pattern ${compComponentsTemplate} is not valid: ${folderName}`)
       return [];
     }
 
@@ -151,10 +181,10 @@ export default class Templates {
       if (!planes?.length) {
         // {env}
         const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
-        const outputName = fileName.replace(/{Env}/gi, env.name).replace(staticEnv, env.name);
+        const outputName = folderName.replace(/{Env}/gi, env.name).replace(staticEnv, env.name);
         names.push({
-          fileName: fileName,
-          outputName: outputName,
+          folderName: folderName,
+          outputFolderName: outputName,
           names: env.outputNames,
         });
       }
@@ -165,12 +195,12 @@ export default class Templates {
             // {env}-{plane}
             const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
             const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
-            const outputName = fileName
+            const outputName = folderName
               .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
               .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name);
             names.push({
-              fileName: fileName,
-              outputName: outputName,
+              folderName: folderName,
+              outputFolderName: outputName,
               names: plane.outputNames,
             });
           }
@@ -182,13 +212,13 @@ export default class Templates {
                 const staticEnv = new RegExp(`\\[${env.name}\\]`, "gi");
                 const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
                 const staticInstance = new RegExp(`\\[${instance.name}\\]`, "gi");
-                const outputName = fileName
+                const outputName = folderName
                   .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
                   .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name)
                   .replace(/{Instance}/gi, instance.name).replace(staticInstance, instance.name);
                 names.push({
-                  fileName: fileName,
-                  outputName: outputName,
+                  folderName: folderName,
+                  outputFolderName: outputName,
                   names: instance.outputNames,
                 });
               }
@@ -199,14 +229,14 @@ export default class Templates {
                   const staticPlane = new RegExp(`\\[${plane.name}\\]`, "gi");
                   const staticInstance = new RegExp(`\\[${instance.name}\\]`, "gi");
                   const staticRegion = new RegExp(`\\[${stamp.name}\\]`, "gi");
-                  const outputName = fileName
+                  const outputName = folderName
                     .replace(/{Env}/gi, env.name).replace(staticEnv, env.name)
                     .replace(/{Plane}/gi, plane.name).replace(staticPlane, plane.name)
                     .replace(/{Instance}/gi, instance.name).replace(staticInstance, instance.name)
                     .replace(/{Region}/gi, stamp.name).replace(staticRegion, stamp.name)
                   names.push({
-                    fileName: fileName,
-                    outputName: outputName,
+                    folderName: folderName,
+                    outputFolderName: outputName,
                     names: stamp.location.outputNames,
                   });
                 }
@@ -218,7 +248,7 @@ export default class Templates {
     }
 
     for (const name of names) {
-      console.log(`info: ${name.fileName} -> ${name.outputName} (${name.names?.baseFileName}.names.json)`);
+      console.log(`info: ${name.folderName} -> ${name.outputFolderName} (${name.names?.baseFileName}.names.json)`);
     }
 
     return names;
@@ -249,8 +279,12 @@ export default class Templates {
 
       if (matches?.length > 0) {
         for (const match of matches) {
-          if (!Object.keys(names).includes(match)) {
-            throw `error: property '${match}' does not exist in names object '${names.baseFileName}.names.json': template file '${namesObj.fileName}'`;
+          // At least one file returns a false-positivle match '"";
+          // just ignore it rather than risk breaking the regex variablePattern.
+          if (match !== '"') {
+            if (!Object.keys(names).includes(match)) {
+              throw `error: property '${match}' does not exist in names object '${names.baseFileName}.names.json': template file '${namesObj.folderName}'`;
+            }
           }
         }
 
@@ -260,25 +294,34 @@ export default class Templates {
           if (text.match(regex)) {
             const value = namesObj.names[name];
             if (!value) {
-              throw `error: property '${name}' is undefined in names object '${names.baseName}': template file '${namesObj.fileName}'`;
+              throw `error: property '${name}' is undefined in names object '${names.baseName}': template file '${namesObj.folderName}'`;
             }
             const replaceValue = typeof value === 'string' ? value : JSON.stringify(value)?.replace(/\n/g, '\r\n');
             text = text.replace(regex, replaceValue);
           }
         }
-      } else {
-        console.log(`warning: No template values found in ${namesObj.fileName}`);
       }
     }
 
     return Buffer.from(text, "utf8");
   }
 
-  private getTemplateList(inputDir: string): string[] {
-    const files: string[] = [];
-    FileHandler.GetAllFiles(inputDir, files);
-    return files;
+  private getTemplateList(folder: string, isNamesFolder: boolean): string[] {
+
+    if (isNamesFolder) {
+      // Names folders process in depth
+      const files: string[] = [];
+      FileHandler.GetAllFiles(folder, files);
+      return files;
+    }
+    else {
+      // Non-names folders only process the current directory
+      const fileNames = FileHandler.GetFiles(folder);
+      const files = fileNames.map(f => path.join(folder, f));
+      return files;
+    }
   }
+
 
   private generateMatches(compComponentsTemplate: string[]): Match[] {
     return compComponentsTemplate.map((n) => {

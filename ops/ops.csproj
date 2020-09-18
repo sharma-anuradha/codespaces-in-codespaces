@@ -17,7 +17,6 @@
     <GenerateComponentsOutputFolder>$([System.IO.Path]::Combine($(OpsFolder),$(GenerateComponentsOutputFolderName)))</GenerateComponentsOutputFolder>
     <ComponentsGeneratorFolder>$([System.IO.Path]::Combine($(OpsFolder),'Generator'))</ComponentsGeneratorFolder>
     <ComponentGeneratorScript>$([System.IO.Path]::Combine($(ComponentsGeneratorFolder),'index.ts'))</ComponentGeneratorScript>
-    <GenerateComponentsRealOutputFolder>$(OutputPath)\$(GenerateComponentsOutputFolderName)</GenerateComponentsRealOutputFolder>
     <OpsScriptsFolderName>Scripts</OpsScriptsFolderName>
     <OpsScriptsFolder>$([System.IO.Path]::Combine($(OpsFolder),$(OpsScriptsFolderName)))</OpsScriptsFolder>
   </PropertyGroup>
@@ -35,21 +34,32 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ZipScriptFolder Include="$(GenerateComponentsInputFolder)\Core\Ev2\Scripts">
-      <DestinationFile>$(GenerateComponentsRealOutputFolder)\Core\Ev2\Scripts\scripts.zip</DestinationFile>
-    </ZipScriptFolder>
-    <ZipScriptFolder Include="$(GenerateComponentsInputFolder)\Stub\Ev2\Scripts">
-      <DestinationFile>$(GenerateComponentsRealOutputFolder)\Stub\Ev2\Scripts\scripts.zip</DestinationFile>
-    </ZipScriptFolder>
+    <ZipMeFile Include="$(OpsFolder)\**\*.zipme" Exclude="$(GenerateComponentsInputFolder)\**\*">
+      <!-- This is a trick to force target batching not to skip if it thinks the outputs are up to date -->
+      <ForceRebuild>%(Identity).forcerebuild</ForceRebuild>
+    </ZipMeFile>
   </ItemGroup>
 
-  <!-- Zip up the script sub directories -->
+  <!-- Zip up each that contain a *.zipme file using target batching-->
   <Target Name="ZipOpsScriptFiles"
-    AfterTargets="AfterBuild" >
+    Inputs="@(ZipMeFile)"
+    Outputs="%(ZipMeFile.ForceRebuild)"
+    AfterTargets="AfterBuild">
+
+    <PropertyGroup>
+      <ZipMeFile>%(ZipMeFile.Identity)</ZipMeFile>
+      <ZipSourceDirectory>%(ZipMeFile.RootDir)%(ZipMeFile.Directory)</ZipSourceDirectory>
+      <ZipDestinationFile>$(ZipMeFile.Replace('.zipme','.zip'))</ZipDestinationFile>
+      <ZipDestinationFile>$(ZipDestinationFile.Replace('$(OpsFolder)','$(OutputPath)'))</ZipDestinationFile>
+      <ZipDestinationDirectory>$([System.IO.Path]::GetDirectoryName($(ZipDestinationFile)))</ZipDestinationDirectory>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(ZipDestinationDirectory)" />
     <ZipDirectory
-      SourceDirectory="%(ZipScriptFolder.FullPath)"
-      DestinationFile="%(ZipScriptFolder.DestinationFile)"
+      SourceDirectory="$(ZipSourceDirectory)"
+      DestinationFile="$(ZipDestinationFile)"
       Overwrite="true"/>
+
   </Target>
 
   <!-- Generate the Components.generated folder at build time if flag is set. -->

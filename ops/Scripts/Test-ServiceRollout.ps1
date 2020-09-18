@@ -7,9 +7,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Component,
-    [string]$RolloutSpecName = "*.rolloutspec.jsonc",
+    [string]$RolloutSpecPattern = "*.rolloutspec.json?",
     [string]$ComponentsGeneratedFolder,
-    [string]$Ev2SubFolder = "Ev2",
     [switch]$Online
 )
 
@@ -29,7 +28,7 @@ if ($PSVersionTable.PSVersion.Major -gt 5) {
 }
 
 function Get-ServiceRoot() {
-    $path = [System.IO.Path]::GetFullPath(([System.IO.Path]::Combine($ComponentsGeneratedFolder, $Component, $Ev2SubFolder)))
+    $path = [System.IO.Path]::GetFullPath(([System.IO.Path]::Combine($ComponentsGeneratedFolder, $Component)))
     $serviceRoot = Get-Item -Path $path
     if (!$serviceRoot) {
         throw "Service root does not exist: $path"
@@ -39,10 +38,10 @@ function Get-ServiceRoot() {
 
 function Get-RolloutSpecs() {
     $serviceRoot = Get-ServiceRoot
-    $specs = $serviceRoot.GetFiles($RolloutSpecName) | % { $_.FullName }
+    $specs = $serviceRoot.GetFiles($RolloutSpecPattern, [System.IO.SearchOption]::AllDirectories) | % { $_.FullName }
 
     if (!$specs) {
-        throw "Rollout spec(s) not found: '$serviceRoot\$RolloutSpecName'"
+        throw "Rollout spec(s) not found: '$serviceRoot\$RolloutSpecPattern'"
     }
 
     $specs

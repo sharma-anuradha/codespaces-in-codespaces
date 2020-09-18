@@ -1,0 +1,217 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ template "service.name" . }}
+  labels:
+    {{ template "labelvalues" . }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      name: {{ template "service.name" . }}
+  template:
+    metadata:
+      labels:
+        name: {{ template "service.name" . }}
+    spec:
+      initContainers:
+        # Download secrets for mdsd
+        - name: keyvault-agent
+          image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.acskeyvaultagentName not specified" .Values.image.acskeyvaultagentName }}:{{ required "Value image.acskeyvaultagentTag not specified" .Values.image.acskeyvaultagentTag }}'
+          env:
+          - name: VAULT_BASE_URL
+            value: '{{ required "Value KeyVault not specified" .Values.config.KeyVault }}'
+          - name: SERVICE_PRINCIPLE_FILE_PATH
+            value: /host/azure.json
+          - name: SECRETS_FOLDER
+            value: '/secrets'
+          - name: SECRETS_KEYS
+            value: '{{ required "Value AzSecPack_GCS_cert_name not specified" .Values.config.AzSecPack_GCS_cert_name }}'
+          volumeMounts:
+          - name: geneva-secret-vol
+            mountPath: '/secrets'
+          - name: host-sp
+            mountPath: /host
+            readOnly: true
+        # Download secrets for MDM
+        - name: keyvault-agent-mdm
+          image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.acskeyvaultagentName not specified" .Values.image.acskeyvaultagentName }}:{{ required "Value image.acskeyvaultagentTag not specified" .Values.image.acskeyvaultagentTag }}'
+          env:
+          - name: VAULT_BASE_URL
+            value: '{{ required "Value KeyVault not specified" .Values.config.KeyVault }}'
+          - name: SERVICE_PRINCIPLE_FILE_PATH
+            value: /host/azure.json
+          - name: SECRETS_FOLDER
+            value: '/secrets'
+          - name: SECRETS_KEYS
+            value: '{{ required "Value AzSecPack_GCS_cert_name not specified" .Values.config.AzSecPack_GCS_cert_name }}::mdm-cert.pem:mdm-key.pem'
+          - name: DOWNLOAD_CA_CERTIFICATES
+            value: "false"
+          volumeMounts:
+          - name: geneva-secret-vol
+            mountPath: '/secrets'
+          - name: host-sp
+            mountPath: /host
+            readOnly: true
+        # Call IMDS to obtain text value of the region we're running in
+        - name: configure-regional-settings
+          image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.busyboxName not specified" .Values.image.busyboxName }}:{{ required "Value image.busyboxTag not specified" .Values.image.busyboxTag }}'
+          command: ["sh", "-c", "wget -O /config/REGION --header Metadata:True http://169.254.169.254/metadata/instance/compute/location?api-version=2017-04-02\\&format=text"]
+          volumeMounts:
+          - name: regional-settings
+            mountPath: "/config"
+            readOnly: false
+      containers:
+      # FluentD
+      - name: fluentd
+        image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.genevafluentdtdagentName not specified" .Values.image.genevafluentdtdagentName }}:{{ required "Value image.genevafluentdtdagentTag not specified" .Values.image.genevafluentdtdagentTag }}'
+        imagePullPolicy: Always
+        env:
+        - name: FLUENTD_CONF
+          value: /etc/fluentd/fluentd.conf
+        ports:
+        - name: mdsd-fluentd
+          containerPort: 24224
+          protocol: TCP
+        volumeMounts:
+        - name: geneva-conf-vol
+          mountPath: /etc/fluentd
+          readOnly: true
+        - name: fluentd-buffer-vol
+          mountPath: /var/log/td-agent
+        - name: mdsd-run-vol
+          mountPath: /var/run/mdsd
+        - name: docker-log-vol
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: var-log-vol
+          mountPath: /var/log
+        - name: run-journal-vol
+          mountPath: /run/log/journal
+          readOnly: true
+      # MDSD
+      - name: mdsd
+        image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.genevamdsdName not specified" .Values.image.genevamdsdName }}:{{ required "Value image.genevamdsdTag not specified" .Values.image.genevamdsdTag }}'
+        imagePullPolicy: Always
+        env:
+        - name: TENANT
+          value: '{{ required "Value AzSecPack_Tenant not specified" .Values.config.AzSecPack_Tenant }}'
+        - name: ROLE
+          value: '{{ required "Value AzSecPack_Namespace not specified" .Values.config.AzSecPack_Namespace }}'
+        - name: ROLEINSTANCE
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: MONITORING_GCS_CERT_CERTFILE
+          value: '{{ required "Value AzSecPack_GCS_cert not specified" .Values.config.AzSecPack_GCS_cert }}'
+        - name: MONITORING_GCS_CERT_KEYFILE
+          value: '{{ required "Value AzSecPack_GCS_key not specified" .Values.config.AzSecPack_GCS_key }}'
+        - name: MONITORING_GCS_ENVIRONMENT
+          value: '{{ required "Value AzSecPack_GCS_Environment not specified" .Values.config.AzSecPack_GCS_Environment }}'
+        - name: MONITORING_GCS_ACCOUNT
+          value: '{{ required "Value AzSecPack_GCS_Account not specified" .Values.config.AzSecPack_GCS_Account }}'
+        command: ["bash", "-c", "export MONITORING_GCS_REGION=$(cat /config/REGION); printenv; /start_mdsd.sh"]
+        volumeMounts:
+        - name: mdsd-run-vol
+          mountPath: /var/run/mdsd
+        - name: geneva-secret-vol
+          mountPath: /secrets
+          readOnly: true
+        - name: geneva-conf-vol
+          mountPath: /geneva/geneva_config
+          readOnly: true
+        - name: var-log-vol
+          mountPath: /geneva/geneva_logs
+        - name: regional-settings
+          mountPath: /config
+      # MDM
+      - name: mdm
+        image: '{{ required "Value image.repositoryUrl not specified" .Values.image.repositoryUrl }}/{{ required "Value image.genevamdmName not specified" .Values.image.genevamdmName }}:{{ required "Value image.genevamdmTag not specified" .Values.image.genevamdmTag }}'
+        imagePullPolicy: Always
+        env:
+        - name: TENANT
+          value: '{{ required "Value AzSecPack_Tenant not specified" .Values.config.AzSecPack_Tenant }}'
+        - name: ROLE
+          value: '{{ required "Value AzSecPack_Namespace not specified" .Values.config.AzSecPack_Namespace }}'
+        - name: ROLEINSTANCE
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: CERT_FILE
+          value: '/secrets/certs_keys/mdm-cert.pem'
+        - name: KEY_FILE
+          value: '/secrets/certs_keys/mdm-key.pem'
+        - name: METRIC_ENDPOINT
+          value: '{{ required "Value Geneva_Mdm_Metric_Endpoint not specified" .Values.config.Geneva_Mdm_Metric_Endpoint }}' 
+        - name: MDM_ACCOUNT
+          value: '{{ required "Value Geneva_Mdm_Account not specified" .Values.config.Geneva_Mdm_Account }}'
+        - name: MDM_LOG_LEVEL
+          value: '{{ required "Value Geneva_Mdm_Log_Level not specified" .Values.config.Geneva_Mdm_Log_Level }}'
+        - name: MDM_INPUT
+          value: ifx_tcp
+        - name: MDM_DATA_DIR
+          value: /secrets
+        command: ["bash", "-c", "printenv; /start_metricsextension.sh"]
+        volumeMounts:
+        - name: geneva-secret-vol
+          mountPath: /secrets
+          readOnly: true
+        - name: etw-vol
+          mountPath: /var/etw
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: host-sp
+        hostPath:
+          # this file contains the cluster service-principal, it exists on every node by default
+          path: /etc/kubernetes
+      - name: geneva-secret-vol
+        emptyDir:
+          medium: Memory
+      - name: geneva-conf-vol
+        configMap:
+          name: {{ template "service.name" . }}-conf
+      - name: docker-log-vol
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: var-log-vol
+        hostPath:
+          path: /var/log
+      - name: run-journal-vol
+        hostPath:
+          path: /run/log/journal
+      - name: etw-vol
+        emptyDir: {}
+      - name: fluentd-buffer-vol
+        emptyDir: {}
+      - name: mdsd-run-vol
+        emptyDir: {}
+      - name: regional-settings
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "service.name" . }}
+  labels:
+    {{ template "labelvalues" . }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: mdsd-fluentd
+    port: 24224
+    protocol: TCP
+    targetPort: 24224
+  - name: mdsd-fluentd-udp
+    port: 24224
+    protocol: UDP
+    targetPort: 24224
+  - name: mdm-ifx-tcp
+    port: 11013
+    protocol: TCP
+    targetPort: 11013
+  selector:
+    name: {{ template "service.name" . }}

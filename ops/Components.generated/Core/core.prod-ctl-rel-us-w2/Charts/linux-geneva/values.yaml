@@ -1,0 +1,7 @@
+image:
+  # image.repositoryUrl must be supplied via helm install
+  repositoryUrl:
+  genevasecpackinstallName: genevasecpackinstall
+  genevasecpackinstallTag: master_52
+  acskeyvaultagentName: acskeyvaultagent
+  acskeyvaultagentTag: master_24

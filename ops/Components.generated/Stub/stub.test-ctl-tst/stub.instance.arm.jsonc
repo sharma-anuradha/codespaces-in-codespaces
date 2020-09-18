@@ -1,0 +1,37 @@
+// Auto-Generated From Template
+// "stub.instance.arm.jsonc"
+// with names file "stub.test-ctl-tst.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+    "baseName": {
+      "type": "string",
+      "value": "vscs-stub-test-tst"
+    },
+    "baseEnvironmentName": {
+      "type": "string",
+      "value": "vscs-stub-test"
+    },
+    "basePlaneName": {
+      "type": "string",
+      "value": "vscs-stub-test"
+    },
+    "baseInstanceName": {
+      "type": "string",
+      "value": "vscs-stub-test-tst"
+    },
+    "instanceRegions": {
+      "type": "array",
+      "value": ["us-w2"]
+    }
+  }
+}

@@ -1,0 +1,59 @@
+// Auto-Generated From Template
+// "core.region.servicemodel.jsonc"
+// with names file "core.ppe-ctl-rel-eu-w.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "vscs-core-ppe-rel-eu-w-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-core-ppe-rel-eu-w-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-core-ppe-rel-eu-w-cluster",
+          "composedOf": {
+            "arm": {
+              "templatePath": "core.ppe-ctl-rel-eu-w/ARM/core.cluster.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-ppe-rel-eu-w-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "core.ppe-ctl-rel-eu-w/ARM/core.network.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-core-ppe-rel-eu-w",
+      "location": "WestEurope",
+      "instanceOf": "vscs-core-ppe-rel-eu-w-rg",
+      "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
+      "serviceResources": [
+        {
+          "name": "vscs-core-ppe-rel-eu-w-cluster",
+          "instanceOf": "vscs-core-ppe-rel-eu-w-cluster"
+        },
+        {
+          "name": "vscs-core-ppe-rel-eu-w-network",
+          "instanceOf": "vscs-core-ppe-rel-eu-w-network"
+        }
+      ]
+    }
+  ]
+}

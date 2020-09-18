@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+
+  "rolloutMetadata": {
+    "serviceModelPath": "{{{baseRegionFileName}}}/stub.region.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "{{{baseRegionName}}} Rollout 1.0.0.0",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "Deploy {{{baseRegionName}}}-arm",
+      "targetType": "ServiceResource",
+      "targetName": "{{{baseRegionName}}}-arm",
+      "actions": [ "deploy" ]
+    }
+  ]
+}

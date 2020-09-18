@@ -1,0 +1,59 @@
+// Auto-Generated From Template
+// "core.region.servicemodel.jsonc"
+// with names file "core.prod-ctl-rel-us-e.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "vscs-core-prod-rel-us-e-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "vscs-core-prod-rel-us-e-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "vscs-core-prod-rel-us-e-cluster",
+          "composedOf": {
+            "arm": {
+              "templatePath": "core.prod-ctl-rel-us-e/ARM/core.cluster.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        },
+        {
+          "name": "vscs-core-prod-rel-us-e-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "core.prod-ctl-rel-us-e/ARM/core.network.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "vscs-core-prod-rel-us-e",
+      "location": "EastUS",
+      "instanceOf": "vscs-core-prod-rel-us-e-rg",
+      "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
+      "serviceResources": [
+        {
+          "name": "vscs-core-prod-rel-us-e-cluster",
+          "instanceOf": "vscs-core-prod-rel-us-e-cluster"
+        },
+        {
+          "name": "vscs-core-prod-rel-us-e-network",
+          "instanceOf": "vscs-core-prod-rel-us-e-network"
+        }
+      ]
+    }
+  ]
+}

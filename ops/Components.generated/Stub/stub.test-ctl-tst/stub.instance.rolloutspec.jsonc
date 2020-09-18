@@ -1,0 +1,35 @@
+// Auto-Generated From Template
+// "stub.instance.rolloutspec.jsonc"
+// with names file "stub.test-ctl-tst.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "contentVersion": "1.0.0.0",
+
+  "rolloutMetadata": {
+    "serviceModelPath": "stub.test-ctl-tst/stub.instance.servicemodel.jsonc",
+    "scopeBindingsPath": null,
+    "name": "vscs-stub-test-tst Rollout 1.0.0.0",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    }
+  },
+  "orchestratedSteps": [
+    {
+      "name": "Deploy vscs-stub-test-tst-arm",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-test-tst-arm",
+      "actions": [ "deploy" ]
+    },
+    {
+      "name": "Deploy and Run vscs-stub-test-tst-script",
+      "targetType": "ServiceResource",
+      "targetName": "vscs-stub-test-tst-script",
+      "actions": [ "Shell/stub-script" ]
+    }
+  ]
+}

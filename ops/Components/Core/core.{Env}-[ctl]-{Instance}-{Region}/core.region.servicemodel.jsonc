@@ -1,0 +1,54 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "contentVersion": "0.0.0.1",
+
+  "serviceMetadata": {
+    "serviceGroup": "{{{baseRegionName}}}-service-group",
+    "environment": "Test"
+  },
+
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "{{{baseRegionName}}}-rg",
+      "serviceResourceDefinitions": [
+        {
+          "name": "{{{baseRegionName}}}-cluster",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/core.cluster.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        },
+        {
+          "name": "{{{baseRegionName}}}-network",
+          "composedOf": {
+            "arm": {
+              "templatePath": "{{{baseRegionFileName}}}/ARM/core.network.arm.json",
+              "parametersPath": "empty.arm.parameters.json"
+            }
+          }
+        }
+      ]
+    }
+  ],
+
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "{{{baseRegionName}}}",
+      "location": "{{{regionLocation}}}",
+      "instanceOf": "{{{baseRegionName}}}-rg",
+      "azureSubscriptionId": "{{{subscriptionId}}}",
+      "serviceResources": [
+        {
+          "name": "{{{baseRegionName}}}-cluster",
+          "instanceOf": "{{{baseRegionName}}}-cluster"
+        },
+        {
+          "name": "{{{baseRegionName}}}-network",
+          "instanceOf": "{{{baseRegionName}}}-network"
+        }
+      ]
+    }
+  ]
+}

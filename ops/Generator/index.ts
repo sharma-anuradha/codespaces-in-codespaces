@@ -59,11 +59,12 @@ class Main {
   }
 
   GenerateNames() {
+    const namesOutputDir = path.join(this.outputDir, "_names");
     Names.Generate(
       this.compDep.components,
       this.envDep.environments,
       this.compDep.globalPrefix,
-      this.outputDir
+      namesOutputDir
     );
   }
 
