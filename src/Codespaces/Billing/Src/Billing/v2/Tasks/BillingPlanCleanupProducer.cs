@@ -1,4 +1,4 @@
-﻿// <copyright file="BillingPlanCleanupProducer.cs" company="Microsoft">
+// <copyright file="BillingPlanCleanupProducer.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -45,7 +45,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                 async (childLogger) =>
                 {
                     // Push job onto queue
-                    await JobQueueProducer.AddJobAsync(new BillScrubberRequest() { PlanId = planId, DesiredEndTime = desiredBillEndingTime }, jobPayloadOptions, cancellationToken);
+                    await JobQueueProducer.AddJobAsync(new BillScrubberRequest() { PlanId = planId, DesiredEndTime = desiredBillEndingTime }, jobPayloadOptions, logger, cancellationToken);
                 });
         }
     }

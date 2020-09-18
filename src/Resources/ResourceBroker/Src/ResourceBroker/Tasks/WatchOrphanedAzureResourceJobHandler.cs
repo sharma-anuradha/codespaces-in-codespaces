@@ -248,7 +248,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                             ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
                         };
 
-                        await JobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, default);
+                        await JobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, childLogger, default);
                     }
                 },
                 swallowException: true);

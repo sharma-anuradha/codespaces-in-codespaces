@@ -196,7 +196,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 // if continuation failed and it will be removed from the queue we failed our result
                 if (jobCompleted.Status.HasFlag(JobCompletedStatus.Failed) && jobCompleted.Status.HasFlag(JobCompletedStatus.Removed))
                 {
-                    await CompleteJobAsync(job, ReturnFailed(), cancellationToken);
+                    await CompleteJobAsync(job, ReturnFailed(), logger, cancellationToken);
                 }
             };
 
@@ -235,7 +235,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 }
 
                 var queueInfo = GetQueueInfo(job, continueJobResult);
-                await JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(job.Payload, continueJobResult.NextPayloadOptions, cancellationToken);
+                await JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(job.Payload, continueJobResult.NextPayloadOptions, logger, cancellationToken);
             }
             else
             {
@@ -243,7 +243,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 {
                     await logger.OperationScopeAsync(
                         "job_continuation_complete",
-                        (childLogger) => CompleteJobAsync(job, continueJobResult, cancellationToken));
+                        (childLogger) => CompleteJobAsync(job, continueJobResult, logger, cancellationToken));
                 }
             }
         }
@@ -316,7 +316,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             return continueJobResult.NextQueue ?? (job.Queue.Id, null);
         }
 
-        private Task CompleteJobAsync(IJob<T> job, ContinuationJobResult<TState, TResult> continueJobResult, CancellationToken cancellationToken)
+        private Task CompleteJobAsync(IJob<T> job, ContinuationJobResult<TState, TResult> continueJobResult, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             var resultPayload = new ContinuationJobPayloadResult<TState, TResult>()
             {
@@ -326,7 +326,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             };
 
             var queueInfo = GetQueueInfo(job, continueJobResult);
-            return JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(resultPayload, null, cancellationToken);
+            return JobQueueProducerFactory.GetOrCreate(queueInfo.Item1, queueInfo.Item2).AddJobAsync(resultPayload, null, logger, cancellationToken);
         }
     }
 #pragma warning restore SA1649

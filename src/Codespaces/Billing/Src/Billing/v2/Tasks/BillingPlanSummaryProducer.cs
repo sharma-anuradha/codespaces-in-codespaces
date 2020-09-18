@@ -59,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                             Partner = partner,
                         },
                         jobPayloadOptions,
+                        logger,
                         cancellationToken);
                 });
         }

@@ -51,7 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             return jobScheduler.AddDelayedJob(delay, jobName, async (jobRunId, dt, srvc, logger, ct) =>
             {
                 var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, logger, ct);
-                await AddJobsAsync(jobQueueProducer, jobPayloadInfos, jobRunId, dt, ct);
+                await AddJobsAsync(jobQueueProducer, jobPayloadInfos, jobRunId, dt, logger, ct);
             });
         }
 
@@ -139,7 +139,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             return jobScheduler.AddRecurringJob(expression, jobName, async (jobRunId, dt, srvc, logger, ct) =>
             {
                 var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, logger, ct);
-                await AddJobsAsync(jobQueueProducer, jobPayloadInfos, jobRunId, dt, ct);
+                await AddJobsAsync(jobQueueProducer, jobPayloadInfos, jobRunId, dt, logger, ct);
             });
         }
 
@@ -209,6 +209,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             IEnumerable<(JobPayload, JobPayloadOptions)> jobPayloadInfos,
             string jobRunId,
             DateTime jobScheduleRun,
+            IDiagnosticsLogger logger,
             CancellationToken cancellationToken)
         {
             foreach (var jobPayloadInfo in jobPayloadInfos)
@@ -216,7 +217,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
                 jobPayloadInfo.Item1.LoggerProperties.Add("JobRunId", jobRunId);
                 jobPayloadInfo.Item1.LoggerProperties.Add("JobScheduleRun", jobScheduleRun);
 
-                await jobQueueProducer.AddJobAsync(jobPayloadInfo.Item1, jobPayloadInfo.Item2, cancellationToken);
+                await jobQueueProducer.AddJobAsync(jobPayloadInfo.Item1, jobPayloadInfo.Item2, logger, cancellationToken);
             }
         }
 

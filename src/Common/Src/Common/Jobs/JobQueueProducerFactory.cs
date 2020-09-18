@@ -18,24 +18,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     {
         private readonly ConcurrentDictionary<(string, AzureLocation?), JobQueueProducer> jobQueueProducer = new ConcurrentDictionary<(string, AzureLocation?), JobQueueProducer>();
         private readonly IQueueFactory queueFactory;
-        private readonly IDiagnosticsLogger logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JobQueueProducerFactory"/> class.
         /// </summary>
         /// <param name="queueFactory">A queue factory instance.</param>
-        /// <param name="logger">Logger instance.</param>
-        public JobQueueProducerFactory(IQueueFactory queueFactory, IDiagnosticsLogger logger)
+        public JobQueueProducerFactory(IQueueFactory queueFactory)
         {
             this.queueFactory = Requires.NotNull(queueFactory, nameof(queueFactory));
-            this.logger = Requires.NotNull(logger, nameof(logger));
         }
 
         /// <inheritdoc/>
         public IJobQueueProducer GetOrCreate(string queueId, AzureLocation? azureLocation)
         {
             var queue = this.queueFactory.GetOrCreate(queueId, azureLocation);
-            return this.jobQueueProducer.GetOrAdd((queueId, azureLocation), (id) => new JobQueueProducer(queue, this.logger));
+            return this.jobQueueProducer.GetOrAdd((queueId, azureLocation), (id) => new JobQueueProducer(queue));
         }
 
         /// <inheritdoc/>

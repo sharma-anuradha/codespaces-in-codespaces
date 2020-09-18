@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
@@ -39,9 +40,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         }
 
         /// <inheritdoc/>
-        public async Task AddJobAllAsync(string queueId, JobPayload jobPayload, JobPayloadOptions jobPayloadOptions, CancellationToken cancellationToken)
+        public async Task AddJobAllAsync(string queueId, JobPayload jobPayload, JobPayloadOptions jobPayloadOptions, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
-            await Task.WhenAll(GetOrCreateAll(queueId).Select(jobQueueProducer => jobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, cancellationToken)));
+            await Task.WhenAll(GetOrCreateAll(queueId).Select(jobQueueProducer => jobQueueProducer.AddJobAsync(jobPayload, jobPayloadOptions, logger, cancellationToken)));
         }
     }
 }

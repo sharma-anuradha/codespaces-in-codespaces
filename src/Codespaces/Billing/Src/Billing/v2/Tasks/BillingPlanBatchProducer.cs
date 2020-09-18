@@ -40,7 +40,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                     childLogger.FluentAddValue(BillingLoggingConstants.Shard, shard);
 
                     // Push job onto queue
-                    await JobQueueProducer.AddJobAsync(new BillingPlanBatchJobPayload() { PlanShard = shard }, jobPayloadOptions, cancellationToken);
+                    await JobQueueProducer.AddJobAsync(new BillingPlanBatchJobPayload() { PlanShard = shard }, jobPayloadOptions, logger, cancellationToken);
                 });
         }
     }

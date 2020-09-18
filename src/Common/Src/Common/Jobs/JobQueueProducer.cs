@@ -20,7 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     public class JobQueueProducer : DisposableBase, IJobQueueProducer
     {
         private readonly IQueue queueMessage;
-        private readonly IDiagnosticsLogger logger;
         private readonly Dictionary<string, JobQueueProducerMetrics> jobQueueProducerMetricsByTypeTag = new Dictionary<string, JobQueueProducerMetrics>();
         private readonly object lockJobQueueProducerMetrics = new object();
 
@@ -28,37 +27,37 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         /// Initializes a new instance of the <see cref="JobQueueProducer"/> class.
         /// </summary>
         /// <param name="queueMessage">A queue message instance.</param>
-        /// <param name="logger">Logger instance.</param>
-        public JobQueueProducer(IQueue queueMessage, IDiagnosticsLogger logger)
+        public JobQueueProducer(IQueue queueMessage)
         {
             this.queueMessage = Requires.NotNull(queueMessage, nameof(queueMessage));
-            this.logger = Requires.NotNull(logger, nameof(logger));
         }
 
         /// <inheritdoc/>
-        public Task AddJobAsync(JobPayload job, JobPayloadOptions jobPayloadOptions = null, CancellationToken cancellationToken = default)
+        public Task<QueueMessage> AddJobAsync(JobPayload job, JobPayloadOptions jobPayloadOptions, IDiagnosticsLogger logger, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(job, nameof(job));
+            Requires.NotNull(logger, nameof(logger));
 
             var tagType = JobPayloadHelpers.GetTypeTag(job.GetType());
             var payloadJson = job.ToJson();
-            return this.logger.OperationScopeAsync(
+            return logger.OperationScopeAsync(
                 "job_queue_producer",
                 async (childLogger) =>
                 {
                     UpdateMetrics(tagType, m => ++m.Processed);
                     var json = new JobPayloadInfo(payloadJson, DateTime.UtcNow) { PayloadOptions = jobPayloadOptions }.ToJson();
-                    var message = await this.queueMessage.AddMessageAsync(Encoding.UTF8.GetBytes(json), jobPayloadOptions?.InitialVisibilityDelay, cancellationToken);
+                    var cloudMessage = await this.queueMessage.AddMessageAsync(Encoding.UTF8.GetBytes(json), jobPayloadOptions?.InitialVisibilityDelay, cancellationToken);
                     childLogger
-                        .FluentAddValue(JobQueueLoggerConst.JobId, message.Id)
+                        .FluentAddValue(JobQueueLoggerConst.JobId, cloudMessage.Id)
                         .FluentAddValue(JobQueueLoggerConst.JobType, tagType)
                         .FluentAddValue(JobQueueLoggerConst.InitialVisibilityDelay, jobPayloadOptions?.InitialVisibilityDelay)
                         .FluentAddValue(JobQueueLoggerConst.ExpireTimeout, jobPayloadOptions?.ExpireTimeout);
+                    return cloudMessage;
                 },
                 errCallback: (err, logger) =>
                 {
                     UpdateMetrics(tagType, m => ++m.Failures);
-                    return Task.CompletedTask;
+                    return Task.FromResult<QueueMessage>(null);
                 });
         }
 

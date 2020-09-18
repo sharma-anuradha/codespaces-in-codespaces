@@ -1,11 +1,15 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
+using Castle.Core.Logging;
+using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
 {
     public abstract class QueueTestBase
     {
+        protected static readonly IDiagnosticsLogger NullLogger = new Common.VsoUtil.NullLogger();
+
         protected QueueTestBase(IQueueFactory queueFactory)
         {
             QueueFactory = queueFactory;

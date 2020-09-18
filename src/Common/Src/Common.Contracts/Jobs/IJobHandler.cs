@@ -51,6 +51,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
     public interface IJobHandlerTarget
     {
         /// <summary>
+        /// The job handler to register.
+        /// </summary>
+        IJobHandler JobHandler { get; }
+
+        /// <summary>
         /// Gets the queue id that this job handler target.
         /// </summary>
         string QueueId { get; }
@@ -59,11 +64,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the location of the queue.
         /// </summary>
         AzureLocation? Location { get; }
+    }
 
+    /// <summary>
+    /// Contract to implement if a job handler want to be notified .
+    /// </summary>
+    public interface IJobHandlerRegisterCallback
+    {
         /// <summary>
-        /// Callback to register the job handler.
+        /// Callback when the job handler is being registered.
         /// </summary>
-        /// <param name="jobQueueConsumer">The job queue consumer instance.</param>
-        void RegisterHandler(IJobQueueConsumer jobQueueConsumer);
+        /// <param name="jobQueueConsumer">The job queue consumer.</param>
+        void OnRegisterJobHandler(IJobQueueConsumer jobQueueConsumer);
     }
 }

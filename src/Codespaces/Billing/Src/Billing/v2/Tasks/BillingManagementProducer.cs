@@ -66,6 +66,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
                                 await JobQueueProducer.AddJobAsync(
                                     new BillingManagementJobPayload(),
                                     new JobPayloadOptions { InitialVisibilityDelay = initialVisibilityDelay, ExpireTimeout = initialVisibilityDelay + expirationDelay },
+                                    logger,
                                     cancellationToken);
                             }
                         }

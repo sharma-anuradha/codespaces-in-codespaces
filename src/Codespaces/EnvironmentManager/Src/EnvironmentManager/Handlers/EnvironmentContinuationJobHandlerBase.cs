@@ -21,7 +21,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
     /// <typeparam name="T">The payload type.</typeparam>
     /// <typeparam name="TState">Type of the state enums.</typeparam>
     /// <typeparam name="TResult">Type of the result.</typeparam>
-    public abstract class EnvironmentContinuationJobHandlerBase<T, TState, TResult> : ContinuationJobHandlerBase<T, TState, TResult>, IJobHandlerTarget
+    public abstract class EnvironmentContinuationJobHandlerBase<T, TState, TResult> : ContinuationJobHandlerBase<T, TState, TResult>, IJobHandlerTarget, IJobHandlerRegisterCallback
        where T : EnvironmentContinuationInputBase<TState>
        where TState : struct, System.Enum
        where TResult : EnvironmentContinuationResult, new()
@@ -50,11 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         public virtual AzureLocation? Location => null;
 
         /// <inheritdoc/>
-        public void RegisterHandler(IJobQueueConsumer jobQueueConsumer)
-        {
-            jobQueueConsumer.RegisterJobHandler(this);
-            OnRegisterJobHandler(jobQueueConsumer);
-        }
+        public IJobHandler JobHandler => this;
 
         /// <summary>
         /// Gets the logger base name.
@@ -76,9 +72,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// </summary>
         /// <param name="payload">The initial payload.</param>
         /// <param name="jobPayloadOptions">Optional payload options.</param>
+        /// <param name="logger">A logger instance.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
         /// <returns>Completion task.</returns>
-        public Task StartAsync(T payload, JobPayloadOptions jobPayloadOptions, CancellationToken cancellationToken)
+        public Task StartAsync(T payload, JobPayloadOptions jobPayloadOptions, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             Requires.NotNull(payload, nameof(payload));
             if (payload.IsInitialized)
@@ -86,7 +83,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 throw new InvalidOperationException("payload already initialized");
             }
 
-            return JobQueueProducerFactory.GetOrCreate(QueueId, Location).AddJobAsync(payload, jobPayloadOptions, cancellationToken);
+            return JobQueueProducerFactory.GetOrCreate(QueueId, Location).AddJobAsync(payload, jobPayloadOptions, logger, cancellationToken);
+        }
+
+        /// <summary>
+        /// Callback when the job handler is being registered.
+        /// </summary>
+        /// <param name="jobQueueConsumer">The job queue consumer.</param>
+        public virtual void OnRegisterJobHandler(IJobQueueConsumer jobQueueConsumer)
+        {
+            // by default we will register the final result payload.
+            jobQueueConsumer.RegisterJobPayloadHandler<ContinuationJobPayloadResult<TState, EnvironmentContinuationResult>>(
+                (payload, logger, ct) =>
+                {
+                    logger.FluentAddValue("CompletionState", payload.CompletionState)
+                    .FluentAddValue("CurrentState", payload.CurrentState)
+                    .FluentAddValue("ContinueJobHandler", LogBaseName);
+
+                    return Task.CompletedTask;
+                });
         }
 
         /// <summary>
@@ -163,23 +178,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         protected virtual TState GetStateFromPayload(T payload)
         {
             return payload.CurrentState;
-        }
-
-        /// <summary>
-        /// Callback when the job handler is beign registered.
-        /// </summary>
-        /// <param name="jobQueueConsumer">The job queue consumer.</param>
-        protected virtual void OnRegisterJobHandler(IJobQueueConsumer jobQueueConsumer)
-        {
-            jobQueueConsumer.RegisterJobPayloadHandler<ContinuationJobPayloadResult<TState, EnvironmentContinuationResult>>(
-                (payload, logger, ct) =>
-                {
-                    logger.FluentAddValue("CompletionState", payload.CompletionState)
-                    .FluentAddValue("CurrentState", payload.CurrentState)
-                    .FluentAddValue("ContinueJobHandler", LogBaseName);
-
-                    return Task.CompletedTask;
-                });
         }
 
         /// <summary>

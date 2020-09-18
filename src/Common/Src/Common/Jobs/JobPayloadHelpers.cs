@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Newtonsoft.Json.Linq;
 
@@ -96,8 +97,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             var fieldInfo = type.GetField(TypeFieldName);
             if (fieldInfo == null)
             {
-                var typeName = GetTypeName(type).Replace('<', '_');
-                typeName = typeName.Replace('>', '_');
+                var typeName = GetTypeName(type)
+                    .Replace('<', '_')
+                    .Replace('>', '_')
+                    .Replace('.', '_')
+                    .Replace('+', '_');
 
                 // remove the last '_'
                 if (typeName.EndsWith('_'))
@@ -114,6 +118,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         private static string GetTypeName(Type type)
         {
             string friendlyName = type.Name;
+            var payloadAttribute = type.GetCustomAttributes(typeof(JobPayloadAttribute), true).Cast<JobPayloadAttribute>().FirstOrDefault();
+            if (payloadAttribute != null)
+            {
+                if (!string.IsNullOrEmpty(payloadAttribute.TypeName))
+                {
+                    friendlyName = payloadAttribute.TypeName;
+                }
+                else if (payloadAttribute.NameOption != JobPayloadNameOption.None)
+                {
+                    if (payloadAttribute.NameOption == JobPayloadNameOption.Name)
+                    {
+                        friendlyName = type.Namespace.Length > 0
+                            ? type.FullName.Substring(type.Namespace.Length + 1)
+                            : type.FullName;
+                    }
+                    else if (payloadAttribute.NameOption == JobPayloadNameOption.FullName)
+                    {
+                        friendlyName = type.FullName;
+                    }
+                }
+            }
+
             if (type.IsGenericType)
             {
                 int iBacktick = friendlyName.IndexOf('`');

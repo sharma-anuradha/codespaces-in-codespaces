@@ -64,6 +64,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         Reason = reason,
                     },
                     null,
+                    logger,
                     CancellationToken.None);
                 return null;
             }
@@ -105,6 +106,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         Reason = reason,
                     },
                     null,
+                    logger,
                     CancellationToken.None);
                 return null;
             }

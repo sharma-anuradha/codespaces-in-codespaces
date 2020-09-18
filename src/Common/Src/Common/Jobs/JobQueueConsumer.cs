@@ -274,6 +274,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             // create the action block that executes the handler wrapper
             actionBlock = new ActionBlock<IJob>((job) => actionWrapper(job), jobHandler.DataflowBlockOptions);
 
+            // in case the job handler want to be notified when registration has completed.
+            if (jobHandler is IJobHandlerRegisterCallback jobHandlerRegisterCallback)
+            {
+                jobHandlerRegisterCallback.OnRegisterJobHandler(this);
+            }
+
             // Link with Predicate - only if a job is of type T
             this.blockJobs.LinkTo(actionBlock, predicate: (job) => job is IJob<T>);
         }

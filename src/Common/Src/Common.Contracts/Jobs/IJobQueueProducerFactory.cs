@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
@@ -45,9 +46,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         /// <param name="jobPayload">The job payload.</param>
         /// <param name="jobPayloadOptions">The job payload options.</param>
+        /// <param name="logger">The logger diagnostic instance.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
-        /// <returns>Completion task.</returns>
-        Task AddJobAsync(JobPayload jobPayload, JobPayloadOptions jobPayloadOptions, CancellationToken cancellationToken);
+        /// <returns>Completion task that return the created Queue message.</returns>
+        Task<QueueMessage> AddJobAsync(JobPayload jobPayload, JobPayloadOptions jobPayloadOptions, IDiagnosticsLogger logger, CancellationToken cancellationToken);
     }
 
     /// <summary>
