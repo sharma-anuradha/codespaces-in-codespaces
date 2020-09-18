@@ -114,6 +114,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             return ReturnFailed(new TResult() { ErrorReason = errorReason });
         }
 
+        protected static TResult ResultFromReason(string errorReason)
+        {
+            return new TResult() { ErrorReason = errorReason };
+        }
+
         /// <inheritdoc/>
         protected override async Task<ContinuationJobResult<TState, TResult>> ContinueAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
@@ -216,7 +221,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
             return new ContinuationJobResult<TState, TResult>(
                 continuationJobPayloadResultState,
-                result: new TResult() { ErrorReason = continuationResult.ErrorReason },
+                result: ResultFromReason(continuationResult.ErrorReason),
                 nextState: GetStateFromPayload(payload));
         }
 

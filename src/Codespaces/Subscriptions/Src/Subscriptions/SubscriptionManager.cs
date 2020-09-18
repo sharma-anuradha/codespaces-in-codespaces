@@ -8,12 +8,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http;
@@ -38,7 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
         /// <param name="systemConfiguration">The system configuration manager.</param>
         /// <param name="environmentSubscriptionManager">The environment subscription manager.</param>
         /// <param name="subscriptionOfferManager">The subscription Offer manager.</param>
-        /// <param name="crossRegionActivator">The CrossRegionContinuationTaskActivator.</param>
+        /// <param name="jobQueueProducerFactory">The job queue producer factory.</param>
         /// <param name="rpaasHttpProvider">HttpProvider for accessing RPaas's registered subscriptions endpoint.</param>
         /// <param name="skuCatalog">the sku catalog.</param>
         /// <param name="planManager">The plan manager.</param>
@@ -48,7 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             ISystemConfiguration systemConfiguration,
             IEnvironmentSubscriptionManager environmentSubscriptionManager,
             ISubscriptionOfferManager subscriptionOfferManager,
-            ICrossRegionContinuationTaskActivator crossRegionActivator,
+            IJobQueueProducerFactory jobQueueProducerFactory,
             IRPaaSMetaRPHttpClient rpaasHttpProvider,
             ISkuCatalog skuCatalog,
             IPlanManager planManager)
@@ -58,7 +57,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
             EnvironmentSubscriptionManager = Requires.NotNull(environmentSubscriptionManager, nameof(environmentSubscriptionManager));
             SubscriptionOfferManager = Requires.NotNull(subscriptionOfferManager, nameof(subscriptionOfferManager));
-            CrossRegionActivator = Requires.NotNull(crossRegionActivator, nameof(crossRegionActivator));
+            JobQueueProducerFactory = Requires.NotNull(jobQueueProducerFactory, nameof(jobQueueProducerFactory));
             RPaaSHttpProvider = rpaasHttpProvider;
             PlanManager = planManager;
             skuFamilies = skuCatalog.CloudEnvironmentSkus.Select(x => x.Value.ComputeSkuFamily).Distinct();
@@ -74,7 +73,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
 
         private ISubscriptionOfferManager SubscriptionOfferManager { get; }
 
-        private ICrossRegionContinuationTaskActivator CrossRegionActivator { get; }
+        private IJobQueueProducerFactory JobQueueProducerFactory { get; }
 
         private IRPaaSMetaRPHttpClient RPaaSHttpProvider { get; }
 
@@ -340,10 +339,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions
             await logger.OperationScopeAsync($"{LoggingBaseName}_queue_environment_for_suspension", async (childLogger) =>
             {
                 childLogger.AddCloudEnvironment(environment);
-                var continuationInput = new EnvironmentContinuationInput { EnvironmentId = environment.Id };
-
-                // TODO: Create these activators through a more common pattern.
-                await CrossRegionActivator.ExecuteForDataPlane(EnvironmentSuspensionContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
+                await SuspendEnvironmentJobHandler.ExecuteAsync(JobQueueProducerFactory, environment.Id, environment.Location, logger);
             });
         }
     }

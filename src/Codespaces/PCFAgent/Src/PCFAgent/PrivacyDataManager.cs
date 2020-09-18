@@ -8,12 +8,11 @@ using System.Threading.Tasks;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.IdentityMap;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -30,19 +29,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
         /// </summary>
         /// <param name="environmentManager">Environment manager.</param>
         /// <param name="identityMapRepository">The identity map repository.</param>
-        /// <param name="crossRegionActivator">Cross-region continuatinuation task activator.</param>
+        /// <param name="jobQueueProducerFactory">Job queue producer factory.</param>
         /// <param name="superuserIdentity">Vso super user claims identity that has access to all environments and plans.</param>
         /// <param name="currentIdentityProvider">Current identity provider.</param>
         public PrivacyDataManager(
             IEnvironmentManager environmentManager,
             IIdentityMapRepository identityMapRepository,
-            ICrossRegionContinuationTaskActivator crossRegionActivator,
+            IJobQueueProducerFactory jobQueueProducerFactory,
             VsoSuperuserClaimsIdentity superuserIdentity,
             ICurrentIdentityProvider currentIdentityProvider)
         {
             EnvironmentManager = environmentManager;
             IdentityMapRepository = identityMapRepository;
-            CrossRegionActivator = crossRegionActivator;
+            JobQueueProducerFactory = jobQueueProducerFactory;
             SuperuserIdentity = superuserIdentity;
             CurrentIdentityProvider = currentIdentityProvider;
         }
@@ -51,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
 
         private IIdentityMapRepository IdentityMapRepository { get; }
 
-        private ICrossRegionContinuationTaskActivator CrossRegionActivator { get; }
+        private IJobQueueProducerFactory JobQueueProducerFactory { get; }
 
         private VsoSuperuserClaimsIdentity SuperuserIdentity { get; }
 
@@ -160,11 +159,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.PCFAgent
 
         private async Task QueueEnvironmentForDeletion(CloudEnvironment environment, IDiagnosticsLogger logger)
         {
-            await logger.OperationScopeAsync("pcf_queue_environment_for_deletion", async (childLogger) =>
+            await logger.OperationScopeAsync("pcf_queue_environment_for_deletion", (childLogger) =>
             {
                 childLogger.AddCloudEnvironment(environment);
-                var continuationInput = new EnvironmentContinuationInput { EnvironmentId = environment.Id };
-                await CrossRegionActivator.ExecuteForDataPlane(SoftDeleteEnvironmentContinuationHandler.DefaultQueueTarget, environment.Location, continuationInput, logger);
+                return SoftDeleteEnvironmentJobHandler.ExecuteAsync(JobQueueProducerFactory, environment.Id, environment.Location, logger);
             });
         }
     }

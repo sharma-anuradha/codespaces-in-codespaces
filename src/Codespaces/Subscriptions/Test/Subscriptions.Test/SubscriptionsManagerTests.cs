@@ -3,6 +3,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Subscriptions.Http;
@@ -48,7 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
             subscriptionRepository = new MockSubscriptionRepository();
             var mockQuotaCatalog = new Mock<IQuotaFamilyCatalog>();
             var subscriptionOfferManager = new SubscriptionOfferManager(mockSystemConfiguration.Object, mockQuotaCatalog.Object);
-            var crossRegionActivator = new MockCrossRegionContinuationTaskActivator();
+            var jobQueueProducerFactory = new Mock<IJobQueueProducerFactory>();
             var httpClient = new Mock<IRPaaSMetaRPHttpClient>();
             var skuCatalog = new Mock<ISkuCatalog>();
             var mockStandardLinux = new Mock<ICloudEnvironmentSku>();
@@ -67,7 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions.Tests
                                     mockSystemConfiguration.Object,
                                     mockEnvironmentSubscriptionManger.Object,
                                     subscriptionOfferManager,
-                                    crossRegionActivator, 
+                                    jobQueueProducerFactory.Object, 
                                     httpClient.Object,
                                     skuCatalog.Object,
                                     mockPlanManager.Object);

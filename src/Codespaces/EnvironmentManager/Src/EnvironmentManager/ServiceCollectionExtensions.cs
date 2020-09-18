@@ -83,8 +83,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<ICrossRegionControlPlaneInfo, CrossRegionControlPlaneInfo>();
             services.AddSingleton<ICrossRegionContinuationTaskMessagePump, CrossRegionContinuationTaskMessagePump>();
             services.AddSingleton<ICrossRegionContinuationTaskActivator, CrossRegionContinuationTaskActivator>();
-            services.AddSingleton<IContinuationTaskMessageHandler, SoftDeleteEnvironmentContinuationHandler>();
-            services.AddSingleton<IContinuationTaskMessageHandler, EnvironmentSuspensionContinuationHandler>();
 
             // Handlers
             services.AddSingleton<ILatestHeartbeatMonitor, LatestHeartbeatMonitor>();
@@ -128,6 +126,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             services.AddSingleton<IJobHandlerTarget>(x => x.GetRequiredService<ArchiveEnvironmentContinuationJobHandler>());
             services.AddSingleton<StartEnvironmentContinuationJobHandlerV2>();
             services.AddSingleton<IJobHandlerTarget>(x => x.GetRequiredService<StartEnvironmentContinuationJobHandlerV2>());
+            services.AddSingleton<IJobHandlerTarget, ShutdownEnvironmentContinuationJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, SoftDeleteEnvironmentJobHandler>();
+            services.AddSingleton<IJobHandlerTarget, SuspendEnvironmentJobHandler>();
 
             // The environment manager
             services.AddSingleton<IEnvironmentManager, EnvironmentManager>();
