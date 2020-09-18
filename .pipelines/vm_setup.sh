@@ -65,3 +65,7 @@ refclock PHC /dev/ptp0 poll 3 dpoll -2 offset 0
 makestep 1.0 -1
 EOF
 systemctl restart chrony.service
+
+echo "Switch ssh port from default 22"
+sed -i 's/#Port 22/Port 2000/g' /etc/ssh/sshd_config
+service ssh restart
