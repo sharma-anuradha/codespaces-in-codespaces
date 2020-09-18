@@ -13,7 +13,7 @@
   "scripts": {
     "preinstall": "node scripts/npm/preinstall.js",
     "postinstall": "yarn vscode:download",
-    "build": "cross-env NODE_ENV=production webpack --config config/webpack/webpack.config.js",
+    "build": "cross-env NODE_ENV=production yarn check:commitId && webpack --config config/webpack/webpack.config.js",
     "build:ts": "yarn build:commonjs && yarn build:lib",
     "build:commonjs": "tsc -b config/commonjs",
     "build:lib": "tsc -b config/lib",
@@ -46,7 +46,8 @@
     "start:dns:darwin": "sh ./scripts/shell/start-dns-server-darwin.sh",
     "watch:client": "webpack-dev-server --config config/webpack/webpack.config.js",
     "watch:portal": "dotnet watch --project ../../../../services/containers/VsClk.Portal.WebSite/VsClk.Portal.WebSite.csproj run --launch-profile Local",
-    "setup:codespace": "bash ./scripts/shell/setup-codespace.sh"
+    "setup:codespace": "bash ./scripts/shell/setup-codespace.sh",
+    "check:commitId": "node --unhandled-rejections=strict ./scripts/npm/check-commitId-integrity.js"
   },
   "devDependencies": {
     "colors": "^1.4.0",
