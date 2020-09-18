@@ -68,8 +68,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    var environment = handlerContext.CloudEnvironment;
                    ValidateEnvironment(environment, environmentData.EnvironmentId);
 
-                   environment.LastUpdatedByHeartBeat = environmentData.Timestamp;
-
                    // This switch gives preference to the existing value instead of the incomming value.
                    // This prevents new values from ovewritting the existing one.
                    environment.Connection.ConnectionSessionPath = !string.IsNullOrWhiteSpace(environment.Connection.ConnectionSessionPath) ? environment.Connection.ConnectionSessionPath : environmentData.SessionPath;
@@ -83,7 +81,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                        if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
                        {
                            environment = await environmentManager.SuspendAsync(Guid.Parse(environment.Id), childLogger);
-                           environment.LastUpdatedByHeartBeat = environmentData.Timestamp;
                            return new CollectedDataHandlerContext(environment);
                        }
                        else if (newState.state == CloudEnvironmentState.Unavailable)

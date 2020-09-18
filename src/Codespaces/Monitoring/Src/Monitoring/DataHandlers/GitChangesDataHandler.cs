@@ -1,4 +1,4 @@
-﻿// <copyright file="GitChangesDataHandler.cs" company="Microsoft">
+// <copyright file="GitChangesDataHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -63,7 +63,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    var cloudEnvironment = handlerContext.CloudEnvironment;
                    ValidateCloudEnvironment(cloudEnvironment, gitChangesData.EnvironmentId);
 
-                   cloudEnvironment.LastUpdatedByHeartBeat = gitChangesData.Timestamp;
                    cloudEnvironment.HasUnpushedGitChanges = gitChangesData.HasChanges;
 
                    return Task.FromResult(handlerContext);

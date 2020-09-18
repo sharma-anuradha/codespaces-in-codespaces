@@ -49,19 +49,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
         /// Initializes a new instance of the <see cref="HeartbeatMonitorContinuationHandler"/> class.
         /// </summary>
         /// <param name="environmentRepository">Target environment repository.</param>
+        /// <param name="heartbeatRepository">Target environment heartbeat repository.</param>
         /// <param name="environmentRepairWorkflows">Target environment repair workflows.</param>
         /// <param name="latestHeartbeatMonitor">Target latest Heartbeat Monitor.</param>
         /// <param name="serviceProvider">Target environment service provider.</param>
         /// <param name="environmentMonitorSettings">Environment monitor settings.</param>
         public HeartbeatMonitorContinuationHandler(
             ICloudEnvironmentRepository environmentRepository,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows,
             ILatestHeartbeatMonitor latestHeartbeatMonitor,
             IServiceProvider serviceProvider,
             EnvironmentMonitorSettings environmentMonitorSettings)
             : base(environmentRepository, environmentRepairWorkflows, latestHeartbeatMonitor, serviceProvider, environmentMonitorSettings)
         {
+            HeartbeatRepository = heartbeatRepository;
         }
+
+        private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
         /// <inheritdoc/>
         protected override string LogBaseName => DefaultQueueTarget;
@@ -97,11 +102,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Continu
                 return CreateFinalResult(OperationState.Cancelled, "StopHeartbeatMonitoringState");
             }
 
-            bool hasHeartbeatTimeExpired = LatestHeartbeatMonitor.LastHeartbeatReceived != null
-                                && LatestHeartbeatMonitor.LastHeartbeatReceived > environment.LastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
-                                && environment.LastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes);
+#pragma warning disable CS0618 // Type or member is obsolete
+            DateTime? lastUpdatedByHeartBeat = environment.LastUpdatedByHeartBeat;
+#pragma warning restore CS0618 // Type or member is obsolete
+            if (!string.IsNullOrEmpty(environment.HeartbeatResourceId))
+            {
+                var heartbeatRecord = await HeartbeatRepository.GetAsync(environment.HeartbeatResourceId, logger.NewChildLogger());
+                lastUpdatedByHeartBeat = heartbeatRecord.LastUpdatedByHeartBeat;
+            }
+
+            bool hasHeartbeatTimeExpired =
+                (LatestHeartbeatMonitor.LastHeartbeatReceived != default && lastUpdatedByHeartBeat == default)
+                || (LatestHeartbeatMonitor.LastHeartbeatReceived != default
+                && LatestHeartbeatMonitor.LastHeartbeatReceived > lastUpdatedByHeartBeat + TimeSpan.FromSeconds(EnvironmentMonitorConstants.HeartbeatIntervalInSeconds)
+                && lastUpdatedByHeartBeat < DateTime.UtcNow.AddMinutes(-EnvironmentMonitorConstants.HeartbeatTimeoutInMinutes));
+
             var environmentMonitor = ServiceProvider.GetService<IEnvironmentMonitor>();
-            logger.FluentAddBaseValue(nameof(environment.LastUpdatedByHeartBeat), environment.LastUpdatedByHeartBeat);
+
+            logger.FluentAddBaseValue(nameof(lastUpdatedByHeartBeat), lastUpdatedByHeartBeat);
 
             if (environment.Type != EnvironmentType.StaticEnvironment)
             {

@@ -108,7 +108,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                         // Mark environment provision to failed status
                         if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
                         {
-                            cloudEnvironment.LastUpdatedByHeartBeat = jobResultData.Timestamp;
                             var newState = CloudEnvironmentState.Failed;
                             var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
                             handlerContext.CloudEnvironmentState = newState;

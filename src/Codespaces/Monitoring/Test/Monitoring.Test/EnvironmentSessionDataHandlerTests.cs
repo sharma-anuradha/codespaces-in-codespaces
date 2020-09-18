@@ -13,8 +13,8 @@ namespace HeartBeat.Test
         [Fact]
         public async void ThrowInvalidOperationExceptionWhenWrongHandlerIsCalled()
         {
-            var handlerContext = await GetHandlerContext(); 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => environmentSessionDataHandler.ProcessAsync(testEnvironmentData,  handlerContext, vmResourceId, logger));
+            var handlerContext = await GetHandlerContext();
+            await Assert.ThrowsAsync<InvalidOperationException>(() => environmentSessionDataHandler.ProcessAsync(testEnvironmentData, handlerContext, vmResourceId, logger));
         }
 
         [Fact]
@@ -50,16 +50,6 @@ namespace HeartBeat.Test
         }
 
         [Fact]
-        public async void UpdateLastUpdatedHeartBeat()
-        {
-            var environmentSessionData = CreateEnvironmentSessionDataObject();
-            var handlerContext = await GetHandlerContext();
-
-            await environmentSessionDataHandler.ProcessAsync(environmentSessionData, handlerContext, vmResourceId, logger);
-            Assert.Equal(handlerContext.CloudEnvironment.LastUpdatedByHeartBeat, environmentSessionData.Timestamp);
-        }
-
-        [Fact]
         public async void IgnoreDataWhenEnvironmentIdIsMissing()
         {
             var environmentSessionData = CreateEnvironmentSessionDataObject(environmentId: null);
@@ -67,7 +57,6 @@ namespace HeartBeat.Test
 
             await environmentSessionDataHandler.ProcessAsync(environmentSessionData, handlerContext, vmResourceId, logger);
             Assert.NotEqual(handlerContext.CloudEnvironment.LastUsed, environmentSessionData.Timestamp);
-            Assert.NotEqual(handlerContext.CloudEnvironment.LastUpdatedByHeartBeat, environmentSessionData.Timestamp);
         }
 
 
@@ -96,6 +85,6 @@ namespace HeartBeat.Test
         }
 
 
-   
+
     }
 }

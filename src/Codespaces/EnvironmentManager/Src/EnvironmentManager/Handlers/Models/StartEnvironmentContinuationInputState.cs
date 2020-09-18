@@ -1,4 +1,4 @@
-﻿// <copyright file="StartEnvironmentContinuationInputState.cs" company="Microsoft">
+// <copyright file="StartEnvironmentContinuationInputState.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -38,5 +38,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Kick off Heartbeat Monitoring.
         /// </summary>
         StartHeartbeatMonitoring = 5,
+
+         /// <summary>
+        /// Create Heartbeat record.
+        /// </summary>
+        GetHeartbeatRecord = 6,
     }
 }

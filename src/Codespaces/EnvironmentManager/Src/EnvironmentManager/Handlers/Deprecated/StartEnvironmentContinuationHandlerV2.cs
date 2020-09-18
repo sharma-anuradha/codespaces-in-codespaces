@@ -6,11 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
@@ -31,6 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// Initializes a new instance of the <see cref="StartEnvironmentContinuationHandlerV2"/> class.
         /// </summary>
         /// <param name="cloudEnvironmentRepository">target env repo.</param>
+        /// <param name="heartbeatRepository">target env heartbeat repo.</param>
         /// <param name="resourceBrokerHttpClient">Target Resource Broker Http Client.</param>
         /// <param name="environmentStateManager">target environment state manager.</param>
         /// <param name="resourceAllocationManager">target resource allocation manager.</param>
@@ -40,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <param name="environmentRepairWorkflows">Environment repair workflows.</param>
         public StartEnvironmentContinuationHandlerV2(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IEnvironmentStateManager environmentStateManager,
             IResourceAllocationManager resourceAllocationManager,
@@ -49,6 +49,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             IEnumerable<IEnvironmentRepairWorkflow> environmentRepairWorkflows)
             : base(cloudEnvironmentRepository)
         {
+            HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
             ResourceBrokerHttpClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             EnvironmentStateManager = Requires.NotNull(environmentStateManager, nameof(environmentStateManager));
             ResourceAllocationManager = Requires.NotNull(resourceAllocationManager, nameof(resourceAllocationManager));
@@ -87,6 +88,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private IResourceSelectorFactory ResourceSelector { get; }
 
         private Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
+        
+        private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
         /// <inheritdoc/>
         protected override async Task<ContinuationResult> RunOperationCoreAsync(
@@ -113,10 +116,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     // Trigger compute allocate by calling allocate endpoint
                     return await operationInput.RunAllocateResourceAsync(CloudEnvironmentRepository, ResourceSelector, ResourceAllocationManager, record, logger, LogBaseName);
 
+                case StartEnvironmentContinuationInputState.GetHeartbeatRecord:
+                    // Trigger create environment heartbeat record if needed.
+                    return await operationInput.RunGetHeartbeatRecordAsync(HeartbeatRepository, CloudEnvironmentRepository, record, logger, LogBaseName);
+                    
                 case StartEnvironmentContinuationInputState.CheckResourceState:
                     // Trigger check resource state
                     return await operationInput.RunCheckResourceProvisioningAsync(CloudEnvironmentRepository, ResourceBrokerHttpClient, record, logger, LogBaseName);
-
+                
                 case StartEnvironmentContinuationInputState.StartCompute:
                     // Trigger start compute by calling start endpoint
                     return await operationInput.RunStartComputeAsync(CloudEnvironmentRepository, EnvironmentStateManager, WorkspaceManager, ServiceProvider, record, logger, LogBaseName);

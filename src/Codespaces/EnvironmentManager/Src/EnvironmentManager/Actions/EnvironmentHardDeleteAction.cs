@@ -30,9 +30,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="environmentAccessManager">Target environment access manager.</param>
-        /// /// <param name="resourceBrokerHttpClient">Target resource broker http client.</param>
+        /// <param name="resourceBrokerHttpClient">Target resource broker http client.</param>
         /// <param name="workspaceManager">Target workspace manager.</param>
         /// <param name="environmentListAction">Target environment list action.</param>
+        /// <param name="heartbeatRepository">Target environment heartbeat repository.</param>
         public EnvironmentHardDeleteAction(
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
@@ -42,14 +43,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IEnvironmentAccessManager environmentAccessManager,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IWorkspaceManager workspaceManager,
-            IEnvironmentListAction environmentListAction)
+            IEnvironmentListAction environmentListAction,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository)
             : base(environmentStateManager, repository, currentLocationProvider, currentUserProvider, controlPlaneInfo, environmentAccessManager)
         {
             ResourceBrokerClient = Requires.NotNull(resourceBrokerHttpClient, nameof(resourceBrokerHttpClient));
             WorkspaceManager = Requires.NotNull(workspaceManager, nameof(workspaceManager));
             EnvironmentListAction = Requires.NotNull(environmentListAction, nameof(environmentListAction));
+            HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
         }
 
+        private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
+        
         /// <inheritdoc/>
         protected override string LogBaseName => "environment_hard_delete_action";
 
@@ -106,6 +111,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             var storageToken = input.AllocatedStorageId;
             var liveshareToken = input.AllocatedLiveshareWorkspaceId;
             var osDiskIdToken = input.AllocatedOsDiskId;
+            string heartbeatIdToken = default;
 
             if (record?.Value != null)
             {
@@ -128,9 +134,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                 }
 
                 liveshareToken ??= record.Value.Connection?.WorkspaceId;
+                heartbeatIdToken = record.Value.HeartbeatResourceId;
             }
 
-            await CleanupResourcesAsync(input.Id, computeToken, storageToken, osDiskIdToken, liveshareToken, logger);
+            await CleanupResourcesAsync(input.Id, computeToken, storageToken, osDiskIdToken, liveshareToken, heartbeatIdToken, logger);
 
             if (record?.Value != null)
             {
@@ -149,6 +156,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             Guid? storageIdToken,
             Guid? osDiskIdToken,
             string liveshareToken,
+            string heartbeatIdToken,
             IDiagnosticsLogger logger)
         {
             if (storageIdToken != null)
@@ -207,6 +215,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
                    {
                        innerLogger.FluentAddBaseValue("ConnectionSessionId", liveshareToken);
                        await WorkspaceManager.DeleteWorkspaceAsync(liveshareToken, innerLogger.NewChildLogger());
+                   },
+                   swallowException: true);
+            }
+
+            if (heartbeatIdToken != null)
+            {
+                 await logger.OperationScopeAsync(
+                   $"{LogBaseName}_delete_heartbeat_record",
+                   async (innerLogger) =>
+                   {
+                       innerLogger.FluentAddBaseValue("HeartbeatResourceId", heartbeatIdToken);
+                       await HeartbeatRepository.DeleteAsync(heartbeatIdToken, logger.NewChildLogger());
                    },
                    swallowException: true);
             }

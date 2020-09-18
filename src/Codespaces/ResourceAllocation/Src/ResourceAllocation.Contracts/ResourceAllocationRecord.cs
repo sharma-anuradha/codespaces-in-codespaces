@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceAllocationRecord.cs" company="Microsoft">
+// <copyright file="ResourceAllocationRecord.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -20,8 +20,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation
     [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class ResourceAllocationRecord
     {
-        private ResourceAllocationKeepAlive keepAlive;
-
         /// <summary>
         /// Gets or sets the resource id token.
         /// </summary>
@@ -53,16 +51,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation
         [JsonProperty]
         [JsonConverter(typeof(StringEnumConverter))]
         public ResourceType? Type { get; set; }
-
-        /// <summary>
-        /// Gets or sets the resources keep alive.
-        /// </summary>
-        [JsonProperty]
-        public ResourceAllocationKeepAlive KeepAlive
-        {
-            get { return keepAlive ?? (keepAlive = new ResourceAllocationKeepAlive()); }
-            set { keepAlive = value; }
-        }
 
         /// <summary>
         /// Gets or sets a value indicating whether record is ready.

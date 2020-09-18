@@ -1,4 +1,4 @@
-﻿// <copyright file="ResourceRecord.cs" company="Microsoft">
+// <copyright file="ResourceRecord.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

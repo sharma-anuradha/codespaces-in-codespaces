@@ -160,7 +160,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the scheduled archival date, after which the environment will be queued up for archival.
         /// </summary>
-        [JsonProperty(Required = Required.Default, PropertyName ="scheduledArchival")]
+        [JsonProperty(Required = Required.Default, PropertyName = "scheduledArchival")]
         public DateTime? ScheduledArchival { get; set; }
 
         /// <summary>
@@ -288,9 +288,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         public string ExportedBranch { get; set; }
 
         /// <summary>
+        /// Gets or sets the heartbeat record id.
+        /// </summary>
+        [JsonProperty(Required = Required.Default, PropertyName = "heartbeatResourceId")]
+        public string HeartbeatResourceId { get; set; }
+
+        /// <summary>
         /// Gets or sets the last time the record is updated based on heartbeat.
         /// </summary>
-        [JsonProperty(Required = Required.Default, PropertyName = "lastUpdatedByHeartBeat")]
+        [Obsolete("Replaced with heartbeat record.")]
         public DateTime LastUpdatedByHeartBeat { get; set; }
 
         /// <summary>

@@ -59,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             {
                 services.AddVsoDocumentDbCollection<CloudEnvironment, IGlobalCloudEnvironmentRepository, DocumentDbCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
                 services.AddVsoDocumentDbCollection<CloudEnvironment, IRegionalCloudEnvironmentRepository, RegionalCloudEnvironmentRepository>(DocumentDbCloudEnvironmentRepository.ConfigureOptions);
+                services.AddVsoDocumentDbCollection<CloudEnvironmentHeartbeat, ICloudEnvironmentHeartbeatRepository, DocumentDbCloudEnvironmentHeartbeatRepository>(DocumentDbCloudEnvironmentHeartbeatRepository.ConfigureOptions);
                 services.AddVsoCosmosContainer<CloudEnvironment, ICloudEnvironmentCosmosContainer, CloudEnvironmentCosmosContainer>(CloudEnvironmentCosmosContainer.ConfigureOptions);
                 services.AddSingleton<IContinuationJobQueueRepository, FrontendJobQueueRepository>();
                 services.AddSingleton<ICrossRegionContinuationJobQueueRepository, CrossRegionFrontendJobQueueRepository>();
@@ -67,6 +68,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             }
 
             services.AddSingleton<ICloudEnvironmentRepository, CloudEnvironmentRepository>();
+            services.AddSingleton<ICloudEnvironmentHeartbeatRepository, DocumentDbCloudEnvironmentHeartbeatRepository>();
             services.AddSingleton<IEnvironmentStateManager, EnvironmentStateManager>();
 
             // Continuation

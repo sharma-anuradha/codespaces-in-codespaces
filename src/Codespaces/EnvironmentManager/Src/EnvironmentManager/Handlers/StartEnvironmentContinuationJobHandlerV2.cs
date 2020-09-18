@@ -36,6 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Initializes a new instance of the <see cref="StartEnvironmentContinuationJobHandlerV2"/> class.
         /// </summary>
         /// <param name="cloudEnvironmentRepository">target env repo.</param>
+        /// <param name="heartbeatRepository">target env heartbeat repo.</param>
         /// <param name="resourceBrokerHttpClient">Target Resource Broker Http Client.</param>
         /// <param name="environmentStateManager">target environment state manager.</param>
         /// <param name="resourceAllocationManager">target resource allocation manager.</param>
@@ -46,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// <param name="jobQueueProducerFactory">Job Queue producer factory instance.</param>
         public StartEnvironmentContinuationJobHandlerV2(
             ICloudEnvironmentRepository cloudEnvironmentRepository,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
             IResourceBrokerResourcesExtendedHttpContract resourceBrokerHttpClient,
             IEnvironmentStateManager environmentStateManager,
             IResourceAllocationManager resourceAllocationManager,
@@ -65,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
             Requires.NotNull(environmentRepairWorkflows, nameof(environmentRepairWorkflows));
             EnvironmentRepairWorkflows = environmentRepairWorkflows.ToDictionary(x => x.WorkflowType);
+            HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
         }
 
         /// <inheritdoc/>
@@ -89,6 +92,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         private IResourceSelectorFactory ResourceSelector { get; }
 
         private Dictionary<EnvironmentRepairActions, IEnvironmentRepairWorkflow> EnvironmentRepairWorkflows { get; }
+
+        private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
         /// <inheritdoc/>
         protected override StartEnvironmentContinuationInputState GetStateFromPayload(StartEnvironmentContinuationInput payload)
@@ -118,10 +123,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     // Trigger compute allocate by calling allocate endpoint
                     return ToContinuationInfo(await payload.RunAllocateResourceAsync(CloudEnvironmentRepository, ResourceSelector, ResourceAllocationManager, record, logger, LogBaseName), payload);
 
+                case StartEnvironmentContinuationInputState.GetHeartbeatRecord:
+                    // Trigger create environment heartbeat record if needed.
+                    return ToContinuationInfo(await payload.RunGetHeartbeatRecordAsync(HeartbeatRepository, CloudEnvironmentRepository, record, logger, LogBaseName), payload);
+                 
                 case StartEnvironmentContinuationInputState.CheckResourceState:
                     // Trigger check resource state
                     return ToContinuationInfo(await payload.RunCheckResourceProvisioningAsync(CloudEnvironmentRepository, ResourceBrokerHttpClient, record, logger, LogBaseName), payload);
-
+               
                 case StartEnvironmentContinuationInputState.StartCompute:
                     // Trigger start compute by calling start endpoint
                     return ToContinuationInfo(await payload.RunStartComputeAsync(CloudEnvironmentRepository, EnvironmentStateManager, WorkspaceManager, ServiceProvider, record, logger, LogBaseName), payload);

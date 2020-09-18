@@ -13,14 +13,12 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Subscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Settings;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Susbscriptions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.UserProfile;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
@@ -35,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private const bool QueueResourceAllocationDefault = true;
         
         private readonly Regex envNameRegex = new Regex(@"^[-\w\._\(\) ]{1,90}$", RegexOptions.IgnoreCase);
-       
+
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvironmentCreateAction"/> class.
         /// </summary>
@@ -53,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="resourceSelectorFactory">The resource selector factory.</param>
         /// <param name="environmentStateManager">Target environment state manager.</param>
         /// <param name="repository">Target repository.</param>
+        /// <param name="heartbeatRepository">Target heartbeat repository.</param>
         /// <param name="currentLocationProvider">Target current location provider.</param>
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
@@ -76,6 +75,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             IResourceSelectorFactory resourceSelectorFactory,
             IEnvironmentStateManager environmentStateManager,
             ICloudEnvironmentRepository repository,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
             ICurrentLocationProvider currentLocationProvider,
             ICurrentUserProvider currentUserProvider,
             IControlPlaneInfo controlPlaneInfo,
@@ -100,6 +100,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             Mapper = Requires.NotNull(mapper, nameof(mapper));
             EnvironmentActionValidator = Requires.NotNull(environmentActionValidator, nameof(environmentActionValidator));
             SystemConfiguration = Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
+            HeartbeatRepository = Requires.NotNull(heartbeatRepository, nameof(heartbeatRepository));
         }
 
         /// <inheritdoc/>
@@ -132,6 +133,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         private IEnvironmentActionValidator EnvironmentActionValidator { get; }
 
         private ISystemConfiguration SystemConfiguration { get; }
+
+        public ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
         /// <inheritdoc/>
         public async Task<CloudEnvironment> RunAsync(
@@ -370,6 +373,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             await EnvironmentStateManager.SetEnvironmentStateAsync(
                 record.Value, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, null, logger.NewChildLogger());
 
+            // Create heartbeat record.
+            var heartbeatRecord = new CloudEnvironmentHeartbeat();
+            heartbeatRecord = await HeartbeatRepository.CreateAsync(heartbeatRecord, logger.NewChildLogger());
+            record.Value.HeartbeatResourceId = heartbeatRecord.Id;
+
             // Create new environment record
             var newRecordValue = await Repository.CreateAsync(record.Value, logger.NewChildLogger());
             record.ReplaceAndResetTransition(newRecordValue);
@@ -444,6 +452,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             // But (at least for now) new environments immediately transition to Provisioning state.
             await EnvironmentStateManager.SetEnvironmentStateAsync(
                 record.Value, CloudEnvironmentState.Provisioning, CloudEnvironmentStateUpdateTriggers.CreateEnvironment, string.Empty, null, logger.NewChildLogger());
+
+            var heartbeatRecord = new CloudEnvironmentHeartbeat();
+            heartbeatRecord = await HeartbeatRepository.CreateAsync(heartbeatRecord, logger.NewChildLogger());
+            record.Value.HeartbeatResourceId = heartbeatRecord.Id;
 
             // Persist core cloud environment record
             var newRecordValue = await Repository.CreateAsync(record.Value, logger.NewChildLogger());

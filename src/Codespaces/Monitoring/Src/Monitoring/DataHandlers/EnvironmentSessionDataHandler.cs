@@ -1,4 +1,4 @@
-﻿// <copyright file="EnvironmentSessionDataHandler.cs" company="Microsoft">
+// <copyright file="EnvironmentSessionDataHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -19,17 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
     /// </summary>
     public class EnvironmentSessionDataHandler : IDataHandler
     {
-        private readonly ILatestHeartbeatMonitor latestHeartbeatMonitor;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EnvironmentSessionDataHandler"/> class.
-        /// </summary>
-        /// <param name="latestHeartbeatMonitor">Latest Heartbeat Monitor.</param>
-        public EnvironmentSessionDataHandler(ILatestHeartbeatMonitor latestHeartbeatMonitor)
-        {
-            this.latestHeartbeatMonitor = latestHeartbeatMonitor;
-        }
-
         /// <inheritdoc />
         public bool CanProcess(CollectedData data)
         {
@@ -37,14 +26,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
         }
 
         /// <inheritdoc />
-        public async Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
+        public Task<CollectedDataHandlerContext> ProcessAsync(CollectedData data, CollectedDataHandlerContext handlerContext, Guid vmResourceId, IDiagnosticsLogger logger)
         {
             if (!CanProcess(data))
             {
                 throw new InvalidOperationException($"Collected data of type {data?.GetType().Name} cannot be processed by {nameof(EnvironmentSessionDataHandler)}.");
             }
 
-            return await logger.OperationScopeAsync(
+            return logger.OperationScopeAsync(
                "environment_session_data_handler_process",
                (childLogger) =>
                {
@@ -62,9 +51,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                    var cloudEnvironment = handlerContext.CloudEnvironment;
                    ValidateCloudEnvironment(cloudEnvironment, environmentSessionData.EnvironmentId);
-
-                   cloudEnvironment.LastUpdatedByHeartBeat = environmentSessionData.Timestamp;
-                   latestHeartbeatMonitor.UpdateHeartbeat(environmentSessionData.Timestamp);
 
                    if (environmentSessionData.ConnectedSessionCount > 0 && (cloudEnvironment.LastUsed < environmentSessionData.Timestamp))
                    {

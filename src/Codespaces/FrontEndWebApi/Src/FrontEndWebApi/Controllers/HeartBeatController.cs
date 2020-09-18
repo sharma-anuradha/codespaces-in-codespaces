@@ -45,16 +45,25 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// <param name="handlers">List of handlers to process the collected data from VSOAgent.</param>
         /// <param name="backendHeartBeatClient">Backend HeartBeat Client.</param>
         /// <param name="environmentManager">Environment Manager.</param>
+        /// <param name="heartbeatRepository">Heartbeat repository.</param>
+        /// <param name="cloudEnvironmentRepository">cloud environment repository.</param>
+        /// <param name="latestHeartbeatMonitor">Latest Heartbeat Monitor.</param>
         /// <param name="currentUserProvider">Current user provider.</param>
         public HeartBeatController(
             IEnumerable<IDataHandler> handlers,
             IResourceHeartBeatHttpContract backendHeartBeatClient,
             IEnvironmentManager environmentManager,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
+            ICloudEnvironmentRepository cloudEnvironmentRepository,
+            ILatestHeartbeatMonitor latestHeartbeatMonitor,
             ICurrentUserProvider currentUserProvider)
         {
             Handlers = handlers;
             BackendHeartBeatClient = backendHeartBeatClient;
             EnvironmentManager = environmentManager;
+            HeartbeatRepository = heartbeatRepository;
+            CloudEnvironmentRepository = cloudEnvironmentRepository;
+            LatestHeartbeatMonitor = latestHeartbeatMonitor;
             CurrentUserProvider = currentUserProvider;
         }
 
@@ -63,6 +72,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         private IResourceHeartBeatHttpContract BackendHeartBeatClient { get; }
 
         private IEnvironmentManager EnvironmentManager { get; }
+
+        private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
+
+        private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
+
+        private ILatestHeartbeatMonitor LatestHeartbeatMonitor { get; }
 
         private ICurrentUserProvider CurrentUserProvider { get; }
 
@@ -83,7 +98,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             logger.AddComputeResourceId(heartBeat.ResourceId)
                   .FluentAddBaseValue(nameof(heartBeat.AgentVersion), heartBeat.AgentVersion);
 
-            CloudEnvironment environment = null;
+            CloudEnvironment environment = default;
             var environmentId = GetEnvironmentId(heartBeat);
             var shouldSendBackendTask = true;
 
@@ -120,6 +135,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                        "process_heartbeat_collected_data",
                        async (childLogger) =>
                        {
+                           environment = await UpdateEnvironmentHeartbeatAsync(heartBeat, environment, childLogger);
+
                            var handlerContext = new CollectedDataHandlerContext(environment);
 
                            foreach (var data in collectedData)
@@ -194,13 +211,60 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             return NoContent();
         }
 
+        private async Task<CloudEnvironment> UpdateEnvironmentHeartbeatAsync(HeartBeatBody heartBeat, CloudEnvironment environment, IDiagnosticsLogger logger)
+        {
+            var heartbeatResourceId = environment.HeartbeatResourceId;
+
+            if (string.IsNullOrEmpty(heartbeatResourceId))
+            {
+                var heartbeatRecord = new CloudEnvironmentHeartbeat() { LastUpdatedByHeartBeat = heartBeat.TimeStamp };
+                heartbeatRecord = await HeartbeatRepository.CreateAsync(heartbeatRecord, logger.NewChildLogger());
+
+                await logger.RetryOperationScopeAsync(
+                    $"process_heartbeat_migrate_heartbeat",
+                    async (innerLogger) =>
+                    {
+                        environment = await CloudEnvironmentRepository.GetAsync(environment.Id, innerLogger.NewChildLogger());
+                        environment.HeartbeatResourceId = heartbeatRecord.Id;
+                        environment = await CloudEnvironmentRepository.UpdateAsync(environment, logger.NewChildLogger());
+                    });
+            }
+            else
+            {
+                await logger.RetryOperationScopeAsync(
+                     $"process_heartbeat_heartbeat_update",
+                     async (innerLogger) =>
+                     {
+                         var heartbeatRecord = await HeartbeatRepository.GetAsync(heartbeatResourceId, logger.NewChildLogger());
+
+                         if (heartbeatRecord.LastUpdatedByHeartBeat != default && heartbeatRecord.LastUpdatedByHeartBeat >= heartBeat.TimeStamp)
+                         {
+                             // no update required as record has latest heartbeat.
+                             return;
+                         }
+
+                         heartbeatRecord.LastUpdatedByHeartBeat = heartBeat.TimeStamp;
+                         await HeartbeatRepository.UpdateAsync(heartbeatRecord, logger.NewChildLogger());
+                     });
+            }
+
+            LatestHeartbeatMonitor.UpdateHeartbeat(heartBeat.TimeStamp);
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            environment.LastUpdatedByHeartBeat = heartBeat.TimeStamp;
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            return environment;
+        }
+
         private async Task UpdateCloudEnvironment(CollectedDataHandlerContext handlerContext, IDiagnosticsLogger logger)
         {
-            if (handlerContext.CloudEnvironment == null)
+            if (handlerContext.CloudEnvironment == default)
             {
                 return;
             }
 
+            // TODO :: Use EnvironmentTransition to track and apply environment changes.
             await EnvironmentManager.UpdateAsync(handlerContext.CloudEnvironment, handlerContext.CloudEnvironmentState, handlerContext.Trigger ?? CloudEnvironmentStateUpdateTriggers.Heartbeat, handlerContext.Reason ?? string.Empty, handlerContext.IsUserError, logger);
         }
 

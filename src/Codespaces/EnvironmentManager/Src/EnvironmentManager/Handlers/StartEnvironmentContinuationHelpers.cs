@@ -15,8 +15,6 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.ResourceB
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.RepairWorkflows;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Plans.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceAllocation;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers
@@ -187,17 +185,47 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
             }
 
-            if (resultResponse.All(status => status.IsReady))
-            {
-                operationInput.CurrentState = StartEnvironmentContinuationInputState.StartCompute;
-                return ContinuationResultHelpers.ReturnInProgress(operationInput);
-            }
-            else
-            {
-                operationInput.CurrentState = StartEnvironmentContinuationInputState.CheckResourceState;
-            }
+            operationInput.CurrentState = StartEnvironmentContinuationInputState.GetHeartbeatRecord;
 
             LogResource(operationInput, logger);
+
+            return ContinuationResultHelpers.ReturnInProgress(operationInput);
+        }
+
+        public static async Task<ContinuationResult> RunGetHeartbeatRecordAsync(
+            this IStartEnvironmentContinuationPayloadV2 operationInput,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
+            ICloudEnvironmentRepository cloudEnvironmentRepository,
+            EnvironmentRecordRef record,
+            IDiagnosticsLogger logger,
+            string operationBaseName)
+        {
+            if (string.IsNullOrEmpty(record.Value.HeartbeatResourceId))
+            {
+                var heartbeatRecord = new CloudEnvironmentHeartbeat();
+                heartbeatRecord = await heartbeatRepository.CreateAsync(heartbeatRecord, logger.NewChildLogger());
+
+                var didUpdate = await cloudEnvironmentRepository.UpdateRecordAsync(
+                                    operationInput.EnvironmentId,
+                                    record,
+                                    (environment, innerLogger) =>
+                                    {
+                                        // Update heartbeat record id.
+                                        record.Value.HeartbeatResourceId = heartbeatRecord.Id;
+                                    
+                                        return Task.FromResult(true);
+                                    },
+                                    logger,
+                                    operationBaseName);
+
+                if (!didUpdate)
+                {
+                    return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "FailedToUpdateEnvironmentRecord" };
+                }
+            }
+
+            operationInput.CurrentState = StartEnvironmentContinuationInputState.CheckResourceState;
+
             return ContinuationResultHelpers.ReturnInProgress(operationInput);
         }
 
@@ -499,6 +527,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 await workspaceManager.DeleteWorkspaceAsync(record.Value.Connection.WorkspaceId, logger.NewChildLogger());
             }
 
+            // Delete heartbeat, when Environment is deleted.
             return ContinuationResultHelpers.ReturnSucceeded();
         }
 

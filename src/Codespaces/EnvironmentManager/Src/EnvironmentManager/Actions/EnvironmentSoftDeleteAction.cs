@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// <param name="currentUserProvider">Target current user provider.</param>
         /// <param name="controlPlaneInfo">Target control plane info.</param>
         /// <param name="environmentAccessManager">Target environment access manager.</param>
-        /// /// <param name="resourceBrokerHttpClient">Target resource broker http client.</param>
+        /// <param name="resourceBrokerHttpClient">Target resource broker http client.</param>
         /// <param name="workspaceManager">Target workspace manager.</param>
         /// <param name="environmentListAction">Target environment list action.</param>
         /// <param name="environmentSuspendAction">Target environment suspend action.</param>

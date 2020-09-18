@@ -6,6 +6,7 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -36,6 +37,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         /// </summary>
         /// <param name="environmentManagerSettings">Target Environment Manager Settings.</param>
         /// <param name="cloudEnvironmentRepository">Target Cloud Environment Repository.</param>
+        /// <param name="heartbeatRepository">Target Cloud Environment Heartbeat Repository.</param>
         /// <param name="resourceBrokerHttpClient">Target Resource Broker Http Client.</param>
         /// <param name="taskHelper">Target task helper.</param>
         /// <param name="claimedDistributedLease">Claimed distributed lease.</param>
@@ -45,6 +47,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         public WatchOrphanedSystemEnvironmentsTask(
             EnvironmentManagerSettings environmentManagerSettings,
             ICloudEnvironmentRepository cloudEnvironmentRepository,
+            ICloudEnvironmentHeartbeatRepository heartbeatRepository,
             IResourceBrokerResourcesHttpContract resourceBrokerHttpClient,
             ITaskHelper taskHelper,
             IClaimedDistributedLease claimedDistributedLease,
@@ -53,6 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
             IConfigurationReader configurationReader)
             : base(environmentManagerSettings, cloudEnvironmentRepository, taskHelper, claimedDistributedLease, resourceNameBuilder, configurationReader)
         {
+            HeartbeatRepository = heartbeatRepository;
             ResourceBrokerHttpClient = resourceBrokerHttpClient;
             ControlPlaneInfo = controlPlaneInfo;
         }
@@ -63,6 +67,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
         private string LeaseBaseName => ResourceNameBuilder.GetLeaseName($"{nameof(WatchOrphanedSystemEnvironmentsTask)}Lease");
 
         private string LogBaseName => EnvironmentLoggingConstants.WatchOrphanedSystemEnvironmentsTask;
+
+        private ICloudEnvironmentHeartbeatRepository HeartbeatRepository { get; }
 
         private IResourceBrokerResourcesHttpContract ResourceBrokerHttpClient { get; }
 
@@ -146,51 +152,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Tasks
 
                             childLogger.FluentAddValue("EnvironmentOSDiskResourceRecordPresent", hasOSDiskResource);
 
-                            // Update db to push back keep alive details
-                            if (hasComputeResource || hasStorageResource || hasOSDiskResource)
+                            // The top level try/catch is to prevent a single exception from killing rest of the loop.
+                            var childLogger2 = childLogger.NewChildLogger();
+                            try
                             {
-                                var childLogger2 = childLogger.NewChildLogger();
-
-                                // The top level try/catch is to prevent a single exception from killing rest of the loop.
-                                try
+                                var result = await Retry.DoAsync<bool>(
+                                async (int attemptNumber) =>
                                 {
-                                    var updatedEnvironmentRecord = await Retry.DoAsync<CloudEnvironment>(
-                                    async (int attemptNumber) =>
+                                    childLogger2.AddAttempt(attemptNumber);
+                                    if (string.IsNullOrEmpty(environment.HeartbeatResourceId))
                                     {
-                                        childLogger2.AddAttempt(attemptNumber);
+                                        // Do nothing as no heartbeat record exists.
+                                        return true;
+                                    }
 
-                                        if (hasComputeResource)
-                                        {
-                                            environment.Compute.KeepAlive.ResourceAlive = updateTime;
-                                        }
-
-                                        if (hasStorageResource)
-                                        {
-                                            environment.Storage.KeepAlive.ResourceAlive = updateTime;
-                                        }
-
-                                        if (hasOSDiskResource)
-                                        {
-                                            environment.OSDisk.KeepAlive.ResourceAlive = updateTime;
-                                        }
-
-                                        environment = await CloudEnvironmentRepository.UpdateAsync(environment, childLogger2.NewChildLogger());
-                                        return environment;
-                                    },
-                                    async (attemptNumber, ex) =>
-                                    {
-                                        childLogger2.AddAttempt(attemptNumber);
-
-                                        if (ex is DocumentClientException dcex && dcex.StatusCode == HttpStatusCode.PreconditionFailed)
-                                        {
-                                            environment = await CloudEnvironmentRepository.GetAsync(environment.Id, childLogger2.NewChildLogger());
-                                        }
-                                    });
-                                }
-                                catch (Exception e)
+                                    var heartbeatRecord = await HeartbeatRepository.GetAsync(environment.HeartbeatResourceId, childLogger2);
+                                    heartbeatRecord.KeepAlive.ResourceAlive = updateTime;
+                                    await HeartbeatRepository.UpdateAsync(heartbeatRecord, childLogger2.NewChildLogger());
+                                    return true;
+                                },
+                                (attemptNumber, ex) =>
                                 {
-                                    childLogger2.LogErrorWithDetail($"{LogBaseName}_update_record_failed", e.ToString());
-                                }
+                                    childLogger2.AddAttempt(attemptNumber);
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                childLogger2.LogErrorWithDetail($"{LogBaseName}_update_record_failed", e.ToString());
                             }
 
                             // Pause to rate limit ourselves

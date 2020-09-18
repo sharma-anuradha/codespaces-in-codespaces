@@ -131,6 +131,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
             this.resourceBroker = new MockResourceBrokerClient();
             this.environmentMonitor = new MockEnvironmentMonitor();
             var metricsLogger = new MockEnvironmentMetricsLogger();
+            var heartbeatRepository = new MockCloudEnvironmentHeartbeatRepository();
 
             var skuMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
             var skuWindowsMock = new Mock<ICloudEnvironmentSku>(MockBehavior.Strict);
@@ -194,7 +195,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 environmentAccessManager,
                 resourceBroker,
                 workspaceManager,
-                environmentListAction
+                environmentListAction,
+                heartbeatRepository
                 );
 
             var environmentCreateAction = new EnvironmentCreateAction(
@@ -212,6 +214,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Test
                 MockUtil.MockResourceSelectorFactory(),
                 environmentStateManager,
                 environmentRepository,
+                heartbeatRepository,
                 MockUtil.MockCurrentLocationProvider(),
                 MockUtil.MockCurrentUserProvider(),
                 MockUtil.MockControlPlaneInfo(),

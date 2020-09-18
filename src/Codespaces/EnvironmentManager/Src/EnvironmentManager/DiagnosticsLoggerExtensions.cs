@@ -39,6 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         private const string LogValueCountryCode = "CountryCode";
         private const string LogValueAzureGeography = "AzureGeography";
         private const string LogValueVsoClientType = "VsoClientType";
+        private const string LogValueHeartbeatResourceId = "HeartbeatResourceId";
 
         /// <summary>
         /// Add logging fields for an <see cref="CloudEnvironment"/> instance.
@@ -68,7 +69,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     .AddPartner(cloudEnvironment.Partner)
                     .AddCountryCode(cloudEnvironment.CreationMetrics?.IsoCountryCode)
                     .AddAzureGeography(cloudEnvironment.CreationMetrics?.AzureGeography)
-                    .AddVsoClientType(cloudEnvironment.CreationMetrics?.VsoClientType);
+                    .AddVsoClientType(cloudEnvironment.CreationMetrics?.VsoClientType)
+                    .AddHeartbeatResourceId(cloudEnvironment.HeartbeatResourceId);
             }
 
             return logger;
@@ -299,5 +301,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
             return logger;
         }
+
+        /// <summary>
+        /// Add the newly environment connection invitation id to the logger.
+        /// </summary>
+        /// <param name="logger">The diagnostics logger.</param>
+        /// <param name="heartbeatResourceId">The workspace id.</param>
+        /// <returns>The <paramref name="logger"/>.</returns>
+        public static IDiagnosticsLogger AddHeartbeatResourceId(this IDiagnosticsLogger logger, string heartbeatResourceId)
+            => logger.FluentAddBaseValue(LogValueHeartbeatResourceId, heartbeatResourceId);
     }
 }
