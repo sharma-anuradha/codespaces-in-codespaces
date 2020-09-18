@@ -36,7 +36,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts
         /// </summary>
         /// <param name="poolCode">resource pool code.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        CloudQueue GetPoolQueue(string poolCode, IDiagnosticsLogger logger);
+        Task<CloudQueue> GetPoolQueueAsync(string poolCode, IDiagnosticsLogger logger);
 
         /// <summary>
         /// Create / Update pool queues.

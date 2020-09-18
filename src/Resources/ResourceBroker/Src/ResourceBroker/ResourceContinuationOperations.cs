@@ -270,6 +270,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             return await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
         }
 
+        /// <inheritdoc/>
+        public async Task ProcessHeartbeatAsync(HeartBeatInput heartBeatInput, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties)
+        {
+            const string reason = "HeartbeatReceived";
+            var consolidatedloggerProperties = await BuildLoggingProperties(heartBeatInput.ResourceId, reason, logger, loggingProperties);
+
+            var input = new ResourceHeartbeatContinuationInput()
+            {
+                ResourceId = heartBeatInput.ResourceId,
+                HeartBeatData = heartBeatInput,
+            };
+
+            var target = ResourceHeartbeatContinuationHandler.DefaultQueueTarget;
+
+            await Activator.Execute(target, input, logger, input.ResourceId, consolidatedloggerProperties);
+        }
+
         private IDictionary<string, string> BuildLoggingProperties(
             Guid resourceId,
             ResourceType type,

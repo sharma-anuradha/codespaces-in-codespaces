@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -32,6 +33,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
     public class ResourceRequestQueueProvider : IResourceRequestQueueProvider
     {
         private const string LogBase = "resource_request_queue_provider";
+        private const string PoolQueueExists = "PoolQueueExists";
+        private const string PoolQueueName = "PoolQueueName";
+        private const string PoolQueueResourceId = "PoolQueueResourceId";
+        private const string PoolQueueRecordExists = "PoolQueueRecordExists";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRequestQueueProvider"/> class.
@@ -62,6 +67,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             ResourceNameBuilder = resourceNameBuilder;
             ResourcePoolDefinitionStore = resourcePoolDefinitionStore;
             ControlPlaneResourceAccessor = controlPlaneResourceAccessor;
+            QueueCache = new ConcurrentDictionary<string, CloudQueue>();
         }
 
         private ITaskHelper TaskHelper { get; }
@@ -78,7 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
         private IResourcePoolDefinitionStore ResourcePoolDefinitionStore { get; }
 
-        private Task<ReadOnlyDictionary<string, CloudQueue>> InitializeQueueTask { get; set; }
+        private ConcurrentDictionary<string, CloudQueue> QueueCache { get; set; }
+
+        private Task InitializeQueueTask { get; set; }
 
         private IControlPlaneAzureResourceAccessor ControlPlaneResourceAccessor { get; }
 
@@ -90,18 +98,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         }
 
         /// <inheritdoc/>
-        public CloudQueue GetPoolQueue(string poolName, IDiagnosticsLogger logger)
+        public async Task<CloudQueue> GetPoolQueueAsync(string poolCode, IDiagnosticsLogger logger)
         {
-            if (InitializeQueueTask.Status != TaskStatus.RanToCompletion)
+            logger.FluentAddBaseValue("PoolCode", poolCode);
+
+            if (InitializeQueueTask?.Status != TaskStatus.RanToCompletion)
             {
                 return default;
             }
 
-            var queueFound = InitializeQueueTask.Result.TryGetValue(poolName, out var poolQueue);
+            var queueFound = QueueCache.TryGetValue(poolCode, out var poolQueue);
+
             if (!queueFound)
             {
-                logger.LogErrorWithDetail($"{LogBase}_get_pool_queue_error", $"No Request queue allocated for pool {poolName}");
-                return default;
+                logger.LogErrorWithDetail($"{LogBase}_get_pool_queue_error", $"No Request queue allocated for pool {poolCode}");
+
+                // Try to get queue information
+                poolQueue = await TryPopulateQueuefromRecordAsync(poolCode, logger);
             }
 
             return poolQueue;
@@ -126,13 +139,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <inheritdoc/>
         public async Task<int> GetPendingRequestCountForPoolAsync(string poolCode, IDiagnosticsLogger logger)
         {
-            var poolQueue = GetPoolQueue(poolCode, logger.NewChildLogger());
+            var poolQueue = await GetPoolQueueAsync(poolCode, logger.NewChildLogger());
             await poolQueue.FetchAttributesAsync();
             var pendingRequestCount = poolQueue.ApproximateMessageCount;
             return pendingRequestCount ?? 0;
         }
 
-        private Task<ReadOnlyDictionary<string, CloudQueue>> InitializePoolRequestQueues(IDiagnosticsLogger logger)
+        private Task InitializePoolRequestQueues(IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                  $"{LogBase}_initialization",
@@ -152,21 +165,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                      }
 
                      var queueClient = GetQueueClient(queueStorageInfo);
-                     var allocationQueues = new Dictionary<string, CloudQueue>();
 
                      foreach (var resourcePool in resourcePools)
                      {
-                         await CreatePoolRequestQueues(childLogger, resourcePool, queueClient, allocationQueues);
+                         await CreatePoolRequestQueues(childLogger, resourcePool, queueClient);
                      }
 
                      await TaskHelper.RunEnumerableAsync(
                         $"{LogBase}_create_pool_queue_record",
                         resourcePools,
-                        (resourcePool, itemLogger) => CreatePoolQueueRecordIfNotExist(queueStorageInfo, resourcePool, allocationQueues, itemLogger),
+                        (resourcePool, itemLogger) => CreatePoolQueueRecordIfNotExist(queueStorageInfo, resourcePool, itemLogger),
                         childLogger,
-                        (resourcePool, itemLogger) => ObtainLeaseAsync($"{LogBase}-lease-{allocationQueues[resourcePool.Details.GetPoolDefinition()].Name}", TimeSpan.FromMinutes(10), itemLogger));
-
-                     return new ReadOnlyDictionary<string, CloudQueue>(allocationQueues);
+                        (resourcePool, itemLogger) => ObtainLeaseAsync($"{LogBase}-lease-{QueueCache[resourcePool.Details.GetPoolDefinition()].Name}", TimeSpan.FromMinutes(10), itemLogger));
                  },
                  (e, childLogger) =>
                  {
@@ -177,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                  });
         }
 
-        private Task CreatePoolRequestQueues(IDiagnosticsLogger logger, ResourcePool resourcePool, CloudQueueClient queueClient, Dictionary<string, CloudQueue> allocationQueues)
+        private Task CreatePoolRequestQueues(IDiagnosticsLogger logger, ResourcePool resourcePool, CloudQueueClient queueClient)
         {
             return logger.OperationScopeAsync(
                  $"{LogBase}_create_pool_queue",
@@ -193,9 +203,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                      var queue = queueClient.GetQueueReference(queueName);
                      var newQueueCreated = await queue.CreateIfNotExistsAsync();
 
-                     childLogger.FluentAddValue("PoolQueueExists", !newQueueCreated);
+                     childLogger.FluentAddValue(PoolQueueExists, !newQueueCreated);
 
-                     allocationQueues[poolCode] = queue;
+                     QueueCache[poolCode] = queue;
                  });
         }
 
@@ -205,7 +215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 ResourceBrokerSettings.LeaseContainerName, leaseName, claimSpan, logger);
         }
 
-        private Task CreatePoolQueueRecordIfNotExist(QueueStorageInfo queueStorageInfo, ResourcePool resourcePool, Dictionary<string, CloudQueue> allocationQueues, IDiagnosticsLogger logger)
+        private Task CreatePoolQueueRecordIfNotExist(QueueStorageInfo queueStorageInfo, ResourcePool resourcePool, IDiagnosticsLogger logger)
         {
             return logger.OperationScopeAsync(
                  $"{LogBase}_create_pool_queue_record",
@@ -213,10 +223,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                  {
                      var poolCode = resourcePool.Details.GetPoolDefinition();
                      var poolQueueCode = resourcePool.Details.GetPoolDefinition().GetPoolQueueDefinition();
-                     var queueName = allocationQueues[poolCode].Name;
+                     var queueName = QueueCache[poolCode].Name;
 
                      childLogger.FluentAddBaseValue("PoolQueueSku", resourcePool.Details.SkuName)
-                        .FluentAddBaseValue("PoolQueueName", queueName)
+                        .FluentAddBaseValue(PoolQueueName, queueName)
                         .FluentAddBaseValue("PoolQueueLocation", resourcePool.Details.Location);
 
                      var queueResourceInfo = new AzureResourceInfo(queueStorageInfo.SubscriptionId, queueStorageInfo.ResourceGroup, queueName)
@@ -230,7 +240,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                      var poolQueueRecord = await ResourceRepository.GetPoolQueueRecordAsync(poolQueueCode, childLogger.NewChildLogger());
 
-                     childLogger.FluentAddBaseValue("PoolQueueRecordExists", poolQueueRecord != default);
+                     childLogger.FluentAddBaseValue(PoolQueueRecordExists, poolQueueRecord != default);
 
                      if (poolQueueRecord == default)
                      {
@@ -241,7 +251,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                          throw new InvalidOperationException($"Pool Queue record {poolQueueRecord.Id} found with different queue details.");
                      }
 
-                     childLogger.FluentAddBaseValue("PoolQueueResourceId", poolQueueRecord.Id);
+                     childLogger.FluentAddBaseValue(PoolQueueResourceId, poolQueueRecord.Id);
                  });
         }
 
@@ -284,6 +294,40 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             var storageAccount = new CloudStorageAccount(storageCredentials, useHttps: true);
             var queueClient = new CloudQueueClient(storageAccount.QueueStorageUri, storageCredentials);
             return queueClient;
+        }
+
+        private Task<CloudQueue> TryPopulateQueuefromRecordAsync(string poolCode, IDiagnosticsLogger logger)
+        {
+            return logger.OperationScopeAsync(
+                 $"{LogBase}_try_populate_queue",
+                 async (childLogger) =>
+                 {
+                     // Get pool queue record
+                     var poolQueueRecord = await ResourceRepository.GetPoolQueueRecordAsync(poolCode, logger.NewChildLogger());
+
+                     childLogger.FluentAddBaseValue(PoolQueueResourceId, poolQueueRecord.Id)
+                        .FluentAddBaseValue(PoolQueueName, poolQueueRecord.AzureResourceInfo.Name)
+                        .FluentAddBaseValue(PoolQueueRecordExists, poolQueueRecord != default);
+
+                     if (poolQueueRecord != default)
+                     {
+                         // Get queue client
+                         var storageInfo = await ControlPlaneResourceAccessor.GetStampStorageAccountForPoolQueuesAsync(logger);
+                         var queueClient = GetQueueClient(storageInfo);
+                         var queue = queueClient.GetQueueReference(poolQueueRecord.AzureResourceInfo.Name);
+
+                         // create queue
+                         var newQueueCreated = await queue.CreateIfNotExistsAsync();
+
+                         childLogger.FluentAddValue(PoolQueueExists, !newQueueCreated);
+
+                         QueueCache[poolCode] = queue;
+
+                         return queue;
+                     }
+
+                     return default;
+                 });
         }
     }
 }

@@ -61,7 +61,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<ResourcePoolDefinitionStore>();
             services.AddSingleton<IResourceScalingHandler>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
             services.AddSingleton<IResourcePoolDefinitionStore>(x => x.GetRequiredService<ResourcePoolDefinitionStore>());
-            services.AddSingleton<IResourceHeartBeatManager, ResourceHeartBeatManager>();
             services.AddSingleton<IResourceContinuationOperations, ResourceContinuationOperations>();
 
             // Resource broker strategies
@@ -112,6 +111,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<CleanupResourceContinuationHandler>();
             services.AddSingleton<ICleanupResourceContinuationHandler>(x => x.GetRequiredService<CleanupResourceContinuationHandler>());
             services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<CleanupResourceContinuationHandler>());
+            services.AddSingleton<ResourceHeartbeatContinuationHandler>();
+            services.AddSingleton<IResourceHeartbeatContinuationHandler>(x => x.GetRequiredService<ResourceHeartbeatContinuationHandler>());
+            services.AddSingleton<IContinuationTaskMessageHandler>(x => x.GetRequiredService<ResourceHeartbeatContinuationHandler>());
 
             // Create resource strategies
             services.AddSingleton<ICreateResourceStrategy, CreateStorageFileShareStrategy>();

@@ -72,8 +72,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
 
                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.RequestRecordId, resource.Id);
 
-                   var poolName = resourcePool.Details.GetPoolDefinition();
-                   var poolQueue = ResourceRequestQueueProvider.GetPoolQueue(poolName, logger.NewChildLogger());
+                   var poolCode = resourcePool.Details.GetPoolDefinition();
+                   var poolQueue = await ResourceRequestQueueProvider.GetPoolQueueAsync(poolCode, logger.NewChildLogger());
 
                    childLogger.FluentAddBaseValue(ResourceLoggingPropertyConstants.PoolQueueName, poolQueue.Name);
 
@@ -106,10 +106,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                        return resource;
                    }
 
-                   var poolName = resource.PoolReference?.Code;
+                   var poolCode = resource.PoolReference?.Code;
 
                    // check if there is any request for pool definition
-                   var poolQueue = ResourceRequestQueueProvider.GetPoolQueue(poolName, logger.NewChildLogger());
+                   var poolQueue = await ResourceRequestQueueProvider.GetPoolQueueAsync(poolCode, logger.NewChildLogger());
                    if (poolQueue == default)
                    {
                        // Queue initialization is not complete, so do nothing.
@@ -198,12 +198,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                                     queuedResourceRecord = await ResourceRepository.UpdateAsync(queuedResourceRecord, innerLogger.NewChildLogger());
 
                                     // Update OS Disk records if needed.
-                                    var queuedOsDiskRecordId = queuedResourceRecord.GetComputeDetails().OSDiskRecordId;
-                                    if (queuedOsDiskRecordId != default)
+                                    if (queuedResourceRecord.Type == ResourceType.ComputeVM)
                                     {
-                                        var queuedResourceComponentRecord = await ResourceRepository.GetAsync(queuedOsDiskRecordId, childLogger.NewChildLogger());
-                                        queuedResourceComponentRecord.AssignedResourceId = resource.GetComputeDetails().OSDiskRecordId;
-                                        await ResourceRepository.UpdateAsync(queuedResourceComponentRecord, innerLogger.NewChildLogger());
+                                        var queuedOsDiskRecordId = queuedResourceRecord.GetComputeDetails().OSDiskRecordId;
+                                        if (queuedOsDiskRecordId != default)
+                                        {
+                                            var queuedResourceComponentRecord = await ResourceRepository.GetAsync(queuedOsDiskRecordId, childLogger.NewChildLogger());
+                                            queuedResourceComponentRecord.AssignedResourceId = resource.GetComputeDetails().OSDiskRecordId;
+                                            await ResourceRepository.UpdateAsync(queuedResourceComponentRecord, innerLogger.NewChildLogger());
+                                        }
                                     }
                                 });
                         }
@@ -249,6 +252,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             resource.Assigned = DateTime.UtcNow;
             resource.IsReady = false;
             resource.ProvisioningStatus = OperationState.Initialized;
+            resource.ProvisioningReason = "shadow_record";
 
             if (resourcePool.Details is ResourcePoolComputeDetails computeDetails && computeDetails.OS == ComputeOS.Windows)
             {

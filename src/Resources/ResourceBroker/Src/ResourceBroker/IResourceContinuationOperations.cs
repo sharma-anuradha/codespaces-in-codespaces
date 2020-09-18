@@ -162,5 +162,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             string reason,
             IDiagnosticsLogger logger,
             IDictionary<string, string> loggingProperties = null);
+
+        /// <summary>
+        /// Process resource heartbeat.
+        /// </summary>
+        /// <param name="heartBeatInput">heartbeat input.</param>
+        /// <param name="logger">logger</param>
+        /// <param name="loggingProperties">The dictionary of logging properties.</param>
+        /// <returns></returns>
+        Task ProcessHeartbeatAsync(HeartBeatInput heartBeatInput, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties);
     }
 }

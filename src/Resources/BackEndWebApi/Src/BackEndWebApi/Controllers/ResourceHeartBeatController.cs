@@ -1,12 +1,15 @@
-﻿// <copyright file="ResourceHeartBeatController.cs" company="Microsoft">
+// <copyright file="ResourceHeartBeatController.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
@@ -16,6 +19,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
 {
@@ -30,15 +34,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceHeartBeatController"/> class.
         /// </summary>
-        /// <param name="resourceHeartBeatManager">Resource HeartBeat Manager.</param>
+        /// <param name="resourceContinuation">Resource continuation.</param>
         /// <param name="mapper">Mapper.</param>
-        public ResourceHeartBeatController(IResourceHeartBeatManager resourceHeartBeatManager, IMapper mapper)
+        public ResourceHeartBeatController(IResourceContinuationOperations resourceContinuation, IMapper mapper)
         {
-            ResourceHeartBeatManager = resourceHeartBeatManager;
+            ResourceContinuation = resourceContinuation;
             Mapper = mapper;
         }
 
-        private IResourceHeartBeatManager ResourceHeartBeatManager { get; }
+        private IResourceContinuationOperations ResourceContinuation { get; }
 
         private IResourceHeartBeatHttpContract ResourceHeartBeatHttp { get => this; }
 
@@ -56,9 +60,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
         [HttpOperationalScope("update")]
         public async Task<IActionResult> UpdateAsync(
-            [FromRoute]Guid resourceId,
-            [FromBody]HeartBeatBody heartBeat,
-            [FromServices]IDiagnosticsLogger logger)
+            [FromRoute] Guid resourceId,
+            [FromBody] HeartBeatBody heartBeat,
+            [FromServices] IDiagnosticsLogger logger)
         {
             try
             {
@@ -70,25 +74,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Controllers
                 return UnprocessableEntity();
             }
 
-            try
+            var loggingProperties = new Dictionary<string, string>();
+
+            if (Request.Headers.TryGetValue(HttpConstants.CorrelationIdHeader, out var correlationId))
             {
-                await ResourceHeartBeatHttp.UpdateHeartBeatAsync(resourceId, heartBeat, logger.NewChildLogger());
+                loggingProperties.Add(ResourceLoggingConstants.RequestCorrelationId, correlationId.First());
             }
-            catch (ResourceNotFoundException)
-            {
-                return UnprocessableEntity();
-            }
+
+            await ResourceHeartBeatHttp.UpdateHeartBeatAsync(resourceId, heartBeat, logger.NewChildLogger(), loggingProperties);
 
             return NoContent();
         }
 
         /// <inheritdoc/>
-        async Task IResourceHeartBeatHttpContract.UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger)
+        async Task IResourceHeartBeatHttpContract.UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties)
         {
             logger.AddBaseResourceId(resourceId);
 
             var heartBeatInput = Mapper.Map<HeartBeatInput>(heartBeat);
-            await ResourceHeartBeatManager.SaveHeartBeatAsync(heartBeatInput, logger.NewChildLogger());
+            if (heartBeatInput == null)
+            {
+                throw new ArgumentNullException(nameof(heartBeatInput));
+            }
+
+            await ResourceContinuation.ProcessHeartbeatAsync(heartBeatInput, logger.NewChildLogger(), loggingProperties);
         }
 
         private void ValidateResource(HeartBeatBody heartBeat, Guid resourceId)

@@ -50,6 +50,30 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                         resource = await ResourceRequestManager.TryAssignAsync(resource, reason, logger);
                     }
 
+                    // Update os disk record if it exists.
+                    if (resource.Type == Common.Contracts.ResourceType.ComputeVM)
+                    {
+                        var computeDetails = resource.GetComputeDetails();
+                        var osDiskRecordId = computeDetails.OSDiskRecordId;
+                        if (osDiskRecordId != default)
+                        {
+                            var osDiskResourceRecord = await ResourceRepository.GetAsync(osDiskRecordId.ToString(), logger.NewChildLogger());
+                            if (osDiskResourceRecord != default)
+                            {
+                                if (!osDiskResourceRecord.IsReady)
+                                {
+                                    osDiskResourceRecord.IsReady = true;
+                                    osDiskResourceRecord.Ready = DateTime.UtcNow;
+                                }
+
+                                // Copies over heartbeat information to OSDisk as well. When compute is gone, we will rely on the information in the OSDisk.
+                                osDiskResourceRecord.HeartBeatSummary = resource.HeartBeatSummary;
+
+                                await ResourceRepository.UpdateAsync(osDiskResourceRecord, logger.NewChildLogger());
+                            }
+                        }
+                    }
+
                     // Update core properties to indicate that its assigned
                     resource.IsReady = true;
                     resource.Ready = DateTime.UtcNow;

@@ -1,8 +1,9 @@
-﻿// <copyright file="IResourceHeartBeatHttpContract.cs" company="Microsoft">
+// <copyright file="IResourceHeartBeatHttpContract.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.HttpContracts.Common;
@@ -20,7 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.HttpContracts.Resou
         /// <param name="resourceId">VM Resource Id.</param>
         /// <param name="heartBeat">Heartbeat message.</param>
         /// <param name="logger">IDiagnostics Logger.</param>
+        /// <param name="loggingProperties">Logging properties.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        Task UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger);
+        Task UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = default);
     }
 }

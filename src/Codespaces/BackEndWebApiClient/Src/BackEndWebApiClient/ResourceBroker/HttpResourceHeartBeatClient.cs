@@ -1,8 +1,9 @@
-﻿// <copyright file="HttpResourceHeartBeatClient.cs" company="Microsoft">
+// <copyright file="HttpResourceHeartBeatClient.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
@@ -28,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient.Resour
         }
 
         /// <inheritdoc/>
-        public async Task UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger)
+        public async Task UpdateHeartBeatAsync(Guid resourceId, HeartBeatBody heartBeat, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties = null)
         {
             Requires.NotEmpty(resourceId, nameof(resourceId));
             var requestUri = ResourceHeartBeatHttpContract.GetUpdateHeartBeatUri(resourceId);
