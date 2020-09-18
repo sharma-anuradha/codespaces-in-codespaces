@@ -1,4 +1,4 @@
-﻿// <copyright file="BatchArchiveFileShareJobProvider.cs" company="Microsoft">
+// <copyright file="BatchArchiveFileShareJobProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -12,6 +12,7 @@ using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 {
@@ -20,6 +21,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     /// </summary>
     public class BatchArchiveFileShareJobProvider : BatchJobProvider<BatchArchiveFileShareJobInput>, IBatchArchiveFileShareJobProvider
     {
+        private const string TaskDisplayName = TaskConstants.ArchiveTaskDisplayName;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchArchiveFileShareJobProvider"/> class.
         /// </summary>
@@ -76,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             // Set permissions
             jobPrepareCommandLines.Add($"chmod 777 {localSrc}");
 
-            job.DisplayName = $"Archive{jobId}";
+            job.DisplayName = TaskDisplayName;
             job.JobPreparationTask = new JobPreparationTask
             {
                 CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobPrepareCommandLines)}\"",

@@ -51,6 +51,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 
             // Job Registration
             services.AddSingleton<IWatchStorageAzureBatchCleanupTask, WatchStorageAzureBatchCleanupTask>();
+            services.AddSingleton<IAzureBatchLoggerTask, AzureBatchLoggerTask>();
 
             return services;
         }

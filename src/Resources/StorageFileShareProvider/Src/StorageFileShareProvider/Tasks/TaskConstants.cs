@@ -18,5 +18,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
         /// Base log name for WatchStorageAzureBatchCleanupTask.
         /// </summary>
         public const string WatchStorageAzureBatchCleanupTaskLogBaseName = "watch_storage_azure_batch_cleanup_task";
+
+        /// <summary>
+        /// Base log name for AzureBatchLoggerTask.
+        /// </summary>
+        public const string AzureBatchLoggerTaskLogBaseName = "watch_storage_azure_batch_metrics_logger_task";
+
+        /// <summary>
+        /// Displayed name for Prepare Task
+        /// </summary>
+        public const string PrepareTaskDisplayName = "BatchPrepareFileShare";
+
+        /// <summary>
+        /// Displayed name for Archive Task
+        /// </summary>
+        public const string ArchiveTaskDisplayName = "BatchArchiveFileShare";
     }
 }

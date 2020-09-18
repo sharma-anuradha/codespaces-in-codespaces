@@ -1,4 +1,4 @@
-﻿// <copyright file="BatchPrepareFileShareJobProvider.cs" company="Microsoft">
+// <copyright file="BatchPrepareFileShareJobProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -14,6 +14,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Settings;
+using Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.Tasks;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
 {
@@ -22,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
     /// </summary>
     public class BatchPrepareFileShareJobProvider : BatchJobProvider<BatchPrepareFileShareJobInput>, IBatchPrepareFileShareJobProvider
     {
+        private const string TaskDisplayName = TaskConstants.PrepareTaskDisplayName;
         private readonly string batchJobMetadataKey = "SourceBlobFilename";
 
         /// <summary>
@@ -85,7 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider
             }
 
             var job = batchClient.JobOperations.CreateJob(jobId, poolInformation);
-            job.DisplayName = JoinCopyItemFileNames(taskInput.SourceCopyItems);
+            job.DisplayName = TaskDisplayName;
             job.JobPreparationTask = new JobPreparationTask
             {
                 CommandLine = $"/bin/bash -cxe \"printenv && {string.Join(" && ", jobPrepareCommandLines)}\"",
