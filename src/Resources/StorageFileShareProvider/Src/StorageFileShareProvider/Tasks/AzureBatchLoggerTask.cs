@@ -145,9 +145,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     .FluentAddValue("CompletedTasks", taskCounts.Completed)
                     .FluentAddValue("SucceededTasks", taskCounts.Succeeded)
                     .FluentAddValue("FailedTasks", taskCounts.Failed)
-                    .FluentAddValue("SuccessRate", taskCounts.Succeeded / taskCounts.Completed)
                     .FluentAddValue("DisplayName", job.DisplayName)
                     .FluentAddValue("JobId", job.Id);
+
+            if (taskCounts.Completed > 0)
+            {
+                logger.FluentAddValue("SuccessRate", taskCounts.Succeeded / taskCounts.Completed);
+            }
+
             await GetTaskTimes(job.Id, taskQuery, taskTimes, batchClient);
 
             if (displayName.Equals(ArchiveTaskDisplayName))
@@ -219,8 +224,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.StorageFileShareProvider.T
                     .FluentAddValue("RunningTasks", runningTasks)
                     .FluentAddValue("CompletedTasks", completedTasks)
                     .FluentAddValue("SucceededTasks", succeededTasks)
-                    .FluentAddValue("FailedTasks", failedTasks)
-                    .FluentAddValue("SuccessRate", succeededTasks / completedTasks);
+                    .FluentAddValue("FailedTasks", failedTasks);
+
+                if (completedTasks > 0)
+                {
+                    logger.FluentAddValue("SuccessRate", succeededTasks / completedTasks);
+                }
 
                 if (archiveTimes.Count > 0)
                 {
