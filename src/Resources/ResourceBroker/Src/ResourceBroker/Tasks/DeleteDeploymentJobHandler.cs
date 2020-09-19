@@ -1,4 +1,4 @@
-// <copyright file="DeleteOneDeploymentJobHandler.cs" company="Microsoft">
+// <copyright file="DeleteDeploymentJobHandler.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -17,24 +17,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// Perform the work of deleting one deploement history
     /// </summary>
-    public class DeleteOneDeploymentJobHandler : JobHandlerPayloadBase<DeleteOneDeploymentPayload>
+    public class DeleteDeploymentJobHandler : JobHandlerPayloadBase<DeleteDeploymentPayload>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DeleteOneDeploymentJobHandler"/> class.
+        /// Initializes a new instance of the <see cref="DeleteDeploymentJobHandler"/> class.
         /// </summary>
         /// <param name="azureClientFactory">Azure client factory</param>
-        public DeleteOneDeploymentJobHandler(
+        public DeleteDeploymentJobHandler(
             IAzureClientFactory azureClientFactory)
         {
             AzureClientFactory = azureClientFactory;
         }
 
-        private string LogBaseName { get; } = ResourceLoggingConstants.DeleteOneDeploymentJobHandler;
+        private string LogBaseName { get; } = ResourceLoggingConstants.DeleteDeploymentJobHandler;
 
         private IAzureClientFactory AzureClientFactory { get; }
 
         /// <inheritdoc/>
-        protected override Task HandleJobAsync(DeleteOneDeploymentPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        protected override Task HandleJobAsync(DeleteDeploymentPayload payload, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             return logger.OperationScopeAsync(
                 $"{LogBaseName}_run_deployment_delete",

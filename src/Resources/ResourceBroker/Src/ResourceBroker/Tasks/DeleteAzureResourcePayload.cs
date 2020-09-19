@@ -1,4 +1,4 @@
-// <copyright file="DeleteOneAzureResourcePayload.cs" company="Microsoft">
+// <copyright file="DeleteAzureResourcePayload.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -10,7 +10,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     /// <summary>
     /// A delete one Azure resource payload.
     /// </summary>
-    public class DeleteOneAzureResourcePayload : JobPayload
+    public class DeleteAzureResourcePayload : JobPayload
     {
         /// <summary>
         /// Gets or sets the subscription id.

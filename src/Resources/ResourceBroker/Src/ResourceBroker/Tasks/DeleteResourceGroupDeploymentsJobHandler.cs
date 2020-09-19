@@ -79,7 +79,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                         foreach (var deployment in deployments)
                         {
-                            var jobPayload = new DeleteOneDeploymentPayload()
+                            var jobPayload = new DeleteDeploymentPayload()
                             {
                                 SubscriptionId = subscriptionId,
                                 ResourceGroupName = resourceGroupName,

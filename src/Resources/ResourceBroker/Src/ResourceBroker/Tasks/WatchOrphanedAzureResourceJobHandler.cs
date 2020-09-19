@@ -236,7 +236,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
                     if (canDeleteResource)
                     { 
-                        var jobPayload = new DeleteOneAzureResourcePayload()
+                        var jobPayload = new DeleteAzureResourcePayload()
                         {
                             SubscriptionId = azure.SubscriptionId,
                             AzureResource = azureResource,

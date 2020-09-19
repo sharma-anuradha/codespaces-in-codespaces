@@ -84,9 +84,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, WatchOrphanedVmAgentImagesJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedStorageImagesJobHandler>();
             services.AddSingleton<IJobHandler, DeleteResourceGroupDeploymentsJobHandler>();
-            services.AddSingleton<IJobHandler, DeleteOneDeploymentJobHandler>();
+            services.AddSingleton<IJobHandler, DeleteDeploymentJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedAzureResourceJobHandler>();
-            services.AddSingleton<IJobHandler, DeleteOneAzureResourceJobHandler>();
+            services.AddSingleton<IJobHandler, DeleteAzureResourceJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();

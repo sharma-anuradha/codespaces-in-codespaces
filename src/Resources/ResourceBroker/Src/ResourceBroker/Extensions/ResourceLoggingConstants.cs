@@ -177,7 +177,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// <summary>
         /// Delete One Deployment Job handler.
         /// </summary>
-        public const string DeleteOneDeploymentJobHandler = "delete_one_deployment_job_handler";
+        public const string DeleteDeploymentJobHandler = "delete_deployment_job_handler";
 
         /// <summary>
         /// Watch Orphaned Azure Resource Job Handler.
@@ -187,7 +187,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// <summary>
         /// Delete One Resource Job handler.
         /// </summary>
-        public const string DeleteOneAzureResourceJobHandler = "delete_one_azure_resource_job_handler";
+        public const string DeleteAzureResourceJobHandler = "delete_azure_resource_job_handler";
 
         // Deprecated
 
