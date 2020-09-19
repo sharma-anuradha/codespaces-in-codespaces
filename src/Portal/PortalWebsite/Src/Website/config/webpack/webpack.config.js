@@ -204,6 +204,7 @@ module.exports = [
                 path.join(paths.staticContent, 'site.css'),
                 path.join(paths.staticContent, 'splash-screen-styles.css'),
                 path.join(paths.staticContent, 'favicon.ico'),
+                path.join(paths.staticContent, 'favicon.png'),
                 path.join(paths.staticContent, 'vscode-stable-favicon.ico'),
                 path.join(paths.staticContent, 'vscode-insider-favicon.ico'),
                 path.join(paths.staticContent, 'manifest.json'),
