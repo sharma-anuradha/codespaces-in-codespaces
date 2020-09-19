@@ -45,7 +45,7 @@ image:
   repositoryName: port-forwarding-web-api
   tag:
   agentRepositoryName: port-forwarding-agent
-  agentTag: 1.0.2842
+  agentTag: 1.0.2843
   liveShareAgentRepositoryName: vsls-agent
   imagePullSecret:
 
