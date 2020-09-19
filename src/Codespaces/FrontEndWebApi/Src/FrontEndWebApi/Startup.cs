@@ -19,6 +19,7 @@ using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
@@ -29,6 +30,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEnd.Common;
 using Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authentication;
@@ -399,6 +401,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
             services.AddJobQueueTelemetrySummary();
 
             services.AddTokenProvider(appSettings.AuthenticationSettings);
+
+            // Add the cache system configuration warmup task
+            services.AddCacheSystemConfigurationWarmupTask();
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>

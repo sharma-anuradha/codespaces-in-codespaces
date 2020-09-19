@@ -4,7 +4,6 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenerator
@@ -18,11 +17,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
         /// Initializes a new instance of the <see cref="ConfigurationKeyGenerator"/> class.
         /// </summary>
         /// <param name="configurationKeyGenerator">Configuration key generator.</param>
-        /// <param name="systemConfiguration">Target system configuration.</param>
-        public ConfigurationReader(IConfigurationKeyGenerator configurationKeyGenerator, ISystemConfiguration systemConfiguration)
+        /// <param name="cachedSystemConfiguration">Target system configuration.</param>
+        public ConfigurationReader(IConfigurationKeyGenerator configurationKeyGenerator, ICachedSystemConfiguration cachedSystemConfiguration)
         {
             ConfigurationKeyGenerator = configurationKeyGenerator;
-            SystemConfiguration = systemConfiguration;
+            CachedSystemConfiguration = cachedSystemConfiguration;
         }
 
         /// <summary>
@@ -33,20 +32,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGe
         /// <summary>
         /// Gets the system configuration cache object.
         /// </summary>
-        private ISystemConfiguration SystemConfiguration { get; }
+        private ICachedSystemConfiguration CachedSystemConfiguration { get; }
 
         /// <inheritdoc/>
         public async Task<T> ReadFeatureFlagAsync<T>(string componentName, IDiagnosticsLogger logger, T defaultValue = default)
         {
             var regionScopedKey = ConfigurationKeyGenerator.GenerateRegionScopeConfigurationKey(ConfigurationType.Feature, componentName, ConfigurationConstants.EnabledFeatureName);
-            return await SystemConfiguration.GetValueAsync(regionScopedKey, logger, defaultValue);
+            return await CachedSystemConfiguration.GetValueAsync(regionScopedKey, logger, defaultValue);
         }
 
         /// <inheritdoc/>
         public async Task<T> ReadSettingAsync<T>(string componentName, string settingName, IDiagnosticsLogger logger, T defaultValue = default)
         {
             var regionScopedKey = ConfigurationKeyGenerator.GenerateRegionScopeConfigurationKey(ConfigurationType.Setting, componentName, settingName);
-            return await SystemConfiguration.GetValueAsync(regionScopedKey, logger, defaultValue);
+            return await CachedSystemConfiguration.GetValueAsync(regionScopedKey, logger, defaultValue);
         }
     }
 }

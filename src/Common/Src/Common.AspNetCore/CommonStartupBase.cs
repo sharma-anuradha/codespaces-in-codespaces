@@ -309,7 +309,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Setup configuration
             services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ISystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepository>(
                 CachedCosmosDbSystemConfigurationRepository.ConfigureOptions);
+            services.AddVsoDocumentDbCollection<SystemConfigurationRecord, ICachedSystemConfigurationRepository, CachedCosmosDbSystemConfigurationRepositoryV2>(
+                CachedCosmosDbSystemConfigurationRepositoryV2.ConfigureOptions);
             services.AddSingleton<ISystemConfiguration, PersistedSystemConfiguration>();
+            services.AddSingleton<ICachedSystemConfiguration, PersistedSystemConfigurationV2>();
             services.AddSingleton<IConfigurationKeyGenerator, ConfigurationKeyGenerator>();
             services.AddSingleton<IConfigurationReader, ConfigurationReader>();
             services.AddSingleton<CertificateKeyVaultSecretCache>();

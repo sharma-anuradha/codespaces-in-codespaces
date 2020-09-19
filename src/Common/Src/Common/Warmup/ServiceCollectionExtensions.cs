@@ -1,4 +1,4 @@
-﻿// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
+// <copyright file="ServiceCollectionExtensions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -65,6 +65,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup
                 {
                     return new TaskSetAsyncWarmup(callback(serviceProvider));
                 });
+        }
+
+        /// <summary>
+        /// Adds cache system configuration warmup task to the collection of services.
+        /// </summary>
+        /// <param name="services">Service collection.</param>
+        /// <returns>Collection of services along with a cache system configuration warmup task.</returns>
+        public static IServiceCollection AddCacheSystemConfigurationWarmupTask(
+            this IServiceCollection services)
+        {
+            Requires.NotNull(services, nameof(services));
+            return services.AddSingleton<IAsyncWarmup, CacheSystemConfigurationWarmupTask>();
         }
 
         private class Lazy<T1, TVal>

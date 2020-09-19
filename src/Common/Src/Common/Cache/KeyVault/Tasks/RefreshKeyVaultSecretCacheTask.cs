@@ -12,7 +12,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.KeyGenera
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
 {
     /// <summary>
-    /// A task that will recurringly generate telemetry that logs various state information about the CloudEnvironment repository.
+    /// A task that will recurringly refresh the key vault cache.
     /// </summary>
     public class RefreshKeyVaultSecretCacheTask : BaseBackgroundTask, IRefreshKeyVaultSecretCacheTask
     {

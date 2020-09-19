@@ -1,4 +1,4 @@
-﻿// <copyright file="CachedCosmosDbSystemConfigurationRepository.cs" company="Microsoft">
+// <copyright file="CachedCosmosDbSystemConfigurationRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 

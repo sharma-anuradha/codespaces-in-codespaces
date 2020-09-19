@@ -17,6 +17,7 @@ using Microsoft.VsSaaS.Azure.Metrics;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
+using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
@@ -27,6 +28,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore.Services;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Warmup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.DiskProvider;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Jobs;
@@ -209,6 +211,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
                     keyVaultSecretOptions.GetServicePrincipalClientSecretAsyncCallback = servicePrincipal.GetClientSecretAsync;
                 })
                 .AddTokenProvider(appSettings.AuthenticationSettings);
+
+            // Add the cache system configuration warmup task
+            services.AddCacheSystemConfigurationWarmupTask();
 
             // OpenAPI/swagger
             services.AddSwaggerGen(x =>
