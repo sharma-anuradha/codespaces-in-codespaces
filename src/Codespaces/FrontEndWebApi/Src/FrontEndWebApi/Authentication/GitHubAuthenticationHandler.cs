@@ -150,7 +150,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Authenticat
 
             if (!ReadClaim(user, CustomClaims.DisplayName, CustomClaims.DisplayName, out string displayName))
             {
-                return AuthenticateResult.Fail("Missing displayname claim.");
+                displayName = username;
             }
 
             if (!ReadClaim(user, CustomClaims.Id, CustomClaims.Id, out string id))
