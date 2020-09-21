@@ -307,9 +307,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     environmentUsageDetails.Add(environmentEvents.Key, usageDetail);
                     totalBillable += billableUnits;
                     RollupUsage(usageByState, usageBySkuByState);
+                    LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, environmentUsageDetails[environmentEvents.Key].ResourceUsage, environmentEvents.Key, childLogger);
                 }
 
-                LogEnvironmentUsageDetails(billSummaryEndTime, region, environmentDetails.Sku.Name, usageByState, environmentUsageDetails[environmentEvents.Key].ResourceUsage, environmentEvents.Key, childLogger);
                 CopyEnvironmentStateTimesToShardStateTimes(usageByState, shardUsageTimes);
             }
 
