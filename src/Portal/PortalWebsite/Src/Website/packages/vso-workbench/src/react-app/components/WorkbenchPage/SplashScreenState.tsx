@@ -1,8 +1,5 @@
 import React from 'react';
-
 import { EnvironmentStateInfo, randomString, IEnvironment, IPartnerInfo } from 'vso-client-core';
-import { VSOSplashScreen } from '@vs/vso-splash-screen';
-
 import { SplashScreenMessage } from '../SplashScreenShellMessage/SplashScreenShellMessage';
 import { IButtonLinkProps } from '../ButtonLink/ButtonLink';
 import { EnvironmentWorkspaceState } from '../../../interfaces/EnvironmentWorkspaceState';
@@ -16,6 +13,7 @@ import { authService } from '../../../auth/authService';
 import { VSCodespacesPlatformInfo } from 'vs-codespaces-authorization';
 import { GitCredentialService } from '../../../rpcServices/GitCredentialService';
 import { BrowserSyncService } from '../../../rpcServices/BrowserSyncService';
+import { VSOSplashScreen } from '@vs/vso-splash-screen';
 
 interface ISplashScreenProps {
     environmentInfo: IEnvironment | null;
@@ -57,7 +55,7 @@ const isLightThemeColor = (
         const { vscodeSettings } = platformInfo;
         const { loadingScreenThemeColor } = vscodeSettings;
 
-        return !loadingScreenThemeColor || (loadingScreenThemeColor === 'light');
+        return !loadingScreenThemeColor || loadingScreenThemeColor === 'light';
     }
 
     return true;
@@ -80,7 +78,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
     let isLightTheme = undefined;
 
     if (!themeParams) {
-        isLightTheme = isLightThemeColor(platformInfo);      
+        isLightTheme = isLightThemeColor(platformInfo);
     } else {
         switch (themeParams) {
             case 'dark':
@@ -162,15 +160,7 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
                 />
             );
         }
-        case EnvironmentStateInfo.Failed: {
-            return (
-                <SplashScreenMessage
-                    message='The codespace failed.'
-                    messageIcon={'error'}
-                    isLightTheme={isLightTheme}
-                />
-            );
-        }
+        case EnvironmentStateInfo.Failed: 
         case EnvironmentStateInfo.Provisioning: {
             if (!environmentInfo) {
                 return (
@@ -197,11 +187,13 @@ export const SplashScreenState: React.FunctionComponent<ISplashScreenProps> = (
             );
         }
         case EnvironmentStateInfo.Available: {
-            return <SplashScreenMessage
-                        message='Connecting...'
-                        messageIcon={'progress'}
-                        isLightTheme={isLightTheme}
-                    />;
+            return (
+                <SplashScreenMessage
+                    message='Connecting...'
+                    messageIcon={'progress'}
+                    isLightTheme={isLightTheme}
+                />
+            );
         }
         case EnvironmentStateInfo.ShuttingDown: {
             return (
