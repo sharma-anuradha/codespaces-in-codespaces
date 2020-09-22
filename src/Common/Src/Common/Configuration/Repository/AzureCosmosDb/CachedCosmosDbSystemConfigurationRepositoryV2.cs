@@ -4,6 +4,7 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
@@ -26,8 +27,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
     {
         /// <summary>
         /// The cosmos db collection name.
-        /// This is linked to the job schedule setting for CacheSystemConfigurationTask
-        /// defined in the ResourceRegisterJobs and EnvironmentRegisterJobs
         /// </summary>
         public const string CollectionName = "configuration";
 
@@ -61,6 +60,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
         private ConcurrentDictionary<string, CacheItem> Cache { get; }
 
         /// <summary>
+        /// A property to check if the cache had been hydrated at least once.
+        /// If it is not the case, then the Get API should make use of base class
+        /// while the cache is being hydrated via warmup task.
+        /// </summary>
+        private bool IsCacheHydrated { get; set; } = false;
+
+        /// <summary>
         /// Configures the standard options for this repository.
         /// </summary>
         /// <param name="options">The options instance.</param>
@@ -73,24 +79,29 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
         /// <inheritdoc/>
         public override Task<SystemConfigurationRecord> GetAsync(DocumentDbKey key, [ValidatedNotNull] IDiagnosticsLogger logger)
         {
-            SystemConfigurationRecord document = default;
-
             return logger.OperationScopeAsync(
                $"docdb_{LoggingDocumentName}_get_call",
                async (childLogger) =>
                {
-                   if (Cache.TryGetValue(key.Id, out var cacheItem))
+                   SystemConfigurationRecord document = default;
+                   childLogger.FluentAddValue("IsCacheHydrated", IsCacheHydrated);
+
+                   if (IsCacheHydrated)
                    {
-                       AddDocumentId(key.Id, childLogger)
-                           .LogInfo($"docdb_{LoggingDocumentName}_cache_found");
-                       document = cacheItem.GetValue();
+                       var isFound = Cache.TryGetValue(key.Id, out var cacheItem);
+                       if (isFound)
+                       {
+                           document = cacheItem.GetValue();
+                       }
+
+                       childLogger.FluentAddValue("FoundInCache", isFound);
                    }
                    else
                    {
-                       AddDocumentId(key.Id, childLogger)
-                           .LogInfo($"docdb_{LoggingDocumentName}_cache_not_found");
+                       document = await base.GetAsync(key, childLogger);
                    }
 
+                   childLogger.AddDocumentId(key.Id);
                    return await Task.FromResult(document);
                }, swallowException: true);
         }
@@ -108,7 +119,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Configuration.Repos
 
                    // reusing the same childlogger to log various metrics and also because this is the only place from where this private method is beign called.
                    await UpdateCacheAsync(records, childLogger);
-               }, swallowException: true);   
+
+                   // set the hydration flag to true to make sure the following calls to GetAsync() API makes use of cache instead of making calls to cosmos DB
+                   IsCacheHydrated = true;
+               }, swallowException: true);
         }
 
         private Task UpdateCacheAsync(IEnumerable<SystemConfigurationRecord> records, IDiagnosticsLogger logger)
