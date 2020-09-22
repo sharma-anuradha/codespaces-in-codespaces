@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     // align the first run with the top of the next hour
                     var initialStartTime = DateTime.UtcNow;
-                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour + 1, 1, 0, DateTimeKind.Utc);
+                    var firstRunTime = new DateTime(initialStartTime.Year, initialStartTime.Month, initialStartTime.Day, initialStartTime.Hour, 1, 0, DateTimeKind.Utc).AddHours(1);
                     var firstRunDelay = firstRunTime - initialStartTime;
 
                     await Task.Delay(firstRunDelay);
