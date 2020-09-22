@@ -50,7 +50,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                 expression,
                 jobName,
                 JobQueueProducerFactory.GetOrCreate(queueName),
-                JobSchedulerProducerHelpers.CreateJobSchedulePayloadFactory(async (jobRunId, dt, srvcProvider, logger, ct) =>
+                JobSchedulerProducerHelpers.CreateJobSchedulePayloadFactory(async (jobRunId, dt, srvcProvider, onCreated, logger, ct) =>
                 {
                     if (isEnabledCallback == null || await isEnabledCallback(dt))
                     {
@@ -59,13 +59,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
                             logger.AddValue("jobRunLeaseObtaioned", (lease != null).ToString());
                             if (lease != null)
                             {
-                                var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvcProvider, logger, ct);
-                                return jobPayloadInfos;
+                                await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvcProvider, onCreated, logger, ct);                                
                             }
                         }
                     }
-
-                    return Array.Empty<(JobPayload, JobPayloadOptions)>();
                 }));
         }
     }

@@ -43,7 +43,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         private IResourcePoolDefinitionStore ResourceScalingStore { get; }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<(JobPayload, JobPayloadOptions)>> CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Get current catalog
             var resourceUnits = await RetrieveResourceSkus();
@@ -52,25 +52,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
             logger.FluentAddValue("TaskCountResourceUnits", resourceUnits.Count().ToString());
 
-            var jobPaylodInfos = new List<(JobPayload, JobPayloadOptions)>();
-
             // Run through found resources in the background
             await TaskHelper.RunEnumerableAsync(
                 $"{ResourceLoggingConstants.WatchPoolProducerTask}_run_unit_check",
                 resourceUnits,
-                (resourceUnit, itemLogger) =>
+                async (resourceUnit, itemLogger) =>
                 {
-                    jobPaylodInfos.AddRange(CreateResourcePoolJobs(resourceUnit, () => payloadVisibilityDelayHelper.NextValue(), itemLogger));
-                    return Task.CompletedTask;
+                    await CreateResourcePoolJobsAsync(resourceUnit, () => payloadVisibilityDelayHelper.NextValue(), onPayloadCreated, itemLogger);
                 },
                 logger);
-
-            return jobPaylodInfos.ToArray();
         }
 
-        private IEnumerable<(JobPayload, JobPayloadOptions)> CreateResourcePoolJobs(
+        private Task CreateResourcePoolJobsAsync(
             ResourcePool resourcePool,
             Func<TimeSpan> payloadVisibilitCallback,
+            OnPayloadCreatedDelegate onPayloadCreated,
             IDiagnosticsLogger logger)
         {
             logger.FluentAddBaseValue("TaskRunId", Guid.NewGuid())
@@ -88,19 +84,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxCreateBatchCount, resourcePool.MaxCreateBatchCount)
                 .FluentAddBaseValue(ResourceLoggingPropertyConstants.MaxDeleteBatchCount, resourcePool.MaxDeleteBatchCount);
 
-            // Create multiple jobs for the different pool job handlers processing.
-            return new (JobPayload, JobPayloadOptions)[]
-            {
-                CreateResourcePoolPayloadInfo<WatchPoolSizeJobHandler>(resourcePool, payloadVisibilitCallback),
-                CreateResourcePoolPayloadInfo<WatchPoolStateJobHandler>(resourcePool, payloadVisibilitCallback),
-                CreateResourcePoolPayloadInfo<WatchPoolVersionJobHandler>(resourcePool, payloadVisibilitCallback),
-                CreateResourcePoolPayloadInfo<WatchFailedResourcesJobHandler>(resourcePool, payloadVisibilitCallback),
-            };
+            return Task.WhenAll(
+                CreateResourcePoolJobAsync<WatchPoolSizeJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated),
+                CreateResourcePoolJobAsync<WatchPoolStateJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated),
+                CreateResourcePoolJobAsync<WatchPoolVersionJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated),
+                CreateResourcePoolJobAsync<WatchFailedResourcesJobHandler>(resourcePool, payloadVisibilitCallback, onPayloadCreated));
         }
 
-        private (JobPayload, JobPayloadOptions) CreateResourcePoolPayloadInfo<TJobHandlerType>(
+        private Task CreateResourcePoolJobAsync<TJobHandlerType>(
             ResourcePool resourcePool,
-            Func<TimeSpan> payloadVisibilitCallback)
+            Func<TimeSpan> payloadVisibilitCallback,
+            OnPayloadCreatedDelegate onPayloadCreated)
             where TJobHandlerType : class
         {
             var jobPayload = new ResourcePoolPayload<TJobHandlerType>() { PoolId = resourcePool.Id };
@@ -110,7 +104,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
                 ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
             };
 
-            return (jobPayload, jobPayloadOptions);
+            return onPayloadCreated(jobPayload, jobPayloadOptions);
         }
 
         private async Task<IEnumerable<ResourcePool>> RetrieveResourceSkus()

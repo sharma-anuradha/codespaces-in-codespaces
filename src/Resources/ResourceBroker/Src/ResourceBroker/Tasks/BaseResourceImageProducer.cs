@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -52,17 +51,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<(JobPayload, JobPayloadOptions)>> CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Fetch accounts with account name and key
             var accounts = await GetStorageAccountsAsync();
 
             // return produced payloads
-            return accounts.Select(account =>
+            await onPayloadCreated.AddAllPayloadsAsync(accounts, (account) =>
             {
                 var jobPayload = (StorageAccountPayloadBase)Activator.CreateInstance(typeof(StorageAccountPayload<>).MakeGenericType(JobHandlerType));
                 jobPayload.StorageAccount = account;
-                return ((JobPayload)jobPayload, (JobPayloadOptions)null);
+                return jobPayload;
             });
         }
 

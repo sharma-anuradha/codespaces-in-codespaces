@@ -32,23 +32,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
 
         private IJobSchedulerFeatureFlags JobSchedulerFeatureFlags { get; }
 
-        public Task<IEnumerable<(JobPayload, JobPayloadOptions)>> CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, IDiagnosticsLogger logger, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IEnumerable<(JobPayload, JobPayloadOptions)>>(CreateJobPayloadInfo());
-        }
-
-        private List<(JobPayload, JobPayloadOptions)> CreateJobPayloadInfo()
+        public Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             var jobPayload = new LogSystemResourceStatePayload();
             var jobPayloadOptions = new JobPayloadOptions()
             {
                 ExpireTimeout = JobPayloadOptions.DefaultJobPayloadExpireTimeout,
             };
-            var jobPaylodInfo = new List<(JobPayload, JobPayloadOptions)>()
-            {
-                (jobPayload, jobPayloadOptions),
-            };
-            return jobPaylodInfo;
+
+            return onPayloadCreated(jobPayload, jobPayloadOptions);
         }
 
         public void RegisterScheduleJob()

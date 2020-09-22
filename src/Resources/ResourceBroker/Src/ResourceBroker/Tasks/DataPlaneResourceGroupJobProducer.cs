@@ -62,7 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<(JobPayload, JobPayloadOptions)>> CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+        public async Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onPayloadCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {
             // Fetch all data plane resource groups
             var dataPlaneResourceGroups = await RetrieveResourceGroups(logger);
@@ -70,12 +70,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
             logger.FluentAddValue("TaskCountResourceGroups", dataPlaneResourceGroups.Count().ToString());
 
             // return produced payloads
-            return dataPlaneResourceGroups.Select(resourceGroup =>
+            await onPayloadCreated.AddAllPayloadsAsync(dataPlaneResourceGroups, (resourceGroup) =>
             {
                 var jobPayload = (ResourceGroupPayloadBase)Activator.CreateInstance(typeof(ResourceGroupPayload<>).MakeGenericType(JobHandlerType));
                 jobPayload.SubscriptionId = resourceGroup.Subscription.SubscriptionId;
                 jobPayload.ResourceGroupName = resourceGroup.ResourceGroup;
-                return ((JobPayload)jobPayload, (JobPayloadOptions)null);
+                return jobPayload;
             });
         }
 

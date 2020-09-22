@@ -9,6 +9,8 @@ using Microsoft.VsSaaS.Diagnostics;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts
 {
+    public delegate Task RunScheduleJobDelegate(string jobRunId, DateTime dt, IServiceProvider provider, IDiagnosticsLogger logger, CancellationToken cancellationToken);
+
     /// <summary>
     /// Helper extension for the IJobScheduler interface.
     /// </summary>
@@ -22,7 +24,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts
         /// <param name="jobName">Name of the job.</param>
         /// <param name="runScheduleJobCallback">The callback when the job is run.</param>
         /// <returns>A schedule job.</returns>
-        public static IScheduleJob AddRecurringJob(this IJobScheduler jobScheduler, string expression, string jobName, Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task> runScheduleJobCallback)
+        public static IScheduleJob AddRecurringJob(this IJobScheduler jobScheduler, string expression, string jobName, RunScheduleJobDelegate runScheduleJobCallback)
         {
             Requires.NotNull(jobScheduler, nameof(jobScheduler));
             Requires.NotNull(runScheduleJobCallback, nameof(runScheduleJobCallback));
@@ -37,7 +39,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts
         /// <param name="jobName">Name of the job.</param>
         /// <param name="runScheduleJobCallback">The callback when the job is run.</param>
         /// <returns>A schedule job.</returns>
-        public static IScheduleJob AddDelayedJob(this IJobScheduler jobScheduler, TimeSpan delay, string jobName, Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task> runScheduleJobCallback)
+        public static IScheduleJob AddDelayedJob(this IJobScheduler jobScheduler, TimeSpan delay, string jobName, RunScheduleJobDelegate runScheduleJobCallback)
         {
             Requires.NotNull(jobScheduler, nameof(jobScheduler));
             Requires.NotNull(runScheduleJobCallback, nameof(runScheduleJobCallback));
@@ -46,9 +48,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts
 
         private class RunScheduleJob : IRunScheduleJob
         {
-            private readonly Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task> runScheduleJob;
+            private readonly RunScheduleJobDelegate runScheduleJob;
 
-            public RunScheduleJob(string jobName, Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task> runScheduleJob)
+            public RunScheduleJob(string jobName, RunScheduleJobDelegate runScheduleJob)
             {
                 Name = jobName;
                 this.runScheduleJob = runScheduleJob;

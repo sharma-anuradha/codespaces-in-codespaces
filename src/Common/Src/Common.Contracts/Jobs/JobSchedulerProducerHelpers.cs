@@ -3,8 +3,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
@@ -12,6 +10,8 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Scheduler.Contracts;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
 {
+    public delegate Task JobPayloadInfoFactoryDelegate(string jobRunId, DateTime dt, IServiceProvider provider, OnPayloadCreatedDelegate onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken);
+
     /// <summary>
     /// Helper extension for the IJobScheduler interface.
     /// </summary>
@@ -23,7 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="jobPayloadInfoFactory">The callback to invoke to produce payloads.</param>
         /// <returns>Instance of a IJobSchedulePayloadFactory interface.</returns>
         public static IJobSchedulePayloadFactory CreateJobSchedulePayloadFactory(
-            Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task<IEnumerable<(JobPayload, JobPayloadOptions)>>> jobPayloadInfoFactory)
+           JobPayloadInfoFactoryDelegate jobPayloadInfoFactory)
         {
             return new JobSchedulePayloadFactory(jobPayloadInfoFactory);
         }
@@ -48,11 +48,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             Requires.NotNull(jobQueueProducer, nameof(jobQueueProducer));
             Requires.NotNull(jobSchedulePayloadFactory, nameof(jobSchedulePayloadFactory));
 
-            return jobScheduler.AddDelayedJob(delay, jobName, async (jobRunId, dt, srvc, logger, ct) =>
-            {
-                var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, logger, ct);
-                await AddJobsAsync(jobQueueProducer, jobPayloadInfos, jobRunId, dt, logger, ct);
-            });
+            return jobScheduler.AddDelayedJob(delay, jobName, BuildPayloadFactoryScheduleDelegate(jobQueueProducer, jobSchedulePayloadFactory));
         }
 
         /// <summary>
@@ -69,7 +65,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             TimeSpan delay,
             string jobName,
             IJobQueueProducer jobQueueProducer,
-            Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task<IEnumerable<(JobPayload, JobPayloadOptions)>>> jobPayloadInfoFactory)
+            JobPayloadInfoFactoryDelegate jobPayloadInfoFactory)
         {
             return AddDelayedJobPayload(jobScheduler, delay, jobName, jobQueueProducer, new JobSchedulePayloadFactory(jobPayloadInfoFactory));
         }
@@ -92,7 +88,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             JobPayload jobPayload,
             JobPayloadOptions jobPayloadOptions = null)
         {
-            return jobScheduler.AddDelayedJobPayload(delay, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, logger, ct) => Task.FromResult(Enumerable.Repeat((jobPayload, jobPayloadOptions), 1)));
+            return jobScheduler.AddDelayedJobPayload(delay, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, onCreated, logger, ct) => onCreated(jobPayload, jobPayloadOptions));
         }
 
         /// <summary>
@@ -136,11 +132,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             Requires.NotNull(jobQueueProducer, nameof(jobQueueProducer));
             Requires.NotNull(jobSchedulePayloadFactory, nameof(jobSchedulePayloadFactory));
 
-            return jobScheduler.AddRecurringJob(expression, jobName, async (jobRunId, dt, srvc, logger, ct) =>
-            {
-                var jobPayloadInfos = await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, logger, ct);
-                await AddJobsAsync(jobQueueProducer, jobPayloadInfos, jobRunId, dt, logger, ct);
-            });
+            return jobScheduler.AddRecurringJob(expression, jobName, BuildPayloadFactoryScheduleDelegate(jobQueueProducer, jobSchedulePayloadFactory));
         }
 
         /// <summary>
@@ -157,7 +149,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             string expression,
             string jobName,
             IJobQueueProducer jobQueueProducer,
-            Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task<IEnumerable<(JobPayload, JobPayloadOptions)>>> jobPayloadInfoFactory)
+            JobPayloadInfoFactoryDelegate jobPayloadInfoFactory)
         {
             return AddRecurringJobPayload(jobScheduler, expression, jobName, jobQueueProducer, new JobSchedulePayloadFactory(jobPayloadInfoFactory));
         }
@@ -180,7 +172,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             JobPayload jobPayload,
             JobPayloadOptions jobPayloadOptions = null)
         {
-            return jobScheduler.AddRecurringJobPayload(expression, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, logger, ct) => Task.FromResult(Enumerable.Repeat((jobPayload, jobPayloadOptions), 1)));
+            return jobScheduler.AddRecurringJobPayload(expression, jobName, jobQueueProducer, (jobRunId, dt, srvcProvider, onCreated, logger, ct) => onCreated(jobPayload, jobPayloadOptions));
         }
 
         /// <summary>
@@ -204,35 +196,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
             return jobScheduler.AddRecurringJobPayload(expression, jobName, jobQueueProducer, new JobPayload<T>(), jobPayloadOptions);
         }
 
-        private static async Task AddJobsAsync(
+        private static RunScheduleJobDelegate BuildPayloadFactoryScheduleDelegate(
             IJobQueueProducer jobQueueProducer,
-            IEnumerable<(JobPayload, JobPayloadOptions)> jobPayloadInfos,
-            string jobRunId,
-            DateTime jobScheduleRun,
-            IDiagnosticsLogger logger,
-            CancellationToken cancellationToken)
+            IJobSchedulePayloadFactory jobSchedulePayloadFactory)
         {
-            foreach (var jobPayloadInfo in jobPayloadInfos)
+            return async (jobRunId, dt, srvc, logger, ct) =>
             {
-                jobPayloadInfo.Item1.LoggerProperties.Add("JobRunId", jobRunId);
-                jobPayloadInfo.Item1.LoggerProperties.Add("JobScheduleRun", jobScheduleRun);
+                Task OnPayloadCreated(JobPayload payload, JobPayloadOptions options)
+                {
+                    payload.LoggerProperties.Add("JobRunId", jobRunId);
+                    payload.LoggerProperties.Add("JobScheduleRun", dt);
 
-                await jobQueueProducer.AddJobAsync(jobPayloadInfo.Item1, jobPayloadInfo.Item2, logger, cancellationToken);
-            }
+                    return jobQueueProducer.AddJobAsync(payload, options, logger, ct);
+                }
+
+                await jobSchedulePayloadFactory.CreatePayloadsAsync(jobRunId, dt, srvc, OnPayloadCreated, logger, ct);
+            };
         }
 
         private class JobSchedulePayloadFactory : IJobSchedulePayloadFactory
         {
-            private readonly Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task<IEnumerable<(JobPayload, JobPayloadOptions)>>> callback;
+            private readonly JobPayloadInfoFactoryDelegate callback;
 
-            public JobSchedulePayloadFactory(Func<string, DateTime, IServiceProvider, IDiagnosticsLogger, CancellationToken, Task<IEnumerable<(JobPayload, JobPayloadOptions)>>> callback)
+            public JobSchedulePayloadFactory(JobPayloadInfoFactoryDelegate callback)
             {
                 this.callback = callback;
             }
 
-            public Task<IEnumerable<(JobPayload, JobPayloadOptions)>> CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, IDiagnosticsLogger logger, CancellationToken cancellationToken)
+            public Task CreatePayloadsAsync(string jobRunId, DateTime scheduleRun, IServiceProvider serviceProvider, OnPayloadCreatedDelegate onCreated, IDiagnosticsLogger logger, CancellationToken cancellationToken)
             {
-                return this.callback(jobRunId, scheduleRun, serviceProvider, logger, cancellationToken);
+                return this.callback(jobRunId, scheduleRun, serviceProvider, onCreated, logger, cancellationToken);
             }
         }
     }
