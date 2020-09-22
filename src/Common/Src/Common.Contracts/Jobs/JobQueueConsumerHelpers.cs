@@ -29,7 +29,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="jobQueueConsumer">The job consumer instance.</param>
         /// <param name="queueMessageProducerSettings">The queue message producer settings.</param>
         /// <param name="cancellationToken">Optional cancellation token.</param>
-        public static void Start(this IJobQueueConsumer jobQueueConsumer, QueueMessageProducerSettings queueMessageProducerSettings, CancellationToken cancellationToken = default)
+        public static void Start(this IJobQueueConsumer jobQueueConsumer, QueueMessageProducerSettings queueMessageProducerSettings = null, CancellationToken cancellationToken = default)
         {
             Task.Run(() => jobQueueConsumer.StartAsync(queueMessageProducerSettings, cancellationToken));
         }

@@ -85,6 +85,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// Gets or sets the value of concurrent job consumers.
         /// </summary>
         [JsonProperty(Required = Required.Always)]
+        public int BoundedCapacityJobConsumerCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the value of concurrent job consumers.
+        /// </summary>
+        [JsonProperty(Required = Required.Always)]
         public int ConcurrentJobProducerCount { get; set; }
 
         /// <summary>

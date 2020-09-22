@@ -31,7 +31,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// Gets the default settings.
         /// </summary>
         public static readonly QueueMessageProducerSettings Default =
-            new QueueMessageProducerSettings(DefaultMessageCount, DefaultVisibilityTimeout, DefaultTimeout, null);
+            new QueueMessageProducerSettings(DefaultMessageCount, DefaultVisibilityTimeout, DefaultTimeout);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueueMessageProducerSettings"/> class.
@@ -39,13 +39,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="messageCount">The message count.</param>
         /// <param name="visibilityTimeout">The visibility timeout.</param>
         /// <param name="timeout">The timeout.</param>
-        /// <param name="messageOptions">Message dataflow block options.</param>
-        public QueueMessageProducerSettings(int messageCount, TimeSpan visibilityTimeout, TimeSpan timeout, DataflowBlockOptions messageOptions = null)
+        public QueueMessageProducerSettings(int messageCount, TimeSpan visibilityTimeout, TimeSpan timeout)
         {
             MessageCount = messageCount;
             VisibilityTimeout = visibilityTimeout;
             Timeout = timeout;
-            MessageOptions = messageOptions;
         }
 
         /// <summary>
@@ -63,22 +61,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// </summary>
         public TimeSpan Timeout { get; }
 
-        /// <summary>
-        /// Gets the message dataflow block options.
-        /// </summary>
-        public DataflowBlockOptions MessageOptions { get; }
-
         public static QueueMessageProducerSettings Create(
             int? messageCount = null,
             TimeSpan? visibilityTimeout = null,
-            TimeSpan? timeout = null,
-            DataflowBlockOptions messageOptions = null)
+            TimeSpan? timeout = null)
         {
             return new QueueMessageProducerSettings(
                 messageCount ?? DefaultMessageCount,
                 visibilityTimeout ?? DefaultVisibilityTimeout,
-                timeout ?? DefaultTimeout,
-                messageOptions);
+                timeout ?? DefaultTimeout);
         }
     }
 }

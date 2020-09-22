@@ -231,8 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         {
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
             {
-                var otherQueueMessageProducer = new QueueMessageProducer(queue);
-                var otherJobQueueConsumer = new JobQueueConsumer(otherQueueMessageProducer, new NullLogger());
+                var otherJobQueueConsumer = new JobQueueConsumer(queue, new NullLogger());
                 var executionDataflowBlockOptions = new ExecutionDataflowBlockOptions()
                 {
                     MaxDegreeOfParallelism = 1
@@ -489,8 +488,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
 
             var disposables = new List<IAsyncDisposable>();
 
-            var queueMessageProducer = new QueueMessageProducerFactory(QueueFactory);
-            var jobQueueConsumerFactory = new JobQueueConsumerFactory(queueMessageProducer, new NullLogger());
+            var jobQueueConsumerFactory = new JobQueueConsumerFactory(QueueFactory, new NullLogger());
 
             var queueId = Guid.NewGuid().ToString();
 
@@ -525,13 +523,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
         [Fact]
         public Task LimitQueueMessagesProducerSettingsAsync()
         {
-            var producerSettings =
-                new QueueMessageProducerSettings(
-                    5,
-                    QueueMessageProducerSettings.DefaultVisibilityTimeout,
-                    QueueMessageProducerSettings.DefaultTimeout,
-                    new DataflowBlockOptions() { BoundedCapacity = 5 });
-
             return RunJobQueueTest(async (jobQueueProducer, jobQueueConsumer, queue) =>
             {
                 int payloadCount = 0;
@@ -546,10 +537,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                         {
                             await tcs.Task;
                         }
-                    }, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 5 } );
+                    }, new ExecutionDataflowBlockOptions() { BoundedCapacity = 5, MaxDegreeOfParallelism = 5 } );
 
                 var jobPayload = new JobContentPayload<int>(100);
-                for (int i = 0; i < 7; ++i)
+                for (int i = 0; i < 10; ++i)
                 {
                     await jobQueueProducer.AddJobAsync(jobPayload, null, NullLogger);
                 }
@@ -566,11 +557,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
                 // unblock all of the job handlers and so have the producer to queue the 2 last jobs
                 tcs.SetResult(true);
 
-                // receive the blocked items
-                await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
-                await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
-
-            }, producerSettings);
+                // receive the rest of blocked items
+                for (int i = 0; i < 5; ++i)
+                {
+                    await payloadsProcessed.ReceiveAsync(ReceiveTimeout);
+                }
+            });
         }
 
         [Fact]
@@ -595,8 +587,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             return RunQueueTest(async (queue) =>
             {
                 var jobQueueProducer = new JobQueueProducer(queue);
-                var queueMessageProducer = new QueueMessageProducer(queue);
-                var jobQueueConsumer = new JobQueueConsumer(queueMessageProducer, new NullLogger());
+                var jobQueueConsumer = new JobQueueConsumer(queue, new NullLogger());
                 jobQueueConsumer.Start(queueMessageProducerSettings ?? QueueMessageProducerSettings.Default, default);
                 await testCallback(jobQueueProducer, jobQueueConsumer, queue);
                 await jobQueueProducer.DisposeAsync();
@@ -609,8 +600,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Test
             return RunQueueTest(async (queue) =>
             {
                 var jobQueueProducerFactory = new JobQueueProducerFactory(QueueFactory);
-                var queueMessageProducerFactory = new QueueMessageProducerFactory(QueueFactory);
-                var jobQueueConsumerFactory = new JobQueueConsumerFactory(queueMessageProducerFactory, new NullLogger());
+                var jobQueueConsumerFactory = new JobQueueConsumerFactory(QueueFactory, new NullLogger());
                 await testCallback(jobQueueProducerFactory, jobQueueConsumerFactory, queue);
             });
         }

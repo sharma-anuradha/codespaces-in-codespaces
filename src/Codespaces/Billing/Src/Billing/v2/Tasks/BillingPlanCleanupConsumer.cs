@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         public BillingPlanCleanupConsumer(
             BillingSettings billingSettings,
             IBillSummaryScrubber billSummaryScrubber)
-            : base(billingSettings.ConcurrentJobConsumerCount)
+            : base(billingSettings.ConcurrentJobConsumerCount, billingSettings.BoundedCapacityJobConsumerCount)
         {
             BillSummaryScrubber = billSummaryScrubber;
         }

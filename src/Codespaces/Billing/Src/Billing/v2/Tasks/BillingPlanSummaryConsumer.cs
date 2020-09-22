@@ -25,7 +25,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks
         public BillingPlanSummaryConsumer(
             BillingSettings billingSettings,
             IBillSummaryGenerator billSummaryGenerator)
-            : base(billingSettings.ConcurrentJobConsumerCount)
+            : base(billingSettings.ConcurrentJobConsumerCount, billingSettings.BoundedCapacityJobConsumerCount)
         {
             BillSummaryGenerator = billSummaryGenerator;
         }

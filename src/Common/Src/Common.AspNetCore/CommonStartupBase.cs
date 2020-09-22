@@ -350,7 +350,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
             // Job Queues support
             services.AddSingleton<IQueueFactory, StorageQueueFactory>();
             services.AddSingleton<IJobQueueProducerFactory, JobQueueProducerFactory>();
-            services.AddSingleton<IQueueMessageProducerFactory, QueueMessageProducerFactory>();
             services.AddSingleton<IJobQueueConsumerFactory, JobQueueConsumerFactory>();
             services.AddSingleton<IJobQueueProducerFactoryHelpers, JobQueueProducerFactoryHelpers>();
         }

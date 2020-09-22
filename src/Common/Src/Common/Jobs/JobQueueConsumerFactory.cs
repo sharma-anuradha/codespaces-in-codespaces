@@ -16,25 +16,26 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
     /// </summary>
     public class JobQueueConsumerFactory : IJobQueueConsumerFactory
     {
-        private readonly IQueueMessageProducerFactory queueMessageProducerFactory;
         private readonly IDiagnosticsLogger logger;
         private readonly ConcurrentDictionary<(string, AzureLocation?), JobQueueConsumer> jobQueueConsumers = new ConcurrentDictionary<(string, AzureLocation?), JobQueueConsumer>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JobQueueConsumerFactory"/> class.
         /// </summary>
-        /// <param name="queueMessageProducerFactory">Instance of a queue message producer factory.</param>
+        /// <param name="queueFactory">A queue factroy instance.</param>
         /// <param name="logger">The logger instance.</param>
-        public JobQueueConsumerFactory(IQueueMessageProducerFactory queueMessageProducerFactory, IDiagnosticsLogger logger)
+        public JobQueueConsumerFactory(IQueueFactory queueFactory, IDiagnosticsLogger logger)
         {
-            this.queueMessageProducerFactory = Requires.NotNull(queueMessageProducerFactory, nameof(queueMessageProducerFactory));
+            QueueFactory = Requires.NotNull(queueFactory, nameof(queueFactory));
             this.logger = Requires.NotNull(logger, nameof(logger));
         }
+
+        private IQueueFactory QueueFactory { get; }
 
         /// <inheritdoc/>
         public IJobQueueConsumer GetOrCreate(string queueId, AzureLocation? azureLocation)
         {
-            return this.jobQueueConsumers.GetOrAdd((queueId, azureLocation), (id) => new JobQueueConsumer(this.queueMessageProducerFactory.Create(queueId, azureLocation), this.logger));
+            return this.jobQueueConsumers.GetOrAdd((queueId, azureLocation), (id) => new JobQueueConsumer(QueueFactory.GetOrCreate(queueId, azureLocation), this.logger));
         }
 
         /// <inheritdoc/>

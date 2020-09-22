@@ -38,7 +38,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Get the job handler options ot be used for a job.
+        /// Get the job handler options to be used for a job.
         /// </summary>
         /// <param name="job">The job type safe instance.</param>
         /// <returns>Handler Options to use.</returns>

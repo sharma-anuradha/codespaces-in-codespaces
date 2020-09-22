@@ -36,6 +36,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JobHandlerBase{T}"/> class.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">Parameter to control the TPL data flow execution options.</param>
+        /// <param name="boundedCapacity">Bound capacity.</param>
+        /// <param name="options">Job handler options.</param>
+        protected JobHandlerPayloadBase(int maxDegreeOfParallelism, int boundedCapacity, JobHandlerOptions options = null)
+            : base(maxDegreeOfParallelism, boundedCapacity, options)
+        {
+        }
+
         /// <inheritdoc/>
         public override Task HandleJobAsync(IJob<T> job, IDiagnosticsLogger logger, CancellationToken cancellationToken)
         {

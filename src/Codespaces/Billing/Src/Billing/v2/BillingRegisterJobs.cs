@@ -19,8 +19,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     /// </summary>
     public class BillingRegisterJobs : IAsyncBackgroundWarmup
     {
-        private const int MaxMessagesProduced = 32; // cache only 32 dequeued messages
-
         /// <summary>
         /// Initializes a new instance of the <see cref="BillingRegisterJobs"/> class.
         /// </summary>
@@ -73,28 +71,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         {
             if (await BillingSettings.V2BillingManagementProducerIsEnabledAsync(logger))
             {
-                // Create a custom message producer settings
-                var billingProducerSettings = QueueMessageProducerSettings.Create(
-                    messageOptions: 
-                        new DataflowBlockOptions() { BoundedCapacity = MaxMessagesProduced });
-
                 // Register: Queue handlers
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingManagermentQueue)
                     .RegisterJobHandler(BillingManagementConsumer)
-                    .Start(billingProducerSettings);
+                    .Start();
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanBatchQueue)
                     .RegisterJobHandler(BillingPlanBatchConsumer)
-                    .Start(billingProducerSettings);
+                    .Start();
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanSummaryQueue)
                     .RegisterJobHandler(BillingPlanSummaryConsumer)
-                    .Start(billingProducerSettings);
+                    .Start();
                 JobQueueConsumerFactory
                     .GetOrCreate(BillingLoggingConstants.BillingPlanCleanupQueue)
                     .RegisterJobHandler(BillingPlanCleanupConsumer)
-                    .Start(billingProducerSettings);
+                    .Start();
 
                 // Job: Start Billing Management Producer
                 TaskHelper.RunBackgroundLoop(

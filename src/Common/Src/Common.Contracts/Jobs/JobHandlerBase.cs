@@ -23,6 +23,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         public static readonly ExecutionDataflowBlockOptions DefaultDataflowBlockOptions = new ExecutionDataflowBlockOptions()
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount,
+            BoundedCapacity = Environment.ProcessorCount,
         };
 
         /// <summary>
@@ -125,7 +126,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs.Contracts
         /// <param name="maxDegreeOfParallelism">Parameter to control the TPL data flow execution options.</param>
         /// <param name="options">Job handler options.</param>
         protected JobHandlerBase(int maxDegreeOfParallelism, JobHandlerOptions options = null)
-            : this(WithValues(maxDegreeOfParallelism), options)
+            : this(WithValues(maxDegreeOfParallelism: maxDegreeOfParallelism), options)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JobHandlerBase{T}"/> class.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">Parameter to control the TPL data flow execution options.</param>
+        /// <param name="boundedCapacity">Bound capacity.</param>
+        /// <param name="options">Job handler options.</param>
+        protected JobHandlerBase(int maxDegreeOfParallelism, int boundedCapacity, JobHandlerOptions options = null)
+            : this(WithValues(maxDegreeOfParallelism: maxDegreeOfParallelism, boundedCapacity: boundedCapacity), options)
         {
         }
 
