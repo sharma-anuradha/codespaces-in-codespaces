@@ -12,17 +12,10 @@ Import-Module "Az.Resources" -Verbose:$false
 
 # Preamble
 Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-$PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
+
 $script:verbose = $false
 if ($PSBoundParameters.ContainsKey('Verbose')) {
   $script:Verbose = $PsBoundParameters.Get_Item('Verbose')
-}
-
-# Global error handling
-trap {
-  Write-Error $_
-  exit 1
 }
 
 # Constants

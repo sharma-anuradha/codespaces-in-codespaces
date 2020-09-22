@@ -384,24 +384,26 @@ function Test-All {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Process {
-        $Subscription | Test-Airs | Test-SubscriptionName | Test-Tags | Test-ResourceGroup | Test-CoreQuotas | Test-ResourceProviders | Test-Rbac | Test-32GbFlags | Test-PartionedDns | Test-VnetInjection
+        ForEach ($sub in $Subscriptions) {
+            $sub | Test-Airs | Test-SubscriptionName | Test-Tags | Test-ResourceGroup | Test-CoreQuotas | Test-ResourceProviders | Test-Rbac | Test-32GbFlags | Test-PartionedDns | Test-VnetInjection
+        }
     }
 }
 
 function Get-SubscriptionMessage {
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription,
+        [Object[]]$Subscriptions,
         [Parameter(Mandatory=$true)]
         [string]$Message
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             Write-Output "Subscription $($sub.subscriptionOldName) ($($sub.subscriptionId)) $Message"
         }
     }
@@ -411,7 +413,7 @@ function Test-Airs {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Begin {
@@ -419,7 +421,7 @@ function Test-Airs {
     }
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             $found = $azureSubscriptions |  Where-Object {
                 $_.id -eq $sub.subscriptionId
             }
@@ -437,7 +439,7 @@ function Test-SubscriptionName {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Begin {
@@ -445,7 +447,7 @@ function Test-SubscriptionName {
     }
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             $azSub = $azureSubscriptions |  Where-Object {
                 $_.id -eq $sub.subscriptionId
             }
@@ -471,11 +473,11 @@ function Test-Tags {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             $tags = az tag list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
 
             $warningTagNames = "component", "env", "ordinal", "plane", "prefix", "region", "type", "serviceTreeId", "serviceTreeUrl"
@@ -506,38 +508,38 @@ function Test-ResourceGroup {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
                 $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
-                continue
-            }
+            } else {
 
-            # Check if subscription has a limit of maximum resource groups
-            if ($null -ne $sub.maxResourceGroupCount) {
+                # Check if subscription has a limit of maximum resource groups
+                if ($null -ne $sub.maxResourceGroupCount) {
 
-                # Some environments may have more than 1 instance, in this case we should take that in factor to calculate the maximum
-                $instances = $instanceEnvironments["$($sub.environment)"]
-                if ($null -eq $instances) {
-                    Write-Error "Invalid environemnt $($sub.environment), unable to find number of instance environments."
-                    Write-Output $sub
-                    continue
+                    # Some environments may have more than 1 instance, in this case we should take that in factor to calculate the maximum
+                    $instances = $instanceEnvironments["$($sub.environment)"]
+                    if ($null -eq $instances) {
+                        Write-Error "Invalid environemnt $($sub.environment), unable to find number of instance environments."
+                        Write-Output $sub
+                        continue
+                    }
+
+                    $maximum = $sub.maxResourceGroupCount * $instances
+
+                    # If we are over capacity we should error out requesting immediate attention and move resources out of the subscription if possible.
+                    $resourceGroups = az group list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
+                    if ($resourceGroups.Count -gt $maximum) {
+                        Write-Error "Subscription:`'$($sub.subscriptionId)`' has more resource groups than allowed. Expected:`'$($maximum)`', Actual:`'$($resourceGroups.Count)`'"
+                    }
                 }
 
-                $maximum = $sub.maxResourceGroupCount * $instances
-
-                # If we are over capacity we should error out requesting immediate attention and move resources out of the subscription if possible.
-                $resourceGroups = az group list --subscription $sub.subscriptionId -o json | ConvertFrom-Json
-                if ($resourceGroups.Count -gt $maximum) {
-                    Write-Error "Subscription:`'$($sub.subscriptionId)`' has more resource groups than allowed. Expected:`'$($maximum)`', Actual:`'$($resourceGroups.Count)`'"
-                }
+                Write-Output $sub
             }
-
-            Write-Output $sub
         }
     }
 }
@@ -546,18 +548,17 @@ function Test-CoreQuotas {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
                 $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
-                continue
+            } else {
+                # Todo validate CoreQuotas
             }
-
-            # Todo validate CoreQuotas
 
             Write-Output $sub
         }
@@ -568,7 +569,7 @@ function Test-ResourceProviders {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Begin {
@@ -577,7 +578,7 @@ function Test-ResourceProviders {
     }
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             if ($sub.generation -eq "v1-legacy") {
                 Write-Output $sub
                 continue
@@ -586,14 +587,13 @@ function Test-ResourceProviders {
             $result = az account set --subscription $sub.subscriptionId
             if ($null -ne $result) {
                 $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
-                continue
-            }
+            } else {
+                $registeredRPs = az provider list --query "[].{Provider:namespace, Status:registrationState}" --out json | ConvertFrom-Json | Where-Object {$_.Status -eq "Registered"}
 
-            $registeredRPs = az provider list --query "[].{Provider:namespace, Status:registrationState}" --out json | ConvertFrom-Json | Where-Object {$_.Status -eq "Registered"}
-
-            ForEach ($provider in $defaultRPs) {
-                if (!($registeredRPs | Test-Any {$_.Provider -like $provider})) {
-                    $sub | Get-SubscriptionMessage -Message "missing provider $provider" | Write-Error
+                ForEach ($provider in $defaultRPs) {
+                    if (!($registeredRPs | Test-Any {$_.Provider -like $provider})) {
+                        $sub | Get-SubscriptionMessage -Message "missing provider $provider" | Write-Error
+                    }
                 }
             }
 
@@ -606,11 +606,11 @@ function Test-Rbac {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             #TODO
 
             Write-Output $sub
@@ -622,7 +622,7 @@ function Test-32GbFlags {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Begin {
@@ -630,7 +630,7 @@ function Test-32GbFlags {
     }
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             if (-not $sub.premiumFilesInternalSettings -like "done") {
                 Write-Output $sub
                 continue
@@ -650,7 +650,7 @@ function Test-PartionedDns {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Begin {
@@ -658,7 +658,7 @@ function Test-PartionedDns {
     }
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
             if (-not $sub.storagePartitionedDnsFlag -like "done") {
                 Write-Output $sub
                 continue
@@ -678,12 +678,36 @@ function Test-VnetInjection {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription
+        [Object[]]$Subscriptions
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
-            #TODO
+        ForEach ($sub in $Subscriptions) {
+            $result = az account set --subscription $sub.subscriptionId
+            if ($null -ne $result) {
+                $sub | Get-SubscriptionMessage -Message "Invalid subscription" | Write-Error
+            } else {
+
+                if ($sub.serviceType -eq [ServiceType]::Compute -or $sub.serviceType -eq [ServiceType]::Network) {                    
+                    if ($sub.environment -eq "dev") {
+                        # The Visual Studio Services API Dev first party appid.
+                        $appId = "48ef7923-268f-473d-bcf1-07f0997961f4";
+                    } else {
+                        # The Visual Studio Services API first party appid.
+                        $appId = "9bd5ab7f-4031-4045-ace9-6bebbad202f6";
+                    }
+
+                    $firstpartyapp = az ad sp list --filter "appId eq '$appId'" --query [0].objectId -o tsv
+                    if ($null -eq $firstpartyapp) {
+                        Write-Error "Unable to find AppId: '$appId'" 
+                    } else {
+                        $role = az role assignment list --role "Contributor" --assignee $firstpartyapp -o json | ConvertFrom-Json
+                        if ($null -eq  $role) {
+                            Write-Error "Subscription:`'$($sub.subscriptionId)`' has incorrect vNet injection."
+                        }
+                    }
+                }
+            }
 
             Write-Output $sub
         }
@@ -782,12 +806,12 @@ function Enable-Subscription {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-        [Subscription]$Subscription,
+        [Object[]]$Subscriptions,
         [string]$vsoUtilPath = "$PSScriptRoot\..\..\bin\debug\VsoUtil\VsoUtil.dll"
     )
 
     Process {
-        ForEach ($sub in $Subscription) {
+        ForEach ($sub in $Subscriptions) {
 
             $options = ""
             if ($null -eq $sub.dbEnabled) {
