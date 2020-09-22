@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Auth;
-using Microsoft.Azure.Storage.File;
+using Microsoft.Azure.Storage.Queue;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore;
@@ -33,7 +33,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
     [LoggingBaseName("sas_controller")]
     public class SasController : ControllerBase
     {
-        private static readonly string StorageMountableShareName = "cloudenvdata";
+        private static readonly string GitHubReportingQueueName = "github-reporting-queue";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SasController"/> class.
@@ -81,23 +81,23 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
             var accounts = await AzureResourceAccessor.GetAllStampStorageAccountForPartner("gh");
             foreach (var (name, key) in accounts)
             {
-                // Get file client for storage account
+                // Get queue client for storage account
                 var storageCreds = new StorageCredentials(name, key);
                 var cloudStorageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
 
-                var fileClient = cloudStorageAccount.CreateCloudFileClient();
+                var queueClient = cloudStorageAccount.CreateCloudQueueClient();
 
-                // Get file reference
-                var fileShareName = StorageMountableShareName;
-                var fileShare = fileClient.GetShareReference(fileShareName);
+                // Get queue reference
+                var queueName = GitHubReportingQueueName;
+                var queue = queueClient.GetQueueReference(queueName);
 
-                // Get file sas token
-                var srcFileSas = fileShare.GetSharedAccessSignature(new SharedAccessFilePolicy()
+                // Get queue sas token
+                var queueSas = queue.GetSharedAccessSignature(new SharedAccessQueuePolicy()
                 {
-                    Permissions = SharedAccessFilePermissions.Read | SharedAccessFilePermissions.Delete,
+                    Permissions = SharedAccessQueuePermissions.ProcessMessages,
                     SharedAccessExpiryTime = DateTime.UtcNow.AddHours(2),
                 });
-                var token = srcFileSas.StartsWith("?") ? srcFileSas.Substring(1) : srcFileSas;
+                var token = queueSas.StartsWith("?") ? queueSas.Substring(1) : queueSas;
 
                 accountToSasDictionary.Add(name, token);
             }
