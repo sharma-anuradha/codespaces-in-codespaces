@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +23,6 @@ using Microsoft.VsSaaS.Azure.Cosmos;
 using Microsoft.VsSaaS.Azure.Storage.Blob;
 using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
-using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.DiagnosticsServer.Startup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
@@ -472,6 +472,31 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
+
+            var hosts = ControlPlaneAzureResourceAccessor
+                .GetCurrentStampValidHosts()
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // Localhost should also be considered a valid host in all cases:
+            // For local scenarios, the service runs on localhost
+            // For cluster deployments, kubernetes will perform health probes on localhost
+            hosts.Add("localhost");
+
+            // Workaround Firefox issue where it can send TLS requests to the wrong stamp due to
+            // HTTP/2 connection reuse when the client is trying to switch to the region-specific
+            // hostname. Assert that we are running in the correct stamp and return 421 if not.
+            app.Use(
+                async (context, next) =>
+            {
+                var host = context.Request.Host.Host;
+                if (!string.IsNullOrWhiteSpace(host) && !hosts.Contains(host))
+                {
+                    context.Response.StatusCode = StatusCodes.Status421MisdirectedRequest;
+                    return;
+                }
+
+                await next.Invoke();
+            });
 
             if (AppSettings.StartDiagnosticsServer)
             {

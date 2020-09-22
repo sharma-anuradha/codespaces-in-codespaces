@@ -48,6 +48,9 @@ spec:
             httpGet:
               path: {{ .Values.pods.livenessProbePath }}
               port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
             {{- if .Values.pods.livenessProbeDelaySeconds }}
             initialDelaySeconds: {{ .Values.pods.livenessProbeDelaySeconds }}
             {{- end }}
@@ -60,6 +63,9 @@ spec:
             httpGet:
               path: {{ .Values.pods.readinessProbePath }}
               port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
             {{- if .Values.pods.readinessProbeDelaySeconds }}
             initialDelaySeconds: {{ .Values.pods.readinessProbeDelaySeconds }}
             {{- end }}
