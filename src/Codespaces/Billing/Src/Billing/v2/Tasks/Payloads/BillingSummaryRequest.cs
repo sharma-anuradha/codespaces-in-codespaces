@@ -40,5 +40,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Tasks.Payloads
         /// Gets or sets the Partner <see cref="Partner"/>.
         /// </summary>
         public Partner? Partner { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to enable submission.
+        /// </summary>
+        public bool EnablePushAgentSubmission { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to enable partner submission.
+        /// </summary>
+        public bool EnablePartnerSubmission { get; set; }
     }
 }

@@ -88,7 +88,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     childLogger.LogInfo($"{LogBaseName}_run_start");
 
-                    if (await billingSettings.V2WorkersAreEnabledAsync(logger))
+                    var enableWorkers = await billingSettings.V2WorkersAreEnabledAsync(logger.NewChildLogger());
+                    var enablePushAgentSubmission = await billingSettings.V2TransmissionIsEnabledAsync(logger.NewChildLogger());
+                    var enablePartnerSubmission = await billingSettings.V2PartnerTransmisionIsEnabledAsync(logger.NewChildLogger());
+
+                    if (enableWorkers)
                     {
                         var overrides = (await billingOverrideRepository.QueryAsync(q => q, childLogger)).ToList();
 
@@ -105,6 +109,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                         DesiredEndTime = desiredEndDate,
                                         BillingOverrides = BuildOverrides(Guid.Parse(plan.Id), plan.Plan.Subscription, overrides),
                                         Partner = plan.Partner,
+                                        EnablePushAgentSubmission = enablePushAgentSubmission,
+                                        EnablePartnerSubmission = enablePartnerSubmission,
                                     },
                                     innerLogger);
                             },

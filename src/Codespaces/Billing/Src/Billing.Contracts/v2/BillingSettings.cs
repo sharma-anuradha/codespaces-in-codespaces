@@ -203,7 +203,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public virtual Task<bool> V2EnableV2CheckForMissingEnvironmentsAsync(IDiagnosticsLogger logger)
+        public virtual Task<bool> V2EnableCheckForMissingEnvironmentsAsync(IDiagnosticsLogger logger)
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 
@@ -215,7 +215,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Contracts
         /// </summary>
         /// <param name="logger">Target logger.</param>
         /// <returns>Target value.</returns>
-        public virtual Task<bool> V2EnableV2CheckForFinalStatesAsync(IDiagnosticsLogger logger)
+        public virtual Task<bool> V2EnableCheckForFinalStatesAsync(IDiagnosticsLogger logger)
         {
             Requires.NotNull(systemConfiguration, nameof(systemConfiguration));
 

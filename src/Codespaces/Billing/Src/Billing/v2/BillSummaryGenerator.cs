@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Transactions;
-using Microsoft.Azure.Management.ContainerRegistry.Fluent;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Diagnostics;
 using Microsoft.VsSaaS.Diagnostics.Extensions;
@@ -27,7 +25,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     {
         private const int BillingWindowMaximumTime = -48;
         private readonly IReadOnlyDictionary<string, ICloudEnvironmentSku> skuDictionary;
-        private readonly BillingSettings billingSettings;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BillSummaryGenerator"/> class.
@@ -40,7 +37,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="billingStorageFactory">the billing storage factory.</param>
         /// <param name="partnerCloudStorageFactory">Factory for partner submissions</param>
         public BillSummaryGenerator(
-            BillingSettings billingSettings,
             IBillSummaryManager billSummaryManager,
             IEnvironmentStateChangeManager environmentStateChangeManager,
             ISkuCatalog skuCatalog,
@@ -48,7 +44,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             IBillingSubmissionCloudStorageFactory billingStorageFactory,
             IPartnerCloudStorageFactory partnerCloudStorageFactory)
         {
-            this.billingSettings = billingSettings;
             BillSummaryManager = billSummaryManager;
             EnvironmentStateChangeManager = environmentStateChangeManager;
             BillingMeterService = billingMeterService;
@@ -64,6 +59,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         private IBillingMeterService BillingMeterService { get; }
 
         private IBillingSubmissionCloudStorageFactory BillingStorageFactory { get; }
+
         private IPartnerCloudStorageFactory PartnerCloudStorageFactory { get; }
 
         /// <inheritdoc />
@@ -137,16 +133,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                     billSummary = await BillSummaryManager.CreateOrUpdateAsync(billSummary, childLogger.NewChildLogger());
 
                     // Now we need to submit this to PushAgent.
-                    await TransmitBillSummaryToPushAgent(billSummary, billingSummaryRequest.PlanInformation, childLogger.NewChildLogger());
+                    await TransmitBillSummaryToPushAgent(billingSummaryRequest, billSummary, billingSummaryRequest.PlanInformation, childLogger.NewChildLogger());
 
-                    await TransmitToPartner(billSummary, partner, childLogger.NewChildLogger());
+                    await TransmitToPartner(billingSummaryRequest, billSummary, partner, childLogger.NewChildLogger());
                 },
                 swallowException: true);
         }
 
-        private async Task TransmitToPartner(BillSummary billSummary, Partner? partner, IDiagnosticsLogger logger)
+        private async Task TransmitToPartner(BillingSummaryRequest billingSummaryRequest, BillSummary billSummary, Partner? partner, IDiagnosticsLogger logger)
         {
-            if (await billingSettings.V2PartnerTransmisionIsEnabledAsync(logger))
+            if (billingSummaryRequest.EnablePartnerSubmission)
             {
                 if (partner == Partner.GitHub)
                 {
@@ -769,10 +765,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
             return (CloudEnvironmentState)Enum.Parse(typeof(CloudEnvironmentState), state);
         }
 
-        private async Task<int> TransmitBillSummaryToPushAgent(BillSummary billingSummary, VsoPlanInfo plan, IDiagnosticsLogger logger)
+        private async Task<int> TransmitBillSummaryToPushAgent(BillingSummaryRequest billingSummaryRequest, BillSummary billingSummary, VsoPlanInfo plan, IDiagnosticsLogger logger)
         {
-            bool enableTransmission = await billingSettings.V2TransmissionIsEnabledAsync(logger);
-            if (!enableTransmission)
+            if (!billingSummaryRequest.EnablePushAgentSubmission)
             {
                 // bail out early
                 return 0;

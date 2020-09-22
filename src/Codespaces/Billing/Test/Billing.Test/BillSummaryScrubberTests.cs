@@ -27,24 +27,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private BillSummaryScrubber BillSummaryScrubber { get; }
         public BillSummaryScrubberTests()
         {
-            BillingSettings = new Mock<BillingSettings>();
             BillSummaryManager = new Mock<IBillSummaryManager>();
             EnvironmentStateChangeManager = new Mock<IEnvironmentStateChangeManager>();
             BillingArchivalManager = new Mock<IBillingArchivalManager>();
             BillSummaryScrubber = new BillSummaryScrubber(
-                BillingSettings.Object,
                 BillSummaryManager.Object,
                 EnvironmentStateChangeManager.Object,
                 BillingArchivalManager.Object);
-
-            // Disable steps by default
-            BillingSettings
-                .Setup(x => x.V2EnableV2CheckForMissingEnvironmentsAsync(It.IsAny<IDiagnosticsLogger>()))
-                .Returns(Task.FromResult(false));
-
-            BillingSettings
-                .Setup(x => x.V2EnableV2CheckForFinalStatesAsync(It.IsAny<IDiagnosticsLogger>()))
-                .Returns(Task.FromResult(false));
         }
 
         private readonly VsoPlanInfo PlanInfo = new VsoPlanInfo
@@ -57,30 +46,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         private readonly string EnvId = "2f86cf59-a5d8-4e37-a450-26a42d63603a";
         private readonly string PlanId = "c56c1aa6-d6f4-43a5-a9fc-addbfa6be1d2";
 
-        private void EnableMissingEnvironmentCheck()
-        {
-            BillingSettings
-                .Setup(x => x.V2EnableV2CheckForMissingEnvironmentsAsync(It.IsAny<IDiagnosticsLogger>()))
-                .Returns(Task.FromResult(true));
-        }
-
-        private void EnableFinalStateCheck()
-        {
-            BillingSettings
-                .Setup(x => x.V2EnableV2CheckForFinalStatesAsync(It.IsAny<IDiagnosticsLogger>()))
-                .Returns(Task.FromResult(true));
-        }
-
         [Fact]
         public async Task ScrubBillSummariesForPlanAsync_SummaryHasEnvWithNoEvents_RemovesUsageDetail()
         {
             // Setup
-            EnableFinalStateCheck();
-
             var request = new BillScrubberRequest
             {
                 PlanId = PlanId,
-                DesiredEndTime = new DateTime(2020, 6, 1)
+                DesiredEndTime = new DateTime(2020, 6, 1),
+                CheckForFinalStates = true,
             };
 
             var envUsage = new EnvironmentUsage
@@ -116,13 +90,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         public async Task ScrubBillSummariesForPlanAsync_SummaryHasEnvWithEvents_NoChangeToBillSummary()
         {
             // Setup
-            EnableFinalStateCheck();
             var finalState = nameof(CloudEnvironmentState.Deleted);
 
             var request = new BillScrubberRequest
             {
                 PlanId = PlanId,
-                DesiredEndTime = new DateTime(2020, 6, 1)
+                DesiredEndTime = new DateTime(2020, 6, 1),
+                CheckForFinalStates = true,
             };
 
             var envUsage = new EnvironmentUsage
@@ -166,14 +140,14 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
         public async Task ScrubBillSummariesForPlanAsync_ChangeInFinalState_BillSummaryIsUpdated()
         {
             // Setup
-            EnableFinalStateCheck();
             var initialEndState = nameof(CloudEnvironmentState.Shutdown);
             var finalState = nameof(CloudEnvironmentState.Deleted);
 
             var request = new BillScrubberRequest
             {
                 PlanId = PlanId,
-                DesiredEndTime = new DateTime(2020, 6, 1)
+                DesiredEndTime = new DateTime(2020, 6, 1),
+                CheckForFinalStates = true,
             };
 
             var envUsage = new EnvironmentUsage

@@ -56,7 +56,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing.Test
             BillingSettings = new Mock<BillingSettings>();
             
             var skuCatalog = GetMockSKuCatalog();
-            BillSummaryGenerator = new BillSummaryGenerator(BillingSettings.Object, BillSummaryManager.Object, EnvironmentStateChangeManager.Object, skuCatalog.Object, BillingMeterService.Object, BillingStorageFactory.Object, PartnerCloudStorageFactory.Object);
+            BillSummaryGenerator = new BillSummaryGenerator(BillSummaryManager.Object, EnvironmentStateChangeManager.Object, skuCatalog.Object, BillingMeterService.Object, BillingStorageFactory.Object, PartnerCloudStorageFactory.Object);
         }
 
         [Fact]

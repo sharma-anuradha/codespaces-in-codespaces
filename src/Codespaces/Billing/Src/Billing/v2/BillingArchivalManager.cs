@@ -18,7 +18,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
     public class BillingArchivalManager : IBillingArchivalManager
     {
         private const string BaseLogName = "billing_archival_manager";
-        private readonly BillingSettings billingSettings;
+
         private readonly IBillSummaryRepository billSummaryRepository;
         private readonly IBillSummaryArchiveRepository billSummaryArchiveRepository;
         private readonly IEnvironmentStateChangeRepository stateChangeRepository;
@@ -33,13 +33,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
         /// <param name="stateChangeRepository">state Change Repository.</param>
         /// <param name="stateChangeArchiveRepository">environment State Change Archive Repository.</param>
         public BillingArchivalManager(
-            BillingSettings billingSettings,
             IBillSummaryRepository billSummaryRepository,
             IBillSummaryArchiveRepository billSummaryArchiveRepository,
             IEnvironmentStateChangeRepository stateChangeRepository,
             IEnvironmentStateChangeArchiveRepository stateChangeArchiveRepository)
         {
-            this.billingSettings = billingSettings;
             this.billSummaryRepository = billSummaryRepository;
             this.billSummaryArchiveRepository = billSummaryArchiveRepository;
             this.stateChangeRepository = stateChangeRepository;
@@ -53,21 +51,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{BaseLogName}_migrate_environment_state_change",
                 async (childLogger) =>
                 {
-                    bool enableArchiving = await billingSettings.V2EnableArchivingAsync(logger.NewChildLogger());
-                    childLogger.FluentAddValue("EnableArchiving", enableArchiving);
-
-                    if (enableArchiving)
-                    {
-                        var sourcePartitionKey = EnvironmentStateChange.CreateActivePartitionKey(stateChange.PlanId);
-                        var destinationPartitionKey = EnvironmentStateChange.CreateArchivedPartitionKey(stateChange.PlanId, stateChange.Time);
-                        await MigrateAsync(
-                            stateChangeRepository,
-                            stateChangeArchiveRepository,
-                            sourcePartitionKey,
-                            destinationPartitionKey,
-                            stateChange,
-                            logger);
-                    }
+                    var sourcePartitionKey = EnvironmentStateChange.CreateActivePartitionKey(stateChange.PlanId);
+                    var destinationPartitionKey = EnvironmentStateChange.CreateArchivedPartitionKey(stateChange.PlanId, stateChange.Time);
+                    await MigrateAsync(
+                        stateChangeRepository,
+                        stateChangeArchiveRepository,
+                        sourcePartitionKey,
+                        destinationPartitionKey,
+                        stateChange,
+                        logger);
                 });
         }
 
@@ -78,21 +70,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                 $"{BaseLogName}_migrate_bill_summary",
                 async (childLogger) =>
                 {
-                    bool enableArchiving = await billingSettings.V2EnableArchivingAsync(logger.NewChildLogger());
-                    childLogger.FluentAddValue("EnableArchiving", enableArchiving);
-
-                    if (enableArchiving)
-                    {
-                        var sourcePartitionKey = BillSummary.CreateActivePartitionKey(billSummary.PlanId);
-                        var destinationPartitionKey = BillSummary.CreateArchivedPartitionKey(billSummary.PlanId, billSummary.BillGenerationTime);
-                        await MigrateAsync(
-                            billSummaryRepository,
-                            billSummaryArchiveRepository,
-                            sourcePartitionKey,
-                            destinationPartitionKey,
-                            billSummary,
-                            logger);
-                    }
+                    var sourcePartitionKey = BillSummary.CreateActivePartitionKey(billSummary.PlanId);
+                    var destinationPartitionKey = BillSummary.CreateArchivedPartitionKey(billSummary.PlanId, billSummary.BillGenerationTime);
+                    await MigrateAsync(
+                        billSummaryRepository,
+                        billSummaryArchiveRepository,
+                        sourcePartitionKey,
+                        destinationPartitionKey,
+                        billSummary,
+                        logger);
                 });
         }
 

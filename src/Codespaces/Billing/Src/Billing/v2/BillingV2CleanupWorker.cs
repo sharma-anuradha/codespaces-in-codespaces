@@ -83,7 +83,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
 
                     childLogger.LogInfo($"{LogBaseName}_run_start");
 
-                    if (await billingSettings.V2WorkersAreEnabledAsync(childLogger))
+                    var enableWorkers = await billingSettings.V2WorkersAreEnabledAsync(logger.NewChildLogger());
+                    var enableCheckForMissingEnvironments = await billingSettings.V2EnableCheckForMissingEnvironmentsAsync(logger.NewChildLogger());
+                    var enableCheckForFinalStates = await billingSettings.V2EnableCheckForFinalStatesAsync(logger.NewChildLogger());
+
+                    if (enableWorkers)
                     {
                         // run scrubbers (defers this less time-sensitive work, at the cost of looping through all plans again later).
                         await ForEachPlan(
@@ -95,6 +99,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Billing
                                 {
                                     PlanId = plan.Id,
                                     DesiredEndTime = desiredEndDate,
+                                    CheckForMissingEnvironments = enableCheckForMissingEnvironments,
+                                    CheckForFinalStates = enableCheckForFinalStates,
                                 },
                                 innerLogger);
                             },
