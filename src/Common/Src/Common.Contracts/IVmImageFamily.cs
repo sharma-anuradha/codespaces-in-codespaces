@@ -29,6 +29,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         string DefaultImageVersion { get; }
 
         /// <summary>
+        /// Gets the VS channel url associated with the image.
+        /// </summary>
+        string VsChannelUrl { get; }
+
+        /// <summary>
         /// Gets the VS version installed in the image.
         /// </summary>
         string VsVersion { get; }

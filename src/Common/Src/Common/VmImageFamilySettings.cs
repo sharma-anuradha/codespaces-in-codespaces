@@ -21,6 +21,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public ImageKind ImageKind { get; set; }
 
         /// <summary>
+        /// Gets or sets the VS channel url for the image.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public string VsChannelUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets the VS IDE version.
         /// </summary>
         [JsonProperty(Required = Required.Default)]

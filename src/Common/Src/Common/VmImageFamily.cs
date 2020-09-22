@@ -73,6 +73,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
         public string DefaultImageVersion { get; }
 
         /// <inheritdoc/>
+        public string VsChannelUrl { get; }
+
+        /// <inheritdoc/>
         public string VsVersion { get; }
 
         private string VmImageSubscriptionId { get; }
