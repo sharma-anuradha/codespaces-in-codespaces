@@ -44,12 +44,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Contracts
         List<string> GetStampOrigins();
 
         /// <summary>
-        /// Gets the DNS hostnames for the current stamp only.
-        /// </summary>
-        /// <returns>The list of hostnames that are valid for the current stamp's API endpoints</returns>
-        List<string> GetCurrentStampValidHosts();
-
-        /// <summary>
         /// Gets the global instance-level cosmos db account.
         /// </summary>
         /// <returns>A tuple of the account url and the account key.</returns>

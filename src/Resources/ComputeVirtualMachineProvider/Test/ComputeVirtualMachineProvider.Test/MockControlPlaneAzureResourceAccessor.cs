@@ -150,10 +150,5 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ComputeVirtualMachineProvi
         {
             throw new NotImplementedException();
         }
-
-        public List<string> GetCurrentStampValidHosts()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

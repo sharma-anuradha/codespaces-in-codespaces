@@ -3,6 +3,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -135,15 +136,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common
             allDNSNames.Add($"https://{ControlPlaneInfo.DnsHostName}");
 
             return allDNSNames;
-        }
-
-        public List<string> GetCurrentStampValidHosts()
-        {
-            return new List<string>()
-            {
-                ControlPlaneInfo.DnsHostName,
-                ControlPlaneInfo.Stamp.DnsHostName,
-            };
         }
 
         /// <inheritdoc/>
