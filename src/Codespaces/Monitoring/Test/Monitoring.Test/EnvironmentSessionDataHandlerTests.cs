@@ -18,15 +18,6 @@ namespace HeartBeat.Test
         }
 
         [Fact]
-        public async void UpdateLastUsedWithActiveUsers()
-        {
-            var environmentSessionData = CreateEnvironmentSessionDataObject();
-            var handlerContext = await GetHandlerContext();
-            await environmentSessionDataHandler.ProcessAsync(environmentSessionData, handlerContext, vmResourceId, logger);
-            Assert.Equal(handlerContext.CloudEnvironment.LastUsed, environmentSessionData.Timestamp);
-        }
-
-        [Fact]
         public async void DoNotUpdateLastUsedWithNoActiveUser()
         {
             var environmentSessionData = CreateEnvironmentSessionDataObject(connectionCount: 0);
@@ -35,30 +26,6 @@ namespace HeartBeat.Test
             var cloudEnvironment = await GetCloudEnvironment();
             Assert.NotEqual(cloudEnvironment.LastUsed, environmentSessionData.Timestamp);
         }
-
-        [Fact]
-        public async void DoNotUpdateLastUsedWhenHeartBeatTimeStampIsOlder()
-        {
-            var handlerContext = await GetHandlerContext();
-            var existingLastUpdate = handlerContext.CloudEnvironment.LastUsed;
-
-            var environmentSessionData = CreateEnvironmentSessionDataObject();
-            environmentSessionData.Timestamp = existingLastUpdate.AddSeconds(-30);
-
-            await environmentSessionDataHandler.ProcessAsync(environmentSessionData, handlerContext, vmResourceId, logger);
-            Assert.Equal(handlerContext.CloudEnvironment.LastUsed, existingLastUpdate);
-        }
-
-        [Fact]
-        public async void IgnoreDataWhenEnvironmentIdIsMissing()
-        {
-            var environmentSessionData = CreateEnvironmentSessionDataObject(environmentId: null);
-            var handlerContext = await GetHandlerContext();
-
-            await environmentSessionDataHandler.ProcessAsync(environmentSessionData, handlerContext, vmResourceId, logger);
-            Assert.NotEqual(handlerContext.CloudEnvironment.LastUsed, environmentSessionData.Timestamp);
-        }
-
 
         [Fact]
         public async void ThrowValidationExceptonWhenCloudEnvironmentIsNotFound()

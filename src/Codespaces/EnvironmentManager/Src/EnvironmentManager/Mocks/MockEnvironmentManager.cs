@@ -26,7 +26,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         /// </summary>
         public MockEnvironmentManager()
         {
-            cloudEnvironment = new CloudEnvironment() { LastUsed = DateTime.UtcNow.AddDays(-1), };
+            cloudEnvironment = new CloudEnvironment() { SessionEnded = DateTime.UtcNow.AddDays(-1), };
         }
 
         /// <inheritdoc/>

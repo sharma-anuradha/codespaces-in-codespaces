@@ -65,28 +65,36 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                    childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentData.EnvironmentId);
 
-                   var environment = handlerContext.CloudEnvironment;
-                   ValidateEnvironment(environment, environmentData.EnvironmentId);
+                   var environmentTransition = handlerContext.CloudEnvironmentTransition;
+                   ValidateEnvironment(environmentTransition.Value, environmentData.EnvironmentId);
 
                    // This switch gives preference to the existing value instead of the incomming value.
                    // This prevents new values from ovewritting the existing one.
-                   environment.Connection.ConnectionSessionPath = !string.IsNullOrWhiteSpace(environment.Connection.ConnectionSessionPath) ? environment.Connection.ConnectionSessionPath : environmentData.SessionPath;
-                   var newState = DetermineNewEnvironmentState(environment, environmentData);
+                   if (string.IsNullOrWhiteSpace(environmentTransition.Value.Connection.ConnectionSessionPath))
+                   {
+                       environmentTransition.PushTransition((environment) => { environment.Connection.ConnectionSessionPath = environmentData.SessionPath; });
+                   }
+
+                   var newState = DetermineNewEnvironmentState(environmentTransition.Value, environmentData);
                    handlerContext.CloudEnvironmentState = newState.state;
                    handlerContext.Reason = newState.reason.ToString();
 
-                   if (environment.Type == EnvironmentType.CloudEnvironment)
+                   if (environmentTransition.Value.Type == EnvironmentType.CloudEnvironment)
                    {
                        // Shutdown if the environment is idle
                        if (environmentData.State.HasFlag(VsoEnvironmentState.Idle))
                        {
-                           environment = await environmentManager.SuspendAsync(Guid.Parse(environment.Id), childLogger);
-                           return new CollectedDataHandlerContext(environment);
+                           var environment = await environmentManager.SuspendAsync(Guid.Parse(environmentTransition.Value.Id), childLogger);
+
+                           // mark environment default and stop processing environment heartbeat further.
+                           environmentTransition.ReplaceAndResetTransition(default);
+
+                           return new CollectedDataHandlerContext(environmentTransition) { StopProcessing = true };
                        }
                        else if (newState.state == CloudEnvironmentState.Unavailable)
                        {
                            // Check that environment state has transitioned back to avaiable within defined timeout, if not force suspend the environment.
-                           await environmentMonitor.MonitorUnavailableStateTransitionAsync(environment.Id, environment.Compute.ResourceId, childLogger.NewChildLogger());
+                           await environmentMonitor.MonitorUnavailableStateTransitionAsync(environmentTransition.Value.Id, environmentTransition.Value.Compute.ResourceId, childLogger.NewChildLogger());
                        }
                    }
 

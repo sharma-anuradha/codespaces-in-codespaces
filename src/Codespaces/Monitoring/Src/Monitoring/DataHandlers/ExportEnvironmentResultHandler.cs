@@ -53,24 +53,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                     }
 
                     var jobResultData = (JobResult)data;
-                    var cloudEnvironment = handlerContext.CloudEnvironment;
+                    var environmentTransition = handlerContext.CloudEnvironmentTransition;
 
                     childLogger.FluentAddBaseValue("CloudEnvironmentId", jobResultData.EnvironmentId)
                         .FluentAddValue("ComputeResourceId", vmResourceId)
-                        .FluentAddValue("CloudEnvironmentFound", cloudEnvironment != null)
+                        .FluentAddValue("CloudEnvironmentFound", environmentTransition != null)
                         .FluentAddValue("JobCollectedData", JsonConvert.SerializeObject(jobResultData))
                         .FluentAddValue("JobState", jobResultData.JobState);
 
                     ValidationUtil.IsRequired(jobResultData.EnvironmentId, nameof(jobResultData.EnvironmentId));
 
-                    if (cloudEnvironment == null)
+                    if (environmentTransition == null)
                     {
                         return handlerContext;
                     }
 
                     if (jobResultData.JobState == JobState.Succeeded)
                     {
-                        if (cloudEnvironment.State == CloudEnvironmentState.Exporting)
+                        if (environmentTransition.Value.State == CloudEnvironmentState.Exporting)
                         {
                             // Extract mount file share result
                             var payloadStageResult = jobResultData.OperationResults.Where(x => x.Name == "PayloadStage").SingleOrDefault();
@@ -91,15 +91,15 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             var exportSasToken = payloadStageResult.Data.GetValueOrDefault("storageExportReadAccountSasToken");
                             var branchName = payloadStageResult.Data.GetValueOrDefault("BRANCH_NAME");
 
-                            logger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
+                            childLogger.FluentAddBaseValue("ComputeResourceId", computeResourceId)
                                 .FluentAddBaseValue("StorageResourceId", storageResourceId)
                                 .FluentAddBaseValue("ArchiveStorageResourceId", archiveStorageResourceId);
 
                             if (Guid.TryParse(storageResourceId, out var storageResourceIdGuid))
                             {
                                 // Call export callback async
-                                cloudEnvironment = await environmentManager.ExportCallbackAsync(
-                                    Guid.Parse(cloudEnvironment.Id),
+                                var environment = await environmentManager.ExportCallbackAsync(
+                                    Guid.Parse(environmentTransition.Value.Id),
                                     storageResourceIdGuid,
                                     string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
                                     exportSasToken,
@@ -107,28 +107,34 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                                     childLogger.NewChildLogger());
 
                                 // Call suspend async to shut down environment after exporting is done.
-                                handlerContext.CloudEnvironment = await environmentManager.SuspendAsync(Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
-                            }
+                                await environmentManager.SuspendAsync(Guid.Parse(environmentTransition.Value.Id), childLogger.NewChildLogger());
 
-                            // Set data of handler context to update state
-                            handlerContext.CloudEnvironmentState = handlerContext.CloudEnvironment.State;
+                                // Reset environment record and tranistions.
+                                environmentTransition.ReplaceAndResetTransition(default);
+
+                                // Set data of handler context to update state
+                                return new CollectedDataHandlerContext(environmentTransition) { StopProcessing = true };
+                            }
 
                             return handlerContext;
                         }
                     }
                     else if (jobResultData.JobState == JobState.Failed)
                     {
-                        if (cloudEnvironment.State == CloudEnvironmentState.Exporting)
+                        if (environmentTransition.Value.State == CloudEnvironmentState.Exporting)
                         {
                             // Shutdown the environment if the environment has failed to start.
-                            handlerContext.CloudEnvironment = await environmentManager.SuspendAsync(Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
+                            var environment = await environmentManager.SuspendAsync(Guid.Parse(environmentTransition.Value.Id), childLogger.NewChildLogger());
+
+                            // Reset environment record and tranistions.
+                            environmentTransition.ReplaceAndResetTransition(default);
 
                             // Track failure
                             var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.ExportEnvironmentGenericError.ToString();
-                            handlerContext.Reason = errorMessage;
-                            handlerContext.Trigger = CloudEnvironmentStateUpdateTriggers.ExportEnvironmentJobFailed;
+                            childLogger.FluentAddBaseValue("ExportJobFailedReason", errorMessage)
+                                .FluentAddBaseValue("ExportJobFailedTrigger", CloudEnvironmentStateUpdateTriggers.ExportEnvironmentJobFailed);
 
-                            return handlerContext;
+                            return new CollectedDataHandlerContext(environmentTransition) { StopProcessing = true };
                         }
                     }
                     else if (jobResultData.JobState == JobState.Started)
@@ -137,7 +143,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                         if (jobResultData.Timeout.HasValue)
                         {
                             // update the environment's state timeout to the one provided by the agent.
-                            cloudEnvironment.StateTimeout = jobResultData.Timeout;
+                            environmentTransition.PushTransition(
+                                 (env) =>
+                                 {
+                                     env.StateTimeout = jobResultData.Timeout;
+                                 });
                         }
                     }
 

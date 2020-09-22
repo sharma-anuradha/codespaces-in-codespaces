@@ -302,9 +302,44 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
         /// <summary>
         /// Gets or sets the last time the record is updated based on active sessions on environment.
         /// </summary>
+        [JsonIgnore]
+        public DateTime LastUsed
+        {
+            // Its computed as follows:
+            // 1. if SessionStart and SessionEnd is default, return Created
+            // 2. If SessionStart is set, retun current time
+            // 3. If SessionStart is default and SessionEnd is Set return SessionEnd
+            get
+            {
+                if (SessionEnded != default)
+                {
+                    // There is no active session.
+                    return SessionEnded.Value;
+                }
+
+                if (SessionEnded == default && SessionStarted != default)
+                {
+                    // There is an active session.
+                    return DateTime.UtcNow;
+                }
+
+                return Created;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the time environment state changed to avaialble state.
+        /// </summary>
         [GDPR(Action = GDPRAction.Export)]
-        [JsonProperty(Required = Required.Default, PropertyName = "lastUsed")]
-        public DateTime LastUsed { get; set; }
+        [JsonProperty(Required = Required.Default, PropertyName = "sessionStarted")]
+        public DateTime? SessionStarted { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time environment state changed from avaialble state.
+        /// </summary>
+        [GDPR(Action = GDPRAction.Export)]
+        [JsonProperty(Required = Required.Default, PropertyName = "sessionEnded")]
+        public DateTime? SessionEnded { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the environment has unpushed git changes.

@@ -27,6 +27,9 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring
             services.AddSingleton<IDataHandler, ExportEnvironmentResultHandler>();
             /* Add additional handlers here as needed */
 
+            // add heartbeat manager.
+            services.AddSingleton<IEnvironmentHeartbeatManager, EnvironmentHeartbeatManager>();
+
             return services;
         }
     }

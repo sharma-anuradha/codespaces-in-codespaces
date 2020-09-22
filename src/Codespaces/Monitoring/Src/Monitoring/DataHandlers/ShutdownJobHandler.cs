@@ -53,14 +53,18 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                    childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(jobResult))
                         .FluentAddBaseValue("CloudEnvironmentId", jobResult.EnvironmentId);
 
-                   var cloudEnvironment = handlerContext.CloudEnvironment;
-                   if (cloudEnvironment == null)
+                   var environmentTransition = handlerContext.CloudEnvironmentTransition;
+                   if (environmentTransition == null)
                    {
                        return handlerContext;
                    }
 
-                   var environmentServiceResult = await this.environmentManager.SuspendCallbackAsync(cloudEnvironment, logger);
-                   return new CollectedDataHandlerContext(environmentServiceResult.CloudEnvironment);
+                   var environmentServiceResult = await this.environmentManager.SuspendCallbackAsync(environmentTransition.Value, childLogger.NewChildLogger());
+
+                   // replace environment record and add tranistions.
+                   await environmentTransition.ReplaceAndReplayTransitionsAsync(environmentServiceResult.CloudEnvironment);
+
+                   return new CollectedDataHandlerContext(environmentTransition);
                });
         }
     }

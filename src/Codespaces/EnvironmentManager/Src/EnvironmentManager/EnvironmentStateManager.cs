@@ -158,6 +158,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     var lastStateUpdated = DateTime.UtcNow;
                     record.PushTransition((environment) =>
                     {
+                        // Update session used date time
+                        if (newState != environment.State)
+                        {
+                            if (newState == CloudEnvironmentState.Available)
+                            {
+                                // new session started
+                                environment.SessionStarted = DateTime.UtcNow;
+                                environment.SessionEnded = default;
+                            }
+                            else if (environment.State == CloudEnvironmentState.Available)
+                            {
+                                // session ended.
+                                environment.SessionEnded = DateTime.UtcNow;
+                            }
+                        }
+
                         environment.State = newState;
                         environment.LastStateUpdateTrigger = trigger;
                         environment.LastStateUpdated = lastStateUpdated;

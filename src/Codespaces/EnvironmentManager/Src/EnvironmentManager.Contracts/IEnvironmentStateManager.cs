@@ -4,9 +4,8 @@
 
 using System.Threading.Tasks;
 using Microsoft.VsSaaS.Diagnostics;
-using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
     /// State Transition Manager.

@@ -200,7 +200,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             record.Value.ControlPlaneLocation = ControlPlaneInfo.Stamp.Location;
             record.Value.Partner = input.Plan.Partner;
             record.Value.OwnerId = CurrentUserProvider.CurrentUserIdSet.PreferredUserId;
-            record.Value.Created = record.Value.Updated = record.Value.LastUsed = DateTime.UtcNow;
+            record.Value.Created = record.Value.Updated = DateTime.UtcNow;
             record.Value.HasUnpushedGitChanges = false;
             record.Value.SubnetResourceId = input.Plan.Properties?.VnetProperties?.SubnetId;
             record.Value.SkuName ??= input.Plan.Properties?.VnetProperties?.SubnetId;

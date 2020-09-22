@@ -51,17 +51,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                     }
 
                     var jobResultData = (JobResult)data;
-                    var cloudEnvironment = handlerContext.CloudEnvironment;
+                    var environmentTransition = handlerContext.CloudEnvironmentTransition;
 
                     childLogger.FluentAddBaseValue("CloudEnvironmentId", jobResultData.EnvironmentId)
                         .FluentAddValue("ComputeResourceId", vmResourceId)
-                        .FluentAddValue("CloudEnvironmentFound", cloudEnvironment != null)
+                        .FluentAddValue("CloudEnvironmentFound", environmentTransition != null)
                         .FluentAddValue("JobCollectedData", JsonConvert.SerializeObject(jobResultData))
                         .FluentAddValue("JobState", jobResultData.JobState);
 
                     ValidationUtil.IsRequired(jobResultData.EnvironmentId, nameof(jobResultData.EnvironmentId));
 
-                    if (cloudEnvironment == null)
+                    if (environmentTransition == null)
                     {
                         return handlerContext;
                     }
@@ -69,7 +69,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                     if (jobResultData.JobState == JobState.Succeeded)
                     {
                         // Only call resume callback when we are calling back from a resume
-                        if (cloudEnvironment.State == CloudEnvironmentState.Starting)
+                        if (environmentTransition.Value.State == CloudEnvironmentState.Starting)
                         {
                             // Extract mount file share result
                             var payloadStageResult = jobResultData.OperationResults.Where(x => x.Name == "PayloadStage").SingleOrDefault();
@@ -95,18 +95,22 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             // Call only if storageResourceId is a valid Guid.
                             if (Guid.TryParse(storageResourceId, out var storageResourceIdGuid))
                             {
-                                handlerContext.CloudEnvironment = await environmentManager.ResumeCallbackAsync(
-                                    Guid.Parse(cloudEnvironment.Id),
+                                var environment = await environmentManager.ResumeCallbackAsync(
+                                    Guid.Parse(environmentTransition.Value.Id),
                                     storageResourceIdGuid,
                                     string.IsNullOrEmpty(archiveStorageResourceId) ? default(Guid?) : Guid.Parse(archiveStorageResourceId),
                                     childLogger.NewChildLogger());
+
+                                // replace environment record and add tranistions.
+                                await environmentTransition.ReplaceAndReplayTransitionsAsync(environment);
                             }
                         }
                     }
                     else if (jobResultData.JobState == JobState.Failed)
                     {
+                        // TODO :: Call FailEnvironmentWorkflow to fail and cleanup resources.
                         // Mark environment provision to failed status
-                        if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
+                        if (environmentTransition.Value.State == CloudEnvironmentState.Provisioning)
                         {
                             var newState = CloudEnvironmentState.Failed;
                             var errorMessage = MessageCodeUtils.GetCodeFromError(jobResultData.Errors) ?? MessageCodes.StartEnvironmentGenericError.ToString();
@@ -114,24 +118,33 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                             handlerContext.Reason = errorMessage;
                             handlerContext.Trigger = CloudEnvironmentStateUpdateTriggers.StartEnvironmentJobFailed;
                             handlerContext.IsUserError = jobResultData.JobErrorType == JobErrorType.User;
+
                             return handlerContext;
                         }
-                        else if (cloudEnvironment.State == CloudEnvironmentState.Starting)
+                        else if (environmentTransition.Value.State == CloudEnvironmentState.Starting)
                         {
                             // Shutdown the environment if the environment has failed to start.
-                            cloudEnvironment = await environmentManager.ForceSuspendAsync(Guid.Parse(cloudEnvironment.Id), childLogger.NewChildLogger());
-                            return new CollectedDataHandlerContext(cloudEnvironment);
+                            var environment = await environmentManager.SuspendAsync(Guid.Parse(environmentTransition.Value.Id), false, childLogger.NewChildLogger());
+
+                            // Reset environment record and tranistions.
+                            environmentTransition.ReplaceAndResetTransition(default);
+
+                            return new CollectedDataHandlerContext(environmentTransition) { StopProcessing = true };
                         }
                     }
                     else if (jobResultData.JobState == JobState.Started)
                     {
-                        if (cloudEnvironment.State == CloudEnvironmentState.Provisioning)
+                        if (environmentTransition.Value.State == CloudEnvironmentState.Provisioning)
                         {
                             // begin transition monitoring if a timeout was specified.
                             if (jobResultData.Timeout.HasValue)
                             {
                                 // update the environment's state timeout to the one provided by the agent.
-                                cloudEnvironment.StateTimeout = jobResultData.Timeout;
+                                environmentTransition.PushTransition(
+                                    (env) =>
+                                    {
+                                        env.StateTimeout = jobResultData.Timeout;
+                                    });
                             }
                         }
                     }

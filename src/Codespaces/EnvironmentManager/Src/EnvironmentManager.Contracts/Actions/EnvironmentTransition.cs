@@ -4,7 +4,7 @@
 
 using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Actions;
 
-namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
+namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts
 {
     /// <summary>
     /// Environment Entity Transition.

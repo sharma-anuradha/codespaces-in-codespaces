@@ -37,34 +37,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
                "environment_session_data_handler_process",
                (childLogger) =>
                {
-                   var environmentSessionData = (EnvironmentSessionData)data;
-
-                   childLogger.FluentAddBaseValue(nameof(CollectedData), JsonConvert.SerializeObject(environmentSessionData));
-
-                   // No-op if the environmentId is empty.
-                   if (string.IsNullOrWhiteSpace(environmentSessionData.EnvironmentId))
-                   {
-                       return Task.FromResult(handlerContext);
-                   }
-
-                   childLogger.FluentAddBaseValue("CloudEnvironmentId", environmentSessionData.EnvironmentId);
-
-                   var cloudEnvironment = handlerContext.CloudEnvironment;
-                   ValidateCloudEnvironment(cloudEnvironment, environmentSessionData.EnvironmentId);
-
-                   if (environmentSessionData.ConnectedSessionCount > 0 && (cloudEnvironment.LastUsed < environmentSessionData.Timestamp))
-                   {
-                       cloudEnvironment.LastUsed = environmentSessionData.Timestamp;
-                   }
-
                    return Task.FromResult(handlerContext);
                });
-        }
-
-        private void ValidateCloudEnvironment(CloudEnvironment cloudEnvironment, string inputEnvironmentId)
-        {
-            ValidationUtil.IsTrue(cloudEnvironment != null, $"No environments found matching the EnvironmentId {inputEnvironmentId} from {nameof(EnvironmentSessionData)}");
-            ValidationUtil.IsTrue(cloudEnvironment.State != CloudEnvironmentState.Deleted, $"Heartbeat received for a deleted environment {inputEnvironmentId}");
         }
     }
 }

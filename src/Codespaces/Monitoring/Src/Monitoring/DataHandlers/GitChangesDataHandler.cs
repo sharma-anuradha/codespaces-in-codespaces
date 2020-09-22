@@ -60,10 +60,17 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                    childLogger.FluentAddBaseValue("CloudEnvironmentId", gitChangesData.EnvironmentId);
 
-                   var cloudEnvironment = handlerContext.CloudEnvironment;
-                   ValidateCloudEnvironment(cloudEnvironment, gitChangesData.EnvironmentId);
+                   var environmentTransition = handlerContext.CloudEnvironmentTransition;
+                   ValidateCloudEnvironment(environmentTransition.Value, gitChangesData.EnvironmentId);
 
-                   cloudEnvironment.HasUnpushedGitChanges = gitChangesData.HasChanges;
+                   if (environmentTransition.Value.HasUnpushedGitChanges != gitChangesData.HasChanges)
+                   {
+                       environmentTransition.PushTransition(
+                                    (env) =>
+                                    {
+                                        env.HasUnpushedGitChanges = gitChangesData.HasChanges;
+                                    });
+                   }
 
                    return Task.FromResult(handlerContext);
                });
