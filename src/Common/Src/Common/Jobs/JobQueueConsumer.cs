@@ -34,6 +34,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
         private readonly Dictionary<string, JobHandlerMetrics> jobHandlerMetricsByTypeTag = new Dictionary<string, JobHandlerMetrics>();
         private readonly object lockJobHandlerMetrics = new object();
 
+        private static Lazy<string> payloadErrorTypeTag = new Lazy<string>(() => typeof(JobPayloadError).RegisterPayloadType());
+
         // dequeued jobs
         private readonly HashSet<Job> dequeuedJobs = new HashSet<Job>();
         private readonly object lockDequeuedJobs = new object();
@@ -94,17 +96,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             ThrowIfRunning();
 
             // register default JobPayloadError handler
-            this.RegisterJobHandler<JobPayloadError>((job, logger, ct) =>
+            var payloadErrorHandler = JobQueueConsumerHelpers.CreateJobHandler<JobPayloadError>(
+                (job, logger, ct) =>
+                {
+                    return logger.OperationScopeAsync(
+                        JobQueueConsumerMessage,
+                        (childLogger) =>
+                        {
+                            childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, job.Id)
+                                .FluentAddBaseValue(JobQueueLoggerConst.JobType, nameof(JobPayloadError));
+                            return CompleteJobAsync((Job)job, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.PayloadError, ((Job<JobPayloadError>)job).Payload.Error);
+                        });
+                }, JobHandlerBase.DefaultDataflowBlockOptions);
+
+            lock (this.lockRegisteredJobHandlers)
             {
-                return this.logger.OperationScopeAsync(
-                    JobQueueConsumerMessage,
-                    (childLogger) =>
-                    {
-                        childLogger.FluentAddBaseValue(JobQueueLoggerConst.JobId, job.Id)
-                            .FluentAddBaseValue(JobQueueLoggerConst.JobType, nameof(JobPayloadError));
-                        return CompleteJobAsync((Job)job, JobCompletedStatus.Failed | JobCompletedStatus.Removed | JobCompletedStatus.PayloadError, ((Job<JobPayloadError>)job).Payload.Error);
-                    });
-            });
+                var jobHandlerInfo = new JobHandlerInfo(payloadErrorHandler, CreateJobHandlerActionBlock(payloadErrorHandler, payloadErrorTypeTag.Value));
+                this.registeredJobHandlers.Add(typeof(JobPayloadError), jobHandlerInfo);
+            }
 
             this.keepInvisibleJobsTask = KeepInvisibleJobsAsync();
             return StartQueueAsync(queueMessageProducerSettings, cancellationToken);
@@ -135,18 +144,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Jobs
             }
         }
 
+        private ActionBlock<IJob> CreateJobHandlerActionBlock<T>(IJobHandler<T> jobHandler)
+            where T : JobPayload
+        {
+            return CreateJobHandlerActionBlock<T>(jobHandler, typeof(T).RegisterPayloadType());
+        }
+
         /// <summary>
         /// Create a job handler action block.
         /// </summary>
         /// <typeparam name="T">Type of the payload.</typeparam>
         /// <param name="jobHandler">The type safe job handler instance.</param>
         /// <returns>A TPL action block.</returns>
-        private ActionBlock<IJob> CreateJobHandlerActionBlock<T>(IJobHandler<T> jobHandler)
+        private ActionBlock<IJob> CreateJobHandlerActionBlock<T>(IJobHandler<T> jobHandler, string typeTag)
             where T : JobPayload
         {
-            // register the payload type on the cache.
-            var typeTag = typeof(T).RegisterPayloadType();
-
             ActionBlock<IJob> actionBlock = null;
 
             // We have to have a wrapper to work with IJob instead of T
