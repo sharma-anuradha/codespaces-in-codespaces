@@ -189,6 +189,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Extensions
         /// </summary>
         public const string DeleteAzureResourceJobHandler = "delete_azure_resource_job_handler";
 
+        /// <summary>
+        /// Log System Resource State Job Handler
+        /// </summary>
+        public const string LogSystemResourceStateJobHandler = "log_system_resource_state_job_handler";
+
         // Deprecated
 
         /// <summary>

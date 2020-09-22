@@ -87,6 +87,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobHandler, DeleteDeploymentJobHandler>();
             services.AddSingleton<IJobHandler, WatchOrphanedAzureResourceJobHandler>();
             services.AddSingleton<IJobHandler, DeleteAzureResourceJobHandler>();
+            services.AddSingleton<IJobHandler, LogSystemResourceStateJobHandler>();
 
             // Jobs
             services.AddSingleton<ResourceRegisterJobs>();
@@ -137,6 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedVmAgentImagesProducer>();
             services.AddSingleton<IJobSchedulerRegister, DeleteResourceGroupDeploymentsJobProducer>();
             services.AddSingleton<IJobSchedulerRegister, WatchOrphanedAzureResourceJobProducer>();
+            services.AddSingleton<IJobSchedulerRegister, LogSystemResourceStateJobProducer>();
 
             // Job Registration
             services.AddSingleton(resourceBrokerSettings);
@@ -144,8 +146,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             services.AddSingleton<IWatchOrphanedSystemResourceTask, WatchOrphanedSystemResourceTask>();
             services.AddSingleton<WatchOrphanedComputeImagesTask>();
             services.AddSingleton<IRefreshKeyVaultSecretCacheTask, RefreshKeyVaultSecretCacheTask>();
-            services.AddSingleton<ILogSystemResourceStateTask, LogSystemResourceStateTask>();
-
+           
             // deprecated job handlers
             services.AddSingleton<IWatchPoolSizeTask, WatchPoolSizeTask>();
             services.AddSingleton<IWatchPoolVersionTask, WatchPoolVersionTask>();

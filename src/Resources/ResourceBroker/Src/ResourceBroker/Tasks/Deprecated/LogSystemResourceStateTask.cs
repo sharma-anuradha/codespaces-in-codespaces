@@ -22,6 +22,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker.Tasks
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LogSystemResourceStateTask"/> class.
+        /// <param name="jobSchedulerFeatureFlags">The job scheduler feature flags instance.</param>
         /// <param name="configurationReader">Configuration reader.</param>
         /// </summary>
         public LogSystemResourceStateTask(

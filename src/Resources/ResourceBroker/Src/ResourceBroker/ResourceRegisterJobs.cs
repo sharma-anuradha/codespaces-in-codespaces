@@ -62,8 +62,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             IWatchPoolVersionTask watchPoolVersionTask,
             IWatchPoolStateTask watchPoolStateTask,
             IWatchFailedResourcesTask watchFailedResourcesTask,
-            IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask,
-            ILogSystemResourceStateTask logSystemResourceStateTask)
+            IRefreshKeyVaultSecretCacheTask refreshKeyVaultSecretCacheTask)
         {
             DeleteResourceGroupDeploymentsTask = deleteResourceGroupDeploymentsTask;
             JobSchedulersRegisters = jobSchedulersRegisters;
@@ -87,7 +86,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
             WatchPoolStateTask = watchPoolStateTask;
             WatchFailedResourcesTask = watchFailedResourcesTask;
             RefreshKeyVaultSecretCacheTask = refreshKeyVaultSecretCacheTask;
-            LogSystemResourceStateTask = logSystemResourceStateTask;
         }
 
         private IEnumerable<IJobSchedulerRegister> JobSchedulersRegisters { get; }
@@ -115,8 +113,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         private ISystemConfiguration SystemConfiguration { get; }
 
         private IRefreshKeyVaultSecretCacheTask RefreshKeyVaultSecretCacheTask { get; }
-
-        private ILogSystemResourceStateTask LogSystemResourceStateTask { get; }
 
         private Random Random { get; }
 
@@ -272,11 +268,6 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
                 $"{ResourceLoggingConstants.RefreshKeyVaultSecretCacheTask}_run",
                 (childLogger) => RefreshKeyVaultSecretCacheTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
                 TimeSpan.FromHours(4));
-
-            TaskHelper.RunBackgroundLoop(
-                $"{ResourceLoggingConstants.LogSystemResourceStateTask}_run",
-                (childLogger) => LogSystemResourceStateTask.RunTaskAsync(TimeSpan.FromMinutes(10), childLogger),
-                TimeSpan.FromMinutes(1));
         }
     }
 }
