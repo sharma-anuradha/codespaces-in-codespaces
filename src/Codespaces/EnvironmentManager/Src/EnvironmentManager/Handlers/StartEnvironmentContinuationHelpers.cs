@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,6 +56,24 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                     record.Value.State == CloudEnvironmentState.Unavailable ||
                     record.Value.State == CloudEnvironmentState.Failed;
             }
+        }
+
+        public static async Task<ContinuationResult> RunStartQueuedStateMonitor(
+             this IStartEnvironmentContinuationPayloadV2 operationInput,
+             IServiceProvider serviceProvider,
+             EnvironmentRecordRef record,
+             IDiagnosticsLogger logger)
+        {
+            var cloudEnvironment = record.Value;
+            var environmentMonitor = serviceProvider.GetService<IEnvironmentMonitor>();
+            var targetState = operationInput.ActionState == StartEnvironmentInputActionState.CreateNew ? CloudEnvironmentState.Provisioning : CloudEnvironmentState.Starting;
+
+            // Start Environment Monitoring
+            await environmentMonitor.MonitorQueuedStateTransitionAsync(cloudEnvironment.Id, targetState, logger.NewChildLogger());
+
+            operationInput.CurrentState = StartEnvironmentContinuationInputState.GetResource;
+
+            return ContinuationResultHelpers.ReturnInProgress(operationInput);
         }
 
         public static async Task<ContinuationResult> RunGetResourceAsync(
@@ -212,7 +231,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                                     {
                                         // Update heartbeat record id.
                                         record.Value.HeartbeatResourceId = heartbeatRecord.Id;
-                                    
+
                                         return Task.FromResult(true);
                                     },
                                     logger,
@@ -452,6 +471,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         }
 
         public static async Task<ContinuationResult> RunStartEnvironmentMonitoring(
+            this IStartEnvironmentContinuationPayloadV2 operationInput,
             IServiceProvider serviceProvider,
             EnvironmentRecordRef record,
             IDiagnosticsLogger logger)
@@ -461,6 +481,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
             // Start Environment Monitoring
             await environmentMonitor.MonitorHeartbeatAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+
+            switch (operationInput.ActionState)
+            {
+                case StartEnvironmentInputActionState.CreateNew:
+                    await environmentMonitor.MonitorProvisioningStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                    break;
+                case StartEnvironmentInputActionState.Resume:
+                    await environmentMonitor.MonitorResumeStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                    break;
+                case StartEnvironmentInputActionState.Export:
+                    await environmentMonitor.MonitorExportStateTransitionAsync(cloudEnvironment.Id, cloudEnvironment.Compute.ResourceId, logger.NewChildLogger());
+                    break;
+                default:
+                    throw new ArgumentException($"{operationInput.ActionState} value is not valid.", nameof(operationInput.ActionState));
+            }
 
             return new ContinuationResult { Status = OperationState.Succeeded };
         }

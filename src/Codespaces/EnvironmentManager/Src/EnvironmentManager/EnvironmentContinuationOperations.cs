@@ -178,6 +178,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                         CloudEnvironmentParameters = cloudEnvironmentParameters,
                         Reason = reason,
                         LoggerProperties = loggingProperties.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value).ToDictionary(),
+                        CurrentState = StartEnvironmentContinuationInputState.StartQueuedStateMonitor,
                     },
                     null,
                     logger,
@@ -193,6 +194,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                     CloudEnvironmentParameters = cloudEnvironmentParameters,
                     Reason = reason,
                     ActionState = actionState,
+                    CurrentState = StartEnvironmentContinuationInputState.StartQueuedStateMonitor,
                 };
 
                 var target = StartEnvironmentContinuationHandlerV2.DefaultQueueTarget;

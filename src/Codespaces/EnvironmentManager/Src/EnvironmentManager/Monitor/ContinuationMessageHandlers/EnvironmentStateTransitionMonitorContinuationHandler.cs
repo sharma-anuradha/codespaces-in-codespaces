@@ -112,6 +112,21 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 case CloudEnvironmentState.Provisioning:
                     return await HandleProvisioningTimeoutAsync(input, environment, logger);
 
+                case CloudEnvironmentState.Queued:
+                    if (input.TargetState == CloudEnvironmentState.Provisioning)
+                    {
+                        // Timeout Kick off fail to cleanup environment.
+                        await EnvironmentRepairWorkflows[EnvironmentRepairActions.Fail].ExecuteAsync(environment, logger.NewChildLogger());
+                    }
+                    else
+                    {
+                        // Timeout Kick off force shutdown to repair environment.
+                        await EnvironmentRepairWorkflows[EnvironmentRepairActions.ForceSuspend].ExecuteAsync(environment, logger.NewChildLogger());
+                    }
+
+                    // state transition has timed out, return next input
+                    return CreateFinalResult(OperationState.Failed, "TimeoutInStateTransition");
+
                 default:
                     return CreateFinalResult(OperationState.Cancelled, "UnknownStateTransition");
             }

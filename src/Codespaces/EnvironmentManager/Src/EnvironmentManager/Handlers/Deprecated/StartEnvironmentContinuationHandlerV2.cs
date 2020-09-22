@@ -108,6 +108,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
             // Run operation
             switch (operationInput.CurrentState)
             {
+                case StartEnvironmentContinuationInputState.StartQueuedStateMonitor:
+                    // Trigger start queued state transition monitor.
+                    return await operationInput.RunStartQueuedStateMonitor(ServiceProvider, record, logger);
+
                 case StartEnvironmentContinuationInputState.GetResource:
                     // Trigger get exisiting resources.
                     return await operationInput.RunGetResourceAsync(ResourceBrokerHttpClient, record, logger);
@@ -134,7 +138,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 
                 case StartEnvironmentContinuationInputState.StartHeartbeatMonitoring:
                     // Start environment monitoring.
-                    return await StartEnvironmentContinuationHelpers.RunStartEnvironmentMonitoring(ServiceProvider, record, logger);
+                    return await operationInput.RunStartEnvironmentMonitoring(ServiceProvider, record, logger);
 
                 default:
                     return new ContinuationResult { Status = OperationState.Failed, ErrorReason = "InvalidEnvironmentCreateState" };

@@ -1,9 +1,10 @@
-﻿// <copyright file="EnvironmentStateTransitionInput.cs" company="Microsoft">
+// <copyright file="EnvironmentStateTransitionInput.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 using System;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
 {

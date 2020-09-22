@@ -11,6 +11,7 @@ using Microsoft.VsSaaS.Services.CloudEnvironments.Common.Continuation;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.ContinuationMessageHandlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Contracts;
+using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handlers.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Settings;
 
 namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
@@ -151,6 +152,20 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager
                 CurrentState = CloudEnvironmentState.ShuttingDown,
                 TargetState = CloudEnvironmentState.Shutdown,
                 TransitionTimeout = await EnvironmentMonitorSettings.ShutdownEnvironmentTimeout(logger.NewChildLogger()),
+            };
+
+            await MonitorStateTransitionAsync(input, logger);
+        }
+
+        /// <inheritdoc/>
+        public async Task MonitorQueuedStateTransitionAsync(string environmentId, CloudEnvironmentState targetState, IDiagnosticsLogger logger)
+        {
+            var input = new EnvironmentStateTransitionInput()
+            {
+                EnvironmentId = environmentId,
+                CurrentState = CloudEnvironmentState.Queued,
+                TargetState = targetState,
+                TransitionTimeout = await EnvironmentMonitorSettings.QueuedEnvironmentTimeout(logger.NewChildLogger()),
             };
 
             await MonitorStateTransitionAsync(input, logger);

@@ -115,6 +115,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
             // Run operation
             switch (payload.CurrentState)
             {
+                case StartEnvironmentContinuationInputState.StartQueuedStateMonitor:
+                    // Trigger start queued state transition monitor.
+                    return ToContinuationInfo(await payload.RunStartQueuedStateMonitor(ServiceProvider, record, logger), payload);
+
                 case StartEnvironmentContinuationInputState.GetResource:
                     // Trigger get exisiting resources.
                     return ToContinuationInfo(await payload.RunGetResourceAsync(ResourceBrokerHttpClient, record, logger), payload);
@@ -126,11 +130,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
                 case StartEnvironmentContinuationInputState.GetHeartbeatRecord:
                     // Trigger create environment heartbeat record if needed.
                     return ToContinuationInfo(await payload.RunGetHeartbeatRecordAsync(HeartbeatRepository, CloudEnvironmentRepository, record, logger, LogBaseName), payload);
-                 
+
                 case StartEnvironmentContinuationInputState.CheckResourceState:
                     // Trigger check resource state
                     return ToContinuationInfo(await payload.RunCheckResourceProvisioningAsync(CloudEnvironmentRepository, ResourceBrokerHttpClient, record, logger, LogBaseName), payload);
-               
+
                 case StartEnvironmentContinuationInputState.StartCompute:
                     // Trigger start compute by calling start endpoint
                     return ToContinuationInfo(await payload.RunStartComputeAsync(CloudEnvironmentRepository, EnvironmentStateManager, WorkspaceManager, ServiceProvider, record, logger, LogBaseName), payload);
@@ -141,7 +145,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
 
                 case StartEnvironmentContinuationInputState.StartHeartbeatMonitoring:
                     // Start environment monitoring.
-                    return ToContinuationInfo(await StartEnvironmentContinuationHelpers.RunStartEnvironmentMonitoring(ServiceProvider, record, logger), payload);
+                    return ToContinuationInfo(await payload.RunStartEnvironmentMonitoring(ServiceProvider, record, logger), payload);
 
                 default:
                     return ReturnFailed("InvalidEnvironmentCreateState");

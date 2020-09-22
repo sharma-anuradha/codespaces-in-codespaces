@@ -59,6 +59,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
         /// </summary>
         public int DefaultUnavailableEnvironmentTimeoutInSeconds { get; set; }
 
+        /// <summary>
+        /// Gets or sets Queued Environment Timeout In Seconds.
+        /// </summary>
+        public int DefaultQueuedEnvironmentTimeoutInSeconds { get; set; }
+
         private ISystemConfiguration SystemConfiguration { get; set; }
 
         /// <summary>
@@ -132,6 +137,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Setting
             Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
 
             var timeout = await SystemConfiguration.GetValueAsync("setting:unavailable-environment-timeout-in-seconds", logger, DefaultUnavailableEnvironmentTimeoutInSeconds);
+            return TimeSpan.FromSeconds(timeout);
+        }
+
+        /// <summary>
+        /// Gets the shutdown environment timeout.
+        /// </summary>
+        /// <param name="logger">Target logger.</param>
+        /// <returns>Target value.</returns>
+        public async Task<TimeSpan> QueuedEnvironmentTimeout(IDiagnosticsLogger logger)
+        {
+            Requires.NotNull(SystemConfiguration, nameof(SystemConfiguration));
+
+            var timeout = await SystemConfiguration.GetValueAsync("setting:queued-environment-timeout-in-seconds", logger, DefaultQueuedEnvironmentTimeoutInSeconds);
             return TimeSpan.FromSeconds(timeout);
         }
 

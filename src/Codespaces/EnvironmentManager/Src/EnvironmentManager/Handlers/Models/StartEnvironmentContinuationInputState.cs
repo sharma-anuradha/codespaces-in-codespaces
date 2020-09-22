@@ -35,7 +35,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         CheckStartCompute = 4,
 
         /// <summary>
-        /// Kick off Heartbeat Monitoring.
+        /// Kick off Environment Monitoring.
         /// </summary>
         StartHeartbeatMonitoring = 5,
 
@@ -43,5 +43,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Handler
         /// Create Heartbeat record.
         /// </summary>
         GetHeartbeatRecord = 6,
+        
+        /// <summary>
+        /// Kick off Queued State Monitoring.
+        /// </summary>
+        StartQueuedStateMonitor = 7,
     }
 }

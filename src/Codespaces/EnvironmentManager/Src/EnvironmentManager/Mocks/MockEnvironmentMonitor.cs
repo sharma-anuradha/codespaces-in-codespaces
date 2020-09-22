@@ -55,5 +55,11 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Mocks
         {
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc/>
+        public Task MonitorQueuedStateTransitionAsync(string environmentId, CloudEnvironmentState targetState, IDiagnosticsLogger logger)
+        {
+            return Task.CompletedTask;
+        }
     }
 }
