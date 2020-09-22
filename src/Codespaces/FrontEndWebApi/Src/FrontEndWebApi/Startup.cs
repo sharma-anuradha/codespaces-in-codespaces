@@ -3,7 +3,10 @@
 // </copyright>
 
 using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -21,6 +24,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.DiagnosticsServer.Startup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApiClient;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Billing;
@@ -468,6 +472,19 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi
 
             // Use VS SaaS middleware.
             app.UseVsSaaS(!isProduction);
+
+            if (AppSettings.StartDiagnosticsServer)
+            {
+                Task.Run(async () =>
+                {
+                    var diag = new DiagnosticsHostedService();
+                    var assemblyFolder = new DirectoryInfo(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+                    var logFolder = Path.GetFullPath(Path.Combine(assemblyFolder.Parent.Parent.Parent.FullName, "logs"));
+                    Directory.CreateDirectory(logFolder);
+
+                    await diag.StartAsync(new Configuration() { Port = 59330, LogDirectory = logFolder });
+                });
+            }
 
             // Finish setting up config
             if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)

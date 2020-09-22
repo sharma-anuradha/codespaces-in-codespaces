@@ -3,7 +3,10 @@
 // </copyright>
 
 using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -19,6 +22,7 @@ using Microsoft.VsSaaS.Azure.Storage.DocumentDB;
 using Microsoft.VsSaaS.Common;
 using Microsoft.VsSaaS.Common.Warmup;
 using Microsoft.VsSaaS.Diagnostics;
+using Microsoft.VsSaaS.DiagnosticsServer.Startup;
 using Microsoft.VsSaaS.Services.CloudEnvironments.Auth.Extensions;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Models;
 using Microsoft.VsSaaS.Services.CloudEnvironments.BackEndWebApi.Support;
@@ -252,6 +256,27 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.BackendWebApi
             {
                 x.MapControllers();
             });
+
+            if (AppSettings.StartDiagnosticsServer)
+            {
+                Task.Run(async () =>
+                {
+                    var diag = new DiagnosticsHostedService();
+                    if (!await diag.IsDiagnosticsRunningAsync(59330))
+                    {
+                        // While IsDiagnosticsRunningAsync is run as part of StartAsync, because there are two services starting at once
+                        // There could be a race condition that would spawn two servers. While the second server would crash and not start,
+                        // It's better for it to not appear at all. This delay helps avoid that.
+                        await Task.Delay(20000);
+                    }
+
+                    var assemblyFolder = new DirectoryInfo(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+                    var logFolder = Path.GetFullPath(Path.Combine(assemblyFolder.Parent.Parent.Parent.FullName, "logs"));
+                    Directory.CreateDirectory(logFolder);
+                    var config = new Configuration() { Port = 59330, LogDirectory = logFolder };
+                    await diag.StartAsync(config);
+                });
+            }
 
             // Finish setting up config
             if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment() && AppSettings.GenerateLocalHostNameFromNgrok)

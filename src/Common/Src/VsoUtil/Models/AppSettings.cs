@@ -37,6 +37,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.VsoUtil.Models
 
         public bool GenerateLocalHostNameFromNgrok { get; set; } = false;
 
+        public bool StartDiagnosticsServer { get; set; } = false;
+
+        public string DiagnosticsLogsDirectory { get; set; } = string.Empty;
+
         public FrontEnd FrontEnd { get; set; }
 
         public ControlPlaneSettings ControlPlaneSettings { get; set; }
