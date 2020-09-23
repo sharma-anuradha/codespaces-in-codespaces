@@ -306,7 +306,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidationUtil.IsTrue(this.envNameRegex.IsMatch(input.Details.FriendlyName), $"'{input.Details.FriendlyName.Truncate(200)}' is not a valid FriendlyName.");
 
             // Validate sku details
-            await ValidateSkuAsync(input.Details.SkuName, input.Plan.Plan);
+            await ValidateSkuAsync(input.Details.SkuName, input.Plan);
 
             // Validate VNet details
             var isVnetInjectionEnabled = await PlanManager.CheckFeatureFlagsAsync(input.Plan, PlanFeatureFlag.VnetInjection, logger.NewChildLogger());

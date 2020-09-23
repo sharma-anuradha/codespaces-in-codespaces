@@ -60,12 +60,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
         /// Validate sku.
         /// </summary>
         /// <param name="skuName">Target sku name.</param>
-        /// <param name="planInfo">Target plan info instance.</param>
+        /// <param name="plan">Target plan.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         protected async Task ValidateSkuAsync(
             string skuName,
-            VsoPlanInfo planInfo)
+            VsoPlan plan)
         {
+            var planInfo = plan.Plan;
             Requires.NotNullOrEmpty(skuName, nameof(skuName));
 
             SkuCatalog.CloudEnvironmentSkus.TryGetValue(skuName, out var sku);
@@ -73,7 +74,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             ValidationUtil.IsTrue(sku != null, $"The requested SKU is not defined: {skuName?.Truncate(200)}");
 
             var profile = await CurrentUserProvider.GetProfileAsync();
-            var isSkuVisible = await SkuUtils.IsVisible(sku, planInfo, profile);
+            var isSkuVisible = plan.Partner == Plans.Contracts.Partner.GitHub || await SkuUtils.IsVisible(sku, planInfo, profile);
 
             ValidationUtil.IsTrue(isSkuVisible, $"The requested SKU '{skuName?.Truncate(200)}' is not visible.");
             ValidationUtil.IsTrue(sku.Enabled, $"The requested SKU '{skuName?.Truncate(200)}' is not available.");

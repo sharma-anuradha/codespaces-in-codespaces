@@ -205,7 +205,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.EnvironmentManager.Actions
             }
 
             // Validate sku details
-            await ValidateSkuAsync(environment.SkuName, plan.Plan);
+            await ValidateSkuAsync(environment.SkuName, plan);
 
             // Validate VNet details
             var isVnetInjectionEnabled = await PlanManager.CheckFeatureFlagsAsync(plan, PlanFeatureFlag.VnetInjection, logger.NewChildLogger());
