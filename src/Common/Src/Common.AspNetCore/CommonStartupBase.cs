@@ -256,7 +256,10 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.AspNetCore
                 kustoStreamLogging = AppSettings.DeveloperPersonalStamp && AppSettings.DeveloperKusto;
             }
 
-            services.AddSingleton<IDiagnosticsLoggerFactory>(x => ActivatorUtilities.CreateInstance<DeveloperStampDiagnosticsLoggerFactory>(x, kustoStreamLogging, AppSettings.RedirectStandardOutToLogsDirectory));
+            if (!IsRunningInAzure() && HostingEnvironment.IsDevelopment())
+            {
+                services.AddSingleton<IDiagnosticsLoggerFactory>(x => ActivatorUtilities.CreateInstance<DeveloperStampDiagnosticsLoggerFactory>(x, kustoStreamLogging, AppSettings.RedirectStandardOutToLogsDirectory));
+            }
 
             var productInfo = new ProductInfoHeaderValue(
                 ServiceName, Assembly.GetExecutingAssembly().GetName().Version.ToString());

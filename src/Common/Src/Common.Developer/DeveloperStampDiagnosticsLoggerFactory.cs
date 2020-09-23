@@ -43,6 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
 
         private IResourceNameBuilder ResourceNameBuilder { get; set; }
 
+        private List<TextWriter> Writers { get; } = new List<TextWriter>();
+
         /// <inheritdoc/>
         public IDiagnosticsLogger New(LogValueSet logValueSet = default)
         {
@@ -50,14 +52,16 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
             {
                 var controlPlaneAccessor = ServiceProvider.GetService<IControlPlaneAzureResourceAccessor>();
                 KustoStreamWriter = new KustoStreamWriter(ResourceNameBuilder, controlPlaneAccessor);
+                Writers.Add(KustoStreamWriter);
             }
 
             if (LogFileStreamWriter == default && this.fileLogStreaming)
             {
                 LogFileStreamWriter = new LogFileStreamWriter();
+                Writers.Add(LogFileStreamWriter);
             }
 
-            return new DeveloperStampDiagnosticsLogger(logValueSet, new List<TextWriter>() { KustoStreamWriter, LogFileStreamWriter });
+            return new DeveloperStampDiagnosticsLogger(logValueSet, Writers);
         }
     }
 }

@@ -37,6 +37,12 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Common.Developer.DevStampL
             {
                 this.DiagnosticsLoggers.Add(new JsonStdoutLogger(baseValues, stream));
             }
+
+            if (!this.DiagnosticsLoggers.Any())
+            {
+                // Callers can pass in an empty list of streams, so default to just printing to stdout
+                this.DiagnosticsLoggers.Add(new JsonStdoutLogger(baseValues));
+            }
         }
 
         /// <summary>
