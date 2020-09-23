@@ -169,7 +169,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.ResourceBroker
         /// <param name="heartBeatInput">heartbeat input.</param>
         /// <param name="logger">logger</param>
         /// <param name="loggingProperties">The dictionary of logging properties.</param>
-        /// <returns></returns>
+        /// <returns>result.</returns>
         Task ProcessHeartbeatAsync(HeartBeatInput heartBeatInput, IDiagnosticsLogger logger, IDictionary<string, string> loggingProperties);
     }
 }

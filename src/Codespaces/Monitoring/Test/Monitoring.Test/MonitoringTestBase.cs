@@ -43,8 +43,8 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.HeartBeat.Test
 
         protected async Task<CollectedDataHandlerContext> GetHandlerContext()
         {
-            var cloudEnvironment = await GetCloudEnvironment();
-            
+            var cloudEnvironment = new EnvironmentTransition(await GetCloudEnvironment());
+
             return new CollectedDataHandlerContext(cloudEnvironment);
         }
 
