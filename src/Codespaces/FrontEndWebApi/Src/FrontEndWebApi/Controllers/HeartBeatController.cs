@@ -43,28 +43,28 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
         /// Initializes a new instance of the <see cref="HeartBeatController"/> class.
         /// </summary>
         /// <param name="backendHeartBeatClient">Backend HeartBeat Client.</param>
-        /// <param name="cloudEnvironmentRepository">cloud environment repository.</param>
         /// <param name="currentUserProvider">Current user provider.</param>
         /// <param name="environmentHeartbeatManager">Environment heartbeat manager.</param>
+        /// <param name="environmentManager">Environment manager.</param>
         public HeartBeatController(
             IResourceHeartBeatHttpContract backendHeartBeatClient,
-            ICloudEnvironmentRepository cloudEnvironmentRepository,
             ICurrentUserProvider currentUserProvider,
-            IEnvironmentHeartbeatManager environmentHeartbeatManager)
+            IEnvironmentHeartbeatManager environmentHeartbeatManager,
+            IEnvironmentManager environmentManager)
         {
             BackendHeartBeatClient = backendHeartBeatClient;
-            CloudEnvironmentRepository = cloudEnvironmentRepository;
             CurrentUserProvider = currentUserProvider;
             EnvironmentHeartbeatManager = environmentHeartbeatManager;
+            EnvironmentManager = environmentManager;
         }
 
         private IResourceHeartBeatHttpContract BackendHeartBeatClient { get; }
 
-        private ICloudEnvironmentRepository CloudEnvironmentRepository { get; }
-
         private ICurrentUserProvider CurrentUserProvider { get; }
 
         private IEnvironmentHeartbeatManager EnvironmentHeartbeatManager { get; }
+
+        private IEnvironmentManager EnvironmentManager { get; }
 
         /// <summary>
         /// Controller to recieve heartbeat messages from VSO Agents.
@@ -92,7 +92,7 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.FrontEndWebApi.Controllers
                 ValidateHeartbeat(heartBeat);
                 if (!string.IsNullOrEmpty(environmentId))
                 {
-                    environment = await CloudEnvironmentRepository.GetAsync(environmentId, logger.NewChildLogger());
+                    environment = await EnvironmentManager.GetAsync(Guid.Parse(environmentId), logger.NewChildLogger());
                     shouldSendBackendTask = !(environment == null || environment.Type == EnvironmentType.StaticEnvironment || environment.State != CloudEnvironmentState.Queued);
                 }
             }

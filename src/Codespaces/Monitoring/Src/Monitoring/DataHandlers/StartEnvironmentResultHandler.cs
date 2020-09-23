@@ -55,13 +55,13 @@ namespace Microsoft.VsSaaS.Services.CloudEnvironments.Monitoring.DataHandlers
 
                     childLogger.FluentAddBaseValue("CloudEnvironmentId", jobResultData.EnvironmentId)
                         .FluentAddValue("ComputeResourceId", vmResourceId)
-                        .FluentAddValue("CloudEnvironmentFound", environmentTransition != null)
+                        .FluentAddValue("CloudEnvironmentFound", environmentTransition?.Value != null)
                         .FluentAddValue("JobCollectedData", JsonConvert.SerializeObject(jobResultData))
                         .FluentAddValue("JobState", jobResultData.JobState);
 
                     ValidationUtil.IsRequired(jobResultData.EnvironmentId, nameof(jobResultData.EnvironmentId));
 
-                    if (environmentTransition == null)
+                    if (environmentTransition?.Value == null)
                     {
                         return handlerContext;
                     }
