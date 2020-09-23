@@ -191,7 +191,13 @@
       ],
       "identityManagement": {
         "type": "SystemAssigned"
-      }
+      },
+      "linkedOperationRules": [
+        {
+        "linkedOperation": "CrossResourceGroupResourceMove, CrossSubscriptionResourceMove",
+        "linkedAction": "Blocked"
+        }
+        ]
     },
     {
       "name": "operations",
@@ -294,8 +300,8 @@
       "VSEngSaaS-PlatformServiceAdministrator",
       "SPARTA-PlatformServiceAdministrator"
     ],
-    "incidentRoutingService": "Azure Resource Manager",
-    "incidentRoutingTeam": "Azure Resource Manager",
+    "incidentRoutingService": "Visual Studio Codespaces",
+    "incidentRoutingTeam": "Cloud Environments",
     "incidentContactEmail": "VSAnywhereDevTeam@microsoft.com",
     "resourceAccessPolicy": "NotSpecified"
   },
