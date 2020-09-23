@@ -6,7 +6,6 @@
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
   "contentVersion": "1.0.0.0",
-
   "rolloutMetadata": {
     "serviceModelPath": "core.prod-ctl-rel-us-w2/core.region.servicemodel.jsonc",
     "scopeBindingsPath": null,
@@ -23,15 +22,36 @@
       "name": "vscs-core-prod-rel-us-w2-network",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-prod-rel-us-w2-network",
-      "actions": [ "deploy" ],
+      "actions": [
+        "deploy"
+      ],
       "dependsOn": []
     },
     {
       "name": "vscs-core-prod-rel-us-w2-cluster",
-      "targetType": "ServiceResource",
-      "targetName": "vscs-core-prod-rel-us-w2-cluster",
-      "actions": [ "deploy" ],
-      "dependsOn": [ "vscs-core-prod-rel-us-w2-network" ]
+      "targetType": "application",
+      "applications": {
+        "names": [
+          "vscs-core-prod-rel-us-w2-docker-image-cleanup-chart",
+          "vscs-core-prod-rel-us-w2-geneva-chart",
+          "vscs-core-prod-rel-us-w2-kubernetes-dashboard-chart",
+          "vscs-core-prod-rel-us-w2-kured-chart",
+          "vscs-core-prod-rel-us-w2-nginx-ingress-controller-chart"
+        ],
+        "actions": [
+          "AppDeploy"
+        ],
+        "applyAcrossServiceResources": {
+          "definitionName": "vscs-core-prod-rel-us-w2-cluster-def",
+          "deployArmResources": true,
+          "names": [
+            "vscs-core-prod-rel-us-w2-cluster"
+          ]
+        }
+      },
+      "dependsOn": [
+        "vscs-core-prod-rel-us-w2-network"
+      ]
     }
   ]
 }

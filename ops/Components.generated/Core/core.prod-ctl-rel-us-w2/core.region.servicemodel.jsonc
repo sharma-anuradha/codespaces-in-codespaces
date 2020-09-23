@@ -4,56 +4,177 @@
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
-  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
-  "contentVersion": "0.0.0.1",
-
-  "serviceMetadata": {
-    "serviceGroup": "vscs-core-prod-rel-us-w2-service-group",
-    "environment": "Test"
+"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+"contentVersion": "0.0.0.1",
+"serviceMetadata": {
+  "serviceGroup": "vscs-core-prod-rel-us-w2-service-group",
+  "environment": "Test"
+},
+"serviceResourceGroupDefinitions": [
+  {
+    "name": "vscs-core-prod-rel-us-w2-rg-def",
+    "serviceResourceDefinitions": [
+      {
+        "name": "vscs-core-prod-rel-us-w2-cluster-def",
+        "composedOf": {
+          "arm": {
+            "templatePath": "core.prod-ctl-rel-us-w2/ARM/core.cluster.arm.json"
+          },
+          "application": {
+            "names": [
+              "vscs-core-prod-rel-us-w2-docker-image-cleanup-chart-def",
+              "vscs-core-prod-rel-us-w2-geneva-chart-def",
+              "vscs-core-prod-rel-us-w2-kubernetes-dashboard-chart-def",
+              "vscs-core-prod-rel-us-w2-kured-chart-def",
+              "vscs-core-prod-rel-us-w2-nginx-ingress-controller-chart-def"
+            ]
+          }
+        }
+      },
+      {
+        "name": "vscs-core-prod-rel-us-w2-network-def",
+        "composedOf": {
+          "arm": {
+            "templatePath": "core.prod-ctl-rel-us-w2/ARM/core.network.arm.json"
+          }
+        }
+      }
+    ]
+  }
+],
+"applicationDefinitions": [
+  {
+    "name": "vscs-core-prod-rel-us-w2-docker-image-cleanup-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "docker-image-cleanup-release",
+      "chart": {
+        "reference": {
+          "path": "charts/docker-image-cleanup/docker-image-cleanup.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.prod-ctl-rel-us-w2/ChartValues/docker-image-cleanup.values.yaml"
+    }
   },
-
-  "serviceResourceGroupDefinitions": [
-    {
-      "name": "vscs-core-prod-rel-us-w2-rg",
-      "serviceResourceDefinitions": [
-        {
-          "name": "vscs-core-prod-rel-us-w2-cluster",
-          "composedOf": {
-            "arm": {
-              "templatePath": "core.prod-ctl-rel-us-w2/ARM/core.cluster.arm.json",
-              "parametersPath": "empty.arm.parameters.json"
-            }
-          }
-        },
-        {
-          "name": "vscs-core-prod-rel-us-w2-network",
-          "composedOf": {
-            "arm": {
-              "templatePath": "core.prod-ctl-rel-us-w2/ARM/core.network.arm.json",
-              "parametersPath": "empty.arm.parameters.json"
-            }
-          }
+  {
+    "name": "vscs-core-prod-rel-us-w2-geneva-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "geneva-release",
+      "chart": {
+        "reference": {
+          "path": "charts/geneva/geneva.zip"
         }
-      ]
-    }
-  ],
-
-  "serviceResourceGroups": [
-    {
-      "azureResourceGroupName": "vscs-core-prod-rel-us-w2",
-      "location": "WestUs2",
-      "instanceOf": "vscs-core-prod-rel-us-w2-rg",
-      "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
-      "serviceResources": [
-        {
-          "name": "vscs-core-prod-rel-us-w2-cluster",
-          "instanceOf": "vscs-core-prod-rel-us-w2-cluster"
-        },
-        {
-          "name": "vscs-core-prod-rel-us-w2-network",
-          "instanceOf": "vscs-core-prod-rel-us-w2-network"
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
         }
-      ]
+      },
+      "valuesPath": "core.prod-ctl-rel-us-w2/ChartValues/geneva.values.yaml"
     }
-  ]
+  },
+  {
+    "name": "vscs-core-prod-rel-us-w2-kubernetes-dashboard-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "kubernetes-dashboard-release",
+      "chart": {
+        "reference": {
+          "path": "charts/kubernetes-dashboard/kubernetes-dashboard.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.prod-ctl-rel-us-w2/ChartValues/kubernetes-dashboard.values.yaml"
+    }
+  },
+  {
+    "name": "vscs-core-prod-rel-us-w2-kured-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "kured-release",
+      "chart": {
+        "reference": {
+          "path": "charts/kured/kured.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.prod-ctl-rel-us-w2/ChartValues/kured.values.yaml"
+    }
+  },
+  {
+    "name": "vscs-core-prod-rel-us-w2-nginx-ingress-controller-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "nginx-ingress-controller-release",
+      "chart": {
+        "reference": {
+          "path": "charts/nginx-ingress-controller/nginx-ingress-controller.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.prod-ctl-rel-us-w2/ChartValues/nginx-ingress-controller.values.yaml"
+    }
+  }
+],
+"serviceResourceGroups": [
+  {
+    "azureResourceGroupName": "vscs-core-prod-rel-us-w2",
+    "location": "WestUs2",
+    "instanceOf": "vscs-core-prod-rel-us-w2-rg-def",
+    "azureSubscriptionId": "108e52ee-62a8-4a26-97e1-d6654c1bcb34",
+    "serviceResources": [
+      {
+        "name": "vscs-core-prod-rel-us-w2-cluster",
+        "instanceOf": "vscs-core-prod-rel-us-w2-cluster-def",
+        "armParametersPath": "empty.arm.parameters.json",
+        "rolloutParametersPath": "core.prod-ctl-rel-us-w2/core.region.rolloutparameters.jsonc",
+        "applications": [
+          {
+            "name": "vscs-core-prod-rel-us-w2-docker-image-cleanup-chart",
+            "instanceOf": "vscs-core-prod-rel-us-w2-docker-image-cleanup-chart-def",
+            "armResourceName": "vscs-core-prod-rel-us-w2-cluster"
+          },
+          {
+            "name": "vscs-core-prod-rel-us-w2-geneva-chart",
+            "instanceOf": "vscs-core-prod-rel-us-w2-geneva-chart-def",
+            "armResourceName": "vscs-core-prod-rel-us-w2-cluster"
+          },
+          {
+            "name": "vscs-core-prod-rel-us-w2-kubernetes-dashboard-chart",
+            "instanceOf": "vscs-core-prod-rel-us-w2-kubernetes-dashboard-chart-def",
+            "armResourceName": "vscs-core-prod-rel-us-w2-cluster"
+          },
+          {
+            "name": "vscs-core-prod-rel-us-w2-kured-chart",
+            "instanceOf": "vscs-core-prod-rel-us-w2-kured-chart-def",
+            "armResourceName": "vscs-core-prod-rel-us-w2-cluster"
+          },
+          {
+            "name": "vscs-core-prod-rel-us-w2-nginx-ingress-controller-chart",
+            "instanceOf": "vscs-core-prod-rel-us-w2-nginx-ingress-controller-chart-def",
+            "armResourceName": "vscs-core-prod-rel-us-w2-cluster"
+          }
+        ]
+      },
+      {
+        "name": "vscs-core-prod-rel-us-w2-network",
+        "instanceOf": "vscs-core-prod-rel-us-w2-network-def",
+        "armParametersPath": "empty.arm.parameters.json"
+      }
+    ]
+  }
+]
 }

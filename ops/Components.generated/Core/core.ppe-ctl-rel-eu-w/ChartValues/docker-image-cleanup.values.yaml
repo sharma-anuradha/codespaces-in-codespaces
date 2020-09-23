@@ -1,0 +1,4 @@
+image:
+  repositoryUrl: vscscoreppeacr.azurecr.io
+  alpineDockerName: 'alpine-docker'
+  alpineDockerTag: '1'

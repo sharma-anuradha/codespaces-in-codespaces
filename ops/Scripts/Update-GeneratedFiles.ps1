@@ -13,7 +13,7 @@ param(
 
 # Global error handling -- ensure non-zero exit code on failure
 trap {
-    Write-Error $_
+    Write-Error $_ -ErrorAction "Continue"
     exit 1
 }
 
@@ -91,6 +91,9 @@ function Update-Components() {
 
         Write-Verbose "Invoking the generator with -i $ComponentsFolder -o $ComponentsGeneratedFolder" -Verbose:$Verbose
         & ts-node-script index.ts -i $ComponentsFolder -o $ComponentsGeneratedFolder
+        if ($LASTEXITCODE -ne 0) {
+            throw "Generator failed"
+        }
     }
     finally {
         Pop-Location | Out-Null

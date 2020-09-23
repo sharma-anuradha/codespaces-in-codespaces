@@ -1,0 +1,33 @@
+image:
+  acskeyvaultagentName: acskeyvaultagent
+  acskeyvaultagentTag:
+  busyboxName: busybox
+  busyboxTag: latest
+  genevafluentdtdagentName: genevafluentd_td-agent
+  genevafluentdtdagentTag:
+  genevamdmName: genevamdm
+  genevamdmTag:
+  genevamdsdName: genevamdsd
+  genevamdsdTag:
+  genevasecpackinstallName: genevasecpackinstall
+  genevasecpackinstallTag:
+  repositoryUrl:
+
+config:
+  AzSecPack_AuditMoniker:
+  AzSecPack_DiagnosticsMoniker:
+  AzSecPack_EventVersion:
+  AzSecPack_GCS_Account:
+  AzSecPack_GCS_cert_name:
+  AzSecPack_GCS_cert:
+  AzSecPack_GCS_Environment:
+  AzSecPack_GCS_key:
+  AzSecPack_Namespace:
+  AzSecPack_Role:
+  AzSecPack_SecurityMoniker:
+  AzSecPack_Tenant:
+  AzSecPack_Timestamp:
+  Geneva_Mdm_Account:
+  Geneva_Mdm_Log_Level: "Info"
+  Geneva_Mdm_Metric_Endpoint: "https://global.metrics.nsatc.net/"
+  KeyVault:

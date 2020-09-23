@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevafluentd_td_agent:
+    image: genevafluentd_td-agent:{{{genevaFluentdTdAgentTag}}}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevafluentd_td-agent:{{{genevaFluentdTdAgentTag}}}
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevamdsd:
+    image: genevamdsd:{{{genevaMdsdTag}}}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevamdsd:{{{genevaMdsdTag}}}
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevamdm:
+    image: genevamdm:{{{genevaMdmTag}}}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevamdm:{{{genevaMdmTag}}}
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevasecpackinstall:
+    image: genevasecpackinstall:{{{genevaSecpackInstallTag}}}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevasecpackinstall:{{{genevaSecpackInstallTag}}}
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_acskeyvaultagent:
+    image: acskeyvaultagent:{{{acsKeyVaultAgentTag}}}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/acskeyvaultagent:{{{acsKeyVaultAgentTag}}}

@@ -1,0 +1,11 @@
+image:
+  repositoryUrl:
+  defaultBackendName: 'k8s-defaultbackend'
+  defaultBackendTag: '1.4'
+  ingressControllerName: 'nginx-ingress-controller'
+  ingressControllerTag: '0.27.1'
+ingress:
+  replicaCount: 3
+# This is used for nginx to set the x-servedby header
+# specified on the helm upgrade command-line
+clusterName:

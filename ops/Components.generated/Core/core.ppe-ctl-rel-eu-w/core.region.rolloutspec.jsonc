@@ -6,7 +6,6 @@
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
   "contentVersion": "1.0.0.0",
-
   "rolloutMetadata": {
     "serviceModelPath": "core.ppe-ctl-rel-eu-w/core.region.servicemodel.jsonc",
     "scopeBindingsPath": null,
@@ -23,15 +22,36 @@
       "name": "vscs-core-ppe-rel-eu-w-network",
       "targetType": "ServiceResource",
       "targetName": "vscs-core-ppe-rel-eu-w-network",
-      "actions": [ "deploy" ],
+      "actions": [
+        "deploy"
+      ],
       "dependsOn": []
     },
     {
       "name": "vscs-core-ppe-rel-eu-w-cluster",
-      "targetType": "ServiceResource",
-      "targetName": "vscs-core-ppe-rel-eu-w-cluster",
-      "actions": [ "deploy" ],
-      "dependsOn": [ "vscs-core-ppe-rel-eu-w-network" ]
+      "targetType": "application",
+      "applications": {
+        "names": [
+          "vscs-core-ppe-rel-eu-w-docker-image-cleanup-chart",
+          "vscs-core-ppe-rel-eu-w-geneva-chart",
+          "vscs-core-ppe-rel-eu-w-kubernetes-dashboard-chart",
+          "vscs-core-ppe-rel-eu-w-kured-chart",
+          "vscs-core-ppe-rel-eu-w-nginx-ingress-controller-chart"
+        ],
+        "actions": [
+          "AppDeploy"
+        ],
+        "applyAcrossServiceResources": {
+          "definitionName": "vscs-core-ppe-rel-eu-w-cluster-def",
+          "deployArmResources": true,
+          "names": [
+            "vscs-core-ppe-rel-eu-w-cluster"
+          ]
+        }
+      },
+      "dependsOn": [
+        "vscs-core-ppe-rel-eu-w-network"
+      ]
     }
   ]
 }

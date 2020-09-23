@@ -1,0 +1,7 @@
+image:
+  repositoryUrl: {{{imageRepositoryUrl}}}
+ingress:
+  replicaCount: {{{ingressReplicaCount}}}
+# This is used for nginx to set the x-servedby header
+# specified on the helm upgrade command-line
+clusterName: {{{baseRegionName}}}-cluster

@@ -1,0 +1,4 @@
+image:
+  repositoryUrl: vscscoredevacr.azurecr.io
+  alpineDockerName: 'alpine-docker'
+  alpineDockerTag: '1'

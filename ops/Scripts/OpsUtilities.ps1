@@ -296,6 +296,7 @@ function Get-DefaultResourceProviders([string]$DataType) {
     "Microsoft.ManagedIdentity",
     "Microsoft.Maps",
     "Microsoft.Network",
+    "Microsoft.PolicyInsights",
     "Microsoft.Relay",
     "Microsoft.ServiceBus",
     "Microsoft.SignalRService",
@@ -321,6 +322,10 @@ function Register-DefaultProvidersAndFeatures(
     "Microsoft.Storage/PartitionedData" | Write-Host -ForegroundColor DarkGray
     Register-AzProviderFeature -FeatureName "PartitionedDns" -ProviderNamespace "Microsoft.Storage" | Out-Null
   }
+
+  # Enable AKS azure policy add-on
+  "Microsoft.ContainerService/AKS-AzurePolicyAutoApprove" | Write-Host -ForegroundColor DarkGray
+  Register-AzProviderFeature -FeatureName "AKS-AzurePolicyAutoApprove" -ProviderNamespace "Microsoft.ContainerService" | Out-Null
 }
 
 function New-SubscriptionRoleAssignment(

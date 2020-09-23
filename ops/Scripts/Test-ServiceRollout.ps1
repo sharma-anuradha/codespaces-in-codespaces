@@ -19,7 +19,7 @@ $PSDefaultParameterValues['*:ErrorAction'] = 'Stop'
 
 # Global error handling
 trap {
-    Write-Error $_
+    Write-Error $_ -ErrorAction "Continue"
     exit 1
 }
 
@@ -81,6 +81,11 @@ $rolloutSpecs | Out-String | Write-Host -ForegroundColor DarkGray
 
 $goodRolloutSpecs = @()
 $badRolloutSpecs = @()
+
+if ($Online) {
+    $rolloutSpecs = $rolloutSpecs | Where-Object { $_.Contains(".dev-") }
+}
+
 $rolloutSpecs | ForEach-Object {
     $rolloutSpec = $_
     try {
@@ -96,7 +101,6 @@ $rolloutSpecs | ForEach-Object {
         }
     }
     catch {
-        "Error validating ${rolloutSpec}: $($_ | Out-String)" | Write-Host -ForegroundColor Red
         $badRolloutSpecs += $rolloutSpec
     }
 }

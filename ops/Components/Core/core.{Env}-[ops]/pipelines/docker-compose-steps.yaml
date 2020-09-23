@@ -1,0 +1,37 @@
+# docker-compose-steps.yml
+
+parameters:
+  name:
+  dockerComposeFile:
+  sourceServiceConnector:
+  sourceContainerRegistry:
+  targetServiceConnector:
+  targetContainerRegistry:
+
+steps:
+- task: DockerCompose@0
+  displayName: Pull images for ${{ parameters.name }} from ${{ parameters.sourceContainerRegistry }}
+  inputs:
+    azureSubscription: ${{ parameters.sourceServiceConnector }}
+    azureContainerRegistry: ${{ parameters.sourceContainerRegistry }}
+    dockerComposeFile: ${{ parameters.dockerComposeFile }}
+    qualifyImageNames: false
+    action: Build services
+
+- task: DockerCompose@0
+  displayName: Tag images for ${{ parameters.name }} with ${{ parameters.targetContainerRegistry }}
+  inputs:
+    azureSubscription: ${{ parameters.targetServiceConnector }}
+    azureContainerRegistry: ${{ parameters.targetContainerRegistry }}
+    dockerComposeFile: ${{ parameters.dockerComposeFile }}
+    qualifyImageNames: true
+    action: Build services
+
+- task: DockerCompose@0
+  displayName: Push images for ${{ parameters.name }} to ${{ parameters.targetContainerRegistry }}
+  inputs:
+    azureSubscription: ${{ parameters.targetServiceConnector }}
+    azureContainerRegistry: ${{ parameters.targetContainerRegistry }}
+    dockerComposeFile: ${{ parameters.dockerComposeFile }}
+    qualifyImageNames: true
+    action: Push services

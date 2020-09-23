@@ -1,7 +1,6 @@
 {
   "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
   "contentVersion": "1.0.0.0",
-
   "rolloutMetadata": {
     "serviceModelPath": "{{{baseRegionFileName}}}/core.region.servicemodel.jsonc",
     "scopeBindingsPath": null,
@@ -18,15 +17,36 @@
       "name": "{{{baseRegionName}}}-network",
       "targetType": "ServiceResource",
       "targetName": "{{{baseRegionName}}}-network",
-      "actions": [ "deploy" ],
+      "actions": [
+        "deploy"
+      ],
       "dependsOn": []
     },
     {
       "name": "{{{baseRegionName}}}-cluster",
-      "targetType": "ServiceResource",
-      "targetName": "{{{baseRegionName}}}-cluster",
-      "actions": [ "deploy" ],
-      "dependsOn": [ "{{{baseRegionName}}}-network" ]
+      "targetType": "application",
+      "applications": {
+        "names": [
+          "{{{baseRegionName}}}-docker-image-cleanup-chart",
+          "{{{baseRegionName}}}-geneva-chart",
+          "{{{baseRegionName}}}-kubernetes-dashboard-chart",
+          "{{{baseRegionName}}}-kured-chart",
+          "{{{baseRegionName}}}-nginx-ingress-controller-chart"
+        ],
+        "actions": [
+          "AppDeploy"
+        ],
+        "applyAcrossServiceResources": {
+          "definitionName": "{{{baseRegionName}}}-cluster-def",
+          "deployArmResources": true,
+          "names": [
+            "{{{baseRegionName}}}-cluster"
+          ]
+        }
+      },
+      "dependsOn": [
+        "{{{baseRegionName}}}-network"
+      ]
     }
   ]
 }

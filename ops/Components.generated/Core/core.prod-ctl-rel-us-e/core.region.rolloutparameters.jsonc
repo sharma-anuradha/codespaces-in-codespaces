@@ -1,0 +1,61 @@
+// Auto-Generated From Template
+// "core.region.rolloutparameters.jsonc"
+// with names file "core.prod-ctl-rel-us-e.names.json"
+// Do not edit this generated file. Edit the source file and rerun the generator instead.
+
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutParameters.json",
+    "contentVersion": "1.0.0.0",
+    "applications": [
+        {
+            "serviceResourceName": "vscs-core-prod-rel-us-e-cluster",
+            "applicationName": "vscs-core-prod-rel-us-e-docker-image-cleanup-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-core-prod-rel-us-e-cluster",
+            "applicationName": "vscs-core-prod-rel-us-e-geneva-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-core-prod-rel-us-e-cluster",
+            "applicationName": "vscs-core-prod-rel-us-e-kubernetes-dashboard-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-core-prod-rel-us-e-cluster",
+            "applicationName": "vscs-core-prod-rel-us-e-kured-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        },
+        {
+            "serviceResourceName": "vscs-core-prod-rel-us-e-cluster",
+            "applicationName": "vscs-core-prod-rel-us-e-nginx-ingress-controller-chart",
+            "authentication": {
+                "type": "CertificateAuthentication",
+                "properties": {
+                    "AksRole": "User"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+
+  # See geneva container versions here
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  prom_mdm_converter:
+    image: shared/prom-mdm-converter:2.0.master.20200730.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=kubernetesshared.azurecr.io/shared/prom-mdm-converter@sha256:9b08063e936a976173d2bf64f8747fce574095875ff5037be8008395abb27805

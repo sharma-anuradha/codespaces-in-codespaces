@@ -1,4 +1,5 @@
 {
+  "acsKeyVaultAgentTag": "master_28",
   "baseComponentFileName": "core",
   "baseComponentName": "vscs-core",
   "baseEnvironmentFileName": "core.ppe",
@@ -14,6 +15,10 @@
     "WestEurope",
     "WestUs2"
   ],
+  "genevaFluentdTdAgentTag": "master_148",
+  "genevaMdmTag": "master_48",
+  "genevaMdsdTag": "master_309",
+  "genevaSecpackInstallTag": "master_57",
   "plane": "ops",
   "prefix": "vscs",
   "subscriptionId": "b37129d5-ec65-4920-bd6c-42aa7a4bdd73",

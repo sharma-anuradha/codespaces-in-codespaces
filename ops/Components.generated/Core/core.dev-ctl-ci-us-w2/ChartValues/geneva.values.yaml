@@ -1,0 +1,24 @@
+image:
+  repositoryUrl: vscscoredevacr.azurecr.io
+  acskeyvaultagentTag: master_28
+  genevafluentdtdagentTag: master_148
+  genevamdmTag: master_48
+  genevamdsdTag: master_309
+  genevasecpackinstallTag: master_57
+
+config:
+  AzSecPack_AuditMoniker: vsonlinedevaudit
+  AzSecPack_DiagnosticsMoniker: vsonlinedevdiag
+  AzSecPack_EventVersion: 1
+  AzSecPack_GCS_Account: VsOnlineDev
+  AzSecPack_GCS_cert_name: vsclk-core-dev-monitoring
+  AzSecPack_GCS_cert: /secrets/certs/vsclk-core-dev-monitoring
+  AzSecPack_GCS_Environment: DiagnosticsProd
+  AzSecPack_GCS_key: /secrets/keys/vsclk-core-dev-monitoring
+  AzSecPack_Namespace: VsOnlineDev
+  AzSecPack_Role: vsonlinedevsecurity
+  AzSecPack_SecurityMoniker: vsonlinedevsecurity
+  AzSecPack_Tenant: 72f988bf-86f1-41af-91ab-2d7cd011db47
+  AzSecPack_Timestamp: 2018-05-07T00:00:00Z
+  Geneva_Mdm_Account: VsOnlineDev
+  KeyVault: https://vscs-core-dev-ops-kv.vault.azure.net/

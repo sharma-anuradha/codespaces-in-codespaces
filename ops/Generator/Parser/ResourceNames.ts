@@ -1,5 +1,7 @@
 // ResourceNames.ts
 
+import { GenevaValues } from "../Values/GenevaValues";
+
 export class ComponentNames {
     public baseName: string;
     public baseFileName: string;
@@ -50,15 +52,16 @@ export class PlaneNames extends EnvironmentNames {
         const basePlaneNames = ResourceNames.makeResourceNames(this.prefix, this.component, this.env, this.plane);
         this.baseName = this.basePlaneName = basePlaneNames.resourceName;
         this.baseFileName = this.basePlaneFileName = basePlaneNames.fileName;
-        this.setContainerRegistryReplications();
+
+        this.assignContainerRegistryValues();
+        this.assignGenevaValues();
     }
 
     // Environment ACR replications, one for each instance location
-    setContainerRegistryReplications(): void {
+    // + registry name and repository url
+    private assignContainerRegistryValues(): void {
         if (this.component === "core" && this.plane === "ctl") {
-
             const containerRegistryName = (this.basePlaneName + "acr").replace(/-/g, '');
-
             const replications = this.environmentStampLocations.map(location => {
                 location = location.toLowerCase();
                 return {
@@ -76,9 +79,18 @@ export class PlaneNames extends EnvironmentNames {
                 };
             });
 
-            (this as Record<string, unknown>).containerRegistryName = containerRegistryName;
-            (this as Record<string, unknown>).containerRegistryReplications = replications;
+            const values = {
+                containerRegistryName: containerRegistryName,
+                imageRepositoryUrl: `${containerRegistryName}.azurecr.io`,
+                containerRegistryReplications: replications
+            };
+            Object.assign(this, values);
         }
+    }
+
+    private assignGenevaValues(): void {
+        const genevaValues = new GenevaValues(this.plane, this.component, this.env);
+        genevaValues.assignValues(this);
     }
 }
 
@@ -120,6 +132,17 @@ export class RegionNames extends InstanceNames {
         this.baseName = this.baseRegionName = baseRegionNames.resourceName;
         this.baseRegionStorageName = baseRegionNames.storageName;
         this.baseFileName = this.baseRegionFileName = baseRegionNames.fileName;
+
+        this.assignNginxValues();
+    }
+
+    private assignNginxValues(): void {
+        if (this.component === "core" && this.plane === "ctl") {
+            const values = {
+                ingressReplicaCount: this.env === "dev" ? 1 : 3
+            };
+            Object.assign(this, values);
+        }
     }
 }
 

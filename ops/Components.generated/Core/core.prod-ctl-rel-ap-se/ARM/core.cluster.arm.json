@@ -109,12 +109,27 @@
             },
             "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutes')]"
           }
+        },
+
+        // AKS add-ons
+        "addonProfiles": {
+          "KubeDashboard": {
+            "enabled": false
+          },
+          "azurepolicy": {
+            // This policy requires the feature Microsoft.ContainerService/AKS-AzurePolicyAutoApprove
+            "enabled": true,
+            "config": {
+              "version": "v2"
+            }
+          }
         }
-        // Unused features
+
+        // Unused features:
+        // "apiServerAccessProfile": null,
         // "linuxProfile": null,
         // "windowsProfile": null,
         // "servicePrincipalProfile": null,
-        // "addOnProfiles": null,
         // "diskEncryptionSetID": null
       }
     }

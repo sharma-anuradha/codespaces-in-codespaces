@@ -1,0 +1,4 @@
+image:
+  repositoryUrl: {{{imageRepositoryUrl}}}
+  alpineDockerName: 'alpine-docker'
+  alpineDockerTag: '1'

@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevafluentd_td_agent:
+    image: genevafluentd_td-agent:master_148
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevafluentd_td-agent:master_148
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevamdsd:
+    image: genevamdsd:master_309
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevamdsd:master_309
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevamdm:
+    image: genevamdm:master_48
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevamdm:master_48
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_genevasecpackinstall:
+    image: genevasecpackinstall:master_57
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/genevasecpackinstall:master_57
+
+  # https://genevamondocs.azurewebsites.net/collect/references/linuxcontainers.html
+  linuxgeneva_microsoft_acskeyvaultagent:
+    image: acskeyvaultagent:master_28
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - base_image=linuxgeneva-microsoft.azurecr.io/acskeyvaultagent:master_28

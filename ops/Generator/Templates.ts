@@ -103,10 +103,10 @@ export default class Templates {
         switch (filetype) {
           case ".jsonc":
             buffer = this.textHeader(buffer, commentHeader);
-            buffer = this.textReplacement(buffer, name);
+            buffer = this.textReplacement(buffer, name, templatePath);
             break;
           default:
-            buffer = this.textReplacement(buffer, name);
+            buffer = this.textReplacement(buffer, name, templatePath);
             break;
         }
 
@@ -269,7 +269,7 @@ export default class Templates {
     return Buffer.from(generatedText, "utf8");
   }
 
-  private textReplacement(buffer: Buffer, namesObj: NameMatch): Buffer {
+  private textReplacement(buffer: Buffer, namesObj: NameMatch, templateFile: string): Buffer {
     let text = buffer.toString("utf8");
     const names = namesObj.names;
 
@@ -283,7 +283,7 @@ export default class Templates {
           // just ignore it rather than risk breaking the regex variablePattern.
           if (match !== '"') {
             if (!Object.keys(names).includes(match)) {
-              throw `error: property '${match}' does not exist in names object '${names.baseFileName}.names.json': template file '${namesObj.folderName}'`;
+              throw `error: property '${match}' does not exist in names object '${names.baseFileName}.names.json': template file '${templateFile}'`;
             }
           }
         }

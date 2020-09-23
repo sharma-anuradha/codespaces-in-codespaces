@@ -1,4 +1,5 @@
 {
+  "acsKeyVaultAgentTag": "master_28",
   "baseComponentFileName": "core",
   "baseComponentName": "vscs-core",
   "baseEnvironmentFileName": "core.ppe",
@@ -19,6 +20,10 @@
     "WestEurope",
     "WestUs2"
   ],
+  "genevaFluentdTdAgentTag": "master_148",
+  "genevaMdmTag": "master_48",
+  "genevaMdsdTag": "master_309",
+  "genevaSecpackInstallTag": "master_57",
   "geo": "us",
   "instance": "rel",
   "instanceLocation": "WestUs2",

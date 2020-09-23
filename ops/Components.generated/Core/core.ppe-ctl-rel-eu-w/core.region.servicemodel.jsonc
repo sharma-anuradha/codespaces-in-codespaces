@@ -4,56 +4,177 @@
 // Do not edit this generated file. Edit the source file and rerun the generator instead.
 
 {
-  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
-  "contentVersion": "0.0.0.1",
-
-  "serviceMetadata": {
-    "serviceGroup": "vscs-core-ppe-rel-eu-w-service-group",
-    "environment": "Test"
+"$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+"contentVersion": "0.0.0.1",
+"serviceMetadata": {
+  "serviceGroup": "vscs-core-ppe-rel-eu-w-service-group",
+  "environment": "Test"
+},
+"serviceResourceGroupDefinitions": [
+  {
+    "name": "vscs-core-ppe-rel-eu-w-rg-def",
+    "serviceResourceDefinitions": [
+      {
+        "name": "vscs-core-ppe-rel-eu-w-cluster-def",
+        "composedOf": {
+          "arm": {
+            "templatePath": "core.ppe-ctl-rel-eu-w/ARM/core.cluster.arm.json"
+          },
+          "application": {
+            "names": [
+              "vscs-core-ppe-rel-eu-w-docker-image-cleanup-chart-def",
+              "vscs-core-ppe-rel-eu-w-geneva-chart-def",
+              "vscs-core-ppe-rel-eu-w-kubernetes-dashboard-chart-def",
+              "vscs-core-ppe-rel-eu-w-kured-chart-def",
+              "vscs-core-ppe-rel-eu-w-nginx-ingress-controller-chart-def"
+            ]
+          }
+        }
+      },
+      {
+        "name": "vscs-core-ppe-rel-eu-w-network-def",
+        "composedOf": {
+          "arm": {
+            "templatePath": "core.ppe-ctl-rel-eu-w/ARM/core.network.arm.json"
+          }
+        }
+      }
+    ]
+  }
+],
+"applicationDefinitions": [
+  {
+    "name": "vscs-core-ppe-rel-eu-w-docker-image-cleanup-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "docker-image-cleanup-release",
+      "chart": {
+        "reference": {
+          "path": "charts/docker-image-cleanup/docker-image-cleanup.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.ppe-ctl-rel-eu-w/ChartValues/docker-image-cleanup.values.yaml"
+    }
   },
-
-  "serviceResourceGroupDefinitions": [
-    {
-      "name": "vscs-core-ppe-rel-eu-w-rg",
-      "serviceResourceDefinitions": [
-        {
-          "name": "vscs-core-ppe-rel-eu-w-cluster",
-          "composedOf": {
-            "arm": {
-              "templatePath": "core.ppe-ctl-rel-eu-w/ARM/core.cluster.arm.json",
-              "parametersPath": "empty.arm.parameters.json"
-            }
-          }
-        },
-        {
-          "name": "vscs-core-ppe-rel-eu-w-network",
-          "composedOf": {
-            "arm": {
-              "templatePath": "core.ppe-ctl-rel-eu-w/ARM/core.network.arm.json",
-              "parametersPath": "empty.arm.parameters.json"
-            }
-          }
+  {
+    "name": "vscs-core-ppe-rel-eu-w-geneva-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "geneva-release",
+      "chart": {
+        "reference": {
+          "path": "charts/geneva/geneva.zip"
         }
-      ]
-    }
-  ],
-
-  "serviceResourceGroups": [
-    {
-      "azureResourceGroupName": "vscs-core-ppe-rel-eu-w",
-      "location": "WestEurope",
-      "instanceOf": "vscs-core-ppe-rel-eu-w-rg",
-      "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
-      "serviceResources": [
-        {
-          "name": "vscs-core-ppe-rel-eu-w-cluster",
-          "instanceOf": "vscs-core-ppe-rel-eu-w-cluster"
-        },
-        {
-          "name": "vscs-core-ppe-rel-eu-w-network",
-          "instanceOf": "vscs-core-ppe-rel-eu-w-network"
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
         }
-      ]
+      },
+      "valuesPath": "core.ppe-ctl-rel-eu-w/ChartValues/geneva.values.yaml"
     }
-  ]
+  },
+  {
+    "name": "vscs-core-ppe-rel-eu-w-kubernetes-dashboard-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "kubernetes-dashboard-release",
+      "chart": {
+        "reference": {
+          "path": "charts/kubernetes-dashboard/kubernetes-dashboard.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.ppe-ctl-rel-eu-w/ChartValues/kubernetes-dashboard.values.yaml"
+    }
+  },
+  {
+    "name": "vscs-core-ppe-rel-eu-w-kured-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "kured-release",
+      "chart": {
+        "reference": {
+          "path": "charts/kured/kured.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.ppe-ctl-rel-eu-w/ChartValues/kured.values.yaml"
+    }
+  },
+  {
+    "name": "vscs-core-ppe-rel-eu-w-nginx-ingress-controller-chart-def",
+    "azureKubernetesService": {
+      "releaseName": "nginx-ingress-controller-release",
+      "chart": {
+        "reference": {
+          "path": "charts/nginx-ingress-controller/nginx-ingress-controller.zip"
+        }
+      },
+      "tools": {
+        "helm": {
+          "version": "3.0"
+        }
+      },
+      "valuesPath": "core.ppe-ctl-rel-eu-w/ChartValues/nginx-ingress-controller.values.yaml"
+    }
+  }
+],
+"serviceResourceGroups": [
+  {
+    "azureResourceGroupName": "vscs-core-ppe-rel-eu-w",
+    "location": "WestEurope",
+    "instanceOf": "vscs-core-ppe-rel-eu-w-rg-def",
+    "azureSubscriptionId": "e4b55408-c71f-4075-89fe-31fb09305ab2",
+    "serviceResources": [
+      {
+        "name": "vscs-core-ppe-rel-eu-w-cluster",
+        "instanceOf": "vscs-core-ppe-rel-eu-w-cluster-def",
+        "armParametersPath": "empty.arm.parameters.json",
+        "rolloutParametersPath": "core.ppe-ctl-rel-eu-w/core.region.rolloutparameters.jsonc",
+        "applications": [
+          {
+            "name": "vscs-core-ppe-rel-eu-w-docker-image-cleanup-chart",
+            "instanceOf": "vscs-core-ppe-rel-eu-w-docker-image-cleanup-chart-def",
+            "armResourceName": "vscs-core-ppe-rel-eu-w-cluster"
+          },
+          {
+            "name": "vscs-core-ppe-rel-eu-w-geneva-chart",
+            "instanceOf": "vscs-core-ppe-rel-eu-w-geneva-chart-def",
+            "armResourceName": "vscs-core-ppe-rel-eu-w-cluster"
+          },
+          {
+            "name": "vscs-core-ppe-rel-eu-w-kubernetes-dashboard-chart",
+            "instanceOf": "vscs-core-ppe-rel-eu-w-kubernetes-dashboard-chart-def",
+            "armResourceName": "vscs-core-ppe-rel-eu-w-cluster"
+          },
+          {
+            "name": "vscs-core-ppe-rel-eu-w-kured-chart",
+            "instanceOf": "vscs-core-ppe-rel-eu-w-kured-chart-def",
+            "armResourceName": "vscs-core-ppe-rel-eu-w-cluster"
+          },
+          {
+            "name": "vscs-core-ppe-rel-eu-w-nginx-ingress-controller-chart",
+            "instanceOf": "vscs-core-ppe-rel-eu-w-nginx-ingress-controller-chart-def",
+            "armResourceName": "vscs-core-ppe-rel-eu-w-cluster"
+          }
+        ]
+      },
+      {
+        "name": "vscs-core-ppe-rel-eu-w-network",
+        "instanceOf": "vscs-core-ppe-rel-eu-w-network-def",
+        "armParametersPath": "empty.arm.parameters.json"
+      }
+    ]
+  }
+]
 }
